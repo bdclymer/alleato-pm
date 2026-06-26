@@ -1,0 +1,225 @@
+"use client";
+
+import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
+
+import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
+import { Button, ErrorState } from "@/components/ds";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+  formatAiApprovalQueueEventLabel,
+  getAiApprovalQueueMetadata,
+  getAiApprovalQueueRelatedHref,
+  isAiApprovalQueueNotification,
+} from "@/lib/collaboration/ai-approval-queue";
+import {
+  useCollaborationNotifications,
+  type CollaborationNotification,
+} from "@/hooks/use-collaboration-notifications";
+
+export const dynamic = "force-dynamic";
+
+function formatAge(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+
+  return formatDistanceToNow(date, { addSuffix: true });
+}
+
+function AiApprovalQueueRow({
+  notification,
+  onMarkReviewed,
+  onDiscard,
+}: {
+  notification: CollaborationNotification;
+  onMarkReviewed: (id: string) => void;
+  onDiscard: (id: string) => void;
+}) {
+  const metadata = getAiApprovalQueueMetadata(notification.metadata);
+  const relatedHref = getAiApprovalQueueRelatedHref({
+    projectId: notification.projectId,
+    entityType: notification.entityType,
+    entityId: notification.entityId,
+  });
+  const stateLabel = notification.readAt ? "Reviewed" : "Needs review";
+
+  return (
+    <li className="grid gap-4 py-4 lg:grid-cols-[minmax(0,2fr)_minmax(10rem,1fr)_8rem_7rem_minmax(0,1.4fr)_auto] lg:items-start">
+      <div className="min-w-0 space-y-1">
+        <div className="text-sm font-medium text-foreground">
+          {notification.title}
+        </div>
+        <div className="line-clamp-2 text-xs leading-5 text-muted-foreground">
+          {metadata.requiredAction ?? notification.body ?? "Review the AI decision."}
+        </div>
+      </div>
+      <div className="min-w-0 text-sm text-foreground/80">
+        <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground lg:hidden">
+          Workflow
+        </span>
+        <div>{formatAiApprovalQueueEventLabel(metadata.eventType)}</div>
+      </div>
+      <div className="text-sm text-foreground/80">
+        <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground lg:hidden">
+          Status
+        </span>
+        <div>{stateLabel}</div>
+      </div>
+      <div className="text-sm text-foreground/80">
+        <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground lg:hidden">
+          Age
+        </span>
+        <div>{formatAge(notification.createdAt)}</div>
+      </div>
+      <div className="text-xs leading-5 text-muted-foreground">
+        <span className="text-xs font-medium uppercase tracking-[0.04em] text-muted-foreground lg:hidden">
+          Why it needs review
+        </span>
+        <div>
+          {metadata.reason ?? metadata.failureLoudBehavior ?? "Source details unavailable."}
+        </div>
+      </div>
+      <div className="flex justify-start gap-2 lg:justify-end">
+        {relatedHref ? (
+          <Button asChild variant="ghost" size="sm">
+            <Link href={relatedHref}>Open</Link>
+          </Button>
+        ) : null}
+        {!notification.readAt ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onMarkReviewed(notification.id)}
+          >
+            Mark reviewed
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onDiscard(notification.id)}
+        >
+          Discard
+        </Button>
+      </div>
+    </li>
+  );
+}
+
+function AiApprovalQueueHeader() {
+  return (
+    <div className="hidden grid-cols-[minmax(0,2fr)_minmax(10rem,1fr)_8rem_7rem_minmax(0,1.4fr)_auto] gap-4 border-b border-border/60 pb-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-foreground lg:grid">
+      <div>Decision</div>
+      <div>Workflow</div>
+      <div>Status</div>
+      <div>Age</div>
+      <div>Why it needs review</div>
+      <div className="text-right">Actions</div>
+    </div>
+  );
+}
+
+function AiApprovalQueueTable({
+  notifications,
+  onMarkReviewed,
+  onDiscard,
+}: {
+  notifications: CollaborationNotification[];
+  onMarkReviewed: (id: string) => void;
+  onDiscard: (id: string) => void;
+}) {
+  if (notifications.length === 0) {
+    return (
+      <div className="py-10">
+        <SectionRuleHeading
+          label="No AI decisions need review"
+          className="mb-1 pb-0"
+        />
+        <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+          Approval-oriented AI decisions will appear here when drafts, report
+          sends, or other review-first actions are waiting on a human decision.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <AiApprovalQueueHeader />
+      <ul className="divide-y divide-border/60">
+        {notifications.map((notification) => (
+          <AiApprovalQueueRow
+            key={notification.id}
+            notification={notification}
+            onMarkReviewed={onMarkReviewed}
+            onDiscard={onDiscard}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function AiApprovalsPage() {
+  const {
+    notifications,
+    isLoading,
+    isFetchingMore,
+    error,
+    hasMore,
+    fetchMore,
+    markAsRead,
+    deleteNotification,
+  } = useCollaborationNotifications({
+    kind: AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+    limit: 100,
+  });
+
+  const queueItems = notifications.filter(isAiApprovalQueueNotification);
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <PageShell variant="table" title="AI approvals">
+        <section className="space-y-4">
+          <SectionRuleHeading label="Needs review" className="mb-0 pb-0" />
+
+          {error ? (
+            <ErrorState title="AI approvals could not load" error={error} />
+          ) : null}
+
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+          ) : (
+            <AiApprovalQueueTable
+              notifications={queueItems}
+              onMarkReviewed={(id) => void markAsRead(id)}
+              onDiscard={(id) => void deleteNotification(id)}
+            />
+          )}
+
+          {hasMore ? (
+            <div className="flex justify-start">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isFetchingMore}
+                onClick={() => void fetchMore()}
+              >
+                {isFetchingMore ? "Loading..." : "Load more"}
+              </Button>
+            </div>
+          ) : null}
+        </section>
+      </PageShell>
+    </div>
+  );
+}

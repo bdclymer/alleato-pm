@@ -77,6 +77,20 @@ export type AiProfileContextPacket = {
   warnings: string[];
 };
 
+export type AiProfileContextAuditCategory = {
+  id:
+    | "identity"
+    | "approval"
+    | "memory"
+    | "notifications"
+    | "leadership"
+    | "blocked";
+  label: string;
+  state: "ready" | "degraded" | "not_configured";
+  summary: string;
+  detail: string;
+};
+
 export type BuildAiProfileContextPacketParams = {
   user: AiProfileContextUser | null;
   memories?: AiProfileMemory[];
@@ -203,7 +217,8 @@ export function buildAiProfileContextPacket({
     },
     approvalPolicy: {
       authority,
-      defaultWriteMode: authority === "admin" ? "commit_allowed" : "preview_only",
+      defaultWriteMode:
+        authority === "admin" ? "commit_allowed" : "preview_only",
       reason:
         authority === "admin"
           ? "Admin or developer profile can proceed to commit after preview and required confirmations."
@@ -294,4 +309,96 @@ export function renderAiProfileContextPacketBlock(
   );
 
   return lines.join("\n");
+}
+
+function formatWriteMode(
+  value: AiProfileContextPacket["approvalPolicy"]["defaultWriteMode"],
+) {
+  return value === "commit_allowed"
+    ? "Commit allowed after preview"
+    : "Preview only";
+}
+
+function formatLeadershipState(
+  leadershipContext: AiProfileContextPacket["leadershipContext"],
+) {
+  if (leadershipContext.state === "available") {
+    return `${leadershipContext.items.length} item${
+      leadershipContext.items.length === 1 ? "" : "s"
+    } from ${leadershipContext.source}`;
+  }
+
+  return leadershipContext.reason;
+}
+
+export function buildAiProfileContextAuditCategories(
+  packet: AiProfileContextPacket,
+): AiProfileContextAuditCategory[] {
+  return [
+    {
+      id: "identity",
+      label: "Identity",
+      state: packet.identity.userId ? "ready" : "degraded",
+      summary: packet.identity.displayName,
+      detail:
+        [packet.identity.title, packet.identity.company, packet.identity.role]
+          .filter(Boolean)
+          .join(" | ") || "No role, title, or company context recorded.",
+    },
+    {
+      id: "approval",
+      label: "Approval and writes",
+      state:
+        packet.approvalPolicy.authority === "unknown" ? "degraded" : "ready",
+      summary: formatWriteMode(packet.approvalPolicy.defaultWriteMode),
+      detail: packet.approvalPolicy.reason,
+    },
+    {
+      id: "memory",
+      label: "Selected memories",
+      state: packet.memoryContext.included.length > 0 ? "ready" : "degraded",
+      summary: `${packet.memoryContext.included.length} included, ${packet.memoryContext.omittedCount} omitted`,
+      detail: packet.memoryContext.selectionReason,
+    },
+    {
+      id: "notifications",
+      label: "Notification routing",
+      state: "not_configured",
+      summary: "Matrix defaults",
+      detail: packet.notificationPreferences.reason,
+    },
+    {
+      id: "leadership",
+      label: "Leadership context",
+      state:
+        packet.leadershipContext.state === "available"
+          ? "ready"
+          : "not_configured",
+      summary:
+        packet.leadershipContext.state === "available"
+          ? "Available"
+          : "Not configured",
+      detail: formatLeadershipState(packet.leadershipContext),
+    },
+    {
+      id: "blocked",
+      label: "Warnings and blocks",
+      state:
+        packet.blockedCapabilities.length > 0 || packet.warnings.length > 0
+          ? "degraded"
+          : "ready",
+      summary:
+        packet.blockedCapabilities.length > 0
+          ? `Blocked: ${packet.blockedCapabilities.join(", ")}`
+          : packet.warnings.length > 0
+            ? `${packet.warnings.length} warning${
+                packet.warnings.length === 1 ? "" : "s"
+              }`
+            : "None",
+      detail:
+        packet.warnings.length > 0
+          ? packet.warnings.join(" ")
+          : "No profile context warnings or blocked capabilities.",
+    },
+  ];
 }

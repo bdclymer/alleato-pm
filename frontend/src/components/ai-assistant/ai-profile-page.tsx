@@ -15,6 +15,12 @@ import { SectionRuleHeading } from "@/components/layout";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { apiFetch } from "@/lib/api-client";
 import {
+  buildAiProfileContextAuditCategories,
+  buildAiProfileContextPacket,
+  type AiProfileContextAuditCategory,
+  type AiProfileContextPacket,
+} from "@/lib/ai/ai-profile-context-packet";
+import {
   buildAiProfileMemorySummary,
   formatAiProfileMemoryType,
   type AiProfileMemory,
@@ -64,6 +70,29 @@ function formatVisibility(value: string): string {
   return "Private";
 }
 
+function formatContextStatus(
+  value:
+    | AiProfileContextPacket["status"]
+    | AiProfileContextAuditCategory["state"],
+): string {
+  switch (value) {
+    case "ready":
+      return "Ready";
+    case "degraded":
+      return "Needs attention";
+    case "not_configured":
+      return "Not configured";
+  }
+}
+
+function formatWriteMode(
+  value: AiProfileContextPacket["approvalPolicy"]["defaultWriteMode"],
+): string {
+  return value === "commit_allowed"
+    ? "Commit allowed after preview"
+    : "Preview only";
+}
+
 function Row({
   label,
   value,
@@ -102,6 +131,11 @@ export function AiProfilePage() {
 
   const memories = memoriesQuery.data?.memories ?? [];
   const summary = buildAiProfileMemorySummary(memories);
+  const contextPacket = buildAiProfileContextPacket({
+    user: profile,
+    memories,
+  });
+  const contextCategories = buildAiProfileContextAuditCategories(contextPacket);
   const isLoading = profileLoading || memoriesQuery.isLoading;
   const error =
     profileError ??
@@ -174,6 +208,82 @@ export function AiProfilePage() {
               : null}
           </DetailField>
         </DetailFieldGrid>
+      </section>
+
+      <section className="space-y-4">
+        <SectionRuleHeading label="Prompt Context Audit" />
+        <DetailFieldGrid columns={2}>
+          <DetailField label="Context status">
+            {formatContextStatus(contextPacket.status)}
+          </DetailField>
+          <DetailField label="Default write mode">
+            {formatWriteMode(contextPacket.approvalPolicy.defaultWriteMode)}
+          </DetailField>
+          <DetailField label="Approval authority">
+            {contextPacket.approvalPolicy.authority}
+          </DetailField>
+          <DetailField label="Memory selection">
+            {contextPacket.memoryContext.selectionReason}
+          </DetailField>
+          <DetailField label="Notification routing">
+            {contextPacket.notificationPreferences.defaultRouting}
+          </DetailField>
+          <DetailField label="Leadership context">
+            {contextPacket.leadershipContext.state === "available"
+              ? `Available from ${contextPacket.leadershipContext.source}`
+              : "Not configured"}
+          </DetailField>
+        </DetailFieldGrid>
+
+        <div className="divide-y divide-border">
+          {contextCategories.map((category) => (
+            <div
+              key={category.id}
+              className="grid gap-2 py-3 text-sm md:grid-cols-[12rem_minmax(0,1fr)]"
+            >
+              <div>
+                <p className="font-medium text-foreground">{category.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatContextStatus(category.state)}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-foreground">{category.summary}</p>
+                <p className="leading-6 text-muted-foreground">
+                  {category.detail}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {contextPacket.memoryContext.included.length > 0 && (
+          <div className="space-y-2">
+            <SectionRuleHeading label="Selected for prompts" />
+            <div className="divide-y divide-border">
+              {contextPacket.memoryContext.included.map((memory) => (
+                <div key={memory.id} className="py-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-foreground">
+                      {formatAiProfileMemoryType(memory.type)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatVisibility(memory.visibility)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {memory.project_id
+                        ? `Project ${memory.project_id}`
+                        : "Global"}
+                    </span>
+                  </div>
+                  <p className="mt-1 leading-6 text-muted-foreground">
+                    {memory.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">

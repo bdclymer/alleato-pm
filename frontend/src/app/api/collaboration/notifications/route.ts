@@ -9,6 +9,8 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   cursor: z.string().datetime().optional(),
   kind: z.string().trim().min(1).max(80).optional(),
+  projectId: z.coerce.number().int().positive().optional(),
+  unreadOnly: z.coerce.boolean().optional(),
 });
 
 const patchSchema = z.discriminatedUnion("action", [
@@ -42,7 +44,7 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const { limit, cursor, kind } = parsed.data;
+    const { limit, cursor, kind, projectId, unreadOnly } = parsed.data;
     const supabase = await createClient();
 
     let query = supabase
@@ -54,12 +56,20 @@ export const GET = withApiGuardrails(
       .order("created_at", { ascending: false })
       .limit(limit + 1);
 
-    if (cursor) {
-      query = query.lt("created_at", cursor);
-    }
-
     if (kind) {
       query = query.eq("kind", kind);
+    }
+
+    if (projectId) {
+      query = query.eq("project_id", projectId);
+    }
+
+    if (unreadOnly) {
+      query = query.is("read_at", null);
+    }
+
+    if (cursor) {
+      query = query.lt("created_at", cursor);
     }
 
     const { data, error } = await query;
@@ -84,6 +94,10 @@ export const GET = withApiGuardrails(
 
     if (kind) {
       unreadQuery = unreadQuery.eq("kind", kind);
+    }
+
+    if (projectId) {
+      unreadQuery = unreadQuery.eq("project_id", projectId);
     }
 
     const { count: unreadCount, error: unreadError } = await unreadQuery;

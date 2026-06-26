@@ -27,9 +27,18 @@ interface NotificationsResponse {
 
 const PAGE_SIZE = 25;
 
-export function useCollaborationNotifications(options?: { enabled?: boolean; kind?: string }) {
+type UseCollaborationNotificationsOptions = {
+  enabled?: boolean;
+  kind?: string;
+  projectId?: number | null;
+  unreadOnly?: boolean;
+  limit?: number;
+};
+
+export function useCollaborationNotifications(
+  options?: UseCollaborationNotificationsOptions,
+) {
   const enabled = options?.enabled ?? true;
-  const kind = options?.kind?.trim() || null;
   const [notifications, setNotifications] = useState<CollaborationNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,12 +49,20 @@ export function useCollaborationNotifications(options?: { enabled?: boolean; kin
   const [userId, setUserId] = useState<string | null>(null);
 
   const baseQuery = useMemo(() => {
-    const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
-    if (kind) {
-      params.set("kind", kind);
+    const params = new URLSearchParams({
+      limit: String(options?.limit ?? PAGE_SIZE),
+    });
+    if (options?.kind) {
+      params.set("kind", options.kind);
+    }
+    if (options?.projectId) {
+      params.set("projectId", String(options.projectId));
+    }
+    if (options?.unreadOnly) {
+      params.set("unreadOnly", "true");
     }
     return params;
-  }, [kind]);
+  }, [options?.kind, options?.limit, options?.projectId, options?.unreadOnly]);
 
   const fetchPage = useCallback(
     async ({ append, cursorValue }: { append: boolean; cursorValue?: string | null }) => {

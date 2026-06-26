@@ -4,6 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { useCollaborationNotifications } from "@/hooks/use-collaboration-notifications";
+import {
+  AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+  isAiApprovalQueueNotification,
+} from "@/lib/collaboration/ai-approval-queue";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -208,6 +213,14 @@ function SourcePendingRow({
 }
 
 export default function HomeActionDashboardPage() {
+  const {
+    notifications: aiApprovalNotifications,
+    isLoading: isLoadingAiApprovals,
+  } = useCollaborationNotifications({
+    kind: AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+    unreadOnly: true,
+    limit: 10,
+  });
   const [state, setState] = React.useState<LoadState>({
     projects: [],
     tasks: [],
@@ -269,6 +282,17 @@ export default function HomeActionDashboardPage() {
     () => openTasks.filter((task) => isDueTodayOrEarlier(task.due_date)).slice(0, 3),
     [openTasks],
   );
+
+  const aiApprovalCount = React.useMemo(
+    () => aiApprovalNotifications.filter(isAiApprovalQueueNotification).length,
+    [aiApprovalNotifications],
+  );
+
+  const aiApprovalMeta = isLoadingAiApprovals
+    ? "Checking AI decisions."
+    : aiApprovalCount > 0
+      ? `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`
+      : "No AI decisions are waiting for review.";
 
   const recentActivity = React.useMemo(() => {
     const taskItems = state.tasks.slice(0, 3).map((task) => ({
@@ -404,6 +428,12 @@ export default function HomeActionDashboardPage() {
 
           <Section title="Quiet Inbox">
             <RowList>
+              <ActionRow
+                title="AI approvals"
+                meta={aiApprovalMeta}
+                href="/ai/approvals"
+                actionLabel="Review"
+              />
               <ActionRow
                 title="Assignment inbox"
                 meta="Open the existing assignment queue."

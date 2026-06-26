@@ -1,4 +1,5 @@
 import {
+  buildAiProfileContextAuditCategories,
   buildAiProfileContextPacket,
   renderAiProfileContextPacketBlock,
   type AiProfileContextUser,
@@ -152,5 +153,48 @@ describe("ai profile context packet", () => {
     expect(block).toContain(
       "Do not imply unavailable leadership context was used.",
     );
+  });
+
+  it("summarizes prompt context categories for the AI Profile audit surface", () => {
+    const packet = buildAiProfileContextPacket({
+      user: null,
+      memories: [memory({ id: "included" })],
+      maxMemories: 1,
+    });
+
+    const categories = buildAiProfileContextAuditCategories(packet);
+
+    expect(categories.map((category) => category.id)).toEqual([
+      "identity",
+      "approval",
+      "memory",
+      "notifications",
+      "leadership",
+      "blocked",
+    ]);
+    expect(
+      categories.find((category) => category.id === "identity"),
+    ).toMatchObject({
+      state: "degraded",
+      summary: "Unknown user",
+    });
+    expect(
+      categories.find((category) => category.id === "memory"),
+    ).toMatchObject({
+      state: "ready",
+      summary: "1 included, 0 omitted",
+    });
+    expect(
+      categories.find((category) => category.id === "leadership"),
+    ).toMatchObject({
+      state: "not_configured",
+      summary: "Not configured",
+    });
+    expect(
+      categories.find((category) => category.id === "blocked"),
+    ).toMatchObject({
+      state: "degraded",
+      summary: "Blocked: write_actions, delivery_actions",
+    });
   });
 });
