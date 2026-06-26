@@ -29,6 +29,10 @@ import {
   useSubmittalAIReview,
   useUpdateSubmittalAIReviewCheck,
 } from "@/hooks/use-submittals";
+import {
+  buildAIReviewResponseComment,
+  recommendedAIReviewWorkflowResponseStatus,
+} from "@/lib/submittals/ai-review/response-comment";
 
 interface Props {
   projectId: number;
@@ -59,48 +63,6 @@ const RESPONSE_OPTIONS: SubmittalWorkflowResponseStatus[] = [
   "Rejected",
   "Reviewed - No Exception",
 ];
-
-function recommendedResponseStatus(
-  result: AIReviewResult,
-): SubmittalWorkflowResponseStatus {
-  const unresolvedFailures = result.checks.some(
-    (check) => check.status === "fail" && check.reviewerDisposition !== "dismissed",
-  );
-  if (unresolvedFailures) return "Revise and Resubmit";
-
-  const unresolvedWarnings = result.checks.some(
-    (check) =>
-      [
-        "warning",
-        "missing_information",
-        "unable_to_determine",
-        "needs_human_review",
-      ].includes(check.status) &&
-      !["accepted", "dismissed"].includes(check.reviewerDisposition),
-  );
-  if (unresolvedWarnings) return "Approved as Noted";
-
-  return "Approved";
-}
-
-function buildAIReviewResponseComment(result: AIReviewResult): string {
-  const actionableChecks = result.checks.filter(
-    (check) =>
-      check.status !== "pass" && check.reviewerDisposition !== "dismissed",
-  );
-  const findingLines = actionableChecks
-    .slice(0, 5)
-    .map((check) => `- ${check.title}: ${check.finding}`);
-
-  return [
-    "AI review response context:",
-    result.summary ? `Summary: ${result.summary}` : null,
-    result.recommendation ? `Recommendation: ${result.recommendation}` : null,
-    findingLines.length > 0 ? ["Findings:", ...findingLines].join("\n") : null,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
 
 function ReviewCheckRow({
   icon,
@@ -338,7 +300,7 @@ function WorkflowResponseAction({
 }) {
   const [responseStatus, setResponseStatus] =
     React.useState<SubmittalWorkflowResponseStatus>(() =>
-      recommendedResponseStatus(result),
+      recommendedAIReviewWorkflowResponseStatus(result),
     );
   const recordResponse = useRecordSubmittalAIReviewWorkflowResponse(
     projectId,
@@ -346,7 +308,7 @@ function WorkflowResponseAction({
   );
 
   React.useEffect(() => {
-    setResponseStatus(recommendedResponseStatus(result));
+    setResponseStatus(recommendedAIReviewWorkflowResponseStatus(result));
   }, [result]);
 
   async function handleRecordResponse() {

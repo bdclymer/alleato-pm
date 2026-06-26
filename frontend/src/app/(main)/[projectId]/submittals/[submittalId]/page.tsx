@@ -65,6 +65,7 @@ export default async function SubmittalDetailPage({ params }: Props) {
          actor_id,
          new_status,
          changes,
+         metadata,
          occurred_at
        )`,
     )

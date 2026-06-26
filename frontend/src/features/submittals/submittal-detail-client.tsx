@@ -75,6 +75,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
+import { parseAIReviewResponseComment } from "@/lib/submittals/ai-review/response-comment";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,39 @@ function userMatchesResponder({
 }): boolean {
   if (!authUserId) return false;
   return responderId === authUserId || Boolean(personId && responderId === personId);
+}
+
+function AIReviewResponseSummary({ comment }: { comment: string }) {
+  const parsed = parseAIReviewResponseComment(comment);
+
+  if (!parsed) {
+    return <p className="text-sm leading-relaxed text-foreground">{comment}</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {parsed.summary && (
+        <p className="text-sm leading-relaxed text-foreground">
+          {parsed.summary}
+        </p>
+      )}
+      {parsed.recommendation && (
+        <p className="text-sm font-medium leading-relaxed text-foreground">
+          {parsed.recommendation}
+        </p>
+      )}
+      {parsed.findings.length > 0 && (
+        <ul className="space-y-1 text-sm leading-relaxed text-muted-foreground">
+          {parsed.findings.map((finding) => (
+            <li key={finding} className="flex gap-2">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+              <span>{finding}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function getInitials(name: string): string {
@@ -1164,7 +1198,11 @@ export function SubmittalDetailClient({
                                     {event.comment ? (
                                       <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
                                         <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
-                                        <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
+                                        {event.source === "ai_review" ? (
+                                          <AIReviewResponseSummary comment={event.comment} />
+                                        ) : (
+                                          <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
+                                        )}
                                       </div>
                                     ) : (
                                       <p className="mt-2 text-sm text-muted-foreground">
