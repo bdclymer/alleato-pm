@@ -961,3 +961,44 @@ Evidence directory:
 - Verified after push:
   - local `HEAD` equals `origin/main`.
   - Linear AAI-718 marked Done.
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Started
+
+- Opened follow-up after Graph sync was blocked by raw `total_connections=42>35`.
+- Live inspection showed the current pressure problem is mostly low headroom from Supabase platform/PostgREST idle baseline, not an active app query pileup.
+- Scope:
+  - classify DB connections by owner bucket;
+  - keep fail-closed checks for real app/client pressure;
+  - add a bucketed verifier/report;
+  - prove with focused tests and live evidence.
+- Links:
+  - [Task](../tasks/2026-06-26-db-pressure-guard-buckets.md)
+  - [Linear AAI-720](https://linear.app/megankharrison/issue/AAI-720/refine-app-db-pressure-guard-with-bucketed-connection-diagnostics)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Implemented
+
+- Updated the app DB pressure guard to classify `pg_stat_activity` into owner buckets:
+  - `app_or_external`
+  - `supabase_postgrest_pool`
+  - `supabase_realtime`
+  - `supabase_storage`
+  - `supabase_supavisor`
+  - `supabase_platform_other`
+  - `postgres_internal`
+- Raw `total_connections` remains diagnostic by default; it blocks only when `APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL=true`.
+- Guard still blocks for real app pressure:
+  - `app_client_connections`
+  - overall active connections
+  - app idle-in-transaction connections
+  - app long-running active connections
+- Added `npm run verify:app-db-pressure` for read-only live diagnostics.
+- Live verifier output:
+  - `total_connections=35`
+  - `platform_connections=32`
+  - `app_client_connections=3`
+  - `app_active_connections=0`
+  - `app_idle_in_transaction_connections=0`
+  - `app_long_running_active_connections=0`
+- Focused test pass:
+  - `14 passed`.
+- Evidence:
+  - [AAI-720 evidence](../evidence/2026-06-25-ai-rag-production-finalization/db-pressure-guard-buckets-aai-720.md)

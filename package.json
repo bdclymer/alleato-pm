@@ -68,6 +68,7 @@
     "verify:render-web-scheduler": "node scripts/verify/verify-render-web-scheduler-disabled.mjs",
     "verify:microsoft-assistant-health": "node scripts/verify/verify_microsoft_assistant_health.mjs",
     "verify:graph-subscriptions": "node scripts/verify/verify_graph_subscriptions.mjs",
+    "verify:app-db-pressure": "python3 scripts/verify/verify_app_db_pressure.py",
     "verify:live-db-incident": "node scripts/verify/verify-live-db-incident.mjs",
     "verify:db-pg-net-suspensions": "node scripts/verify/verify-db-pg-net-suspensions.mjs",
     "verify:active-backend-url": "node scripts/verify/verify-active-backend-url.mjs",
