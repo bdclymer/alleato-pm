@@ -84,7 +84,8 @@
     "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs",
     "design:no-new-form-violations": "node scripts/design-system/check-no-new-form-violations.mjs",
     "codemod:forms:placeholder-zero": "node scripts/codemods/normalize-zero-placeholders.mjs",
-    "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN --build-script-name=build-storybook"
+    "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN --build-script-name=build-storybook",
+    "ai:contract": "jest --config jest.contract.config.js --runTestsByPath src/lib/ai/tools/contract/write-tools.contract.test.ts"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.15",
