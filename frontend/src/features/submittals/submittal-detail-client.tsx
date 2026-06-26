@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
   ExternalLink,
@@ -76,6 +76,10 @@ import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
 import { parseAIReviewResponseComment } from "@/lib/submittals/ai-review/response-comment";
+import {
+  normalizeSubmittalDetailTab,
+  type SubmittalDetailTab,
+} from "@/lib/submittals/detail-tabs";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -532,6 +536,8 @@ export function SubmittalDetailClient({
   projectName,
 }: SubmittalDetailClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const supabase = createClient();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -616,7 +622,11 @@ export function SubmittalDetailClient({
     router.refresh();
   }
 
-  const [activeTab, setActiveTab] = React.useState("details");
+  const tabFromUrl = normalizeSubmittalDetailTab(
+    searchParams.get("tab") ?? searchParams.get("view"),
+  );
+  const [activeTab, setActiveTab] =
+    React.useState<SubmittalDetailTab>(tabFromUrl);
   const [showAddStep, setShowAddStep] = React.useState(false);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
@@ -645,6 +655,35 @@ export function SubmittalDetailClient({
       )
     );
   });
+
+  React.useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  function handleTabChange(tab: string) {
+    const nextTab = normalizeSubmittalDetailTab(tab);
+    setActiveTab(nextTab);
+
+    const nextParams = new URLSearchParams(
+      typeof window === "undefined"
+        ? searchParams.toString()
+        : window.location.search,
+    );
+    if (nextTab === "details") {
+      nextParams.delete("tab");
+      nextParams.delete("view");
+    } else {
+      nextParams.set("tab", nextTab);
+      nextParams.delete("view");
+    }
+
+    const query = nextParams.toString();
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
+  }
 
   React.useEffect(() => {
     let isMounted = true;
@@ -819,7 +858,7 @@ export function SubmittalDetailClient({
                 { label: "Details", href: "details", isActive: activeTab === "details" },
                 { label: "AI Review", href: "ai-review", isActive: activeTab === "ai-review" },
               ]}
-              onTabClick={(href) => setActiveTab(href)}
+              onTabClick={handleTabChange}
             />
 
             {activeTab === "details" && (
