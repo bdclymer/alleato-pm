@@ -70,6 +70,7 @@ export const GET = withApiGuardrails(
       .select(
         "id, kind, title, body, metadata, created_at, read_at, entity_type, entity_id, project_id",
       )
+      .eq("user_id", user.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(limit + 1);
@@ -107,6 +108,7 @@ export const GET = withApiGuardrails(
     let unreadQuery = supabase
       .from("collaboration_notifications")
       .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
       .is("deleted_at", null)
       .is("read_at", null);
 
@@ -173,6 +175,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .update({ read_at: new Date().toISOString() })
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null);
 
       if (error) {
@@ -193,6 +196,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .select("metadata")
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null)
         .maybeSingle();
 
@@ -220,6 +224,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .update({ read_at: reviewedAt, metadata })
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null);
 
       if (error) {
@@ -238,6 +243,7 @@ export const PATCH = withApiGuardrails(
       const { error } = await supabase
         .from("collaboration_notifications")
         .update({ read_at: new Date().toISOString() })
+        .eq("user_id", user.id)
         .is("deleted_at", null)
         .is("read_at", null);
 
@@ -258,6 +264,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null);
 
       if (error) {
@@ -275,6 +282,7 @@ export const PATCH = withApiGuardrails(
     const { error } = await supabase
       .from("collaboration_notifications")
       .update({ deleted_at: new Date().toISOString() })
+      .eq("user_id", user.id)
       .is("deleted_at", null);
 
     if (error) {
