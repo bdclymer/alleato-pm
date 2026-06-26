@@ -36,6 +36,8 @@ const removedLegacyPaths = [
   "backend/src/scripts/rag_chatkit_server.py",
   "backend/src/scripts/rag_chatkit_server_streaming.py",
   "backend/src/scripts/rag_chatkit_server_unified.py",
+  "backend/src/scripts/eval_graph_sync.py",
+  "backend/src/scripts/eval_mine_emails.py",
   "backend/tests/test_rag_chatkit.py",
   "frontend/src/app/(chat)/chat-admin-view",
   "frontend/src/app/(chat)/chat-demo",

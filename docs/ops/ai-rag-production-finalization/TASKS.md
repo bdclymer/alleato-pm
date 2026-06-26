@@ -31,6 +31,10 @@ Active event-driven intelligence/task write slice:
 
 - [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
 
+Active cleanup/deletion proof slice:
+
+- [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -129,9 +133,10 @@ Evidence directory:
 
 ### Phase 12: Cleanup And Deletion
 
-- [ ] For each deletion candidate, prove inactive status through imports, route references, provider schedules, database writes, and verifier output.
+- [x] For each deletion candidate in AAI-703, prove inactive status through imports, route references, provider schedules, database writes, and verifier output.
 - [x] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
-- [ ] Remove archived, duplicate, experimental, deprecated, dead, or unused implementations.
+- [x] Remove AAI-703-proven obsolete manual Graph/email eval implementations.
+- [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
 - [ ] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
 
@@ -228,6 +233,20 @@ Evidence directory:
 - Verified warning/fallback behavior is logged instead of silently failing:
   - unsupported customer fields are dropped with persisted warnings;
   - missing historical payment-application endpoint is logged with fallback projection from `acumatica_payments` where customer-to-project mapping is unique.
+- Verified duplicate prevention:
+  - upsert/conflict-key code guardrails exist;
+  - live unique indexes exist for Acumatica raw/projection keys;
+  - 18 duplicate probes returned zero duplicate groups.
+- Verification passed:
+  - `npm run verify:acumatica-sync-health`
+  - delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+- Evidence:
+  - [acumatica-sync-health-baseline-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-baseline-aai-697.txt)
+  - [acumatica-sync-health-after-stale-threshold-fix-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-stale-threshold-fix-aai-697.txt)
+  - [acumatica-run-state-duplicate-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-run-state-duplicate-inventory-aai-697.json)
+  - [acumatica-code-guardrail-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json)
+  - [acumatica-logging-stats-duplicate-proof-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json)
+  - [frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt)
 
 ### 2026-06-26: AAI-699 Event-Driven Outlook/Teams Intelligence Guard Patched
 
@@ -243,20 +262,33 @@ Evidence directory:
   - [event-driven-intelligence-write-guard-aai-699.md](../evidence/2026-06-25-ai-rag-production-finalization/event-driven-intelligence-write-guard-aai-699.md)
 - Task:
   - [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
-- Verified duplicate prevention:
-  - upsert/conflict-key code guardrails exist;
-  - live unique indexes exist for Acumatica raw/projection keys;
-  - 18 duplicate probes returned zero duplicate groups.
-- Verification passed:
-  - `npm run verify:acumatica-sync-health`
-  - delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+
+### 2026-06-26: AAI-703 Legacy Cleanup Proof And First Deletions
+
+- Completed the first deletion/import proof slice for remaining legacy AI/RAG implementations.
+- Deleted two proven-inactive manual eval/bootstrap scripts:
+  - `backend/src/scripts/eval_graph_sync.py`
+  - `backend/src/scripts/eval_mine_emails.py`
+- Removed stale README advertising and generated DB-inventory references for those scripts.
+- Added a guardrail to `npm run rag:verify:chat-architecture` so those removed paths cannot silently reappear.
+- Kept active or not-yet-replaced paths with explicit classification:
+  - local admin RAG eval scripts remain `active-keep`;
+  - contextual embedding backfill remains `migrate-first`;
+  - Outlook RAG-to-app metadata bridge remains `manual/dev-only`.
 - Evidence:
-  - [acumatica-sync-health-baseline-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-baseline-aai-697.txt)
-  - [acumatica-sync-health-after-stale-threshold-fix-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-stale-threshold-fix-aai-697.txt)
-  - [acumatica-run-state-duplicate-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-run-state-duplicate-inventory-aai-697.json)
-  - [acumatica-code-guardrail-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json)
-  - [acumatica-logging-stats-duplicate-proof-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json)
-  - [frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt)
+  - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
+  - [legacy-cleanup-candidate-inventory-aai-703.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-cleanup-candidate-inventory-aai-703.md)
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - `backend/.venv/bin/python -m compileall -q backend/src/scripts backend/src/services/pipeline/contextualize.py`;
+  - `npm run rag:verify:chat-architecture`;
+  - `npm run rag:verify:source-specific`;
+  - `npm run rag:verify:retrieval-contract`;
+  - `npm run rag:verify:client-boundary`;
+  - `npm run rag:verify:backend-client-boundary`;
+  - `npm run rag:verify:metadata-boundary`.
+- Known unrelated blocker:
+  - `npm run db:inventory` could not fully regenerate because `docs/architecture/tables.yaml` is missing live MAIN tables: `document_page_intelligence`, `idea_items`, `rfi_response_tokens`, `rfi_responses`, `spec_drawing_links`, `submittal_ai_review_checks`, `submittal_ai_review_runs`, and `submittal_project_settings`.
 
 ### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
 

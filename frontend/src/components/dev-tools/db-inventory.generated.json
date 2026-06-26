@@ -50766,12 +50766,6 @@
             "lineNumber": 105,
             "kind": "read",
             "snippet": ".from(\"graph_sync_state\")"
-          },
-          {
-            "filePath": "backend/src/scripts/eval_graph_sync.py",
-            "lineNumber": 202,
-            "kind": "read",
-            "snippet": "result = rag_supabase.table(\"graph_sync_state\").select("
           }
         ],
         "migrations": [
@@ -73689,30 +73683,6 @@
             "snippet": "chunks_with_embeddings = client.table(\"document_chunks\")\\\\"
           },
           {
-            "filePath": "backend/src/scripts/eval_graph_sync.py",
-            "lineNumber": 423,
-            "kind": "read",
-            "snippet": "rag_supabase.table(\"document_chunks\")"
-          },
-          {
-            "filePath": "backend/src/scripts/eval_graph_sync.py",
-            "lineNumber": 458,
-            "kind": "read",
-            "snippet": "rag_supabase.table(\"document_chunks\")"
-          },
-          {
-            "filePath": "backend/src/scripts/eval_graph_sync.py",
-            "lineNumber": 561,
-            "kind": "read",
-            "snippet": "rag_supabase.table(\"document_chunks\")"
-          },
-          {
-            "filePath": "backend/src/scripts/eval_mine_emails.py",
-            "lineNumber": 162,
-            "kind": "read",
-            "snippet": "supabase.table(\"document_chunks\")"
-          },
-          {
             "filePath": "backend/src/scripts/process_existing_documents.py",
             "lineNumber": 86,
             "kind": "read",
@@ -83281,12 +83251,6 @@
             "lineNumber": 105,
             "kind": "read",
             "snippet": ".from(\"graph_sync_state\")"
-          },
-          {
-            "filePath": "backend/src/scripts/eval_graph_sync.py",
-            "lineNumber": 202,
-            "kind": "read",
-            "snippet": "result = rag_supabase.table(\"graph_sync_state\").select("
           }
         ],
         "migrations": [

@@ -57,8 +57,6 @@ backend/
 │   │   ├── backfill_transcript_chunks.py            # Re-chunk existing transcripts
 │   │   ├── clean_and_reingest.py                    # Wipe + re-ingest a document
 │   │   ├── create_test_data.py                      # Seed test fixtures
-│   │   ├── eval_graph_sync.py                       # Evaluate MS Graph sync quality
-│   │   ├── eval_mine_emails.py                      # Evaluate email-mining quality
 │   │   ├── eval_seed_test_cases.py                  # Seed RAG eval test cases
 │   │   ├── execute_vector_fix.py                    # Fix corrupted vector data
 │   │   ├── fix_document_statuses.py                 # Repair stuck document statuses
