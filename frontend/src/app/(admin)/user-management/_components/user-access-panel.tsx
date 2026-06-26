@@ -167,21 +167,21 @@ export function UserAccessPanel({
     <div className="space-y-8">
       <section className="py-2">
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="group min-w-0 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                User role
-              </p>
+          <div className="group relative min-w-0 space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              User role
+            </p>
+            <div className="absolute -right-1 -top-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+                className="h-5 w-5 text-muted-foreground/60 opacity-100 hover:text-muted-foreground md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
                 disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
                 onClick={() => setIsEditingCompanyAccess((current) => !current)}
                 aria-label="Edit user role"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3 w-3" />
               </Button>
             </div>
             {isEditingCompanyAccess ? (
@@ -477,18 +477,11 @@ function GranularExceptionPanel({
   ) => void;
 }) {
   const inheritedFlags = getInheritedGranularFlags(user, templates, companyTemplates);
-  const activeOverrideCount = user.granularOverrides.filter(
-    (override) => override.projectId == null,
-  ).length;
-
   return (
     <section className="space-y-4">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <SectionRuleHeading label="Granular exceptions" />
-          {activeOverrideCount > 0 && (
-            <Badge variant="outline">{activeOverrideCount} active</Badge>
-          )}
         </div>
       </div>
 
