@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Pen, RotateCcw, Square, Undo2 } from "lucide-react";
+import { ArrowUpRight, Pen, Square, Trash2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,115 +9,29 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-type Tool = "arrow" | "rect" | "pen";
-type Color = "#ef4444" | "#eab308" | "#3b82f6";
-type Point = { x: number; y: number };
-
-type Shape =
-  | { kind: "arrow"; from: Point; to: Point; color: Color }
-  | { kind: "rect"; from: Point; to: Point; color: Color }
-  | { kind: "pen"; points: Point[]; color: Color };
-
-type InProgress =
-  | { kind: "arrow"; from: Point; to: Point }
-  | { kind: "rect"; from: Point; to: Point }
-  | { kind: "pen"; points: Point[] };
-
-const COLORS: { value: Color; label: string }[] = [
-  { value: "#ef4444", label: "Red" },
-  { value: "#eab308", label: "Yellow" },
-  { value: "#3b82f6", label: "Blue" },
-];
-
-function drawArrow(ctx: CanvasRenderingContext2D, from: Point, to: Point, color: string) {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len < 4) return;
-  const headLen = Math.min(22, len * 0.45);
-  const angle = Math.atan2(dy, dx);
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(
-    to.x - headLen * 0.6 * Math.cos(angle),
-    to.y - headLen * 0.6 * Math.sin(angle),
-  );
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(to.x, to.y);
-  ctx.lineTo(
-    to.x - headLen * Math.cos(angle - Math.PI / 6),
-    to.y - headLen * Math.sin(angle - Math.PI / 6),
-  );
-  ctx.lineTo(
-    to.x - headLen * Math.cos(angle + Math.PI / 6),
-    to.y - headLen * Math.sin(angle + Math.PI / 6),
-  );
-  ctx.closePath();
-  ctx.fill();
-}
-
-function drawRect(ctx: CanvasRenderingContext2D, from: Point, to: Point, color: string) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeRect(from.x, from.y, to.x - from.x, to.y - from.y);
-}
-
-function drawPen(ctx: CanvasRenderingContext2D, points: Point[], color: string) {
-  if (points.length < 2) return;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
-  ctx.stroke();
-}
-
-function render(
-  ctx: CanvasRenderingContext2D,
-  shapes: Shape[],
-  inProgress: InProgress | null,
-  activeColor: Color,
-) {
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  for (const s of shapes) {
-    if (s.kind === "arrow") drawArrow(ctx, s.from, s.to, s.color);
-    else if (s.kind === "rect") drawRect(ctx, s.from, s.to, s.color);
-    else if (s.kind === "pen") drawPen(ctx, s.points, s.color);
-  }
-  if (inProgress) {
-    if (inProgress.kind === "arrow") drawArrow(ctx, inProgress.from, inProgress.to, activeColor);
-    else if (inProgress.kind === "rect") drawRect(ctx, inProgress.from, inProgress.to, activeColor);
-    else if (inProgress.kind === "pen") drawPen(ctx, inProgress.points, activeColor);
-  }
-}
-
-function scalePoint(p: Point, sx: number, sy: number): Point {
-  return { x: p.x * sx, y: p.y * sy };
-}
-
-function scaleShape(s: Shape, sx: number, sy: number): Shape {
-  if (s.kind === "arrow") return { ...s, from: scalePoint(s.from, sx, sy), to: scalePoint(s.to, sx, sy) };
-  if (s.kind === "rect") return { ...s, from: scalePoint(s.from, sx, sy), to: scalePoint(s.to, sx, sy) };
-  return { ...s, points: s.points.map((p) => scalePoint(p, sx, sy)) };
-}
+import {
+  COLORS,
+  composeAnnotatedScreenshot,
+  renderShapes,
+  type Color,
+  type InProgress,
+  type Point,
+  type Shape,
+  type Tool,
+} from "./annotate";
 
 export function ScreenshotAnnotator({
   dataUrl,
   onChange,
 }: {
+  /** Immutable base screenshot. Never overwritten by this component. */
   dataUrl: string;
+  /**
+   * Receives the flattened (base + shapes) PNG whenever the annotation changes,
+   * or the untouched base when annotations are cleared. The parent MUST store
+   * this in a separate slot from `dataUrl` — feeding it back into `dataUrl`
+   * recreates the "screenshot disappears on annotate" feedback loop.
+   */
   onChange: (annotatedDataUrl: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,7 +42,15 @@ export function ScreenshotAnnotator({
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [inProgress, setInProgress] = useState<InProgress | null>(null);
 
-  // Sync canvas size to display size of the image
+  // A new base screenshot (retake / upload / re-pick) starts a clean slate.
+  useEffect(() => {
+    setShapes([]);
+    setInProgress(null);
+    isDrawing.current = false;
+  }, [dataUrl]);
+
+  // Sync canvas size to the displayed image size. Re-runs when the base image
+  // changes so a differently-sized capture re-measures the overlay.
   useEffect(() => {
     const img = imgRef.current;
     const canvas = canvasRef.current;
@@ -142,31 +64,29 @@ export function ScreenshotAnnotator({
     const ro = new ResizeObserver(sync);
     ro.observe(img);
     return () => ro.disconnect();
-  }, []);
+  }, [dataUrl]);
 
-  // Re-render on every state change
+  // Re-render the overlay on every annotation state change.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    render(ctx, shapes, inProgress, color);
+    renderShapes(ctx, shapes, inProgress, color);
   }, [shapes, inProgress, color]);
 
   const flatten = useCallback(
     (finalShapes: Shape[]) => {
       const img = imgRef.current;
       if (!img) return;
-      const offscreen = document.createElement("canvas");
-      offscreen.width = img.naturalWidth;
-      offscreen.height = img.naturalHeight;
-      const ctx = offscreen.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
-      const sx = img.naturalWidth / img.offsetWidth;
-      const sy = img.naturalHeight / img.offsetHeight;
-      render(ctx, finalShapes.map((s) => scaleShape(s, sx, sy)), null, color);
-      onChange(offscreen.toDataURL("image/png"));
+      const annotated = composeAnnotatedScreenshot({
+        image: img,
+        shapes: finalShapes,
+        color,
+      });
+      // null = base image was not ready; keep the existing attachment intact
+      // rather than emitting an empty "data:," that would blank the screenshot.
+      if (annotated) onChange(annotated);
     },
     [color, onChange],
   );
@@ -230,101 +150,22 @@ export function ScreenshotAnnotator({
     onChange(dataUrl);
   };
 
+  const cycleColor = () => {
+    const index = COLORS.findIndex((c) => c.value === color);
+    setColor(COLORS[(index + 1) % COLORS.length].value);
+  };
+
+  const activeColorLabel =
+    COLORS.find((c) => c.value === color)?.label ?? "Color";
+
   const tools: { value: Tool; label: string; icon: typeof Pen }[] = [
     { value: "arrow", label: "Arrow", icon: ArrowUpRight },
-    { value: "rect", label: "Rectangle", icon: Square },
-    { value: "pen", label: "Freehand", icon: Pen },
+    { value: "rect", label: "Box", icon: Square },
+    { value: "pen", label: "Draw", icon: Pen },
   ];
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex items-center gap-1 px-1.5 py-1">
-        {tools.map(({ value, label, icon: Icon }) => (
-          <Tooltip key={value}>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setTool(value)}
-                aria-label={label}
-                aria-pressed={tool === value}
-                className={cn(
-                  "rounded-full text-muted-foreground hover:text-foreground",
-                  tool === value && "bg-muted text-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-          </Tooltip>
-        ))}
-
-        <span className="mx-1 h-4 w-px bg-border/70" />
-
-        {COLORS.map(({ value, label }) => (
-          <Button
-            key={value}
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setColor(value)}
-            aria-label={label}
-            aria-pressed={color === value}
-            className={cn(
-              "size-7 rounded-full transition-transform",
-              color === value && "scale-110",
-            )}
-          >
-            <span
-              className={cn(
-                "size-3.5 rounded-full ring-offset-2 ring-offset-card transition-all",
-                color === value
-                  ? "ring-2 ring-foreground"
-                  : "opacity-60 hover:opacity-100",
-              )}
-              style={{ backgroundColor: value }}
-            />
-          </Button>
-        ))}
-
-        <span className="mx-1 h-4 w-px bg-border/70" />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={undo}
-              disabled={shapes.length === 0}
-              aria-label="Undo"
-              className="rounded-full text-muted-foreground hover:text-foreground"
-            >
-              <Undo2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Undo</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={clear}
-              disabled={shapes.length === 0}
-              aria-label="Clear all"
-              className="rounded-full text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Clear all</TooltipContent>
-        </Tooltip>
-      </div>
-
+    <div className="space-y-2">
       <div
         className="relative w-full select-none overflow-hidden rounded-lg border border-border/60"
         style={{ cursor: "crosshair" }}
@@ -344,6 +185,85 @@ export function ScreenshotAnnotator({
           onMouseUp={commit}
           onMouseLeave={commit}
         />
+      </div>
+
+      {/* Controls live below the image: draw tools + color on the left,
+          history actions on the right, separated by space (no dividers). */}
+      <div className="flex items-center gap-1">
+        {tools.map(({ value, label, icon: Icon }) => (
+          <Tooltip key={value}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setTool(value)}
+                aria-label={label}
+                aria-pressed={tool === value}
+                className={cn(
+                  "text-muted-foreground hover:text-foreground",
+                  tool === value && "bg-muted text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+        ))}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={cycleColor}
+              aria-label={`Color: ${activeColorLabel}. Click to change.`}
+            >
+              <span
+                className="size-3.5 rounded-full ring-2 ring-border ring-offset-1 ring-offset-card"
+                style={{ backgroundColor: color }}
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{activeColorLabel} — click to change</TooltipContent>
+        </Tooltip>
+
+        <div className="ml-auto flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={undo}
+                disabled={shapes.length === 0}
+                aria-label="Undo last annotation"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Undo</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={clear}
+                disabled={shapes.length === 0}
+                aria-label="Remove all annotations"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove all</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </div>
   );

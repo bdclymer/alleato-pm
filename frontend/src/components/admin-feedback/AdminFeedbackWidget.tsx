@@ -5,9 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowRight,
+  ArrowUp,
+  Bug,
   Camera,
+  CircleHelp,
   CircleStop,
   Crosshair,
+  Lightbulb,
   Trash2,
   Upload,
   Video,
@@ -48,19 +52,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import { Textarea } from "@/components/ui/textarea";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { ScreenshotAnnotator } from "@/components/admin-feedback/ScreenshotAnnotator";
 
@@ -82,32 +89,12 @@ type RectState = {
   height: number;
 };
 
-const FEEDBACK_TYPES = ["Bug", "Idea", "Question"] as const;
-const PRIORITY_LEVELS: { value: PriorityLevel; label: string }[] = [
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
+const FEEDBACK_TYPES: { value: FeedbackType; icon: typeof Bug }[] = [
+  { value: "Bug", icon: Bug },
+  { value: "Idea", icon: Lightbulb },
+  { value: "Question", icon: CircleHelp },
 ];
 const ADMIN_FEEDBACK_DESKTOP_OFFSET = "34rem";
-
-const TOOL_LIST = [
-  "Budget",
-  "Change Events",
-  "Change Management",
-  "Commitments",
-  "Direct Costs",
-  "Drawings",
-  "Estimates",
-  "Invoicing",
-  "Prime Contracts",
-  "RFIs",
-  "Submittals",
-  "Directory",
-  "Schedule",
-  "AI Assistant",
-  "Portfolio",
-  "Other",
-] as const;
 
 const TOOL_PATH_MAP: [string, string][] = [
   ["/budget", "Budget"],
@@ -268,6 +255,13 @@ export function AdminFeedbackWidget() {
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
     null,
   );
+  // Flattened base + annotations, produced by ScreenshotAnnotator. Kept separate
+  // from `screenshotDataUrl` (the immutable base) so the annotator never feeds
+  // its output back into the <img> it draws over — that loop blanked the
+  // screenshot the moment you drew on it.
+  const [annotatedScreenshotDataUrl, setAnnotatedScreenshotDataUrl] = useState<
+    string | null
+  >(null);
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
@@ -284,11 +278,21 @@ export function AdminFeedbackWidget() {
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSupported = isScreenRecordingSupported();
   const shouldLoadProfile = dialogOpen || isSubmitting;
-  const { profile, isLoading } = useCurrentUserProfile({
+  // Loaded in the background purely for submit-time attribution (submitterName /
+  // submitterEmail). It must NEVER gate the composer's render — doing so unmounts
+  // the open panel until the profile fetch resolves, which is what made the form
+  // "take a minute to load" and blink out on open.
+  const { profile } = useCurrentUserProfile({
     enabled: shouldLoadProfile,
   });
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Any new base screenshot (capture / upload / re-pick / clear) discards the
+  // prior annotation so a stale overlay can never be submitted with a new image.
+  useEffect(() => {
+    setAnnotatedScreenshotDataUrl(null);
+  }, [screenshotDataUrl]);
 
   const handleFileUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -673,7 +677,7 @@ export function AdminFeedbackWidget() {
     };
   }, [isSelecting]);
 
-  if ((shouldLoadProfile && isLoading) || isImmersiveChatRoute) {
+  if (isImmersiveChatRoute) {
     return null;
   }
 
@@ -757,7 +761,9 @@ export function AdminFeedbackWidget() {
       // Guarantee the screenshot fits within the 4.5MB serverless body limit.
       // An oversized screenshot must never block the whole submission — drop it
       // with a warning rather than failing the feedback entirely.
-      let screenshotForUpload = screenshotDataUrl;
+      // Prefer the annotated flatten when the user drew on the capture; fall
+      // back to the untouched base screenshot otherwise.
+      let screenshotForUpload = annotatedScreenshotDataUrl ?? screenshotDataUrl;
       if (screenshotForUpload) {
         try {
           screenshotForUpload = await compressImageDataUrl(screenshotForUpload);
@@ -885,142 +891,187 @@ export function AdminFeedbackWidget() {
         </div>
       )}
 
-      <aside
-        aria-hidden={!dialogOpen}
-        className={cn(
-          "fixed inset-y-0 right-0 z-[9999] flex w-full max-w-[34rem] flex-col border-l border-border bg-background shadow-sm transition-transform duration-200 ease-out",
-          "top-0 h-svh md:top-12 md:h-[calc(100svh-3rem)]",
-          dialogOpen ? "translate-x-0" : "translate-x-full",
-        )}
-        {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
+      <SidePanel
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            minimizeComposer();
+          }
+        }}
+        modal={false}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 py-4 sm:px-6">
-          <div className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
-            Share Feedback or Idea
-          </div>
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="sm" asChild>
-              <Link href="/feedback-inbox" className="gap-1.5">
-                View feedback
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={minimizeComposer}
-              aria-label="Close feedback sheet"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <SidePanelContent
+          size="md"
+          showOverlay={false}
+          showCloseButton={false}
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+          {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
+        >
+          <SidePanelHeader className="flex-row items-center justify-between gap-4 space-y-0">
+            <SidePanelTitle className="min-w-0 truncate tracking-tight">
+              Share Feedback or Idea
+            </SidePanelTitle>
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="ghost" size="sm" asChild>
+                <Link href="/feedback-inbox" className="gap-1.5">
+                  View feedback
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={minimizeComposer}
+                aria-label="Close feedback sheet"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </SidePanelHeader>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          {selectedTarget ? (
-            <div className="space-y-6">
-              <div className="space-y-3">
+          <SidePanelBody>
+            {selectedTarget ? (
+            <div className="space-y-5">
+              <div className="space-y-2">
                 <Label>Type</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {FEEDBACK_TYPES.map((feedbackType) => {
-                    const active = form.feedbackType === feedbackType;
+                <div className="flex flex-wrap gap-2">
+                  {FEEDBACK_TYPES.map(({ value, icon: Icon }) => {
+                    const active = form.feedbackType === value;
                     return (
                       <Button
-                        key={feedbackType}
+                        key={value}
                         type="button"
                         variant="ghost"
+                        size="sm"
+                        aria-pressed={active}
                         onClick={() =>
                           setForm((current) => ({
                             ...current,
-                            feedbackType,
+                            feedbackType: value,
                           }))
                         }
                         className={cn(
-                          "h-10 rounded-md border border-border px-3 text-sm font-medium",
+                          "h-8 gap-1.5 rounded-md border border-border px-3 text-sm font-medium",
                           active
-                            ? "border-primary bg-primary/10 text-foreground hover:bg-primary/10"
-                            : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                            ? "bg-primary/10 text-foreground hover:bg-primary/10"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
                       >
-                        {feedbackType}
+                        <Icon className="h-4 w-4" />
+                        {value}
                       </Button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="feedback-comment">What should change?</Label>
-                <Textarea
-                  id="feedback-comment"
-                  rows={7}
-                  placeholder="Describe the issue, idea, or question."
-                  value={form.comment}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      comment: event.target.value,
-                    }))
-                  }
+              <div className="space-y-2">
+                <Label htmlFor="feedback-comment">Enter feedback</Label>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
                 />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-0.5">
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileUpload}
+                <InputGroup className="rounded-2xl border-border/70 focus-within:border-border">
+                  <InputGroupTextarea
+                    id="feedback-comment"
+                    rows={5}
+                    placeholder="Describe the issue, idea, or question."
+                    value={form.comment}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        comment: event.target.value,
+                      }))
+                    }
                   />
-                  <FeedbackToolButton
-                    label={screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
-                    onClick={() => void refreshScreenshot()}
-                    disabled={isCapturingScreenshot}
+                  <InputGroupAddon
+                    align="block-end"
+                    className="justify-between gap-1"
                   >
-                    <Camera
-                      className={cn("h-4 w-4", isCapturingScreenshot && "animate-pulse")}
-                    />
-                  </FeedbackToolButton>
-                  <FeedbackToolButton label="Point to an area" onClick={startSelectMode}>
-                    <Crosshair className="h-4 w-4" />
-                  </FeedbackToolButton>
-                  <FeedbackToolButton
-                    label="Upload image"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                  </FeedbackToolButton>
-                  {recordingSupported && !isRecording && !videoPreviewUrl && (
-                    <FeedbackToolButton label="Record screen" onClick={startRecording}>
-                      <Video className="h-4 w-4" />
-                    </FeedbackToolButton>
-                  )}
-                  {isRecording && (
-                    <FeedbackToolButton
-                      label="Stop recording"
-                      onClick={stopRecording}
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    <div className="flex items-center gap-0.5">
+                      <FeedbackToolButton
+                        label={
+                          screenshotDataUrl
+                            ? "Retake screenshot"
+                            : "Capture screenshot"
+                        }
+                        onClick={() => void refreshScreenshot()}
+                        disabled={isCapturingScreenshot}
+                      >
+                        <Camera
+                          className={cn(
+                            "h-4 w-4",
+                            isCapturingScreenshot && "animate-pulse",
+                          )}
+                        />
+                      </FeedbackToolButton>
+                      <FeedbackToolButton
+                        label="Point to an area"
+                        onClick={startSelectMode}
+                      >
+                        <Crosshair className="h-4 w-4" />
+                      </FeedbackToolButton>
+                      <FeedbackToolButton
+                        label="Upload image"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4" />
+                      </FeedbackToolButton>
+                      {recordingSupported && !isRecording && !videoPreviewUrl && (
+                        <FeedbackToolButton
+                          label="Record screen"
+                          onClick={startRecording}
+                        >
+                          <Video className="h-4 w-4" />
+                        </FeedbackToolButton>
+                      )}
+                      {isRecording && (
+                        <FeedbackToolButton
+                          label="Stop recording"
+                          onClick={stopRecording}
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <CircleStop className="h-4 w-4" />
+                        </FeedbackToolButton>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSubmit}
+                      disabled={
+                        isSubmitting ||
+                        isRecording ||
+                        isUploadingVideo ||
+                        form.comment.trim().length === 0
+                      }
+                      className="gap-1.5 rounded-full"
                     >
-                      <CircleStop className="h-4 w-4" />
-                    </FeedbackToolButton>
-                  )}
-                </div>
-
-                {screenshotDataUrl ? (
-                  <ScreenshotAnnotator
-                    dataUrl={screenshotDataUrl}
-                    onChange={setScreenshotDataUrl}
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Capture, point to an area, or upload an image if it helps
-                    explain the issue.
-                  </p>
-                )}
+                      {isSubmitting
+                        ? "Sending..."
+                        : isUploadingVideo
+                          ? "Uploading..."
+                          : "Send"}
+                      {!isSubmitting && !isUploadingVideo && (
+                        <ArrowUp className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
+
+              {screenshotDataUrl && (
+                <ScreenshotAnnotator
+                  dataUrl={screenshotDataUrl}
+                  onChange={setAnnotatedScreenshotDataUrl}
+                />
+              )}
 
               {isRecording && (
                 <InfoAlert
@@ -1070,77 +1121,19 @@ export function AdminFeedbackWidget() {
                 </div>
               )}
 
-              <details className="group rounded-lg border border-border/60 bg-background px-4 py-3">
-                <summary className="cursor-pointer list-none text-sm font-medium text-foreground">
-                  Optional details
-                </summary>
-                <div className="mt-4 space-y-4">
-                  {form.feedbackType === "Bug" && (
-                    <div className="space-y-2">
-                      <Label>Priority</Label>
-                      <Select
-                        value={form.priority}
-                        onValueChange={(value) =>
-                          setForm((current) => ({
-                            ...current,
-                            priority: value as PriorityLevel,
-                          }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PRIORITY_LEVELS.map(({ value, label }) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="feedback-title">Title</Label>
-                    <Input
-                      id="feedback-title"
-                      placeholder="Optional"
-                      value={form.title}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          title: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="feedback-tool">Tool</Label>
-                    <Select
-                      value={form.affectedTool}
-                      onValueChange={(value) =>
-                        setForm((current) => ({
-                          ...current,
-                          affectedTool: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="feedback-tool">
-                        <SelectValue placeholder="Optional" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TOOL_LIST.map((tool) => (
-                          <SelectItem key={tool} value={tool}>
-                            {tool}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {hasRecoverableDraft && (
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={resetComposer}
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear draft
+                  </Button>
                 </div>
-              </details>
+              )}
             </div>
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -1150,27 +1143,9 @@ export function AdminFeedbackWidget() {
               </p>
             </div>
           )}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
-          <Button type="button" variant="link" onClick={resetComposer}>
-            Clear draft
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting || isRecording || isUploadingVideo}
-          >
-            {isSubmitting
-              ? "Sending..."
-              : isUploadingVideo
-                ? "Uploading video..."
-                : isRecording
-                  ? "Stop recording first"
-                  : "Send feedback"}
-          </Button>
-        </div>
-      </aside>
+          </SidePanelBody>
+        </SidePanelContent>
+      </SidePanel>
     </>
   );
 }

@@ -136,7 +136,16 @@ export async function captureTargetScreenshot(target: HTMLElement) {
   // this, the composer or a Velt layer would bleed into the screenshot.
   const hidden: { el: HTMLElement; prev: string }[] = [];
   const hide = (el: Element | null) => {
-    if (el instanceof HTMLElement && el.style.visibility !== "hidden") {
+    // Skip nodes the clone `filter` below already drops (our own feedback
+    // overlays / Velt hosts). Hiding them in the LIVE DOM blinks the visible
+    // composer out and back on every capture for zero benefit — they never
+    // reach the rendered canvas anyway. Only genuinely-foreign floats (other
+    // Radix dialogs, etc.) still need the live hide.
+    if (
+      el instanceof HTMLElement &&
+      !isOverlayHost(el) &&
+      el.style.visibility !== "hidden"
+    ) {
       hidden.push({ el, prev: el.style.visibility });
       el.style.visibility = "hidden";
     }
