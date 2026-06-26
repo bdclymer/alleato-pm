@@ -124,7 +124,15 @@ describe("recordSubmittalWorkflowResponse", () => {
   it("persists a submittal history entry for workflow responses", async () => {
     const supabase = new SupabaseMock({
       "submittals.select": [
-        { data: { id: "sub-1", project_id: 25125, status: "Open" } },
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-001",
+            title: "Door hardware",
+          },
+        },
       ],
       "submittal_workflow_steps.select": [
         { data: { id: "step-1" } },
@@ -163,6 +171,10 @@ describe("recordSubmittalWorkflowResponse", () => {
     ).resolves.toEqual({
       id: "response-1",
       response_status: "Revise and Resubmit",
+      notification: {
+        status: "skipped",
+        reason: "workflow_complete",
+      },
     });
 
     const historyCall = supabase.calls.find(
@@ -186,10 +198,195 @@ describe("recordSubmittalWorkflowResponse", () => {
     });
   });
 
+  it("creates a next responder notification when workflow advances", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-002",
+            title: "Storefront glazing",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }],
+      "collaboration_notifications.insert": [{ data: null }],
+    });
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "created",
+      userId: "user-2",
+    });
+
+    const notificationCall = supabase.calls.find(
+      (call) => call.table === "collaboration_notifications",
+    );
+    expect(notificationCall?.payload).toMatchObject({
+      user_id: "user-2",
+      actor_id: "user-1",
+      project_id: 25125,
+      entity_type: "submittal",
+      entity_id: "sub-1",
+      kind: "submittal_workflow_action",
+      title: "Submittal response needed",
+      body: "SUB-002 - Storefront glazing",
+      metadata: {
+        source: "workflow",
+        response_id: "response-1",
+        previous_workflow_step_id: "step-1",
+        workflow_step_id: "step-2",
+        workflow_step_type: "Approver",
+        response_status: "Approved",
+      },
+    });
+  });
+
+  it("records notification delivery failures in submittal history", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-003",
+            title: "Millwork samples",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }, { data: null }],
+      "collaboration_notifications.insert": [
+        { error: { message: "notification insert failed" } },
+      ],
+    });
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "failed",
+      userId: "user-2",
+      error: "notification insert failed",
+    });
+
+    const failureHistoryCall = supabase.calls
+      .filter((call) => call.table === "submittal_history")
+      .find(
+        (call) =>
+          (call.payload as { action?: string }).action ===
+          "workflow_notification_failed",
+      );
+    expect(failureHistoryCall?.payload).toMatchObject({
+      action: "workflow_notification_failed",
+      actor_id: "user-1",
+      actor_type: "system",
+      changes: {
+        notification_status: "failed",
+        target_user_id: "user-2",
+      },
+      metadata: {
+        project_id: 25125,
+        workflow_step_id: "step-1",
+        next_workflow_step_id: "step-2",
+        response_id: "response-1",
+        target_user_id: "user-2",
+        error: "notification insert failed",
+        source: "workflow",
+      },
+    });
+  });
+
   it("fails loudly when the history entry cannot be written", async () => {
     const supabase = new SupabaseMock({
       "submittals.select": [
-        { data: { id: "sub-1", project_id: 25125, status: "Open" } },
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-004",
+            title: "Finish sample",
+          },
+        },
       ],
       "submittal_workflow_steps.select": [
         { data: { id: "step-1" } },
