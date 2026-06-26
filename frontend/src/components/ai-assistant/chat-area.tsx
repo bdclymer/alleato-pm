@@ -1725,12 +1725,7 @@ export function ChatArea({
               : "min-h-12 pb-3 pt-1",
         )}
       />
-      <PromptInputFooter
-        className={cn(
-          "flex items-center justify-between gap-2 px-0",
-          welcomeHideOrb ? "pb-0" : "pb-1.5",
-        )}
-      >
+      <PromptInputFooter className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <PromptInputActionMenu>
             <PromptInputActionMenuTrigger
