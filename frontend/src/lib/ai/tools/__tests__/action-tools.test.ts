@@ -1084,6 +1084,172 @@ describe("project directory action tools", () => {
   });
 });
 
+describe("createCommitment previews", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true, projectId: 43 }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "recorded",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "teams"],
+        requiredAction: "Confirm vendor, dates, line items, and total before commit.",
+        reason: "Commitment or SOV draft is a high-risk financial write.",
+        failureLoudBehavior: "Keep Commit disabled until required confirmations complete.",
+        preferenceOverrideReason:
+          "Teams delivery suppressed by preference; in-app visibility retained.",
+      },
+    });
+  });
+
+  function setupCommitmentPreviewClient() {
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "subcontracts") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+        };
+      }
+      if (tableName === "companies") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              ilike: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({
+                  data: [{ id: "company-1", name: "Acme Electric" }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        };
+      }
+      throw new Error(`Unexpected table in commitment preview test: ${tableName}`);
+    });
+
+    mockedCreateServiceClient.mockReturnValue({ from, rpc: jest.fn() } as never);
+  }
+
+  it("records a notification decision when previewing a commitment", async () => {
+    setupCommitmentPreviewClient();
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      lineItems: [
+        {
+          budgetCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      notificationDecision: {
+        status: "recorded",
+        decision: {
+          channels: ["in_app", "teams"],
+        },
+      },
+      preview: {
+        table: "subcontracts",
+        fields: {
+          project_id: 43,
+          contract_number: "SC-001",
+          title: "Electrical rough-in",
+          contract_company_id: "company-1",
+        },
+      },
+    });
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: "00000000-0000-0000-0000-000000000001",
+        eventType: "ai_commitment_awaiting_approval",
+        severity: "normal",
+        projectId: 43,
+        entityType: "subcontracts",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+        title: "AI commitment draft ready",
+        body:
+          "Confirm vendor, dates, and line items before creating the AI-drafted commitment: Electrical rough-in",
+        preferenceHints: {
+          suppressTeams: true,
+        },
+        isUserOnRelatedPage: true,
+      }),
+    );
+  });
+
+  it("keeps the commitment preview visible when notification decision recording fails", async () => {
+    setupCommitmentPreviewClient();
+    mockedRecordAiNotificationDecision.mockResolvedValueOnce({
+      status: "failed",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "teams"],
+        requiredAction: "Confirm vendor, dates, line items, and total before commit.",
+        reason: "Commitment or SOV draft is a high-risk financial write.",
+        failureLoudBehavior: "Keep Commit disabled until required confirmations complete.",
+        preferenceOverrideReason: null,
+      },
+      error: {
+        code: "insert_failed",
+        message:
+          "Failed to record AI notification decision (ai_commitment_awaiting_approval): insert denied",
+      },
+    });
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        table: "subcontracts",
+      },
+      notificationDecision: {
+        status: "failed",
+        error: {
+          code: "insert_failed",
+          message: expect.stringContaining(
+            "Failed to record AI notification decision",
+          ),
+        },
+      },
+    });
+  });
+});
+
 describe("createCommitment line-item writes", () => {
   beforeEach(() => {
     jest.clearAllMocks();

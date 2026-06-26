@@ -342,6 +342,35 @@ async function recordChangeEventPreviewNotificationDecision({
   });
 }
 
+async function recordCommitmentPreviewNotificationDecision({
+  userId,
+  projectId,
+  title,
+  type,
+  eventKey,
+}: {
+  userId: string;
+  projectId: number;
+  title: string;
+  type: "subcontract" | "purchase_order";
+  eventKey: string;
+}): Promise<AiNotificationDecisionLedgerResult> {
+  return recordAiNotificationDecision({
+    recipientUserId: userId,
+    eventType: "ai_commitment_awaiting_approval",
+    severity: "normal",
+    projectId,
+    entityType: type === "subcontract" ? "subcontracts" : "purchase_orders",
+    eventKey,
+    title: "AI commitment draft ready",
+    body: `Confirm vendor, dates, and line items before creating the AI-drafted commitment: ${title}`,
+    preferenceHints: {
+      suppressTeams: true,
+    },
+    isUserOnRelatedPage: true,
+  });
+}
+
 export async function previewCreateRFI(
   userId: string,
   options: ActionToolsOptions,
@@ -3309,6 +3338,19 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         }
 
         if (!confirmed) {
+          const previewFields = {
+            project_id: projectId,
+            contract_number: finalContractNumber,
+            title,
+            status,
+            contract_company_id: contractCompanyId,
+            vendor_name_resolved: contractCompanyId ? vendorName : vendorName ? `${vendorName} (not found in project directory — will need to be linked manually)` : null,
+            description: description ?? null,
+            start_date: startDate ?? null,
+            estimated_completion_date: estimatedCompletionDate ?? null,
+            default_retainage_percent: defaultRetainagePercent ?? null,
+            line_items: lineItems ?? [],
+          };
           const widget = buildCommitmentDraftWidget({
             projectId,
             type,
@@ -3323,27 +3365,25 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             defaultRetainagePercent: defaultRetainagePercent ?? null,
             lineItems,
           });
+          const notificationDecision =
+            await recordCommitmentPreviewNotificationDecision({
+              userId,
+              projectId,
+              title,
+              type,
+              eventKey: resolvePreviewEventKey("createCommitment", previewFields),
+            });
+
           return {
             action: "preview",
             message:
               `Here's the ${type === "subcontract" ? "subcontract" : "purchase order"} I'll create. ` +
               "Reply **confirm** to proceed or tell me what to change.",
+            notificationDecision,
             widget,
             preview: {
               table,
-              fields: {
-                project_id: projectId,
-                contract_number: finalContractNumber,
-                title,
-                status,
-                contract_company_id: contractCompanyId,
-                vendor_name_resolved: contractCompanyId ? vendorName : vendorName ? `${vendorName} (not found in project directory — will need to be linked manually)` : null,
-                description: description ?? null,
-                start_date: startDate ?? null,
-                estimated_completion_date: estimatedCompletionDate ?? null,
-                default_retainage_percent: defaultRetainagePercent ?? null,
-                line_items: lineItems ?? [],
-              },
+              fields: previewFields,
             },
           };
         }
