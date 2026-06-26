@@ -50,9 +50,10 @@ const GROUP_COPY: Record<string, string> = {
 const FEATURED_ACTIONS: CatalogDefinition[] = [
   {
     toolName: "getProjectBriefingSnapshot",
-    label: "Find project status evidence",
+    label: "Project status report",
     group: "Find evidence",
-    prompt: "Find the current source-backed status for this project.",
+    prompt:
+      "Start a project status report conversation for the selected project. Use the selected project context, ask me for the project if none is selected, and include source-backed current status, risks, decisions, and next steps.",
   },
   {
     toolName: "searchTeamsMessages",
@@ -80,9 +81,10 @@ const FEATURED_ACTIONS: CatalogDefinition[] = [
   },
   {
     toolName: "createChangeEvent",
-    label: "Draft a change event",
+    label: "Create change request",
     group: "Create records",
-    prompt: "Help me create a change event from the available project evidence.",
+    prompt:
+      "Help me create a change request for the selected project. Ask for any missing required fields, use available project evidence where possible, and preview the change request before anything is submitted.",
   },
   {
     toolName: "createCommitment",
@@ -92,9 +94,10 @@ const FEATURED_ACTIONS: CatalogDefinition[] = [
   },
   {
     toolName: "createGeneratedTask",
-    label: "Create a follow-up task",
+    label: "Tasks overview",
     group: "Create records",
-    prompt: "Create a follow-up task from the current context and preview it first.",
+    prompt:
+      "Give me a tasks overview for the selected project. Summarize open tasks, likely follow-ups, owners, due dates, and blockers from available project context before suggesting any new task.",
   },
   {
     toolName: "createWeeklyProgressReportDraft",

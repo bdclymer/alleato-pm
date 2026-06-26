@@ -103,7 +103,6 @@ const SURFACE_DEFAULTS: Record<AssistantSuggestionSurface, string[]> = {
     "getProjectBriefingSnapshot",
     "createChangeEvent",
     "createGeneratedTask",
-    "searchTeamsMessages",
   ],
   page_action: [
     "getProjectBriefingSnapshot",

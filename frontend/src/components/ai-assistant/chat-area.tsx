@@ -1957,12 +1957,14 @@ export function ChatArea({
             variant={welcomeHideOrb ? "widget" : "full"}
             composer={promptInputEl}
             beforeComposer={
-              showWidgetWelcomePrompt ? (
+              welcomeHideOrb ? (
                 <WidgetWelcomePrompt
                   disabled={isStreaming}
                   suggestions={assistantSuggestions}
                   onAction={handleWidgetWelcomeAction}
-                  onDismiss={onWidgetWelcomeDismiss}
+                  onDismiss={
+                    showWidgetWelcomePrompt ? onWidgetWelcomeDismiss : undefined
+                  }
                 />
               ) : !welcomeHideOrb ? (
                 <AssistantSuggestionList

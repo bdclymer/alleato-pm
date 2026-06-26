@@ -36,6 +36,20 @@ describe("assistant suggestion resolver", () => {
     ]);
   });
 
+  it("uses persistent widget action chips when no route rule matches", () => {
+    const suggestions = resolveAssistantSuggestions({
+      pathname: "/comments",
+      surface: "widget",
+    });
+
+    expect(suggestions.map((suggestion) => suggestion.label)).toEqual([
+      "Project status report",
+      "Create change request",
+      "Tasks overview",
+    ]);
+    expect(suggestions[0].prompt).toContain("selected project");
+  });
+
   it("does not return more than the requested suggestion limit", () => {
     const suggestions = resolveAssistantSuggestions({
       pathname: "/25125/progress-reports",
