@@ -9,7 +9,7 @@ import type {
   ChangeEventLineItem,
   CommitmentSovLineItem,
 } from "./types";
-import { createEmptyLineItem } from "./types";
+import { createEmptyLineItem, isMatchCostRevenueSource } from "./types";
 import { apiFetch } from "@/lib/api-client";
 import { useDropdownData } from "./useDropdownData";
 import {
@@ -180,12 +180,8 @@ export function useChangeEventFormData({
             Number(current.costQuantity || 0) *
             Number(current.costUnitCost || 0);
 
-          // Auto-sync revenue ROM when source is "match_cost"
-          const revenueSource = prev.lineItemRevenueSource || "";
-          const isMatchCost =
-            revenueSource === "match_cost" ||
-            revenueSource.toLowerCase().includes("match revenue to latest cost");
-          if (isMatchCost) {
+          // Auto-sync revenue ROM when revenue mirrors cost (match-cost source).
+          if (isMatchCostRevenueSource(prev.lineItemRevenueSource)) {
             current.revenueRom = current.costRom;
           }
         }

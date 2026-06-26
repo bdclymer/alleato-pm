@@ -26,7 +26,7 @@ import type {
   BudgetCodeOption,
   CommitmentSovLineItem,
 } from "./types";
-import { UOM_OPTIONS } from "./types";
+import { UOM_OPTIONS, isMatchCostRevenueSource } from "./types";
 
 interface LineItemRowProps {
   item: ChangeEventLineItem;
@@ -66,11 +66,10 @@ export function LineItemRow({
   const overUnder = (item.revenueRom || 0) - (item.costRom || 0);
   const isLinkedToCommitment = Boolean(item.commitmentId);
 
-  const revenueSourceLower = lineItemRevenueSource.toLowerCase();
-  const isRevenueReadOnly =
-    revenueSourceLower !== "" &&
-    revenueSourceLower !== "manual" &&
-    !revenueSourceLower.includes("manual entry");
+  // Revenue Qty / Unit Cost are read-only ONLY when revenue mirrors cost
+  // ("Match Revenue to Latest Cost"). "Enter manually" and "Quantity x Unit Cost"
+  // are both user-entered. (Revenue ROM stays computed regardless — see below.)
+  const isRevenueReadOnly = isMatchCostRevenueSource(lineItemRevenueSource);
 
   return (
     <TableRow className="group border-b-0 bg-background transition-colors hover:bg-transparent">

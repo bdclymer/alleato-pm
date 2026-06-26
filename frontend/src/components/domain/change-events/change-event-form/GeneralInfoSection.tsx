@@ -184,8 +184,17 @@ export function GeneralInfoSection({
           options={primeContractSelectOptions}
           value={formData.primeContractId || ""}
           onValueChange={(value) => updateFormData({ primeContractId: value })}
-          placeholder="Select Prime Contract"
+          placeholder={
+            hasPrimeContracts
+              ? "Select Prime Contract"
+              : "No prime contract on this project"
+          }
           disabled={!hasPrimeContracts}
+          hint={
+            hasPrimeContracts
+              ? undefined
+              : "Add a prime contract to this project to use it as the markup basis."
+          }
         />
         {showDescription && (
           <div className="md:col-span-3">

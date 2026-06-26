@@ -195,3 +195,24 @@ export const REVENUE_SOURCE_OPTIONS = [
   { value: "Enter manually", label: "Enter manually" },
   { value: "Quantity x Unit Cost", label: "Quantity x Unit Cost" },
 ];
+
+/**
+ * Revenue-source semantics for a change-event line item:
+ *   - "Match Revenue to Latest Cost" → revenue mirrors cost; the revenue
+ *     Qty / Unit Cost cells are READ-ONLY (auto-computed from cost).
+ *   - "Enter manually" / "Quantity x Unit Cost" → the user types the revenue
+ *     Qty + Unit Cost. (Revenue ROM is always computed, never directly edited.)
+ *   - "" / unset → editable (no source chosen yet).
+ *
+ * Only the match-cost source is read-only. Handles the canonical values above
+ * AND the legacy aliases that may already be stored in the DB (see
+ * api/.../change-events/validation.ts → LineItemRevenueSource).
+ */
+export function isMatchCostRevenueSource(source?: string | null): boolean {
+  const normalized = (source ?? "").trim().toLowerCase();
+  return (
+    normalized === "match_cost" ||
+    normalized === "match_revenue_to_cost" ||
+    normalized.includes("match revenue to latest cost")
+  );
+}
