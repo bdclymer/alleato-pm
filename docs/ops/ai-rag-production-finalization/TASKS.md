@@ -15,6 +15,10 @@ Active handoff:
 
 - [2026-06-25-S91-ai-rag-production-finalization-audit.md](../handoffs/2026-06-25-S91-ai-rag-production-finalization-audit.md)
 
+Active project/task generation slice:
+
+- [2026-06-25-project-assignment-task-generation-e2e.md](../tasks/2026-06-25-project-assignment-task-generation-e2e.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -312,6 +316,54 @@ Evidence directory:
   - [client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-final-aai-682.txt)
   - [backend-client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-final-aai-682.txt)
 - AAI-682 is closed as a retrieval-slice deliverable. The overall production-finalization program remains open for the other pipeline and final all-system gates.
+
+### 2026-06-25: AAI-690 Project Assignment And Task Generation Slice Started
+
+- Created Linear issue AAI-690 for end-to-end project assignment and automatic task generation verification/repair.
+- Created active task ledger before implementation changes.
+- Embedded the operational freshness windows:
+  - Fireflies backlog errors older than two months are historical unless needed for historical reconstruction.
+  - Outlook and Teams backlog errors older than one week are historical unless needed for historical reconstruction.
+- Embedded the typecheck delegation rule: every TS/JS implementation change must be followed by delegated sub-agent typecheck.
+- Evidence:
+  - [2026-06-25-project-assignment-task-generation-e2e.md](../tasks/2026-06-25-project-assignment-task-generation-e2e.md)
+
+### 2026-06-25: AAI-690 Fireflies Task Link Repair Completed
+
+- Inventoried active project-assignment and generated-task code paths.
+- Baseline checks:
+  - `npm run rag:verify:source-lifecycle -- --days 7` passed.
+  - `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution` passed.
+  - Fireflies task integrity initially failed over the two-month operational concern window because stale tasks had empty/mismatched task project arrays.
+- Added scoped repair controls to `backfill_project_assignments_from_compiler_jobs.mjs`:
+  - `--source-system fireflies`
+  - `--tasks-only`
+- Applied Fireflies task-only deterministic repair:
+  - 76 Fireflies task links updated.
+  - 0 document assignment rows updated.
+- Added Python guardrail coverage proving new Fireflies task upserts persist task project arrays.
+- Post-repair checks passed:
+  - Fireflies task integrity over 60 days.
+  - Fireflies task-only backfill postcheck reports 0 eligible stale links.
+  - Source lifecycle still passes over the 7-day Outlook/Teams concern window.
+- Follow-up duplicate/link check found no duplicate generated-task groups, but found 48 Fireflies task-level attribution rows where the scalar project was set and the project array was empty.
+- Repaired task attribution scripts so the project array is updated alongside future scalar project assignment.
+- Applied Fireflies-only task-attribution sync:
+  - 5 Fireflies tasks assigned from deterministic task text.
+  - 48 existing Fireflies task project arrays synced from scalar project values.
+- Final Fireflies checks now show:
+  - 0 duplicate generated-task groups.
+  - 0 Fireflies scalar/array task project mismatches over 60 days.
+  - Fireflies task integrity passed.
+  - Source lifecycle still passed over 7 days.
+- Delegated bounded typecheck was run after each JS edit and timed out or was externally terminated without TypeScript diagnostics; the delegated no-timeout retry passed.
+- Evidence:
+  - [project-assignment-task-generation-inventory-aai-690.md](../evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md)
+  - [fireflies-task-integrity-after-link-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-integrity-after-link-repair-aai-690.json)
+  - [project-assignment-backfill-fireflies-tasks-only-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-assignment-backfill-fireflies-tasks-only-applied-aai-690.json)
+  - [fireflies-task-link-guardrail-tests-aai-690.txt](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-link-guardrail-tests-aai-690.txt)
+  - [task-project-rules-fireflies-sync-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json)
+  - [generated-task-duplicate-after-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json)
 
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 

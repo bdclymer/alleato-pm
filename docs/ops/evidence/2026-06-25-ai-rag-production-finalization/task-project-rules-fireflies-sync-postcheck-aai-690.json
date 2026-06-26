@@ -1,0 +1,17 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 60,
+  "limit": 5000,
+  "sourceSystemFilter": "fireflies",
+  "syncExistingProjectIds": true,
+  "projectsLoaded": 113,
+  "rulesLoaded": 283,
+  "tasksScanned": 85,
+  "assignments": 0,
+  "existingProjectIdMismatches": 0,
+  "existingProjectIdMismatchesUpdated": 0,
+  "byProject": {},
+  "samples": [],
+  "existingProjectIdMismatchSamples": []
+}

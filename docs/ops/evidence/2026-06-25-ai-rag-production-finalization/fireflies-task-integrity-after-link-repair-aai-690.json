@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "message": "Fireflies task integrity verification passed",
+  "details": {
+    "window_hours": 1440,
+    "checked": 1000,
+    "meeting_rows": 1000,
+    "non_meeting_violations": 0,
+    "link_violations": 0,
+    "quality": {
+      "meeting_task_count": 1000,
+      "missing_assignee": 0,
+      "missing_due_date": 757,
+      "generic_prefix_descriptions": 0,
+      "missing_assignee_pct": 0.0,
+      "missing_due_date_pct": 75.7,
+      "generic_prefix_pct": 0.0
+    },
+    "quality_thresholds": {
+      "max_missing_assignee_pct": 75.0,
+      "max_generic_prefix_pct": 20.0
+    },
+    "quality_violations": [],
+    "non_meeting_examples": [],
+    "link_examples": []
+  }
+}

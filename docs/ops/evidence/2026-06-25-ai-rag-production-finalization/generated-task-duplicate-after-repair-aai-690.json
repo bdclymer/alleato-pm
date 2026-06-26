@@ -1,0 +1,38 @@
+{
+  "status": "pass_with_historical_nonconcern_rows",
+  "generatedAt": "2026-06-26T03:16:52.098Z",
+  "windowDays": 60,
+  "duplicateGroups": 0,
+  "duplicateSamples": [],
+  "projectLinkRows": [
+    {
+      "source_system": "email",
+      "total": 44,
+      "with_project_id": 44,
+      "with_project_ids": 44,
+      "mismatched_project_ids": 0
+    },
+    {
+      "source_system": "fireflies",
+      "total": 1142,
+      "with_project_id": 1057,
+      "with_project_ids": 1057,
+      "mismatched_project_ids": 0
+    },
+    {
+      "source_system": "meeting",
+      "total": 5,
+      "with_project_id": 4,
+      "with_project_ids": 0,
+      "mismatched_project_ids": 4
+    },
+    {
+      "source_system": "teams_dm_conversation",
+      "total": 9,
+      "with_project_id": 3,
+      "with_project_ids": 0,
+      "mismatched_project_ids": 3
+    }
+  ],
+  "note": "meeting and teams_dm_conversation rows are older than the one-week Teams/Outlook concern window or outside Fireflies scoped repair; tracked separately if historical cleanup is requested."
+}

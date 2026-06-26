@@ -249,9 +249,59 @@ AAI-682 progress:
 - Remaining blocker:
   - No active blocker inside AAI-682. Broad production readiness still requires final all-pipeline verification after the remaining implementation/cleanup slices.
 
+AAI-690 progress:
+
+- Scope: end-to-end project assignment and task generation verification/repair.
+- Linear issue: AAI-690.
+- Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_project_assignments_from_compiler_jobs.mjs`
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_task_project_assignments_from_rules.mjs`
+  - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/backfill_project_assignments_from_attribution_rules.mjs`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_fireflies_action_items.py`
+- Documentation/evidence changed:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-25-project-assignment-task-generation-e2e.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/ai-rag-production-finalization/TASKS.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md`
+  - AAI-690 evidence files under `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/`
+- Root cause confirmed:
+  - Stale Fireflies task rows had scalar project values populated but project arrays empty or mismatched.
+  - Current Fireflies task writers already populate project arrays; the first failure was historical drift.
+  - A stricter duplicate/link check then found task-level attribution repairs had set scalar projects from task text without updating project arrays.
+- Data repair:
+  - Fireflies source-document task repair updated 76 task links and 0 document rows.
+  - Fireflies task-attribution sync assigned 5 additional tasks from deterministic task text.
+  - Fireflies task-attribution sync updated 48 existing project arrays from scalar project values.
+- Prevention:
+  - `backfill_project_assignments_from_compiler_jobs.mjs` now supports `--source-system` and `--tasks-only`.
+  - `backfill_task_project_assignments_from_rules.mjs` now supports `--source-system` and `--sync-existing-project-ids`; future task-text project assignments populate task project arrays.
+  - `backfill_project_assignments_from_attribution_rules.mjs` now populates task project arrays when assigning linked document tasks.
+  - Python guardrail test proves extractor `_upsert_task` persists project arrays with scalar projects.
+- Verification:
+  - PASS: `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution`
+  - PASS: `npm run rag:verify:source-lifecycle -- --days 7`
+  - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_fireflies_action_items.py backend/tests/test_project_assignment.py -q`
+  - PASS: `PYTHONPATH=backend backend/.venv/bin/python scripts/verify/verify_fireflies_task_integrity.py --window-hours 1440 --limit 5000`
+  - PASS: Fireflies task-only postcheck found 0 eligible stale links.
+  - PASS: Fireflies task-attribution sync postcheck found 0 project-id/project-ids mismatches.
+  - PASS: generated-task duplicate check found 0 duplicate groups.
+  - PASS: JS syntax checks for touched verifier/backfill scripts.
+  - PASS: delegated no-timeout frontend typecheck passed after bounded typecheck agents timed out or were externally terminated without TypeScript diagnostics.
+- Evidence:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-attribution-baseline-aai-690.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-baseline-aai-690.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-integrity-baseline-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-assignment-backfill-fireflies-tasks-only-applied-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-link-guardrail-tests-aai-690.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-task-attribution-sync-aai-690.txt`
+- Remaining blocker:
+  - AAI-690 is not fully closed because email, Teams, document-analysis task-generation, unmatched manual-review routing, and cross-source duplicate-prevention coverage still need the same level of evidence.
+
 ## Exact Next Step
 
-Move to the next open production-finalization slice: final all-pipeline verification, task/project assignment end-to-end proof, and cleanup candidates that still need import/route/provider/database-write evidence before deletion.
+Publish the Fireflies project/task repair slice, then continue AAI-690 with email, Teams, document-analysis task-generation, unmatched manual-review routing, and cross-source duplicate-prevention evidence.
 
 ## Known Pitfalls
 

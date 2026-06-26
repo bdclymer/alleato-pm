@@ -1,0 +1,16 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 60,
+  "minConfidence": 0.85,
+  "sourceSystemFilter": "fireflies",
+  "tasksOnly": true,
+  "compilerJobsConsidered": 5000,
+  "documentsEligible": 0,
+  "documentsUpdated": 0,
+  "taskLinksEligible": 0,
+  "taskLinksUpdated": 0,
+  "bySource": [],
+  "samples": [],
+  "taskLinkSamples": []
+}

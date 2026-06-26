@@ -1,0 +1,42 @@
+..............................................                           [100%]
+=============================== warnings summary ===============================
+backend/src/api/main.py:1762
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1762: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+  /Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend/src/api/main.py:1776
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1776: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend/src/api/main.py:1813
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1813: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+46 passed, 6 warnings in 1.76s

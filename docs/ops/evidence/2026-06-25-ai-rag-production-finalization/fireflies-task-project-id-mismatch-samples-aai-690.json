@@ -1,0 +1,512 @@
+{
+  "status": "sampled",
+  "count": 25,
+  "grouped": [
+    {
+      "extraction_source": "deep_extractor",
+      "count": 27,
+      "document_project_differs": 27
+    },
+    {
+      "extraction_source": "fireflies_rewriter",
+      "count": 21,
+      "document_project_differs": 21
+    }
+  ],
+  "samples": [
+    {
+      "id": "cb2a7158-5685-443c-ab27-9c1b196ec5aa",
+      "created_at": "2026-06-16T06:50:14.354Z",
+      "title": "Service laptop for Notion stability",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Salary and PTO review",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Ashley Ortiz] Consider taking her laptop to Best Buy due to performance issues to improve Notion use stability",
+        "rewriter_confidence": 0.75,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "fcca3486-9a80-4bfc-885f-11c777e4f9fd",
+      "created_at": "2026-06-16T06:50:14.267Z",
+      "title": "Help Gregory access transaction coding",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "60",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Salary and PTO review",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Ashley Ortiz] Assist Gregory and others in accessing the Notion transaction coding area and troubleshoot any login issues",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "88c30664-58a7-4f8d-9b9f-e3ae7df45685",
+      "created_at": "2026-06-16T06:50:14.166Z",
+      "title": "Track prompt PTO absence reporting",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Salary and PTO review",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Ashley Ortiz] Monitor and ensure PTO requests are reported promptly, especially for full or half day absences, and coordinate with Maria regarding PTO approvals and communications with Brandon and Jesse",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "3ed70b36-cc02-4fc5-9fba-60d4359b33ed",
+      "created_at": "2026-06-16T06:50:13.926Z",
+      "title": "Publish PTO email copy instructions",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Salary and PTO review",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Ashley Ortiz] Communicate clearly to employees that they must copy Maria and Ashley on all PTO-related emails sent to Jesse for better coordination and transparency",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "460aa4c4-f504-4b3d-a042-c30802f43c33",
+      "created_at": "2026-06-16T06:50:13.579Z",
+      "title": "Maintain accurate PTO deduction records",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Salary and PTO review",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Maria Calcetero] Manage PTO records backend to ensure proper deduction for employees taking days off, including those who fail to submit PTO requests timely (e.g., Jake, AJ)",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "663427c0-0796-4429-a4ff-04deb438a117",
+      "created_at": "2026-06-16T06:38:50.048Z",
+      "title": "Create Job Planner commitments",
+      "source_system": "fireflies",
+      "metadata_id": "01KTYF2KMQ3VHQX96HW3DANVNC",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "How to write commitments Job Planner",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Acannon@alleatogroup.com] Begin creating commitments for subcontractors and designers in Job Planner following shared process",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "e4578997-2bf0-4054-801c-30906ec369f9",
+      "created_at": "2026-06-11T01:35:17.766Z",
+      "title": "Resubmit Brooksville Road architectural plans",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "877",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill Weekly OAC Meeting",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Jesse Dawson] Resubmit Brooksville Road architectural plans in response to review comments and provide conveyor details to architect; assist Andrew with related questions",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "a67935d0-35fc-46d0-94af-d219560455b1",
+      "created_at": "2026-06-11T01:35:17.638Z",
+      "title": "Advance Allisonville Road site work",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "754",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill Weekly OAC Meeting",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Malachi Amico] Continue Allisonville Road site work including RTU removal, floor grinding, pouring footers, insulation, drywall, and dock pit excavation as scheduled",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "project_assignment_backfill": {
+          "source": "task_text_attribution_rules",
+          "pattern": "Allisonville",
+          "assigned_at": "2026-06-17T09:42:10.705347+00:00"
+        },
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "b7638f99-ac4d-405b-a831-2c6d84843b73",
+      "created_at": "2026-06-11T01:35:17.552Z",
+      "title": "Prepare Kokomo June 12 submittal",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "1016",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill Weekly OAC Meeting",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Nick Jepson] Coordinate submittal plans and project updates with the Kokomo team to maintain schedule for June 12 submission and July meeting preparations",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "project_assignment_backfill": {
+          "source": "task_text_attribution_rules",
+          "pattern": "Kokomo",
+          "assigned_at": "2026-06-17T09:42:10.705347+00:00"
+        },
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "e4210a63-07e3-42b7-a8e1-6b78aed46cde",
+      "created_at": "2026-06-11T01:35:17.419Z",
+      "title": "Oversee Bloomington Excel door installation",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "47",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill Weekly OAC Meeting",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Nick Jepson] Oversee door contractor work at Bloomington Excel and coordinate CSC visit contingent on door installation success",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "32e7d9ce-1b6e-4374-88c0-2b4f10b4dc76",
+      "created_at": "2026-06-11T01:35:17.036Z",
+      "title": "Schedule Treymont inspections",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "25108",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill Weekly OAC Meeting",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Chad Tragesser] Follow up on scheduling inspections with the Treymont inspector due to previous unsuccessful contact attempts",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "9d12b7a7-6a5d-41ba-81f0-675034ecd955",
+      "created_at": "2026-06-11T01:34:12.492Z",
+      "title": "Monitor Canton roof after repair",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Nicholas Brimie] Monitor weather and roof condition post-repair at Canton site; liaise with landlord and real estate manager Denise if leaks reoccur",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "1e619824-8e64-44d5-b268-eea591eaa9e7",
+      "created_at": "2026-06-11T01:34:12.401Z",
+      "title": "Manage Washington overnight flooring shifts",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Nicholas Brimie] Schedule and coordinate punch walk at Pioneer during Andrew Mulder’s visit; manage overnight work shifts for flooring and grinding at Washington scheduled for June 8th",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "351ba1c6-bcfb-4b7d-bb0c-2fd250abd9cb",
+      "created_at": "2026-06-11T01:34:12.303Z",
+      "title": "Schedule Pioneer punch walk",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "871",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Nicholas Brimie] Schedule and coordinate punch walk at Pioneer during Andrew Mulder’s visit; manage overnight work shifts for flooring and grinding at Washington scheduled for June 8th",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "ae7a56ea-42bc-417d-a67c-daf55664ed91",
+      "created_at": "2026-06-11T01:34:12.201Z",
+      "title": "Obtain Galesburg contractor proposal",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: La' Kisha Green] Follow up with contractor in Galesburg to obtain final proposal within the next few days to enable budget revision and project start by end of the week",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "83fab490-7bca-4b24-991a-391c7870753f",
+      "created_at": "2026-06-11T01:34:12.095Z",
+      "title": "Finalize billing documents and job budgets",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: La' Kisha Green] Provide finalized billing documents and clean up job budgets for Pioneer, Washington, and Canton projects; apply any credits to contingency funds for easier management",
+        "rewriter_confidence": 0.95,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "b4b4b22a-fcf8-4ece-b4df-38048bcda1cc",
+      "created_at": "2026-06-11T01:33:32.029Z",
+      "title": "Schedule Chris follow-up interviews after CEO approval",
+      "source_system": "fireflies",
+      "metadata_id": "01KT4AYE4HNQ91FNY2H0W1EQA4",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Chris Inteview-VP role",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Jazmin Gaona] Contact Chris to schedule further interviews if the CEO decides to move forward with his candidacy",
+        "rewriter_confidence": 0.96,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "090b5815-bbcc-4f58-a4e5-597bb5b84ffb",
+      "created_at": "2026-06-11T01:33:31.909Z",
+      "title": "Submit Chris screening package for CEO review",
+      "source_system": "fireflies",
+      "metadata_id": "01KT4AYE4HNQ91FNY2H0W1EQA4",
+      "project_id": "90",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Chris Inteview-VP role",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Jazmin Gaona] Submit Chris’s screening notes and candidate profile to the company CEO for review and decision-making regarding next steps",
+        "rewriter_confidence": 0.98,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "28bbca9b-7d2e-44b0-8e38-9e19b8a3e4a0",
+      "created_at": "2026-06-11T01:31:46.780Z",
+      "title": "Schedule Paradise Isles condo meeting",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "58",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Weekly OPS (Estimators)",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Jesse Dawson] Coordinate with Todd to schedule and attend the Paradise Isles condo association meeting and communicate timelines",
+        "rewriter_confidence": 0.9,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "0bacbe7a-6ac7-4d54-ba7a-83027206fb5d",
+      "created_at": "2026-06-11T01:31:45.802Z",
+      "title": "Collect Vermillion electrical subcontractor quotes",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "67",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Weekly OPS (Estimators)",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Bob Wright] Complete gathering final electrical subcontractor quotes for the Vermillion project today to finalize budget",
+        "rewriter_confidence": 0.98,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "project_assignment_backfill": {
+          "source": "task_text_attribution_rules",
+          "pattern": "Vermillion",
+          "assigned_at": "2026-06-17T09:42:10.705347+00:00"
+        },
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "172a4b87-2be2-4841-b0cb-13eddc4ac9f0",
+      "created_at": "2026-06-11T01:31:44.661Z",
+      "title": "Submit revised Eye Surgeons budget",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "1033",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Weekly OPS (Estimators)",
+      "extraction_source": "fireflies_rewriter",
+      "extraction_metadata": {
+        "source_action_item": "[Fireflies owner: Jake Richardson] Submit revised Eye Surgeons budget reflecting updated customer requirements and plumbing logistics by the end of the week",
+        "rewriter_confidence": 0.98,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "852f56fe-1ce0-4bdc-87dd-57758d79685d",
+      "created_at": "2026-06-11T01:19:36.602Z",
+      "title": "Send Andrew the revised Galesburg number after entering the",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "deep_extractor",
+      "extraction_metadata": {
+        "status_hint": "new",
+        "evidence_quote": "so that I can give it to you by the end of the week",
+        "deep_confidence": 0.94,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "ae9e9457-ed9e-4f1b-84b6-e8afe30e8e76",
+      "created_at": "2026-06-11T01:19:36.082Z",
+      "title": "Follow up with the remaining Galesburg contractor to obtain the",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "deep_extractor",
+      "extraction_metadata": {
+        "status_hint": "new",
+        "evidence_quote": "hopefully the guy will get me my numbers this in a day or two",
+        "deep_confidence": 0.92,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "6fbbb2ce-1215-4b10-bd28-c7a8e06c2334",
+      "created_at": "2026-06-11T01:19:35.495Z",
+      "title": "Monitor Canton roof conditions after the next rain and escalate",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "deep_extractor",
+      "extraction_metadata": {
+        "status_hint": "new",
+        "evidence_quote": "if we are there and it rains a week from now or something and we notice more, we can reach out to them.",
+        "deep_confidence": 0.88,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    },
+    {
+      "id": "02a803aa-67df-46e6-9ece-c0253ce3875b",
+      "created_at": "2026-06-11T01:19:34.960Z",
+      "title": "Schedule Canton painters to begin painting the sales floor after",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "project_ids": [],
+      "document_project_id": null,
+      "document_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "extraction_source": "deep_extractor",
+      "extraction_metadata": {
+        "status_hint": "new",
+        "evidence_quote": "painters, as soon as they're done, to begin painting the entirety of the sales floor.",
+        "deep_confidence": 0.89,
+        "assignee_person_type": "employee",
+        "assignee_resolution_method": "email_exact",
+        "assignee_resolution_confidence": 1
+      }
+    }
+  ]
+}

@@ -207,6 +207,11 @@ try {
           `
             update public.tasks
             set project_id = $1,
+              project_ids = case
+                when project_ids is null then array[$1]::bigint[]
+                when $1 = any(project_ids) then project_ids
+                else array_append(project_ids, $1)
+              end,
               updated_at = now()
             where metadata_id = $2
               and project_id is null

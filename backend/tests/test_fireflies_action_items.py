@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 
 import src.services.ingestion.fireflies_pipeline as fireflies_pipeline
+import src.services.pipeline.extractor as pipeline_extractor
 from src.services.ingestion.fireflies_task_rewriter import (
     _build_user_prompt,
     _looks_like_narration,
@@ -20,6 +21,7 @@ from src.services.ingestion.fireflies_task_rewriter import (
     _valid_iso_date,
 )
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from src.services.pipeline.models import TaskItem
 
 
 # Real Fireflies action_items string for the Goodwill Kokomo design meeting —
@@ -215,6 +217,71 @@ class _FakeOpenAIClient:
 
     def create(self, *args, **kwargs):  # noqa: ANN002, ANN003 - test stub
         return _FakeResponse(self._content)
+
+
+class _FakeTaskTable:
+    def __init__(self) -> None:
+        self.upserted = None
+
+    def upsert(self, data, on_conflict=None):  # noqa: ANN001
+        self.upserted = {"data": data, "on_conflict": on_conflict}
+        return self
+
+    def execute(self):
+        return None
+
+
+class _FakeSupabaseClient:
+    def __init__(self) -> None:
+        self.tasks_table = _FakeTaskTable()
+
+    def table(self, name: str):
+        assert name == "tasks"
+        return self.tasks_table
+
+
+class _ResolvedEmployee:
+    is_employee = True
+    person_type = "employee"
+    method = "test"
+    confidence = 1.0
+    name = "Megan Harrison"
+    person_id = "person-1"
+    email = "megan@example.com"
+
+
+class _FakeTaskAssigneeResolver:
+    def __init__(self, client) -> None:  # noqa: ANN001
+        self.client = client
+
+    def resolve(self, assignee, assignee_email):  # noqa: ANN001
+        return _ResolvedEmployee()
+
+
+class TestExtractorTaskProjectLinks:
+    def test_upsert_task_persists_project_ids_with_project_id(self, monkeypatch):
+        monkeypatch.setattr(pipeline_extractor, "TaskAssigneeResolver", _FakeTaskAssigneeResolver)
+        client = _FakeSupabaseClient()
+
+        persisted = pipeline_extractor._upsert_task(
+            client,
+            TaskItem(
+                description="Send updated schedule to the project team",
+                assignee="Megan Harrison",
+                assignee_email="megan@example.com",
+                priority="medium",
+            ),
+            metadata_id="meeting-1",
+            project_ids=[1009],
+            project_id=1009,
+        )
+
+        assert persisted is True
+        assert client.tasks_table.upserted["on_conflict"] == "metadata_id,description"
+        data = client.tasks_table.upserted["data"]
+        assert data["project_id"] == 1009
+        assert data["project_ids"] == [1009]
+        assert data["source_system"] == "fireflies"
 
 
 class TestMeetingMemoryExtraction:

@@ -39,6 +39,8 @@ const lookbackDays = numberArg("days", "PROJECT_ASSIGNMENT_BACKFILL_DAYS", 14);
 const minConfidence = numberArg("min-confidence", "PROJECT_ASSIGNMENT_BACKFILL_MIN_CONFIDENCE", 0.85);
 const limit = numberArg("limit", "PROJECT_ASSIGNMENT_BACKFILL_LIMIT", 5_000);
 const dryRun = args.get("dry-run") === "true";
+const sourceSystemFilter = textArg("source-system", "PROJECT_ASSIGNMENT_BACKFILL_SOURCE_SYSTEM", "");
+const tasksOnly = args.get("tasks-only") === "true";
 
 function numberArg(name, envName, fallback) {
   const raw = args.get(name) ?? process.env[envName];
@@ -49,6 +51,12 @@ function numberArg(name, envName, fallback) {
     process.exit(1);
   }
   return value;
+}
+
+function textArg(name, envName, fallback) {
+  const raw = args.get(name) ?? process.env[envName];
+  if (raw === undefined) return fallback;
+  return String(raw).trim();
 }
 
 const appDatabaseUrl = getAppDatabaseUrl();
@@ -101,7 +109,7 @@ try {
     [minConfidence, lookbackDays, limit],
   )).rows;
 
-  const sourceIds = jobRows.map((row) => String(row.source_document_id));
+  const sourceIds = tasksOnly ? [] : jobRows.map((row) => String(row.source_document_id));
   const docs = sourceIds.length
     ? (await appClient.query(
         `
@@ -133,6 +141,7 @@ try {
       join public.document_metadata d on d.id::text = t.metadata_id::text
       where t.created_at >= now() - ($1::text || ' days')::interval
         and t.source_system in ('fireflies', 'meeting', 'email', 'teams_dm_conversation', 'microsoft_graph')
+        and ($3::text = '' or t.source_system = $3::text)
         and d.project_id is not null
         and (
           t.project_id is distinct from d.project_id
@@ -142,7 +151,7 @@ try {
       order by t.created_at desc
       limit $2
     `,
-    [lookbackDays, limit],
+    [lookbackDays, limit, sourceSystemFilter],
   )).rows;
 
   if (!dryRun && (docs.length > 0 || taskLinkRows.length > 0)) {
@@ -294,6 +303,8 @@ try {
     dryRun,
     lookbackDays,
     minConfidence,
+    sourceSystemFilter: sourceSystemFilter || null,
+    tasksOnly,
     compilerJobsConsidered: jobRows.length,
     documentsEligible: docs.length,
     documentsUpdated: dryRun ? 0 : docs.length,

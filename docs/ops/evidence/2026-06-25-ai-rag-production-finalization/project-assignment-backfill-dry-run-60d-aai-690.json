@@ -1,0 +1,143 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 60,
+  "minConfidence": 0.85,
+  "compilerJobsConsidered": 5000,
+  "documentsEligible": 2,
+  "documentsUpdated": 0,
+  "taskLinksEligible": 82,
+  "taskLinksUpdated": 0,
+  "bySource": [
+    {
+      "source": "Zapier",
+      "category": null,
+      "type": "meeting",
+      "count": 2
+    }
+  ],
+  "samples": [
+    {
+      "id": "01KQYZ50XPR8R6KVVHX1YJ8XEJ",
+      "title": "FIT Volt - Certification",
+      "source": "Zapier",
+      "category": null,
+      "type": "meeting",
+      "project_id": 34,
+      "project": "Port Collective",
+      "confidence_score": 0.9
+    },
+    {
+      "id": "01KQZ2D9FY82JBVQ8BDJ0PTE3Y",
+      "title": "AAG Join Up",
+      "source": "Zapier",
+      "category": null,
+      "type": "meeting",
+      "project_id": 34,
+      "project": "Port Collective",
+      "confidence_score": 0.9
+    }
+  ],
+  "taskLinkSamples": [
+    {
+      "id": "497658ed-5a70-4099-abc7-2abbeb7a9fa7",
+      "title": "Consolidate site plan drawings",
+      "source_system": "fireflies",
+      "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+      "document_title": "Union Site Meeting Prep",
+      "project_id": 1009,
+      "previous_project_id": 1009,
+      "previous_project_ids": []
+    },
+    {
+      "id": "07d88fbc-82c7-451a-9bef-086f5ec0af39",
+      "title": "Secure Brandon’s camera equipment approval",
+      "source_system": "fireflies",
+      "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+      "document_title": "Union Site Meeting Prep",
+      "project_id": 1009,
+      "previous_project_id": 1009,
+      "previous_project_ids": []
+    },
+    {
+      "id": "3914ee6b-6fd4-46dd-89e9-ceb08a0a1bac",
+      "title": "Communicate installation schedule to crews",
+      "source_system": "fireflies",
+      "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+      "document_title": "Union Site Meeting Prep",
+      "project_id": 1009,
+      "previous_project_id": 1009,
+      "previous_project_ids": []
+    },
+    {
+      "id": "60da72b2-239a-41d2-b9bc-302b8db9fdbc",
+      "title": "Update brancher setup timing",
+      "source_system": "fireflies",
+      "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+      "document_title": "Union Site Meeting Prep",
+      "project_id": 1009,
+      "previous_project_id": 1009,
+      "previous_project_ids": []
+    },
+    {
+      "id": "ebeab38f-7c69-4879-b1ad-f807d223a747",
+      "title": "Import the Noblesville schedule",
+      "source_system": "teams_dm_conversation",
+      "metadata_id": "teamsdm_862e0c3cd3fa9916_2026-06-10",
+      "document_title": "Teams DM Conversation: 19:38f414d6-",
+      "project_id": 25125,
+      "previous_project_id": 25125,
+      "previous_project_ids": []
+    },
+    {
+      "id": "cc488f30-c0f6-4e7d-b306-478c1b8a7c68",
+      "title": "Photograph Noblesville GW after furniture move-in",
+      "source_system": "teams_dm_conversation",
+      "metadata_id": "teamsdm_7cd66da2e291489f_2026-06-10",
+      "document_title": "Teams DM Conversation: 19:55b5a581-",
+      "project_id": 25125,
+      "previous_project_id": 25125,
+      "previous_project_ids": []
+    },
+    {
+      "id": "dfa3df8b-4deb-47e4-b583-171e7c1f0dbf",
+      "title": "Send Union Collective PEMB roof estimate",
+      "source_system": "teams_dm_conversation",
+      "metadata_id": "teamsdm_692582d1506dcbc0_2026-06-10",
+      "document_title": "Teams DM Conversation: 19:81e9018c-",
+      "project_id": 1009,
+      "previous_project_id": 1009,
+      "previous_project_ids": []
+    },
+    {
+      "id": "d0636661-31c3-4dd6-90fa-b9e91f039e53",
+      "title": "Schedule Dustin Corbett’s VP recruitment next step",
+      "source_system": "meeting",
+      "metadata_id": "01KTRPC1MKTWAH72NR7E80QNGR",
+      "document_title": "Dustin Corbett- VP Screening Interview",
+      "project_id": 90,
+      "previous_project_id": 90,
+      "previous_project_ids": []
+    },
+    {
+      "id": "092e9eed-0eb5-4a7f-bedd-0ec0ac35884e",
+      "title": "Notify Rodney of interview decision",
+      "source_system": "meeting",
+      "metadata_id": "01KTRST5HSSZP8TT3VWS40RVWC",
+      "document_title": "Rodney Interview- VP Role",
+      "project_id": 90,
+      "previous_project_id": 90,
+      "previous_project_ids": []
+    },
+    {
+      "id": "9d6ada11-b7d1-46c1-863a-d7db6f321351",
+      "title": "Submit Rodney screening notes to Brandon",
+      "source_system": "meeting",
+      "metadata_id": "01KTRST5HSSZP8TT3VWS40RVWC",
+      "document_title": "Rodney Interview- VP Role",
+      "project_id": 90,
+      "previous_project_id": 90,
+      "previous_project_ids": []
+    }
+  ]
+}

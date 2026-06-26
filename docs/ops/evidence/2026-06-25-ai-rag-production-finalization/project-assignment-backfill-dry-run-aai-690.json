@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 7,
+  "minConfidence": 0.85,
+  "compilerJobsConsidered": 124,
+  "documentsEligible": 0,
+  "documentsUpdated": 0,
+  "taskLinksEligible": 0,
+  "taskLinksUpdated": 0,
+  "bySource": [],
+  "samples": [],
+  "taskLinkSamples": []
+}
