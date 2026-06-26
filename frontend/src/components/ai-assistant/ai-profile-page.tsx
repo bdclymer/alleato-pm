@@ -17,6 +17,7 @@ import { apiFetch } from "@/lib/api-client";
 import {
   buildAiProfileContextAuditCategories,
   buildAiProfileContextPacket,
+  buildAiProfileContextUsageSummary,
   type AiProfileContextAuditCategory,
   type AiProfileContextPacket,
 } from "@/lib/ai/ai-profile-context-packet";
@@ -136,6 +137,7 @@ export function AiProfilePage() {
     memories,
   });
   const contextCategories = buildAiProfileContextAuditCategories(contextPacket);
+  const contextUsage = buildAiProfileContextUsageSummary(contextPacket);
   const isLoading = profileLoading || memoriesQuery.isLoading;
   const error =
     profileError ??
@@ -233,6 +235,7 @@ export function AiProfilePage() {
               ? `Available from ${contextPacket.leadershipContext.source}`
               : "Not configured"}
           </DetailField>
+          <DetailField label="Used by">{contextUsage.summary}</DetailField>
         </DetailFieldGrid>
 
         <div className="divide-y divide-border">

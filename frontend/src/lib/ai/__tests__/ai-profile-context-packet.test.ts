@@ -1,6 +1,7 @@
 import {
   buildAiProfileContextAuditCategories,
   buildAiProfileContextPacket,
+  buildAiProfileContextUsageSummary,
   renderAiProfileContextPacketBlock,
   type AiProfileContextUser,
 } from "@/lib/ai/ai-profile-context-packet";
@@ -195,6 +196,30 @@ describe("ai profile context packet", () => {
     ).toMatchObject({
       state: "degraded",
       summary: "Blocked: write_actions, delivery_actions",
+    });
+  });
+
+  it("summarizes where the AI profile context is used", () => {
+    const packet = buildAiProfileContextPacket({
+      user,
+      memories: [],
+      leadershipContext: {
+        state: "available",
+        source: "leadership_profile",
+        items: [],
+      },
+    });
+
+    expect(buildAiProfileContextUsageSummary(packet)).toEqual({
+      surfaces: [
+        "assistant prompts",
+        "preview-first write actions",
+        "AI approval routing",
+        "memory selection",
+        "leadership coaching context",
+      ],
+      summary:
+        "assistant prompts, preview-first write actions, AI approval routing, memory selection, leadership coaching context",
     });
   });
 });

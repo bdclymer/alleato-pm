@@ -91,6 +91,11 @@ export type AiProfileContextAuditCategory = {
   detail: string;
 };
 
+export type AiProfileContextUsageSummary = {
+  surfaces: string[];
+  summary: string;
+};
+
 export type BuildAiProfileContextPacketParams = {
   user: AiProfileContextUser | null;
   memories?: AiProfileMemory[];
@@ -309,6 +314,26 @@ export function renderAiProfileContextPacketBlock(
   );
 
   return lines.join("\n");
+}
+
+export function buildAiProfileContextUsageSummary(
+  packet: AiProfileContextPacket,
+): AiProfileContextUsageSummary {
+  const surfaces = [
+    "assistant prompts",
+    "preview-first write actions",
+    "AI approval routing",
+    "memory selection",
+  ];
+
+  if (packet.leadershipContext.state === "available") {
+    surfaces.push("leadership coaching context");
+  }
+
+  return {
+    surfaces,
+    summary: surfaces.join(", "),
+  };
 }
 
 function formatWriteMode(
