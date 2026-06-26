@@ -12,6 +12,7 @@ import {
   useCollaborationNotifications,
   type CollaborationNotification,
 } from "@/hooks/use-collaboration-notifications";
+import { getCollaborationNotificationHref } from "@/lib/collaboration/notification-links";
 
 export const dynamic = "force-dynamic";
 
@@ -49,10 +50,7 @@ function NotificationRow({
   onDelete: (id: string) => void;
 }) {
   const isUnread = !notification.readAt;
-  const href =
-    notification.projectId && notification.entityType
-      ? `/${notification.projectId}/${notification.entityType}/${notification.entityId ?? ""}`
-      : "/team-chat";
+  const href = getCollaborationNotificationHref(notification);
 
   return (
     <div className="group/row relative">
