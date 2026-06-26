@@ -31,6 +31,15 @@ export interface SplitPageProps {
   /** Layout direction */
   orientation?: Orientation;
   className?: string;
+  firstPaneClassName?: string;
+  secondPaneClassName?: string;
+}
+
+type SplitPageFrameHeight = 'content' | 'viewport';
+
+export interface SplitPageFrameProps
+  extends React.ComponentPropsWithoutRef<'div'> {
+  height?: SplitPageFrameHeight;
 }
 
 // ─── Media query hook ─────────────────────────────────────────────────────────
@@ -75,6 +84,8 @@ export function SplitPage({
   defaultIsOpen = true,
   orientation = 'horizontal',
   className,
+  firstPaneClassName,
+  secondPaneClassName,
 }: SplitPageProps) {
   const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const isDesktop = useMediaQuery(BREAKPOINT_QUERIES[breakpoint]);
@@ -108,6 +119,7 @@ export function SplitPage({
               : isOpen
                 ? 'block w-full flex-none'
                 : 'hidden',
+            firstPaneClassName,
           )}
         >
           {leftPane}
@@ -118,6 +130,7 @@ export function SplitPage({
           className={cn(
             'flex-1 min-w-0 overflow-auto',
             isDesktop ? 'block' : isOpen ? 'hidden' : 'block',
+            secondPaneClassName,
           )}
         >
           {rightPane}
@@ -126,3 +139,21 @@ export function SplitPage({
     </SplitPageContext.Provider>
   );
 }
+
+export const SplitPageFrame = React.forwardRef<HTMLDivElement, SplitPageFrameProps>(
+  ({ children, className, height = 'content', ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'relative flex min-h-0 w-full flex-col overflow-hidden',
+        height === 'viewport' ? 'h-svh' : 'h-[calc(100dvh-5rem)]',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  ),
+);
+
+SplitPageFrame.displayName = 'SplitPageFrame';
