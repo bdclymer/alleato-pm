@@ -50,6 +50,10 @@ import {
   notifyChangeRequestReviewNeeded,
   notifyRfiReviewNeeded,
 } from "@/services/notificationService";
+import {
+  recordAiNotificationDecision,
+  type AiNotificationDecisionLedgerResult,
+} from "@/lib/ai/notification-decision-ledger";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -309,6 +313,33 @@ function resolvePreviewEventKey(
   return createHash("sha256")
     .update(`${toolName}:preview:${JSON.stringify(input)}`)
     .digest("hex");
+}
+
+async function recordChangeEventPreviewNotificationDecision({
+  userId,
+  projectId,
+  title,
+  eventKey,
+}: {
+  userId: string;
+  projectId: number;
+  title: string;
+  eventKey: string;
+}): Promise<AiNotificationDecisionLedgerResult> {
+  return recordAiNotificationDecision({
+    recipientUserId: userId,
+    eventType: "ai_change_event_awaiting_approval",
+    severity: "normal",
+    projectId,
+    entityType: "change_events",
+    eventKey,
+    title: "AI change event draft ready",
+    body: `Review, edit, or confirm the AI-created change event draft: ${title}`,
+    preferenceHints: {
+      suppressTeams: true,
+    },
+    isUserOnRelatedPage: true,
+  });
 }
 
 export async function previewCreateRFI(
@@ -908,6 +939,7 @@ export function createActionTools(
         const fields = buildChangeRequestPreviewFields(draft);
 
         if (!confirmed) {
+          const eventKey = resolvePreviewEventKey("createChangeEvent", fields);
           await notifyChangeRequestReviewNeeded(userId, {
             projectId: draft.projectId,
             title: draft.title,
@@ -915,8 +947,16 @@ export function createActionTools(
             scope: draft.scope,
             type: draft.type,
             status: draft.status,
-            eventKey: resolvePreviewEventKey("createChangeEvent", fields),
+            eventKey,
           });
+
+          const notificationDecision =
+            await recordChangeEventPreviewNotificationDecision({
+              userId,
+              projectId: draft.projectId,
+              title: draft.title,
+              eventKey,
+            });
 
           return {
             action: "preview",
@@ -926,6 +966,7 @@ export function createActionTools(
               fields,
               reviewCard: buildChangeRequestReviewCard(fields),
             },
+            notificationDecision,
           };
         }
 

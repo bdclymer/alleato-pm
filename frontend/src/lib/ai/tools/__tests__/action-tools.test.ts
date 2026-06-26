@@ -23,7 +23,12 @@ jest.mock("@/services/notificationService", () => ({
   notifyRfiReviewNeeded: jest.fn(),
 }));
 
+jest.mock("@/lib/ai/notification-decision-ledger", () => ({
+  recordAiNotificationDecision: jest.fn(),
+}));
+
 import { createServiceClient } from "@/lib/supabase/service";
+import { recordAiNotificationDecision } from "@/lib/ai/notification-decision-ledger";
 import {
   notifyChangeRequestReviewNeeded,
   notifyRfiReviewNeeded,
@@ -45,6 +50,9 @@ const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
   notifyChangeRequestReviewNeeded,
 );
 const mockedNotifyRfiReviewNeeded = jest.mocked(notifyRfiReviewNeeded);
+const mockedRecordAiNotificationDecision = jest.mocked(
+  recordAiNotificationDecision,
+);
 
 describe("previewCreateRFI", () => {
   beforeEach(() => {
@@ -163,6 +171,18 @@ describe("previewCreateRFI", () => {
 describe("createChangeEvent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "recorded",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "assistant_widget"],
+        requiredAction: "Approve, edit, or discard the AI-created change event draft.",
+        reason: "AI-created draft needs human decision before it becomes record truth.",
+        failureLoudBehavior: "Keep draft visible with source and owner.",
+        preferenceOverrideReason:
+          "Teams delivery suppressed by preference; in-app visibility retained.",
+      },
+    });
   });
 
   it("previews change request creation before writing", async () => {
@@ -197,6 +217,12 @@ describe("createChangeEvent", () => {
 
     expect(output).toMatchObject({
       action: "preview",
+      notificationDecision: {
+        status: "recorded",
+        decision: {
+          channels: ["in_app", "assistant_widget"],
+        },
+      },
       preview: {
         table: "change_events",
         fields: {
@@ -252,6 +278,23 @@ describe("createChangeEvent", () => {
         eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
       }),
     );
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: "00000000-0000-0000-0000-000000000001",
+        eventType: "ai_change_event_awaiting_approval",
+        severity: "normal",
+        projectId: 43,
+        entityType: "change_events",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+        title: "AI change event draft ready",
+        body:
+          "Review, edit, or confirm the AI-created change event draft: Owner-requested lobby finish change",
+        preferenceHints: {
+          suppressTeams: true,
+        },
+        isUserOnRelatedPage: true,
+      }),
+    );
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createChangeEvent",
@@ -261,6 +304,77 @@ describe("createChangeEvent", () => {
         }),
         output: expect.objectContaining({
           action: "preview",
+        }),
+      }),
+    );
+  });
+
+  it("keeps the change request preview visible when notification decision recording fails", async () => {
+    const onTrace = jest.fn();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+    mockedRecordAiNotificationDecision.mockResolvedValueOnce({
+      status: "failed",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "assistant_widget"],
+        requiredAction: "Approve, edit, or discard the AI-created change event draft.",
+        reason: "AI-created draft needs human decision before it becomes record truth.",
+        failureLoudBehavior: "Keep draft visible with source and owner.",
+        preferenceOverrideReason: null,
+      },
+      error: {
+        code: "insert_failed",
+        message:
+          "Failed to record AI notification decision (ai_change_event_awaiting_approval): insert denied",
+      },
+    });
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { onTrace },
+    );
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        table: "change_events",
+      },
+      notificationDecision: {
+        status: "failed",
+        error: {
+          code: "insert_failed",
+          message: expect.stringContaining(
+            "Failed to record AI notification decision",
+          ),
+        },
+      },
+    });
+    expect(onTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "createChangeEvent",
+        output: expect.objectContaining({
+          action: "preview",
+          notificationDecision: expect.objectContaining({
+            status: "failed",
+          }),
         }),
       }),
     );
@@ -291,6 +405,7 @@ describe("createChangeEvent", () => {
       error: expect.stringContaining('Invalid change request status "void"'),
     });
     expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+    expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
   });
 
   it("writes a confirmed change request with the canonical DB payload", async () => {
@@ -397,6 +512,7 @@ describe("createChangeEvent", () => {
       expect.objectContaining({ status: "success" }),
     );
     expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+    expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
     expect(output).toMatchObject({
       success: true,
       message:
