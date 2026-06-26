@@ -82,9 +82,16 @@ export function parseAIReviewResponseComment(
     .filter((line) => line.startsWith("- "))
     .map((line) => line.slice(2).trim())
     .filter(Boolean);
+  const inlineContext = comment
+    .slice("AI review response context:".length)
+    .trim();
 
   return {
-    summary,
+    summary:
+      summary ??
+      (recommendation || findings.length > 0 || !inlineContext
+        ? null
+        : inlineContext),
     recommendation,
     findings,
   };

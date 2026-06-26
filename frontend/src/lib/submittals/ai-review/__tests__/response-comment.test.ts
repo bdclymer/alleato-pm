@@ -46,6 +46,18 @@ describe("AI review workflow response comments", () => {
     expect(parseAIReviewResponseComment("Please revise and resubmit.")).toBeNull();
   });
 
+  it("preserves older one-line AI review context comments", () => {
+    expect(
+      parseAIReviewResponseComment(
+        "AI review response context: finish conflict requires revision.",
+      ),
+    ).toEqual({
+      summary: "finish conflict requires revision.",
+      recommendation: null,
+      findings: [],
+    });
+  });
+
   it("recommends revise and resubmit for unresolved failures", () => {
     expect(recommendedAIReviewWorkflowResponseStatus(reviewResult())).toBe(
       "Revise and Resubmit",

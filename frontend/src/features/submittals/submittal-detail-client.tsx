@@ -1197,11 +1197,7 @@ export function SubmittalDetailClient({
                                     {event.comment ? (
                                       <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
                                         <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
-                                        {event.source === "ai_review" ? (
-                                          <AIReviewResponseSummary comment={event.comment} />
-                                        ) : (
-                                          <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
-                                        )}
+                                        <AIReviewResponseSummary comment={event.comment} />
                                       </div>
                                     ) : (
                                       <p className="mt-2 text-sm text-muted-foreground">
