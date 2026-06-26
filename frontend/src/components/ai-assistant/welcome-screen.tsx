@@ -66,6 +66,12 @@ export function WelcomeScreen({
             {afterComposer ? <div className="mt-7">{afterComposer}</div> : null}
             <div className="mt-3 flex items-center justify-center gap-4 text-center">
               <Link
+                href="/ai/approvals"
+                className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                AI Approvals
+              </Link>
+              <Link
                 href="/ai/profile"
                 className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >

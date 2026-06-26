@@ -38,6 +38,23 @@ describe("WelcomeScreen", () => {
     expect(screen.queryByTestId("animated-orb")).not.toBeInTheDocument();
   });
 
+  it("links to AI review and profile routes from the full welcome screen", () => {
+    render(
+      <WelcomeScreen
+        composer={<Textarea aria-label="Ask anything" />}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "AI Approvals" })).toHaveAttribute(
+      "href",
+      "/ai/approvals",
+    );
+    expect(screen.getByRole("link", { name: "AI Profile" })).toHaveAttribute(
+      "href",
+      "/ai/profile",
+    );
+  });
+
   it("keeps the widget variant quiet and bottom aligned", () => {
     const { container } = render(
       <WelcomeScreen
