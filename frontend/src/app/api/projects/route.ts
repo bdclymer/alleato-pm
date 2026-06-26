@@ -5,6 +5,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { isOwnerEmail } from "@/lib/auth/owner";
 
 function normalizeOptionalDate(value: unknown): string | null | undefined {
   if (typeof value === "undefined") {
@@ -108,8 +109,10 @@ function uniqueFiniteProjectIds(values: Array<number | null | undefined>): numbe
 
 async function resolveVisibleProjectIdsForUser(
   supabase: ReturnType<typeof createServiceClient>,
-  userId: string,
-): Promise<{ isAdmin: boolean; allowedProjectIds: number[] | null }> {
+  user: { id: string; email?: string | null },
+): Promise<{ isAdmin: boolean; isOwner: boolean; allowedProjectIds: number[] | null }> {
+  const userId = user.id;
+
   const { data: authLink, error: authLinkError } = await supabase
     .from("users_auth")
     .select("person_id")
@@ -143,13 +146,19 @@ async function resolveVisibleProjectIdsForUser(
   }
 
   const isAdmin = (profile as UserProfileRow | null)?.is_admin === true;
-  if (isAdmin) {
-    return { isAdmin, allowedProjectIds: null };
+
+  // Project visibility is membership-scoped for EVERYONE — including admins.
+  // Only the single workspace owner sees the entire portfolio. `is_admin`
+  // grants elevated tool/permission access elsewhere, but it must NOT widen
+  // which projects appear in the dashboard / portfolio list.
+  const isOwner = isOwnerEmail(user.email);
+  if (isOwner) {
+    return { isAdmin, isOwner, allowedProjectIds: null };
   }
 
   const personId = (authLink as UserAuthLinkRow | null)?.person_id;
   if (!personId) {
-    return { isAdmin, allowedProjectIds: [] };
+    return { isAdmin, isOwner, allowedProjectIds: [] };
   }
 
   const { data: directoryMemberships, error: directoryMembershipsError } = await supabase
@@ -192,6 +201,7 @@ async function resolveVisibleProjectIdsForUser(
 
   return {
     isAdmin,
+    isOwner,
     allowedProjectIds: uniqueFiniteProjectIds([...directoryProjectIds, ...roleProjectIds]),
   };
 }
@@ -294,7 +304,7 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   }
 
   const supabase = createServiceClient();
-  const { isAdmin, allowedProjectIds } = await resolveVisibleProjectIdsForUser(supabase, user.id);
+  const { isAdmin, allowedProjectIds } = await resolveVisibleProjectIdsForUser(supabase, user);
 
   const { searchParams } = new URL(request.url);
 
