@@ -11,6 +11,10 @@ const linkedDrawingsRoutePath = path.join(
   repoRoot,
   "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/route.ts",
 );
+const linkedDrawingDeleteRoutePath = path.join(
+  repoRoot,
+  "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/[drawingId]/route.ts",
+);
 const reviewRunServicePath = path.join(
   repoRoot,
   "frontend/src/lib/submittals/ai-review/review-run-service.ts",
@@ -41,6 +45,7 @@ function assert(condition, message) {
 
 const aiReviewRoute = read(aiReviewRoutePath);
 const linkedDrawingsRoute = read(linkedDrawingsRoutePath);
+const linkedDrawingDeleteRoute = read(linkedDrawingDeleteRoutePath);
 const reviewRunService = read(reviewRunServicePath);
 const schemas = read(schemasPath);
 const sourceReferences = read(sourceReferencesPath);
@@ -60,6 +65,15 @@ assert(
 assert(
   linkedDrawingsRoute.includes("createSubmittalAIReviewService"),
   "Linked drawings route must use the shared review service.",
+);
+assert(
+  linkedDrawingDeleteRoute.includes("createSubmittalAIReviewService"),
+  "Linked drawing delete route must use the shared review service.",
+);
+assert(
+  linkedDrawingDeleteRoute.includes("getScopedSubmittal") &&
+    linkedDrawingDeleteRoute.includes("getDrawingByScope"),
+  "Linked drawing delete route must validate submittal and drawing project scope before delete.",
 );
 assert(
   !linkedDrawingsRoute.includes("return new Set()"),
