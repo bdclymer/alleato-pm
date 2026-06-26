@@ -1,6 +1,6 @@
 # DB Pressure Guard Buckets
 
-Status: In Progress
+Status: Published
 
 Linear: AAI-720
 
@@ -25,9 +25,13 @@ The guard currently blocks on raw `total_connections > 35`. Live inspection afte
 - [x] Delegate typecheck/syntax/focused tests after edits.
 - [x] Capture live evidence.
 - [x] Update progress notes.
-- [ ] Publish to `origin/main` and close Linear.
+- [x] Publish to `origin/main` and close Linear.
 
 ## Evidence
 
 - Live bucketed DB pressure snapshot and focused local test pass: [db-pressure-guard-buckets-aai-720.md](../evidence/2026-06-25-ai-rag-production-finalization/db-pressure-guard-buckets-aai-720.md)
 - Delegated final verification passed: `14 passed`, Python compile passed, `verify:app-db-pressure` package script mapping passed.
+- Published commits:
+  - `1cfb8ca7a`
+  - `3ca917e73`
+- Linear AAI-720 marked Done.

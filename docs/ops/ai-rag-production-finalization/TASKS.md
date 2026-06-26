@@ -1002,3 +1002,12 @@ Evidence directory:
   - `14 passed`.
 - Evidence:
   - [AAI-720 evidence](../evidence/2026-06-25-ai-rag-production-finalization/db-pressure-guard-buckets-aai-720.md)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Published
+
+- Published to `origin/main`:
+  - `1cfb8ca7a`
+  - `3ca917e73`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-720 marked Done.
