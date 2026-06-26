@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST =
@@ -43,24 +44,36 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { profile } = useCurrentUserProfile({ enabled: Boolean(POSTHOG_KEY) });
+  // Defer analytics init past the critical render/hydration window. PostHog's
+  // init (incl. the rrweb session recorder) costs ~260ms of main-thread time;
+  // running it eagerly on mount competes for the main thread during LCP. The
+  // shared deferred-mount hook waits for a delay + browser idle before firing.
+  const analyticsReady = useDeferredMount(2_000);
 
   useEffect(() => {
+    if (!analyticsReady) return;
     initPostHog();
-  }, []);
+  }, [analyticsReady]);
 
   useEffect(() => {
-    if (!posthogInitialized || !pathname) return;
+    if (!analyticsReady || !posthogInitialized || !pathname) return;
     const search = searchParams?.toString();
     const url = search ? `${pathname}?${search}` : pathname;
     posthog.capture("$pageview", { $current_url: window.location.origin + url });
-  }, [pathname, searchParams]);
+  }, [analyticsReady, pathname, searchParams]);
 
   useEffect(() => {
-    if (!posthogInitialized || !profile?.id) return;
+    if (!analyticsReady || !posthogInitialized || !profile?.id) return;
     posthog.identify(profile.id, {
       email: profile.email ?? undefined,
       name: profile.fullName ?? undefined,
     });
+  }, [analyticsReady, profile?.id, profile?.email, profile?.fullName]);
+
+  // Sentry user attribution stays independent of analytics init so error
+  // reports keep their user context even before PostHog has booted.
+  useEffect(() => {
+    if (!profile?.id) return;
     Sentry.setUser({
       id: profile.id,
       email: profile.email ?? undefined,
