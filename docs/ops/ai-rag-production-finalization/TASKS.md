@@ -35,6 +35,10 @@ Active cleanup/deletion proof slice:
 
 - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
 
+Active Outlook project Emails repair:
+
+- [2026-06-26-outlook-project-emails-intake.md](../tasks/2026-06-26-outlook-project-emails-intake.md)
+
 Active env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
@@ -881,3 +885,176 @@ Evidence directory:
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
 - AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.
 - Unrelated typecheck blocker: untracked `frontend/src/lib/ai/workflow-registry.ts` currently fails frontend typecheck outside this AAI-682 slice.
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Blocker Opened
+
+- Production-readiness blocker found before continuing Outlook legacy deletion:
+  - scheduled Outlook sync and cached intake can pass while Outlook webhook subscriptions are not active.
+- Live evidence at `2026-06-26T12:11Z`:
+  - `npm run verify:microsoft-assistant-health -- --json`: pass for `bclymer@alleatogroup.com`;
+  - direct RAG DB subscription read: `subscriptionCount=1`, `activeSubscriptionCount=0`, `syncStateCount=12`, `erroredSyncStateCount=0`;
+  - only Outlook subscription row was expired/stale: `mharrison@alleatogroup.com`, status `renewal_due`, `reauthorizationRequired`.
+- AAI-709 Outlook legacy mirroring deletion is paused until webhook readiness is restored or explicitly blocked.
+- Subagents started:
+  - backend subscription reconcile investigation/fix;
+  - assistant operations status guardrail investigation/fix.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-webhook-subscription-readiness.md)
+  - [Linear AAI-715](https://linear.app/megankharrison/issue/AAI-715/restore-active-outlook-graph-webhook-subscriptions)
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
+
+- Patched Graph subscription reconciliation so expired, `renewal_due`, failed/removed/missed, or `reauthorizationRequired` rows create a fresh Graph subscription instead of trying to patch stale subscription ids first.
+- Stale Graph delete is now best-effort; a missing old subscription no longer blocks fresh subscription creation.
+- Manually triggered Render cron `alleato-graph-subscription-reconcile`.
+- Live verifier now proves all configured Outlook webhook targets are active:
+  - `expectedTargetCount=10`
+  - `activeSubscriptionCount=10`
+  - `missingActiveTargets=[]`
+  - `erroredSyncStateCount=0`
+- Added `npm run verify:graph-subscriptions` as a hard guardrail so zero or incomplete Outlook webhook subscription coverage fails loudly.
+- Updated the assistant-facing Outlook operations tool so zero active subscriptions or all-zero operational rows return `status: "degraded"` plus explicit warnings.
+- Verification passed:
+  - delegated changed-file typecheck after verifier/package edits;
+  - delegated changed-file typecheck after assistant-status TS edits;
+  - backend subscription pytest and py_compile;
+  - focused assistant operations Jest and ESLint;
+  - live graph subscription verifier.
+- Evidence:
+  - [outlook-graph-subscriptions-live-aai-715.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-graph-subscriptions-live-aai-715.json)
+- Published:
+  - `4ba56cec55cb4017729a3a38e5dd290eb83f9f31`
+  - Linear AAI-715 marked Done.
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Started
+
+- Opened urgent follow-up because stale Outlook subscription rows should not remain visible indefinitely.
+- Clarified that `MICROSOFT_SYNC_USERS` is the configured mailbox set for Graph sync/subscription jobs; if `mharrison@alleatogroup.com` should be monitored, excluding it was a config bug.
+- Scope:
+  - mark out-of-config Outlook subscription rows removed during reconciliation;
+  - add `mharrison@alleatogroup.com` to Graph-related Render `MICROSOFT_SYNC_USERS`;
+  - rerun live reconcile/read-back;
+  - keep `verify:graph-subscriptions` proving full configured coverage.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-stale-subscription-prevention.md)
+  - [Linear AAI-718](https://linear.app/megankharrison/issue/AAI-718/prevent-stale-outlook-graph-subscriptions-and-include-megan-mailbox)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Ready For Publish
+
+- Prevented recurrence:
+  - Graph subscription reconcile now marks out-of-config subscription rows `removed` so stale lifecycle rows cannot remain active renewal debt.
+  - Source health now reports `unconfigured_graph_subscription` separately from generic renewal/expiration warnings.
+  - `verify:graph-subscriptions` now fails on stale non-active rows and unconfigured non-removed rows.
+- Live config aligned:
+  - `alleato-graph-subscription-reconcile`, `alleato-graph-sync`, `alleato-teams-dm-sync`, `alleato-teams-channel-sync`, and `alleato-source-sync-health` all read back with the 11-user Microsoft sync target set including `mharrison@alleatogroup.com`.
+- Live proof:
+  - Strict subscription verifier passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
+  - Megan mailbox scoped sync succeeded and read back as `sync_status=success` with `last_sync_at=2026-06-26T12:57:54.566226+00:00`.
+  - Full Graph sync was blocked by the DB pressure guard at `total_connections=42>35`; scoped mailbox delta sync was used instead.
+- Verification:
+  - Delegated focused tests passed: `29 passed`.
+  - Delegated Python compile passed.
+  - Delegated `node --check scripts/verify/verify_graph_subscriptions.mjs` passed.
+- Evidence:
+  - [AAI-718 evidence](../evidence/2026-06-25-ai-rag-production-finalization/outlook-stale-subscription-prevention-aai-718.md)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
+
+- Published to `origin/main`:
+  - `76c1e1cb684251963fc09083466ffedc4bb67dfe`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-718 marked Done.
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Started
+
+- Opened follow-up after Graph sync was blocked by raw `total_connections=42>35`.
+- Live inspection showed the current pressure problem is mostly low headroom from Supabase platform/PostgREST idle baseline, not an active app query pileup.
+- Scope:
+  - classify DB connections by owner bucket;
+  - keep fail-closed checks for real app/client pressure;
+  - add a bucketed verifier/report;
+  - prove with focused tests and live evidence.
+- Links:
+  - [Task](../tasks/2026-06-26-db-pressure-guard-buckets.md)
+  - [Linear AAI-720](https://linear.app/megankharrison/issue/AAI-720/refine-app-db-pressure-guard-with-bucketed-connection-diagnostics)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Implemented
+
+- Updated the app DB pressure guard to classify `pg_stat_activity` into owner buckets:
+  - `app_or_external`
+  - `supabase_postgrest_pool`
+  - `supabase_realtime`
+  - `supabase_storage`
+  - `supabase_supavisor`
+  - `supabase_platform_other`
+  - `postgres_internal`
+- Raw `total_connections` remains diagnostic by default; it blocks only when `APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL=true`.
+- Guard still blocks for real app pressure:
+  - `app_client_connections`
+  - overall active connections
+  - app idle-in-transaction connections
+  - app long-running active connections
+- Added `npm run verify:app-db-pressure` for read-only live diagnostics.
+- Live verifier output:
+  - `total_connections=35`
+  - `platform_connections=32`
+  - `app_client_connections=3`
+  - `app_active_connections=0`
+  - `app_idle_in_transaction_connections=0`
+  - `app_long_running_active_connections=0`
+- Focused test pass:
+  - `14 passed`.
+- Evidence:
+  - [AAI-720 evidence](../evidence/2026-06-25-ai-rag-production-finalization/db-pressure-guard-buckets-aai-720.md)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Published
+
+- Published to `origin/main`:
+  - `1cfb8ca7a`
+  - `3ca917e73`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-720 marked Done.
+
+### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Started
+
+- Opened urgent follow-up after the project Emails page rendered an empty inbox while Outlook sync data existed.
+- Confirmed first root cause:
+  - `outlook_email_intake` had 545 rows in the last seven days;
+  - `project_emails` had 0 rows created in the same window;
+  - `/{projectId}/emails` calls `/api/projects/{projectId}/emails`, and that route still read only `project_emails`.
+- Patched the project GET route so:
+  - default `source=all` returns app-composed rows plus live Outlook intake rows;
+  - `source=outlook` bypasses stale `project_emails`;
+  - `source=app` preserves the app-authored draft path.
+- Guarded mixed-source UI actions:
+  - Outlook intake rows are read-only for old `project_emails` edit/delete/summarize/task endpoints;
+  - bulk delete excludes Outlook intake rows;
+  - old project-email attachment queries are disabled for Outlook intake rows until attachment rendering is migrated to `outlook_email_intake_attachments`.
+- Focused guardrails:
+  - route unit tests passed for project and global email routes;
+  - focused ESLint passed with existing warnings only;
+  - delegated changed-file typecheck passed.
+- Production browser/API proof then failed before the env repair:
+  - authenticated admin session on `https://projects.alleatogroup.com/876/emails` showed the empty inbox;
+  - authenticated `/api/projects/876/emails?source=outlook` returned `[]`;
+  - RAG DB readback showed project `876` rows existed, including `Re: Exol Morrisville PA`.
+- Confirmed second root cause:
+  - Vercel production runtime env pull showed no active `RAG_SUPABASE_URL`, no `RAG_SUPABASE_SERVICE_ROLE_KEY`, and no `RAG_DATABASE_READS_ENABLED`;
+  - production therefore fell back to the PM App Supabase project, whose `outlook_email_intake` had 0 rows in the one-week operational window.
+- Applied provider/config repair:
+  - overwrote Vercel production `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY`, and `RAG_DATABASE_READS_ENABLED` from the existing local secure env source without printing secrets;
+  - changed `createOutlookIntakeServiceClient()` so Outlook intake can only use the AI/RAG Supabase client and fails loudly if RAG env is missing;
+  - added `scripts/validate-runtime-config.mjs` production checks for the same RAG env vars.
+- Added fail-loud guardrail test:
+  - `src/lib/supabase/__tests__/service.test.ts` proves Outlook intake uses the RAG host and missing RAG env throws instead of falling back to PM App.
+- Production proof after env repair:
+  - Vercel redeploy `dpl_7f5gZeBdGQDphgiUJyK4myqS7MJJ` reached READY;
+  - authenticated `/api/emails` returned 1000 live Outlook rows;
+  - authenticated `/api/projects/876/emails?source=outlook` returned 28 rows with `Re: Exol Morrisville PA` first;
+  - browser body text for `/876/emails` contains `Steve Fischer` and `Re: Exol Morrisville PA` and no longer contains the empty-state strings.
+- Publish scope:
+  - this AAI-721 closeout publishes the fail-loud guardrail code so future production deployments cannot silently fall back to the PM App database.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-project-emails-intake.md)
+  - [Linear AAI-721](https://linear.app/megankharrison/issue/AAI-721/repair-project-emails-route-to-read-live-outlook-intake)

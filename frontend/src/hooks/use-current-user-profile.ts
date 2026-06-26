@@ -6,6 +6,7 @@ import { currentUserProfileQueryKey, useProjectShell } from "@/hooks/use-project
 
 export type CurrentUserProfile = {
   id: string;
+  personId: string | null;
   fullName: string;
   email: string;
   avatarUrl?: string;

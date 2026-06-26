@@ -29,6 +29,10 @@ import {
   useSubmittalAIReview,
   useUpdateSubmittalAIReviewCheck,
 } from "@/hooks/use-submittals";
+import {
+  buildAIReviewResponseComment,
+  recommendedAIReviewWorkflowResponseStatus,
+} from "@/lib/submittals/ai-review/response-comment";
 
 interface Props {
   projectId: number;
@@ -37,6 +41,7 @@ interface Props {
     stepId: string;
     stepType: string;
   } | null;
+  onOpenDetails?: () => void;
   onWorkflowResponseRecorded?: () => void;
 }
 
@@ -59,48 +64,6 @@ const RESPONSE_OPTIONS: SubmittalWorkflowResponseStatus[] = [
   "Rejected",
   "Reviewed - No Exception",
 ];
-
-function recommendedResponseStatus(
-  result: AIReviewResult,
-): SubmittalWorkflowResponseStatus {
-  const unresolvedFailures = result.checks.some(
-    (check) => check.status === "fail" && check.reviewerDisposition !== "dismissed",
-  );
-  if (unresolvedFailures) return "Revise and Resubmit";
-
-  const unresolvedWarnings = result.checks.some(
-    (check) =>
-      [
-        "warning",
-        "missing_information",
-        "unable_to_determine",
-        "needs_human_review",
-      ].includes(check.status) &&
-      !["accepted", "dismissed"].includes(check.reviewerDisposition),
-  );
-  if (unresolvedWarnings) return "Approved as Noted";
-
-  return "Approved";
-}
-
-function buildAIReviewResponseComment(result: AIReviewResult): string {
-  const actionableChecks = result.checks.filter(
-    (check) =>
-      check.status !== "pass" && check.reviewerDisposition !== "dismissed",
-  );
-  const findingLines = actionableChecks
-    .slice(0, 5)
-    .map((check) => `- ${check.title}: ${check.finding}`);
-
-  return [
-    "AI review response context:",
-    result.summary ? `Summary: ${result.summary}` : null,
-    result.recommendation ? `Recommendation: ${result.recommendation}` : null,
-    findingLines.length > 0 ? ["Findings:", ...findingLines].join("\n") : null,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
 
 function ReviewCheckRow({
   icon,
@@ -338,7 +301,7 @@ function WorkflowResponseAction({
 }) {
   const [responseStatus, setResponseStatus] =
     React.useState<SubmittalWorkflowResponseStatus>(() =>
-      recommendedResponseStatus(result),
+      recommendedAIReviewWorkflowResponseStatus(result),
     );
   const recordResponse = useRecordSubmittalAIReviewWorkflowResponse(
     projectId,
@@ -346,7 +309,7 @@ function WorkflowResponseAction({
   );
 
   React.useEffect(() => {
-    setResponseStatus(recommendedResponseStatus(result));
+    setResponseStatus(recommendedAIReviewWorkflowResponseStatus(result));
   }, [result]);
 
   async function handleRecordResponse() {
@@ -402,6 +365,7 @@ export function SubmittalAIReviewPanel({
   projectId,
   submittalId,
   workflowResponseStep,
+  onOpenDetails,
   onWorkflowResponseRecorded,
 }: Props) {
   const { data, isLoading } = useSubmittalAIReview(projectId, submittalId);
@@ -418,6 +382,16 @@ export function SubmittalAIReviewPanel({
   const updatingCheckId = updateDisposition.isPending
     ? (updateDisposition.variables?.checkId ?? null)
     : null;
+  const notReadyLayerKeys = new Set(
+    data?.readiness.layers
+      .filter((layer) => layer.state === "not_ready")
+      .map((layer) => layer.key) ?? [],
+  );
+  const detailsRecoveryLabel = notReadyLayerKeys.has("linked_drawings")
+    ? "Link drawings in Details"
+    : notReadyLayerKeys.has("submittal_text")
+      ? "Add source documents in Details"
+      : null;
 
   function handleDispositionChange(
     check: ReviewCheck,
@@ -496,7 +470,19 @@ export function SubmittalAIReviewPanel({
           <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>{data.readiness.summary}</div>
+              <div>
+                <div>{data.readiness.summary}</div>
+                {detailsRecoveryLabel && onOpenDetails && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="mt-2 h-auto p-0 text-sm font-medium text-warning underline-offset-4 hover:text-warning"
+                    onClick={onOpenDetails}
+                  >
+                    {detailsRecoveryLabel}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}

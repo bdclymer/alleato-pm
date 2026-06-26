@@ -42,6 +42,36 @@ const DEFAULT_MAX_SUGGESTIONS = 4;
 
 const ROUTE_RULES: RouteRule[] = [
   {
+    pattern: /\/home(?:\/|$)/,
+    actionIds: [
+      "openAiApprovals",
+      "openAiProfile",
+      "getProjectBriefingSnapshot",
+      "createGeneratedTask",
+    ],
+    reason: "Homepage context",
+  },
+  {
+    pattern: /\/ai\/approvals(?:\/|$)/,
+    actionIds: [
+      "openAiApprovals",
+      "openAiProfile",
+      "getProjectBriefingSnapshot",
+      "createGeneratedTask",
+    ],
+    reason: "AI approvals context",
+  },
+  {
+    pattern: /\/ai\/profile(?:\/|$)/,
+    actionIds: [
+      "openAiProfile",
+      "writeMemory",
+      "saveToKnowledgeBase",
+      "openAiApprovals",
+    ],
+    reason: "AI profile context",
+  },
+  {
     pattern: /\/rfis(?:\/|$)/,
     actionIds: ["createRFI", "getProjectBriefingSnapshot", "searchEmails", "searchTeamsMessages"],
     reason: "RFI route context",
@@ -113,7 +143,12 @@ const SURFACE_DEFAULTS: Record<AssistantSuggestionSurface, string[]> = {
     "searchEmails",
     "searchTeamsMessages",
   ],
-  onboarding: ["getProjectBriefingSnapshot", "createRFI", "writeMemory", "saveToKnowledgeBase"],
+  onboarding: [
+    "openAiProfile",
+    "openAiApprovals",
+    "getProjectBriefingSnapshot",
+    "createRFI",
+  ],
 };
 
 function normalizePathname(pathname: string | null | undefined): string {

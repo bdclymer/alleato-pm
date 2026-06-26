@@ -21,6 +21,7 @@ import {
   isAiWidgetNotificationKind,
   type AiWidgetNotificationDraft,
 } from "@/lib/collaboration/ai-widget-notifications";
+import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
 
@@ -64,6 +65,7 @@ export function GlobalAiWidget() {
   const [mounted, setMounted] = React.useState(false);
   const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
+  const [compactPanel, setCompactPanel] = React.useState(false);
   const [hasAssistantActivityUnread, setHasAssistantActivityUnread] =
     React.useState(false);
   const [showWelcomePrompt, setShowWelcomePrompt] = React.useState(false);
@@ -91,6 +93,9 @@ export function GlobalAiWidget() {
   const hasUnreadAiWelcomeNotification = unreadAiNotifications.some(
     (notification) => notification.kind === "ai_assistant_welcome",
   );
+  const hasUnreadInterruptingAiNotification = unreadAiNotifications.some(
+    shouldInterruptAiWidget,
+  );
   const unreadNotificationDraft = React.useMemo(
     () => getFirstUnreadAiWidgetNotificationDraft(notifications),
     [notifications],
@@ -98,7 +103,7 @@ export function GlobalAiWidget() {
   const hasUnread =
     hasAssistantActivityUnread ||
     showWelcomePrompt ||
-    unreadAiNotifications.length > 0;
+    hasUnreadInterruptingAiNotification;
 
   React.useEffect(() => {
     openRef.current = open;
@@ -288,6 +293,7 @@ export function GlobalAiWidget() {
           className={cn(
             "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
             "transition-[opacity,transform] duration-200 ease-out",
+            compactPanel && !expanded && "global-ai-widget-panel-compact",
             expanded && "global-ai-widget-panel-expanded",
             open
               ? "translate-y-0 opacity-100"
@@ -378,6 +384,7 @@ export function GlobalAiWidget() {
               view={view}
               onViewChange={setView}
               onAssistantActivity={handleAssistantActivity}
+              onCompactStateChange={setCompactPanel}
               showWelcomePrompt={showWelcomePrompt}
               onWelcomePromptDismiss={dismissWelcomePrompt}
               notificationDraft={notificationDraft}

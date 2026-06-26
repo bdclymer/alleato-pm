@@ -9,8 +9,14 @@ import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   isAiApprovalQueueNotification,
 } from "@/lib/collaboration/ai-approval-queue";
+import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { getHomeAiApprovalMeta } from "./home-action-routing";
+import type {
+  HomeOutlookCalendarMeeting,
+  HomeOutlookCalendarResponse,
+} from "@/app/api/home/outlook-calendar/types";
 
 type ProjectRow = {
   id: number | string;
@@ -65,14 +71,19 @@ type ActionRowProps = {
   eyebrow?: string;
 };
 
-const OPEN_TASK_STATUSES = new Set(["open", "todo", "new", "pending", "in_progress"]);
+const OPEN_TASK_STATUSES = new Set([
+  "open",
+  "todo",
+  "new",
+  "pending",
+  "in_progress",
+]);
 const HOME_REQUIRED_SECTIONS = [
-  "Start here",
+  "Upcoming meetings",
   "Work queue",
   "Resume projects",
   "Review queue",
   "Recent movement",
-  "Source wiring",
 ] as const;
 
 function isOpenTask(task: TaskRow): boolean {
@@ -90,13 +101,70 @@ function formatDate(value: string | null | undefined): string | null {
   });
 }
 
+function formatTime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function meetingTimeRange(meeting: HomeOutlookCalendarMeeting): string {
+  if (meeting.isAllDay) {
+    return `${formatDate(meeting.startDateTime) ?? "Upcoming"} · All day`;
+  }
+
+  const startDate = formatDate(meeting.startDateTime);
+  const startTime = formatTime(meeting.startDateTime);
+  const endTime = formatTime(meeting.endDateTime);
+
+  return [
+    startDate,
+    startTime && endTime ? `${startTime} - ${endTime}` : startTime,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" · ");
+}
+
+function meetingMeta(meeting: HomeOutlookCalendarMeeting): string {
+  return [
+    meeting.location,
+    meeting.organizerName ? `Organizer: ${meeting.organizerName}` : null,
+    meeting.attendeeCount > 0
+      ? `${meeting.attendeeCount} attendee${meeting.attendeeCount === 1 ? "" : "s"}`
+      : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" · ");
+}
+
+function startsTodayOrLater(value: string | null | undefined): boolean {
+  if (!value) return true;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return true;
+  const meetingDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return meetingDay.getTime() >= today.getTime();
+}
+
 function isDueTodayOrEarlier(value: string | null): boolean {
   if (!value) return false;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return false;
   const today = new Date();
   const dueDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
   return dueDay.getTime() <= todayDay.getTime();
 }
 
@@ -130,23 +198,12 @@ function projectMeta(project: ProjectRow): string {
     getProjectJobNumber(project) ? `#${getProjectJobNumber(project)}` : null,
     project.client,
     project.phase,
-    project.updated_at ? `Updated ${formatDate(project.updated_at) ?? project.updated_at}` : null,
+    project.updated_at
+      ? `Updated ${formatDate(project.updated_at) ?? project.updated_at}`
+      : null,
   ]
     .filter((value): value is string => Boolean(value))
     .join(" · ");
-}
-
-function queueSummary(todayCount: number, openCount: number, aiApprovalCount: number): string {
-  if (todayCount > 0) {
-    return `${todayCount} due today. ${openCount} open in your task feed.`;
-  }
-  if (openCount > 0) {
-    return `${openCount} open task${openCount === 1 ? "" : "s"} in your feed.`;
-  }
-  if (aiApprovalCount > 0) {
-    return `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`;
-  }
-  return "No dated or assigned tasks are blocking the start of the day.";
 }
 
 function Section({
@@ -161,9 +218,12 @@ function Section({
   className?: string;
 }) {
   return (
-    <section className={cn("min-w-0 space-y-4", className)}>
+    <section className={cn("min-w-0 space-y-3", className)}>
       <div className="flex items-center justify-between gap-4">
-        <SectionRuleHeading label={title} className="mb-0 pb-0" />
+        <SectionRuleHeading
+          label={title}
+          className="mb-0 pb-0 [&_span]:text-sm [&_span]:normal-case [&_span]:tracking-normal [&_span]:text-foreground"
+        />
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
       {children}
@@ -234,35 +294,11 @@ function ActionRow({
   }
 
   return (
-    <Link href={href} className="block rounded-md transition-colors hover:bg-muted/40">
-      {content}
-    </Link>
-  );
-}
-
-function PrimaryActionRow({
-  title,
-  meta,
-  href,
-  actionLabel,
-}: {
-  title: string;
-  meta: string;
-  href: string;
-  actionLabel: string;
-}) {
-  return (
     <Link
       href={href}
-      className="block rounded-lg bg-muted/60 px-4 py-4 transition-colors hover:bg-muted"
+      className="block rounded-md transition-colors hover:bg-muted/40"
     >
-      <div className="flex min-h-12 items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-foreground">{title}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{meta}</p>
-        </div>
-        <span className="shrink-0 text-sm font-medium text-primary">{actionLabel}</span>
-      </div>
+      {content}
     </Link>
   );
 }
@@ -286,19 +322,56 @@ function EmptyQueueAction({
   );
 }
 
-function SourcePendingRow({
-  title,
-  owner,
+function OutlookMeetingRow({
+  meeting,
 }: {
-  title: string;
-  owner: string;
+  meeting: HomeOutlookCalendarMeeting;
 }) {
+  const meta = meetingMeta(meeting);
+
   return (
-    <ActionRow
-      title={title}
-      meta={`Pending source wiring: ${owner}`}
-      muted
-    />
+    <div className="grid min-h-16 grid-cols-[6.5rem_minmax(0,1fr)_auto] items-center gap-4 py-3">
+      <div className="text-sm font-medium text-foreground">
+        {meeting.isAllDay
+          ? "All day"
+          : formatTime(meeting.startDateTime) || "Upcoming"}
+      </div>
+      <div className="min-w-0 space-y-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-medium text-foreground">
+            {meeting.subject || "Untitled meeting"}
+          </p>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {formatDate(meeting.startDateTime)}
+          </span>
+        </div>
+        <p className="truncate text-xs text-muted-foreground">
+          {[meetingTimeRange(meeting), meta].filter(Boolean).join(" · ")}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3 text-xs font-medium">
+        {meeting.joinUrl ? (
+          <a
+            href={meeting.joinUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary transition-colors hover:text-primary/80"
+          >
+            Join
+          </a>
+        ) : null}
+        {meeting.webLink ? (
+          <a
+            href={meeting.webLink}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary transition-colors hover:text-primary/80"
+          >
+            Outlook
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -316,6 +389,9 @@ export default function HomeActionDashboardPage() {
     tasks: [],
     isAdmin: false,
   });
+  const [calendarState, setCalendarState] =
+    React.useState<HomeOutlookCalendarResponse | null>(null);
+  const [isCalendarLoading, setIsCalendarLoading] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(true);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -332,13 +408,17 @@ export default function HomeActionDashboardPage() {
             "/api/projects?archived=false&page=1&limit=8&includeClient=true",
             { cache: "no-store" },
           ),
-          apiFetch<TasksResponse>("/api/tasks?scope=mine", { cache: "no-store" }),
+          apiFetch<TasksResponse>("/api/tasks?scope=mine", {
+            cache: "no-store",
+          }),
         ]);
 
         if (!isMounted) return;
 
         setState({
-          projects: Array.isArray(projectsResponse.data) ? projectsResponse.data : [],
+          projects: Array.isArray(projectsResponse.data)
+            ? projectsResponse.data
+            : [],
           tasks: Array.isArray(tasksResponse.data) ? tasksResponse.data : [],
           isAdmin: projectsResponse.meta?.isAdmin === true,
         });
@@ -363,13 +443,60 @@ export default function HomeActionDashboardPage() {
     };
   }, []);
 
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function loadCalendar() {
+      setIsCalendarLoading(true);
+
+      try {
+        const response = await apiFetch<HomeOutlookCalendarResponse>(
+          "/api/home/outlook-calendar",
+          { cache: "no-store" },
+        );
+
+        if (isMounted) {
+          setCalendarState(response);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        const message =
+          error instanceof ApiError || error instanceof Error
+            ? error.message
+            : "Outlook Calendar could not be loaded.";
+        setCalendarState({
+          ok: false,
+          source: "microsoft-graph-live",
+          error: message,
+          window: {
+            startIso: new Date().toISOString(),
+            endIso: new Date().toISOString(),
+          },
+        });
+      } finally {
+        if (isMounted) {
+          setIsCalendarLoading(false);
+        }
+      }
+    }
+
+    void loadCalendar();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const openTasks = React.useMemo(
     () => state.tasks.filter(isOpenTask).slice(0, 5),
     [state.tasks],
   );
 
   const todayTasks = React.useMemo(
-    () => openTasks.filter((task) => isDueTodayOrEarlier(task.due_date)).slice(0, 3),
+    () =>
+      openTasks
+        .filter((task) => isDueTodayOrEarlier(task.due_date))
+        .slice(0, 3),
     [openTasks],
   );
 
@@ -378,27 +505,21 @@ export default function HomeActionDashboardPage() {
     [aiApprovalNotifications],
   );
 
-  const aiApprovalMeta = isLoadingAiApprovals
-    ? "Checking AI decisions."
-    : aiApprovalCount > 0
-      ? `${aiApprovalCount} AI decision${aiApprovalCount === 1 ? "" : "s"} waiting for review.`
-      : "No AI decisions are waiting for review.";
+  const interruptingAiApprovalCount = React.useMemo(
+    () =>
+      aiApprovalNotifications.filter(
+        (notification) =>
+          isAiApprovalQueueNotification(notification) &&
+          shouldInterruptAiWidget(notification),
+      ).length,
+    [aiApprovalNotifications],
+  );
 
-  const startSummary = queueSummary(todayTasks.length, openTasks.length, aiApprovalCount);
-  const primaryQueueHref =
-    todayTasks[0]?.project_id
-      ? `/${todayTasks[0].project_id}/tasks`
-      : openTasks[0]?.project_id
-        ? `/${openTasks[0].project_id}/tasks`
-        : aiApprovalCount > 0
-          ? "/ai/approvals"
-          : "/tasks";
-  const primaryQueueLabel =
-    todayTasks.length > 0 || openTasks.length > 0
-      ? "Open tasks"
-      : aiApprovalCount > 0
-        ? "Review AI"
-        : "Open tasks";
+  const aiApprovalMeta = getHomeAiApprovalMeta({
+    isLoading: isLoadingAiApprovals,
+    aiApprovalCount,
+    interruptCount: interruptingAiApprovalCount,
+  });
 
   const recentActivity = React.useMemo(() => {
     const taskItems = state.tasks.slice(0, 3).map((task) => ({
@@ -431,19 +552,29 @@ export default function HomeActionDashboardPage() {
 
     return [...taskItems, ...projectItems]
       .sort((left, right) => {
-        const leftTime = left.timestamp ? new Date(left.timestamp).getTime() : 0;
-        const rightTime = right.timestamp ? new Date(right.timestamp).getTime() : 0;
+        const leftTime = left.timestamp
+          ? new Date(left.timestamp).getTime()
+          : 0;
+        const rightTime = right.timestamp
+          ? new Date(right.timestamp).getTime()
+          : 0;
         return rightTime - leftTime;
       })
       .slice(0, 5);
   }, [state.projects, state.tasks]);
 
+  const visibleMeetings = React.useMemo(
+    () =>
+      calendarState?.ok
+        ? calendarState.meetings
+            .filter((meeting) => startsTodayOrLater(meeting.startDateTime))
+            .slice(0, 8)
+        : [],
+    [calendarState],
+  );
+
   return (
-    <PageShell
-      variant="dashboard"
-      title="Home"
-      contentClassName="space-y-10"
-    >
+    <PageShell variant="dashboard" title="Home" contentClassName="space-y-8">
       {errorMessage ? (
         <div
           role="alert"
@@ -461,30 +592,32 @@ export default function HomeActionDashboardPage() {
         </div>
       ) : null}
 
-      <section className="grid gap-8 lg:grid-cols-3">
-        <div className="min-w-0 space-y-3 lg:col-span-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Start here
-          </p>
-          <p className="max-w-3xl text-2xl font-semibold tracking-tight text-foreground">
-            {startSummary}
-          </p>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Use this page to resume work, not monitor everything. Open the first queue that can change what happens next.
-          </p>
-        </div>
-        <div className="min-w-0 self-end">
-          <PrimaryActionRow
-            title={aiApprovalCount > 0 ? "Review waiting decisions" : "Open the work queue"}
-            meta={aiApprovalCount > 0 ? aiApprovalMeta : "Tasks, assignments, and project queues stay one click away."}
-            href={primaryQueueHref}
-            actionLabel={primaryQueueLabel}
-          />
-        </div>
-      </section>
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]">
+        <div className="min-w-0 space-y-8">
+          <Section title={HOME_REQUIRED_SECTIONS[0]}>
+            {isCalendarLoading ? (
+              <p className="py-4 text-sm text-muted-foreground">
+                Checking Outlook Calendar.
+              </p>
+            ) : calendarState?.ok ? (
+              <RowList empty="No upcoming Outlook meetings in the next 7 days.">
+                {visibleMeetings.map((meeting) => (
+                  <OutlookMeetingRow key={meeting.id} meeting={meeting} />
+                ))}
+              </RowList>
+            ) : (
+              <div role="status" className="py-4 text-sm">
+                <p className="font-medium text-foreground">
+                  Outlook Calendar is not available.
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  {calendarState?.error ??
+                    "Microsoft Graph calendar data could not be loaded."}
+                </p>
+              </div>
+            )}
+          </Section>
 
-      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,0.75fr)]">
-        <div className="min-w-0 space-y-10">
           <Section
             title={HOME_REQUIRED_SECTIONS[1]}
             action={
@@ -496,21 +629,29 @@ export default function HomeActionDashboardPage() {
             {todayTasks.length > 0 ? (
               <div className="space-y-6">
                 <div>
-                  <p className="mb-2 text-sm font-medium text-foreground">Due now</p>
+                  <p className="mb-2 text-sm font-medium text-foreground">
+                    Due now
+                  </p>
                   <RowList>
                     {todayTasks.map((task) => (
                       <ActionRow
                         key={task.id}
                         title={taskTitle(task)}
                         meta={taskMeta(task)}
-                        href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                        href={
+                          task.project_id
+                            ? `/${task.project_id}/tasks`
+                            : "/tasks"
+                        }
                         actionLabel="Open"
                       />
                     ))}
                   </RowList>
                 </div>
                 <div>
-                  <p className="mb-2 text-sm font-medium text-foreground">Open assignments</p>
+                  <p className="mb-2 text-sm font-medium text-foreground">
+                    Open assignments
+                  </p>
                   <RowList empty="No other open assigned tasks were returned.">
                     {openTasks
                       .filter((task) => !todayTasks.includes(task))
@@ -520,7 +661,11 @@ export default function HomeActionDashboardPage() {
                           key={task.id}
                           title={taskTitle(task)}
                           meta={taskMeta(task)}
-                          href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                          href={
+                            task.project_id
+                              ? `/${task.project_id}/tasks`
+                              : "/tasks"
+                          }
                           actionLabel="Open"
                         />
                       ))}
@@ -534,7 +679,9 @@ export default function HomeActionDashboardPage() {
                     key={task.id}
                     title={taskTitle(task)}
                     meta={taskMeta(task)}
-                    href={task.project_id ? `/${task.project_id}/tasks` : "/tasks"}
+                    href={
+                      task.project_id ? `/${task.project_id}/tasks` : "/tasks"
+                    }
                     actionLabel="Open"
                   />
                 ))}
@@ -549,7 +696,9 @@ export default function HomeActionDashboardPage() {
               </RowList>
             )}
           </Section>
+        </div>
 
+        <div className="min-w-0 space-y-8">
           <Section
             title={HOME_REQUIRED_SECTIONS[2]}
             action={
@@ -559,7 +708,7 @@ export default function HomeActionDashboardPage() {
             }
           >
             <RowList empty="No active projects were returned for this user.">
-              {state.projects.slice(0, 7).map((project) => {
+              {state.projects.slice(0, 6).map((project) => {
                 const projectId = getProjectId(project);
                 return (
                   <ActionRow
@@ -573,9 +722,7 @@ export default function HomeActionDashboardPage() {
               })}
             </RowList>
           </Section>
-        </div>
 
-        <div className="min-w-0 space-y-10">
           <Section title={HOME_REQUIRED_SECTIONS[3]}>
             <RowList>
               <ActionRow
@@ -589,6 +736,12 @@ export default function HomeActionDashboardPage() {
                 meta="Review what AI can use for role, memory, and approval context."
                 href="/ai/profile"
                 actionLabel="Manage"
+              />
+              <ActionRow
+                title="AI actions"
+                meta="Open the assistant action catalog and chat workspace."
+                href="/ai"
+                actionLabel="Open"
               />
               <ActionRow
                 title="Executive intelligence"
@@ -622,19 +775,6 @@ export default function HomeActionDashboardPage() {
                   actionLabel={null}
                 />
               ))}
-            </RowList>
-          </Section>
-
-          <Section title={HOME_REQUIRED_SECTIONS[5]}>
-            <RowList>
-              <SourcePendingRow
-                title="Personal AI brief summary"
-                owner="needs a homepage-specific brief API contract"
-              />
-              <SourcePendingRow
-                title="Inbox priority rollup"
-                owner="needs a shared unread/priority inbox source"
-              />
             </RowList>
           </Section>
         </div>

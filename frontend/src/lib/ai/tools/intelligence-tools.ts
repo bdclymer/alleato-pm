@@ -3,9 +3,12 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { loadCurrentIntelligencePacket } from "@/lib/ai/intelligence/packet-service";
 import { PACKET_STALE_AFTER_HOURS } from "@/lib/ai/intelligence/types";
 import { defineReadTool, type ToolTracePayload } from "./tool-utils";
+import { type ToolContext } from "./tool-context";
 
 export type IntelligenceToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 const DOMAIN_INTELLIGENCE_ERROR_GUIDANCE =
@@ -23,6 +26,7 @@ function normalizeSlug(value: string): string {
 }
 
 export function createIntelligenceTools(options: IntelligenceToolsOptions = {}) {
+  const db = options.ctx?.db ?? createServiceClient();
   return {
     listDomainIntelligence: defineReadTool("listDomainIntelligence", options, {
       description:
@@ -33,7 +37,7 @@ export function createIntelligenceTools(options: IntelligenceToolsOptions = {}) 
       inputSchema: z.object({}),
       errorGuidance: LIST_DOMAINS_ERROR_GUIDANCE,
       execute: async () => {
-        const supabase = createServiceClient();
+        const supabase = db;
         const { data, error } = await supabase
           .from("intelligence_targets")
           .select("slug, name, description, priority, last_signal_at")
@@ -79,7 +83,7 @@ export function createIntelligenceTools(options: IntelligenceToolsOptions = {}) 
       }),
       errorGuidance: DOMAIN_INTELLIGENCE_ERROR_GUIDANCE,
       execute: async ({ domain }) => {
-        const supabase = createServiceClient();
+        const supabase = db;
         const normalized = normalizeSlug(domain);
 
         // Try exact slug match, then fall back to name ILIKE.

@@ -13,6 +13,7 @@ import {
   type ModelMessage,
   type ToolSet,
 } from "ai";
+import { classifyAssistantIntent } from "@/lib/ai/intent-router";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
   buildCouncilModePromptInjection,
@@ -118,6 +119,10 @@ export type BotSkillUsageSummary = SkillInjectionUsageSummary;
 export interface BotCoreResult {
   /** The generated response text */
   text: string;
+  /** Where the response text came from after channel-safe normalization */
+  responseSource: "model_text" | "tool_result" | "empty_result_fallback";
+  /** Raw model text length before tool-result fallback normalization */
+  rawTextLength: number;
   /** Tool calls made during generation */
   toolTrace: Array<Record<string, unknown>>;
   /** Token usage */
@@ -125,6 +130,119 @@ export interface BotCoreResult {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
+  };
+}
+
+type ToolResultLike = {
+  toolName?: unknown;
+  output?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function renderToolOutput(output: unknown): string | null {
+  const direct = asNonEmptyString(output);
+  if (direct) return direct;
+
+  if (!isRecord(output)) return null;
+
+  const message = asNonEmptyString(output.message);
+  if (message) return message;
+
+  const error = asNonEmptyString(output.error);
+  if (error) return `I could not complete that request: ${error}`;
+
+  const preview = output.preview;
+  if (isRecord(preview)) {
+    const fields = isRecord(preview.fields) ? preview.fields : {};
+    const title =
+      asNonEmptyString(fields.title) ??
+      asNonEmptyString(fields.name) ??
+      asNonEmptyString(fields.subject);
+    if (title) {
+      return `I prepared this for review: ${title}. Reply confirm to proceed.`;
+    }
+  }
+
+  return null;
+}
+
+function collectToolResults(result: unknown): ToolResultLike[] {
+  if (!isRecord(result)) return [];
+
+  const directResults = Array.isArray(result.toolResults)
+    ? (result.toolResults as ToolResultLike[])
+    : [];
+  const stepResults = Array.isArray(result.steps)
+    ? result.steps.flatMap((step) => {
+        if (!isRecord(step) || !Array.isArray(step.toolResults)) return [];
+        return step.toolResults as ToolResultLike[];
+      })
+    : [];
+
+  return [...stepResults, ...directResults];
+}
+
+function renderToolTraceOutput(toolTrace: Array<Record<string, unknown>>): string | null {
+  for (const trace of [...toolTrace].reverse()) {
+    const text = renderToolOutput(trace.output);
+    if (text) return text;
+
+    const error = asNonEmptyString(trace.error);
+    if (error) return `I could not complete that request: ${error}`;
+  }
+
+  return null;
+}
+
+export function normalizeBotResponseText(params: {
+  modelText: string;
+  generationResult: unknown;
+  toolTrace: Array<Record<string, unknown>>;
+}): Pick<BotCoreResult, "text" | "responseSource" | "rawTextLength"> {
+  const modelText = params.modelText.trim();
+  if (modelText.length > 0) {
+    return {
+      text: modelText,
+      responseSource: "model_text",
+      rawTextLength: params.modelText.length,
+    };
+  }
+
+  const toolResults = collectToolResults(params.generationResult);
+  for (const result of [...toolResults].reverse()) {
+    const text = renderToolOutput(result.output);
+    if (text) {
+      return {
+        text,
+        responseSource: "tool_result",
+        rawTextLength: params.modelText.length,
+      };
+    }
+  }
+
+  const traceText = renderToolTraceOutput(params.toolTrace);
+  if (traceText) {
+    return {
+      text: traceText,
+      responseSource: "tool_result",
+      rawTextLength: params.modelText.length,
+    };
+  }
+
+  return {
+    text:
+      "I processed the request, but the model returned tool activity without a final message. Nothing was posted from an empty response; please retry or check the assistant run log.",
+    responseSource: "empty_result_fallback",
+    rawTextLength: params.modelText.length,
   };
 }
 
@@ -526,10 +644,15 @@ export async function assembleTaskWriteSystemPrompt(options: {
   userId: string;
   messageText: string;
   selectedProjectId?: number;
+  platform?: "teams" | "web";
 }): Promise<string> {
-  const { messageText, selectedProjectId } = options;
+  const { messageText, selectedProjectId, platform } = options;
   const today = new Date().toISOString().split("T")[0];
   const contextHealth: string[] = [];
+  const createTaskInstruction =
+    platform === "teams"
+      ? "For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false`; in Teams, that tool call writes the task directly through the audited task-write path and returns the created task link. Do not ask for a second confirmation after the user already asked you to create the task."
+      : "For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false` so the UI can render a preview card.";
   const parts = [
     "You are Alleato AI inside Alleato PM.",
     [
@@ -539,7 +662,7 @@ export async function assembleTaskWriteSystemPrompt(options: {
     [
       "## Task Write Contract",
       "The user is asking to create, modify, close, reassign, reprioritize, reschedule, or delete a Tasks page action item.",
-      "Use the available Tasks page tools. For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false` so the UI can render a preview card.",
+      `Use the available Tasks page tools. ${createTaskInstruction}`,
       "For updates or deletes, first use the available task lookup tool when the user did not provide a task id, then call `updateGeneratedTask` or `deleteGeneratedTask` with `confirmed: false` if a matching task is found.",
       "Do not answer with a plain-text task preview when a tool call can produce the preview. If the target task cannot be identified, say exactly what identifying detail is missing.",
     ].join("\n"),
@@ -623,6 +746,10 @@ export async function generateBotResponse(
   options: BotCoreOptions,
 ): Promise<BotCoreResult> {
   const toolTrace: Array<Record<string, unknown>> = [];
+  const intent = classifyAssistantIntent(options.messageText, {
+    selectedProjectId: options.selectedProjectId ?? null,
+  });
+  const isTaskWriteIntent = intent === "task_write";
 
   // Auto-load history from DB when a sessionId is present and no history was
   // explicitly provided. This makes it impossible for a caller to forget —
@@ -637,19 +764,30 @@ export async function generateBotResponse(
       toolTrace.push(trace);
       options.onTrace?.(trace);
     },
+    pinnedProjectId: options.selectedProjectId,
+    includeActionTools: isTaskWriteIntent,
+    generatedTaskWriteMode:
+      isTaskWriteIntent && options.platform === "teams" ? "direct" : "preview",
   });
 
-  const systemPrompt = await assembleSystemPrompt({
-    userId: options.userId,
-    messageText: options.messageText,
-    selectedProjectId: options.selectedProjectId,
-    councilMode: options.councilMode,
-    sessionId: options.sessionId,
-    isFirstTurn: !options.conversationHistory?.length,
-    platform: options.platform,
-    onLearningUsage: options.onLearningUsage,
-    onSkillUsage: options.onSkillUsage,
-  });
+  const systemPrompt = isTaskWriteIntent
+    ? await assembleTaskWriteSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        platform: options.platform,
+      })
+    : await assembleSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        councilMode: options.councilMode,
+        sessionId: options.sessionId,
+        isFirstTurn: !options.conversationHistory?.length,
+        platform: options.platform,
+        onLearningUsage: options.onLearningUsage,
+        onSkillUsage: options.onSkillUsage,
+      });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
     ? [
@@ -667,9 +805,16 @@ export async function generateBotResponse(
   });
 
   const usage = result.usage;
+  const normalized = normalizeBotResponseText({
+    modelText: result.text,
+    generationResult: result,
+    toolTrace,
+  });
 
   return {
-    text: result.text,
+    text: normalized.text,
+    responseSource: normalized.responseSource,
+    rawTextLength: normalized.rawTextLength,
     toolTrace,
     usage: usage
       ? {
@@ -692,6 +837,10 @@ export async function generateBotResponse(
  */
 export async function streamBotResponse(options: BotCoreOptions) {
   const toolTrace: Array<Record<string, unknown>> = [];
+  const intent = classifyAssistantIntent(options.messageText, {
+    selectedProjectId: options.selectedProjectId ?? null,
+  });
+  const isTaskWriteIntent = intent === "task_write";
 
   if (options.sessionId && !options.conversationHistory) {
     const prior = await loadConversationHistory(options.sessionId);
@@ -703,18 +852,30 @@ export async function streamBotResponse(options: BotCoreOptions) {
       toolTrace.push(trace);
       options.onTrace?.(trace);
     },
+    pinnedProjectId: options.selectedProjectId,
+    includeActionTools: isTaskWriteIntent,
+    generatedTaskWriteMode:
+      isTaskWriteIntent && options.platform === "teams" ? "direct" : "preview",
   });
 
-  const systemPrompt = await assembleSystemPrompt({
-    userId: options.userId,
-    messageText: options.messageText,
-    selectedProjectId: options.selectedProjectId,
-    councilMode: options.councilMode,
-    sessionId: options.sessionId,
-    isFirstTurn: !options.conversationHistory?.length,
-    onLearningUsage: options.onLearningUsage,
-    onSkillUsage: options.onSkillUsage,
-  });
+  const systemPrompt = isTaskWriteIntent
+    ? await assembleTaskWriteSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        platform: options.platform,
+      })
+    : await assembleSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        councilMode: options.councilMode,
+        sessionId: options.sessionId,
+        isFirstTurn: !options.conversationHistory?.length,
+        platform: options.platform,
+        onLearningUsage: options.onLearningUsage,
+        onSkillUsage: options.onSkillUsage,
+      });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
     ? [

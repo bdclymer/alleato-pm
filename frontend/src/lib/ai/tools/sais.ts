@@ -3,15 +3,19 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { buildFinanceSpendRollup } from "@/lib/accounting/finance-spend";
 import { listSopBacklog } from "@/lib/accounting/sop-backlog";
 import { defineReadTool, type ToolTracePayload } from "./tool-utils";
+import { type ToolContext } from "./tool-context";
 
 type CreateSaisToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 export function createSaisTools(
   _userId: string,
   options: CreateSaisToolsOptions = {},
 ) {
+  const db = options.ctx?.db ?? createServiceClient();
   return {
     getSopBacklog: defineReadTool(
       "getSopBacklog",
@@ -32,7 +36,7 @@ export function createSaisTools(
         errorGuidance:
           "SOP backlog data is unavailable. Say that the structured SOP backlog source failed instead of searching uploaded files as a substitute.",
         execute: async ({ businessArea, status }) => {
-          const records = await listSopBacklog(createServiceClient());
+          const records = await listSopBacklog(db);
           const filtered = records.filter((record) => {
             const areaMatches = businessArea === "all" || record.business_area === businessArea;
             const statusMatches = status === "all" || record.status === status;
@@ -77,7 +81,7 @@ export function createSaisTools(
         errorGuidance:
           "Finance spend rollup data is unavailable. Say that the Acumatica AP classification source failed and avoid estimating spend from memory.",
         execute: async ({ months }) => {
-          const rollup = await buildFinanceSpendRollup(createServiceClient(), months);
+          const rollup = await buildFinanceSpendRollup(db, months);
           return {
             source: "acumatica_ap_bills + finance_spend_classification_rules",
             sourceRef: `[Source: Acumatica AP finance spend rollup - ${rollup.window.startDate} to ${rollup.window.endDate}]`,

@@ -3,16 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.13.1",
-  "pnpm": {
-    "patchedDependencies": {
-      "agentation@3.0.2": "patches/agentation@3.0.2.patch"
-    },
-    "overrides": {
-      "@opentelemetry/sdk-trace-base": "^2.7.1",
-      "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
-      "@opentelemetry/sdk-node": "^0.208.0"
-    }
-  },
   "scripts": {
     "postinstall": "rm -rf .next 2>/dev/null || true",
     "dev": "bash ../scripts/dev/start-frontend-clean.sh",
@@ -94,7 +84,10 @@
     "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs",
     "design:no-new-form-violations": "node scripts/design-system/check-no-new-form-violations.mjs",
     "codemod:forms:placeholder-zero": "node scripts/codemods/normalize-zero-placeholders.mjs",
-    "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN --build-script-name=build-storybook"
+    "chromatic": "chromatic --project-token=$CHROMATIC_PROJECT_TOKEN --build-script-name=build-storybook",
+    "ai:contract": "jest --config jest.contract.config.js --runTestsByPath src/lib/ai/tools/contract/write-tools.contract.test.ts",
+    "ai:contract:read": "jest --config jest.contract.config.js --runTestsByPath src/lib/ai/tools/contract/read-tools.contract.test.ts",
+    "ai:contract:all": "jest --config jest.contract.config.js"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.15",

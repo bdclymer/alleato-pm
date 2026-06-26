@@ -11,18 +11,16 @@ export interface InviteUserProps {
 }
 
 export default function InviteUser({
-  inviterName,
   inviteeName,
   email,
-  role,
   acceptUrl,
   expiresInHours = 72,
 }: InviteUserProps) {
   return (
     <EmailShell
-      previewText={`${inviterName} invited you to join Alleato`}
+      previewText="Alleato Group invited you to join Alleato"
       eyebrow="Invitation"
-      heading="You're invited to Alleato"
+      heading="You're invited to Alleato Project Management Platform"
       ctaLabel="Accept invitation"
       ctaUrl={acceptUrl}
       footerNote={`This invitation expires in ${expiresInHours} hours.`}
@@ -31,15 +29,8 @@ export default function InviteUser({
         {inviteeName ? `Hi ${inviteeName},` : "Hi,"}
       </p>
       <p style={{ margin: "0 0 12px" }}>
-        <strong>{inviterName}</strong> has invited you to join the Alleato
-        construction management platform
-        {role ? (
-          <>
-            {" "}
-            as a <strong>{role}</strong>
-          </>
-        ) : null}
-        .
+        <strong>Alleato Group</strong> has invited you to join the Alleato
+        project management platform.
       </p>
       <p style={{ margin: "0 0 12px" }}>
         Click the button below to accept the invitation and create your

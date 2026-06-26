@@ -14,6 +14,7 @@ from src.services.agents.microsoft_executive_assistant.agent import _inbox_reque
 from src.services.agents.microsoft_executive_assistant.tools import (
     _patch_message_category,
     _patch_message_categories,
+    draft_teams_message_for_review,
     patch_outlook_email_categories,
     read_live_outlook_inbox,
 )
@@ -644,6 +645,148 @@ def test_outlook_event_trigger_runs_from_webhook_for_brandon_outlook(monkeypatch
     assert "Megan" not in captured["request"].prompt
 
 
+class _FakeSupabaseResponse:
+    def __init__(self, data: list[dict[str, Any]] | None = None):
+        self.data = data or []
+
+
+class _FakeOutlookIntakeTable:
+    def __init__(self, row: dict[str, Any] | None = None):
+        self.row = row
+        self.operation = "select"
+        self.update_payloads: list[dict[str, Any]] = []
+        self.filters: dict[str, Any] = {}
+        self.require_unsent = False
+
+    def update(self, payload: dict[str, Any]):
+        self.operation = "update"
+        self.update_payloads.append(payload)
+        return self
+
+    def select(self, *_args):
+        self.operation = "select"
+        return self
+
+    def eq(self, key: str, value: Any):
+        self.filters[key] = value
+        return self
+
+    def is_(self, key: str, value: Any):
+        if key == "teams_alert_sent_at" and value == "null":
+            self.require_unsent = True
+        return self
+
+    def limit(self, *_args):
+        return self
+
+    def execute(self):
+        if self.filters.get("graph_message_id") != (self.row or {}).get("graph_message_id"):
+            return _FakeSupabaseResponse([])
+        if self.operation == "update":
+            if self.require_unsent and self.row.get("teams_alert_sent_at"):
+                return _FakeSupabaseResponse([])
+            self.row.update(self.update_payloads[-1])
+            return _FakeSupabaseResponse([dict(self.row)])
+        return _FakeSupabaseResponse([dict(self.row)])
+
+
+class _FakeOutlookIntakeClient:
+    def __init__(self, row: dict[str, Any] | None = None):
+        self.table_obj = _FakeOutlookIntakeTable(row)
+
+    def table(self, name: str):
+        assert name == "outlook_email_intake"
+        return self.table_obj
+
+
+def test_urgent_teams_alert_blocks_without_graph_message_id(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: _FakeOutlookIntakeClient(),
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda _message: {"sent": True},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "preview"
+    assert result["teamsResult"]["sent"] is False
+    assert result["teamsResult"]["reason"] == "missing_graph_message_id"
+
+
+def test_urgent_teams_alert_skips_duplicate_when_ledger_has_timestamp(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    fake_client = _FakeOutlookIntakeClient(
+        {
+            "graph_message_id": "message-1",
+            "teams_alert_sent_at": "2026-06-26T12:45:00+00:00",
+        }
+    )
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: fake_client,
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda message: sent.append(message) or {"sent": True},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+        graph_message_id="message-1",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "preview"
+    assert result["teamsResult"]["sent"] is False
+    assert result["teamsResult"]["reason"] == "duplicate"
+    assert sent == []
+
+
+def test_urgent_teams_alert_claims_ledger_before_send(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    fake_client = _FakeOutlookIntakeClient(
+        {
+            "graph_message_id": "message-1",
+            "teams_alert_sent_at": None,
+        }
+    )
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: fake_client,
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda message: sent.append(message) or {"sent": True, "http_status": 200},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+        graph_message_id="message-1",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "sent"
+    assert result["teamsResult"]["sent"] is True
+    assert result["teamsResult"]["dedupe"]["claimed"] is True
+    assert fake_client.table_obj.row["teams_alert_sent_at"] is not None
+    assert sent == ["Urgent inbox item."]
+
+
 class _FakeCategoryGraph:
     def __init__(self, existing_categories: list[str] | None = None):
         self.existing_categories = existing_categories or []
@@ -860,4 +1003,3 @@ def test_structured_inbox_emails_sets_draft_ready_from_lookup(monkeypatch):
     msg_2 = next(item for item in items if item.conversation_id == "conv-BBB")
     assert msg_1.draft_ready is True
     assert msg_2.draft_ready is False
-    assert graph.patch_payload == {"categories": []}

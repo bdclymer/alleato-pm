@@ -7,6 +7,7 @@ import {
   submittalWorkflowResponseStatusSchema,
 } from "@/lib/submittals/workflow-response-service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
   params: Promise<{ projectId: string; submittalId: string; stepId: string }>;
@@ -47,8 +48,10 @@ export const POST = withApiGuardrails(
       "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST",
     );
     const projectIdNumber = Number.parseInt(projectId, 10);
+    const serviceClient = createServiceClient();
     const response = await recordSubmittalWorkflowResponse({
-      supabase,
+      supabase: serviceClient,
+      notificationSupabase: serviceClient,
       projectId: projectIdNumber,
       submittalId,
       stepId,

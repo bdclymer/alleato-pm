@@ -3,6 +3,7 @@ import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   isAiApprovalQueueNotification,
 } from "./ai-approval-queue";
+import { shouldInterruptAiWidget } from "./ai-notification-routing";
 
 export const AI_WIDGET_NOTIFICATION_KINDS = [
   "ai_assistant_welcome",
@@ -21,6 +22,7 @@ export type AiWidgetNotificationMetadata = {
   source?: string;
   eventType?: string;
   requiredAction?: string;
+  tier?: string;
 };
 
 export type AiWidgetNotificationCandidate = {
@@ -67,6 +69,7 @@ export function getAiWidgetNotificationMetadata(
     source: cleanString(record.source),
     eventType: cleanString(record.eventType),
     requiredAction: cleanString(record.requiredAction),
+    tier: cleanString(record.tier),
   };
 }
 
@@ -74,7 +77,9 @@ export function isUnreadAiWidgetNotification(
   notification: AiWidgetNotificationCandidate,
 ): boolean {
   return (
-    !notification.readAt && isAiWidgetNotificationKind(notification.kind)
+    !notification.readAt &&
+    isAiWidgetNotificationKind(notification.kind) &&
+    shouldInterruptAiWidget(notification)
   );
 }
 
@@ -130,16 +135,5 @@ function getAiNotificationDecisionPrompt(
 
   if (!subject) return null;
 
-  const context = [title, body].filter(
-    (value, index, values): value is string =>
-      Boolean(value) && values.indexOf(value) === index && value !== subject,
-  );
-
-  if (context.length === 0) {
-    return `Help me review this AI update: ${subject}`;
-  }
-
-  return `Help me review this AI update: ${subject}\n\nContext: ${context.join(
-    " - ",
-  )}`;
+  return `Review this AI update: ${subject}`;
 }

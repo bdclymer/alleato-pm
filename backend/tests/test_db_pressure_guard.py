@@ -51,6 +51,7 @@ def test_pressure_guard_blocks_high_connection_pressure(monkeypatch):
 
     monkeypatch.setenv("DATABASE_URL", "postgresql://example")
     monkeypatch.setenv("APP_DB_PRESSURE_MAX_TOTAL_CONNECTIONS", "10")
+    monkeypatch.setenv("APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL", "true")
     monkeypatch.setattr(
         db_pressure_guard.psycopg2,
         "connect",
@@ -60,6 +61,162 @@ def test_pressure_guard_blocks_high_connection_pressure(monkeypatch):
 
     with pytest.raises(db_pressure_guard.AppDbPressureError, match="total_connections=99>10"):
         db_pressure_guard.enforce_app_db_pressure_guard("graph_sync")
+
+
+def test_fetch_pressure_snapshot_uses_psycopg_safe_like_patterns(monkeypatch):
+    executed_sql = []
+
+    class FakeCursor:
+        description = [
+            ("total_connections",),
+            ("active_connections",),
+            ("idle_in_transaction_connections",),
+            ("long_running_active_connections",),
+            ("app_client_connections",),
+            ("app_active_connections",),
+            ("app_idle_in_transaction_connections",),
+            ("app_long_running_active_connections",),
+            ("platform_connections",),
+            ("connection_buckets",),
+            ("max_query_age_seconds",),
+        ]
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def execute(self, sql, *_args):
+            executed_sql.append(sql)
+
+        def fetchone(self):
+            return (42, 1, 0, 1, 1, 0, 0, 0, 41, {"supabase_realtime": 6}, 120)
+
+    class FakeConnection:
+        def cursor(self, *_args, **_kwargs):
+            return FakeCursor()
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(
+        db_pressure_guard.psycopg2,
+        "connect",
+        lambda *_args, **_kwargs: FakeConnection(),
+        raising=False,
+    )
+
+    snapshot = db_pressure_guard._fetch_pressure_snapshot("postgresql://example")
+
+    assert snapshot.connection_buckets == {"supabase_realtime": 6}
+    assert "realtime%%" in executed_sql[-1]
+    assert "Supavisor%%" in executed_sql[-1]
+
+
+def test_pressure_guard_allows_high_platform_baseline_without_app_pressure(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example")
+    monkeypatch.setenv("APP_DB_PRESSURE_MAX_TOTAL_CONNECTIONS", "10")
+    monkeypatch.setattr(
+        db_pressure_guard,
+        "_fetch_pressure_snapshot",
+        lambda _url: db_pressure_guard.AppDbPressureSnapshot(
+            total_connections=42,
+            active_connections=1,
+            idle_in_transaction_connections=0,
+            long_running_active_connections=1,
+            max_query_age_seconds=120,
+            app_client_connections=1,
+            app_active_connections=0,
+            app_idle_in_transaction_connections=0,
+            app_long_running_active_connections=0,
+            platform_connections=41,
+            connection_buckets={
+                "supabase_postgrest_pool": 11,
+                "supabase_realtime": 6,
+                "postgres_internal": 9,
+                "app_or_external": 1,
+            },
+        ),
+    )
+
+    snapshot = db_pressure_guard.enforce_app_db_pressure_guard("graph_sync")
+
+    assert snapshot is not None
+    assert snapshot.total_connections == 42
+    assert snapshot.platform_connections == 41
+
+
+def test_pressure_guard_blocks_app_client_connection_pressure(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example")
+    monkeypatch.setenv("APP_DB_PRESSURE_MAX_APP_CLIENT_CONNECTIONS", "3")
+    monkeypatch.setattr(
+        db_pressure_guard,
+        "_fetch_pressure_snapshot",
+        lambda _url: db_pressure_guard.AppDbPressureSnapshot(
+            total_connections=20,
+            active_connections=2,
+            idle_in_transaction_connections=0,
+            long_running_active_connections=0,
+            max_query_age_seconds=5,
+            app_client_connections=4,
+            app_active_connections=2,
+            app_idle_in_transaction_connections=0,
+            app_long_running_active_connections=0,
+            platform_connections=16,
+            connection_buckets={"app_or_external": 4, "supabase_postgrest_pool": 11},
+        ),
+    )
+
+    with pytest.raises(db_pressure_guard.AppDbPressureError, match="app_client_connections=4>3"):
+        db_pressure_guard.enforce_app_db_pressure_guard("graph_sync")
+
+
+def test_pressure_guard_raw_total_block_is_explicit_opt_in(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example")
+    monkeypatch.setenv("APP_DB_PRESSURE_MAX_TOTAL_CONNECTIONS", "10")
+    monkeypatch.setenv("APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL", "true")
+    monkeypatch.setattr(
+        db_pressure_guard,
+        "_fetch_pressure_snapshot",
+        lambda _url: db_pressure_guard.AppDbPressureSnapshot(
+            total_connections=42,
+            active_connections=1,
+            idle_in_transaction_connections=0,
+            long_running_active_connections=0,
+            max_query_age_seconds=5,
+            app_client_connections=1,
+            app_active_connections=0,
+            app_idle_in_transaction_connections=0,
+            app_long_running_active_connections=0,
+            platform_connections=41,
+            connection_buckets={"app_or_external": 1, "supabase_postgrest_pool": 11},
+        ),
+    )
+
+    with pytest.raises(db_pressure_guard.AppDbPressureError, match="total_connections=42>10"):
+        db_pressure_guard.enforce_app_db_pressure_guard("graph_sync")
+
+
+def test_pressure_snapshot_to_dict_includes_bucket_diagnostics():
+    snapshot = db_pressure_guard.AppDbPressureSnapshot(
+        total_connections=34,
+        active_connections=1,
+        idle_in_transaction_connections=0,
+        long_running_active_connections=1,
+        max_query_age_seconds=60,
+        app_client_connections=1,
+        app_active_connections=0,
+        app_idle_in_transaction_connections=0,
+        app_long_running_active_connections=0,
+        platform_connections=33,
+        connection_buckets={"supabase_postgrest_pool": 11, "app_or_external": 1},
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["platform_connections"] == 33
+    assert payload["connection_buckets"]["supabase_postgrest_pool"] == 11
 
 
 def test_high_churn_pm_app_write_guard_fails_closed(monkeypatch):

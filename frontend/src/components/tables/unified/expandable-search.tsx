@@ -17,13 +17,15 @@ export function ExpandableSearch({
   onChange,
   placeholder = "Search...",
   ariaLabel = "Search table",
+  defaultExpanded = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   ariaLabel?: string;
+  defaultExpanded?: boolean;
 }): React.ReactElement {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {

@@ -27,7 +27,16 @@ describe("ai widget collaboration notifications", () => {
       { id: "2", kind: "ai_action_ready", readAt: "2026-06-25T00:00:00Z" },
       { id: "3", kind: "ai_action_ready", readAt: null },
       { id: "4", kind: "rfi_attention", readAt: null },
-      { id: "5", kind: "ai_notification_decision", readAt: null },
+      {
+        id: "5",
+        kind: "ai_notification_decision",
+        readAt: null,
+        metadata: {
+          eventType: "delivery_failure",
+          tier: "interrupt",
+          channelsSelected: ["assistant_widget"],
+        },
+      },
     ];
 
     expect(getUnreadAiWidgetNotifications(notifications)).toEqual([
@@ -45,6 +54,7 @@ describe("ai widget collaboration notifications", () => {
         source: " collaboration_notifications ",
         eventType: " ai_memory_updated ",
         requiredAction: " Open the assistant. ",
+        tier: " quiet ",
         ignored: "value",
       }),
     ).toEqual({
@@ -53,6 +63,7 @@ describe("ai widget collaboration notifications", () => {
       source: "collaboration_notifications",
       eventType: "ai_memory_updated",
       requiredAction: "Open the assistant.",
+      tier: "quiet",
     });
 
     expect(
@@ -106,7 +117,33 @@ describe("ai widget collaboration notifications", () => {
     });
   });
 
-  it("generates a contextual prompt for unread AI notification decisions", () => {
+  it("generates a contextual prompt for widget-selected AI notification decisions", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_notification_decision",
+        title: "AI delivery failed",
+        body: "Teams notification could not be delivered.",
+        readAt: null,
+        metadata: {
+          eventType: "delivery_failure",
+          tier: "interrupt",
+          channelsSelected: ["in_app", "assistant_widget"],
+          requiredAction: "Retry delivery or choose another notification channel.",
+          source: "ai_notification_routing",
+        },
+      },
+    ];
+
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
+      id: "1",
+      prompt:
+        "Review this AI update: Retry delivery or choose another notification channel.",
+      source: "ai_notification_routing",
+    });
+  });
+
+  it("does not return quiet AI decisions as widget-visible notifications or drafts", () => {
     const notifications = [
       {
         id: "1",
@@ -116,17 +153,42 @@ describe("ai widget collaboration notifications", () => {
         readAt: null,
         metadata: {
           eventType: "ai_memory_updated",
-          requiredAction: "Review the saved memory before using it.",
-          source: "ai_notification_routing",
+          tier: "quiet",
+          channelsSelected: ["quiet_inbox"],
+          requiredAction: "Review in AI profile when convenient.",
         },
       },
     ];
 
+    expect(getUnreadAiWidgetNotifications(notifications)).toEqual([]);
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toBeNull();
+  });
+
+  it("returns interrupting AI decisions when assistant_widget is selected", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_notification_decision",
+        title: "Email needs response",
+        body: "External request needs an owner.",
+        readAt: null,
+        metadata: {
+          eventType: "delivery_failure",
+          tier: "interrupt",
+          channelsSelected: ["in_app", "assistant_widget"],
+          requiredAction: "Draft a reply or assign ownership.",
+        },
+      },
+    ];
+
+    expect(getUnreadAiWidgetNotifications(notifications)).toEqual([
+      notifications[0],
+    ]);
     expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
       id: "1",
-      prompt:
-        "Help me review this AI update: Review the saved memory before using it.\n\nContext: AI memory saved - Megan prefers preview-first approvals.",
-      source: "ai_notification_routing",
+      prompt: "Review this AI update: Draft a reply or assign ownership.",
+      actionLabel: undefined,
+      source: undefined,
     });
   });
 
@@ -202,6 +264,9 @@ describe("ai widget collaboration notifications", () => {
         body: "Megan prefers preview-first approvals.",
         readAt: null,
         metadata: {
+          eventType: "delivery_failure",
+          tier: "interrupt",
+          channelsSelected: ["assistant_widget"],
           prompt: "Show me what changed in my AI profile.",
           requiredAction: "Review the saved memory before using it.",
         },

@@ -9,6 +9,7 @@ import { z } from "zod";
 
 const CurrentUserProfileSchema = z.object({
   id: z.string(),
+  personId: z.string().nullable(),
   fullName: z.string(),
   email: z.string(),
   avatarUrl: z.string().optional(),

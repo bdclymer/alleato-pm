@@ -128,19 +128,31 @@ def _get_source_sync_health_with_fake_rag(supabase):
         source_sync_health_mod.get_rag_read_client = original_get_rag_read_client
 
 
+def _with_fake_rag_write(supabase, fn):
+    original_get_rag_write_client = source_sync_health_mod.get_rag_write_client
+    source_sync_health_mod.get_rag_write_client = lambda: supabase
+    try:
+        return fn()
+    finally:
+        source_sync_health_mod.get_rag_write_client = original_get_rag_write_client
+
+
 def test_record_sync_run_writes_loud_run_ledger_row():
     supabase = _FakeSupabase()
 
-    row = record_sync_run(
+    row = _with_fake_rag_write(
         supabase,
-        source="outlook_email",
-        resource_id="brandon@example.com",
-        stage="source_sync",
-        status="failed",
-        items_seen=3,
-        items_failed=1,
-        error_code="GRAPH_THROTTLED",
-        error_message="Graph returned 429.",
+        lambda: record_sync_run(
+            supabase,
+            source="outlook_email",
+            resource_id="brandon@example.com",
+            stage="source_sync",
+            status="failed",
+            items_seen=3,
+            items_failed=1,
+            error_code="GRAPH_THROTTLED",
+            error_message="Graph returned 429.",
+        ),
     )
 
     assert row["source"] == "outlook_email"
@@ -155,26 +167,32 @@ def test_record_sync_run_writes_loud_run_ledger_row():
 def test_update_sync_run_finishes_existing_running_row():
     supabase = _FakeSupabase()
     started = datetime.now(timezone.utc)
-    row = record_sync_run(
+    row = _with_fake_rag_write(
         supabase,
-        source="fireflies",
-        resource_id="fireflies_ingestion_jobs",
-        stage="vectorization",
-        status="running",
-        started_at=started,
-        items_seen=10,
+        lambda: record_sync_run(
+            supabase,
+            source="fireflies",
+            resource_id="fireflies_ingestion_jobs",
+            stage="vectorization",
+            status="running",
+            started_at=started,
+            items_seen=10,
+        ),
     )
 
-    updated = update_sync_run(
+    updated = _with_fake_rag_write(
         supabase,
-        row["id"],
-        status="warning",
-        items_seen=10,
-        items_synced=8,
-        items_skipped=2,
-        items_failed=0,
-        error_code="FIREFLIES_BACKLOG_NON_VECTORIZABLE",
-        error_message="2 Fireflies backlog jobs marked non-vectorizable",
+        lambda: update_sync_run(
+            supabase,
+            row["id"],
+            status="warning",
+            items_seen=10,
+            items_synced=8,
+            items_skipped=2,
+            items_failed=0,
+            error_code="FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+            error_message="2 Fireflies backlog jobs marked non-vectorizable",
+        ),
     )
 
     assert updated["id"] == row["id"]
@@ -236,6 +254,28 @@ def test_get_source_sync_health_surfaces_stale_graph_and_vector_backlog():
     assert outlook["unembeddedCount"] == 1
     assert outlook["uncompiledCount"] == 1
     assert health["alerts"]
+
+
+def test_get_source_sync_health_surfaces_unconfigured_graph_subscription(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_SYNC_USERS", "active@example.com")
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    supabase.tables["graph_subscriptions"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "stale@example.com",
+            "resource_name": "Stale mailbox",
+            "status": "renewal_due",
+            "expiration_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+            "last_error_message": "Microsoft Graph lifecycle event: reauthorizationRequired",
+        }
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    assert health["status"] == "degraded"
+    assert health["pipeline"]["unconfiguredGraphSubscriptions"] == 1
+    assert any(alert["code"] == "unconfigured_graph_subscription" for alert in health["alerts"])
 
 
 def test_get_source_sync_health_includes_recent_runs_and_stuck_items():

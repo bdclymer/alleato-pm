@@ -78,6 +78,34 @@ GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
 GRAPH_PROJECT_DOCUMENT_SOURCES = {"sharepoint"}
 
 
+def _configured_graph_subscription_keys() -> set[Tuple[str, str]]:
+    try:
+        from src.services.integrations.microsoft_graph.subscriptions import configured_subscription_targets
+    except Exception:
+        return set()
+    return {
+        (str(target.source), str(target.resource_id).lower())
+        for target in configured_subscription_targets()
+        if target.source and target.resource_id
+    }
+
+
+def _unconfigured_graph_subscriptions(subscriptions: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    configured_keys = _configured_graph_subscription_keys()
+    if not configured_keys:
+        return []
+    return [
+        row
+        for row in subscriptions
+        if str(row.get("status") or "") != "removed"
+        and (
+            str(row.get("source") or ""),
+            str(row.get("resource_id") or "").lower(),
+        )
+        not in configured_keys
+    ]
+
+
 def _active_sharepoint_resource_ids() -> set[str]:
     entries = [
         entry.strip()
@@ -739,6 +767,18 @@ def detect_source_sync_alerts(
         )
 
     graph_subscription_statuses = pipeline.get("graphSubscriptionsByStatus", {})
+    unconfigured_subscriptions = pipeline.get("unconfiguredGraphSubscriptions", 0)
+    if unconfigured_subscriptions:
+        alerts.append(
+            {
+                "severity": "critical",
+                "code": "unconfigured_graph_subscription",
+                "source": "microsoft_graph",
+                "resourceId": "graph_subscriptions",
+                "message": f"{unconfigured_subscriptions} Graph subscription row(s) are not in the configured sync target set.",
+                "detectedAt": _iso(now),
+            }
+        )
     removed_subscriptions = graph_subscription_statuses.get("removed", 0) + graph_subscription_statuses.get("missed", 0)
     if removed_subscriptions:
         alerts.append(
@@ -1371,6 +1411,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "packetJobsByStatus": _counter(packet_jobs, "status"),
         "tasksBySourceSystem": _counter(tasks, "source_system"),
         "graphSubscriptionsByStatus": _counter(subscriptions, "status"),
+        "unconfiguredGraphSubscriptions": len(_unconfigured_graph_subscriptions(subscriptions)),
         "graphProjectDocumentPromotion": _graph_project_document_promotion_counts(
             documents,
             project_documents,

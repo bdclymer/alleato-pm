@@ -1906,6 +1906,12 @@ velt-comment-dialog-internal velt-sidebar-button {
     box-shadow: 0 14px 36px rgba(15, 23, 42, 0.1);
   }
 
+  .global-ai-widget-panel-compact {
+    height: auto;
+    min-height: 0;
+    max-height: min(420px, calc(100dvh - 112px));
+  }
+
   .compact-ai-message-bubble {
     max-width: 86%;
   }

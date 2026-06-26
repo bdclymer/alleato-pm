@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
   ExternalLink,
@@ -72,8 +72,14 @@ import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
+import { parseAIReviewResponseComment } from "@/lib/submittals/ai-review/response-comment";
+import {
+  normalizeSubmittalDetailTab,
+  type SubmittalDetailTab,
+} from "@/lib/submittals/detail-tabs";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -95,6 +101,52 @@ function resolveUserName(users: AuthUser[], id: string): string {
   if (!u) return "";
   const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
   return name || u.email;
+}
+
+function userMatchesResponder({
+  authUserId,
+  personId,
+  responderId,
+}: {
+  authUserId: string | null;
+  personId: string | null;
+  responderId: string;
+}): boolean {
+  if (!authUserId) return false;
+  return responderId === authUserId || Boolean(personId && responderId === personId);
+}
+
+function AIReviewResponseSummary({ comment }: { comment: string }) {
+  const parsed = parseAIReviewResponseComment(comment);
+
+  if (!parsed) {
+    return <p className="text-sm leading-relaxed text-foreground">{comment}</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {parsed.summary && (
+        <p className="text-sm leading-relaxed text-foreground">
+          {parsed.summary}
+        </p>
+      )}
+      {parsed.recommendation && (
+        <p className="text-sm font-medium leading-relaxed text-foreground">
+          {parsed.recommendation}
+        </p>
+      )}
+      {parsed.findings.length > 0 && (
+        <ul className="space-y-1 text-sm leading-relaxed text-muted-foreground">
+          {parsed.findings.map((finding) => (
+            <li key={finding} className="flex gap-2">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+              <span>{finding}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function getInitials(name: string): string {
@@ -484,6 +536,8 @@ export function SubmittalDetailClient({
   projectName,
 }: SubmittalDetailClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const supabase = createClient();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -492,6 +546,7 @@ export function SubmittalDetailClient({
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
+  const { profile: currentUserProfile } = useCurrentUserProfile();
 
   const { users, allUsers } = useAuthUsers(String(projectId));
   const { companies } = useProjectCompanies(String(projectId), { per_page: 200 });
@@ -567,7 +622,11 @@ export function SubmittalDetailClient({
     router.refresh();
   }
 
-  const [activeTab, setActiveTab] = React.useState("details");
+  const tabFromUrl = normalizeSubmittalDetailTab(
+    searchParams.get("tab") ?? searchParams.get("view"),
+  );
+  const [activeTab, setActiveTab] =
+    React.useState<SubmittalDetailTab>(tabFromUrl);
   const [showAddStep, setShowAddStep] = React.useState(false);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
@@ -577,6 +636,9 @@ export function SubmittalDetailClient({
   const linkedDrawingIds = new Set(
     linkedDrawings.map((drawing) => drawing.drawingId),
   );
+  const currentUser = allUsers.find((user) => user.id === currentUserId) ?? null;
+  const currentUserPersonId =
+    currentUser?.person_id ?? currentUserProfile?.personId ?? null;
   const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
     const isActive = getStepState(step) === "in-progress";
     return (
@@ -584,11 +646,44 @@ export function SubmittalDetailClient({
       currentUserId &&
       step.submittal_responses?.some(
         (response) =>
-          response.responder_id === currentUserId &&
+          userMatchesResponder({
+            authUserId: currentUserId,
+            personId: currentUserPersonId,
+            responderId: response.responder_id,
+          }) &&
           response.response_status === "Pending",
       )
     );
   });
+
+  React.useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  function handleTabChange(tab: string) {
+    const nextTab = normalizeSubmittalDetailTab(tab);
+    setActiveTab(nextTab);
+
+    const nextParams = new URLSearchParams(
+      typeof window === "undefined"
+        ? searchParams.toString()
+        : window.location.search,
+    );
+    if (nextTab === "details") {
+      nextParams.delete("tab");
+      nextParams.delete("view");
+    } else {
+      nextParams.set("tab", nextTab);
+      nextParams.delete("view");
+    }
+
+    const query = nextParams.toString();
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
+  }
 
   React.useEffect(() => {
     let isMounted = true;
@@ -677,7 +772,9 @@ export function SubmittalDetailClient({
           responder: r.responder_id,
           status: r.response_status,
           comment: r.comments,
-          source: responseHistorySources.get(r.id) ?? null,
+          source:
+            responseHistorySources.get(r.id) ??
+            (parseAIReviewResponseComment(r.comments) ? "ai_review" : null),
         })),
     ),
     ...distributions.map((d) => ({
@@ -761,7 +858,7 @@ export function SubmittalDetailClient({
                 { label: "Details", href: "details", isActive: activeTab === "details" },
                 { label: "AI Review", href: "ai-review", isActive: activeTab === "ai-review" },
               ]}
-              onTabClick={(href) => setActiveTab(href)}
+              onTabClick={handleTabChange}
             />
 
             {activeTab === "details" && (
@@ -928,8 +1025,16 @@ export function SubmittalDetailClient({
                         const responder = step.submittal_responses?.[0]?.responder_id;
                         const responderName = responder ? resolveUserName(allUsers, responder) : null;
                         const isActive = state === "in-progress";
-                        const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                        const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
+                        const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
+                        const stepResponseEntry = step.submittal_responses?.find(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
                         return (
                           <div key={step.id} className="border-b border-border last:border-b-0">
                             <div className={cn(
@@ -1047,7 +1152,6 @@ export function SubmittalDetailClient({
                               type="button"
                               variant="link"
                               className="h-auto px-0 text-sm text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
-                              disabled={isDrawingOptionsLoading}
                             >
                               Drawing
                             </Button>
@@ -1134,7 +1238,7 @@ export function SubmittalDetailClient({
                                     {event.comment ? (
                                       <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
                                         <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
-                                        <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
+                                        <AIReviewResponseSummary comment={event.comment} />
                                       </div>
                                     ) : (
                                       <p className="mt-2 text-sm text-muted-foreground">
@@ -1229,6 +1333,7 @@ export function SubmittalDetailClient({
                       }
                     : null
                 }
+                onOpenDetails={() => handleTabChange("details")}
                 onWorkflowResponseRecorded={() => router.refresh()}
               />
             )}

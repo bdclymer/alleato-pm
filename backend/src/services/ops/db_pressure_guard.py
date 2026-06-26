@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict
 
 import psycopg2
 
@@ -65,6 +65,27 @@ class AppDbPressureSnapshot:
     idle_in_transaction_connections: int
     long_running_active_connections: int
     max_query_age_seconds: int
+    app_client_connections: int = 0
+    app_active_connections: int = 0
+    app_idle_in_transaction_connections: int = 0
+    app_long_running_active_connections: int = 0
+    platform_connections: int = 0
+    connection_buckets: Dict[str, int] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total_connections": self.total_connections,
+            "active_connections": self.active_connections,
+            "idle_in_transaction_connections": self.idle_in_transaction_connections,
+            "long_running_active_connections": self.long_running_active_connections,
+            "max_query_age_seconds": self.max_query_age_seconds,
+            "app_client_connections": self.app_client_connections,
+            "app_active_connections": self.app_active_connections,
+            "app_idle_in_transaction_connections": self.app_idle_in_transaction_connections,
+            "app_long_running_active_connections": self.app_long_running_active_connections,
+            "platform_connections": self.platform_connections,
+            "connection_buckets": self.connection_buckets or {},
+        }
 
 
 def _snapshot_from_row(row: dict[str, Any]) -> AppDbPressureSnapshot:
@@ -74,6 +95,12 @@ def _snapshot_from_row(row: dict[str, Any]) -> AppDbPressureSnapshot:
         idle_in_transaction_connections=int(row.get("idle_in_transaction_connections") or 0),
         long_running_active_connections=int(row.get("long_running_active_connections") or 0),
         max_query_age_seconds=int(float(row.get("max_query_age_seconds") or 0)),
+        app_client_connections=int(row.get("app_client_connections") or 0),
+        app_active_connections=int(row.get("app_active_connections") or 0),
+        app_idle_in_transaction_connections=int(row.get("app_idle_in_transaction_connections") or 0),
+        app_long_running_active_connections=int(row.get("app_long_running_active_connections") or 0),
+        platform_connections=int(row.get("platform_connections") or 0),
+        connection_buckets=dict(row.get("connection_buckets") or {}),
     )
 
 
@@ -89,6 +116,27 @@ def _fetch_pressure_snapshot(database_url: str) -> AppDbPressureSnapshot:
             cursor.execute("set statement_timeout = %s", (statement_timeout_ms,))
             cursor.execute(
                 """
+                with activity as (
+                  select
+                    *,
+                    case
+                      when backend_type <> 'client backend' then 'postgres_internal'
+                      when application_name = 'postgrest' then 'supabase_postgrest_pool'
+                      when application_name like 'realtime%%' then 'supabase_realtime'
+                      when application_name = 'Supabase Storage API' then 'supabase_storage'
+                      when application_name like 'Supavisor%%' then 'supabase_supavisor'
+                      when usename in ('supabase_admin', 'pgbouncer', 'authenticator', 'supabase_storage_admin')
+                        then 'supabase_platform_other'
+                      else 'app_or_external'
+                    end as pressure_bucket
+                  from pg_stat_activity
+                  where pid <> pg_backend_pid()
+                ),
+                bucket_counts as (
+                  select pressure_bucket, count(*)::int as bucket_count
+                  from activity
+                  group by pressure_bucket
+                )
                 select
                   count(*)::int as total_connections,
                   count(*) filter (where state = 'active')::int as active_connections,
@@ -98,15 +146,37 @@ def _fetch_pressure_snapshot(database_url: str) -> AppDbPressureSnapshot:
                       and query_start is not null
                       and now() - query_start > make_interval(secs => %s)
                   )::int as long_running_active_connections,
+                  count(*) filter (where pressure_bucket = 'app_or_external')::int as app_client_connections,
+                  count(*) filter (
+                    where pressure_bucket = 'app_or_external'
+                      and state = 'active'
+                  )::int as app_active_connections,
+                  count(*) filter (
+                    where pressure_bucket = 'app_or_external'
+                      and state = 'idle in transaction'
+                  )::int as app_idle_in_transaction_connections,
+                  count(*) filter (
+                    where pressure_bucket = 'app_or_external'
+                      and state = 'active'
+                      and query_start is not null
+                      and now() - query_start > make_interval(secs => %s)
+                  )::int as app_long_running_active_connections,
+                  count(*) filter (where pressure_bucket <> 'app_or_external')::int as platform_connections,
+                  coalesce(
+                    (
+                      select jsonb_object_agg(pressure_bucket, bucket_count)
+                      from bucket_counts
+                    ),
+                    '{}'::jsonb
+                  ) as connection_buckets,
                   coalesce(
                     max(extract(epoch from now() - query_start))
                       filter (where query_start is not null),
                     0
                   )::int as max_query_age_seconds
-                from pg_stat_activity
-                where pid <> pg_backend_pid()
+                from activity
                 """,
-                (long_running_seconds,),
+                (long_running_seconds, long_running_seconds),
             )
             row = cursor.fetchone()
             if not row:
@@ -145,6 +215,8 @@ def enforce_app_db_pressure_guard(job_name: str) -> AppDbPressureSnapshot | None
         return None
 
     max_total = _env_int("APP_DB_PRESSURE_MAX_TOTAL_CONNECTIONS", 35, minimum=1)
+    block_on_raw_total = _env_flag("APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL")
+    max_app_client = _env_int("APP_DB_PRESSURE_MAX_APP_CLIENT_CONNECTIONS", 12, minimum=1)
     max_active = _env_int("APP_DB_PRESSURE_MAX_ACTIVE_CONNECTIONS", 8, minimum=1)
     max_idle_txn = _env_int("APP_DB_PRESSURE_MAX_IDLE_IN_TXN_CONNECTIONS", 0, minimum=0)
     max_long_running = _env_int("APP_DB_PRESSURE_MAX_LONG_RUNNING_ACTIVE_CONNECTIONS", 2, minimum=0)
@@ -157,32 +229,44 @@ def enforce_app_db_pressure_guard(job_name: str) -> AppDbPressureSnapshot | None
         ) from exc
 
     reasons: list[str] = []
-    if snapshot.total_connections > max_total:
+    diagnostics: list[str] = []
+    if snapshot.total_connections > max_total and block_on_raw_total:
         reasons.append(f"total_connections={snapshot.total_connections}>{max_total}")
+    elif snapshot.total_connections > max_total:
+        diagnostics.append(f"raw_total_connections={snapshot.total_connections}>{max_total}")
+    if snapshot.app_client_connections > max_app_client:
+        reasons.append(f"app_client_connections={snapshot.app_client_connections}>{max_app_client}")
     if snapshot.active_connections > max_active:
         reasons.append(f"active_connections={snapshot.active_connections}>{max_active}")
-    if snapshot.idle_in_transaction_connections > max_idle_txn:
+    if snapshot.app_idle_in_transaction_connections > max_idle_txn:
         reasons.append(
-            f"idle_in_transaction_connections={snapshot.idle_in_transaction_connections}>{max_idle_txn}"
+            f"app_idle_in_transaction_connections={snapshot.app_idle_in_transaction_connections}>{max_idle_txn}"
         )
-    if snapshot.long_running_active_connections > max_long_running:
+    if snapshot.app_long_running_active_connections > max_long_running:
         reasons.append(
-            f"long_running_active_connections={snapshot.long_running_active_connections}>{max_long_running}"
+            f"app_long_running_active_connections={snapshot.app_long_running_active_connections}>{max_long_running}"
         )
 
     if reasons:
+        diagnostic_suffix = f"; diagnostics: {', '.join(diagnostics)}" if diagnostics else ""
         raise AppDbPressureError(
-            f"App DB pressure guard blocked {job_name}: {', '.join(reasons)}"
+            f"App DB pressure guard blocked {job_name}: {', '.join(reasons)}{diagnostic_suffix}"
         )
 
     logger.info(
-        "[DBPressureGuard] %s allowed: total=%d active=%d idle_in_txn=%d long_running=%d max_age=%ds",
+        (
+            "[DBPressureGuard] %s allowed: total=%d platform=%d app_client=%d "
+            "active=%d app_idle_in_txn=%d app_long_running=%d max_age=%ds buckets=%s"
+        ),
         job_name,
         snapshot.total_connections,
+        snapshot.platform_connections,
+        snapshot.app_client_connections,
         snapshot.active_connections,
-        snapshot.idle_in_transaction_connections,
-        snapshot.long_running_active_connections,
+        snapshot.app_idle_in_transaction_connections,
+        snapshot.app_long_running_active_connections,
         snapshot.max_query_age_seconds,
+        snapshot.connection_buckets or {},
     )
     return snapshot
 

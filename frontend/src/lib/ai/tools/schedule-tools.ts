@@ -1,14 +1,15 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
-import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type AnyRow = Record<string, unknown>;
 
 type CreateScheduleToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -28,10 +29,9 @@ export function createScheduleTools(
   userId: string,
   options: CreateScheduleToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const guardrails = ctx.guardrails;
 
   return {
     getScheduleAnalysis: tool({

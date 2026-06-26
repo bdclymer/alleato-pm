@@ -526,9 +526,14 @@ export function EmailsClient({
     setSelectedEmail(item);
   };
 
-  // Outlook-synced emails are read-only — only app-composed emails can be
-  // edited. Delete remains available for both (it only removes our copy).
+  // Outlook-synced emails are read-only in the project Emails surface. The
+  // project edit/delete/task endpoints still write `project_emails`, while live
+  // Outlook rows come from `outlook_email_intake`.
   const canEditEmail = React.useCallback(
+    (item: ProjectEmail) => !noWriteActions && !isOutlookSourced(item),
+    [noWriteActions],
+  );
+  const canDeleteEmail = React.useCallback(
     (item: ProjectEmail) => !noWriteActions && !isOutlookSourced(item),
     [noWriteActions],
   );
@@ -540,7 +545,7 @@ export function EmailsClient({
   };
 
   const handleDeleteIntent = (item: ProjectEmail) => {
-    if (noWriteActions) return;
+    if (!canDeleteEmail(item)) return;
     setEmailToDelete(item);
     setDeleteDialogOpen(true);
   };
@@ -575,7 +580,7 @@ export function EmailsClient({
     // inbox) we can't delete — the rule only applies to future emails, so
     // we just leave the source email in place and let the next sync clean
     // up any future duplicates.
-    if (noWriteActions || !projectId) return;
+    if (noWriteActions || !projectId || isOutlookSourced(item)) return;
     try {
       await deleteEmail.mutateAsync(String(item.id));
     } catch (err) {
@@ -608,7 +613,12 @@ export function EmailsClient({
   };
 
   const handleBulkDeleteConfirm = async () => {
-    const ids = tableState.selectedIds;
+    const deletableIds = new Set(
+      filteredEmails
+        .filter(canDeleteEmail)
+        .map((email) => String(email.id)),
+    );
+    const ids = tableState.selectedIds.filter((id) => deletableIds.has(id));
     if (ids.length === 0) return;
 
     setIsBulkDeleting(true);
@@ -713,7 +723,7 @@ export function EmailsClient({
           onSourceFilterChange={handleSourceFilterChange}
           canEdit={canEditEmail}
           canCompose={!noWriteActions}
-          canDelete={!noWriteActions}
+          canDelete={canDeleteEmail}
           sortBy={tableState.sortBy ?? undefined}
           sortDirection={tableState.sortDirection}
           onSortChange={handleSortChange}
@@ -843,7 +853,11 @@ export function EmailsClient({
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: allowBulkDelete && tableState.selectedIds.length > 0
+          onBulkDelete: allowBulkDelete && tableState.selectedIds.some((id) =>
+            filteredEmails.some(
+              (email) => String(email.id) === id && canDeleteEmail(email),
+            ),
+          )
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
         }}
@@ -860,8 +874,8 @@ export function EmailsClient({
           rowActions: (item) =>
             renderEmailRowActions(
               item,
-              noWriteActions ? null : handleEdit,
-              noWriteActions ? null : handleDeleteIntent,
+              canEditEmail(item) ? handleEdit : null,
+              canDeleteEmail(item) ? handleDeleteIntent : null,
               // "Mark as junk" creates a filter rule — it doesn't mutate the
               // email itself, so we expose it even on read-only views
               // (Outlook intake, global inbox) where it's most useful.
@@ -934,7 +948,8 @@ export function EmailsClient({
                     email={selectedEmail}
                     canCompose={!noWriteActions}
                     canEditEmail={canEditEmail(selectedEmail)}
-                    canDelete={!noWriteActions}
+                    canDelete={canDeleteEmail(selectedEmail)}
+                    canProjectEmailActions={!isOutlookSourced(selectedEmail)}
                     onCompose={() => {
                       setEditingEmail(null);
                       setComposeOpen(true);

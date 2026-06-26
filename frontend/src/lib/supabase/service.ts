@@ -87,11 +87,32 @@ export function createRagServiceClient(): SupabaseClient<RagDatabase> {
 }
 
 export function createOutlookIntakeServiceClient(): SupabaseClient<Database> {
-  // Outlook intake tables (`outlook_email_intake*`) are typed against the main
-  // `Database`. When RAG_SUPABASE_URL is set the rows physically live in the AI
-  // database, but the table shape is identical, so we surface the main typing.
-  if (process.env.RAG_SUPABASE_URL) {
-    return createRagServiceClient() as unknown as SupabaseClient<Database>;
+  // Outlook intake tables (`outlook_email_intake*`) physically live in the AI
+  // database. Falling back to the PM App database makes the inbox look empty
+  // even when sync is healthy, so require the canonical RAG client here.
+  const supabaseUrl = process.env.RAG_SUPABASE_URL;
+  const supabaseServiceKey =
+    process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.RAG_SUPABASE_SERVICE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error(
+      "Missing RAG_SUPABASE_URL environment variable. " +
+        "This is required for Outlook intake reads.",
+    );
   }
-  return createServiceClient();
+
+  if (!supabaseServiceKey) {
+    throw new Error(
+      "Missing RAG_SUPABASE_SERVICE_ROLE_KEY environment variable. " +
+        "This is required for Outlook intake reads.",
+    );
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

@@ -2,10 +2,15 @@ import { NextRequest } from "next/server";
 
 import { recordSubmittalWorkflowResponse } from "@/lib/submittals/workflow-response-service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { POST } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn(),
 }));
 
 jest.mock("@/lib/submittals/workflow-response-service", () => {
@@ -18,6 +23,9 @@ jest.mock("@/lib/submittals/workflow-response-service", () => {
 
 const createClientMock = createClient as jest.MockedFunction<
   typeof createClient
+>;
+const createServiceClientMock = createServiceClient as jest.MockedFunction<
+  typeof createServiceClient
 >;
 const recordWorkflowResponseMock =
   recordSubmittalWorkflowResponse as jest.MockedFunction<
@@ -79,7 +87,9 @@ describe("/api/projects/[projectId]/submittals/[submittalId]/ai-review/workflow-
   });
 
   it("records the response through the shared workflow service", async () => {
-    const supabase = mockUser();
+    mockUser();
+    const serviceClient = { from: jest.fn() };
+    createServiceClientMock.mockReturnValue(serviceClient as never);
     recordWorkflowResponseMock.mockResolvedValue({
       id: "response-1",
       response_status: "Revise and Resubmit",
@@ -108,7 +118,8 @@ describe("/api/projects/[projectId]/submittals/[submittalId]/ai-review/workflow-
 
     expect(response.status).toBe(200);
     expect(recordWorkflowResponseMock).toHaveBeenCalledWith({
-      supabase,
+      supabase: serviceClient,
+      notificationSupabase: serviceClient,
       projectId: 876,
       submittalId: "sub-1",
       stepId: "11111111-1111-4111-8111-111111111111",

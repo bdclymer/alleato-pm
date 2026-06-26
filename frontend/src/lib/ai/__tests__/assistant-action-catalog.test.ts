@@ -9,6 +9,17 @@ function catalogItems() {
 }
 
 describe("assistant action catalog", () => {
+  it("puts review and approval actions first in the command catalog", () => {
+    expect(ASSISTANT_ACTION_CATALOG.map((group) => group.title)).toEqual([
+      "Review and approve",
+      "Create records",
+      "Find evidence",
+      "Reports and briefings",
+      "Personalization",
+      "Delivery",
+    ]);
+  });
+
   it("derives high-value actions from the assistant tool registry", () => {
     const items = catalogItems();
 

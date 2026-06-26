@@ -3,6 +3,7 @@ import type { createServiceClient } from "@/lib/supabase/service";
 
 export type CurrentUserProfilePayload = {
   id: string;
+  personId: string | null;
   fullName: string;
   email: string;
   avatarUrl?: string;
@@ -55,7 +56,7 @@ export async function loadCurrentUserProfilePayload({
   const personQuery = serviceClient
     .from("people")
     .select(
-      "first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
+      "id, first_name, last_name, profile_photo_url, company, job_title, phone_mobile, phone_business",
     );
   const profilePromise =
     profileData === undefined
@@ -107,6 +108,7 @@ export async function loadCurrentUserProfilePayload({
 
   return {
     ...profile,
+    personId: personData?.id ?? personId ?? null,
     profileCompleteness: calculateProfileCompleteness(profile),
   };
 }

@@ -773,7 +773,7 @@ export function assembleSystemPromptFromContext(
           "",
           "The server-side retrieval for this query found no matching records.",
           "Do NOT say 'no data available'. Instead, use your available tools to answer the question directly.",
-          "Call the most relevant tool (e.g. getMeetingIntelligence, getMeetingsByDate, getActionItemsAndInsights, consultMicrosoftExecutiveAssistant) and report what you find.",
+          "Call the most relevant tool (e.g. getMeetingsByDate, getMeetingDetails, getActionItemsAndInsights, consultMicrosoftExecutiveAssistant) and report what you find.",
         ].join("\n"),
       );
     }

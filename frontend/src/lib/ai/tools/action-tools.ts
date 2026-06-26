@@ -10,9 +10,9 @@ import { z } from "zod";
 import { createHash, randomUUID } from "crypto";
 import type { CommitmentDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
 import type { Database, Json } from "@/types/database.types";
-import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { type ToolTracePayload, withWriteTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { wrapToolSetWithOutboundActionPolicy } from "./outbound-action-policy";
 import {
   RISK_CARD_TYPES,
@@ -58,6 +58,9 @@ import {
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  generatedTaskWriteMode?: "preview" | "direct";
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 export type CreateRFIPreviewInput = {
@@ -520,16 +523,15 @@ export function createActionTools(
   userId: string,
   options: ActionToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
   const writeAuditTable = "ai_tool_write_audits";
   const runtimeAuditClient = supabase as unknown as RuntimeAuditClient;
   const runtimeCommitmentReadClient =
     supabase as unknown as RuntimeCommitmentReadClient;
   const runtimeCommitmentWriteClient =
     supabase as unknown as RuntimeCommitmentWriteClient;
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const guardrails = ctx.guardrails;
 
   function resolveIdempotencyKey(
     toolName: string,
@@ -1121,8 +1123,24 @@ export function createActionTools(
           return { error: "Provide at least one of healthStatus or phase to update." };
         }
 
+        // The tool's enum (on_track/at_risk/...) must be mapped to the values
+        // projects.health_status actually allows (projects_health_status_check:
+        // Healthy | At Risk | Needs Attention | Critical). Writing the raw enum
+        // silently fails the check constraint on every call. Guarded by the AI
+        // tool contract harness (write-tools.contract.test.ts).
+        const HEALTH_STATUS_DB_VALUE: Record<string, string> = {
+          on_track: "Healthy",
+          at_risk: "At Risk",
+          critical: "Critical",
+          on_hold: "Needs Attention",
+          complete: "Healthy",
+        };
+
         const updates: Record<string, string> = {};
-        if (healthStatus) updates.health_status = healthStatus;
+        if (healthStatus) {
+          updates.health_status =
+            HEALTH_STATUS_DB_VALUE[healthStatus] ?? healthStatus;
+        }
         if (phase) updates.phase = phase;
 
         if (!confirmed) {
@@ -1407,7 +1425,17 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createGeneratedTask", options, async (input) => {
-        const { projectId, scheduleTaskId, title, description, assignee, dueDate, priority, status, confirmed } = input;
+        const {
+          projectId,
+          scheduleTaskId,
+          title,
+          description,
+          assignee,
+          dueDate,
+          priority,
+          status,
+          confirmed,
+        } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
         const effectiveProjectId = access.projectId;
@@ -1415,8 +1443,10 @@ export function createActionTools(
         const taskDescription = description?.trim() || title;
         const normalizedPriority = normalizeGeneratedTaskPriority(priority);
         const normalizedStatus = normalizeGeneratedTaskStatus(status);
+        const shouldWriteTask =
+          confirmed || options.generatedTaskWriteMode === "direct";
 
-        if (!confirmed) {
+        if (!shouldWriteTask) {
           return {
             action: "preview",
             message:
@@ -1440,7 +1470,18 @@ export function createActionTools(
           };
         }
 
-        const idempotencyKey = resolveIdempotencyKey("createGeneratedTask", input);
+        const auditInput =
+          shouldWriteTask && !confirmed
+            ? {
+                ...input,
+                confirmed: true,
+                autoConfirmedBy: "teams_task_write_direct",
+              }
+            : input;
+        const idempotencyKey = resolveIdempotencyKey(
+          "createGeneratedTask",
+          auditInput,
+        );
         const replay = await getReplayResponse("createGeneratedTask", idempotencyKey);
         if (replay) return replay;
 
@@ -1471,7 +1512,7 @@ export function createActionTools(
             toolName: "createGeneratedTask",
             idempotencyKey,
             projectId: effectiveProjectId,
-            input,
+            input: auditInput,
             status: "error",
             response: failure,
           });
@@ -1486,14 +1527,14 @@ export function createActionTools(
             tasksPage: effectiveProjectId ? `/${effectiveProjectId}/tasks?task=${data.id}` : `/tasks?task=${data.id}`,
           },
         };
-        await recordWriteAudit({
-          toolName: "createGeneratedTask",
-          idempotencyKey,
-          projectId: effectiveProjectId,
-          input,
-          status: "success",
-          response,
-        });
+	        await recordWriteAudit({
+	          toolName: "createGeneratedTask",
+	          idempotencyKey,
+	          projectId: effectiveProjectId,
+	          input: auditInput,
+	          status: "success",
+	          response,
+	        });
         return response;
       }),
     }),
@@ -1808,7 +1849,7 @@ export function createActionTools(
                 .update({
                   status: "active",
                   role: normalized.role ?? existingMembership.role,
-                  user_type: existingMembership.user_type || "contact",
+                  user_type: existingMembership.user_type || "client",
                   invite_status: "accepted",
                 })
                 .eq("id", existingMembership.id)
@@ -1829,7 +1870,12 @@ export function createActionTools(
                 person_id: person.id,
                 role: normalized.role,
                 status: "active",
-                user_type: "contact",
+                // 'contact' is not an allowed user_type
+                // (project_directory_memberships_user_type_check: employee |
+                // client | subcontractor | developer). AI-added project contacts
+                // default to the least-privileged external type. Guarded by the
+                // AI tool contract harness.
+                user_type: "client",
                 invite_status: "accepted",
               })
               .select("id,project_id,person_id,role,status,user_type,invite_status")
@@ -3010,7 +3056,7 @@ export function createActionTools(
         };
 
         // Synthesize with LLM
-        const openai = getOpenAI();
+        const openai = ctx.openai;
         const completion = await openai.chat.completions.create({
           model: "gpt-5.4-mini",
           temperature: 0.3,
@@ -3634,7 +3680,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("submitFeedback", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const feedbackId = crypto.randomUUID();
 
         const { error: insertError } = await supabaseLocal
@@ -3789,12 +3835,15 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
       inputSchema: z.object({
         title: z.string().describe("Short, clear title for the board card"),
         description: z.string().describe("Full description — context, goals, acceptance criteria"),
+        // Values must match admin_feedback_items_board_status_check
+        // (submitted | planned | in_progress | shipped). 'in_review' was in this
+        // enum but the DB CHECK rejects it — picking it failed the write.
         board_status: z
-          .enum(["submitted", "in_review", "planned", "in_progress", "shipped"])
+          .enum(["submitted", "planned", "in_progress", "shipped"])
           .default("submitted")
           .describe(
             "Which column to place the card in: " +
-            "'submitted' = new idea, 'in_review' = being evaluated, " +
+            "'submitted' = new idea, " +
             "'planned' = confirmed for roadmap, 'in_progress' = actively being built, " +
             "'shipped' = done"
           ),
@@ -3827,7 +3876,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("addBoardItem", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const itemId = crypto.randomUUID();
 
         const { error } = await supabaseLocal.from("admin_feedback_items").insert({

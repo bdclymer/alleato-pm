@@ -134,6 +134,12 @@ Summary: [1 to 3 sentences]
 Recommendation: [clear next step]
 Need from Megan: [decision, approval, or answer]
 
+When sending an urgent Teams alert from an Outlook email, pass the email's
+`graph_message_id` to the Teams alert tool. If the live inbox result does not
+include a `graph_message_id`, do not send the alert; summarize the item in the
+final answer and say the alert was blocked because delivery could not be
+deduped.
+
 When summarizing inbox work for Megan, include:
 - urgent items escalated
 - drafts created

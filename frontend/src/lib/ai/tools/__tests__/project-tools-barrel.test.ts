@@ -10,30 +10,46 @@
  */
 
 // Mock heavy dependencies so we can import the barrel without a real DB
-jest.mock("@/lib/supabase/service", () => ({
-  createServiceClient: () => ({
-    from: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      is: jest.fn().mockReturnThis(),
-      ilike: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-    }),
-    rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
+const mockDbClient = () => ({
+  from: jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockReturnThis(),
+    not: jest.fn().mockReturnThis(),
+    is: jest.fn().mockReturnThis(),
+    ilike: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
   }),
+  rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
+});
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: mockDbClient,
+  createRagServiceClient: mockDbClient,
 }));
 
+const mockGuardrails = () => ({
+  getScopedProjectIds: jest.fn().mockResolvedValue([67]),
+  pinnedProjectId: undefined,
+  enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+  getScope: jest.fn().mockResolvedValue({ isAdmin: false, allowedProjectIds: [67] }),
+});
+
 jest.mock("../guardrails", () => ({
-  createToolGuardrails: () => ({
-    getScopedProjectIds: jest.fn().mockResolvedValue([67]),
-    pinnedProjectId: undefined,
-    enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+  createToolGuardrails: mockGuardrails,
+}));
+
+// Mock createToolContext so barrel tests don't need a real OpenAI key or RAG client.
+jest.mock("../tool-context", () => ({
+  createToolContext: (_input: unknown) => ({
+    db: jest.requireMock("@/lib/supabase/service").createServiceClient(),
+    rag: jest.requireMock("@/lib/supabase/service").createRagServiceClient(),
+    openai: {},
+    guardrails: mockGuardrails(),
   }),
+  createFakeToolContext: jest.fn(),
 }));
 
 jest.mock("../acumatica", () => ({
@@ -86,7 +102,6 @@ const CORE_TOOLS = [
   "getProjectBudgetSummary",
   "getActionItemsAndInsights",
   "getMeetingsByDate",
-  "getMeetingIntelligence",
   "getOutlookOperationsStatus",
   "getOutlookCalendarEvents",
   "searchPastConversations",

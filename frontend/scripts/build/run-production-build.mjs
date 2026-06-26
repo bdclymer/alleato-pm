@@ -26,6 +26,8 @@ const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true";
 const buildEngine = (process.env.NEXT_PRODUCTION_BUILD_ENGINE ?? "turbopack")
   .trim()
   .toLowerCase();
+const nextBuildNodeOptions =
+  process.env.NEXT_PRODUCTION_BUILD_NODE_OPTIONS?.trim() || "--max-old-space-size=7168";
 
 let activeChild = null;
 let cleanedUp = false;
@@ -119,11 +121,12 @@ async function runNextBuildAttempt({ attempt, args, label }) {
   let buildOutput = "";
   const exitCode = await new Promise((resolve, reject) => {
     console.log(`[build] Starting ${label} production build attempt ${attempt}`);
+    console.log(`[build] ${label} production build NODE_OPTIONS=${nextBuildNodeOptions}`);
     activeChild = spawn("pnpm", args, {
       cwd: frontendRoot,
       env: {
         ...process.env,
-        NODE_OPTIONS: "--max-old-space-size=7168",
+        NODE_OPTIONS: nextBuildNodeOptions,
       },
       stdio: ["inherit", "pipe", "pipe"],
     });

@@ -113,8 +113,8 @@ interface ProjectEmailsWorkspaceProps {
   canEdit?: (email: ProjectEmail) => boolean;
   /** Hide the compose affordance on read-only (global / Outlook) surfaces. */
   canCompose?: boolean;
-  /** Hide the delete affordance on read-only surfaces. */
-  canDelete?: boolean;
+  /** Returns false for rows that cannot use the project email delete endpoint. */
+  canDelete?: boolean | ((email: ProjectEmail) => boolean);
   /** Mail / Table / List switcher rendered in the list header. */
   viewSwitcher?: React.ReactNode;
   /** Filter control rendered next to search in the list header. */
@@ -759,6 +759,7 @@ interface EmailReadingPanelProps {
   canCompose?: boolean;
   canEditEmail?: boolean;
   canDelete?: boolean;
+  canProjectEmailActions?: boolean;
   onCompose?: () => void;
   onEdit?: (email: ProjectEmail) => void;
   onDelete?: (email: ProjectEmail) => void;
@@ -773,9 +774,9 @@ interface EmailReadingPanelProps {
 }
 
 interface EmailActionControlsProps {
-  onSummarize: () => void;
+  onSummarize?: () => void;
   onImportanceIntent: (signal: "important" | "not_important") => void;
-  onCreateTask: () => void;
+  onCreateTask?: () => void;
   className?: string;
   orientation?: "row" | "column";
 }
@@ -796,19 +797,21 @@ function EmailActionControls({
         className,
       )}
     >
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onSummarize}
-        className={cn(
-          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
-          orientation === "column" && "justify-start",
-        )}
-      >
-        <Sparkles className="h-3.5 w-3.5" />
-        Summarize
-      </Button>
+      {onSummarize ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onSummarize}
+          className={cn(
+            "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+            orientation === "column" && "justify-start",
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Summarize
+        </Button>
+      ) : null}
 
       <Button
         type="button"
@@ -837,19 +840,21 @@ function EmailActionControls({
         Not important
       </Button>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onCreateTask}
-        className={cn(
-          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
-          orientation === "column" && "justify-start",
-        )}
-      >
-        <ListTodo className="h-3.5 w-3.5" />
-        Create task
-      </Button>
+      {onCreateTask ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onCreateTask}
+          className={cn(
+            "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+            orientation === "column" && "justify-start",
+          )}
+        >
+          <ListTodo className="h-3.5 w-3.5" />
+          Create task
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -859,6 +864,7 @@ export function EmailReadingPanel({
   canCompose = true,
   canEditEmail = false,
   canDelete = true,
+  canProjectEmailActions = true,
   onCompose,
   onEdit,
   onDelete,
@@ -901,7 +907,7 @@ export function EmailReadingPanel({
         `/api/projects/${email?.project_id}/email-attachments`,
         { signal },
       ),
-    enabled: Boolean(email?.project_id),
+    enabled: Boolean(email?.project_id && canProjectEmailActions),
   });
   const selectedAttachments = React.useMemo(
     () =>
@@ -1246,9 +1252,9 @@ export function EmailReadingPanel({
                 ) : null}
 
                 <EmailActionControls
-                  onSummarize={() => void handleSummarize()}
+                  onSummarize={canProjectEmailActions ? () => void handleSummarize() : undefined}
                   onImportanceIntent={handleImportanceIntent}
-                  onCreateTask={handleOpenCreateTask}
+                  onCreateTask={canProjectEmailActions ? handleOpenCreateTask : undefined}
                   className="border-t border-border/60 pt-5 2xl:hidden"
                 />
               </div>
@@ -1290,9 +1296,9 @@ export function EmailReadingPanel({
       {email && desktopActionsSlot
         ? createPortal(
             <EmailActionControls
-              onSummarize={() => void handleSummarize()}
+              onSummarize={canProjectEmailActions ? () => void handleSummarize() : undefined}
               onImportanceIntent={handleImportanceIntent}
-              onCreateTask={handleOpenCreateTask}
+              onCreateTask={canProjectEmailActions ? handleOpenCreateTask : undefined}
               orientation="column"
             />,
             desktopActionsSlot,
@@ -1624,6 +1630,11 @@ export function ProjectEmailsWorkspace({
       ? canEdit(selectedEmail)
       : true
     : false;
+  const selectedEmailDeletable = selectedEmail
+    ? typeof canDelete === "function"
+      ? canDelete(selectedEmail)
+      : canDelete
+    : false;
 
   const handleSelectEmail = React.useCallback((email: ProjectEmail) => {
     setSelectedEmailId(email.id);
@@ -1815,7 +1826,8 @@ export function ProjectEmailsWorkspace({
               email={selectedEmail}
               canCompose={canCompose}
               canEditEmail={selectedEmailEditable}
-              canDelete={canDelete}
+              canDelete={selectedEmailDeletable}
+              canProjectEmailActions={selectedEmailEditable}
               onCompose={onCompose}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -1853,7 +1865,7 @@ export function ProjectEmailsWorkspace({
                   <Pencil1Icon className="h-4 w-4" />
                 </Button>
               ) : null}
-              {canDelete ? (
+              {selectedEmailDeletable ? (
                 <Button
                   type="button"
                   variant="ghost"

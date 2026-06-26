@@ -51,10 +51,9 @@ const pdfjsBrowserEntry = resolvePdfjsDistPath("build/pdf.min.mjs");
 // Brotli-compressed Chromium blobs read at runtime by @sparticuz/chromium's
 // executablePath(). Force-traced into every PDF-rendering route (see
 // outputFileTracingIncludes below). The version glob survives package bumps;
-// both the hoisted symlink path and the real pnpm store path are covered so
-// tracing resolves the blobs regardless of how Vercel lays out node_modules.
+// Trace the real pnpm store path rather than the hoisted @sparticuz/chromium
+// symlink; Vercel rejects serverless packages that include symlinked dirs.
 const CHROMIUM_TRACE_GLOBS = [
-  "./node_modules/@sparticuz/chromium/bin/**",
   "./node_modules/.pnpm/@sparticuz+chromium@*/node_modules/@sparticuz/chromium/bin/**",
 ];
 
