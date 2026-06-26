@@ -5,6 +5,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { generateProgressReportSections } from "@/lib/progress-reports/ai-generate";
+import { recordProgressReportAiGeneratedDecision } from "@/lib/progress-reports/ai-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,25 @@ export const POST = withApiGuardrails(
         weekStart: report.week_start as string,
         weekEnd: report.week_end as string,
       });
+      const notificationDecision =
+        await recordProgressReportAiGeneratedDecision({
+          userId: user.id,
+          projectId: numericProjectId,
+          reportId,
+          weekStart: report.week_start as string,
+          weekEnd: report.week_end as string,
+        });
+      if (notificationDecision.status === "failed") {
+        console.warn(
+          JSON.stringify({
+            event: "progress_report_ai_notification_decision_failed",
+            projectId: numericProjectId,
+            reportId,
+            userId: user.id,
+            error: notificationDecision.error,
+          }),
+        );
+      }
       return NextResponse.json(sections);
     } catch (err) {
       return NextResponse.json(
