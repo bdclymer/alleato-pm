@@ -35,6 +35,7 @@ export function WidgetAiChat({
   view = "chat",
   onViewChange,
   onAssistantActivity,
+  onCompactStateChange,
   showWelcomePrompt = false,
   onWelcomePromptDismiss,
   notificationDraft,
@@ -44,6 +45,7 @@ export function WidgetAiChat({
   view?: WidgetAiChatView;
   onViewChange?: (view: WidgetAiChatView) => void;
   onAssistantActivity?: () => void;
+  onCompactStateChange?: (compact: boolean) => void;
   showWelcomePrompt?: boolean;
   onWelcomePromptDismiss?: () => void;
   notificationDraft?: AiWidgetNotificationDraft | null;
@@ -91,6 +93,10 @@ export function WidgetAiChat({
   const consumedNotificationDraftIdRef = useRef<string | null>(null);
 
   const effectiveSessionId = activeSessionId ?? pendingSessionId;
+
+  useEffect(() => {
+    onCompactStateChange?.(view === "chat" && !effectiveSessionId);
+  }, [effectiveSessionId, onCompactStateChange, view]);
 
   useEffect(() => {
     if (!notificationDraft?.prompt) return;

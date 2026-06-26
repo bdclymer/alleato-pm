@@ -65,6 +65,7 @@ export function GlobalAiWidget() {
   const [mounted, setMounted] = React.useState(false);
   const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
+  const [compactPanel, setCompactPanel] = React.useState(false);
   const [hasAssistantActivityUnread, setHasAssistantActivityUnread] =
     React.useState(false);
   const [showWelcomePrompt, setShowWelcomePrompt] = React.useState(false);
@@ -292,6 +293,7 @@ export function GlobalAiWidget() {
           className={cn(
             "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
             "transition-[opacity,transform] duration-200 ease-out",
+            compactPanel && !expanded && "global-ai-widget-panel-compact",
             expanded && "global-ai-widget-panel-expanded",
             open
               ? "translate-y-0 opacity-100"
@@ -382,6 +384,7 @@ export function GlobalAiWidget() {
               view={view}
               onViewChange={setView}
               onAssistantActivity={handleAssistantActivity}
+              onCompactStateChange={setCompactPanel}
               showWelcomePrompt={showWelcomePrompt}
               onWelcomePromptDismiss={dismissWelcomePrompt}
               notificationDraft={notificationDraft}
