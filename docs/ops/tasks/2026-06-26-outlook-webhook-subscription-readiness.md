@@ -1,6 +1,6 @@
 # Outlook Webhook Subscription Readiness
 
-Status: Verification Complete - Pending Publish
+Status: Complete - Published
 
 Linear: AAI-715
 
@@ -31,8 +31,8 @@ Restore and prove active Microsoft Graph webhook subscriptions for Outlook email
 - [x] Run focused backend subscription tests if backend code changes.
 - [x] Delegate changed-file typecheck for any TypeScript changes.
 - [x] Update progress notes with evidence and remaining blockers.
-- [ ] Post Linear milestone/handoff comment.
-- [ ] Publish or explicitly block with cause, detection gap, prevention step, owner, and next action.
+- [x] Post Linear milestone/handoff comment.
+- [x] Publish or explicitly block with cause, detection gap, prevention step, owner, and next action.
 
 ## Subagents
 
@@ -56,3 +56,8 @@ Restore and prove active Microsoft Graph webhook subscriptions for Outlook email
 
 - The old `mharrison@alleatogroup.com` subscription row remains stale because that mailbox is not in current `MICROSOFT_SYNC_USERS`. It no longer blocks configured Outlook webhook coverage, but stale-row cleanup should be a follow-up so status summaries do not over-report irrelevant renewal debt.
 - Render cron still needs to prove normal six-hour renewal cadence before the June 28 subscription expiry window; the manual run restored coverage.
+
+## Publish
+
+- Published to `origin/main` at `4ba56cec55cb4017729a3a38e5dd290eb83f9f31`.
+- Linear AAI-715 marked Done.

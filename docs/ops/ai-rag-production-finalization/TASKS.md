@@ -918,3 +918,6 @@ Evidence directory:
   - live graph subscription verifier.
 - Evidence:
   - [outlook-graph-subscriptions-live-aai-715.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-graph-subscriptions-live-aai-715.json)
+- Published:
+  - `4ba56cec55cb4017729a3a38e5dd290eb83f9f31`
+  - Linear AAI-715 marked Done.
