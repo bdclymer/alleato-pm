@@ -72,6 +72,7 @@ export interface SubmittalDetail extends SubmittalSummary {
     actor_id: string | null;
     new_status: string | null;
     changes: unknown;
+    metadata: unknown;
     occurred_at: string | null;
   }>;
   linked_rfis: Array<{

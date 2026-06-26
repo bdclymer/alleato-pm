@@ -111,6 +111,7 @@ function getDaysUntil(dateStr: string | null): number | null {
 }
 
 type StepState = "done" | "in-progress" | "rejected" | "not-started";
+type WorkflowResponseSource = "ai_review" | "workflow";
 
 function getStepState(
   step: SubmittalDetail["submittal_workflow_steps"][number],
@@ -126,6 +127,15 @@ function getStepState(
   const hasPending = responses.some((r) => r.response_status === "Pending");
   if (hasPending) return "in-progress";
   return "done";
+}
+
+function getHistoryRecordMetadata(
+  metadata: unknown,
+): Record<string, unknown> | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  return metadata as Record<string, unknown>;
 }
 
 // ─── Ball in Court Chip ───────────────────────────────────────────────────────
@@ -643,9 +653,31 @@ export function SubmittalDetailClient({
   }
 
   // Build unified comms feed
+  const responseHistorySources = new Map<string, WorkflowResponseSource>();
+  for (const item of history) {
+    if (item.action !== "workflow_response_recorded") continue;
+    const metadata = getHistoryRecordMetadata(item.metadata);
+    const responseId = metadata?.response_id;
+    const source = metadata?.source;
+    if (
+      typeof responseId === "string" &&
+      (source === "ai_review" || source === "workflow")
+    ) {
+      responseHistorySources.set(responseId, source);
+    }
+  }
+
   type CommEvent =
     | { kind: "rfi"; date: string; rfi: (typeof linkedRfis)[number] }
-    | { kind: "response"; date: string; stepType: string; responder: string; status: string; comment: string | null }
+    | {
+        kind: "response";
+        date: string;
+        stepType: string;
+        responder: string;
+        status: string;
+        comment: string | null;
+        source: WorkflowResponseSource | null;
+      }
     | { kind: "distribution"; date: string; fromId: string; recipientCount: number; message: string | null };
 
   const commEvents: CommEvent[] = [
@@ -664,6 +696,7 @@ export function SubmittalDetailClient({
           responder: r.responder_id,
           status: r.response_status,
           comment: r.comments,
+          source: responseHistorySources.get(r.id) ?? null,
         })),
     ),
     ...distributions.map((d) => ({
@@ -1108,7 +1141,11 @@ export function SubmittalDetailClient({
                                         </span>
                                         <div>
                                           <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
-                                          <p className="text-xs text-muted-foreground">{event.stepType}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {event.source === "ai_review"
+                                              ? `${event.stepType} via AI Review`
+                                              : event.stepType}
+                                          </p>
                                         </div>
                                       </div>
                                       <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>

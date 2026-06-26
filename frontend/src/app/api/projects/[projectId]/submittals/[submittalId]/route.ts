@@ -95,6 +95,7 @@ export const GET = withApiGuardrails(
            actor_id,
            new_status,
            changes,
+           metadata,
            occurred_at
          )`,
       )
