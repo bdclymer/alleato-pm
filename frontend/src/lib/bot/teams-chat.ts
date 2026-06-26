@@ -455,6 +455,8 @@ async function handleMessage(
       threadId: thread.id,
       extra: {
         responseLength: result.text.length,
+        responseSource: result.responseSource,
+        rawTextLength: result.rawTextLength,
         toolCallCount: result.toolTrace.length,
       },
     });
@@ -468,6 +470,8 @@ async function handleMessage(
         platform: "teams",
         model: "strategist",
         toolCallCount: result.toolTrace.length,
+        responseSource: result.responseSource,
+        rawTextLength: result.rawTextLength,
         usage: result.usage,
       },
     });
