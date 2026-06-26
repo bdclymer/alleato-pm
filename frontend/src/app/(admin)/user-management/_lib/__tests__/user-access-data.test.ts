@@ -1,5 +1,8 @@
 import {
+  buildUserSlugMaps,
   getProjectRoleTemplates,
+  looksLikePersonId,
+  slugifyName,
   toAccessSummary,
   type PermissionUser,
 } from "../user-access-data";
@@ -106,5 +109,93 @@ describe("toAccessSummary", () => {
     const summary = toAccessSummary(permissionUser({ personType: "subcontractor" }));
 
     expect(summary.personType).toBe("subcontractor");
+  });
+});
+
+describe("slugifyName", () => {
+  it("kebab-cases a normal name", () => {
+    expect(slugifyName("John Smith")).toBe("john-smith");
+  });
+
+  it("strips accents and apostrophes", () => {
+    expect(slugifyName("José O'Brien")).toBe("jose-obrien");
+  });
+
+  it("collapses punctuation and trims stray hyphens", () => {
+    expect(slugifyName("  Mary-Jane  (PM) ")).toBe("mary-jane-pm");
+  });
+
+  it("falls back to 'user' when nothing slugifiable remains", () => {
+    expect(slugifyName("！！！")).toBe("user");
+  });
+});
+
+describe("looksLikePersonId", () => {
+  it("recognises a UUID", () => {
+    expect(looksLikePersonId("a2a3eaf6-b0bf-46de-b406-493289136877")).toBe(true);
+  });
+
+  it("rejects a name slug", () => {
+    expect(looksLikePersonId("john-smith-2")).toBe(false);
+  });
+});
+
+describe("buildUserSlugMaps", () => {
+  function summaryFor(personId: string, fullName: string) {
+    return toAccessSummary(
+      permissionUser({
+        personId,
+        firstName: fullName.split(" ")[0] ?? "",
+        lastName: fullName.split(" ").slice(1).join(" "),
+        email: `${personId}@example.com`,
+      }),
+    );
+  }
+
+  it("gives unique names a bare slug", () => {
+    const { slugByPersonId } = buildUserSlugMaps([
+      summaryFor("p1", "John Smith"),
+      summaryFor("p2", "Jane Doe"),
+    ]);
+
+    expect(slugByPersonId.get("p1")).toBe("john-smith");
+    expect(slugByPersonId.get("p2")).toBe("jane-doe");
+  });
+
+  it("numbers duplicate names starting at the second occurrence", () => {
+    const { slugByPersonId } = buildUserSlugMaps([
+      summaryFor("p-aaa", "John Smith"),
+      summaryFor("p-bbb", "John Smith"),
+      summaryFor("p-ccc", "John Smith"),
+    ]);
+
+    expect(slugByPersonId.get("p-aaa")).toBe("john-smith");
+    expect(slugByPersonId.get("p-bbb")).toBe("john-smith-2");
+    expect(slugByPersonId.get("p-ccc")).toBe("john-smith-3");
+  });
+
+  it("numbers duplicates deterministically regardless of input order", () => {
+    const ordered = buildUserSlugMaps([
+      summaryFor("p-aaa", "John Smith"),
+      summaryFor("p-bbb", "John Smith"),
+    ]).slugByPersonId;
+    const reversed = buildUserSlugMaps([
+      summaryFor("p-bbb", "John Smith"),
+      summaryFor("p-aaa", "John Smith"),
+    ]).slugByPersonId;
+
+    expect(ordered.get("p-aaa")).toBe(reversed.get("p-aaa"));
+    expect(ordered.get("p-bbb")).toBe(reversed.get("p-bbb"));
+  });
+
+  it("round-trips slug back to personId", () => {
+    const { slugByPersonId, personIdBySlug } = buildUserSlugMaps([
+      summaryFor("p1", "John Smith"),
+      summaryFor("p2", "John Smith"),
+    ]);
+
+    for (const [personId, slug] of slugByPersonId) {
+      expect(personIdBySlug.get(slug)).toBe(personId);
+    }
   });
 });

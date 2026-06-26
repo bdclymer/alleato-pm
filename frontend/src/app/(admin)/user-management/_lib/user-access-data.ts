@@ -164,3 +164,61 @@ export function toAccessSummary(user: PermissionUser): UserAccessSummary {
 export function formatProjectCount(count: number) {
   return `${count} ${count === 1 ? "project" : "projects"}`;
 }
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function looksLikePersonId(value: string): boolean {
+  return UUID_PATTERN.test(value.trim());
+}
+
+/**
+ * Turn a display name into a URL-safe slug (kebab-case, ASCII only).
+ * Falls back to "user" when a name slugifies to nothing.
+ */
+export function slugifyName(name: string): string {
+  const slug = name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "") // strip accents
+    .toLowerCase()
+    .replace(/['’]/g, "") // drop apostrophes so "o'brien" -> "obrien"
+    .replace(/[^a-z0-9]+/g, "-") // any run of non-alphanumerics -> single hyphen
+    .replace(/^-+|-+$/g, ""); // trim leading/trailing hyphens
+
+  return slug || "user";
+}
+
+export type UserSlugMaps = {
+  /** personId -> canonical slug (e.g. "john-smith", "john-smith-2") */
+  slugByPersonId: Map<string, string>;
+  /** slug -> personId */
+  personIdBySlug: Map<string, string>;
+};
+
+/**
+ * Build a stable, collision-free slug for every user.
+ *
+ * The first user with a given name keeps the bare slug; each subsequent
+ * duplicate gets a numeric suffix ("-2", "-3", ...). Numbering is made
+ * deterministic by sorting on personId, so the same person always resolves to
+ * the same slug regardless of fetch/render order — which is required for the
+ * list page (link generation) and detail page (slug resolution) to agree.
+ */
+export function buildUserSlugMaps(users: UserAccessSummary[]): UserSlugMaps {
+  const slugByPersonId = new Map<string, string>();
+  const personIdBySlug = new Map<string, string>();
+  const baseCounts = new Map<string, number>();
+
+  const ordered = [...users].sort((a, b) => a.personId.localeCompare(b.personId));
+
+  for (const user of ordered) {
+    const base = slugifyName(user.fullName);
+    const nextCount = (baseCounts.get(base) ?? 0) + 1;
+    baseCounts.set(base, nextCount);
+    const slug = nextCount === 1 ? base : `${base}-${nextCount}`;
+    slugByPersonId.set(user.personId, slug);
+    personIdBySlug.set(slug, user.personId);
+  }
+
+  return { slugByPersonId, personIdBySlug };
+}

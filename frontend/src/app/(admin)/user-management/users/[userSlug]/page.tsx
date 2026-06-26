@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  buildUserSlugMaps,
   fetchTemplates,
   fetchUsers,
   getProjectRoleTemplates,
@@ -22,7 +23,9 @@ import type { GranularFlag } from "@/lib/permissions-shared";
 export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const { personId } = useParams<{ personId: string }>()! ?? { personId: "" };
+  const searchParams = useSearchParams();
+  const { userSlug } = useParams<{ userSlug: string }>()! ?? { userSlug: "" };
+  const routeKey = decodeURIComponent(userSlug ?? "");
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
@@ -44,9 +47,33 @@ export default function PermissionUserDetailPage() {
     () => (usersQuery.data?.data ?? []).map(toAccessSummary),
     [usersQuery.data?.data],
   );
+  const { slugByPersonId, personIdBySlug } = useMemo(
+    () => buildUserSlugMaps(users),
+    [users],
+  );
+
+  // Resolve the route key as a name slug first, then fall back to a raw
+  // personId/authUserId so legacy UUID links keep working.
+  const personIdFromSlug = personIdBySlug.get(routeKey) ?? null;
   const user =
-    users.find((item) => item.personId === personId || item.authUserId === personId) ??
-    null;
+    users.find(
+      (item) =>
+        item.personId === personIdFromSlug ||
+        item.personId === routeKey ||
+        item.authUserId === routeKey,
+    ) ?? null;
+
+  // Canonicalize the URL to the user's name slug (e.g. when arriving via a
+  // legacy UUID link). Replace so the back button skips the UUID entry.
+  useEffect(() => {
+    if (!user) return;
+    const canonicalSlug = slugByPersonId.get(user.personId);
+    if (!canonicalSlug || canonicalSlug === routeKey) return;
+    const query = searchParams?.toString();
+    router.replace(
+      `/user-management/users/${canonicalSlug}${query ? `?${query}` : ""}`,
+    );
+  }, [user, slugByPersonId, routeKey, router, searchParams]);
 
   const assignMutation = useMutation({
     mutationFn: async ({
