@@ -16,6 +16,24 @@ After every bug fix, answer:
 
 ---
 
+## How Work Gets Done (read before any multi-step task)
+
+The **AI Engineering Playbook** is the single source of truth for *which* skill runs at
+*which* step: `docs/alleato-os-docs/developer-docs/ai-engineering-playbook.mdx`.
+
+Before starting any multi-step task:
+1. **Classify the tier** — Quick / Standard / Large by uncertainty × blast radius (auth,
+   RLS, migrations, money, RAG → always Large).
+2. **Walk that tier's row** — Frame → Plan → Build → Verify → Test → Validate → Ship,
+   running the **one** skill named in each cell and skipping blank cells.
+
+Each skill owns exactly one (tier × step) cell — there is never a menu. Review =
+`code-review`. Deep QA = `verify-feature`. UI judgment = `impeccable-alleato`. Always
+close with `verification-before-completion`. Do not reach for retired/overlapping skills
+listed in the playbook's retirement table.
+
+---
+
 ## Project Overview
 
 Next.js 15 frontend + Supabase backend construction project management platform. Mirrors Procore: budgets, contracts, change orders, directory, scheduling.
