@@ -15,10 +15,28 @@ const querySchema = z.object({
 
 const patchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("mark-read"), id: z.string().uuid() }),
+  z.object({
+    action: z.literal("mark-reviewed"),
+    id: z.string().uuid(),
+    review: z
+      .object({
+        checkedIds: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+        checkedLabels: z.array(z.string().trim().min(1).max(200)).max(20).default([]),
+      })
+      .optional(),
+  }),
   z.object({ action: z.literal("mark-all-read") }),
   z.object({ action: z.literal("delete"), id: z.string().uuid() }),
   z.object({ action: z.literal("delete-all") }),
 ]);
+
+function getMetadataRecord(metadata: unknown): Record<string, unknown> {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+
+  return metadata as Record<string, unknown>;
+}
 
 export const GET = withApiGuardrails(
   "collaboration/notifications#GET",
@@ -162,6 +180,53 @@ export const PATCH = withApiGuardrails(
           code: "INTERNAL_ERROR",
           where: "collaboration/notifications#PATCH",
           message: `Failed to mark notification as read: ${error.message}`,
+          details: error,
+        });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (payload.action === "mark-reviewed") {
+      const reviewedAt = new Date().toISOString();
+      const { data: existing, error: existingError } = await supabase
+        .from("collaboration_notifications")
+        .select("metadata")
+        .eq("id", payload.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Failed to load notification review metadata: ${existingError.message}`,
+          details: existingError,
+        });
+      }
+
+      const metadata = {
+        ...getMetadataRecord(existing?.metadata),
+        review: {
+          source: "ai_approval_queue",
+          reviewedAt,
+          reviewedBy: user.id,
+          checkedIds: payload.review?.checkedIds ?? [],
+          checkedLabels: payload.review?.checkedLabels ?? [],
+        },
+      };
+
+      const { error } = await supabase
+        .from("collaboration_notifications")
+        .update({ read_at: reviewedAt, metadata })
+        .eq("id", payload.id)
+        .is("deleted_at", null);
+
+      if (error) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Failed to mark notification as reviewed: ${error.message}`,
           details: error,
         });
       }

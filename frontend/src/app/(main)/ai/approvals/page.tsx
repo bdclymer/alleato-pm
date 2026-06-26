@@ -20,6 +20,7 @@ import {
 import {
   useCollaborationNotifications,
   type CollaborationNotification,
+  type NotificationReviewPayload,
 } from "@/hooks/use-collaboration-notifications";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ function AiApprovalQueueRow({
   onDiscard,
 }: {
   notification: CollaborationNotification;
-  onMarkReviewed: (id: string) => void;
+  onMarkReviewed: (id: string, review?: NotificationReviewPayload) => void;
   onDiscard: (id: string) => void;
 }) {
   const metadata = getAiApprovalQueueMetadata(notification.metadata);
@@ -151,7 +152,15 @@ function AiApprovalQueueRow({
             size="sm"
             disabled={!canMarkReviewed}
             onClick={() => {
-              if (canMarkReviewed) onMarkReviewed(notification.id);
+              if (!canMarkReviewed) return;
+
+              const checkedReviewChecks = reviewChecks.filter((check) =>
+                checkedReviewIds.has(check.id),
+              );
+              onMarkReviewed(notification.id, {
+                checkedIds: checkedReviewChecks.map((check) => check.id),
+                checkedLabels: checkedReviewChecks.map((check) => check.label),
+              });
             }}
           >
             Mark reviewed
@@ -189,7 +198,7 @@ function AiApprovalQueueTable({
   onDiscard,
 }: {
   notifications: CollaborationNotification[];
-  onMarkReviewed: (id: string) => void;
+  onMarkReviewed: (id: string, review?: NotificationReviewPayload) => void;
   onDiscard: (id: string) => void;
 }) {
   if (notifications.length === 0) {
@@ -232,7 +241,7 @@ export default function AiApprovalsPage() {
     error,
     hasMore,
     fetchMore,
-    markAsRead,
+    markReviewed,
     deleteNotification,
   } = useCollaborationNotifications({
     kind: AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
@@ -260,7 +269,7 @@ export default function AiApprovalsPage() {
           ) : (
             <AiApprovalQueueTable
               notifications={queueItems}
-              onMarkReviewed={(id) => void markAsRead(id)}
+              onMarkReviewed={(id, review) => void markReviewed(id, review)}
               onDiscard={(id) => void deleteNotification(id)}
             />
           )}

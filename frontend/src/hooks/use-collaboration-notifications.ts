@@ -25,6 +25,11 @@ interface NotificationsResponse {
   hasMore: boolean;
 }
 
+export type NotificationReviewPayload = {
+  checkedIds?: string[];
+  checkedLabels?: string[];
+};
+
 const PAGE_SIZE = 25;
 
 type UseCollaborationNotificationsOptions = {
@@ -193,6 +198,11 @@ export function useCollaborationNotifications(
     (id: string) => mutate({ action: "mark-read", id }),
     [mutate],
   );
+  const markReviewed = useCallback(
+    (id: string, review?: NotificationReviewPayload) =>
+      mutate({ action: "mark-reviewed", id, review }),
+    [mutate],
+  );
   const markAllAsRead = useCallback(
     () => mutate({ action: "mark-all-read" }),
     [mutate],
@@ -215,6 +225,7 @@ export function useCollaborationNotifications(
     hasMore,
     fetchMore,
     markAsRead,
+    markReviewed,
     markAllAsRead,
     deleteNotification,
     deleteAll,
