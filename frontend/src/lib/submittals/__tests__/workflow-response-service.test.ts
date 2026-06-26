@@ -241,11 +241,21 @@ describe("recordSubmittalWorkflowResponse", () => {
       "submittals.update": [{ data: null }],
       "submittal_history.insert": [{ data: null }],
       "collaboration_notifications.insert": [{ data: null }],
+      "user_profiles.select": [
+        { data: { full_name: "Next Reviewer", email: "next@example.com" } },
+        { data: { full_name: "Current Reviewer", email: "current@example.com" } },
+      ],
+      "projects.select": [{ data: { name: "Goodwill Noblesville" } }],
+    });
+    const emailSender = jest.fn().mockResolvedValue({
+      id: "email-1",
+      error: null,
     });
 
     const result = await recordSubmittalWorkflowResponse({
       supabase: supabase as never,
       notificationSupabase: supabase as never,
+      emailSender,
       projectId: 25125,
       submittalId: "sub-1",
       stepId: "step-1",
@@ -258,7 +268,27 @@ describe("recordSubmittalWorkflowResponse", () => {
     expect(result.notification).toMatchObject({
       status: "created",
       userId: "user-2",
+      email: {
+        status: "sent",
+        id: "email-1",
+      },
     });
+    expect(emailSender).toHaveBeenCalledWith(
+      expect.objectContaining({
+        template: "submittal-notification",
+        to: "next@example.com",
+        subject: "SUB-002 response needed - Storefront glazing",
+        entity: { type: "submittal", id: "sub-1" },
+        userId: "user-2",
+        metadata: expect.objectContaining({
+          project_id: 25125,
+          submittal_id: "sub-1",
+          response_id: "response-1",
+          workflow_step_id: "step-2",
+          previous_workflow_step_id: "step-1",
+        }),
+      }),
+    );
 
     const notificationCall = supabase.calls.find(
       (call) => call.table === "collaboration_notifications",
@@ -279,6 +309,184 @@ describe("recordSubmittalWorkflowResponse", () => {
         workflow_step_id: "step-2",
         workflow_step_type: "Approver",
         response_status: "Approved",
+      },
+    });
+  });
+
+  it("skips workflow email when the next responder has no email", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-005",
+            title: "Access panels",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }],
+      "collaboration_notifications.insert": [{ data: null }],
+      "user_profiles.select": [
+        { data: { full_name: "Next Reviewer", email: null } },
+        { data: { full_name: "Current Reviewer", email: "current@example.com" } },
+      ],
+      "projects.select": [{ data: { name: "Goodwill Noblesville" } }],
+    });
+    const emailSender = jest.fn();
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      emailSender,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "created",
+      userId: "user-2",
+      email: {
+        status: "skipped",
+        reason: "missing_recipient_email",
+      },
+    });
+    expect(emailSender).not.toHaveBeenCalled();
+  });
+
+  it("records workflow email failures in submittal history", async () => {
+    const supabase = new SupabaseMock({
+      "submittals.select": [
+        {
+          data: {
+            id: "sub-1",
+            project_id: 25125,
+            status: "Open",
+            submittal_number: "SUB-006",
+            title: "Roof hatch",
+          },
+        },
+      ],
+      "submittal_workflow_steps.select": [
+        { data: { id: "step-1" } },
+        {
+          data: [
+            {
+              id: "step-1",
+              step_order: 1,
+              step_type: "Reviewer",
+              submittal_responses: [
+                { responder_id: "user-1", response_status: "Approved" },
+              ],
+            },
+            {
+              id: "step-2",
+              step_order: 2,
+              step_type: "Approver",
+              submittal_responses: [
+                { responder_id: "user-2", response_status: "Pending" },
+              ],
+            },
+          ],
+        },
+      ],
+      "submittal_responses.select": [{ data: { id: "response-1" } }],
+      "submittal_responses.update": [
+        { data: { id: "response-1", response_status: "Approved" } },
+      ],
+      "submittals.update": [{ data: null }],
+      "submittal_history.insert": [{ data: null }, { data: null }],
+      "collaboration_notifications.insert": [{ data: null }],
+      "user_profiles.select": [
+        { data: { full_name: "Next Reviewer", email: "next@example.com" } },
+        { data: { full_name: "Current Reviewer", email: "current@example.com" } },
+      ],
+      "projects.select": [{ data: { name: "Goodwill Noblesville" } }],
+    });
+    const emailSender = jest.fn().mockResolvedValue({
+      id: null,
+      error: { message: "resend unavailable" },
+    });
+
+    const result = await recordSubmittalWorkflowResponse({
+      supabase: supabase as never,
+      notificationSupabase: supabase as never,
+      emailSender,
+      projectId: 25125,
+      submittalId: "sub-1",
+      stepId: "step-1",
+      userId: "user-1",
+      responseStatus: "Approved",
+      comments: null,
+      where: "workflow-response-test",
+    });
+
+    expect(result.notification).toMatchObject({
+      status: "created",
+      userId: "user-2",
+      email: {
+        status: "failed",
+        error: "resend unavailable",
+      },
+    });
+
+    const emailFailureHistoryCall = supabase.calls
+      .filter((call) => call.table === "submittal_history")
+      .find(
+        (call) =>
+          (call.payload as { action?: string }).action ===
+          "workflow_email_failed",
+      );
+    expect(emailFailureHistoryCall?.payload).toMatchObject({
+      action: "workflow_email_failed",
+      actor_id: "user-1",
+      actor_type: "system",
+      changes: {
+        email_status: "failed",
+        target_user_id: "user-2",
+      },
+      metadata: {
+        project_id: 25125,
+        workflow_step_id: "step-1",
+        next_workflow_step_id: "step-2",
+        response_id: "response-1",
+        target_user_id: "user-2",
+        error: "resend unavailable",
+        source: "workflow",
       },
     });
   });

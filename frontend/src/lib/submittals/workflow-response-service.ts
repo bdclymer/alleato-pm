@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import SubmittalWorkflowHandoffNotification from "@/emails/submittals/SubmittalWorkflowHandoffNotification";
+import { APP_BASE_URL } from "@/lib/email/client";
+import { sendEmail } from "@/lib/email/send";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
@@ -27,6 +30,7 @@ type JsonValue = Database["public"]["Tables"]["submittal_history"]["Insert"]["me
 interface RecordWorkflowResponseInput {
   supabase: WorkflowSupabaseClient;
   notificationSupabase?: WorkflowSupabaseClient;
+  emailSender?: typeof sendEmail;
   projectId: number;
   submittalId: string;
   stepId: string;
@@ -41,6 +45,10 @@ export type SubmittalWorkflowNotificationResult =
       status: "created";
       userId: string;
       eventKey: string;
+      email:
+        | { status: "sent"; id: string | null }
+        | { status: "skipped"; reason: "missing_recipient_email" }
+        | { status: "failed"; error: string };
     }
   | {
       status: "skipped";
@@ -179,6 +187,74 @@ async function insertWorkflowNotificationFailureHistory({
   }
 }
 
+async function insertWorkflowEmailFailureHistory({
+  supabase,
+  submittalId,
+  projectId,
+  userId,
+  responseId,
+  stepId,
+  nextStepId,
+  targetUserId,
+  eventKey,
+  errorMessage,
+  where,
+}: {
+  supabase: WorkflowSupabaseClient;
+  submittalId: string;
+  projectId: number;
+  userId: string;
+  responseId: string;
+  stepId: string;
+  nextStepId: string;
+  targetUserId: string;
+  eventKey: string;
+  errorMessage: string;
+  where: string;
+}) {
+  const { error } = await supabase.from("submittal_history").insert({
+    submittal_id: submittalId,
+    action: "workflow_email_failed",
+    actor_id: userId,
+    actor_type: "system",
+    description: "Workflow response recorded, but next responder email failed.",
+    changes: {
+      email_status: "failed",
+      target_user_id: targetUserId,
+    } as JsonValue,
+    metadata: {
+      project_id: projectId,
+      workflow_step_id: stepId,
+      next_workflow_step_id: nextStepId,
+      response_id: responseId,
+      target_user_id: targetUserId,
+      event_key: eventKey,
+      error: errorMessage,
+      source: historySource(where),
+    } as JsonValue,
+    occurred_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    throw new GuardrailError({
+      code: "DB_ERROR",
+      where,
+      message: `Could not write submittal workflow email failure history: ${error.message}`,
+    });
+  }
+}
+
+function displayName(profile: {
+  full_name?: string | null;
+  email?: string | null;
+}) {
+  return (
+    profile.full_name?.trim() ||
+    profile.email?.split("@")[0]?.trim() ||
+    "A team member"
+  );
+}
+
 async function createWorkflowHandoffNotification({
   supabase,
   fallbackSupabase,
@@ -192,6 +268,7 @@ async function createWorkflowHandoffNotification({
   responseStatus,
   target,
   skipReason,
+  emailSender,
   where,
 }: {
   supabase: WorkflowSupabaseClient;
@@ -206,6 +283,7 @@ async function createWorkflowHandoffNotification({
   responseStatus: SubmittalWorkflowResponseStatus;
   target: { userId: string; stepId: string; stepType: string } | null;
   skipReason: "step_still_pending" | "workflow_complete";
+  emailSender?: typeof sendEmail;
   where: string;
 }): Promise<SubmittalWorkflowNotificationResult> {
   if (!target) {
@@ -241,7 +319,122 @@ async function createWorkflowHandoffNotification({
     });
 
   if (!error) {
-    return { status: "created", userId: target.userId, eventKey };
+    const [
+      { data: targetProfile, error: targetProfileError },
+      { data: actorProfile, error: actorProfileError },
+      { data: project, error: projectError },
+    ] = await Promise.all([
+      notificationClient
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", target.userId)
+        .maybeSingle(),
+      notificationClient
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", userId)
+        .maybeSingle(),
+      notificationClient
+        .from("projects")
+        .select("name")
+        .eq("id", projectId)
+        .maybeSingle(),
+    ]);
+
+    const profileError =
+      targetProfileError?.message ||
+      actorProfileError?.message ||
+      projectError?.message;
+    if (profileError) {
+      await insertWorkflowEmailFailureHistory({
+        supabase,
+        submittalId,
+        projectId,
+        userId,
+        responseId,
+        stepId,
+        nextStepId: target.stepId,
+        targetUserId: target.userId,
+        eventKey,
+        errorMessage: profileError,
+        where,
+      });
+
+      return {
+        status: "created",
+        userId: target.userId,
+        eventKey,
+        email: { status: "failed", error: profileError },
+      };
+    }
+
+    const recipientEmail = targetProfile?.email?.trim();
+    if (!recipientEmail) {
+      return {
+        status: "created",
+        userId: target.userId,
+        eventKey,
+        email: { status: "skipped", reason: "missing_recipient_email" },
+      };
+    }
+
+    const emailResult = await (emailSender ?? sendEmail)({
+      template: "submittal-notification",
+      to: recipientEmail,
+      subject: `${submittalNumber ?? "Submittal"} response needed - ${
+        submittalTitle ?? "Untitled"
+      }`,
+      react: SubmittalWorkflowHandoffNotification({
+        recipientName: displayName(targetProfile),
+        projectName: project?.name ?? `Project #${projectId}`,
+        submittalNumber: submittalNumber ?? "Submittal",
+        submittalTitle: submittalTitle ?? "Untitled",
+        respondedBy: displayName(actorProfile ?? {}),
+        responseStatus,
+        stepType: target.stepType,
+        viewUrl: `${APP_BASE_URL}/${projectId}/submittals/${submittalId}`,
+      }),
+      entity: { type: "submittal", id: submittalId },
+      userId: target.userId,
+      idempotencyKey: eventKey,
+      metadata: {
+        project_id: projectId,
+        submittal_id: submittalId,
+        response_id: responseId,
+        workflow_step_id: target.stepId,
+        previous_workflow_step_id: stepId,
+      },
+    });
+
+    if (!emailResult.error) {
+      return {
+        status: "created",
+        userId: target.userId,
+        eventKey,
+        email: { status: "sent", id: emailResult.id },
+      };
+    }
+
+    await insertWorkflowEmailFailureHistory({
+      supabase,
+      submittalId,
+      projectId,
+      userId,
+      responseId,
+      stepId,
+      nextStepId: target.stepId,
+      targetUserId: target.userId,
+      eventKey,
+      errorMessage: emailResult.error.message,
+      where,
+    });
+
+    return {
+      status: "created",
+      userId: target.userId,
+      eventKey,
+      email: { status: "failed", error: emailResult.error.message },
+    };
   }
 
   await insertWorkflowNotificationFailureHistory({
@@ -269,6 +462,7 @@ async function createWorkflowHandoffNotification({
 export async function recordSubmittalWorkflowResponse({
   supabase,
   notificationSupabase,
+  emailSender,
   projectId,
   submittalId,
   stepId,
@@ -478,6 +672,7 @@ export async function recordSubmittalWorkflowResponse({
     responseStatus,
     target: notificationTarget,
     skipReason: notificationSkipReason,
+    emailSender,
     where,
   });
 
