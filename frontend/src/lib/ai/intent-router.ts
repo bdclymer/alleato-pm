@@ -55,10 +55,32 @@ const EMAIL_ACTION_PATTERNS = [
 // status/briefing questions that should go through packet-first retrieval, not
 // a narrow vector search. Meeting-specific explicit lookups are covered by
 // EXPLICIT_SOURCE_LOOKUP_PATTERNS below.
+// NOTE: bare "source" is deliberately NOT a standalone trigger here. It collides
+// with domain field names — "Line Item Revenue Source", "funding source",
+// "source of truth" — and used to steal product how-to questions into transcript
+// search (e.g. "what does Line Item Revenue Source do" → semanticSearch). The
+// word "source" only signals a source lookup in an evidence-retrieval phrasing,
+// captured by the guarded patterns below. Regression-guarded by intent-router.test.ts.
 const SOURCE_LOOKUP_PATTERNS = [
-  /\b(source|evidence|citation|transcript|emails?|e-mails?|inbox|mails?|outlook|teams|messages?|documents?)\b/i,
+  // Communication-channel + evidence nouns that unambiguously name a retrievable
+  // record. These fire unconditionally — they don't collide with field names.
+  /\b(evidence|citation|transcript|emails?|e-mails?|inbox|mails?|outlook|teams|messages?|documents?)\b/i,
   /\bshow me\b.*\b(where|source|messages?|emails?|e-mails?|inbox)\b/i,
 ];
+
+// "source(s)" as an evidence-retrieval request. Gated below by
+// DOMAIN_FIELD_SOURCE_PATTERN so the word "source" in a FIELD NAME does not trip it.
+const SOURCE_WORD_LOOKUP_PATTERNS = [
+  /\b(what'?s|what is|where'?s|where is|show me|find|pull up|cite|give me|need|underlying|original)\b.{0,40}\bsources?\b/i,
+  /\bsources? (for|of|behind|on|that|showing|backing|supporting)\b/i,
+];
+
+// When "source" is preceded by a domain qualifier it's a field name
+// ("revenue source", "funding source", "line item source"), not a request to
+// retrieve an underlying record. This is the guard for the production miss where
+// "what does Line Item Revenue Source do" was routed to transcript search.
+const DOMAIN_FIELD_SOURCE_PATTERN =
+  /\b(revenue|funding|cost|income|payment|budget|data|line[- ]?item)\s+sources?\b/i;
 
 const EXPLICIT_SOURCE_LOOKUP_PATTERNS = [
   /\b(look through|search|find|check|pull up|scan|show me)\b.{0,60}\b(teams|messages?|chats?|emails?|e-mails?|inbox|outlook|meetings?|transcripts?|documents?)\b/i,
@@ -91,6 +113,12 @@ const APP_HELP_PATTERNS = [
   /\b(what table|which table|what route|which route|what page|which page)\b.{0,80}\b(app|feature|page|workflow|button|route|table|powers|backs)\b/i,
   /\b(is this|is that|can the app|does the app)\b.{0,80}\b(implemented|live|planned|available|built|supported)\b/i,
   /\bwhy can'?t i see\b/i,
+  // Conceptual "what does this feature/field do / I don't understand it" help —
+  // distinct from the UI-navigation phrasings above. Anchored on a confusion or
+  // definition verb AND a feature/action object so data questions ("I don't
+  // understand why we're over budget") are NOT stolen into app help.
+  /\b(i (really |honestly )?(don'?t|dont|do not) (really |fully |quite )?understand|i'?m (really |so )?confused (about|by|on|with)|help me understand)\b.{0,80}\b(field|column|button|tab|section|toggle|setting|option|feature|page|screen|widget|dropdown|do|does|mean|means|work|works|used for|for)\b/i,
+  /\bwhat (does|do|is|are)\b.{0,70}\b(field|column|button|tab|toggle|setting|option|feature|do|mean|means|stand for|used for|represent)\b/i,
 ];
 
 const OWNER_PORTFOLIO_BRIEFING_PATTERNS = [
@@ -175,7 +203,11 @@ export function classifyAssistantIntent(
     return "latest_status";
   }
 
-  if (SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text))) {
+  if (
+    SOURCE_LOOKUP_PATTERNS.some((pattern) => pattern.test(text)) ||
+    (!DOMAIN_FIELD_SOURCE_PATTERN.test(text) &&
+      SOURCE_WORD_LOOKUP_PATTERNS.some((pattern) => pattern.test(text)))
+  ) {
     return "source_lookup";
   }
 
