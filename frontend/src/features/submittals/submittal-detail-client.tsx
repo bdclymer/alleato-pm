@@ -1333,6 +1333,7 @@ export function SubmittalDetailClient({
                       }
                     : null
                 }
+                onOpenDetails={() => handleTabChange("details")}
                 onWorkflowResponseRecorded={() => router.refresh()}
               />
             )}

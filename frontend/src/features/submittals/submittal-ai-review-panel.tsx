@@ -41,6 +41,7 @@ interface Props {
     stepId: string;
     stepType: string;
   } | null;
+  onOpenDetails?: () => void;
   onWorkflowResponseRecorded?: () => void;
 }
 
@@ -364,6 +365,7 @@ export function SubmittalAIReviewPanel({
   projectId,
   submittalId,
   workflowResponseStep,
+  onOpenDetails,
   onWorkflowResponseRecorded,
 }: Props) {
   const { data, isLoading } = useSubmittalAIReview(projectId, submittalId);
@@ -380,6 +382,16 @@ export function SubmittalAIReviewPanel({
   const updatingCheckId = updateDisposition.isPending
     ? (updateDisposition.variables?.checkId ?? null)
     : null;
+  const notReadyLayerKeys = new Set(
+    data?.readiness.layers
+      .filter((layer) => layer.state === "not_ready")
+      .map((layer) => layer.key) ?? [],
+  );
+  const detailsRecoveryLabel = notReadyLayerKeys.has("linked_drawings")
+    ? "Link drawings in Details"
+    : notReadyLayerKeys.has("submittal_text")
+      ? "Add source documents in Details"
+      : null;
 
   function handleDispositionChange(
     check: ReviewCheck,
@@ -458,7 +470,19 @@ export function SubmittalAIReviewPanel({
           <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>{data.readiness.summary}</div>
+              <div>
+                <div>{data.readiness.summary}</div>
+                {detailsRecoveryLabel && onOpenDetails && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="mt-2 h-auto p-0 text-sm font-medium text-warning underline-offset-4 hover:text-warning"
+                    onClick={onOpenDetails}
+                  >
+                    {detailsRecoveryLabel}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
