@@ -19,6 +19,33 @@ import { Button, EmptyState, ErrorState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import type { GranularFlag } from "@/lib/permissions-shared";
 
+type ProjectOption = {
+  id: number;
+  name: string;
+  jobNumber: string | null;
+};
+
+type ProjectsResponse = {
+  data: Array<{
+    id: number;
+    name: string | null;
+    "job number"?: string | null;
+    job_number?: string | null;
+  }>;
+};
+
+async function fetchProjectOptions(): Promise<ProjectOption[]> {
+  const response = await apiFetch<ProjectsResponse>(
+    "/api/projects?limit=500&fields=id,name,job_number&includeClient=false",
+  );
+
+  return response.data.map((project) => ({
+    id: project.id,
+    name: project.name?.trim() || `Project #${project.id}`,
+    jobNumber: project["job number"] ?? project.job_number ?? null,
+  }));
+}
+
 export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
@@ -38,6 +65,11 @@ export default function PermissionUserDetailPage() {
   const companyTemplatesQuery = useQuery({
     queryKey: ["permission-templates", "company"],
     queryFn: () => fetchTemplates("company"),
+  });
+
+  const projectsQuery = useQuery({
+    queryKey: ["permission-project-options"],
+    queryFn: fetchProjectOptions,
   });
 
   const users = useMemo(
@@ -68,7 +100,52 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
+      console.error("Project access role update failed", err);
       toast.error("Failed to update project access");
+    },
+  });
+
+  const addProjectAccessMutation = useMutation({
+    mutationFn: async ({
+      projectIds,
+      templateId,
+    }: {
+      projectIds: number[];
+      templateId: string;
+    }) => {
+      await apiFetch(`/api/permissions/users/${personId}/project-access`, {
+        method: "POST",
+        body: JSON.stringify({ project_ids: projectIds, template_id: templateId }),
+      });
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.projectIds.length === 1
+          ? "Project access added"
+          : `${variables.projectIds.length} projects added`,
+      );
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      console.error("Project access add failed", err);
+      toast.error("Project access could not be added. Try again.");
+    },
+  });
+
+  const removeProjectAccessMutation = useMutation({
+    mutationFn: async ({ projectId }: { projectId: number | string }) => {
+      await apiFetch(`/api/permissions/users/${personId}/project-access`, {
+        method: "DELETE",
+        body: JSON.stringify({ project_id: Number(projectId) }),
+      });
+    },
+    onSuccess: () => {
+      toast.success("Project access removed");
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      console.error("Project access remove failed", err);
+      toast.error("Project access could not be removed. Try again.");
     },
   });
 
@@ -89,6 +166,7 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
+      console.error("Company access update failed", err);
       toast.error("Failed to update company access");
     },
   });
@@ -122,6 +200,7 @@ export default function PermissionUserDetailPage() {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
+      console.error("Permission exception update failed", err);
       toast.error("Failed to update permission exception");
     },
   });
@@ -176,12 +255,24 @@ export default function PermissionUserDetailPage() {
           user={user}
           templates={getProjectRoleTemplates(projectTemplatesQuery.data ?? [])}
           companyTemplates={companyTemplatesQuery.data ?? []}
+          projects={projectsQuery.data ?? []}
           isTemplatesLoading={projectTemplatesQuery.isLoading}
-          isAssignmentSaving={assignMutation.isPending}
+          isProjectsLoading={projectsQuery.isLoading}
+          isAssignmentSaving={
+            assignMutation.isPending ||
+            addProjectAccessMutation.isPending ||
+            removeProjectAccessMutation.isPending
+          }
           isCompanyTemplateSaving={companyTemplateMutation.isPending}
           isGranularOverrideSaving={granularOverrideMutation.isPending}
           onAssignTemplate={(projectId, personId, templateId) =>
             assignMutation.mutate({ projectId, personId, templateId })
+          }
+          onAddProjectAccess={(projectIds, templateId) =>
+            addProjectAccessMutation.mutate({ projectIds, templateId })
+          }
+          onRemoveProjectAccess={(projectId) =>
+            removeProjectAccessMutation.mutate({ projectId })
           }
           onAssignCompanyTemplate={(personId, templateId) =>
             companyTemplateMutation.mutate({ personId, templateId })
