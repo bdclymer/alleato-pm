@@ -23,7 +23,7 @@ export type AssistantIntent =
 // it to describe the task in text instead of calling createGeneratedTask.
 const TASK_WRITE_PATTERNS = [
   /\b(remind me to|remind me about)\b/i,
-  /\b(add a task|add task|create a task|create task|make a task|log a task|log that I need to)\b/i,
+  /\b(add a task|add task|create (a|the|this|that) task|create task|make a task|log a task|log that I need to)\b/i,
   /\b(flag (this |it )?for follow[- ]?up|throw (this |it )?on (my )?list)\b/i,
   /\bnote for myself\b/i,
   /\baction item:\s/i,

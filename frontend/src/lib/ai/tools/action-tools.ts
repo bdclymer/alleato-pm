@@ -58,6 +58,7 @@ import {
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  generatedTaskWriteMode?: "preview" | "direct";
 };
 
 export type CreateRFIPreviewInput = {
@@ -1407,7 +1408,17 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createGeneratedTask", options, async (input) => {
-        const { projectId, scheduleTaskId, title, description, assignee, dueDate, priority, status, confirmed } = input;
+        const {
+          projectId,
+          scheduleTaskId,
+          title,
+          description,
+          assignee,
+          dueDate,
+          priority,
+          status,
+          confirmed,
+        } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
         const effectiveProjectId = access.projectId;
@@ -1415,8 +1426,10 @@ export function createActionTools(
         const taskDescription = description?.trim() || title;
         const normalizedPriority = normalizeGeneratedTaskPriority(priority);
         const normalizedStatus = normalizeGeneratedTaskStatus(status);
+        const shouldWriteTask =
+          confirmed || options.generatedTaskWriteMode === "direct";
 
-        if (!confirmed) {
+        if (!shouldWriteTask) {
           return {
             action: "preview",
             message:
@@ -1440,7 +1453,18 @@ export function createActionTools(
           };
         }
 
-        const idempotencyKey = resolveIdempotencyKey("createGeneratedTask", input);
+        const auditInput =
+          shouldWriteTask && !confirmed
+            ? {
+                ...input,
+                confirmed: true,
+                autoConfirmedBy: "teams_task_write_direct",
+              }
+            : input;
+        const idempotencyKey = resolveIdempotencyKey(
+          "createGeneratedTask",
+          auditInput,
+        );
         const replay = await getReplayResponse("createGeneratedTask", idempotencyKey);
         if (replay) return replay;
 
@@ -1471,7 +1495,7 @@ export function createActionTools(
             toolName: "createGeneratedTask",
             idempotencyKey,
             projectId: effectiveProjectId,
-            input,
+            input: auditInput,
             status: "error",
             response: failure,
           });
@@ -1486,14 +1510,14 @@ export function createActionTools(
             tasksPage: effectiveProjectId ? `/${effectiveProjectId}/tasks?task=${data.id}` : `/tasks?task=${data.id}`,
           },
         };
-        await recordWriteAudit({
-          toolName: "createGeneratedTask",
-          idempotencyKey,
-          projectId: effectiveProjectId,
-          input,
-          status: "success",
-          response,
-        });
+	        await recordWriteAudit({
+	          toolName: "createGeneratedTask",
+	          idempotencyKey,
+	          projectId: effectiveProjectId,
+	          input: auditInput,
+	          status: "success",
+	          response,
+	        });
         return response;
       }),
     }),

@@ -1134,6 +1134,7 @@ export function createStrategistTools(
     pinnedProjectId?: number;
     sessionId?: string;
     includeActionTools?: boolean;
+    generatedTaskWriteMode?: ActionToolsOptions["generatedTaskWriteMode"];
   } = {},
 ) {
   const visibilitySnapshots: ToolVisibilitySnapshot[] = [];

@@ -13,6 +13,7 @@ import {
   type ModelMessage,
   type ToolSet,
 } from "ai";
+import { classifyAssistantIntent } from "@/lib/ai/intent-router";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
   buildCouncilModePromptInjection,
@@ -643,10 +644,15 @@ export async function assembleTaskWriteSystemPrompt(options: {
   userId: string;
   messageText: string;
   selectedProjectId?: number;
+  platform?: "teams" | "web";
 }): Promise<string> {
-  const { messageText, selectedProjectId } = options;
+  const { messageText, selectedProjectId, platform } = options;
   const today = new Date().toISOString().split("T")[0];
   const contextHealth: string[] = [];
+  const createTaskInstruction =
+    platform === "teams"
+      ? "For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false`; in Teams, that tool call writes the task directly through the audited task-write path and returns the created task link. Do not ask for a second confirmation after the user already asked you to create the task."
+      : "For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false` so the UI can render a preview card.";
   const parts = [
     "You are Alleato AI inside Alleato PM.",
     [
@@ -656,7 +662,7 @@ export async function assembleTaskWriteSystemPrompt(options: {
     [
       "## Task Write Contract",
       "The user is asking to create, modify, close, reassign, reprioritize, reschedule, or delete a Tasks page action item.",
-      "Use the available Tasks page tools. For new follow-ups, reminders, and action items, call `createGeneratedTask` with `confirmed: false` so the UI can render a preview card.",
+      `Use the available Tasks page tools. ${createTaskInstruction}`,
       "For updates or deletes, first use the available task lookup tool when the user did not provide a task id, then call `updateGeneratedTask` or `deleteGeneratedTask` with `confirmed: false` if a matching task is found.",
       "Do not answer with a plain-text task preview when a tool call can produce the preview. If the target task cannot be identified, say exactly what identifying detail is missing.",
     ].join("\n"),
@@ -740,6 +746,10 @@ export async function generateBotResponse(
   options: BotCoreOptions,
 ): Promise<BotCoreResult> {
   const toolTrace: Array<Record<string, unknown>> = [];
+  const intent = classifyAssistantIntent(options.messageText, {
+    selectedProjectId: options.selectedProjectId ?? null,
+  });
+  const isTaskWriteIntent = intent === "task_write";
 
   // Auto-load history from DB when a sessionId is present and no history was
   // explicitly provided. This makes it impossible for a caller to forget —
@@ -754,19 +764,30 @@ export async function generateBotResponse(
       toolTrace.push(trace);
       options.onTrace?.(trace);
     },
+    pinnedProjectId: options.selectedProjectId,
+    includeActionTools: isTaskWriteIntent,
+    generatedTaskWriteMode:
+      isTaskWriteIntent && options.platform === "teams" ? "direct" : "preview",
   });
 
-  const systemPrompt = await assembleSystemPrompt({
-    userId: options.userId,
-    messageText: options.messageText,
-    selectedProjectId: options.selectedProjectId,
-    councilMode: options.councilMode,
-    sessionId: options.sessionId,
-    isFirstTurn: !options.conversationHistory?.length,
-    platform: options.platform,
-    onLearningUsage: options.onLearningUsage,
-    onSkillUsage: options.onSkillUsage,
-  });
+  const systemPrompt = isTaskWriteIntent
+    ? await assembleTaskWriteSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        platform: options.platform,
+      })
+    : await assembleSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        councilMode: options.councilMode,
+        sessionId: options.sessionId,
+        isFirstTurn: !options.conversationHistory?.length,
+        platform: options.platform,
+        onLearningUsage: options.onLearningUsage,
+        onSkillUsage: options.onSkillUsage,
+      });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
     ? [
@@ -816,6 +837,10 @@ export async function generateBotResponse(
  */
 export async function streamBotResponse(options: BotCoreOptions) {
   const toolTrace: Array<Record<string, unknown>> = [];
+  const intent = classifyAssistantIntent(options.messageText, {
+    selectedProjectId: options.selectedProjectId ?? null,
+  });
+  const isTaskWriteIntent = intent === "task_write";
 
   if (options.sessionId && !options.conversationHistory) {
     const prior = await loadConversationHistory(options.sessionId);
@@ -827,18 +852,30 @@ export async function streamBotResponse(options: BotCoreOptions) {
       toolTrace.push(trace);
       options.onTrace?.(trace);
     },
+    pinnedProjectId: options.selectedProjectId,
+    includeActionTools: isTaskWriteIntent,
+    generatedTaskWriteMode:
+      isTaskWriteIntent && options.platform === "teams" ? "direct" : "preview",
   });
 
-  const systemPrompt = await assembleSystemPrompt({
-    userId: options.userId,
-    messageText: options.messageText,
-    selectedProjectId: options.selectedProjectId,
-    councilMode: options.councilMode,
-    sessionId: options.sessionId,
-    isFirstTurn: !options.conversationHistory?.length,
-    onLearningUsage: options.onLearningUsage,
-    onSkillUsage: options.onSkillUsage,
-  });
+  const systemPrompt = isTaskWriteIntent
+    ? await assembleTaskWriteSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        platform: options.platform,
+      })
+    : await assembleSystemPrompt({
+        userId: options.userId,
+        messageText: options.messageText,
+        selectedProjectId: options.selectedProjectId,
+        councilMode: options.councilMode,
+        sessionId: options.sessionId,
+        isFirstTurn: !options.conversationHistory?.length,
+        platform: options.platform,
+        onLearningUsage: options.onLearningUsage,
+        onSkillUsage: options.onSkillUsage,
+      });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
     ? [

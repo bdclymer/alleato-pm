@@ -187,6 +187,7 @@ describe("intent router", () => {
       "action item: confirm RFI response deadline with design team",
       "Generate a task from this meeting note",
       "Make a task to revisit the budget next week",
+      "Create the task for Candon",
     ];
 
     it.each(WRITE_CASES)(

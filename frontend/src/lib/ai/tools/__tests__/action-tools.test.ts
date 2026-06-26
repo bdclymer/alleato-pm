@@ -660,6 +660,123 @@ describe("generated task DB contract normalization", () => {
       },
     });
   });
+
+  it("direct-writes generated tasks for Teams task-create mode without a preview round trip", async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: {
+        id: "task-2",
+        title: "Confirm utility transfer impact",
+        description:
+          "Confirm the Solar Array temp-power transfer back to utility power will not impact electricity.",
+        status: "open",
+        priority: "high",
+        due_date: "2026-06-26",
+        project_id: null,
+        assignee_name: "Candon Rusin",
+        assignee_email: "candon@example.com",
+        created_at: "2026-06-26T13:45:00Z",
+      },
+      error: null,
+    });
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "people") {
+        return {
+          select: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue({
+              data: [
+                {
+                  id: "person-1",
+                  first_name: "Candon",
+                  last_name: "Rusin",
+                  email: "candon@example.com",
+                },
+              ],
+              error: null,
+            }),
+          })),
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table write in generated task test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn().mockResolvedValue(null),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from, rpc } as never);
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { generatedTaskWriteMode: "direct" },
+    );
+    const execute = tools.createGeneratedTask.execute;
+    if (!execute) throw new Error("createGeneratedTask execute was not registered");
+
+    const output = await execute({
+      title: "Confirm utility transfer impact",
+      description:
+        "Confirm the Solar Array temp-power transfer back to utility power will not impact electricity.",
+      assignee: "Candon Rusin",
+      dueDate: "2026-06-26",
+      priority: "high",
+      status: "open",
+      confirmed: false,
+      idempotencyKey: "teams-task-key-1",
+    });
+
+    expect(rpc).toHaveBeenCalledWith(
+      "create_ai_generated_task",
+      expect.objectContaining({
+        p_title: "Confirm utility transfer impact",
+        p_status: "open",
+        p_priority: "high",
+        p_assignee_name: "Candon Rusin",
+        p_assignee_email: "candon@example.com",
+        p_assignee_person_id: "person-1",
+        p_idempotency_key: "teams-task-key-1",
+      }),
+    );
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        request_payload: expect.objectContaining({
+          confirmed: true,
+          autoConfirmedBy: "teams_task_write_direct",
+        }),
+      }),
+    );
+    expect(output).toMatchObject({
+      success: true,
+      message:
+        'Task **"Confirm utility transfer impact"** was added to the Tasks page.',
+      links: {
+        tasksPage: "/tasks?task=task-2",
+      },
+    });
+  });
 });
 
 describe("createSubmittal DB contract", () => {

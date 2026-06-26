@@ -262,6 +262,13 @@ describe("bot-core prompt assembly", () => {
 });
 
 describe("bot-core response normalization", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetLanguageModel.mockReturnValue("test-language-model" as never);
+    mockCreateStrategistTools.mockReturnValue({} as never);
+    mockShouldLoadTaskTrainingContext.mockReturnValue(false);
+  });
+
   it("uses tool result messages when the model returns no final text", () => {
     const normalized = normalizeBotResponseText({
       modelText: "",
@@ -318,5 +325,36 @@ describe("bot-core response normalization", () => {
     );
     expect(result.responseSource).toBe("tool_result");
     expect(result.rawTextLength).toBe(0);
+  });
+
+  it("routes Teams task-write prompts through direct action-tool mode", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: "Task **Confirm utility transfer impact** was added to the Tasks page.",
+      toolResults: [],
+      usage: { inputTokens: 12, outputTokens: 8, totalTokens: 20 },
+    } as never);
+
+    await generateBotResponse({
+      userId: "user-1",
+      messageText: "Create the task for Candon",
+      selectedProjectId: 43,
+      platform: "teams",
+    });
+
+    expect(mockCreateStrategistTools).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        pinnedProjectId: 43,
+        includeActionTools: true,
+        generatedTaskWriteMode: "direct",
+      }),
+    );
+    expect(mockGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: expect.stringContaining(
+          "in Teams, that tool call writes the task directly",
+        ),
+      }),
+    );
   });
 });
