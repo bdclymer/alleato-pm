@@ -143,7 +143,12 @@ const SURFACE_DEFAULTS: Record<AssistantSuggestionSurface, string[]> = {
     "searchEmails",
     "searchTeamsMessages",
   ],
-  onboarding: ["getProjectBriefingSnapshot", "createRFI", "writeMemory", "saveToKnowledgeBase"],
+  onboarding: [
+    "openAiProfile",
+    "openAiApprovals",
+    "getProjectBriefingSnapshot",
+    "createRFI",
+  ],
 };
 
 function normalizePathname(pathname: string | null | undefined): string {

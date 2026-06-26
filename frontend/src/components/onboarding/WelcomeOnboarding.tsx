@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
   type MomentumStats,
 } from "@/lib/onboarding/copy";
 import { findAlleatoAiProfile } from "@/config/aiPersonalization";
+import { resolveAssistantSuggestions } from "@/lib/ai/assistant-suggestion-resolver";
 import { cn } from "@/lib/utils";
 import { IntroFeedbackStep } from "./steps/IntroFeedbackStep";
 import { MissionStep } from "./steps/MissionStep";
@@ -56,6 +58,17 @@ export function WelcomeOnboarding({
   const userName =
     currentUserProfile?.fullName || personalizationProfile.displayName;
   const firstName = userName.trim().split(/\s+/)[0] || undefined;
+  const aiActionLinks = React.useMemo(
+    () =>
+      resolveAssistantSuggestions({
+        pathname: "/welcome",
+        surface: "onboarding",
+        maxSuggestions: 4,
+      }).flatMap((suggestion) =>
+        suggestion.href ? [{ ...suggestion, href: suggestion.href }] : [],
+      ),
+    [],
+  );
 
   React.useEffect(() => {
     const shouldForceOpen =
@@ -172,7 +185,23 @@ export function WelcomeOnboarding({
             {step === 1 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
           </div>
 
-          <div className="relative flex justify-end px-6 pb-6 pt-7 sm:px-12 sm:pb-8 sm:pt-10">
+          <div className="relative flex flex-col gap-4 px-6 pb-6 pt-7 sm:px-12 sm:pb-8 sm:pt-10 md:flex-row md:items-center md:justify-between">
+            {aiActionLinks.length > 0 && (
+              <nav
+                aria-label="AI onboarding actions"
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-muted-foreground"
+              >
+                {aiActionLinks.map((action) => (
+                  <Link
+                    key={action.id}
+                    href={action.href}
+                    className="underline-offset-4 hover:text-foreground hover:underline"
+                  >
+                    {action.label}
+                  </Link>
+                ))}
+              </nav>
+            )}
             <div className="flex gap-2">
               {step > 0 && (
                 <Button

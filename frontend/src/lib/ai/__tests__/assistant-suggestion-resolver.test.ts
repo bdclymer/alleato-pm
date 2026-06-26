@@ -91,6 +91,22 @@ describe("assistant suggestion resolver", () => {
     });
   });
 
+  it("starts onboarding suggestions with route-backed AI access actions", () => {
+    const suggestions = resolveAssistantSuggestions({
+      pathname: "/welcome",
+      surface: "onboarding",
+    });
+
+    expect(suggestions.map((suggestion) => suggestion.id)).toEqual([
+      "openAiProfile",
+      "openAiApprovals",
+      "getProjectBriefingSnapshot",
+      "createRFI",
+    ]);
+    expect(suggestions[0].href).toBe("/ai/profile");
+    expect(suggestions[1].href).toBe("/ai/approvals");
+  });
+
   it("does not return more than the requested suggestion limit", () => {
     const suggestions = resolveAssistantSuggestions({
       pathname: "/25125/progress-reports",
