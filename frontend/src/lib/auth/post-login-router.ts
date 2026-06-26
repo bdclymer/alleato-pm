@@ -3,20 +3,25 @@ import type { Database } from "@/types/database.types";
 
 export type PostLoginSupabaseClient = Pick<SupabaseClient<Database>, "from">;
 
+const DEFAULT_POST_LOGIN_PATH = "/";
+
 /**
  * Landing path for a single membership, based on its user_type.
  * Client/subcontractor users keep their role-specific project surfaces; internal
- * users land on the company-level Action Dashboard so login does not drop them
- * directly into a project before they decide what needs attention.
+ * users land on the stable portfolio surface while the company-level home page
+ * is held back from default login routing.
  */
-function landingForMembership(projectId: number, userType: string | null): string {
+function landingForMembership(
+  projectId: number,
+  userType: string | null,
+): string {
   if (userType === "client") {
     return `/${projectId}/client-dashboard`;
   }
   if (userType === "subcontractor") {
     return `/${projectId}/my-work`;
   }
-  return "/home";
+  return DEFAULT_POST_LOGIN_PATH;
 }
 
 /**
@@ -32,14 +37,19 @@ function projectIdFromPath(path: string): number | null {
   return parseInt(firstSegment, 10);
 }
 
+function isBlockedPostLoginPath(path: string): boolean {
+  const normalized = path.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
+  return normalized === "/home";
+}
+
 /**
  * Determines the best redirect path after login based on the user's memberships.
  *
  * - Client with 1 project → /{projectId}/client-dashboard
  * - Subcontractor with 1 project → /{projectId}/my-work
- * - Employee/developer with 1 project -> /home
- * - Multiple projects -> /home
- * - No memberships -> /home
+ * - Employee/developer with 1 project -> /
+ * - Multiple projects -> /
+ * - No memberships -> /
  *
  * `callbackUrl` (the page the user was trying to reach before login) is honored
  * ONLY when the user can actually access it. A callbackUrl pointing at a project
@@ -70,19 +80,23 @@ export async function getPostLoginRedirect(
 
     // Get active memberships with user_type (none for admins is fine)
     const memberships = authLink
-      ? (
+      ? ((
           await supabase
             .from("project_directory_memberships")
             .select("project_id, user_type")
             .eq("person_id", authLink.person_id)
             .eq("status", "active")
-        ).data ?? []
+        ).data ?? [])
       : [];
 
     const memberProjectIds = new Set(memberships.map((m) => m.project_id));
 
     // Honor an explicit callbackUrl only when the user can access it.
-    if (callbackUrl && callbackUrl !== "/") {
+    if (
+      callbackUrl &&
+      callbackUrl !== "/" &&
+      !isBlockedPostLoginPath(callbackUrl)
+    ) {
       const targetProjectId = projectIdFromPath(callbackUrl);
       const isProjectScoped = targetProjectId !== null;
       const canAccessTarget =
@@ -94,12 +108,11 @@ export async function getPostLoginRedirect(
     }
 
     if (isAdmin) {
-      // Admin with no specific destination -> Action Dashboard.
-      return "/home";
+      return DEFAULT_POST_LOGIN_PATH;
     }
 
     if (memberships.length === 0) {
-      return "/home";
+      return DEFAULT_POST_LOGIN_PATH;
     }
 
     if (memberships.length === 1) {
@@ -107,8 +120,7 @@ export async function getPostLoginRedirect(
       return landingForMembership(m.project_id, m.user_type);
     }
 
-    // Multiple projects -> Action Dashboard.
-    return "/home";
+    return DEFAULT_POST_LOGIN_PATH;
   } catch {
     return "/";
   }
