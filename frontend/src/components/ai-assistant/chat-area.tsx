@@ -153,6 +153,7 @@ import {
   type MemoryUsage,
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
+import { AssistantActionCatalog } from "./assistant-action-catalog";
 import { AssistantSuggestionList } from "./assistant-suggestion-list";
 import {
   resolveAssistantSuggestions,
@@ -1967,9 +1968,8 @@ export function ChatArea({
             }
             afterComposer={
               !welcomeHideOrb ? (
-                <AssistantSuggestionList
+                <AssistantActionCatalog
                   disabled={isStreaming}
-                  suggestions={assistantSuggestions}
                   onSelectPrompt={handleCatalogAction}
                 />
               ) : null
