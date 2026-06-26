@@ -298,14 +298,14 @@ export default function PermissionsAdminPage() {
     activeTab === "project-access" ? "Add Project Access" : "Grant App Access";
   const usersTotalCount =
     activeTab === "project-access" ? projectAccessUserCount : appUserCount;
-  const canInviteFromActiveTab = activeTab !== "project-access";
   const canManageUserRows = activeTab === "app-users";
+  const accessDialogMode: "app" | "project" =
+    activeTab === "project-access" ? "project" : "app";
 
   const usersTopContent =
     activeTab === "project-access" ? (
       <p className="mt-0 max-w-3xl pb-4 text-sm leading-6 text-muted-foreground">
-        Users who have been granted access to individual projects. Users can be added or removed
-        from the project directory inside each project.
+        Add Project Access assigns an employee to selected projects with a project permission template.
       </p>
     ) : null;
 
@@ -573,7 +573,7 @@ export default function PermissionsAdminPage() {
       });
     },
     onSuccess: () => {
-      toast.success("User invited and access assigned");
+      toast.success("Access assigned");
       setShowInvite(false);
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
@@ -754,12 +754,12 @@ export default function PermissionsAdminPage() {
           header={{
             title: "Manage Users",
             description: usersDescription,
-            actions: canInviteFromActiveTab ? (
+            actions: (
                 <Button size="sm" onClick={() => setShowInvite(true)}>
                   <UserPlus className="h-4 w-4" />
                   {usersAddLabel}
                 </Button>
-              ) : null,
+              ),
           }}
           tabs={tabs}
           toolbar={{
@@ -857,12 +857,12 @@ export default function PermissionsAdminPage() {
             description: usersEmptyDescription,
             filteredDescription: usersFilteredDescription,
             isFiltered: Boolean(tableState.debouncedSearch),
-            action: canInviteFromActiveTab ? (
+            action: (
               <Button size="sm" onClick={() => setShowInvite(true)}>
                 <UserPlus className="h-4 w-4" />
                 {usersAddLabel}
               </Button>
-            ) : undefined,
+            ),
           }}
           pagination={{
             page: tableState.page,
@@ -1013,6 +1013,7 @@ export default function PermissionsAdminPage() {
       <InviteUserDialog
         open={showInvite}
         onOpenChange={setShowInvite}
+        mode={accessDialogMode}
         projectTemplates={projectTemplatesQuery.data ?? []}
         companyTemplates={companyTemplatesQuery.data ?? []}
         employees={employeeOptionsQuery.data ?? []}
@@ -1165,6 +1166,7 @@ export default function PermissionsAdminPage() {
 function InviteUserDialog({
   open,
   onOpenChange,
+  mode,
   projectTemplates,
   companyTemplates,
   employees,
@@ -1175,6 +1177,7 @@ function InviteUserDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode: "app" | "project";
   projectTemplates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
   employees: EmployeeOption[];
@@ -1191,12 +1194,14 @@ function InviteUserDialog({
     project_ids: number[];
   }) => Promise<void>;
 }) {
+  const initialAccessScope: AccessScope =
+    mode === "project" ? "selected_projects" : "all_projects";
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
-  const [accessScope, setAccessScope] = useState<AccessScope>("all_projects");
+  const [accessScope, setAccessScope] = useState<AccessScope>(initialAccessScope);
   const [projectTemplateId, setProjectTemplateId] = useState("");
   const [companyTemplateId, setCompanyTemplateId] = useState("");
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
@@ -1209,7 +1214,7 @@ function InviteUserDialog({
       setLastName("");
       setEmail("");
       setJobTitle("");
-      setAccessScope("all_projects");
+      setAccessScope(initialAccessScope);
       setProjectTemplateId("");
       setCompanyTemplateId("");
       setSelectedProjectIds(new Set());
@@ -1225,7 +1230,8 @@ function InviteUserDialog({
         companyTemplates[0]?.id ||
         "",
     );
-  }, [open, projectTemplates, companyTemplates]);
+    setAccessScope(initialAccessScope);
+  }, [open, projectTemplates, companyTemplates, initialAccessScope]);
 
   const selectedEmployee =
     employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
@@ -1264,7 +1270,7 @@ function InviteUserDialog({
     setError(null);
 
     if (!canSubmit) {
-      setError("Add the user details, permission template, and project access before sending the invite.");
+      setError("Add the user details, permission template, and project access before saving.");
       return;
     }
 
@@ -1287,10 +1293,7 @@ function InviteUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Grant app access</DialogTitle>
-          <DialogDescription>
-            Start from an existing employee in People when possible, then choose their permission template and project access.
-          </DialogDescription>
+          <DialogTitle>{mode === "project" ? "Add project access" : "Grant app access"}</DialogTitle>
         </DialogHeader>
 
         <form className="space-y-6" onSubmit={submit}>
@@ -1304,9 +1307,6 @@ function InviteUserDialog({
               disabled={isLoading}
               onSelect={selectEmployee}
             />
-            <p className="text-xs text-muted-foreground">
-              Start from People when the employee already exists, or leave this empty to create a new employee and invite them.
-            </p>
             {selectedEmployee ? (
               <Button
                 type="button"
@@ -1368,53 +1368,55 @@ function InviteUserDialog({
             </div>
           </div>
 
-          <div className="space-y-3">
-            <SectionRuleHeading label="Access" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setAccessScope("all_projects");
-                  setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
-                }}
-                className={cn(
-                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
-                  accessScope === "all_projects"
-                    ? "border-primary bg-primary/5 hover:bg-primary/5"
-                    : "hover:bg-muted/50",
-                )}
-              >
-                <span className="block min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">All projects</span>
-                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Default for employees who should see every current and future project.
+          {mode === "app" ? (
+            <div className="space-y-3">
+              <SectionRuleHeading label="Access" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAccessScope("all_projects");
+                    setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+                  }}
+                  className={cn(
+                    "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                    accessScope === "all_projects"
+                      ? "border-primary bg-primary/5 hover:bg-primary/5"
+                      : "hover:bg-muted/50",
+                  )}
+                >
+                  <span className="block min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">All projects</span>
+                    <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                      Access across every current and future project.
+                    </span>
                   </span>
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setAccessScope("selected_projects");
-                  setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
-                }}
-                className={cn(
-                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
-                  accessScope === "selected_projects"
-                    ? "border-primary bg-primary/5 hover:bg-primary/5"
-                    : "hover:bg-muted/50",
-                )}
-              >
-                <span className="block min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">Specific projects</span>
-                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Downgrade path for limited project access.
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAccessScope("selected_projects");
+                    setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
+                  }}
+                  className={cn(
+                    "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                    accessScope === "selected_projects"
+                      ? "border-primary bg-primary/5 hover:bg-primary/5"
+                      : "hover:bg-muted/50",
+                  )}
+                >
+                  <span className="block min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">Specific projects</span>
+                    <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                      Access only to selected projects.
+                    </span>
                   </span>
-                </span>
-              </Button>
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="space-y-1.5">
@@ -1498,7 +1500,7 @@ function InviteUserDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving || !canSubmit}>
-              {isSaving ? "Sending..." : "Send Invite"}
+              {isSaving ? "Saving..." : mode === "project" ? "Add Project Access" : "Grant Access"}
             </Button>
           </div>
         </form>
