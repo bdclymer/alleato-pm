@@ -365,7 +365,7 @@ Evidence directory:
   - [task-project-rules-fireflies-sync-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json)
   - [generated-task-duplicate-after-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json)
 
-### 2026-06-25: AAI-690 Outlook Communication Task Generation Restored
+### 2026-06-25: AAI-690 Outlook And Teams Communication Task Generation Restored
 
 - Live coverage found recent Outlook/Teams communications were synced but not being synthesized into tasks:
   - 454 Outlook email docs in the 7-day window, 369 project-assigned, 0 task rows before repair.
@@ -382,8 +382,8 @@ Evidence directory:
   - Shared task writer now mirrors scalar project ID into the task project array.
   - Replaced dead compiler tests with active project synthesizer task-writer coverage.
   - Ran one bounded production Outlook redrive for project 67; it created 1 task with project, project array, owner, and no duplicate group.
+  - Ran one bounded production Teams redrive for project 1011; it created 4 tasks with project, project arrays, owners, and no duplicate group.
 - Remaining AAI-690 work:
-  - Teams task-generation proof is still open; recent Teams docs are present but no Teams task row has been generated yet.
   - Document-analysis task generation, unmatched/manual-review routing, and SharePoint/upload/drawing/RFI/contract assignment evidence still need completion.
 - Evidence:
   - [project-synthesizer-status-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json)
@@ -392,6 +392,10 @@ Evidence directory:
   - [project-synthesizer-created-task-project-array-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-created-task-project-array-repair-aai-690.json)
   - [task-generation-live-coverage-after-synthesis-fix-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json)
   - [communications-task-generation-tests-aai-690.txt](../evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt)
+  - [teams-synthesizer-dry-run-project-1011-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-dry-run-project-1011-aai-690.json)
+  - [teams-synthesizer-applied-project-1011-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-applied-project-1011-aai-690.json)
+  - [teams-task-generation-live-proof-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json)
+  - [task-generation-live-coverage-after-teams-proof-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json)
 
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 

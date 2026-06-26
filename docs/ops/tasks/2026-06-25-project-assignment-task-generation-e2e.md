@@ -44,7 +44,7 @@ Verify and finalize end-to-end project assignment and automatic task generation 
 - [ ] Verify unmatched/ambiguous records route to manual review with confidence scoring.
 - [x] Verify task generation from meetings.
 - [x] Verify task generation from emails.
-- [ ] Verify task generation from Teams conversations.
+- [x] Verify task generation from Teams conversations.
 - [ ] Verify task generation from document analysis and AI extraction.
 - [ ] Verify duplicate task prevention.
 - [x] Verify generated task owner and project association.
@@ -103,6 +103,11 @@ Repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-created-task-project-array-repair-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-candidates-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-dry-run-project-1011-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-applied-project-1011-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json`
 
 ## Initial Known Constraints
 
@@ -134,6 +139,7 @@ Outlook/Teams automatic task generation had a separate active gap. Recent live d
 - Updated the shared task writer so scalar project assignments always populate the task project array.
 - Replaced a dead compiler-title unit test that referenced deleted email/Teams compiler modules with active-path project synthesizer task writer tests.
 - Verified one real recent Outlook email generated a task with project, project array, owner, and no duplicate task group after the fix.
+- Verified one real recent Teams DM generated 4 tasks with project, project arrays, owners, and no duplicate task groups after the fix.
 
 ## Failure-Loud Guardrail
 

@@ -1,0 +1,71 @@
+{
+  "project_id": 1011,
+  "since": "2026-06-18",
+  "docs_seen": 1,
+  "emails": 0,
+  "teams": 1,
+  "skipped": 0,
+  "cards_written": 0,
+  "tasks_written": 0,
+  "extractions_attempted": 1,
+  "dry_run": true,
+  "errors": [],
+  "samples": [
+    {
+      "doc_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "comm_type": "teams",
+      "title": "Teams DM Conversation: 19:81e9018c-",
+      "text_chars": 3956,
+      "extraction_failed": false,
+      "extraction_error": null,
+      "what_changed": "The team identified that the Vargo permit project has an invoice/payment question and clarified that the client likely has not yet been invoiced or the payment cannot be found. Andrew exported the invoice to Acumatica, Misty agreed to process it after her meeting, and Andrew requested it be sent with Brandon CC\u2019d and a 6/30 due date because the account is overdue.",
+      "signals": 9,
+      "tasks": 4,
+      "sample_signals": [
+        {
+          "type": "decision",
+          "title": "Use the 6/30 due date on the invoice because the account is overdue.",
+          "evidence": "I put the due date as 6/30. I didn't give them much time because they are overdue"
+        },
+        {
+          "type": "decision",
+          "title": "Proceed with processing the Vargo invoice now that the project identity was clarified.",
+          "evidence": "got it. I can take care of this as soon as my meeting is done"
+        },
+        {
+          "type": "financial_exposure",
+          "title": "There may be a billing reconciliation problem because the client believes they already paid, but the team has no invoice",
+          "evidence": "The client thought they already paid. Could be a 2025 invoice."
+        },
+        {
+          "type": "risk",
+          "title": "The overdue invoice may create client friction or a dispute over the shortened due date.",
+          "evidence": "I didn't give them much time because they are overdue"
+        },
+        {
+          "type": "initiative_signal",
+          "title": "Andrew can help prepare and send the invoice quickly, reducing billing turnaround despite the legacy project confusion.",
+          "evidence": "I can help out! Which project?"
+        }
+      ],
+      "sample_tasks": [
+        {
+          "description": "Notify the client about the payment/invoice status.",
+          "assignee": "Andrew Cannon"
+        },
+        {
+          "description": "Process the Vargo invoice after the meeting.",
+          "assignee": "Misty Rogers"
+        },
+        {
+          "description": "Send the invoice to the client once processed.",
+          "assignee": "Misty Rogers"
+        },
+        {
+          "description": "CC Brandon and Andrew when sending the invoice.",
+          "assignee": "Misty Rogers"
+        }
+      ]
+    }
+  ]
+}

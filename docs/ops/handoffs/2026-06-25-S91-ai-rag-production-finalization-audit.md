@@ -300,6 +300,7 @@ AAI-690 progress:
   - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_fireflies_action_items.py backend/tests/test_graph_sync_options.py backend/unit_tests/test_task_writer_titles.py -q`
   - PASS: delegated no-timeout frontend typecheck passed after each backend code edit checkpoint.
   - PASS: bounded project 67 Outlook synthesis redrive wrote 1 real communication task with scalar project, project array, owner, and no duplicate group.
+  - PASS: bounded project 1011 Teams synthesis redrive wrote 4 real communication tasks with scalar project, project arrays, owners, and no duplicate group.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-attribution-baseline-aai-690.txt`
@@ -314,12 +315,15 @@ AAI-690 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-applied-project-67-after-patch-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-applied-project-1011-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json`
 - Remaining blocker:
-  - AAI-690 is not fully closed because Teams task-generation proof, document-analysis task-generation, unmatched manual-review routing, and remaining SharePoint/upload/drawing/RFI/contract assignment evidence still need the same level of evidence.
+  - AAI-690 is not fully closed because document-analysis task-generation, unmatched manual-review routing, and remaining SharePoint/upload/drawing/RFI/contract assignment evidence still need the same level of evidence.
 
 ## Exact Next Step
 
-Publish the communication task-generation repair slice, then continue AAI-690 with Teams redrive/proof, document-analysis task-generation, unmatched manual-review routing, and remaining assignment-source evidence.
+Publish the Teams task-generation proof, then continue AAI-690 with document-analysis task-generation, unmatched manual-review routing, and remaining assignment-source evidence.
 
 ## Known Pitfalls
 
