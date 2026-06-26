@@ -741,7 +741,6 @@ function RoleSelect({
         {roleTemplates.map((template) => (
           <SelectItem key={template.id} value={template.id}>
             {template.name}
-            {template.is_system ? " (System)" : ""}
           </SelectItem>
         ))}
       </SelectContent>
