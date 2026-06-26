@@ -1111,7 +1111,6 @@ export function SubmittalDetailClient({
                               type="button"
                               variant="link"
                               className="h-auto px-0 text-sm text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
-                              disabled={isDrawingOptionsLoading}
                             >
                               Drawing
                             </Button>
