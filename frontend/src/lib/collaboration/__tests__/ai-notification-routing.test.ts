@@ -14,10 +14,30 @@ describe("AI notification routing", () => {
 
     expect(getAiNotificationDeliveryPlan(notification)).toEqual({
       tier: "interrupt",
-      channels: ["approvals_queue", "in_app_widget", "notifications_center"],
+      channels: ["approvals_queue", "in_app", "assistant_widget"],
       reason: "AI decision requires human review before a business action proceeds.",
     });
     expect(shouldInterruptAiWidget(notification)).toBe(true);
+  });
+
+  it("does not interrupt the widget when selected channels omit assistant_widget", () => {
+    const notification = {
+      id: "1b",
+      kind: "ai_notification_decision",
+      readAt: null,
+      metadata: {
+        eventType: "ai_commitment_awaiting_approval",
+        tier: "interrupt",
+        channelsSelected: ["in_app", "teams"],
+      },
+    };
+
+    expect(getAiNotificationDeliveryPlan(notification)).toEqual({
+      tier: "interrupt",
+      channels: ["approvals_queue", "in_app", "teams"],
+      reason: "AI decision requires human review before a business action proceeds.",
+    });
+    expect(shouldInterruptAiWidget(notification)).toBe(false);
   });
 
   it("keeps memory and profile updates quiet by default", () => {
@@ -29,8 +49,8 @@ describe("AI notification routing", () => {
     };
 
     expect(getAiNotificationDeliveryPlan(notification)).toEqual({
-      tier: "quiet_unboxing",
-      channels: ["notifications_center"],
+      tier: "quiet",
+      channels: ["quiet_inbox"],
       reason: "Notification is useful context but does not require interruption.",
     });
     expect(shouldInterruptAiWidget(notification)).toBe(false);
@@ -51,9 +71,9 @@ describe("AI notification routing", () => {
         id: "4",
         kind: "change_request_review_needed",
         readAt: null,
-        metadata: { tier: "quiet_unboxing" },
+        metadata: { tier: "quiet", channelsSelected: ["quiet_inbox"] },
       })?.tier,
-    ).toBe("quiet_unboxing");
+    ).toBe("quiet");
   });
 
   it("ignores non-AI notification kinds", () => {

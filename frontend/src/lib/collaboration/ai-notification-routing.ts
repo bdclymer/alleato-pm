@@ -1,32 +1,35 @@
 import type { Json } from "@/types/database.types";
+import type {
+  AiNotificationChannel,
+  AiNotificationTier,
+} from "@/lib/ai/notification-routing";
 import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   isAiApprovalQueueNotification,
 } from "./ai-approval-queue";
-import {
-  getAiWidgetNotificationMetadata,
-  isAiWidgetNotificationKind,
-  type AiWidgetNotificationCandidate,
-} from "./ai-widget-notifications";
-
-export type AiNotificationRoutingTier = "interrupt" | "quiet_unboxing";
 
 export type AiNotificationDeliveryChannel =
-  | "approvals_queue"
-  | "in_app_widget"
-  | "notifications_center"
-  | "teams"
-  | "outlook";
+  | AiNotificationChannel
+  | "approvals_queue";
+
+export type AiNotificationRoutingCandidate = {
+  kind: string;
+  metadata?: Json | null;
+};
 
 export type AiNotificationDeliveryPlan = {
-  tier: AiNotificationRoutingTier;
+  tier: AiNotificationTier;
   channels: AiNotificationDeliveryChannel[];
   reason: string;
 };
 
-export type AiNotificationRoutingCandidate = AiWidgetNotificationCandidate & {
-  metadata?: Json | null;
-};
+const AI_NOTIFICATION_KINDS = new Set([
+  "ai_assistant_welcome",
+  "ai_action_ready",
+  AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
+  "rfi_attention",
+  "change_request_review_needed",
+]);
 
 const INTERRUPT_EVENT_PATTERNS = [
   "awaiting_approval",
@@ -43,63 +46,124 @@ const QUIET_EVENT_PATTERNS = [
   "sync_completed",
 ];
 
+function cleanString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function getMetadataRecord(metadata: Json | null | undefined): Record<string, unknown> {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+  return metadata as Record<string, unknown>;
+}
+
+function getChannelsSelected(metadata: Json | null | undefined): AiNotificationChannel[] {
+  const record = getMetadataRecord(metadata);
+  if (!Array.isArray(record.channelsSelected)) return [];
+
+  return record.channelsSelected.filter(
+    (channel): channel is AiNotificationChannel =>
+      typeof channel === "string" && channel.trim().length > 0,
+  );
+}
+
 function hasPattern(value: string | undefined, patterns: string[]): boolean {
   return Boolean(value && patterns.some((pattern) => value.includes(pattern)));
 }
 
-function explicitTier(value: string | undefined): AiNotificationRoutingTier | null {
+function explicitTier(value: string | undefined): AiNotificationTier | null {
   if (value === "interrupt") return "interrupt";
-  if (value === "quiet_unboxing") return "quiet_unboxing";
+  if (value === "quiet") return "quiet";
+  if (value === "digest") return "digest";
+  if (value === "system") return "system";
   return null;
+}
+
+function defaultChannelsForTier(tier: AiNotificationTier): AiNotificationChannel[] {
+  if (tier === "interrupt") return ["in_app", "assistant_widget"];
+  if (tier === "digest") return ["digest"];
+  if (tier === "system") return ["admin_system_queue"];
+  return ["quiet_inbox"];
 }
 
 export function getAiNotificationDeliveryPlan(
   notification: AiNotificationRoutingCandidate,
 ): AiNotificationDeliveryPlan | null {
-  if (!isAiWidgetNotificationKind(notification.kind)) return null;
+  if (!AI_NOTIFICATION_KINDS.has(notification.kind)) return null;
 
-  const metadata = getAiWidgetNotificationMetadata(notification.metadata);
-  const eventType = metadata.eventType;
-  const tierOverride = explicitTier(metadata.tier);
+  const metadata = getMetadataRecord(notification.metadata);
+  const eventType = cleanString(metadata.eventType);
+  const tierOverride = explicitTier(cleanString(metadata.tier));
+  const selectedChannels = getChannelsSelected(notification.metadata);
+  const hasSelectedChannels = selectedChannels.length > 0;
+
+  if (notification.kind === "ai_assistant_welcome") {
+    return {
+      tier: "interrupt",
+      channels: hasSelectedChannels ? selectedChannels : ["assistant_widget"],
+      reason: "Welcome notifications intentionally introduce the assistant entry point.",
+    };
+  }
+
+  if (
+    notification.kind === "ai_action_ready" ||
+    notification.kind === "change_request_review_needed"
+  ) {
+    return {
+      tier: tierOverride ?? "interrupt",
+      channels: hasSelectedChannels ? selectedChannels : ["assistant_widget"],
+      reason: "Assistant action notifications are intended to be available from the widget.",
+    };
+  }
 
   if (
     notification.kind === AI_APPROVAL_QUEUE_NOTIFICATION_KIND &&
     isAiApprovalQueueNotification(notification)
   ) {
+    const channels = hasSelectedChannels
+      ? (["approvals_queue", ...selectedChannels] as AiNotificationDeliveryChannel[])
+      : ["approvals_queue", "in_app", "assistant_widget"];
+
     return {
-      tier: "interrupt",
-      channels: ["approvals_queue", "in_app_widget", "notifications_center"],
+      tier: tierOverride ?? "interrupt",
+      channels,
       reason: "AI decision requires human review before a business action proceeds.",
     };
   }
 
-  if (tierOverride === "interrupt" || hasPattern(eventType, INTERRUPT_EVENT_PATTERNS)) {
+  if (tierOverride) {
     return {
-      tier: "interrupt",
-      channels: ["in_app_widget", "notifications_center"],
-      reason: "Notification requires timely human attention.",
+      tier: tierOverride,
+      channels: hasSelectedChannels ? selectedChannels : defaultChannelsForTier(tierOverride),
+      reason:
+        tierOverride === "interrupt"
+          ? "Notification requires timely human attention."
+          : "Notification is useful context but does not require interruption.",
     };
   }
 
-  if (notification.kind === "rfi_attention") {
+  if (hasPattern(eventType, INTERRUPT_EVENT_PATTERNS) || notification.kind === "rfi_attention") {
     return {
       tier: "interrupt",
-      channels: ["in_app_widget", "notifications_center"],
-      reason: "RFI attention notifications can affect project response timing.",
+      channels: hasSelectedChannels ? selectedChannels : ["in_app", "assistant_widget"],
+      reason:
+        notification.kind === "rfi_attention"
+          ? "RFI attention notifications can affect project response timing."
+          : "Notification requires timely human attention.",
     };
   }
 
-  if (tierOverride === "quiet_unboxing" || hasPattern(eventType, QUIET_EVENT_PATTERNS)) {
+  if (hasPattern(eventType, QUIET_EVENT_PATTERNS)) {
     return {
-      tier: "quiet_unboxing",
-      channels: ["notifications_center"],
+      tier: "quiet",
+      channels: hasSelectedChannels ? selectedChannels : ["quiet_inbox"],
       reason: "Notification is useful context but does not require interruption.",
     };
   }
 
   return {
-    tier: "quiet_unboxing",
-    channels: ["notifications_center"],
+    tier: "quiet",
+    channels: hasSelectedChannels ? selectedChannels : ["quiet_inbox"],
     reason: "Default AI notification route is quiet until a review or response signal is present.",
   };
 }
@@ -108,5 +172,5 @@ export function shouldInterruptAiWidget(
   notification: AiNotificationRoutingCandidate,
 ): boolean {
   const plan = getAiNotificationDeliveryPlan(notification);
-  return Boolean(plan?.tier === "interrupt" && plan.channels.includes("in_app_widget"));
+  return Boolean(plan?.tier === "interrupt" && plan.channels.includes("assistant_widget"));
 }

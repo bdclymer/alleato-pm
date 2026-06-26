@@ -3,6 +3,7 @@ import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   isAiApprovalQueueNotification,
 } from "./ai-approval-queue";
+import { shouldInterruptAiWidget } from "./ai-notification-routing";
 
 export const AI_WIDGET_NOTIFICATION_KINDS = [
   "ai_assistant_welcome",
@@ -76,7 +77,9 @@ export function isUnreadAiWidgetNotification(
   notification: AiWidgetNotificationCandidate,
 ): boolean {
   return (
-    !notification.readAt && isAiWidgetNotificationKind(notification.kind)
+    !notification.readAt &&
+    isAiWidgetNotificationKind(notification.kind) &&
+    shouldInterruptAiWidget(notification)
   );
 }
 

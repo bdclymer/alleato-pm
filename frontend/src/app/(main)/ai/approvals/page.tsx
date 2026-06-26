@@ -23,6 +23,7 @@ import {
   type CollaborationNotification,
   type NotificationReviewPayload,
 } from "@/hooks/use-collaboration-notifications";
+import { getAiNotificationDeliveryPlan } from "@/lib/collaboration/ai-notification-routing";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,10 @@ function formatAge(createdAt: string): string {
   if (Number.isNaN(date.getTime())) return "Unknown";
 
   return formatDistanceToNow(date, { addSuffix: true });
+}
+
+function formatDeliveryChannelLabel(channel: string): string {
+  return channel.replaceAll("_", " ");
 }
 
 function AiApprovalQueueRow({
@@ -43,6 +48,7 @@ function AiApprovalQueueRow({
   onDiscard: (id: string) => void;
 }) {
   const metadata = getAiApprovalQueueMetadata(notification.metadata);
+  const deliveryPlan = getAiNotificationDeliveryPlan(notification);
   const preview = getAiApprovalQueuePreview(notification.metadata);
   const reviewChecks = getAiApprovalQueueReviewChecks(preview);
   const [checkedReviewIds, setCheckedReviewIds] = React.useState<Set<string>>(
@@ -139,6 +145,12 @@ function AiApprovalQueueRow({
         <div>
           {metadata.reason ?? metadata.failureLoudBehavior ?? "Source details unavailable."}
         </div>
+        {deliveryPlan ? (
+          <div className="mt-1">
+            Route: {deliveryPlan.tier.replace("_", " ")} ·{" "}
+            {deliveryPlan.channels.map(formatDeliveryChannelLabel).join(", ")}
+          </div>
+        ) : null}
       </div>
       <div className="flex justify-start gap-2 lg:justify-end">
         {relatedHref ? (
