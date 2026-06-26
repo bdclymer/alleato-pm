@@ -1,9 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createRagServiceClient } from "@/lib/supabase/service";
-import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 import { listOutlookCalendarEvents } from "@/lib/microsoft-graph/calendar-events";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type AnyRow = Record<string, unknown>;
 type OutlookOperationsStatus = "healthy" | "degraded";
@@ -11,6 +10,8 @@ type OutlookOperationsStatus = "healthy" | "degraded";
 export type CreateOutlookOperationsToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -100,10 +101,9 @@ export function createOutlookOperationsTools(
   userId: string,
   options: CreateOutlookOperationsToolsOptions = {},
 ) {
-  const ragSupabase = createRagServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const ragSupabase = ctx.rag;
+  const guardrails = ctx.guardrails;
 
   async function requireAdminForOutlook() {
     const scope = await guardrails.getScope();

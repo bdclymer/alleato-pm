@@ -1,14 +1,16 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type AnyRow = Record<string, unknown>;
 
 type CreateFinancialToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
@@ -181,10 +183,9 @@ export function createFinancialTools(
   _userId: string,
   options: CreateFinancialToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const guardrails = createToolGuardrails(_userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx = options.ctx ?? createToolContext({ userId: _userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const guardrails = ctx.guardrails;
 
   return {
     // -----------------------------------------------------------------------

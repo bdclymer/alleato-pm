@@ -4,7 +4,30 @@ jest.mock("../guardrails", () => ({
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
+  createRagServiceClient: jest.fn(),
 }));
+
+// Mock createToolContext so action-tools tests don't need a real OpenAI key or
+// RAG client. The ctx.db, ctx.rag, and ctx.guardrails slots are wired to the
+// same jest.fn() stubs already mocked above so existing test expectations hold.
+jest.mock("../tool-context", () => {
+  const { createServiceClient, createRagServiceClient } = jest.requireMock("@/lib/supabase/service") as {
+    createServiceClient: jest.MockedFunction<() => unknown>;
+    createRagServiceClient: jest.MockedFunction<() => unknown>;
+  };
+  const { createToolGuardrails } = jest.requireMock("../guardrails") as {
+    createToolGuardrails: jest.MockedFunction<(...args: unknown[]) => unknown>;
+  };
+  return {
+    createToolContext: jest.fn((input: { userId: string; pinnedProjectId?: number }) => ({
+      db: createServiceClient(),
+      rag: createRagServiceClient(),
+      openai: {},
+      guardrails: createToolGuardrails(input.userId, { pinnedProjectId: input.pinnedProjectId }),
+    })),
+    createFakeToolContext: jest.fn(),
+  };
+});
 
 jest.mock("@/lib/microsoft-graph/calendar-invites", () => ({
   buildCalendarInviteAdaptiveCard: jest.fn(),

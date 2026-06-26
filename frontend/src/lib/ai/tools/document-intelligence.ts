@@ -1,21 +1,21 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import {
   EMBEDDING,
   generateEmbedding,
-  getOpenAI,
   resolveProject,
   type ToolTracePayload,
   withTrace as _withTrace,
 } from "./tool-utils";
-import { createToolGuardrails } from "./guardrails";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type AnyRow = Record<string, unknown>;
 
 type CreateDocumentIntelligenceToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -226,11 +226,10 @@ export function createDocumentIntelligenceTools(
   userId: string,
   options: CreateDocumentIntelligenceToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const ragSupabase = createRagServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const ragSupabase = ctx.rag;
+  const guardrails = ctx.guardrails;
 
   async function resolveSpecificationSources(
     query: string,
@@ -1019,7 +1018,7 @@ export function createDocumentIntelligenceTools(
           const additionalChunks: Array<{ title: string; excerpt: string }> = [];
           if (searchQuery.trim()) {
             try {
-              const openai = getOpenAI();
+              const openai = ctx.openai;
               const queryEmbedding = await generateEmbedding(
                 openai,
                 searchQuery,

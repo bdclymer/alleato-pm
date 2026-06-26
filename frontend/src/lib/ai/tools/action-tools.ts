@@ -10,9 +10,9 @@ import { z } from "zod";
 import { createHash, randomUUID } from "crypto";
 import type { CommitmentDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
 import type { Database, Json } from "@/types/database.types";
-import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { type ToolTracePayload, withWriteTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { wrapToolSetWithOutboundActionPolicy } from "./outbound-action-policy";
 import {
   RISK_CARD_TYPES,
@@ -59,6 +59,8 @@ export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
   generatedTaskWriteMode?: "preview" | "direct";
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 export type CreateRFIPreviewInput = {
@@ -521,16 +523,15 @@ export function createActionTools(
   userId: string,
   options: ActionToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
   const writeAuditTable = "ai_tool_write_audits";
   const runtimeAuditClient = supabase as unknown as RuntimeAuditClient;
   const runtimeCommitmentReadClient =
     supabase as unknown as RuntimeCommitmentReadClient;
   const runtimeCommitmentWriteClient =
     supabase as unknown as RuntimeCommitmentWriteClient;
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const guardrails = ctx.guardrails;
 
   function resolveIdempotencyKey(
     toolName: string,
@@ -3055,7 +3056,7 @@ export function createActionTools(
         };
 
         // Synthesize with LLM
-        const openai = getOpenAI();
+        const openai = ctx.openai;
         const completion = await openai.chat.completions.create({
           model: "gpt-5.4-mini",
           temperature: 0.3,
@@ -3679,7 +3680,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("submitFeedback", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const feedbackId = crypto.randomUUID();
 
         const { error: insertError } = await supabaseLocal
@@ -3875,7 +3876,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("addBoardItem", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const itemId = crypto.randomUUID();
 
         const { error } = await supabaseLocal.from("admin_feedback_items").insert({

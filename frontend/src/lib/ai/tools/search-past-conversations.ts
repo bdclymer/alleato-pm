@@ -1,12 +1,14 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type SearchPastConversationsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
   sessionId?: string;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 type RpcSessionMessage = {
@@ -192,7 +194,8 @@ export function createSessionSearchTools(
   userId: string,
   options: SearchPastConversationsOptions = {},
 ) {
-  const supabase = createServiceClient();
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
 
   return {
     searchPastConversations: tool({
