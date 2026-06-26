@@ -618,7 +618,7 @@ const AISDK_FEATURES: Array<{
   { feature: "streamText", usage: "Main chat handler and agentic bot core. Streams token-by-token text and tool calls to the client.", where: "handler-v2.ts, bot-core.ts, artifacts/text", badge: "Core" },
   { feature: "generateText", usage: "Meeting prep generation (multi-step), fallback chain, Procore RAG Q&A, structured output via Output.object().", where: "meeting prep, procore-docs/ask, fallback-chain, bot-core", badge: "Core" },
   { feature: "streamObject", usage: "Streaming structured JSON for artifact creation and updates (code editor, spreadsheet).", where: "artifacts/code/server, artifacts/sheet/server", badge: "Core" },
-  { feature: "generateObject", usage: "Intent classification — maps free-text prompts to typed intent categories (financial, operational, creative, etc.).", where: "intent-classifier.ts", badge: "Core" },
+  { feature: "generateObject", usage: "Structured output for project-intelligence summaries and LLM-as-judge response scoring.", where: "project-intelligence-summary, llm-judge", badge: "Core" },
   { feature: "tool()", usage: "28+ registered tools across 6 tool files: financial, operational, project, Acumatica, schedule, forecast, Outlook operations.", where: "lib/ai/tools/", badge: "Tools" },
   { feature: "Output.object() / Output.array()", usage: "Structured output from generateText without switching to generateObject — used for action briefs, suggestion arrays, and memory extraction.", where: "structured-output.ts, request-suggestions.ts, memory-extraction.ts", badge: "Tools" },
   { feature: "stopWhen: stepCountIs(N)", usage: "Agentic loop cap: 10 steps for the main chat assistant, 7 steps for meeting prep generation.", where: "handler-v2.ts, meeting prep route", badge: "Agents" },
