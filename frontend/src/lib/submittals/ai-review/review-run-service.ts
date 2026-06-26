@@ -24,6 +24,13 @@ import {
   normalizeStoredSourceCoverage,
 } from "./persistence";
 import {
+  completeSubmittalAIReviewOpsRun,
+  failSubmittalAIReviewOpsRun,
+  recordSubmittalAIReviewOpsStep,
+  startSubmittalAIReviewOpsRun,
+  type SubmittalAIReviewOpsContext,
+} from "./ops-ledger";
+import {
   buildPromptSourceCatalog,
   buildSourceReference,
   resolvePromptSourceKeys,
@@ -912,12 +919,34 @@ export function createSubmittalAIReviewService(userId: string) {
       model_id: REVIEW_MODEL,
     });
     const runId = String(runRow.id);
+    let opsContext: SubmittalAIReviewOpsContext | null = null;
+    let opsTerminalRecorded = false;
 
     try {
+      const startedAt =
+        normalizeReviewRunTimestamp(runRow.started_at) ??
+        (() => {
+          throw new GuardrailError({
+            code: "INTERNAL_ERROR",
+            where: WHERE,
+            message: "Stored review run timestamp is invalid.",
+          });
+        })();
+      opsContext = await startSubmittalAIReviewOpsRun({
+        projectId,
+        submittalId,
+        submittalReviewRunId: runId,
+        userId,
+        focusArea: focusArea ?? null,
+        modelId: REVIEW_MODEL,
+        startedAt,
+      });
+
       const reviewTool = tools.reviewSubmittalAgainstDrawings;
       const specTool = tools.getSpecRequirements;
 
       let toolContext: AnyRow;
+      const contextStepStartedAt = new Date().toISOString();
       try {
         toolContext = (await reviewTool.execute!(
           { projectId, submittalId, focusArea },
@@ -928,6 +957,21 @@ export function createSubmittalAIReviewService(userId: string) {
           },
         )) as AnyRow;
       } catch (error) {
+        await recordSubmittalAIReviewOpsStep(opsContext, {
+          stepType: "tool_call",
+          status: "failed_retryable",
+          startedAt: contextStepStartedAt,
+          failureCode: "TOOL_EXECUTION_FAILED",
+          failureMessage:
+            error instanceof Error
+              ? error.message
+              : "Submittal review tool failed.",
+          metadata: {
+            toolName: "reviewSubmittalAgainstDrawings",
+            projectId,
+            submittalId,
+          },
+        });
         await updateRunRecord(runId, {
           status: "failed",
           completed_at: new Date().toISOString(),
@@ -944,6 +988,16 @@ export function createSubmittalAIReviewService(userId: string) {
           cause: error,
         });
       }
+      await recordSubmittalAIReviewOpsStep(opsContext, {
+        stepType: "tool_call",
+        status: "succeeded",
+        startedAt: contextStepStartedAt,
+        metadata: {
+          toolName: "reviewSubmittalAgainstDrawings",
+          projectId,
+          submittalId,
+        },
+      });
 
     const specQuery =
       scopedSubmittal.specificationSection?.trim() ||
@@ -1121,6 +1175,24 @@ export function createSubmittalAIReviewService(userId: string) {
     const readyForSynthesis =
       submittalTextLayer.state !== "not_ready" &&
       linkedDrawingLayer.state !== "not_ready";
+    await recordSubmittalAIReviewOpsStep(opsContext, {
+      stepType: "source_fetch",
+      status:
+        readyForSynthesis && !layers.some((layer) => layer.state === "failed")
+          ? "succeeded"
+          : readyForSynthesis
+            ? "failed_retryable"
+            : "blocked",
+      startedAt: contextStepStartedAt,
+      metadata: {
+        readiness: {
+          state: statusFromLayers,
+          summary: readinessSummary(layers),
+          layers,
+        },
+        sourceCoverage,
+      },
+    });
 
     if (!readyForSynthesis || "error" in toolContext) {
       const payload = SubmittalAIReviewRunSchema.parse({
@@ -1180,6 +1252,8 @@ export function createSubmittalAIReviewService(userId: string) {
         completed_at: payload.completedAt,
       });
       await persistCompatibilityCache(submittalId, payload);
+      await completeSubmittalAIReviewOpsRun(opsContext, payload);
+      opsTerminalRecorded = true;
       return payload;
     }
 
@@ -1257,6 +1331,7 @@ export function createSubmittalAIReviewService(userId: string) {
 
     let modelOutput: SubmittalAIReviewModelOutput;
     let rawModelOutput: unknown = null;
+    const synthesisStartedAt = new Date().toISOString();
     try {
       const result = await generateText({
         model: getLanguageModel(REVIEW_MODEL),
@@ -1285,6 +1360,32 @@ export function createSubmittalAIReviewService(userId: string) {
       modelOutput = result.output;
       rawModelOutput = result.response.body ?? result.output;
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Submittal AI review failed.";
+      await recordSubmittalAIReviewOpsStep(opsContext, {
+        stepType: "synthesis",
+        status: "failed_retryable",
+        startedAt: synthesisStartedAt,
+        failureCode: "AI_PROVIDER_FAILED",
+        failureMessage: message,
+        metadata: {
+          modelId: REVIEW_MODEL,
+          sourceCoverage,
+        },
+      });
+      await failSubmittalAIReviewOpsRun(opsContext, {
+        code: "AI_PROVIDER_FAILED",
+        message,
+        sourceCoverage,
+        metadata: {
+          submittalReviewRunId: runId,
+          projectId,
+          submittalId,
+        },
+      });
+      opsTerminalRecorded = true;
       await updateRunRecord(runId, {
         status: "failed",
         readiness: toJson({
@@ -1294,10 +1395,7 @@ export function createSubmittalAIReviewService(userId: string) {
         }),
         source_coverage: toJson(sourceCoverage),
         error_code: "AI_PROVIDER_FAILED",
-        error_message:
-          error instanceof Error
-            ? error.message
-            : "Submittal AI review failed.",
+        error_message: message,
         completed_at: new Date().toISOString(),
       });
       throw new GuardrailError({
@@ -1307,6 +1405,15 @@ export function createSubmittalAIReviewService(userId: string) {
         cause: error,
       });
     }
+    await recordSubmittalAIReviewOpsStep(opsContext, {
+      stepType: "synthesis",
+      status: "succeeded",
+      startedAt: synthesisStartedAt,
+      metadata: {
+        modelId: REVIEW_MODEL,
+        checkCount: modelOutput.checks.length,
+      },
+    });
 
     const checks: SubmittalAIReviewCheck[] = modelOutput.checks.map(
       (check) => ({
@@ -1381,6 +1488,8 @@ export function createSubmittalAIReviewService(userId: string) {
       error_message: null,
     });
     await persistCompatibilityCache(submittalId, payload);
+    await completeSubmittalAIReviewOpsRun(opsContext, payload);
+    opsTerminalRecorded = true;
 
     return payload;
     } catch (error) {
@@ -1392,6 +1501,17 @@ export function createSubmittalAIReviewService(userId: string) {
         error instanceof GuardrailError ? error.code : "INTERNAL_ERROR";
 
       await failRunIfStillRunning(runId, code, message);
+      if (!opsTerminalRecorded) {
+        await failSubmittalAIReviewOpsRun(opsContext, {
+          code,
+          message,
+          metadata: {
+            submittalReviewRunId: runId,
+            projectId,
+            submittalId,
+          },
+        });
+      }
       throw error;
     }
   }
