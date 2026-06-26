@@ -24,4 +24,12 @@ describe("home action dashboard contract", () => {
     expect(source).not.toContain("Uses the existing executive brief surface while homepage synthesis is wired.");
     expect(source).not.toContain("No dated tasks are due today from your current task feed.");
   });
+
+  it("keeps the AI profile discoverable from the review queue", () => {
+    const source = fs.readFileSync(homePagePath, "utf8");
+
+    expect(source).toContain('title="AI profile"');
+    expect(source).toContain('href="/ai/profile"');
+    expect(source).toContain("role, memory, and approval context");
+  });
 });

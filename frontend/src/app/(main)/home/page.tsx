@@ -585,6 +585,12 @@ export default function HomeActionDashboardPage() {
                 actionLabel="Review"
               />
               <ActionRow
+                title="AI profile"
+                meta="Review what AI can use for role, memory, and approval context."
+                href="/ai/profile"
+                actionLabel="Manage"
+              />
+              <ActionRow
                 title="Executive intelligence"
                 meta="Open the existing source-backed executive surface."
                 href="/executive"
