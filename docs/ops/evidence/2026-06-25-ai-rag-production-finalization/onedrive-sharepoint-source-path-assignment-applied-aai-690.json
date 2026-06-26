@@ -1,0 +1,69 @@
+{
+  "status": "pass",
+  "dryRun": false,
+  "lookbackDays": 120,
+  "docsScanned": 144,
+  "assignments": 7,
+  "updated": 7,
+  "ambiguous": 0,
+  "failures": [],
+  "samples": [
+    {
+      "document_id": "onedrive_012BEZDVXJUP2UNIWQLZEZ5HWGQBKGZZZG",
+      "title": "Revised Proposal (Goodwill Store Remodel - Peoria, IL).PDF",
+      "project_id": 762,
+      "project_number": "26-105",
+      "project_name": "Goodwill Pioneer PKWY",
+      "source_path": "Alleato Group/2026 Jobs/26-105 - GW Pioneer PKWY (Peoria, IL)/06 - Bid (Responses)/09 - Finishes/Revised Proposal (Goodwill Store Remodel - Peoria, IL).PDF"
+    },
+    {
+      "document_id": "onedrive_012BEZDVT6HMQSRGSGYVGJQILBG7O3WVTT",
+      "title": "Pioneer Park Floor Plan Scope.pdf",
+      "project_id": 762,
+      "project_number": "26-105",
+      "project_name": "Goodwill Pioneer PKWY",
+      "source_path": "Alleato Group/2026 Jobs/26-105 - GW Pioneer PKWY (Peoria, IL)/01 - Drawings/Pioneer Park Floor Plan Scope.pdf"
+    },
+    {
+      "document_id": "onedrive_012BEZDVUZJ55XDW4BD5C3KKDMS5QGX3BT",
+      "title": "Pioneer Park Floor Plan from Lease 2006.pdf",
+      "project_id": 762,
+      "project_number": "26-105",
+      "project_name": "Goodwill Pioneer PKWY",
+      "source_path": "Alleato Group/2026 Jobs/26-105 - GW Pioneer PKWY (Peoria, IL)/01 - Drawings/Pioneer Park Floor Plan from Lease 2006.pdf"
+    },
+    {
+      "document_id": "onedrive_012BEZDVQCSPBQ7N6KFFEKZNFB4R4LONGR",
+      "title": "South Apartment SOW and Proposal.pdf",
+      "project_id": 833,
+      "project_number": "25-104",
+      "project_name": "Royal Theatre Apartments",
+      "source_path": "Alleato Group/2025 Jobs/25- 104 Danville Theatre/Alleato SOW for Completion/South Apartment SOW and Proposal.pdf"
+    },
+    {
+      "document_id": "onedrive_012BEZDVU3CK7V7SKL5NEJOIPVX6DDIOSS",
+      "title": "North Apartment SOW and Proposal.pdf",
+      "project_id": 833,
+      "project_number": "25-104",
+      "project_name": "Royal Theatre Apartments",
+      "source_path": "Alleato Group/2025 Jobs/25- 104 Danville Theatre/Alleato SOW for Completion/North Apartment SOW and Proposal.pdf"
+    },
+    {
+      "document_id": "onedrive_012BEZDVRQEPAPJTXDGZFL5WTFYYYHZMI7",
+      "title": "South Apartment SOW.pdf",
+      "project_id": 833,
+      "project_number": "25-104",
+      "project_name": "Royal Theatre Apartments",
+      "source_path": "Alleato Group/2025 Jobs/25- 104 Danville Theatre/Alleato SOW for Completion/South Apartment SOW.pdf"
+    },
+    {
+      "document_id": "onedrive_012BEZDVUMQPTDNBG2S5G3UIM7M6VRFA6Y",
+      "title": "North Apartment SOW.pdf",
+      "project_id": 833,
+      "project_number": "25-104",
+      "project_name": "Royal Theatre Apartments",
+      "source_path": "Alleato Group/2025 Jobs/25- 104 Danville Theatre/Alleato SOW for Completion/North Apartment SOW.pdf"
+    }
+  ],
+  "ambiguousSamples": []
+}

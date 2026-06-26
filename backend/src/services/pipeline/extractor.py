@@ -81,6 +81,7 @@ MEETING_PACKET_COMPILER_VERSION = "meeting_extractor_compiler_v0_1"
 # extraction_prompt_version on every AI-sourced task; deep tasks satisfy it with
 # this. Bump when the deep extraction prompt materially changes.
 DEEP_EXTRACTION_PROMPT_VERSION = "deep_extractor_v0_1"
+LEGACY_FIREFLIES_TASK_PROMPT_VERSION = "fireflies_pipeline_legacy_v0_1"
 
 # Map a RiskItem.category to an insight_cards.card_type. Values MUST stay within
 # compiler.INSIGHT_CARD_TYPES (and the insight_cards.card_type CHECK constraint).
@@ -1153,6 +1154,7 @@ def _upsert_task(
         prompt_version = DEEP_EXTRACTION_PROMPT_VERSION
     else:
         extraction_source = "fireflies_pipeline_legacy"
+        prompt_version = LEGACY_FIREFLIES_TASK_PROMPT_VERSION
 
     data = {
         "metadata_id": metadata_id,

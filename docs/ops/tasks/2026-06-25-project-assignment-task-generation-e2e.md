@@ -39,14 +39,14 @@ Verify and finalize end-to-end project assignment and automatic task generation 
 - [x] Verify project assignment for Teams messages inside the one-week operational concern window.
 - [x] Verify project assignment for Fireflies meetings inside the two-month operational concern window.
 - [ ] Verify project assignment for SharePoint files.
-- [ ] Verify project assignment for uploaded documents and PDFs.
-- [ ] Verify project assignment for drawings, submittals, RFIs, and contracts where source records exist.
-- [ ] Verify unmatched/ambiguous records route to manual review with confidence scoring.
+- [x] Verify project assignment for uploaded documents and PDFs.
+- [x] Verify project assignment for drawings, submittals, RFIs, and contracts where source records exist.
+- [x] Verify unmatched/ambiguous records route to manual review with confidence scoring.
 - [x] Verify task generation from meetings.
 - [x] Verify task generation from emails.
 - [x] Verify task generation from Teams conversations.
-- [ ] Verify task generation from document analysis and AI extraction.
-- [ ] Verify duplicate task prevention.
+- [x] Verify task generation from document analysis and AI extraction.
+- [x] Verify duplicate task prevention.
 - [x] Verify generated task owner and project association.
 - [x] Add or repair failure-loud guardrails for any confirmed gap.
 - [x] Delegate typecheck after every TS/JS implementation change and record evidence.
@@ -67,6 +67,7 @@ Linear issue:
 Linear kickoff comment:
 
 - AAI-690 comment `6957e310-e278-4724-be79-20587c94d45d`
+- AAI-690 progress comment `18a3c44b-bdb3-4400-86a6-abb1bdb9b0d1`
 
 Path inventory:
 
@@ -108,6 +109,19 @@ Repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-applied-project-1011-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-analysis-task-generation-inventory-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-active-window-duplicates-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/onedrive-sharepoint-source-path-assignment-dry-run-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-ap-check-assignment-dry-run-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/onedrive-sharepoint-source-path-assignment-applied-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-redrive-aai-690-source-lifecycle-regression.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-redrive-aai-690-after-legacy-prompt-fix.json`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-legacy-prompt-compile-aai-690.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-legacy-prompt-tests-aai-690.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-aai-690-fireflies-legacy-prompt-fix.txt`
 
 ## Initial Known Constraints
 
@@ -118,6 +132,8 @@ Repair evidence:
 ## Blockers
 
 - Bounded delegated frontend typechecks timed out or were externally terminated without TypeScript diagnostics. The delegated no-timeout retry passed with no TypeScript errors.
+- SharePoint assignment is not closed. Live inventory after deterministic repair still shows 136 SharePoint app documents without a direct project, and lifecycle evidence includes SharePoint rows marked complete without a project as well as rows explicitly in project-assignment review. The AP-check deterministic repair found 81 parsed SharePoint check documents but 0 safe exact project matches, so remaining rows must stay review-routed until a stronger accounting match or review workflow closes them.
+- Fireflies lifecycle regressed during this slice because recent meetings can reappear as missing chunk coverage. Redrive restored the source lifecycle verifier, but the first retry exposed a real Fireflies legacy task guardrail failure that required a code fix.
 
 ## Root Cause
 
@@ -126,6 +142,10 @@ Fireflies task integrity initially failed because stale task rows had their scal
 A stricter duplicate/link query then found 48 additional Fireflies task rows where task-level attribution repairs had set the scalar project from task text while leaving the project array empty. The recurring path was `backfill_task_project_assignments_from_rules.mjs`, which updated only the scalar project.
 
 Outlook/Teams automatic task generation had a separate active gap. Recent live data showed 454 Outlook email documents and 341 Teams message documents inside the one-week concern window, but zero communication task rows and zero synthesizer processing markers. The Graph sync path only invoked communication intelligence extraction when inline embedding was enabled, while Teams-only scheduled phases intentionally run fetch-only. A bounded Outlook redrive then exposed a second issue: signal-card promotion failures aborted the whole document before task writes, and the shared task writer populated the scalar project but not the task project array for communication tasks called with only scalar project ID.
+
+The remaining Fireflies lifecycle regression exposed a third active issue. Legacy Fireflies action-item tasks created by the pipeline extractor were classified as `fireflies_pipeline_legacy` but left the required extraction prompt version empty, so the database task-quality trigger rejected the write and stopped the redrive. The extractor now records an explicit legacy Fireflies prompt version for that path.
+
+Document-source inventory found that deterministic source-path assignment could safely repair 7 OneDrive/SharePoint documents. SharePoint AP check assignment was intentionally not applied because exact payment or accounting matches resolved 0 safe assignments and rejected 81 parsed candidates.
 
 ## Prevention
 
@@ -140,6 +160,13 @@ Outlook/Teams automatic task generation had a separate active gap. Recent live d
 - Replaced a dead compiler-title unit test that referenced deleted email/Teams compiler modules with active-path project synthesizer task writer tests.
 - Verified one real recent Outlook email generated a task with project, project array, owner, and no duplicate task group after the fix.
 - Verified one real recent Teams DM generated 4 tasks with project, project arrays, owners, and no duplicate task groups after the fix.
+- Verified drawing uploads and submittals are directly project-assigned in live app metadata.
+- Verified uploaded-document/PDF assignment coverage, with the only uploaded-document unassigned sample being a knowledge SOP rather than a project document.
+- Verified manual review routing exists through `document_attribution_candidates`, including pending-review rows with confidence scores and the admin review API.
+- Verified document-analysis task generation exists through a real contract attachment task with project, project array, and owner populated.
+- Verified duplicate task prevention inside the active freshness windows: 0 duplicate groups for Outlook/Teams one-week windows, Fireflies two-month window, and all other document-task rows.
+- Added `LEGACY_FIREFLIES_TASK_PROMPT_VERSION` so legacy Fireflies action-item tasks satisfy the task-quality database trigger instead of failing redrive.
+- Re-ran canonical source lifecycle verification after Fireflies redrive; it passes with no failures.
 
 ## Failure-Loud Guardrail
 

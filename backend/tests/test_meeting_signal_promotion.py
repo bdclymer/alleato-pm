@@ -316,6 +316,23 @@ def test_upsert_task_high_confidence_deep_task_auto_created(monkeypatch):
     assert row["extraction_metadata"]["deep_confidence"] == 0.95
 
 
+def test_upsert_task_legacy_fireflies_task_records_prompt_version(monkeypatch):
+    _patch_employee_resolver(monkeypatch)
+    recorder = {"upserted": []}
+    client = _FakeTaskClient(recorder)
+
+    legacy = TaskItem(
+        description="Check headphone and sound settings before the next call.",
+        assignee="Sam",
+    )
+    extractor._upsert_task(client, legacy, "meeting-1", [42], 42)
+
+    row = recorder["upserted"][0]
+    assert row["source_system"] == "fireflies"
+    assert row["extraction_source"] == "fireflies_pipeline_legacy"
+    assert row["extraction_prompt_version"] == extractor.LEGACY_FIREFLIES_TASK_PROMPT_VERSION
+
+
 def test_promote_meeting_signals_skips_without_project():
     structured = StructuredData(decisions=[DecisionItem(description="x" * 50)])
     result = extractor._promote_meeting_signals(object(), "meeting-1", None, None, structured)

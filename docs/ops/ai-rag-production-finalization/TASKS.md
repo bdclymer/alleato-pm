@@ -270,6 +270,20 @@ Evidence directory:
   - [focused-compile-lint-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt)
 - Remaining AAI-682 closure gates: live permission behavior, citation/reference-link proof, and deletion/migration proof for any legacy retrieval candidates.
 
+### 2026-06-26: AAI-690 Document Assignment And Task Evidence Extended
+
+- Verified live assignment/task state for SharePoint, OneDrive, uploaded documents, PDFs, drawings, submittals, contracts, manual-review candidates, and document-derived tasks.
+- Applied 7 deterministic OneDrive/SharePoint project assignments from source-path project numbers.
+- Left SharePoint AP checks in review instead of forcing assignment: 81 parsed check documents had 0 safe exact accounting/project matches.
+- Fixed Fireflies legacy action-item task writes by recording an explicit prompt version required by the task-quality trigger.
+- Verified active-window duplicate task prevention: 0 duplicate groups under the user freshness policy.
+- Re-ran canonical source lifecycle verification after Fireflies redrive; it passes.
+- Evidence:
+  - [document-source-assignment-task-inventory-after-source-path-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json)
+  - [document-analysis-task-generation-inventory-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-analysis-task-generation-inventory-aai-690.json)
+  - [task-generation-active-window-duplicates-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-active-window-duplicates-aai-690.json)
+  - [source-lifecycle-after-aai-690-fireflies-redrive.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt)
+
 ### 2026-06-25: AAI-682 Retrieval Contract Verifier Added
 
 - Added `npm run rag:verify:retrieval-contract`.

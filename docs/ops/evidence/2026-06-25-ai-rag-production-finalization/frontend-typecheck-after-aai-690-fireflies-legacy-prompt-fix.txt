@@ -1,0 +1,9 @@
+Pass.
+
+Command: TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck
+
+Errors: none.
+
+Likely owner files if failing: none.
+
+Relation to current task: passed after the backend Fireflies extractor prompt-version guardrail fix.

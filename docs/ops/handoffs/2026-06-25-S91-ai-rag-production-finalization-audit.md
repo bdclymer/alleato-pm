@@ -71,7 +71,7 @@
    - Meeting vectorization for recent eligible meetings is recovered: official verifier now reports `75/75` recent meetings with embedded chunks. Historical Fireflies error backlog remains at `13225` rows and must be classified/drained separately.
    - Source lifecycle verifier is recovered: project disposition semantics now honor manual-review terminal states, and 162 deterministic task links were repaired from their source document projects.
    - Provider schedules do not fully match the target architecture: Render Acumatica, RAG health, AI provider health, and Microsoft Executive Assistant checks are suspended; Vercel Graph/Graph-embed/Acumatica crons are disabled but still present in repo config.
-10) Recommended next action (one line): Inventory active production paths, then run compact source lifecycle and RAG verifier commands before any deletion or implementation edits.
+10) Recommended next action (one line): Close the remaining SharePoint assignment disposition gap before claiming AAI-690 complete.
 11) Handoff file path: docs/ops/handoffs/2026-06-25-S91-ai-rag-production-finalization-audit.md
 12) Migration ledger evidence: No migration in this slice.
 
@@ -233,6 +233,36 @@ AAI-682 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt`
+
+AAI-690 continued progress:
+
+- Code changed:
+  - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/pipeline/extractor.py`
+  - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_meeting_signal_promotion.py`
+- Data repair:
+  - Applied 7 deterministic OneDrive/SharePoint assignments from source-path project numbers.
+  - Did not apply SharePoint AP-check assignment because the deterministic AP repair found 81 parsed check documents and 0 safe exact matches.
+- Root cause:
+  - Legacy Fireflies action-item tasks were classified as `fireflies_pipeline_legacy` without a required prompt version, so the task-quality database trigger rejected redrive writes.
+- Prevention:
+  - Added `LEGACY_FIREFLIES_TASK_PROMPT_VERSION`.
+  - Added a regression test that legacy Fireflies task writes include the prompt version.
+- Verification:
+  - PASS: `python3 -m py_compile backend/src/services/pipeline/extractor.py backend/tests/test_meeting_signal_promotion.py`
+  - PASS: `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_meeting_signal_promotion.py -q`
+  - PASS: delegated sub-agent typecheck `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+  - PASS: `npm run rag:verify:source-lifecycle` after Fireflies redrive
+- Remaining blocker:
+  - AAI-690 is still not complete. Live inventory still shows SharePoint documents without a direct project, including rows with lifecycle status complete but no project and rows in project-assignment review. This needs a final disposition policy or stronger deterministic accounting match before completion.
+- Evidence:
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/document-analysis-task-generation-inventory-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/task-generation-active-window-duplicates-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/onedrive-sharepoint-source-path-assignment-applied-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/sharepoint-ap-check-assignment-dry-run-aai-690.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/fireflies-redrive-aai-690-after-legacy-prompt-fix.json`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt`

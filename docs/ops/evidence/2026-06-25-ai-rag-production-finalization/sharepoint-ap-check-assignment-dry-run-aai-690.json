@@ -1,0 +1,135 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 120,
+  "limit": 10000,
+  "documentsScanned": 123,
+  "parsedDocuments": 81,
+  "assignments": 0,
+  "updated": 0,
+  "rejected": 81,
+  "byMethod": {},
+  "samples": [],
+  "rejectedSamples": [
+    {
+      "id": "sharepoint_01AFX6IXNRDYXX6JJJEVCYGG4Z3NSTAHAZ",
+      "title": "Check 785_Legacy Fire Protection _$19,162.50.pdf",
+      "checkNumber": "000785",
+      "amount": 19162.5
+    },
+    {
+      "id": "sharepoint_01AFX6IXICZRH2AZ62GFB26RLQARRRY7MD",
+      "title": "Check 784_Brantley_$99.pdf",
+      "checkNumber": "000784",
+      "amount": 99
+    },
+    {
+      "id": "sharepoint_01AFX6IXOQJRDLOK3LPFEKV4P3IPBXX6FY",
+      "title": "Check 783_Trane U.S Inc_$2,299.40.pdf",
+      "checkNumber": "000783",
+      "amount": 2299.4
+    },
+    {
+      "id": "sharepoint_01AFX6IXLJD462CMJQ6ZDYSNUIHOBJHPEX",
+      "title": "Check 780_Casework Concepts LLC_$1,138.20.pdf",
+      "checkNumber": "000780",
+      "amount": 1138.2
+    },
+    {
+      "id": "sharepoint_01AFX6IXNJ4L3X6XTJQRHZVGEVGQY3P5FU",
+      "title": "Check 779_Casework Concepts LLC_$10,243.pdf",
+      "checkNumber": "000779",
+      "amount": 10243
+    },
+    {
+      "id": "sharepoint_01AFX6IXKP7PPYLEWAYZHYFWYARF65S7BP",
+      "title": "Check 777_Plangrid_$3,600.pdf",
+      "checkNumber": "000777",
+      "amount": 3600
+    },
+    {
+      "id": "sharepoint_01AFX6IXL3I37N5TDKCBG2HYGH4YAUPZMI",
+      "title": "Check 771_Rite Rug Co_$1,350.pdf",
+      "checkNumber": "000771",
+      "amount": 1350
+    },
+    {
+      "id": "sharepoint_01AFX6IXIJ3AJFPICZ2ZBZDTMABOWUBZGJ",
+      "title": "Check # 683 HGCC $1,498.15.pdf",
+      "checkNumber": "000683",
+      "amount": 1498.15
+    },
+    {
+      "id": "sharepoint_01AFX6IXMJKHC5CPEX2RALMRD7R4TUT6KJ",
+      "title": "Check # 682 Advanced Doc Sol $210.66.pdf",
+      "checkNumber": "000682",
+      "amount": 210.66
+    },
+    {
+      "id": "sharepoint_01AFX6IXOBHGBTKZ7VXFFZBRJR4LMXQOVB",
+      "title": "Check # 681 Somerset Tech $3,192.00.pdf",
+      "checkNumber": "000681",
+      "amount": 3192
+    },
+    {
+      "id": "sharepoint_01AFX6IXP25LCIPYARNZA2Y22L7YMUE66Z",
+      "title": "Check # 575 Done Right Plumbing $1,260.00.pdf",
+      "checkNumber": "000575",
+      "amount": 1260
+    },
+    {
+      "id": "sharepoint_01AFX6IXO5DZ64BRHVSJDZFLMYTWCSO5QY",
+      "title": "Check # 574 Architectural Walls Inc $847.00.pdf",
+      "checkNumber": "000574",
+      "amount": 847
+    },
+    {
+      "id": "sharepoint_01AFX6IXLGDL5Q6XMAWVC2P4PXWHKVLDUQ",
+      "title": "Check # 573 Inline Painting Inc $1300.00.pdf",
+      "checkNumber": "000573",
+      "amount": 1300
+    },
+    {
+      "id": "sharepoint_01AFX6IXL2MILXQG5JN5CLNG5SXZYSE3XI",
+      "title": "Check # 572 David Electric $959.00.pdf",
+      "checkNumber": "000572",
+      "amount": 959
+    },
+    {
+      "id": "sharepoint_01AFX6IXON77NRDSOXKRCYXF2GKWEJ5523",
+      "title": "Check # 570 Hoplite Lawn Care $500.00.pdf",
+      "checkNumber": "000570",
+      "amount": 500
+    },
+    {
+      "id": "sharepoint_01AFX6IXMBXQJLGNFGTVHKNG5EJNIXGT5F",
+      "title": "Check # 569 Lewis Wagner LLP $3,172.00.pdf",
+      "checkNumber": "000569",
+      "amount": 3172
+    },
+    {
+      "id": "sharepoint_01AFX6IXIA22423UOIRND3ENDUXKHKZTRN",
+      "title": "Check # 568 Somerset Technology Solutions, LLC $3,192.00.pdf",
+      "checkNumber": "000568",
+      "amount": 3192
+    },
+    {
+      "id": "sharepoint_01AFX6IXJXMFQHNVLU3ZEZQSNQ7BQ43NKM",
+      "title": "Check # 567 Brantley $99.00.pdf",
+      "checkNumber": "000567",
+      "amount": 99
+    },
+    {
+      "id": "sharepoint_01AFX6IXMMADR322P7OZBKAME2EAS3T3YO",
+      "title": "Check # 566 Brantley $99.00.pdf",
+      "checkNumber": "000566",
+      "amount": 99
+    },
+    {
+      "id": "sharepoint_01AFX6IXMHQSANCVEELNF2GUGIG4WEWUHO",
+      "title": "Check # 565 Advanced Document Solutions, Inc $217.68.pdf",
+      "checkNumber": "000565",
+      "amount": 217.68
+    }
+  ]
+}
