@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-06-26T00:12:03.777391+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-outlook-vision-repair-aai-669.json",
+  "batch_size": 5,
+  "results": [
+    {
+      "id": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+      "title": "change-event-detail-upload-test.txt",
+      "started_at": "2026-06-26T00:10:47.301597+00:00",
+      "ok": true,
+      "pipeline": {
+        "metadataId": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+        "parser": {
+          "metadataId": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+          "segmentCount": 1,
+          "summaryLength": 146,
+          "extractedChars": 39
+        },
+        "vision": {
+          "pages_analyzed": 0,
+          "skipped_reason": "not a PDF"
+        },
+        "embedder": {
+          "metadataId": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+          "chunkCount": 3,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "358fb1d6-daa7-4778-8c84-bb8b0d88ab1f",
+          "insights": 4,
+          "decisions": 0,
+          "risks": 2,
+          "opportunities": 2,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "finished_at": "2026-06-26T00:11:06.926175+00:00"
+    },
+    {
+      "id": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+      "title": "change-event-edit-upload-test.txt",
+      "started_at": "2026-06-26T00:11:06.927289+00:00",
+      "ok": true,
+      "pipeline": {
+        "metadataId": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+        "parser": {
+          "metadataId": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+          "segmentCount": 1,
+          "summaryLength": 144,
+          "extractedChars": 37
+        },
+        "vision": {
+          "pages_analyzed": 0,
+          "skipped_reason": "not a PDF"
+        },
+        "embedder": {
+          "metadataId": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+          "chunkCount": 3,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "fff81973-cf5a-4b0e-97b1-37e44ded492e",
+          "insights": 4,
+          "decisions": 0,
+          "risks": 2,
+          "opportunities": 2,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "finished_at": "2026-06-26T00:11:21.470821+00:00"
+    },
+    {
+      "id": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+      "title": "change-event-edit-upload-test.txt",
+      "started_at": "2026-06-26T00:11:21.471290+00:00",
+      "ok": true,
+      "pipeline": {
+        "metadataId": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+        "parser": {
+          "metadataId": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+          "segmentCount": 1,
+          "summaryLength": 144,
+          "extractedChars": 37
+        },
+        "vision": {
+          "pages_analyzed": 0,
+          "skipped_reason": "not a PDF"
+        },
+        "embedder": {
+          "metadataId": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+          "chunkCount": 3,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "32be3b5f-c622-4a5b-98ab-6d6104c7f450",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "finished_at": "2026-06-26T00:11:34.677731+00:00"
+    },
+    {
+      "id": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+      "title": "change-event-edit-upload-test.txt",
+      "started_at": "2026-06-26T00:11:34.678162+00:00",
+      "ok": true,
+      "pipeline": {
+        "metadataId": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+        "parser": {
+          "metadataId": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+          "segmentCount": 1,
+          "summaryLength": 144,
+          "extractedChars": 37
+        },
+        "vision": {
+          "pages_analyzed": 0,
+          "skipped_reason": "not a PDF"
+        },
+        "embedder": {
+          "metadataId": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+          "chunkCount": 3,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "7a2c56bc-7cdd-4499-a215-ef8ece093a68",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "finished_at": "2026-06-26T00:11:49.978325+00:00"
+    },
+    {
+      "id": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+      "title": "change-event-detail-upload-test.txt",
+      "started_at": "2026-06-26T00:11:49.978772+00:00",
+      "ok": true,
+      "pipeline": {
+        "metadataId": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+        "parser": {
+          "metadataId": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+          "segmentCount": 1,
+          "summaryLength": 146,
+          "extractedChars": 39
+        },
+        "vision": {
+          "pages_analyzed": 0,
+          "skipped_reason": "not a PDF"
+        },
+        "embedder": {
+          "metadataId": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+          "chunkCount": 3,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "finished_at": "2026-06-26T00:12:03.777381+00:00"
+    }
+  ]
+}

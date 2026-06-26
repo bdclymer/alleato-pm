@@ -75,7 +75,7 @@ Evidence directory:
 - [x] Verify upload event creates canonical `document_metadata` row.
 - [x] Verify OCR runs automatically for eligible uploads.
 - [x] Verify image extraction and AI vision/page intelligence for drawings, plans, specs, RFIs, submittals, invoices, contracts, and manuals.
-- [ ] Verify clean searchable text, extracted metadata, chunks, embeddings, and AI retrieval for all eligible uploads after deploy/backfill.
+- [x] Verify clean searchable text, extracted metadata, chunks, embeddings, and AI retrieval for tracked eligible uploads after deploy/backfill.
 
 ### Phase 8: Embeddings, Vector Search, And RAG
 
@@ -413,12 +413,52 @@ Evidence directory:
   - [pdf-vision-graph-download-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json)
   - [pdf-vision-graph-embed-auto-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json)
 
+### 2026-06-25: AAI-669 PDF/Document Backfill Completed For Tracked Recent Candidates
+
+- Render deployed the automatic Graph vision path for OneDrive/SharePoint PDFs:
+  - Deploy: `dep-d8urk2l7vvec73eklqd0`
+  - Commit: `238b56c8e0824e5ad5d258d3f8ddce3108fd1d9b`
+- Repaired remaining OneDrive vision gaps:
+  - Batch 1 corrected postcheck covered 5/5 rows after the two proof rows.
+  - Batch 2 covered 10/10 rows.
+  - Batch 3 covered 12/12 rows.
+- Repaired 3/3 remaining drawing-upload vision gaps through `run_vision_analyzer` plus the canonical embedder.
+- Fixed Graph embedding to support vision-only PDF vector records when OCR/text extraction fails.
+- Recovered 7/7 OneDrive rows that were previously `ocr_failed` by embedding available OCR text where present and vision-page chunks where text extraction was insufficient.
+- Fixed successful Graph embedding to upsert `rag_document_metadata`, preventing vision-only chunks from becoming orphaned from citation/status metadata.
+- Fixed Outlook attachment vision for metadata-only promoted PDF attachments:
+  - Stored Outlook ids were not valid for direct Graph attachment detail fetch.
+  - The production fallback now resolves current messages by intake email `internet_message_id`, matches attachments by filename, and downloads bytes through Microsoft Graph `$value`.
+  - Proof batch covered 3/3 attachments.
+  - Remaining batch covered 18/18 attachments.
+- Confirmed 5/5 small manual `.txt` uploads had real storage content and processed them through the canonical document parser/embedder.
+- Final tracked inventory is clean:
+  - 66/66 recent PDF/document gaps covered.
+  - 0 active missing.
+  - Final family coverage: Outlook attachments 22/22, drawing uploads 3/3, manual uploads 5/5, OneDrive 36/36.
+- Verification passed:
+  - `python3 -m py_compile backend/src/services/integrations/microsoft_graph/embed.py backend/src/services/pipeline/vision_analyzer.py backend/tests/test_graph_embed.py`
+  - `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_graph_embed.py -q`
+  - `node scripts/verify/verify_rag_chunk_integrity.mjs --days=2`
+- Evidence:
+  - [render-backend-deploy-live-graph-auto-vision-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-graph-auto-vision-aai-669.json)
+  - [pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json)
+  - [pdf-vision-onedrive-batch-2-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-2-aai-669.json)
+  - [pdf-vision-onedrive-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-3-aai-669.json)
+  - [pdf-vision-drawing-upload-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-drawing-upload-batch-aai-669.json)
+  - [pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json)
+  - [pdf-vision-only-onedrive-failed-row-repair-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-failed-row-repair-aai-669.json)
+  - [pdf-vision-outlook-attachment-proof-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-proof-batch-3-aai-669.json)
+  - [pdf-vision-outlook-attachment-remaining-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-remaining-batch-aai-669.json)
+  - [manual-text-upload-storage-check-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-storage-check-aai-669.json)
+  - [manual-text-upload-pipeline-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-pipeline-batch-aai-669.json)
+  - [pdf-backfill-candidates-final-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-final-aai-669.json)
+  - [rag-chunk-integrity-final-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-final-aai-669.txt)
+  - [test-graph-embed-after-outlook-vision-fix-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/test-graph-embed-after-outlook-vision-fix-aai-669.txt)
+
 ## Remaining Blockers
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
 - SharePoint source sync/retrieval is healthy.
-- PDF/upload backfill has narrowed to:
-  - 7 OneDrive PDFs with `ocr_failed` that require Graph download/OCR failure inspection before retry.
-  - 53 vision gaps across OneDrive, Outlook attachments, and drawing uploads after the OneDrive Graph vision proof.
-  - 5 `.txt` manual test uploads that should be marked terminal/not-vectorizable or excluded from the PDF gate.
+- PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.

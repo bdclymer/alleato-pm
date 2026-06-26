@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-06-26T00:03:55.385346+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-vision-only-onedrive-repair-aai-669.json",
+  "batch_size": 3,
+  "results": [
+    {
+      "id": "outlook_attachment_bef2dfd5333ba5e52eb33c51_a75da57fb84ac33520746d51",
+      "title": "Str - Union Collective - v2025 (1).pdf",
+      "started_at": "2026-06-26T00:02:29.424753+00:00",
+      "ok": true,
+      "chunks_written": 15,
+      "page_intelligence_count": 14,
+      "rag_chunk_count": 15,
+      "vision_chunk_count": 14,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 191
+      },
+      "finished_at": "2026-06-26T00:03:35.246355+00:00"
+    },
+    {
+      "id": "outlook_attachment_bef2dfd5333ba5e52eb33c51_d333101f4034236badb2e142",
+      "title": "Union Collective Concept Plan 6-15-26.pdf",
+      "started_at": "2026-06-26T00:03:35.246702+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 194
+      },
+      "finished_at": "2026-06-26T00:03:45.960935+00:00"
+    },
+    {
+      "id": "outlook_attachment_ad2a7dfe0f62644deff23dfe_c2fffc6c88dbfffcdb6e04e8",
+      "title": "Goodwill Office - A401_Enlarged Stair Plan and Elevation_6-23-26.pdf",
+      "started_at": "2026-06-26T00:03:45.961225+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 218
+      },
+      "finished_at": "2026-06-26T00:03:55.385336+00:00"
+    }
+  ]
+}

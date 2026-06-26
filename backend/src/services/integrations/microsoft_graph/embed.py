@@ -190,6 +190,51 @@ def _upsert_rag_content_payload(
     ).execute()
 
 
+def _upsert_rag_embedding_success(
+    rag_client,
+    doc: Dict[str, Any],
+    *,
+    content: str,
+    chunk_count: int,
+    source_type: str,
+) -> None:
+    metadata_id = str(doc.get("id") or "")
+    if not metadata_id:
+        return
+
+    payload: Dict[str, Any] = {
+        "id": metadata_id,
+        "app_document_id": metadata_id,
+        "project_id": doc.get("project_id"),
+        "source": doc.get("source"),
+        "source_system": doc.get("source_system"),
+        "source_item_id": doc.get("source_item_id"),
+        "title": doc.get("title"),
+        "type": doc.get("type"),
+        "category": doc.get("category"),
+        "storage_bucket": doc.get("storage_bucket"),
+        "storage_path": doc.get("file_path") or doc.get("source_path"),
+        "source_web_url": doc.get("source_web_url"),
+        "content_length": len(content or ""),
+        "embedding_status": "embedded",
+        "embedding_attempts": 0,
+        "embedding_error": None,
+        "parsing_status": doc.get("status"),
+        "processing_metadata": {
+            "app_status": doc.get("status"),
+            "chunk_count": chunk_count,
+            "source_type": source_type,
+            "embedding_path": "microsoft_graph.embed_graph_document",
+        },
+        "last_content_loaded_at": datetime.utcnow().isoformat(),
+    }
+    if content:
+        payload["content"] = content
+        payload["raw_text"] = content
+
+    rag_client.from_("rag_document_metadata").upsert(payload).execute()
+
+
 def _update_app_document_status(supabase_client, metadata_id: str, status: str, *, enabled: bool = True) -> None:
     if not enabled:
         return
@@ -826,7 +871,11 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     content = (rag_doc.get("content") or rag_doc.get("raw_text") or "").strip()
     if not content:
         content = _rehydrate_graph_document_content(supabase_client, rag_client, doc)
-    if not content:
+
+    _ensure_vision_page_intelligence(supabase_client, doc)
+    vision_chunks = _vision_page_chunks(supabase_client, metadata_id)
+
+    if not content and not vision_chunks:
         if str(doc.get("source_system") or "").lower() in {"onedrive", "sharepoint"}:
             logger.error("[GraphEmbed] Document %s missing Graph content after rehydrate attempt", metadata_id)
             _mark_graph_content_missing_error(supabase_client, rag_client, doc)
@@ -851,9 +900,9 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         return 0
 
-    substantive_chars = _substantive_text_length(content)
+    substantive_chars = _substantive_text_length(content) if content else 0
     min_chars = _min_embeddable_chars(doc)
-    if substantive_chars < min_chars:
+    if content and substantive_chars < min_chars and not vision_chunks:
         logger.info(
             "[GraphEmbed] Document %s skipped_low_content (%d < %d chars)",
             metadata_id,
@@ -879,12 +928,14 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         return 0
 
-    # Prepend title for better retrieval context
-    full_text = f"[{title}]\n\n{content}"
-    chunks = _split_text(full_text)
-    _ensure_vision_page_intelligence(supabase_client, doc)
-    vision_chunks = _vision_page_chunks(supabase_client, metadata_id)
-    if not chunks:
+    # Prepend title for better retrieval context. Some drawing PDFs have no
+    # OCR text but do have vision page intelligence; those are valid
+    # vision-only vector records.
+    chunks: List[str] = []
+    if content and substantive_chars >= min_chars:
+        full_text = f"[{title}]\n\n{content}"
+        chunks = _split_text(full_text)
+    if not chunks and not vision_chunks:
         _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
         get_rag_write_client().from_("rag_document_metadata").update(
             {"embedding_status": "embedded"}
@@ -1001,11 +1052,16 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
 
     # Mark embedded in RAG DB so the supplement scan doesn't re-process this doc.
-    # Reset the bounded-retry counter and clear any stored error on success.
+    # Upsert, rather than update-only, so vision-only PDF recovery cannot leave
+    # searchable chunks without citation/status metadata.
     try:
-        get_rag_write_client().from_("rag_document_metadata").update(
-            {"embedding_status": "embedded", "embedding_attempts": 0, "embedding_error": None}
-        ).eq("id", metadata_id).execute()
+        _upsert_rag_embedding_success(
+            get_rag_write_client(),
+            doc,
+            content=content,
+            chunk_count=len(rows),
+            source_type=source_type,
+        )
     except Exception as e:
         logger.warning("[GraphEmbed] Could not update RAG embedding_status for %s: %s", metadata_id, e)
 

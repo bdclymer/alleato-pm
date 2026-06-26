@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-06-25T23:48:36.914913+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-onedrive-vision-batch-3-aai-669.json",
+  "batch_size": 3,
+  "results": [
+    {
+      "id": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+      "title": "[043] P601",
+      "started_at": "2026-06-25T23:48:02.039854+00:00",
+      "ok": true,
+      "vision": {
+        "pages_analyzed": 1,
+        "total_pages": 1
+      },
+      "embedder": {
+        "metadataId": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+        "chunkCount": 3,
+        "segmentCount": 1
+      },
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 3,
+      "vision_chunk_count": 1,
+      "rag_embedding_status": "embedded",
+      "rag_parsing_status": "embedded",
+      "finished_at": "2026-06-25T23:48:13.348906+00:00"
+    },
+    {
+      "id": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+      "title": "[046] M001",
+      "started_at": "2026-06-25T23:48:13.349411+00:00",
+      "ok": true,
+      "vision": {
+        "pages_analyzed": 1,
+        "total_pages": 1
+      },
+      "embedder": {
+        "metadataId": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+        "chunkCount": 33,
+        "segmentCount": 15
+      },
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 33,
+      "vision_chunk_count": 1,
+      "rag_embedding_status": "embedded",
+      "rag_parsing_status": "embedded",
+      "finished_at": "2026-06-25T23:48:28.438890+00:00"
+    },
+    {
+      "id": "6869ca41-4323-4ad7-8610-3cc45861a252",
+      "title": "[049] M112",
+      "started_at": "2026-06-25T23:48:28.439123+00:00",
+      "ok": true,
+      "vision": {
+        "pages_analyzed": 1,
+        "total_pages": 1
+      },
+      "embedder": {
+        "metadataId": "6869ca41-4323-4ad7-8610-3cc45861a252",
+        "chunkCount": 3,
+        "segmentCount": 1
+      },
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 3,
+      "vision_chunk_count": 1,
+      "rag_embedding_status": "embedded",
+      "rag_parsing_status": "embedded",
+      "finished_at": "2026-06-25T23:48:36.914903+00:00"
+    }
+  ]
+}

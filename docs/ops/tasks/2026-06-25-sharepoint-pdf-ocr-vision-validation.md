@@ -3,7 +3,7 @@
 Date: 2026-06-25
 Linear: AAI-669
 Parent: AAI-636
-Status: In Progress - Root Cause Fixed, Backfill Remaining
+Status: In Progress - Final Verification And Publish Remaining
 
 ## Objective
 
@@ -50,6 +50,14 @@ Validate the production SharePoint and uploaded-document/PDF processing pipeline
 - Current inventory: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json`
 - Graph vision download proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json`
 - Graph embed auto-vision proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json`
+- Render auto-vision deploy live: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-graph-auto-vision-aai-669.json`
+- OneDrive vision batches: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-2-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-3-aai-669.json`
+- Drawing upload vision batch: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-drawing-upload-batch-aai-669.json`
+- Vision-only OneDrive OCR-failure repair: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-failed-row-repair-aai-669.json`
+- Outlook attachment metadata/download proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/outlook-attachment-metadata-sample-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/outlook-intake-email-sample-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-proof-batch-3-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-remaining-batch-aai-669.json`
+- Manual text upload storage and pipeline proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-storage-check-aai-669.json`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-pipeline-batch-aai-669.json`
+- Final inventory: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-final-aai-669.json`
+- Final verification: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-final-aai-669.txt`, `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/test-graph-embed-after-outlook-vision-fix-aai-669.txt`
 
 Key results:
 
@@ -78,18 +86,27 @@ Key results:
 - Fixed Graph embedding so `document_page_intelligence` summaries become `vision_page_summary` vector chunks.
 - OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`: 25 pages analyzed from Graph and 25 embedded `vision_page_summary` chunks written alongside 22 OneDrive text chunks.
 - Automatic Graph embed proof succeeded for `onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37`: `embed_graph_document` ran vision internally and wrote 39 total chunks with page intelligence.
+- Render deployed the automatic Graph vision fix live on `alleato-backend` (`dep-d8urk2l7vvec73eklqd0`, commit `238b56c8e0824e5ad5d258d3f8ddce3108fd1d9b`).
+- OneDrive vision backfill repaired 29/29 embedded OneDrive drawing/document PDFs:
+  - Batch 1 postcheck covered 5/5 additional rows after the first two proof rows.
+  - Batch 2 covered 10/10.
+  - Batch 3 covered the remaining 12/12.
+- Drawing upload vision repair covered 3/3 remaining drawing uploads.
+- Graph embedding now supports vision-only PDF vector records when OCR/text extraction fails; this recovered 7/7 OneDrive rows that were previously `ocr_failed`.
+- Outlook attachment vision now resolves stored metadata-only attachments through Microsoft Graph:
+  - Direct stored Outlook ids were not valid for attachment detail download.
+  - The fallback resolves the current message by `internetMessageId`, matches the attachment by filename, and downloads bytes through the Graph `$value` endpoint.
+  - Proof batch covered 3/3; remaining batch covered 18/18.
+- Manual text uploads were confirmed to have storage-backed text and processed through the canonical document parser/embedder: 5/5 covered.
+- Final inventory: 66/66 tracked recent PDF/document gaps covered, 0 active missing.
+- Final RAG chunk integrity passed with no missing embeddings and no orphan document-like chunks.
+- Focused Graph embed regression tests passed: 3 tests.
 
 ## Blockers
 
-- Remaining embedding blockers:
-  - 5 `.txt` manual test uploads are not PDF/OCR targets and should be marked terminal/not-vectorizable or excluded from this PDF gate.
-  - 7 OneDrive drawing PDFs remain `ocr_failed`; they need Graph download/OCR failure inspection before reset/retry.
-- Remaining vision blockers:
-  - 28 OneDrive embedded drawing documents still need the Graph vision backfill after the proof row succeeded.
-  - 22 Outlook attachments have embeddings but no vision/page-intelligence chunk.
-  - 3 drawing uploads have embeddings but still lack the vision evidence required by this validation.
-- Provider JSON-mode fallback warnings still occur during parser/extractor/compiler calls. They did not block the two-document proof run, but they remain observability noise and should be tracked separately if they cause extraction quality failures.
-- PM app final projection writes remain intentionally disabled by `AppDbProjectionError`; ingestion completes and records the compiler projection as non-blocking.
+- No active PDF/document processing blockers remain in the tracked recent candidate set after the final inventory.
+- Remaining operational note: provider JSON-mode fallback warnings still occur during parser/extractor/compiler calls and should stay tracked as observability noise unless extraction quality degrades.
+- Remaining operational note: PM app final projection writes remain intentionally disabled by `AppDbProjectionError`; ingestion completes and records the compiler projection as non-blocking.
 
 ## Root Cause
 
@@ -102,6 +119,10 @@ Key results:
 `verify_rag_chunk_integrity.mjs` now fails when document-like chunks exist without a `rag_document_metadata` row, preventing searchable chunks from silently losing citation metadata.
 
 `run_vision_analyzer` now falls back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally. Graph document embedding now invokes the vision analyzer for PDF-like Graph rows when page intelligence is absent, then embeds `document_page_intelligence` summaries as `vision_page_summary` chunks.
+
+Graph document embedding now allows vision-only vector records for PDF rows when OCR/text extraction fails, and upserts RAG metadata on successful embedding so vision-only chunks cannot be orphaned from citation/status metadata.
+
+`run_vision_analyzer` now also supports metadata-only Outlook attachment PDFs by resolving the current Graph message through the intake email `internet_message_id`, matching the attachment by filename, and downloading the attachment bytes through Microsoft Graph `$value` when no stored PDF exists.
 
 ## Failure-Loud Guardrail
 

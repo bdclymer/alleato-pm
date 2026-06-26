@@ -15,6 +15,7 @@ import base64
 import json
 import logging
 import re
+from urllib.parse import quote
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -108,7 +109,8 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
         pm_client.table("document_metadata")
         .select(
             "id, title, file_path, file_name, storage_bucket, url, source_web_url,"
-            "source_system,source_drive_id,source_item_id,source_site_id,source_path"
+            "source_system,source_drive_id,source_item_id,source_site_id,source_path,"
+            "source_metadata"
         )
         .eq("id", metadata_id)
         .maybe_single()
@@ -183,6 +185,135 @@ def run_vision_analyzer(metadata_id: str, pm_client: Any) -> Dict[str, Any]:
             except Exception as exc:
                 logger.warning(
                     "[VisionAnalyzer] Graph source download failed for %s: %s",
+                    metadata_id,
+                    exc,
+                )
+
+    if not pdf_bytes:
+        source_system = (metadata.get("source_system") or "").lower()
+        source_metadata = metadata.get("source_metadata") or {}
+        source_file_url = str(source_metadata.get("source_file_url") or "")
+        outlook_message_id = str(source_metadata.get("outlook_message_id") or "")
+        outlook_attachment_id = ""
+        match = re.search(r"^graph://messages/(.+)/attachments/(.+)$", source_file_url)
+        if match:
+            outlook_message_id = outlook_message_id or match.group(1)
+            outlook_attachment_id = match.group(2)
+
+        source_path_parts = str(metadata.get("source_path") or "").split("/")
+        mailbox_user_id = source_path_parts[1] if len(source_path_parts) > 2 and source_path_parts[0] == "outlook" else ""
+
+        if source_system == "outlook_attachment" and mailbox_user_id and outlook_message_id and outlook_attachment_id:
+            try:
+                from ..integrations.microsoft_graph.client import get_graph_client
+
+                graph = get_graph_client()
+                if not graph.is_configured():
+                    return {
+                        "pages_analyzed": 0,
+                        "skipped_reason": "microsoft graph is not configured",
+                    }
+
+                def _download_attachment_value(message_id: str, attachment_id: str) -> Optional[bytes]:
+                    import httpx
+                    from ..integrations.microsoft_graph.client import GRAPH_BASE
+
+                    url = (
+                        f"{GRAPH_BASE}/users/{quote(mailbox_user_id, safe='@.')}"
+                        f"/messages/{quote(message_id, safe='')}"
+                        f"/attachments/{quote(attachment_id, safe='')}/$value"
+                    )
+                    response = httpx.get(
+                        url,
+                        headers={"Authorization": f"Bearer {graph._get_token()}"},
+                        timeout=90,
+                    )
+                    response.raise_for_status()
+                    return response.content or None
+
+                try:
+                    pdf_bytes = _download_attachment_value(outlook_message_id, outlook_attachment_id)
+                except Exception as direct_exc:
+                    logger.info(
+                        "[VisionAnalyzer] Direct Outlook attachment download failed for %s; resolving by internetMessageId: %s",
+                        metadata_id,
+                        direct_exc,
+                    )
+
+                if not pdf_bytes:
+                    intake_email_id = source_metadata.get("outlook_intake_email_id")
+                    if intake_email_id:
+                        from ..supabase_helpers import get_outlook_intake_read_client
+
+                        intake_rows = (
+                            get_outlook_intake_read_client()
+                            .from_("outlook_email_intake")
+                            .select("mailbox_user_id,internet_message_id")
+                            .eq("id", intake_email_id)
+                            .limit(1)
+                            .execute()
+                            .data
+                            or []
+                        )
+                        if intake_rows:
+                            intake = intake_rows[0]
+                            mailbox_user_id = intake.get("mailbox_user_id") or mailbox_user_id
+                            internet_message_id = str(intake.get("internet_message_id") or "")
+                            if internet_message_id:
+                                escaped_message_id = internet_message_id.replace("'", "''")
+                                messages = graph.get_all_pages(
+                                    f"/users/{quote(mailbox_user_id, safe='@.')}/messages",
+                                    params={
+                                        "$top": "5",
+                                        "$filter": f"internetMessageId eq '{escaped_message_id}'",
+                                        "$select": "id,subject,hasAttachments,internetMessageId",
+                                    },
+                                    max_pages=1,
+                                    max_items=5,
+                                    timeout=30,
+                                    max_retries=1,
+                                )
+                                for message in messages:
+                                    attachments = graph.get_all_pages(
+                                        "/users/{user}/messages/{message}/attachments".format(
+                                            user=quote(mailbox_user_id, safe="@."),
+                                            message=quote(str(message.get("id") or ""), safe=""),
+                                        ),
+                                        params={
+                                            "$top": "25",
+                                            "$select": "id,name,contentType,size,isInline",
+                                        },
+                                        max_pages=1,
+                                        max_items=25,
+                                        timeout=30,
+                                        max_retries=1,
+                                    )
+                                    matched = next(
+                                        (
+                                            row
+                                            for row in attachments
+                                            if str(row.get("name") or "").casefold()
+                                            == str(file_name or "").casefold()
+                                        ),
+                                        None,
+                                    )
+                                    if matched:
+                                        pdf_bytes = _download_attachment_value(
+                                            str(message.get("id") or ""),
+                                            str(matched.get("id") or ""),
+                                        )
+                                        break
+
+                if not pdf_bytes:
+                    raise RuntimeError("outlook attachment could not be resolved from stored metadata")
+                logger.info(
+                    "[VisionAnalyzer] Downloaded Outlook attachment PDF for %s (%s)",
+                    metadata_id,
+                    file_name,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "[VisionAnalyzer] Outlook attachment download failed for %s: %s",
                     metadata_id,
                     exc,
                 )
