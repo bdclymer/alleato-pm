@@ -509,7 +509,7 @@ This file lists every table in both Supabase projects with its current status, r
 Column meanings:
 - **Rows** — approximate row count from \`pg_class.reltuples\` (refreshed each regenerate).
 - **Code refs** — count of \`.from("table")\` / \`.table("table")\` references in \`frontend/src\`, \`backend/src\`, and \`alleato-ai\`. Does NOT include migration files or one-off scripts. **0 code refs + 0 rows = strong drop candidate.** **0 code refs + N rows = stale data, no readers.**
-- **Notes** — \`notes_for_ai\` if set, else \`gotchas\`, from \`tables.yaml\`.
+- **Notes** — uses notesForAi when set, otherwise gotchas, from tables.yaml.
 
 For richer information (full writer/reader file lists, columns, line numbers), open the admin UI at \`/database-inventory\` or read the source: \`docs/architecture/tables.yaml\`. For architectural narrative + dated corrections, read \`docs/architecture/TABLE-INVENTORY.md\`.
 

@@ -35,6 +35,10 @@ Active cleanup/deletion proof slice:
 
 - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
 
+Active env/database cleanup proof slice:
+
+- [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -136,6 +140,7 @@ Evidence directory:
 - [x] For each deletion candidate in AAI-703, prove inactive status through imports, route references, provider schedules, database writes, and verifier output.
 - [x] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
 - [x] Remove AAI-703-proven obsolete manual Graph/email eval implementations.
+- [x] Repair AAI-705 database inventory drift so active AI/RAG/workflow tables are documented instead of false orphan candidates.
 - [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
 - [ ] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
@@ -289,6 +294,31 @@ Evidence directory:
   - `npm run rag:verify:metadata-boundary`.
 - Known unrelated blocker:
   - `npm run db:inventory` could not fully regenerate because `docs/architecture/tables.yaml` is missing live MAIN tables: `document_page_intelligence`, `idea_items`, `rfi_response_tokens`, `rfi_responses`, `spec_drawing_links`, `submittal_ai_review_checks`, `submittal_ai_review_runs`, and `submittal_project_settings`.
+
+### 2026-06-26: AAI-705 Env/Database Cleanup Proof And Inventory Drift Repaired
+
+- Proved the eight DB inventory drift tables from AAI-703 are active, not orphaned:
+  - `document_page_intelligence`
+  - `spec_drawing_links`
+  - `rfi_responses`
+  - `rfi_response_tokens`
+  - `submittal_project_settings`
+  - `submittal_ai_review_runs`
+  - `submittal_ai_review_checks`
+  - `idea_items`
+- Documented those tables in `docs/architecture/tables.yaml` and regenerated:
+  - `frontend/src/components/dev-tools/db-inventory.generated.ts`
+  - `frontend/src/components/dev-tools/db-inventory.generated.json`
+  - `docs/architecture/TABLE-LIST.md`
+- `npm run db:inventory` now passes schema drift and generated a 458-table inventory.
+- `npm run db:inventory -- --check-only` passes.
+- First env cleanup candidates were classified but not removed:
+  - `LEGACY_DAILY_DIGEST_ENABLED` and `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` are migrate-first disabled legacy gates.
+  - `GRAPH_API_INGESTION_ENABLED` is an active provider/web-service pressure guard.
+  - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` are migrate-first Outlook compatibility gates.
+- Evidence:
+  - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
+  - [env-db-cleanup-candidate-inventory-aai-705.md](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-candidate-inventory-aai-705.md)
 
 ### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
 
