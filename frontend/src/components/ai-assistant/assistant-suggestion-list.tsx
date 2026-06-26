@@ -41,10 +41,10 @@ export function AssistantSuggestionList({
             type="button"
             variant="ghost"
             disabled={disabled || suggestion.status === "not_ready"}
-            className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-sm font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
+            className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-xs font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
             onClick={() => onSelectPrompt(suggestion.prompt)}
           >
-            <span className="line-clamp-2 whitespace-normal leading-5">
+            <span className="line-clamp-2 whitespace-normal leading-4">
               {suggestion.label}
             </span>
           </Button>
