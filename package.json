@@ -126,6 +126,7 @@
     "rag:verify:metadata-boundary": "node scripts/verify/verify_rag_document_metadata_boundary.mjs",
     "rag:verify:client-boundary": "node scripts/verify/verify_rag_client_boundary.mjs",
     "rag:verify:backend-client-boundary": "node scripts/verify/verify_backend_rag_table_boundary.mjs",
+    "rag:verify:retrieval-contract": "node scripts/verify/verify_rag_retrieval_contract.mjs",
     "rag:verify:deep-agents-nonprod": "node scripts/verify/verify_deep_agents_nonprod_readiness.mjs",
     "rag:verify:project-intelligence-live-paths": "node scripts/verify/verify_project_intelligence_live_paths.mjs",
     "rag:verify:graph-embedding": "node scripts/verify/verify_graph_embedding_contract.mjs",

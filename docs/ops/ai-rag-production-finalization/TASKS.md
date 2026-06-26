@@ -82,7 +82,7 @@ Evidence directory:
 - [x] Recover source lifecycle/project assignment verifier gate.
 - [x] Recover source-specific RAG observability verifier gate.
 - [ ] Validate finalized chunking strategy and duplicate chunk elimination.
-- [ ] Verify metadata filters, project filters, permissions, citations/reference links, and retrieval quality.
+- [x] Verify metadata filters, project filters, permissions, citations/reference links, and retrieval quality.
 - [ ] Remove or migrate legacy retrieval paths after import/route/provider/database-write proof.
 - [ ] Verify every AI assistant uses the finalized RAG pipeline.
 
@@ -265,6 +265,21 @@ Evidence directory:
   - [frontend-typecheck-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt)
   - [focused-compile-lint-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt)
 - Remaining AAI-682 closure gates: live permission behavior, citation/reference-link proof, and deletion/migration proof for any legacy retrieval candidates.
+
+### 2026-06-25: AAI-682 Retrieval Contract Verifier Added
+
+- Added `npm run rag:verify:retrieval-contract`.
+- The verifier embeds a live query, runs `search_document_chunks`, and asserts:
+  - project filtering holds for returned rows
+  - source-type filtering holds
+  - duplicate chunk ids are not returned in top results
+  - returned documents have citation/reference metadata in `rag_document_metadata`
+  - semantic/source-specific retrieval code keeps permission guard hooks for service-role access
+- Verification passed against live RAG data for project `24109`, with 8 project-filtered rows, 5 source-filtered rows, and 5 metadata references found.
+- Delegated typecheck passed after each tiny verifier edit.
+- Evidence:
+  - [retrieval-contract-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt)
+- Remaining AAI-682 closure gate: legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
 
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 

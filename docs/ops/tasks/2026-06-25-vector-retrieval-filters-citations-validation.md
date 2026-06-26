@@ -27,8 +27,8 @@ Finalize and verify the production vector retrieval layer: chunk integrity, dupl
 - [x] Run current retrieval guardrails before edits and record outputs.
 - [x] Validate finalized chunking strategy and duplicate chunk elimination.
 - [x] Verify metadata filters and project filters on live RAG search paths.
-- [ ] Verify permission behavior or record the exact ownership gap with prevention step.
-- [ ] Verify citations/reference links are present for retrieved source records.
+- [x] Verify permission behavior or record the exact ownership gap with prevention step.
+- [x] Verify citations/reference links are present for retrieved source records.
 - [x] Verify retrieval quality using current source-specific, hybrid ranking, and assistant eval gates.
 - [ ] Identify legacy retrieval candidates and prove inactive status before deletion.
 - [ ] Migrate or delete any proven duplicate retrieval implementation in this slice.
@@ -80,6 +80,8 @@ Low-content repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt`
+- Delegated typecheck checkpoints after retrieval-contract verifier edits: PASS from sub-agents Copernicus and Goodall, command `npm --prefix frontend run typecheck`.
 
 Linear milestone comment:
 
@@ -97,13 +99,13 @@ Linear milestone comment:
 
 ## Blockers
 
-- Permission behavior and citation/reference-link proof still need a dedicated live retrieval validation pass before AAI-682 can close.
 - Legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
 
 ## Resolved Blockers
 
 - `npm run rag:verify:assistant-operational-readiness` passed after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path. The restored path is backed by the active Render Deep Agents research endpoint, records the canonical executive trace, and persists source/debug metadata for direct and fallback synthesis paths.
 - RAG/app database ownership boundary verifiers now pass after routing app metadata text fallbacks through `rag_document_metadata`, routing admin `source_sync_runs` reads through `createRagServiceClient()`, and routing Outlook intake reads/writes through AI DB resolver helpers.
+- Retrieval contract verifier now passes for live `search_document_chunks`: project filter, source-type filter, duplicate top-chunk prevention, citation/reference metadata, and static permission guard hooks.
 
 ## Root Cause
 
@@ -115,6 +117,8 @@ The executive bridge assertion failed because the current handler and bridge mod
 
 The RAG/app boundary failures came from mature production code still reading high-churn or heavy AI data through app-database paths: parser/embedder and document-intelligence fallbacks read `document_metadata.content/raw_text`, the admin work-runs endpoint queried `source_sync_runs` through the app client, and Outlook digest/assistant triage used the generic Supabase client for Outlook intake control-plane tables.
 
+The retrieval contract did not previously have a focused verifier for live project/source filters, citation/reference metadata, duplicate top results, or service-role permission guard hooks. Those requirements were partially covered by implementation patterns but not by a single repeatable gate.
+
 ## Prevention
 
 - Low-content documents no longer create fake parser segments or fake summaries.
@@ -124,6 +128,7 @@ The RAG/app boundary failures came from mature production code still reading hig
 - Assistant operational readiness now loads the active `docs/ai-plan2/evals/assistant-eval-suite.json` eval suite.
 - Broad no-project executive prompts now route through `fetchDeepAgentExecutiveBriefing`, backed by the active Render Deep Agents research endpoint, and persist the canonical `backendDeepAgentExecutiveBriefing` trace.
 - Boundary verifiers now enforce that app `document_metadata` selects in AI/RAG paths do not pull heavy body text, frontend RAG tables/RPCs use `createRagServiceClient()`, and backend RAG-owned tables use explicit AI DB resolver helpers.
+- `npm run rag:verify:retrieval-contract` now fails loudly if live `search_document_chunks` project/source filters drift, returned records lose citation/reference metadata, duplicate chunk ids appear in top results, or permission guard hooks are removed from source-specific/semantic retrieval paths.
 
 ## Failure-Loud Guardrail
 
