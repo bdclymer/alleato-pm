@@ -4,7 +4,8 @@ import {
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
-import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
+import { type ToolGuardrails } from "./guardrails";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { createStructuredQueryTools } from "./structured-queries";
 import {
   type ToolTracePayload,
@@ -58,6 +59,11 @@ const RAG_RETRIEVAL_TELEMETRY_ENABLED =
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  /**
+   * Injected data seam. When omitted, a real ToolContext is built from env —
+   * preserving the original behavior for callers that haven't migrated yet.
+   */
+  ctx?: ToolContext;
 };
 
 type RecentEmailDirection = "mailbox" | "to" | "from" | "to_or_from";
@@ -514,11 +520,12 @@ export function createOperationalTools(
   userId: string,
   options: CreateOperationalToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const ragSupabase = createRagServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx =
+    options.ctx ??
+    createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const ragSupabase = ctx.rag;
+  const guardrails = ctx.guardrails;
 
   async function requireAdminForCommunications(sourceLabel: string) {
     const scope = await guardrails.getScope();
@@ -1539,7 +1546,7 @@ export function createOperationalTools(
           }
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
-            const openai = getOpenAI();
+            const openai = ctx.openai;
             const embeddingArg3072 = await generateEmbedding(
               openai,
               query,
@@ -2166,7 +2173,7 @@ export function createOperationalTools(
           // memories.embedding column type. The halfvec overload of
           // search_conversation_memories handles user-level filtering correctly.
           // Fixed: 2026-05-08 (Problem 6 — embedding dimension inconsistency).
-          const openaiClient = getOpenAI();
+          const openaiClient = ctx.openai;
           // generateEmbedding throws on API failure — no silent empty results.
           const queryEmbedding = await generateEmbedding(
             openaiClient,
@@ -2307,7 +2314,7 @@ export function createOperationalTools(
             // 2. Semantic search on real meeting summaries via document_metadata.summary_embedding
             (async () => {
               try {
-                const openai = getOpenAI();
+                const openai = ctx.openai;
                 const emb = await generateEmbedding(
                   openai,
                   topic,

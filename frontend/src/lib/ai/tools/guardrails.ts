@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type ToolScope = {
@@ -18,13 +20,15 @@ export type ToolGuardrails = {
 
 type CreateToolGuardrailsOptions = {
   pinnedProjectId?: number;
+  /** Injected DB client. Defaults to a fresh service client when omitted. */
+  db?: SupabaseClient<Database>;
 };
 
 export function createToolGuardrails(
   userId: string,
   options: CreateToolGuardrailsOptions = {},
 ): ToolGuardrails {
-  const supabase = createServiceClient();
+  const supabase = options.db ?? createServiceClient();
   let scopePromise: Promise<ToolScope> | null = null;
 
   async function loadScope(): Promise<ToolScope> {
