@@ -123,7 +123,7 @@ async function assertProjectTemplate(templateId: string, where: string) {
 export const POST = withApiGuardrails(
   "permissions/users/[personId]/project-access#POST",
   async ({ request, params }: { request: Request } & RouteParams) => {
-    const actor = await requireAdmin("permissions/users/[personId]/project-access#POST");
+    await requireAdmin("permissions/users/[personId]/project-access#POST");
     const { personId } = await params;
     const parsed = ProjectAccessBody.required({ template_id: true }).safeParse(await request.json());
 
@@ -153,7 +153,6 @@ export const POST = withApiGuardrails(
           role: template.name,
           status: "active",
           user_type: "employee",
-          assigned_by: actor.id,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "project_id,person_id" },

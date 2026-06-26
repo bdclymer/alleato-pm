@@ -107,6 +107,10 @@ describe("/api/permissions/users/[personId]/project-access", () => {
       }),
       { onConflict: "project_id,person_id" },
     );
+    expect(membershipQuery.upsert).not.toHaveBeenCalledWith(
+      expect.objectContaining({ assigned_by: expect.anything() }),
+      expect.anything(),
+    );
   });
 
   it("rejects company templates for project access", async () => {
