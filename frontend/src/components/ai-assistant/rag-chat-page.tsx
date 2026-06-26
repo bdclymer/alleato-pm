@@ -470,7 +470,7 @@ export function RagChatPage() {
       </div>
       <nav
         aria-label="AI workspace links"
-        className="fixed right-4 top-20 z-30 hidden items-center gap-3 text-xs font-medium text-muted-foreground md:flex"
+        className="fixed left-4 right-4 top-32 z-30 flex items-center justify-center gap-3 text-xs font-medium text-muted-foreground md:left-auto md:top-20 md:justify-end"
       >
         <Link
           href="/ai/approvals"

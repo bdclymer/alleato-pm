@@ -14,5 +14,6 @@ describe("RagChatPage AI access links", () => {
     expect(source).toContain('href="/ai/approvals"');
     expect(source).toContain('href="/ai/profile"');
     expect(source).toContain('href="/ai/teach"');
+    expect(source).not.toContain("hidden items-center gap-3");
   });
 });
