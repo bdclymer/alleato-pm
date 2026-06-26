@@ -16,8 +16,29 @@ Rule 9: Never ship band-aid fixes. If a change only satisfies the immediate erro
 
 ## Mandatory Task Markdown Done Gate
 
-Every non-trivial task must have a task markdown file before implementation
-starts. Use `docs/ops/tasks/TASK-TEMPLATE.md` and save active task files under
+Use the lightest process that still protects the work.
+
+Micro-change fast path: do **not** create a task markdown file or Linear issue
+for small, low-risk edits when all of these are true:
+
+- The change is limited to docs, tests, copy, types, or a small helper/component
+  edit.
+- No database schema, migration, provider config, deployment setting, auth,
+  billing, permission, integration delivery, or external service behavior
+  changes.
+- No broad workflow ownership decision is being made.
+- The change can be validated with targeted lint/type/unit checks or direct file
+  inspection.
+- The final answer can list changed files, checks run, remaining risk, and next
+  step in plain text.
+
+For micro-changes, implement directly, run the narrowest useful checks, and
+report the result. If the edit grows beyond the criteria above, stop and promote
+it to the full task process before continuing.
+
+Full task process: every non-trivial task outside the micro-change fast path
+must have a task markdown file before implementation starts. Use
+`docs/ops/tasks/TASK-TEMPLATE.md` and save active task files under
 `docs/ops/tasks/YYYY-MM-DD-<short-slug>.md`.
 
 The task markdown file is the working definition of done. Do not say a task is
@@ -27,20 +48,21 @@ evidence section is filled in. This explicitly includes end testing.
 
 Rules:
 
-1. Create the task markdown file before coding, migrations, provider changes, UI
-   work, or delivery wiring.
-2. Break scope into concrete checklist items that prove the pieces come together
+1. First classify the work as micro-change fast path or full task process.
+2. For full task process work, create the task markdown file before coding,
+   migrations, provider changes, substantial UI work, or delivery wiring.
+3. Break scope into concrete checklist items that prove the pieces come together
    into one workflow, not just separate files.
-3. Include integration and verification checklist items before implementation
+4. Include integration and verification checklist items before implementation
    starts.
-4. Update the task file as work progresses; do not backfill a vague checklist at
+5. Update the task file as work progresses; do not backfill a vague checklist at
    the end.
-5. If any checklist item cannot be completed, the task status must be
+6. If any checklist item cannot be completed, the task status must be
    `Blocked/Deferred`, with cause, detection gap, prevention step, owner, and
    next action.
-6. A final answer must not claim done if the task file has unchecked required
+7. A final answer must not claim done if the task file has unchecked required
    items. The correct status is partial, blocked, or in progress.
-7. For user-facing, scheduled, database-backed, integration, AI, RAG, delivery,
+8. For user-facing, scheduled, database-backed, integration, AI, RAG, delivery,
    or external-service work, verification must include actual end-to-end proof
    of the requested outcome, not only typecheck/lint/unit tests.
 
@@ -134,33 +156,37 @@ Yes: each active session must summarize what it did and what it found in its han
 
 Do not block the main conversation on long-running verification unless the user explicitly asks to wait.
 
-For expensive checks such as full builds, full predeploy gates, full test suites, long crawls, deployment log monitoring, or any command likely to run for more than a few minutes:
+For expensive checks such as full builds, full predeploy gates, full test suites, long crawls, deployment log monitoring, full/project typechecks, or any command likely to run for more than a few minutes:
 
 1. Delegate the long-running verification to a cheaper capable sub-agent when sub-agents are available.
 2. Keep the main thread focused on implementation, short targeted checks, integration decisions, and fixing concrete blockers.
 3. Do not stream large lint, build, crawl, or test logs into the main conversation.
-4. Prefer the cheapest capable model available for routine verification. Do not use a frontier model for lint, typecheck, build, predeploy, or log-watching unless the user explicitly requests it.
-5. The verification sub-agent must return a compact report with:
+4. Full or project-wide typechecks, including `npm run typecheck`, `tsc --noEmit`, frontend/backend quality gates that include typecheck, and equivalent commands, belong in a cheap verification sub-agent by default. The main thread may run only narrow file-scoped or changed-file checks that are expected to finish quickly, such as targeted ESLint, focused unit tests, `npm run typecheck:changed`, or direct compile checks for touched files.
+5. Prefer the cheapest capable model available for routine verification. Do not use a frontier model for lint, typecheck, build, predeploy, or log-watching unless the user explicitly requests it.
+6. The verification sub-agent must return a compact report with:
    - pass/fail status
    - exact failing command
    - concise error lines only
    - likely owner file(s)
    - whether the failure is related to the current task or unrelated repo debt
-6. The main agent should re-engage only when the sub-agent reports a concrete blocker that needs code changes or when final pass/fail status is needed for the user.
+7. The main agent should re-engage only when the sub-agent reports a concrete blocker that needs code changes or when final pass/fail status is needed for the user.
 
 Default pattern:
 
 - Main thread: implementation, short checks, decisions.
-- Cheap sub-agent: full build, full predeploy, full test suite, long-running verification.
+- Cheap sub-agent: full typecheck, full build, full predeploy, full test suite, long-running verification.
 - Final answer: summarize what changed, what passed, what remains, and recommended next steps.
 
 ## Linear-Codex Operating Process (MANDATORY)
 
-Linear is the source of truth for issue ownership and state. The local orchestration docs are the evidence ledger.
+Linear is the source of truth for issue ownership and state on full task process
+work. Micro-change fast path work does not require Linear unless the user asks
+for tracking, the change affects ownership across sessions, or the work expands
+past the micro-change criteria.
 
 Required process:
 
-1. Every Codex-owned task must have a Linear issue before coding starts.
+1. Every full-process Codex-owned task must have a Linear issue before coding starts.
 2. Broad work must be split into Linear sub-issues when slices have separate ownership, verification, risk, or definition of done.
 3. The active Linear issue ID and URL must be recorded in the worker handoff intake block.
 4. Codex must post Linear comments at kickoff, meaningful milestones, blockers, review handoff, and acceptance/rework.

@@ -3,6 +3,7 @@ import type { Json } from "@/types/database.types";
 export const AI_WIDGET_NOTIFICATION_KINDS = [
   "ai_assistant_welcome",
   "ai_action_ready",
+  "ai_notification_decision",
   "rfi_attention",
   "change_request_review_needed",
 ] as const;
@@ -14,11 +15,15 @@ export type AiWidgetNotificationMetadata = {
   prompt?: string;
   actionLabel?: string;
   source?: string;
+  eventType?: string;
+  requiredAction?: string;
 };
 
 export type AiWidgetNotificationCandidate = {
   id?: string;
   kind: string;
+  title?: string | null;
+  body?: string | null;
   readAt: string | null;
   metadata?: Json | null;
 };
@@ -33,6 +38,10 @@ export type AiWidgetNotificationDraft = {
 const AI_WIDGET_NOTIFICATION_KIND_SET = new Set<string>(
   AI_WIDGET_NOTIFICATION_KINDS,
 );
+
+function cleanString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
 
 export function isAiWidgetNotificationKind(
   kind: string,
@@ -49,18 +58,11 @@ export function getAiWidgetNotificationMetadata(
   const record = metadata as Record<string, unknown>;
 
   return {
-    prompt:
-      typeof record.prompt === "string" && record.prompt.trim()
-        ? record.prompt.trim()
-        : undefined,
-    actionLabel:
-      typeof record.actionLabel === "string" && record.actionLabel.trim()
-        ? record.actionLabel.trim()
-        : undefined,
-    source:
-      typeof record.source === "string" && record.source.trim()
-        ? record.source.trim()
-        : undefined,
+    prompt: cleanString(record.prompt),
+    actionLabel: cleanString(record.actionLabel),
+    source: cleanString(record.source),
+    eventType: cleanString(record.eventType),
+    requiredAction: cleanString(record.requiredAction),
   };
 }
 
@@ -83,15 +85,44 @@ export function getFirstUnreadAiWidgetNotificationDraft<
 >(notifications: T[]): AiWidgetNotificationDraft | null {
   for (const notification of getUnreadAiWidgetNotifications(notifications)) {
     const metadata = getAiWidgetNotificationMetadata(notification.metadata);
-    if (!metadata.prompt) continue;
+    const prompt =
+      metadata.prompt ?? getAiNotificationDecisionPrompt(notification, metadata);
+    if (!prompt) continue;
 
     return {
       id: notification.id,
-      prompt: metadata.prompt,
+      prompt,
       actionLabel: metadata.actionLabel,
       source: metadata.source,
     };
   }
 
   return null;
+}
+
+function getAiNotificationDecisionPrompt(
+  notification: AiWidgetNotificationCandidate,
+  metadata: AiWidgetNotificationMetadata,
+): string | null {
+  if (notification.kind !== "ai_notification_decision") return null;
+
+  const title = cleanString(notification.title);
+  const body = cleanString(notification.body);
+  const requiredAction = metadata.requiredAction;
+  const subject = requiredAction ?? body ?? title;
+
+  if (!subject) return null;
+
+  const context = [title, body].filter(
+    (value, index, values): value is string =>
+      Boolean(value) && values.indexOf(value) === index && value !== subject,
+  );
+
+  if (context.length === 0) {
+    return `Help me review this AI update: ${subject}`;
+  }
+
+  return `Help me review this AI update: ${subject}\n\nContext: ${context.join(
+    " - ",
+  )}`;
 }

@@ -9,6 +9,7 @@ describe("ai widget collaboration notifications", () => {
   it("accepts only durable AI widget notification kinds", () => {
     expect(isAiWidgetNotificationKind("ai_assistant_welcome")).toBe(true);
     expect(isAiWidgetNotificationKind("ai_action_ready")).toBe(true);
+    expect(isAiWidgetNotificationKind("ai_notification_decision")).toBe(true);
     expect(isAiWidgetNotificationKind("rfi_attention")).toBe(true);
     expect(isAiWidgetNotificationKind("change_request_review_needed")).toBe(
       true,
@@ -25,11 +26,13 @@ describe("ai widget collaboration notifications", () => {
       { id: "2", kind: "ai_action_ready", readAt: "2026-06-25T00:00:00Z" },
       { id: "3", kind: "ai_action_ready", readAt: null },
       { id: "4", kind: "rfi_attention", readAt: null },
+      { id: "5", kind: "ai_notification_decision", readAt: null },
     ];
 
     expect(getUnreadAiWidgetNotifications(notifications)).toEqual([
       notifications[2],
       notifications[3],
+      notifications[4],
     ]);
   });
 
@@ -39,12 +42,16 @@ describe("ai widget collaboration notifications", () => {
         prompt: "  Draft a change event. ",
         actionLabel: " Open assistant ",
         source: " collaboration_notifications ",
+        eventType: " ai_memory_updated ",
+        requiredAction: " Open the assistant. ",
         ignored: "value",
       }),
     ).toEqual({
       prompt: "Draft a change event.",
       actionLabel: "Open assistant",
       source: "collaboration_notifications",
+      eventType: "ai_memory_updated",
+      requiredAction: "Open the assistant.",
     });
 
     expect(
@@ -96,6 +103,66 @@ describe("ai widget collaboration notifications", () => {
       actionLabel: "Review draft",
       source: "collaboration_notifications",
     });
+  });
+
+  it("generates a contextual prompt for unread AI notification decisions", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_notification_decision",
+        title: "AI memory saved",
+        body: "Megan prefers preview-first approvals.",
+        readAt: null,
+        metadata: {
+          eventType: "ai_memory_updated",
+          requiredAction: "Review the saved memory before using it.",
+          source: "ai_notification_routing",
+        },
+      },
+    ];
+
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
+      id: "1",
+      prompt:
+        "Help me review this AI update: Review the saved memory before using it.\n\nContext: AI memory saved - Megan prefers preview-first approvals.",
+      source: "ai_notification_routing",
+    });
+  });
+
+  it("keeps explicit widget prompts ahead of generated AI decision prompts", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "ai_notification_decision",
+        title: "AI memory saved",
+        body: "Megan prefers preview-first approvals.",
+        readAt: null,
+        metadata: {
+          prompt: "Show me what changed in my AI profile.",
+          requiredAction: "Review the saved memory before using it.",
+        },
+      },
+    ];
+
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
+      id: "1",
+      prompt: "Show me what changed in my AI profile.",
+      actionLabel: undefined,
+      source: undefined,
+    });
+  });
+
+  it("skips malformed AI decision rows without usable prompt content", () => {
+    expect(
+      getFirstUnreadAiWidgetNotificationDraft([
+        {
+          id: "1",
+          kind: "ai_notification_decision",
+          readAt: null,
+          metadata: { requiredAction: 42 },
+        },
+      ]),
+    ).toBeNull();
   });
 
   it("does not create a draft from read, unrelated, or malformed notifications", () => {
