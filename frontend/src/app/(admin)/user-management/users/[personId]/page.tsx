@@ -107,19 +107,23 @@ export default function PermissionUserDetailPage() {
 
   const addProjectAccessMutation = useMutation({
     mutationFn: async ({
-      projectId,
+      projectIds,
       templateId,
     }: {
-      projectId: number;
+      projectIds: number[];
       templateId: string;
     }) => {
       await apiFetch(`/api/permissions/users/${personId}/project-access`, {
         method: "POST",
-        body: JSON.stringify({ project_id: projectId, template_id: templateId }),
+        body: JSON.stringify({ project_ids: projectIds, template_id: templateId }),
       });
     },
-    onSuccess: () => {
-      toast.success("Project access added");
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.projectIds.length === 1
+          ? "Project access added"
+          : `${variables.projectIds.length} projects added`,
+      );
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
     onError: (err) => {
@@ -264,8 +268,8 @@ export default function PermissionUserDetailPage() {
           onAssignTemplate={(projectId, personId, templateId) =>
             assignMutation.mutate({ projectId, personId, templateId })
           }
-          onAddProjectAccess={(projectId, templateId) =>
-            addProjectAccessMutation.mutate({ projectId, templateId })
+          onAddProjectAccess={(projectIds, templateId) =>
+            addProjectAccessMutation.mutate({ projectIds, templateId })
           }
           onRemoveProjectAccess={(projectId) =>
             removeProjectAccessMutation.mutate({ projectId })

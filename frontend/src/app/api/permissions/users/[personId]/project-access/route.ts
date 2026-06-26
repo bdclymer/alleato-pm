@@ -15,6 +15,28 @@ const ProjectAccessBody = z.object({
   template_id: z.string().uuid().optional(),
 });
 
+const ProjectAccessPostBody = z
+  .object({
+    project_id: z.coerce.number().int().positive().optional(),
+    project_ids: z.array(z.coerce.number().int().positive()).optional(),
+    template_id: z.string().uuid(),
+  })
+  .superRefine((body, context) => {
+    if (body.project_id || (body.project_ids && body.project_ids.length > 0)) return;
+
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one project is required.",
+      path: ["project_ids"],
+    });
+  });
+
+function getProjectIds(body: z.infer<typeof ProjectAccessPostBody>) {
+  const projectIds = [...(body.project_ids ?? [])];
+  if (body.project_id) projectIds.push(body.project_id);
+  return Array.from(new Set(projectIds));
+}
+
 async function requireAdmin(where: string) {
   const supabase = await createClient();
   const {
@@ -125,13 +147,13 @@ export const POST = withApiGuardrails(
   async ({ request, params }: { request: Request } & RouteParams) => {
     await requireAdmin("permissions/users/[personId]/project-access#POST");
     const { personId } = await params;
-    const parsed = ProjectAccessBody.required({ template_id: true }).safeParse(await request.json());
+    const parsed = ProjectAccessPostBody.safeParse(await request.json());
 
     if (!parsed.success) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "permissions/users/[personId]/project-access#POST",
-        message: "project_id and template_id are required.",
+        message: "At least one project and template_id are required.",
         details: parsed.error.issues,
       });
     }
@@ -143,20 +165,20 @@ export const POST = withApiGuardrails(
     );
 
     const service = createServiceClient();
+    const now = new Date().toISOString();
+    const memberships = getProjectIds(parsed.data).map((projectId) => ({
+      project_id: projectId,
+      person_id: personId,
+      permission_template_id: parsed.data.template_id,
+      role: template.name,
+      status: "active",
+      user_type: "employee",
+      updated_at: now,
+    }));
+
     const { error } = await service
       .from("project_directory_memberships")
-      .upsert(
-        {
-          project_id: parsed.data.project_id,
-          person_id: personId,
-          permission_template_id: parsed.data.template_id,
-          role: template.name,
-          status: "active",
-          user_type: "employee",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "project_id,person_id" },
-      );
+      .upsert(memberships, { onConflict: "project_id,person_id" });
 
     if (error) {
       throw new GuardrailError({
@@ -167,7 +189,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, count: memberships.length });
   },
 );
 

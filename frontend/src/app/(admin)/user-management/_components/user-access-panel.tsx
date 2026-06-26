@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  FolderKanban,
-  KeyRound,
+  Check,
+  ChevronsUpDown,
   Pencil,
   Plus,
   Trash2,
@@ -15,6 +15,7 @@ import {
   AvatarImage,
   Badge,
   Button,
+  Checkbox,
   EmptyState,
   InlineTable,
   InlineTableBody,
@@ -23,6 +24,9 @@ import {
   InlineTableHeaderCell,
   InlineTableHeaderRow,
   InlineTableRow,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -31,6 +35,7 @@ import {
   StatusBadge,
 } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANULAR_FLAGS,
@@ -76,7 +81,7 @@ export function UserAccessPanel({
   isCompanyTemplateSaving: boolean;
   isGranularOverrideSaving: boolean;
   onAssignTemplate: (projectId: number | string, personId: string, templateId: string) => void;
-  onAddProjectAccess: (projectId: number, templateId: string) => void;
+  onAddProjectAccess: (projectIds: number[], templateId: string) => void;
   onRemoveProjectAccess: (projectId: number | string) => void;
   onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
   onSetGranularOverride: (
@@ -86,15 +91,13 @@ export function UserAccessPanel({
   ) => void;
 }) {
   const [isEditingCompanyAccess, setIsEditingCompanyAccess] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
+  const [isProjectPickerOpen, setIsProjectPickerOpen] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const defaultProjectTemplateId = getProjectRoleTemplates(templates)[0]?.id ?? "none";
   const [selectedProjectTemplateId, setSelectedProjectTemplateId] = useState<string>(
     defaultProjectTemplateId,
   );
-  const assignmentProgress =
-    user.projectCount > 0
-      ? Math.round((user.assignedProjectCount / user.projectCount) * 100)
-      : 100;
   const companyOverrideCount = user.granularOverrides.filter(
     (override) => override.projectId == null,
   ).length;
@@ -106,6 +109,19 @@ export function UserAccessPanel({
     () => projects.filter((project) => !assignedProjectIds.has(String(project.id))),
     [assignedProjectIds, projects],
   );
+  const visibleProjects = useMemo(() => {
+    const query = projectSearch.trim().toLowerCase();
+    if (!query) return availableProjects;
+
+    return availableProjects.filter((project) => {
+      const searchable = `${project.name} ${project.jobNumber ?? ""} ${project.id}`.toLowerCase();
+      return searchable.includes(query);
+    });
+  }, [availableProjects, projectSearch]);
+  const selectedProjects = useMemo(
+    () => availableProjects.filter((project) => selectedProjectIds.includes(project.id)),
+    [availableProjects, selectedProjectIds],
+  );
   const userRole = user.isAdmin
     ? "Admin"
     : user.companyTemplateName
@@ -113,20 +129,43 @@ export function UserAccessPanel({
       : user.projectCount > 0
         ? "Selected projects"
         : "No project access";
-  const companyRoleContext =
-    user.isAdmin || !user.companyTemplateName || user.companyTemplateName === userRole
-      ? null
-      : user.companyTemplateName;
   const canAddProject =
-    selectedProjectId !== "none" &&
+    selectedProjectIds.length > 0 &&
     selectedProjectTemplateId !== "none" &&
     !isProjectsLoading &&
     !isTemplatesLoading &&
     !isAssignmentSaving;
 
+  useEffect(() => {
+    setSelectedProjectIds((current) =>
+      current.filter((projectId) => availableProjects.some((project) => project.id === projectId)),
+    );
+  }, [availableProjects]);
+
+  useEffect(() => {
+    if (selectedProjectTemplateId === "none" && defaultProjectTemplateId !== "none") {
+      setSelectedProjectTemplateId(defaultProjectTemplateId);
+    }
+  }, [defaultProjectTemplateId, selectedProjectTemplateId]);
+
+  const toggleProject = (projectId: number) => {
+    setSelectedProjectIds((current) =>
+      current.includes(projectId)
+        ? current.filter((id) => id !== projectId)
+        : [...current, projectId],
+    );
+  };
+
+  const selectedProjectLabel =
+    selectedProjects.length === 0
+      ? "Select projects"
+      : selectedProjects.length === 1
+        ? selectedProjects[0].name
+        : `${selectedProjects.length} projects selected`;
+
   return (
     <div className="space-y-8">
-      <section className="border-y border-border py-4">
+      <section className="py-2">
         <div className="grid gap-4 md:grid-cols-4">
           <div className="group min-w-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -169,59 +208,117 @@ export function UserAccessPanel({
             ) : (
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{userRole}</p>
-                {companyRoleContext && (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {companyRoleContext}
-                  </p>
-                )}
               </div>
             )}
           </div>
           <SummaryItem
             label="Project roles"
             value={`${user.assignedProjectCount}/${user.projectCount}`}
-            context={user.projectCount === 0 ? "No memberships" : `${assignmentProgress}% assigned`}
           />
           <SummaryItem
             label="Exceptions"
             value={String(companyOverrideCount)}
-            context="Company-level overrides"
           />
           <SummaryItem
             label="Auth link"
             value={user.authUserId ? "Linked" : "Missing"}
-            context={user.authUserId ? "Can sign in" : "Needs reconciliation"}
           />
         </div>
       </section>
 
       <section className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <SectionRuleHeading
-            label="Project access"
-            icon={<FolderKanban className="h-4 w-4" />}
-          />
-          <div className="grid gap-2 sm:grid-cols-[minmax(220px,1fr)_minmax(180px,220px)_auto] lg:w-2/3 lg:max-w-3xl">
-            <Select
-              value={selectedProjectId}
-              disabled={isProjectsLoading || isAssignmentSaving || availableProjects.length === 0}
-              onValueChange={setSelectedProjectId}
-            >
-              <SelectTrigger className="h-9 w-full text-sm">
-                <SelectValue placeholder="Select project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" disabled>
-                  Select project
-                </SelectItem>
-                {availableProjects.map((project) => (
-                  <SelectItem key={project.id} value={String(project.id)}>
-                    {project.name}
-                    {project.jobNumber ? ` (${project.jobNumber})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <SectionRuleHeading label="Project access" />
+          <div className="grid gap-2 sm:grid-cols-[minmax(260px,1fr)_minmax(180px,220px)_auto] lg:w-2/3 lg:max-w-3xl">
+            <Popover open={isProjectPickerOpen} onOpenChange={setIsProjectPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 justify-between px-3 text-left text-sm font-normal"
+                  disabled={isProjectsLoading || isAssignmentSaving || availableProjects.length === 0}
+                >
+                  <span className="truncate">{selectedProjectLabel}</span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-80 p-0 sm:w-96">
+                <div className="space-y-2 p-2">
+                  <ExpandableSearch
+                    value={projectSearch}
+                    onChange={setProjectSearch}
+                    placeholder="Search projects"
+                    ariaLabel="Search projects"
+                    defaultExpanded
+                  />
+                  <div className="flex items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
+                    <span>{selectedProjectIds.length} selected</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={visibleProjects.length === 0}
+                        onClick={() =>
+                          setSelectedProjectIds((current) =>
+                            Array.from(new Set([...current, ...visibleProjects.map((project) => project.id)])),
+                          )
+                        }
+                      >
+                        Select visible
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={selectedProjectIds.length === 0}
+                        onClick={() => setSelectedProjectIds([])}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto border-t border-border">
+                    {visibleProjects.length === 0 ? (
+                      <EmptyState title="No available projects" className="py-6" />
+                    ) : (
+                      visibleProjects.map((project) => {
+                        const isSelected = selectedProjectIds.includes(project.id);
+
+                        return (
+                          <div
+                            key={project.id}
+                            role="button"
+                            tabIndex={0}
+                            className="flex w-full items-center gap-3 border-b border-border px-2 py-2 text-left text-sm last:border-b-0 hover:bg-muted/50"
+                            onClick={() => toggleProject(project.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                toggleProject(project.id);
+                              }
+                            }}
+                          >
+                            <Checkbox checked={isSelected} aria-label={`Select ${project.name}`} />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium text-foreground">
+                                {project.name}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {project.jobNumber ? `Project #${project.jobNumber}` : `Project #${project.id}`}
+                              </span>
+                            </span>
+                            {isSelected && <Check className="h-4 w-4 text-primary" />}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             <RoleSelect
               value={selectedProjectTemplateId}
               disabled={isTemplatesLoading || isAssignmentSaving || templates.length === 0}
@@ -234,12 +331,14 @@ export function UserAccessPanel({
               disabled={!canAddProject}
               onClick={() => {
                 if (!canAddProject) return;
-                onAddProjectAccess(Number(selectedProjectId), selectedProjectTemplateId);
-                setSelectedProjectId("none");
+                onAddProjectAccess(selectedProjectIds, selectedProjectTemplateId);
+                setSelectedProjectIds([]);
+                setProjectSearch("");
+                setIsProjectPickerOpen(false);
               }}
             >
               <Plus className="h-4 w-4" />
-              Add
+              Add {selectedProjectIds.length > 1 ? selectedProjectIds.length : ""}
             </Button>
           </div>
         </div>
@@ -248,10 +347,10 @@ export function UserAccessPanel({
           <EmptyState
             title="No project memberships"
             description="Add a project above to give this person access."
-            className="border-t border-border py-12"
+            className="py-12"
           />
         ) : (
-          <div className="overflow-hidden border-t border-border">
+          <div className="overflow-hidden">
             <InlineTable variant="read" className="hidden sm:block">
               <InlineTableHeader>
                 <InlineTableHeaderRow>
@@ -308,11 +407,9 @@ export function UserAccessPanel({
 function SummaryItem({
   label,
   value,
-  context,
 }: {
   label: string;
   value: string;
-  context: string;
 }) {
   return (
     <div className="min-w-0 space-y-2">
@@ -321,7 +418,6 @@ function SummaryItem({
       </p>
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-foreground">{value}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{context}</p>
       </div>
     </div>
   );
@@ -389,17 +485,14 @@ function GranularExceptionPanel({
     <section className="space-y-4">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <SectionRuleHeading
-            label="Granular exceptions"
-            icon={<KeyRound className="h-4 w-4" />}
-          />
+          <SectionRuleHeading label="Granular exceptions" />
           {activeOverrideCount > 0 && (
             <Badge variant="outline">{activeOverrideCount} active</Badge>
           )}
         </div>
       </div>
 
-      <div className="overflow-hidden border-t border-border">
+      <div className="overflow-hidden">
         <InlineTable variant="read" className="hidden sm:block">
           <InlineTableHeader>
             <InlineTableHeaderRow>

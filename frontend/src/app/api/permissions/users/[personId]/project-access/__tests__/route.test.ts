@@ -98,18 +98,64 @@ describe("/api/permissions/users/[personId]/project-access", () => {
 
     expect(response.status).toBe(200);
     expect(membershipQuery.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        project_id: 42,
-        person_id: "person-1",
-        permission_template_id: "11111111-1111-4111-8111-111111111111",
-        role: "Project Manager",
-        status: "active",
-      }),
+      [
+        expect.objectContaining({
+          project_id: 42,
+          person_id: "person-1",
+          permission_template_id: "11111111-1111-4111-8111-111111111111",
+          role: "Project Manager",
+          status: "active",
+        }),
+      ],
       { onConflict: "project_id,person_id" },
     );
     expect(membershipQuery.upsert).not.toHaveBeenCalledWith(
-      expect.objectContaining({ assigned_by: expect.anything() }),
+      expect.arrayContaining([expect.objectContaining({ assigned_by: expect.anything() })]),
       expect.anything(),
+    );
+  });
+
+  it("adds multiple project memberships in one request", async () => {
+    const membershipQuery = createQuery({ data: null, error: null });
+
+    createServiceClientMock.mockReturnValue({
+      from: jest.fn((table: string) => {
+        if (table === "people") {
+          return createQuery({ data: { id: "person-1" }, error: null });
+        }
+        if (table === "permission_templates") {
+          return createQuery({
+            data: { id: "template-1", name: "Project Manager", scope: "project" },
+            error: null,
+          });
+        }
+        if (table === "project_directory_memberships") {
+          return membershipQuery;
+        }
+        return createQuery({ data: null, error: null });
+      }),
+    } as never);
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/permissions/users/person-1/project-access", {
+        method: "POST",
+        body: JSON.stringify({
+          project_ids: [42, 43, 42],
+          template_id: "11111111-1111-4111-8111-111111111111",
+        }),
+      }),
+      { params: Promise.resolve({ personId: "person-1" }) },
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual(expect.objectContaining({ success: true, count: 2 }));
+    expect(membershipQuery.upsert).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ project_id: 42, person_id: "person-1" }),
+        expect.objectContaining({ project_id: 43, person_id: "person-1" }),
+      ],
+      { onConflict: "project_id,person_id" },
     );
   });
 
