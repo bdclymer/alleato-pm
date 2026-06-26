@@ -40,7 +40,10 @@ const createMockQuery = (resolveValue: {
 };
 
 type MockQuery = ReturnType<typeof createMockQuery>;
-let mockServiceClient: any;
+type MockServiceClient = {
+  from: jest.Mock;
+};
+let mockServiceClient: MockServiceClient;
 
 // Mock auth client
 const mockAuthClient = {
@@ -277,6 +280,155 @@ describe("/api/projects", () => {
           phase: "Current",
         },
       ]);
+    });
+
+    it("includes projects assigned through project roles", async () => {
+      const projectsQuery = createMockQuery({
+        data: [
+          {
+            id: 42,
+            name: "Role Assigned Project",
+            "job number": "24042",
+            archived: false,
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+      mockServiceClient = {
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: { person_id: "person-123" },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: false },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "project_directory_memberships") {
+            return createMockQuery({
+              data: [],
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "project_role_members") {
+            return createMockQuery({
+              data: [
+                { project_role: { project_id: 42 } },
+                { project_role: { project_id: 42 } },
+                { project_role: { project_id: 43 } },
+              ],
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            return projectsQuery;
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        }),
+      };
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/projects?fields=id,name,job_number,archived&includeClient=false&limit=100",
+      );
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(projectsQuery.in).toHaveBeenCalledWith("id", [42, 43]);
+      expect(data.data).toEqual([
+        {
+          id: 42,
+          name: "Role Assigned Project",
+          "job number": "24042",
+          archived: false,
+        },
+      ]);
+    });
+
+    it("returns an empty list for non-admin users with no linked person", async () => {
+      mockServiceClient = {
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: null,
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: false },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            throw new Error("projects should not be queried without assignment identity");
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        }),
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects");
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toEqual({
+        data: [],
+        meta: { page: 1, limit: 100, total: 0, totalPages: 0 },
+      });
+      expect(mockServiceClient.from).not.toHaveBeenCalledWith("projects");
+    });
+
+    it("fails closed when assignment lookup errors", async () => {
+      mockServiceClient = {
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: { person_id: "person-123" },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: false },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "project_directory_memberships") {
+            return createMockQuery({
+              data: null,
+              error: { message: "membership lookup failed" },
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            throw new Error("projects should not be queried when assignments fail");
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        }),
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects");
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data).toEqual(expect.objectContaining({ success: false, error_code: "INTERNAL_ERROR" }));
+      expect(mockServiceClient.from).not.toHaveBeenCalledWith("projects");
     });
 
     it("handles pagination parameters", async () => {

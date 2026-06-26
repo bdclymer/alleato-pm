@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
 
 export interface Project {
@@ -56,6 +56,10 @@ interface UseProjectsReturn {
   refetch: () => Promise<void>;
 }
 
+type ProjectsApiResponse = {
+  data?: Project[];
+};
+
 /**
  * Hook for fetching projects from Supabase
  * Used in project selection dropdowns, contract forms, etc.
@@ -82,38 +86,29 @@ export function useProjects(
     setError(null);
 
     try {
-      const supabase = createClient();
-      let query = supabase
-        .from("projects")
-        .select("*")
-        .order("name", { ascending: true })
-        .limit(limit);
+      const params = new URLSearchParams({
+        limit: String(limit),
+        includeClient: "false",
+      });
 
       if (search) {
-        query = query.or(
-          `name.ilike.%${search}%,project_number.ilike.%${search}%`,
-        );
+        params.set("search", search);
       }
 
       if (phase) {
-        query = query.eq("phase", phase);
+        params.set("phase", phase);
       }
 
       if (!includeArchived) {
-        query = query.eq("archived", false);
+        params.set("archived", "false");
       }
 
       if (companyId) {
-        query = query.eq("company_id", companyId);
+        params.set("companyId", companyId);
       }
 
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw new Error(queryError.message);
-      }
-
-      setProjects(data || []);
+      const response = await apiFetch<ProjectsApiResponse>(`/api/projects?${params.toString()}`);
+      setProjects(response.data || []);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch projects"),

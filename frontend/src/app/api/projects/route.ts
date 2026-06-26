@@ -41,6 +41,22 @@ type CompanyNameRow = {
   name: string | null;
 };
 
+type UserAuthLinkRow = {
+  person_id: string | null;
+};
+
+type UserProfileRow = {
+  is_admin: boolean | null;
+};
+
+type ProjectDirectoryMembershipRow = {
+  project_id: number | null;
+};
+
+type ProjectRoleMembershipRow = {
+  project_role: { project_id: number | null } | null;
+};
+
 const PROJECT_FIELD_MAP: Record<string, string> = {
   id: "id",
   name: "name",
@@ -80,6 +96,104 @@ function cleanClientName(value: unknown): string | null {
   if (!trimmed) return null;
   if (/^E2E-/i.test(trimmed)) return null;
   return trimmed;
+}
+
+function uniqueFiniteProjectIds(values: Array<number | null | undefined>): number[] {
+  return Array.from(
+    new Set(
+      values.filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+    ),
+  );
+}
+
+async function resolveVisibleProjectIdsForUser(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+): Promise<{ isAdmin: boolean; allowedProjectIds: number[] | null }> {
+  const { data: authLink, error: authLinkError } = await supabase
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+
+  if (authLinkError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to resolve project access identity.",
+      details: { reason: authLinkError.message },
+      cause: authLinkError,
+    });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to resolve project access profile.",
+      details: { reason: profileError.message },
+      cause: profileError,
+    });
+  }
+
+  const isAdmin = (profile as UserProfileRow | null)?.is_admin === true;
+  if (isAdmin) {
+    return { isAdmin, allowedProjectIds: null };
+  }
+
+  const personId = (authLink as UserAuthLinkRow | null)?.person_id;
+  if (!personId) {
+    return { isAdmin, allowedProjectIds: [] };
+  }
+
+  const { data: directoryMemberships, error: directoryMembershipsError } = await supabase
+    .from("project_directory_memberships")
+    .select("project_id")
+    .eq("person_id", personId)
+    .eq("status", "active");
+
+  if (directoryMembershipsError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to resolve project directory assignments.",
+      details: { reason: directoryMembershipsError.message },
+      cause: directoryMembershipsError,
+    });
+  }
+
+  const { data: roleMemberships, error: roleMembershipsError } = await supabase
+    .from("project_role_members")
+    .select("project_role:project_roles!inner(project_id)")
+    .eq("person_id", personId);
+
+  if (roleMembershipsError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#GET",
+      message: "Failed to resolve project role assignments.",
+      details: { reason: roleMembershipsError.message },
+      cause: roleMembershipsError,
+    });
+  }
+
+  const directoryProjectIds = ((directoryMemberships ?? []) as ProjectDirectoryMembershipRow[]).map(
+    (membership) => membership.project_id,
+  );
+  const roleProjectIds = ((roleMemberships ?? []) as ProjectRoleMembershipRow[]).map(
+    (membership) => membership.project_role?.project_id,
+  );
+
+  return {
+    isAdmin,
+    allowedProjectIds: uniqueFiniteProjectIds([...directoryProjectIds, ...roleProjectIds]),
+  };
 }
 
 /**
@@ -180,22 +294,7 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   }
 
   const supabase = createServiceClient();
-
-  // Get the user's person_id to filter projects by membership
-  const { data: authLink } = await supabase
-    .from("users_auth")
-    .select("person_id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  // Check if user is an app admin (can see all projects)
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const isAdmin = profile?.is_admin === true;
+  const { isAdmin, allowedProjectIds } = await resolveVisibleProjectIdsForUser(supabase, user.id);
 
   const { searchParams } = new URL(request.url);
 
@@ -204,33 +303,23 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   const limit = parseInt(searchParams.get("limit") || "100", 10);
   const offset = (page - 1) * limit;
 
-  // Get project IDs the user has active membership in (unless admin)
-  let allowedProjectIds: number[] | null = null;
-  if (!isAdmin && authLink?.person_id) {
-    const { data: memberships } = await supabase
-      .from("project_directory_memberships")
-      .select("project_id")
-      .eq("person_id", authLink.person_id)
-      .eq("status", "active");
-
-    allowedProjectIds = memberships?.map((m) => m.project_id) ?? [];
-  } else if (!isAdmin && !authLink) {
-    // User has no person record — return empty
-    return NextResponse.json({
-      data: [],
-      meta: { page, limit, total: 0, totalPages: 0 },
-    });
-  }
-
   // Filter params
   const search = searchParams.get("search");
   const state = searchParams.get("state");
   const excludeState = searchParams.get("excludeState");
   const phase = searchParams.get("phase");
   const archived = searchParams.get("archived");
+  const companyId = searchParams.get("companyId");
   const fields = searchParams.get("fields");
   const skipClientResolution = searchParams.get("includeClient") === "false";
   const projectSelect = getProjectSelect(fields, !skipClientResolution);
+
+  if (allowedProjectIds !== null && allowedProjectIds.length === 0) {
+    return NextResponse.json({
+      data: [],
+      meta: { page, limit, total: 0, totalPages: 0 },
+    });
+  }
 
   let query = supabase
     .from("projects")
@@ -240,12 +329,6 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
 
   // Filter to only projects the user has membership in (unless admin)
   if (allowedProjectIds !== null) {
-    if (allowedProjectIds.length === 0) {
-      return NextResponse.json({
-        data: [],
-        meta: { page, limit, total: 0, totalPages: 0 },
-      });
-    }
     query = query.in("id", allowedProjectIds);
   }
 
@@ -272,6 +355,10 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   // Add archived filter if provided
   if (archived !== null) {
     query = query.eq("archived", archived === "true");
+  }
+
+  if (companyId) {
+    query = query.eq("company_id", companyId);
   }
 
   const { data, error, count } = await query;
