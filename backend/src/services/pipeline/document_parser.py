@@ -345,7 +345,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata,content,raw_text")
+        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,storage_bucket,file_path,file_name,url,source_web_url,source_metadata")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -366,7 +366,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
         "id",
         metadata_id,
     )
-    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text")
     file_bytes: Optional[bytes] = None
 
     # If no inline content, try to fetch from Supabase storage

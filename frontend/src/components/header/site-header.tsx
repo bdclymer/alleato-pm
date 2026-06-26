@@ -10,7 +10,6 @@ import {
   ChevronsRight,
   ChevronRight,
   ChevronDown,
-  GitCompare,
   Menu,
   Sparkles,
   X,
@@ -41,7 +40,6 @@ import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebarButton } from "./comments-sidebar-button";
 import { FeedbackButton } from "./feedback-button";
-import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
@@ -61,28 +59,6 @@ type PermissionUserBreadcrumbRecord = {
 };
 
 const userManagementBreadcrumbTitleCache = new Map<string, string>();
-
-function ProcoreReferenceToggle() {
-  const { open, toggle } = useProcorePanelStore();
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={toggle}
-      aria-label="Toggle Procore reference panel"
-      aria-pressed={open ? "true" : "false"}
-      className={cn(
-        "h-8 w-8",
-        open
-          ? "bg-primary/10 text-primary hover:bg-primary/20"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
-      )}
-    >
-      <GitCompare className="h-4 w-4" />
-    </Button>
-  );
-}
 
 function AiChatButton() {
   const pathname = usePathname()!;
@@ -335,9 +311,6 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
-          {user?.email === "megan@megankharrison.com" && (
-            <ProcoreReferenceToggle />
-          )}
           <HeaderUserMenu
             user={user}
             projectId={nav.projectId}

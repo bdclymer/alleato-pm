@@ -74,6 +74,10 @@ assert(
   "Review service does not persist normalized review checks.",
 );
 assert(
+  reviewRunService.includes("rag_document_metadata"),
+  "Review service does not read split-RAG submittal source text.",
+);
+assert(
   schemas.includes("SubmittalAIReviewModelOutputSchema"),
   "Structured output schema is missing.",
 );

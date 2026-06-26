@@ -121,6 +121,9 @@ const DATE_LIKE_COLUMN_PATTERN =
 
 export const TABLE_HEADER_LABEL_CLASSNAME =
   "inline-block min-w-max shrink-0 whitespace-nowrap [word-break:keep-all]";
+export const TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME = "w-auto lg:hidden";
+export const TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME =
+  "hidden min-w-0 justify-end lg:flex";
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -1963,10 +1966,10 @@ export function UnifiedTablePage<T>({
         ) : headerActionsSlot ? (
           <div className="flex items-center gap-2">
             {headerActionsSlot}
-            {renderTableToolbar("sm:hidden")}
+            {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
           </div>
         ) : (
-          renderTableToolbar("sm:hidden")
+          renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)
         )
       }
     />
@@ -1999,7 +2002,7 @@ export function UnifiedTablePage<T>({
           {!toolbarInlineWithHeader ? (
             <div
               className={cn(
-                "hidden min-w-0 justify-end sm:flex",
+                TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
                 tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >

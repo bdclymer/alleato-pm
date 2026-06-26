@@ -1968,7 +1968,10 @@ export function ChatArea({
                     showWidgetWelcomePrompt ? onWidgetWelcomeDismiss : undefined
                   }
                 />
-              ) : !welcomeHideOrb ? (
+              ) : null
+            }
+            afterComposer={
+              !welcomeHideOrb ? (
                 <AssistantSuggestionList
                   disabled={isStreaming}
                   suggestions={assistantSuggestions}

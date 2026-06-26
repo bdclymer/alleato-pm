@@ -22,7 +22,7 @@ load_env()
 
 import httpx
 
-from src.services.supabase_helpers import get_supabase_client
+from src.services.supabase_helpers import get_outlook_intake_read_client
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ def _send_teams_dm(message: str) -> DeliveryResult:
 
 def generate_email_digest(mailbox: str, date: datetime) -> str:
     """Query outlook_email_intake for `date` and return a formatted digest string."""
-    client = get_supabase_client()
+    client = get_outlook_intake_read_client()
 
     day_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
     day_end = day_start + timedelta(days=1)

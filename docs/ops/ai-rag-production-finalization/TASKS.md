@@ -245,6 +245,27 @@ Evidence directory:
   - [chat-architecture-after-mcp-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-mcp-wire-aai-641.txt)
   - [mcp-tools-unit-after-chat-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/mcp-tools-unit-after-chat-wire-aai-641.txt)
 
+### 2026-06-25: AAI-682 Retrieval Boundary Verifiers Recovered
+
+- Cleared the RAG/app database ownership boundary failures for the retrieval finalization slice.
+- App metadata reads in parser/embedder and document-intelligence fallbacks no longer pull heavy `document_metadata.content/raw_text` in AI/RAG paths.
+- Admin AI work-runs now reads RAG-owned `source_sync_runs` through `createRagServiceClient()`.
+- Outlook digest and Microsoft Executive Assistant triage now use Outlook intake AI DB resolver helpers for `outlook_email_intake` tables.
+- Verification passed:
+  - `npm run rag:verify:metadata-boundary`
+  - `npm run rag:verify:client-boundary`
+  - `npm run rag:verify:backend-client-boundary`
+  - delegated sub-agent typecheck: `npm --prefix frontend run typecheck`
+  - focused frontend lint for touched TypeScript files
+  - Python compile for touched backend files
+- Evidence:
+  - [metadata-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-boundary-fix-aai-682.txt)
+  - [client-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-boundary-fix-aai-682.txt)
+  - [backend-client-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt)
+  - [frontend-typecheck-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt)
+  - [focused-compile-lint-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt)
+- Remaining AAI-682 closure gates: live permission behavior, citation/reference-link proof, and deletion/migration proof for any legacy retrieval candidates.
+
 ### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
 
 - Ran a bounded canonical Outlook delta redrive for `bclymer@alleatogroup.com`.

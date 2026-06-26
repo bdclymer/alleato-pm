@@ -1,9 +1,7 @@
-const REQUEST_TYPE_LABELS: Record<string, string> = {
-  bug: "Bug",
-  change_request: "Change Events",
-  copy: "Copy",
-  question: "Question",
-};
+import {
+  ADMIN_FEEDBACK_REQUEST_TYPE_LABELS,
+  type AdminFeedbackRequestType,
+} from "./constants";
 
 function compactText(value: string | null | undefined) {
   return value?.replace(/\s+/g, " ").trim() ?? "";
@@ -18,7 +16,11 @@ function truncate(value: string, maxLength: number) {
 }
 
 function typeLabel(requestType: string) {
-  return REQUEST_TYPE_LABELS[requestType] ?? requestType.charAt(0).toUpperCase() + requestType.slice(1);
+  if (requestType in ADMIN_FEEDBACK_REQUEST_TYPE_LABELS) {
+    return ADMIN_FEEDBACK_REQUEST_TYPE_LABELS[requestType as AdminFeedbackRequestType];
+  }
+
+  return requestType.charAt(0).toUpperCase() + requestType.slice(1);
 }
 
 export function buildAdminFeedbackTitle({

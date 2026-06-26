@@ -1,2 +1,15 @@
+allowBuilds:
+  '@parcel/watcher': set this to true or false
+  '@scarf/scarf': set this to true or false
+  '@sentry/cli': set this to true or false
+  better-sqlite3: set this to true or false
+  canvas: set this to true or false
+  core-js: set this to true or false
+  esbuild: set this to true or false
+  msw: set this to true or false
+  protobufjs: set this to true or false
+  puppeteer: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
 patchedDependencies:
   agentation@3.0.2: patches/agentation@3.0.2.patch

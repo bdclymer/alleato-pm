@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireAdmin } from "@/app/api/admin/_shared";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 
@@ -375,6 +375,7 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   const limit = Math.min(Math.max(Number.isInteger(rawLimit) ? rawLimit : 50, 1), MAX_LIMIT);
 
   const supabase = createServiceClient();
+  const ragSupabase = createRagServiceClient();
   const { data: runRows, error: runError } = await supabase
     .from("ai_work_runs")
     .select(WORK_RUN_SELECT)
@@ -408,7 +409,7 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
           .in("id", eventIds)
       : Promise.resolve({ data: [], error: null }),
     sourceSyncRunIds.length > 0
-      ? supabase
+      ? ragSupabase
           .from("source_sync_runs")
           .select("id,status,items_seen,items_synced,items_skipped,items_failed,error_code,error_message")
           .in("id", sourceSyncRunIds)

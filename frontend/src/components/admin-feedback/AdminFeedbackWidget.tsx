@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ArrowRight,
+  Camera,
   CircleStop,
-  ExternalLink,
-  ImagePlus,
-  MessageSquarePlus,
-  RefreshCw,
+  Crosshair,
   Trash2,
+  Upload,
   Video,
   X,
 } from "lucide-react";
@@ -56,6 +56,11 @@ import {
 } from "@/components/ui/select";
 
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { ScreenshotAnnotator } from "@/components/admin-feedback/ScreenshotAnnotator";
 
@@ -154,6 +159,12 @@ function mapFeedbackTypeToRequestType(
   return "question";
 }
 
+function getSubmissionSuccessLabel(feedbackType: FeedbackType) {
+  if (feedbackType === "Idea") return "Idea submitted.";
+  if (feedbackType === "Question") return "Question submitted.";
+  return "Feedback submitted.";
+}
+
 function getRectState(target: FeedbackTargetSnapshot | null): RectState | null {
   if (!target) {
     return null;
@@ -204,6 +215,39 @@ function waitForComposerToLeaveViewport() {
       window.requestAnimationFrame(() => resolve());
     });
   });
+}
+
+function FeedbackToolButton({
+  label,
+  onClick,
+  disabled,
+  className,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          className={cn("text-muted-foreground hover:text-foreground", className)}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function AdminFeedbackWidget() {
@@ -762,6 +806,9 @@ export function AdminFeedbackWidget() {
             metadata: {
               pathname: pagePath,
               feedbackType: form.feedbackType,
+              intakeKind: "product_feedback",
+              intakeSource: "admin-feedback-widget",
+              canonicalWorkflow: "feedback-inbox",
               priority: form.feedbackType === "Bug" ? form.priority : undefined,
               affectedTool: form.affectedTool || undefined,
               submitterName: profile?.fullName,
@@ -787,7 +834,7 @@ export function AdminFeedbackWidget() {
             "Feedback saved, but GitHub issue creation needs configuration.",
           );
         } else {
-          toast.success("Feedback submitted.");
+          toast.success(getSubmissionSuccessLabel(form.feedbackType));
         }
 
         // The recording is now referenced by the saved feedback record — clear
@@ -847,23 +894,15 @@ export function AdminFeedbackWidget() {
         )}
         {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border/60 px-5 py-4 sm:px-6">
-            <div className="min-w-0 space-y-1">
-              <div className="flex items-center gap-2 text-foreground">
-                <MessageSquarePlus className="h-4 w-4 text-primary" />
-                <div className="text-base font-semibold tracking-tight">
-                  Share Feedback
-                </div>
-              </div>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Keep the page visible while you explain what should change.
-              </p>
-            </div>
+        <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 py-4 sm:px-6">
+          <div className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
+            Share Feedback or Idea
+          </div>
           <div className="flex items-center gap-1">
             <Button type="button" variant="ghost" size="sm" asChild>
               <Link href="/feedback-inbox" className="gap-1.5">
                 View feedback
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
             <Button
@@ -916,7 +955,7 @@ export function AdminFeedbackWidget() {
                 <Textarea
                   id="feedback-comment"
                   rows={7}
-                  placeholder="Describe the problem, idea, or question."
+                  placeholder="Describe the issue, idea, or question."
                   value={form.comment}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -928,7 +967,7 @@ export function AdminFeedbackWidget() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-0.5">
                   <Input
                     ref={fileInputRef}
                     type="file"
@@ -936,81 +975,51 @@ export function AdminFeedbackWidget() {
                     className="hidden"
                     onChange={handleFileUpload}
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                  <FeedbackToolButton
+                    label={screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
                     onClick={() => void refreshScreenshot()}
                     disabled={isCapturingScreenshot}
-                    className="gap-2"
                   >
-                    <RefreshCw
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        isCapturingScreenshot && "animate-spin",
-                      )}
+                    <Camera
+                      className={cn("h-4 w-4", isCapturingScreenshot && "animate-pulse")}
                     />
-                    {screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={startSelectMode}
-                    className="gap-2"
-                  >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Point to area
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                  </FeedbackToolButton>
+                  <FeedbackToolButton label="Point to an area" onClick={startSelectMode}>
+                    <Crosshair className="h-4 w-4" />
+                  </FeedbackToolButton>
+                  <FeedbackToolButton
+                    label="Upload image"
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
                   >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Upload image
-                  </Button>
+                    <Upload className="h-4 w-4" />
+                  </FeedbackToolButton>
                   {recordingSupported && !isRecording && !videoPreviewUrl && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={startRecording}
-                      className="gap-2"
-                    >
-                      <Video className="h-3.5 w-3.5" />
-                      Record screen
-                    </Button>
+                    <FeedbackToolButton label="Record screen" onClick={startRecording}>
+                      <Video className="h-4 w-4" />
+                    </FeedbackToolButton>
                   )}
                   {isRecording && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
+                    <FeedbackToolButton
+                      label="Stop recording"
                       onClick={stopRecording}
-                      className="gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <CircleStop className="h-3.5 w-3.5" />
-                      Stop recording
-                    </Button>
+                      <CircleStop className="h-4 w-4" />
+                    </FeedbackToolButton>
                   )}
                 </div>
 
-                <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
-                  {screenshotDataUrl ? (
-                    <ScreenshotAnnotator
-                      dataUrl={screenshotDataUrl}
-                      onChange={setScreenshotDataUrl}
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Add a screenshot if it helps explain the issue. The page
-                      stays visible while this sheet is open.
-                    </p>
-                  )}
-                </div>
+                {screenshotDataUrl ? (
+                  <ScreenshotAnnotator
+                    dataUrl={screenshotDataUrl}
+                    onChange={setScreenshotDataUrl}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Capture, point to an area, or upload an image if it helps
+                    explain the issue.
+                  </p>
+                )}
               </div>
 
               {isRecording && (

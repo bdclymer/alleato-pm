@@ -15,9 +15,13 @@ describe("change request field guide", () => {
     ]);
     expect(CHANGE_REQUEST_FIELD_GUIDE.optionalFields.map((field) => field.name)).toEqual([
       "description",
-      "scope",
       "type",
+      "scope",
       "status",
+      "reason",
+      "origin",
+      "expectingRevenue",
+      "lineItemRevenueSource",
     ]);
     expect(CHANGE_REQUEST_FIELD_GUIDE.generatedFields.map((field) => field.name)).toEqual([
       "number",
@@ -37,6 +41,7 @@ describe("change request field guide", () => {
     );
     expect(renderChangeRequestToolDescription()).toContain("change request");
     expect(renderChangeRequestToolDescription()).toContain("projectId and title");
+    expect(renderChangeRequestToolDescription()).toContain("expectingRevenue");
     expect(renderChangeRequestToolDescription()).toContain("confirmed=false first");
   });
 
@@ -45,9 +50,12 @@ describe("change request field guide", () => {
       project_id: 43,
       title: "Owner-requested lobby finish change",
       description: "Owner asked to upgrade the lobby finish package.",
-      scope: "owner_change",
-      type: "potential_change",
-      status: "open",
+      type: "Owner Change",
+      scope: "TBD",
+      status: "Open",
+      reason: "Back Charge",
+      origin: "Internal",
+      expecting_revenue: true,
     });
 
     expect(reviewCard).toMatchObject({
@@ -77,7 +85,17 @@ describe("change request field guide", () => {
             expect.objectContaining({
               key: "scope",
               label: "Scope",
-              value: "owner_change",
+              value: "TBD",
+            }),
+            expect.objectContaining({
+              key: "type",
+              label: "Type",
+              value: "Owner Change",
+            }),
+            expect.objectContaining({
+              key: "expecting_revenue",
+              label: "Expecting revenue",
+              value: "Yes",
             }),
           ]),
         },

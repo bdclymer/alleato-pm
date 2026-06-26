@@ -533,13 +533,33 @@ export function createSubmittalAIReviewService(userId: string) {
         });
       }
 
+      const { data: ragRows, error: ragError } = await rag
+        .from("rag_document_metadata")
+        .select("id, content, raw_text")
+        .in("id", docIds);
+
+      if (ragError) {
+        throw new GuardrailError({
+          code: "DB_ERROR",
+          where: WHERE,
+          message: `Could not load submittal RAG source text: ${ragError.message}`,
+        });
+      }
+
+      const ragById = new Map(
+        ((ragRows ?? []) as AnyRow[]).map((row) => [String(row.id), row]),
+      );
+
       for (const row of (metadataRows ?? []) as AnyRow[]) {
+        const ragRow = ragById.get(String(row.id));
         docs.push({
           sourceId: String(row.id),
           documentMetadataId: String(row.id),
           label: String(row.title ?? "Submittal document"),
           excerpt: compactText(
-            (row.content as string | undefined) ??
+            (ragRow?.content as string | undefined) ??
+              (ragRow?.raw_text as string | undefined) ??
+              (row.content as string | undefined) ??
               (row.raw_text as string | undefined),
           ),
         });

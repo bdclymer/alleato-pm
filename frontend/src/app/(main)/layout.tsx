@@ -60,14 +60,15 @@ export default function MainLayout({
 }) {
   const pathname = usePathname()!;
   const shouldMountDeferredPanels = useDeferredMount(6_000);
-  const isTeamChatPage = pathname?.startsWith("/team-chat");
+  const isImmersiveChatPage =
+    pathname?.startsWith("/team-chat") || pathname?.startsWith("/comments");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const isAiAssistant =
     pathname === "/ai" ||
     pathname?.startsWith("/ai/") ||
     pathname?.startsWith("/ai-assistant");
   const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
-  if (isTeamChatPage) {
+  if (isImmersiveChatPage) {
     return (
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />

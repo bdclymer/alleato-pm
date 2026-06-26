@@ -203,9 +203,13 @@ describe("createChangeEvent", () => {
           project_id: 43,
           title: "Owner-requested lobby finish change",
           description: "Owner asked to upgrade the lobby finish package.",
-          scope: "owner_change",
-          type: "potential_change",
-          status: "open",
+          type: "Owner Change",
+          scope: "TBD",
+          status: "Open",
+          reason: null,
+          origin: "Internal",
+          expecting_revenue: true,
+          line_item_revenue_source: null,
         },
         reviewCard: {
           title: "Review change request",
@@ -242,9 +246,9 @@ describe("createChangeEvent", () => {
         projectId: 43,
         title: "Owner-requested lobby finish change",
         description: "Owner asked to upgrade the lobby finish package.",
-        scope: "owner_change",
-        type: "potential_change",
-        status: "open",
+        scope: "TBD",
+        type: "Owner Change",
+        status: "Open",
         eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
       }),
     );
@@ -260,6 +264,149 @@ describe("createChangeEvent", () => {
         }),
       }),
     );
+  });
+
+  it("rejects invalid native values before preview or write", async () => {
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn(),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Invalid status",
+      status: "void",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      success: false,
+      error: expect.stringContaining('Invalid change request status "void"'),
+    });
+    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+  });
+
+  it("writes a confirmed change request with the canonical DB payload", async () => {
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const changeEventInsert = jest.fn((payload) => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "ce-1",
+            title: payload.title,
+            number: payload.number,
+            status: payload.status,
+          },
+          error: null,
+        }),
+      })),
+    }));
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest
+                          .fn()
+                          .mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      if (tableName === "change_events") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn().mockResolvedValue({
+              data: [
+                { number: "001" },
+                { number: "CE-009" },
+                { number: "not-a-number" },
+              ],
+              error: null,
+            }),
+          })),
+          insert: changeEventInsert,
+        };
+      }
+      throw new Error(`Unexpected table in change request test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      scope: "owner_change",
+      type: "potential_change",
+      status: "open",
+      reason: "Back Charge",
+      origin: "Internal",
+      expectingRevenue: true,
+      confirmed: true,
+      idempotencyKey: "change-request-key-1",
+    });
+
+    expect(changeEventInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_id: 43,
+        title: "Owner-requested lobby finish change",
+        description: "Owner asked to upgrade the lobby finish package.",
+        type: "Owner Change",
+        scope: "TBD",
+        status: "Open",
+        reason: "Back Charge",
+        origin: "Internal",
+        number: "010",
+        expecting_revenue: true,
+        line_item_revenue_source: null,
+      }),
+    );
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success" }),
+    );
+    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+    expect(output).toMatchObject({
+      success: true,
+      message:
+        'Change request **010 — "Owner-requested lobby finish change"** logged.',
+      record: {
+        id: "ce-1",
+        number: "010",
+        status: "Open",
+      },
+    });
   });
 });
 

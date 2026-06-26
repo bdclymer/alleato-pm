@@ -5,6 +5,10 @@ import {
   PauseCircle,
   ShieldCheck,
 } from "lucide-react";
+import {
+  ADMIN_FEEDBACK_PRODUCT_INTAKE_LABEL,
+  ADMIN_FEEDBACK_REQUEST_TYPE_LABELS,
+} from "@/lib/admin-feedback/constants";
 import type {
   DisplayStatus,
   FeedbackInboxTab,
@@ -30,7 +34,7 @@ export const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
 
 export const FEEDBACK_INBOX_TABS: { value: FeedbackInboxTab; label: string }[] = [
   { value: "issues", label: "Issues" },
-  { value: "feature_requests", label: "Features" },
+  { value: "feature_requests", label: ADMIN_FEEDBACK_PRODUCT_INTAKE_LABEL },
 ];
 
 export const STATUS_META: Record<
@@ -80,11 +84,7 @@ export const STATUS_META: Record<
 };
 
 export const REQUEST_TYPE_LABELS: Record<string, string> = {
-  bug: "Bug",
-  change_request: "Change Events",
-  copy: "Copy",
-  feature_request: "Feature Request",
-  question: "Question",
+  ...ADMIN_FEEDBACK_REQUEST_TYPE_LABELS,
 };
 
 export const IN_PROGRESS_STATUSES = new Set([

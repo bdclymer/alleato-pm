@@ -26,7 +26,7 @@ Finalize and verify the production vector retrieval layer: chunk integrity, dupl
 - [x] Inventory active retrieval and assistant code paths against the target architecture.
 - [x] Run current retrieval guardrails before edits and record outputs.
 - [x] Validate finalized chunking strategy and duplicate chunk elimination.
-- [ ] Verify metadata filters and project filters on live RAG search paths.
+- [x] Verify metadata filters and project filters on live RAG search paths.
 - [ ] Verify permission behavior or record the exact ownership gap with prevention step.
 - [ ] Verify citations/reference links are present for retrieved source records.
 - [x] Verify retrieval quality using current source-specific, hybrid ranking, and assistant eval gates.
@@ -34,7 +34,7 @@ Finalize and verify the production vector retrieval layer: chunk integrity, dupl
 - [ ] Migrate or delete any proven duplicate retrieval implementation in this slice.
 - [x] Verify every relevant AI assistant/tool consumes the finalized RAG pipeline or record a follow-on blocker.
 - [x] Update central AI/RAG finalization `TASKS.md`.
-- [ ] Update handoff with evidence, root cause, prevention, and remaining blockers.
+- [x] Update handoff with evidence, root cause, prevention, and remaining blockers.
 - [ ] Publish code/docs/evidence if code/docs change.
 
 ## Evidence
@@ -75,6 +75,11 @@ Low-content repair evidence:
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt`
 - `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-boundary-fix-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-boundary-fix-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
+- `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
 
 Linear milestone comment:
 
@@ -92,15 +97,13 @@ Linear milestone comment:
 
 ## Blockers
 
-- Boundary verifiers still fail on RAG/app database ownership:
-  - `npm run verify:metadata-boundary` flags heavy `document_metadata.content/raw_text` reads in the parser/embedder and related document-intelligence paths.
-  - `npm run verify:client-boundary` flags `frontend/src/app/api/admin/ai-work-runs/route.ts` reading RAG-owned `source_sync_runs` without `createRagServiceClient()`.
-  - `npm run verify:backend-client-boundary` flags Outlook intake reads that still need the AI DB resolver in email digest and Microsoft executive assistant paths.
-- `npm run typecheck` currently reports unrelated untracked-file type debt in `frontend/src/lib/ai/workflow-registry.ts`; the failing file is not part of this AAI-682 slice.
+- Permission behavior and citation/reference-link proof still need a dedicated live retrieval validation pass before AAI-682 can close.
+- Legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
 
 ## Resolved Blockers
 
 - `npm run rag:verify:assistant-operational-readiness` passed after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path. The restored path is backed by the active Render Deep Agents research endpoint, records the canonical executive trace, and persists source/debug metadata for direct and fallback synthesis paths.
+- RAG/app database ownership boundary verifiers now pass after routing app metadata text fallbacks through `rag_document_metadata`, routing admin `source_sync_runs` reads through `createRagServiceClient()`, and routing Outlook intake reads/writes through AI DB resolver helpers.
 
 ## Root Cause
 
@@ -110,6 +113,8 @@ The assistant-readiness verifier also pointed at a missing archived eval-suite p
 
 The executive bridge assertion failed because the current handler and bridge module no longer exposed the canonical business-wide Deep Agents path, while the active architecture and eval suite still required `backendDeepAgentExecutiveBriefing` for no-project executive/operator prompts.
 
+The RAG/app boundary failures came from mature production code still reading high-churn or heavy AI data through app-database paths: parser/embedder and document-intelligence fallbacks read `document_metadata.content/raw_text`, the admin work-runs endpoint queried `source_sync_runs` through the app client, and Outlook digest/assistant triage used the generic Supabase client for Outlook intake control-plane tables.
+
 ## Prevention
 
 - Low-content documents no longer create fake parser segments or fake summaries.
@@ -118,6 +123,7 @@ The executive bridge assertion failed because the current handler and bridge mod
 - RAG chunk integrity now fails on low-content placeholder chunks.
 - Assistant operational readiness now loads the active `docs/ai-plan2/evals/assistant-eval-suite.json` eval suite.
 - Broad no-project executive prompts now route through `fetchDeepAgentExecutiveBriefing`, backed by the active Render Deep Agents research endpoint, and persist the canonical `backendDeepAgentExecutiveBriefing` trace.
+- Boundary verifiers now enforce that app `document_metadata` selects in AI/RAG paths do not pull heavy body text, frontend RAG tables/RPCs use `createRagServiceClient()`, and backend RAG-owned tables use explicit AI DB resolver helpers.
 
 ## Failure-Loud Guardrail
 

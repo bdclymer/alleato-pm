@@ -43,6 +43,10 @@ import {
   renderChangeRequestToolDescription,
 } from "@/lib/ai/change-request-field-guide";
 import {
+  buildChangeRequestPreviewFields,
+  normalizeChangeRequestDraft,
+} from "@/lib/ai/workflow-registry";
+import {
   notifyChangeRequestReviewNeeded,
   notifyRfiReviewNeeded,
 } from "@/services/notificationService";
@@ -856,13 +860,30 @@ export function createActionTools(
       description: renderChangeRequestToolDescription(),
       inputSchema: z.object({
         projectId: z.number().describe("Project ID — required"),
-        title: z.string().describe("Short descriptive title"),
+        title: z.string().min(1).describe("Short descriptive title"),
         description: z.string().optional().describe("Detailed description"),
         scope: z
-          .enum(["owner_change", "unforeseen_condition", "design_error", "other"])
-          .default("other"),
-        type: z.enum(["potential_change", "trend", "rfi_answer_required"]).default("potential_change"),
-        status: z.enum(["open", "in_review", "approved", "rejected", "void"]).default("open"),
+          .string()
+          .optional()
+          .describe("Native scope such as TBD, In Scope, Out of Scope, or legacy owner_change/design_error aliases."),
+        type: z
+          .string()
+          .optional()
+          .describe("Native type such as Owner Change, Design Change, Allowance, Scope Gap, or supported legacy aliases."),
+        status: z
+          .string()
+          .optional()
+          .describe("Native status such as Open, Pending Approval, Approved, Rejected, Closed, or Converted."),
+        reason: z.string().optional().describe("Optional native reason."),
+        origin: z.string().optional().describe("Optional native origin."),
+        expectingRevenue: z
+          .boolean()
+          .optional()
+          .describe("Whether revenue is expected. Defaults to true."),
+        lineItemRevenueSource: z
+          .string()
+          .optional()
+          .describe("Optional line item revenue calculation mode."),
         confirmed: z.boolean().default(false),
         idempotencyKey: z
           .string()
@@ -871,25 +892,35 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createChangeEvent", options, async (input) => {
-        const { projectId, title, description, scope, type, status, confirmed } = input;
-        const access = await enforceProjectWriteAccess(projectId);
+        const normalized = normalizeChangeRequestDraft(input);
+        if (!normalized.ok) {
+          return {
+            success: false,
+            error: normalized.error,
+            missingFields: normalized.missingFields ?? [],
+          };
+        }
+
+        const { draft } = normalized;
+        const { confirmed } = input;
+        const access = await enforceProjectWriteAccess(draft.projectId);
         if (!access.ok) return { success: false, error: access.error };
+        const fields = buildChangeRequestPreviewFields(draft);
 
         if (!confirmed) {
-          const fields = { project_id: projectId, title, description, scope, type, status };
           await notifyChangeRequestReviewNeeded(userId, {
-            projectId,
-            title,
-            description,
-            scope,
-            type,
-            status,
+            projectId: draft.projectId,
+            title: draft.title,
+            description: draft.description ?? undefined,
+            scope: draft.scope,
+            type: draft.type,
+            status: draft.status,
             eventKey: resolvePreviewEventKey("createChangeEvent", fields),
           });
 
           return {
             action: "preview",
-            message: "Here's the change event I'll create. Reply **confirm** to proceed.",
+            message: "Here's the change request I'll create. Reply **confirm** to proceed.",
             preview: {
               table: "change_events",
               fields,
@@ -902,28 +933,48 @@ export function createActionTools(
         const replay = await getReplayResponse("createChangeEvent", idempotencyKey);
         if (replay) return replay;
 
-        // change_events requires number and updated_at — generate them
-        const { data: existing } = await supabase
+        const { data: existing, error: numberError } = await supabase
           .from("change_events")
           .select("number")
-          .eq("project_id", projectId)
-          .order("created_at", { ascending: false })
-          .limit(1);
+          .eq("project_id", draft.projectId);
 
-        const lastNumber = existing?.[0]?.number ?? "CE-000";
-        const nextNum = String(parseInt(lastNumber.replace(/\D/g, "") || "0") + 1).padStart(3, "0");
+        if (numberError) {
+          const failure = {
+            success: false,
+            error: `Unable to generate the next change request number: ${numberError.message}`,
+          };
+          await recordWriteAudit({
+            toolName: "createChangeEvent",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const maxNumber = (existing ?? []).reduce((max, row) => {
+          const value = typeof row.number === "string" ? row.number : "";
+          const parsed = Number.parseInt(value.replace(/\D/g, ""), 10);
+          return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
+        }, 0);
+        const nextNumber = String(maxNumber + 1).padStart(3, "0");
 
         const { data, error } = await supabase
           .from("change_events")
           .insert({
-            project_id: projectId,
-            title,
-            description: description ?? null,
-            scope: scope,
-            type,
-            status,
-            number: `CE-${nextNum}`,
-            expecting_revenue: false,
+            project_id: draft.projectId,
+            title: draft.title,
+            description: draft.description,
+            scope: draft.scope,
+            type: draft.type,
+            status: draft.status,
+            reason: draft.reason,
+            origin: draft.origin,
+            number: nextNumber,
+            expecting_revenue: draft.expectingRevenue,
+            line_item_revenue_source: draft.lineItemRevenueSource,
             updated_at: new Date().toISOString(),
           })
           .select("id, title, number, status")
@@ -944,7 +995,7 @@ export function createActionTools(
 
         const response = {
           success: true,
-          message: `Change event **${data.number} — "${title}"** logged.`,
+          message: `Change request **${data.number} — "${draft.title}"** logged.`,
           record: data,
         };
         await recordWriteAudit({

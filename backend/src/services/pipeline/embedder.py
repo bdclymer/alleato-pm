@@ -261,7 +261,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         .select(
             "id,title,type,category,source,source_system,project_id,date,captured_at,"
             "created_at,summary,overview,status,fireflies_id,participants,"
-            "participants_array,source_metadata,content,raw_text,file_name,file_path,"
+            "participants_array,source_metadata,file_name,file_path,"
             "storage_bucket,source_web_url,url,document_type"
         )
         .eq("id", metadata_id)
@@ -279,7 +279,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         "id",
         metadata_id,
     )
-    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text")
     meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")

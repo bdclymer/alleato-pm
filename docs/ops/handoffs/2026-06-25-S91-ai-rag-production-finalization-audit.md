@@ -208,7 +208,12 @@ AAI-682 progress:
   - FAIL: `npm run verify:client-boundary` still flags the admin AI work-runs route reading RAG-owned `source_sync_runs` without `createRagServiceClient()`.
   - FAIL: `npm run verify:backend-client-boundary` still flags Outlook intake reads that need the AI DB resolver in email digest and Microsoft executive assistant paths.
   - PASS after follow-up: `npm run rag:verify:assistant-operational-readiness` passes after restoring the canonical `backendDeepAgentExecutiveBriefing` handler path.
-  - WARN/BLOCKED outside this slice: `npm run typecheck` reports unrelated untracked-file type errors in `frontend/src/lib/ai/workflow-registry.ts`.
+  - PASS after follow-up: `npm run rag:verify:metadata-boundary` passes after moving AI/RAG heavy body-text reads off app `document_metadata`.
+  - PASS after follow-up: `npm run rag:verify:client-boundary` passes after routing admin `source_sync_runs` reads through `createRagServiceClient()`.
+  - PASS after follow-up: `npm run rag:verify:backend-client-boundary` passes after routing Outlook intake control-plane reads/writes through AI DB resolver helpers.
+  - PASS after follow-up: delegated sub-agent typecheck `npm --prefix frontend run typecheck` passed with no errors.
+  - PASS after follow-up: focused lint passed for `frontend/src/app/api/admin/ai-work-runs/route.ts` and `frontend/src/lib/ai/tools/document-intelligence.ts`.
+  - PASS after follow-up: Python compile passed for touched backend parser/embedder/backfill/digest/assistant files.
 - Evidence:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-plan-aai-682.json`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json`
@@ -221,9 +226,15 @@ AAI-682 progress:
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt`
   - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-boundary-fix-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-boundary-fix-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt`
+  - `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt`
 - Remaining blocker:
-  - Resolve RAG/app boundary failures before claiming retrieval production readiness.
-  - Resolve or isolate unrelated untracked `frontend/src/lib/ai/workflow-registry.ts` type errors before using full frontend typecheck as a closeout gate.
+  - Live permission behavior and citation/reference-link proof still need a dedicated retrieval validation pass before AAI-682 can close.
+  - Legacy retrieval candidates still need import/route/provider-schedule/database-write proof before deletion or migration.
+  - Broad production readiness still requires final all-pipeline verification after the remaining implementation/cleanup slices.
 
 ## Exact Next Step
 

@@ -230,73 +230,66 @@ export function ScreenshotAnnotator({
     onChange(dataUrl);
   };
 
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1 flex-wrap">
-        <div className="flex items-center gap-0.5 border-r border-border pr-2 mr-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant={tool === "arrow" ? "secondary" : "ghost"}
-                size="icon-sm"
-                onClick={() => setTool("arrow")}
-                aria-label="Arrow"
-              >
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Arrow</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant={tool === "rect" ? "secondary" : "ghost"}
-                size="icon-sm"
-                onClick={() => setTool("rect")}
-                aria-label="Rectangle"
-              >
-                <Square className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Rectangle</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant={tool === "pen" ? "secondary" : "ghost"}
-                size="icon-sm"
-                onClick={() => setTool("pen")}
-                aria-label="Freehand"
-              >
-                <Pen className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Freehand</TooltipContent>
-          </Tooltip>
-        </div>
+  const tools: { value: Tool; label: string; icon: typeof Pen }[] = [
+    { value: "arrow", label: "Arrow", icon: ArrowUpRight },
+    { value: "rect", label: "Rectangle", icon: Square },
+    { value: "pen", label: "Freehand", icon: Pen },
+  ];
 
-        <div className="flex items-center gap-1.5 border-r border-border pr-2 mr-1">
-          {COLORS.map(({ value, label }) => (
-            <Button
-              key={value}
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setColor(value)}
-              aria-label={label}
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1 px-1.5 py-1">
+        {tools.map(({ value, label, icon: Icon }) => (
+          <Tooltip key={value}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setTool(value)}
+                aria-label={label}
+                aria-pressed={tool === value}
+                className={cn(
+                  "rounded-full text-muted-foreground hover:text-foreground",
+                  tool === value && "bg-muted text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+        ))}
+
+        <span className="mx-1 h-4 w-px bg-border/70" />
+
+        {COLORS.map(({ value, label }) => (
+          <Button
+            key={value}
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setColor(value)}
+            aria-label={label}
+            aria-pressed={color === value}
+            className={cn(
+              "size-7 rounded-full transition-transform",
+              color === value && "scale-110",
+            )}
+          >
+            <span
               className={cn(
-                "h-4 w-4 rounded-full p-0 transition-all",
+                "size-3.5 rounded-full ring-offset-2 ring-offset-card transition-all",
                 color === value
-                  ? "ring-2 ring-offset-1 ring-foreground scale-125"
-                  : "opacity-50 hover:opacity-90",
+                  ? "ring-2 ring-foreground"
+                  : "opacity-60 hover:opacity-100",
               )}
               style={{ backgroundColor: value }}
             />
-          ))}
-        </div>
+          </Button>
+        ))}
+
+        <span className="mx-1 h-4 w-px bg-border/70" />
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -307,8 +300,9 @@ export function ScreenshotAnnotator({
               onClick={undo}
               disabled={shapes.length === 0}
               aria-label="Undo"
+              className="rounded-full text-muted-foreground hover:text-foreground"
             >
-              <Undo2 className="h-3.5 w-3.5" />
+              <Undo2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Undo</TooltipContent>
@@ -322,15 +316,19 @@ export function ScreenshotAnnotator({
               onClick={clear}
               disabled={shapes.length === 0}
               aria-label="Clear all"
+              className="rounded-full text-muted-foreground hover:text-foreground"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Clear all</TooltipContent>
         </Tooltip>
       </div>
 
-      <div className="relative w-full select-none overflow-hidden rounded shadow-sm" style={{ cursor: "crosshair" }}>
+      <div
+        className="relative w-full select-none overflow-hidden rounded-lg border border-border/60"
+        style={{ cursor: "crosshair" }}
+      >
         <img
           ref={imgRef}
           src={dataUrl}

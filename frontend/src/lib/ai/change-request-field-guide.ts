@@ -1,5 +1,23 @@
+import { CHANGE_REQUEST_WORKFLOW } from "@/lib/ai/workflow-registry";
+
+const workflowRequiredFields = CHANGE_REQUEST_WORKFLOW.fields
+  .filter((field) => field.required)
+  .map((field) => ({
+    name: field.name,
+    label: field.label,
+    description: field.description,
+  }));
+
+const workflowOptionalFields = CHANGE_REQUEST_WORKFLOW.fields
+  .filter((field) => !field.required)
+  .map((field) => ({
+    name: field.name,
+    label: field.label,
+    description: field.description,
+  }));
+
 export const CHANGE_REQUEST_FIELD_GUIDE = {
-  canonicalTool: "createChangeEvent",
+  canonicalTool: CHANGE_REQUEST_WORKFLOW.backingTool,
   canonicalRecordName: "change request / change event",
   aliases: [
     "change request",
@@ -9,42 +27,8 @@ export const CHANGE_REQUEST_FIELD_GUIDE = {
     "scope change",
     "unexpected condition",
   ],
-  requiredFields: [
-    {
-      name: "projectId",
-      label: "Project",
-      description: "Numeric Alleato project id. Resolve this before previewing.",
-    },
-    {
-      name: "title",
-      label: "Title",
-      description: "Short name for the potential change.",
-    },
-  ],
-  optionalFields: [
-    {
-      name: "description",
-      label: "Description",
-      description: "Known scope, cost, schedule, or source context.",
-    },
-    {
-      name: "scope",
-      label: "Scope",
-      description:
-        "owner_change, unforeseen_condition, design_error, or other. Default to other when unclear.",
-    },
-    {
-      name: "type",
-      label: "Type",
-      description:
-        "potential_change, trend, or rfi_answer_required. Default to potential_change.",
-    },
-    {
-      name: "status",
-      label: "Status",
-      description: "open, in_review, approved, rejected, or void. Default to open.",
-    },
-  ],
+  requiredFields: workflowRequiredFields,
+  optionalFields: workflowOptionalFields,
   generatedFields: [
     {
       name: "number",
@@ -68,6 +52,10 @@ type ChangeRequestPreviewFields = {
   scope?: unknown;
   type?: unknown;
   status?: unknown;
+  reason?: unknown;
+  origin?: unknown;
+  expecting_revenue?: unknown;
+  line_item_revenue_source?: unknown;
 };
 
 type ReviewCardField = {
@@ -141,9 +129,21 @@ export function buildChangeRequestReviewCard(
         title: "Optional",
         fields: [
           reviewField("description", "description", fields.description),
-          reviewField("scope", "scope", fields.scope),
           reviewField("type", "type", fields.type),
+          reviewField("scope", "scope", fields.scope),
           reviewField("status", "status", fields.status),
+          reviewField("reason", "reason", fields.reason),
+          reviewField("origin", "origin", fields.origin),
+          reviewField(
+            "expectingRevenue",
+            "expecting_revenue",
+            fields.expecting_revenue,
+          ),
+          reviewField(
+            "lineItemRevenueSource",
+            "line_item_revenue_source",
+            fields.line_item_revenue_source,
+          ),
         ],
       },
       {
@@ -197,7 +197,7 @@ export function renderChangeRequestToolDescription() {
   return [
     "Help create a change request/change event for a possible scope, cost, or schedule change.",
     "Use this when the user says change request, change event, potential change, field change, scope change, or describes an unexpected field condition.",
-    "Required fields are projectId and title. Optional fields are description, scope, type, and status.",
+    "Required fields are projectId and title. Optional fields are description, type, scope, status, reason, origin, expectingRevenue, and lineItemRevenueSource.",
     "The tool generates the change event number and updated_at timestamp.",
     CHANGE_REQUEST_FIELD_GUIDE.previewRule,
   ].join(" ");

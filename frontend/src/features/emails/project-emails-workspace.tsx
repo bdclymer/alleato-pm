@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -12,7 +13,6 @@ import {
   Cross2Icon,
   EnvelopeClosedIcon,
   FileTextIcon,
-  Link2Icon,
   MagnifyingGlassIcon,
   MixerHorizontalIcon,
   PaperPlaneIcon,
@@ -52,6 +52,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SplitPage, useSplitPage } from "@/components/ui/split-page";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -379,16 +380,6 @@ function previewText(email: ProjectEmail): string {
   return body || "No message preview yet.";
 }
 
-function counterpartyLabel(email: ProjectEmail): string {
-  if (email.status === "Received") {
-    const recipients = formatRecipientLine(email.to_list);
-    return recipients === "No recipients" ? "To unknown" : `To ${recipients}`;
-  }
-
-  const sender = email.from_name || email.from_email || "Unknown sender";
-  return `From ${sender}`;
-}
-
 function getInitials(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "EM";
@@ -461,61 +452,47 @@ function InboxRow({
   isActive: boolean;
   onSelect: () => void;
 }) {
-  const isReceived = email.status === "Received";
+  const { onClose } = useSplitPage();
 
   return (
     <Button
       type="button"
-      onClick={onSelect}
+      onClick={() => {
+        onSelect();
+        onClose();
+      }}
       variant="ghost"
       className={cn(
-        "group h-auto w-full justify-start overflow-hidden rounded-none border-l-2 px-4 py-3 text-left transition-colors duration-200",
+        "group h-auto min-w-0 w-full max-w-full justify-start overflow-hidden rounded-none border-l-2 px-4 py-3 text-left whitespace-normal transition-colors duration-200",
         isActive
           ? "border-primary bg-accent/60"
           : "border-transparent hover:bg-accent/50",
       )}
     >
-      <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_7.5rem] gap-3">
-        <div className="min-w-0 pr-3">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                isReceived
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-amber-50 text-amber-700",
-              )}
-              aria-label={isReceived ? "Received email" : "Sent email"}
-            >
-              {isReceived ? (
-                <EnvelopeClosedIcon className="h-3.5 w-3.5" />
-              ) : (
-                <PaperPlaneIcon className="h-3.5 w-3.5" />
-              )}
-            </span>
-            <div className="truncate text-xs font-semibold leading-4 text-foreground">
-              {email.from_name || email.from_email || "Unknown sender"}
-            </div>
+      <div className="min-w-0 w-full max-w-full flex-1 overflow-hidden space-y-1">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+          <div className="min-w-0 truncate text-xs font-semibold leading-4 text-foreground">
+            {email.from_name || email.from_email || "Unknown sender"}
           </div>
-          <p className="mt-0.5 truncate pr-2 text-xs font-medium leading-4 text-foreground">
-            {email.subject || "Untitled email"}
-          </p>
-          <p className="mt-0.5 truncate pr-2 text-[11px] leading-4 text-muted-foreground">
-            {counterpartyLabel(email)}
-          </p>
-          <div className="mt-0.5 flex items-center gap-2 pr-2">
-            <p className="min-w-0 truncate text-[11px] leading-4 text-muted-foreground">
-              {previewText(email)}
-            </p>
-            {email.has_attachments ? (
-              <FileTextIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
-            ) : null}
-          </div>
-        </div>
-        <div className="flex flex-col items-end text-right">
-          <div className="whitespace-nowrap text-[11px] font-medium tabular-nums text-muted-foreground">
+          <div className="whitespace-nowrap text-[11px] font-medium tabular-nums text-foreground/60">
             {formatPaneTimestamp(email.received_at || email.sent_at || email.created_at)}
           </div>
+        </div>
+        {email.from_email ? (
+          <p className="truncate text-[11px] leading-4 text-muted-foreground">
+            {email.from_email}
+          </p>
+        ) : null}
+        <p className="truncate text-xs font-medium leading-4 text-foreground">
+          {email.subject || "Untitled email"}
+        </p>
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 truncate text-[11px] leading-4 text-muted-foreground">
+            {previewText(email)}
+          </p>
+          {email.has_attachments ? (
+            <FileTextIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+          ) : null}
         </div>
       </div>
     </Button>
@@ -564,16 +541,13 @@ function ProjectAssignmentPopover({
             variant="ghost"
             size="sm"
             disabled={saving}
-            className="h-auto max-w-full items-center gap-2 rounded-md px-0 py-0 text-left shadow-none hover:bg-transparent"
+            className="h-auto max-w-full justify-start gap-1.5 rounded-md px-0 py-0 text-left text-[13px] font-normal text-foreground shadow-none hover:bg-transparent"
           >
-            <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="truncate text-[15px] font-medium text-foreground/85">
-              {currentLabel ?? "Assign project"}
-            </span>
+            <span className="truncate">{currentLabel ?? "Assign project"}</span>
             {saving ? (
-              <ReloadIcon className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              <ReloadIcon className="h-3 w-3 animate-spin text-muted-foreground" />
             ) : (
-              <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDownIcon className="h-3 w-3 text-muted-foreground" />
             )}
           </Button>
         ) : (
@@ -798,6 +772,88 @@ interface EmailReadingPanelProps {
   className?: string;
 }
 
+interface EmailActionControlsProps {
+  onSummarize: () => void;
+  onImportanceIntent: (signal: "important" | "not_important") => void;
+  onCreateTask: () => void;
+  className?: string;
+  orientation?: "row" | "column";
+}
+
+function EmailActionControls({
+  onSummarize,
+  onImportanceIntent,
+  onCreateTask,
+  className,
+  orientation = "row",
+}: EmailActionControlsProps) {
+  return (
+    <div
+      className={cn(
+        orientation === "column"
+          ? "flex flex-col items-stretch gap-1"
+          : "flex flex-wrap items-center gap-1.5",
+        className,
+      )}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onSummarize}
+        className={cn(
+          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+          orientation === "column" && "justify-start",
+        )}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        Summarize
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => onImportanceIntent("important")}
+        className={cn(
+          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+          orientation === "column" && "justify-start",
+        )}
+      >
+        <Star className="h-3.5 w-3.5" />
+        Mark important
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => onImportanceIntent("not_important")}
+        className={cn(
+          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+          orientation === "column" && "justify-start",
+        )}
+      >
+        <StarOff className="h-3.5 w-3.5" />
+        Not important
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onCreateTask}
+        className={cn(
+          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+          orientation === "column" && "justify-start",
+        )}
+      >
+        <ListTodo className="h-3.5 w-3.5" />
+        Create task
+      </Button>
+    </div>
+  );
+}
+
 export function EmailReadingPanel({
   email,
   canCompose = true,
@@ -827,6 +883,8 @@ export function EmailReadingPanel({
   const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [summary, setSummary] = React.useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = React.useState(false);
+  const [desktopActionsSlot, setDesktopActionsSlot] =
+    React.useState<HTMLElement | null>(null);
 
   const selectedBody = React.useMemo(
     () => (email ? plainTextBody(email) : ""),
@@ -882,6 +940,10 @@ export function EmailReadingPanel({
     setSummaryOpen(false);
     setSummary(null);
     setSummaryLoading(false);
+  }, [email?.id]);
+
+  React.useEffect(() => {
+    setDesktopActionsSlot(document.getElementById("email-details-actions-slot"));
   }, [email?.id]);
 
   const handleSummarize = React.useCallback(async () => {
@@ -970,55 +1032,35 @@ export function EmailReadingPanel({
           >
             <div className="border-b border-border/70 px-8 py-4 xl:px-10">
               <div className="flex items-start justify-between gap-6">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-start justify-between gap-4">
+                    <div className="min-w-0 text-[15px] font-semibold leading-5 tracking-[-0.01em] text-foreground">
                       {email.subject || "Untitled email"}
                     </div>
+                    <span className="shrink-0 whitespace-nowrap text-right text-[12px] text-muted-foreground">
+                      {formatMetaDate(
+                        email.received_at ||
+                          email.sent_at ||
+                          email.created_at,
+                      )}
+                    </span>
                   </div>
-                  <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)_auto] sm:gap-x-3">
+                  <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)] sm:gap-x-3">
                     <span className="font-medium text-foreground/75">From</span>
                     <span className="min-w-0 truncate text-foreground">
                       <span className="font-medium">{email.from_name || "Unknown sender"}</span>
                       {email.from_email ? `  ${email.from_email}` : ""}
                     </span>
-                    <span className="row-span-3 hidden whitespace-nowrap text-right text-[12px] text-muted-foreground sm:block">
-                      {formatMetaDate(
-                        email.received_at ||
-                          email.sent_at ||
-                          email.created_at,
-                      )}
-                    </span>
                     <span className="font-medium text-foreground/75">To</span>
                     <span className="min-w-0 truncate text-foreground">
                       {formatRecipientLine(email.to_list)}
                     </span>
-                    <span className="font-medium text-foreground/75 sm:hidden">Date</span>
-                    <span className="text-foreground sm:hidden">
-                      {formatMetaDate(
-                        email.received_at ||
-                          email.sent_at ||
-                          email.created_at,
-                      )}
-                    </span>
                     <span className="font-medium text-foreground/75">Project</span>
-                    <span className="min-w-0 truncate text-foreground">
-                      {projectLabel(email.project) ?? "No project assigned"}
-                    </span>
+                    <ProjectAssignmentPopover email={email} variant="toolbar" />
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleImportanceIntent("important")}
-                    aria-label="Importance feedback"
-                    className="h-8 w-8 rounded-full"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
                   {showDetailsButton && onOpenDetails ? (
                     <Button
                       type="button"
@@ -1091,7 +1133,7 @@ export function EmailReadingPanel({
 
             <ScrollArea className="flex-1">
               <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
-                <div className="space-y-5 text-[16px] leading-8 text-foreground [overflow-wrap:anywhere]">
+                <div className="space-y-4 text-[14px] leading-6 text-foreground [overflow-wrap:anywhere]">
                   {selectedBody ? (
                     selectedBodyBlocks.map((block) => {
                       if (block.kind === "metadata" || block.kind === "quote-header") {
@@ -1203,53 +1245,12 @@ export function EmailReadingPanel({
                   </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void handleSummarize()}
-                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Summarize
-                  </Button>
-
-                  <ProjectAssignmentPopover email={email} />
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleImportanceIntent("important")}
-                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <Star className="h-3.5 w-3.5" />
-                    Mark important
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleImportanceIntent("not_important")}
-                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <StarOff className="h-3.5 w-3.5" />
-                    Not important
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleOpenCreateTask}
-                    disabled={!email.project_id}
-                    className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ListTodo className="h-3.5 w-3.5" />
-                    Create task
-                  </Button>
-                </div>
+                <EmailActionControls
+                  onSummarize={() => void handleSummarize()}
+                  onImportanceIntent={handleImportanceIntent}
+                  onCreateTask={handleOpenCreateTask}
+                  className="border-t border-border/60 pt-5 2xl:hidden"
+                />
               </div>
             </ScrollArea>
           </motion.div>
@@ -1286,6 +1287,17 @@ export function EmailReadingPanel({
           </motion.div>
         )}
       </AnimatePresence>
+      {email && desktopActionsSlot
+        ? createPortal(
+            <EmailActionControls
+              onSummarize={() => void handleSummarize()}
+              onImportanceIntent={handleImportanceIntent}
+              onCreateTask={handleOpenCreateTask}
+              orientation="column"
+            />,
+            desktopActionsSlot,
+          )
+        : null}
       <EmailImportanceFeedbackDialog
         email={email}
         open={importanceDialogOpen}
@@ -1430,7 +1442,7 @@ function EmailDetailsPanel({
               </div>
             ) : null}
 
-              <div className="space-y-5 border-b border-border/70 pb-6">
+              <div className="space-y-3 pb-6">
               <div className="flex items-start gap-4">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-14 w-14">
@@ -1443,20 +1455,14 @@ function EmailDetailsPanel({
                       {primaryContact.displayName}
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">{primaryContact.roleLabel}</div>
+                    {primaryContact.linkLabel ? (
+                      <div className="mt-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                        {primaryContact.linkLabel}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
-
-              {primaryContact.linkLabel ? (
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="inline-flex items-start gap-2">
-                    <Link2Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 break-all [overflow-wrap:anywhere]">
-                      {primaryContact.linkLabel}
-                    </span>
-                  </div>
-                </div>
-              ) : null}
             </div>
 
             <div className="space-y-4 py-6">
@@ -1476,6 +1482,13 @@ function EmailDetailsPanel({
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-3 pb-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Actions
+              </div>
+              <div id="email-details-actions-slot" />
             </div>
 
             <div className="space-y-4 border-t border-border/70 pt-6">
@@ -1618,9 +1631,13 @@ export function ProjectEmailsWorkspace({
   }, []);
 
   return (
-    <div className="relative flex min-h-[calc(100dvh-8.5rem)] flex-col">
-      <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[24rem_minmax(0,1fr)] 2xl:grid-cols-[24rem_minmax(0,1fr)_21rem]">
-        <div className="flex min-h-0 flex-col border-b border-border/70 xl:border-b-0 xl:border-r">
+    <div className="relative flex h-[calc(100dvh-8.5rem)] min-h-0 w-full flex-col overflow-hidden">
+      <SplitPage
+        breakpoint="xl"
+        defaultIsOpen={!selectedEmail}
+        className="min-h-0 flex-1"
+      >
+        <div className="flex h-full w-full min-w-0 flex-col overflow-hidden border-b border-border/70 xl:w-96 xl:border-b-0 xl:border-r">
           <div className="border-b border-border/70 px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
@@ -1647,6 +1664,7 @@ export function ProjectEmailsWorkspace({
                     onSortChange={onSortChange}
                   />
                 ) : null}
+                {viewSwitcher}
                 {canCompose ? (
                   <Button
                     variant="ghost"
@@ -1662,34 +1680,30 @@ export function ProjectEmailsWorkspace({
               </div>
             </div>
 
-            <nav className="flex items-center">
-              {tabs.map((tab) => (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={cn(
-                    "relative px-3 py-3 text-sm font-medium transition-colors",
-                    tab.isActive
-                      ? "text-primary"
-                      : "text-foreground/70 hover:text-foreground/90",
-                  )}
-                >
-                  {tab.label}
-                  <span
-                    aria-hidden="true"
+            {tabs.length > 0 ? (
+              <nav className="mt-3 flex items-center">
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
                     className={cn(
-                      "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
-                      tab.isActive ? "bg-primary" : "bg-transparent",
+                      "relative px-3 py-2 text-sm font-medium transition-colors",
+                      tab.isActive
+                        ? "text-primary"
+                        : "text-foreground/70 hover:text-foreground/90",
                     )}
-                  />
-                </Link>
-              ))}
-            </nav>
-
-            {viewSwitcher ? (
-              <div className="mt-3 flex items-center gap-2">
-                {viewSwitcher}
-              </div>
+                  >
+                    {tab.label}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
+                        tab.isActive ? "bg-primary" : "bg-transparent",
+                      )}
+                    />
+                  </Link>
+                ))}
+              </nav>
             ) : null}
 
             <AnimatePresence initial={false}>
@@ -1730,7 +1744,7 @@ export function ProjectEmailsWorkspace({
             </AnimatePresence>
           </div>
 
-          <ScrollArea className="min-h-0 flex-1">
+          <ScrollArea className="min-h-0 min-w-0 flex-1 [&_[data-slot=scroll-area-viewport]>div]:!block [&_[data-slot=scroll-area-viewport]>div]:!min-w-0 [&_[data-slot=scroll-area-viewport]>div]:!w-full">
             {isLoading ? (
               <div className="space-y-1 px-0 py-2">
                 {Array.from({ length: 6 }).map((_, index) => (
@@ -1780,7 +1794,7 @@ export function ProjectEmailsWorkspace({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.24, ease: "easeOut" }}
-                className="divide-y divide-border/60"
+                className="min-w-0 divide-y divide-border/60 overflow-hidden"
               >
                 {visibleEmails.map((email) => (
                   <InboxRow
@@ -1795,28 +1809,30 @@ export function ProjectEmailsWorkspace({
           </ScrollArea>
         </div>
 
-        <div className="min-h-0 border-b border-border/70 xl:border-b-0 xl:border-r 2xl:border-r">
-          <EmailReadingPanel
-            email={selectedEmail}
-            canCompose={canCompose}
-            canEditEmail={selectedEmailEditable}
-            canDelete={canDelete}
-            onCompose={onCompose}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            showDetailsButton
-            onOpenDetails={() => setIsDetailsPanelOpen(true)}
-          />
-        </div>
+        <div className="flex h-full min-h-0 min-w-0">
+          <div className="min-h-0 min-w-0 flex-1 border-b border-border/70 xl:border-b-0 2xl:border-r">
+            <EmailReadingPanel
+              email={selectedEmail}
+              canCompose={canCompose}
+              canEditEmail={selectedEmailEditable}
+              canDelete={canDelete}
+              onCompose={onCompose}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              showDetailsButton
+              onOpenDetails={() => setIsDetailsPanelOpen(true)}
+            />
+          </div>
 
-        <div className="hidden min-h-0 2xl:block">
-          <EmailDetailsPanel
-            selectedEmail={selectedEmail}
-            primaryContact={primaryContact}
-            contextItems={contextItems}
-          />
+          <div className="hidden min-h-0 w-80 shrink-0 2xl:block">
+            <EmailDetailsPanel
+              selectedEmail={selectedEmail}
+              primaryContact={primaryContact}
+              contextItems={contextItems}
+            />
+          </div>
         </div>
-      </div>
+      </SplitPage>
 
       <EmailDetailSheet
         email={selectedEmailDetail}

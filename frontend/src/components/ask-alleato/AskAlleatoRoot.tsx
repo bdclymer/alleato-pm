@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT } from "@/lib/admin-feedback/constants";
 import { ONBOARDING_VISIBILITY_EVENT } from "@/lib/onboarding/copy";
 import { AskAlleatoPanel, type AskAlleatoPanelTab } from "./AskAlleatoPanel";
-import { AskAlleatoPill } from "./AskAlleatoPill";
 
 function shouldHideForRoute(pathname: string) {
   return (
@@ -62,19 +60,12 @@ export function AskAlleatoRoot() {
   }
 
   return (
-    <>
-      <AskAlleatoPill
-        onClick={() => {
-          window.dispatchEvent(new CustomEvent(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT));
-        }}
-      />
-      <AskAlleatoPanel
-        open={open}
-        onOpenChange={setOpen}
-        activeTab={activeTab}
-        onActiveTabChange={setActiveTab}
-        pagePath={pathname}
-      />
-    </>
+    <AskAlleatoPanel
+      open={open}
+      onOpenChange={setOpen}
+      activeTab={activeTab}
+      onActiveTabChange={setActiveTab}
+      pagePath={pathname}
+    />
   );
 }

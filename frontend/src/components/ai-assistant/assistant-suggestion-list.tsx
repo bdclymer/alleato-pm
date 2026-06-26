@@ -1,7 +1,5 @@
 "use client";
 
-import { ArrowRightIcon, LockKeyholeIcon } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import type { AssistantSuggestion } from "@/lib/ai/assistant-suggestion-resolver";
 import { cn } from "@/lib/utils";
@@ -36,24 +34,19 @@ export function AssistantSuggestionList({
           </p>
         </div>
       ) : null}
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {suggestions.map((suggestion) => (
           <Button
             key={suggestion.id}
             type="button"
-            variant={variant === "panel" ? "secondary" : "outline"}
-            size="sm"
+            variant="ghost"
             disabled={disabled || suggestion.status === "not_ready"}
-            className="h-8 max-w-full rounded-full px-3 text-xs font-medium"
+            className="min-h-16 min-w-0 items-start justify-start rounded-md bg-muted/35 px-3 py-2.5 text-left text-sm font-medium text-foreground shadow-none hover:bg-muted/55 disabled:opacity-50"
             onClick={() => onSelectPrompt(suggestion.prompt)}
           >
-            {suggestion.requiresApproval ? (
-              <LockKeyholeIcon className="h-3 w-3" />
-            ) : null}
-            <span className="truncate">{suggestion.label}</span>
-            {variant === "inline" ? (
-              <ArrowRightIcon className="h-3 w-3 text-muted-foreground" />
-            ) : null}
+            <span className="line-clamp-2 whitespace-normal leading-5">
+              {suggestion.label}
+            </span>
           </Button>
         ))}
       </div>

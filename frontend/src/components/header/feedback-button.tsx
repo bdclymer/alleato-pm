@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT } from "@/lib/admin-feedback/constants";
 
@@ -16,7 +16,7 @@ export function FeedbackButton() {
         window.dispatchEvent(new CustomEvent(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT))
       }
     >
-      <MessageSquarePlus className="h-4 w-4" />
+      <Send className="h-4 w-4" />
     </Button>
   );
 }

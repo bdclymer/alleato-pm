@@ -19,6 +19,33 @@ export const ADMIN_FEEDBACK_REQUEST_TYPES = [
   "feature_request",
 ] as const;
 
+export type AdminFeedbackRequestType =
+  (typeof ADMIN_FEEDBACK_REQUEST_TYPES)[number];
+
+export const ADMIN_FEEDBACK_REQUEST_TYPE_LABELS: Record<
+  AdminFeedbackRequestType,
+  string
+> = {
+  bug: "Bug",
+  change_request: "Change request",
+  copy: "Copy / wording",
+  question: "Question",
+  feature_request: "Idea",
+};
+
+export const ADMIN_FEEDBACK_REQUEST_TYPE_GITHUB_LABELS: Record<
+  AdminFeedbackRequestType,
+  string
+> = {
+  bug: "feedback:bug",
+  change_request: "feedback:change_request",
+  copy: "feedback:copy",
+  question: "feedback:question",
+  feature_request: "feedback:feature_request",
+};
+
+export const ADMIN_FEEDBACK_PRODUCT_INTAKE_LABEL = "Ideas";
+
 export const BOARD_STATUSES = [
   "submitted",
   "planned",
@@ -36,9 +63,6 @@ export const BOARD_STATUS_LABELS: Record<BoardStatus, string> = {
 };
 
 export const ADMIN_FEEDBACK_SEVERITIES = ["low", "medium", "high"] as const;
-
-export type AdminFeedbackRequestType =
-  (typeof ADMIN_FEEDBACK_REQUEST_TYPES)[number];
 
 export type AdminFeedbackSeverity = (typeof ADMIN_FEEDBACK_SEVERITIES)[number];
 

@@ -19,6 +19,7 @@ import type {
   AdminFeedbackRequestType,
   AdminFeedbackSeverity,
 } from "./constants";
+import { ADMIN_FEEDBACK_REQUEST_TYPE_LABELS } from "./constants";
 
 type NotifyInput = {
   requestId: string;
@@ -42,14 +43,6 @@ type NotifyResult =
   | { ok: true }
   | { ok: false; reason: "not_configured" | "send_failed"; details?: string };
 
-const TYPE_LABELS: Record<AdminFeedbackRequestType, string> = {
-  bug: "Bug",
-  feature_request: "Feature request",
-  question: "Question",
-  change_request: "Change request",
-  copy: "Copy / wording",
-};
-
 const SEVERITY_COLORS: Record<AdminFeedbackSeverity, string> = {
   high: "Attention",
   medium: "Accent",
@@ -63,7 +56,7 @@ function truncate(value: string, max: number): string {
 
 function buildAdaptiveCardPayload(input: NotifyInput) {
   const facts: { title: string; value: string }[] = [
-    { title: "Type", value: TYPE_LABELS[input.requestType] },
+    { title: "Type", value: ADMIN_FEEDBACK_REQUEST_TYPE_LABELS[input.requestType] },
     { title: "Severity", value: input.severity },
     {
       title: "Submitted by",

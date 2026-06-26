@@ -8,6 +8,7 @@ import { AnimatedOrb } from "./animated-orb";
 interface WelcomeScreenProps {
   children?: ReactNode;
   beforeComposer?: ReactNode;
+  afterComposer?: ReactNode;
   composer?: ReactNode;
   error?: ReactNode;
   /** Omit the decorative animated orb (used by the compact floating widget). */
@@ -18,6 +19,7 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({
   children,
   beforeComposer,
+  afterComposer,
   composer,
   error,
   hideOrb = false,
@@ -64,6 +66,7 @@ export function WelcomeScreen({
             {error && <div className="mb-2">{error}</div>}
             {beforeComposer}
             {composer}
+            {afterComposer ? <div className="mt-4">{afterComposer}</div> : null}
             <div className="mt-3 flex items-center justify-center gap-4 text-center">
               <Link
                 href="/ai/profile"

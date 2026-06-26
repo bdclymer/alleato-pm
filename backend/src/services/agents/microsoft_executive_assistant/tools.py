@@ -401,9 +401,9 @@ def draft_teams_message_for_review(recipient: str, message: str, urgency: str = 
 def _supabase_client():
     """Lazy Supabase client for triage write-back. Returns None if unconfigured."""
     try:
-        from src.services.supabase_helpers import get_pm_write_client
+        from src.services.supabase_helpers import get_outlook_intake_write_client
 
-        return get_pm_write_client()
+        return get_outlook_intake_write_client()
     except Exception:
         try:
             import os
