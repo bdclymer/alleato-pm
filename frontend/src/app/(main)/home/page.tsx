@@ -11,6 +11,7 @@ import {
 } from "@/lib/collaboration/ai-approval-queue";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { getHomePrimaryQueueAction } from "./home-action-routing";
 
 type ProjectRow = {
   id: number | string;
@@ -385,20 +386,11 @@ export default function HomeActionDashboardPage() {
       : "No AI decisions are waiting for review.";
 
   const startSummary = queueSummary(todayTasks.length, openTasks.length, aiApprovalCount);
-  const primaryQueueHref =
-    todayTasks[0]?.project_id
-      ? `/${todayTasks[0].project_id}/tasks`
-      : openTasks[0]?.project_id
-        ? `/${openTasks[0].project_id}/tasks`
-        : aiApprovalCount > 0
-          ? "/ai/approvals"
-          : "/tasks";
-  const primaryQueueLabel =
-    todayTasks.length > 0 || openTasks.length > 0
-      ? "Open tasks"
-      : aiApprovalCount > 0
-        ? "Review AI"
-        : "Open tasks";
+  const primaryQueueAction = getHomePrimaryQueueAction({
+    todayTasks,
+    openTasks,
+    aiApprovalCount,
+  });
 
   const recentActivity = React.useMemo(() => {
     const taskItems = state.tasks.slice(0, 3).map((task) => ({
@@ -477,8 +469,8 @@ export default function HomeActionDashboardPage() {
           <PrimaryActionRow
             title={aiApprovalCount > 0 ? "Review waiting decisions" : "Open the work queue"}
             meta={aiApprovalCount > 0 ? aiApprovalMeta : "Tasks, assignments, and project queues stay one click away."}
-            href={primaryQueueHref}
-            actionLabel={primaryQueueLabel}
+            href={primaryQueueAction.href}
+            actionLabel={primaryQueueAction.label}
           />
         </div>
       </section>
