@@ -2,6 +2,7 @@ import {
   formatAiApprovalQueueEventLabel,
   getAiApprovalQueueMetadata,
   getAiApprovalQueuePreview,
+  getAiApprovalQueueReviewChecks,
   getAiApprovalQueueRelatedHref,
   isAiApprovalQueueEventType,
   isAiApprovalQueueNotification,
@@ -120,6 +121,46 @@ describe("AI approval queue helpers", () => {
 
     expect(getAiApprovalQueuePreview({ preview: { fields: [] } })).toBeNull();
     expect(getAiApprovalQueuePreview(null)).toBeNull();
+  });
+
+  it("builds explicit review checks from sensitive preview fields", () => {
+    const preview = getAiApprovalQueuePreview({
+      preview: {
+        fields: {
+          title: "Electrical rough-in",
+          start_date: "2026-07-01",
+          vendor_name_resolved: "Acme Electric",
+          line_items: [{ description: "Rough-in", amount: 12500 }],
+          scope: "TBD",
+          expecting_revenue: true,
+        },
+      },
+    });
+
+    expect(getAiApprovalQueueReviewChecks(preview)).toEqual([
+      {
+        id: "generated-fields",
+        label: "Generated fields match the intended record.",
+      },
+      {
+        id: "dates",
+        label: "Dates are correct.",
+      },
+      {
+        id: "vendor",
+        label: "Vendor and contract details are correct.",
+      },
+      {
+        id: "line-items",
+        label: "Line items and totals are correct.",
+      },
+      {
+        id: "scope-revenue",
+        label: "Scope and revenue assumptions are correct.",
+      },
+    ]);
+
+    expect(getAiApprovalQueueReviewChecks(null)).toEqual([]);
   });
 
   it("builds related record links from notification context", () => {

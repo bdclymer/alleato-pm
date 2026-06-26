@@ -41,6 +41,11 @@ export type AiApprovalQueuePreview = {
   fields: AiApprovalQueuePreviewField[];
 };
 
+export type AiApprovalQueueReviewCheck = {
+  id: string;
+  label: string;
+};
+
 export type AiApprovalQueueCandidate = {
   kind: string;
   metadata?: Json | null;
@@ -168,6 +173,59 @@ export function getAiApprovalQueuePreview(
     table: cleanString(preview.table),
     fields: displayFields,
   };
+}
+
+export function getAiApprovalQueueReviewChecks(
+  preview: AiApprovalQueuePreview | null,
+): AiApprovalQueueReviewCheck[] {
+  if (!preview) return [];
+
+  const fieldKeys = new Set(preview.fields.map((field) => field.key));
+  const checks: AiApprovalQueueReviewCheck[] = [
+    {
+      id: "generated-fields",
+      label: "Generated fields match the intended record.",
+    },
+  ];
+
+  if (
+    fieldKeys.has("start_date") ||
+    fieldKeys.has("estimated_completion_date") ||
+    fieldKeys.has("due_date")
+  ) {
+    checks.push({
+      id: "dates",
+      label: "Dates are correct.",
+    });
+  }
+
+  if (fieldKeys.has("contract_company_id") || fieldKeys.has("vendor_name_resolved")) {
+    checks.push({
+      id: "vendor",
+      label: "Vendor and contract details are correct.",
+    });
+  }
+
+  if (fieldKeys.has("line_items")) {
+    checks.push({
+      id: "line-items",
+      label: "Line items and totals are correct.",
+    });
+  }
+
+  if (
+    fieldKeys.has("scope") ||
+    fieldKeys.has("type") ||
+    fieldKeys.has("expecting_revenue") ||
+    fieldKeys.has("line_item_revenue_source")
+  ) {
+    checks.push({
+      id: "scope-revenue",
+      label: "Scope and revenue assumptions are correct.",
+    });
+  }
+
+  return checks;
 }
 
 export function isAiApprovalQueueEventType(

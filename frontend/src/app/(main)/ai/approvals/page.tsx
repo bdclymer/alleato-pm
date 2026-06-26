@@ -6,12 +6,14 @@ import { formatDistanceToNow } from "date-fns";
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button, DetailField, DetailFieldGrid, ErrorState } from "@/components/ds";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   formatAiApprovalQueueEventLabel,
   getAiApprovalQueueMetadata,
   getAiApprovalQueuePreview,
+  getAiApprovalQueueReviewChecks,
   getAiApprovalQueueRelatedHref,
   isAiApprovalQueueNotification,
 } from "@/lib/collaboration/ai-approval-queue";
@@ -40,12 +42,32 @@ function AiApprovalQueueRow({
 }) {
   const metadata = getAiApprovalQueueMetadata(notification.metadata);
   const preview = getAiApprovalQueuePreview(notification.metadata);
+  const reviewChecks = getAiApprovalQueueReviewChecks(preview);
+  const [checkedReviewIds, setCheckedReviewIds] = React.useState<Set<string>>(
+    () => new Set(),
+  );
   const relatedHref = getAiApprovalQueueRelatedHref({
     projectId: notification.projectId,
     entityType: notification.entityType,
     entityId: notification.entityId,
   });
   const stateLabel = notification.readAt ? "Reviewed" : "Needs review";
+  const canMarkReviewed =
+    Boolean(notification.readAt) ||
+    reviewChecks.length === 0 ||
+    reviewChecks.every((check) => checkedReviewIds.has(check.id));
+
+  function toggleReviewCheck(id: string, checked: boolean) {
+    setCheckedReviewIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
 
   return (
     <li className="grid gap-4 py-4 lg:grid-cols-[minmax(0,2fr)_minmax(10rem,1fr)_8rem_7rem_minmax(0,1.4fr)_auto] lg:items-start">
@@ -64,6 +86,30 @@ function AiApprovalQueueRow({
               </DetailField>
             ))}
           </DetailFieldGrid>
+        ) : null}
+        {!notification.readAt && reviewChecks.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {reviewChecks.map((check) => {
+              const inputId = `ai-approval-${notification.id}-${check.id}`;
+              return (
+                <label
+                  key={check.id}
+                  htmlFor={inputId}
+                  className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"
+                >
+                  <Checkbox
+                    id={inputId}
+                    checked={checkedReviewIds.has(check.id)}
+                    onCheckedChange={(checked) =>
+                      toggleReviewCheck(check.id, checked === true)
+                    }
+                    className="mt-0.5"
+                  />
+                  <span>{check.label}</span>
+                </label>
+              );
+            })}
+          </div>
         ) : null}
       </div>
       <div className="min-w-0 text-sm text-foreground/80">
@@ -103,7 +149,10 @@ function AiApprovalQueueRow({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => onMarkReviewed(notification.id)}
+            disabled={!canMarkReviewed}
+            onClick={() => {
+              if (canMarkReviewed) onMarkReviewed(notification.id);
+            }}
           >
             Mark reviewed
           </Button>
