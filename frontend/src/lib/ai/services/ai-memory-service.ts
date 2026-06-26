@@ -21,6 +21,10 @@ import {
   getOpenAIModelId,
 } from "@/lib/ai/provider-config";
 import { resolveTargetIdsForProjects } from "@/lib/ai/insight-cards";
+import {
+  recordAiNotificationDecision,
+  type AiNotificationDecisionLedgerResult,
+} from "@/lib/ai/notification-decision-ledger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,6 +133,38 @@ export interface WriteMemoryParams {
   expiresAt?: Date | null;
 }
 
+export type WriteMemoryResult =
+  | {
+      id: string;
+      action: "created" | "updated";
+      notificationDecision?: AiNotificationDecisionLedgerResult;
+    }
+  | { error: string };
+
+async function recordMemoryNotificationDecision({
+  memoryId,
+  action,
+  params,
+  projectId,
+}: {
+  memoryId: string;
+  action: "created" | "updated";
+  params: WriteMemoryParams;
+  projectId: number | null;
+}): Promise<AiNotificationDecisionLedgerResult> {
+  return recordAiNotificationDecision({
+    recipientUserId: params.userId,
+    eventType: "ai_memory_updated",
+    severity: "low",
+    projectId,
+    entityType: "ai_memories",
+    entityId: memoryId,
+    eventKey: `ai_memory:${memoryId}:${action}`,
+    title: action === "created" ? "AI memory saved" : "AI memory updated",
+    body: params.content,
+  });
+}
+
 /**
  * Write a memory. Before inserting, checks for a near-duplicate (>0.88 similarity
  * of the same type) and updates it instead. Commitment memories automatically
@@ -138,7 +174,7 @@ export interface WriteMemoryParams {
  */
 export async function writeMemory(
   params: WriteMemoryParams,
-): Promise<{ id: string; action: "created" | "updated" } | { error: string }> {
+): Promise<WriteMemoryResult> {
   const supabase = createServiceClient();
 
   try {
@@ -177,7 +213,13 @@ export async function writeMemory(
         user_id: params.userId, type: params.type, project_id: params.projectId ?? null,
         meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
       });
-      return { id: dup.id, action: "updated" };
+      const notificationDecision = await recordMemoryNotificationDecision({
+        memoryId: dup.id,
+        action: "updated",
+        params,
+        projectId: params.projectId ?? null,
+      });
+      return { id: dup.id, action: "updated", notificationDecision };
     }
 
     // --- Fresh insert ---
@@ -248,7 +290,14 @@ export async function writeMemory(
       });
     }
 
-    return { id: memoryId, action: "created" };
+    const notificationDecision = await recordMemoryNotificationDecision({
+      memoryId,
+      action: "created",
+      params,
+      projectId: safeProjectId,
+    });
+
+    return { id: memoryId, action: "created", notificationDecision };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Unknown error" };
   }
