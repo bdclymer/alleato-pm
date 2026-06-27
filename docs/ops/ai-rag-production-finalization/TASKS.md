@@ -1474,3 +1474,31 @@ Active latency hardening slice:
   - `npm run verify:microsoft-assistant-health -- --json` passes with 0 warnings and `lastSuccessfulRunAt=2026-06-27T15:07:07Z`.
 - Evidence:
   - [Task](../tasks/2026-06-27-final-verifier-warning-gaps.md)
+
+### 2026-06-27: AAI-755 Extractor Pipeline A No-Op Writer Removed
+
+- Found the remaining active-source Pipeline A compatibility stub:
+  - `backend/src/services/pipeline/extractor.py` still defined private
+    `_upsert_insight()` as a deprecated no-op writer for the retired legacy
+    insights-table output.
+  - Active meeting extraction had already moved to Pipeline B through
+    `_safe_promote_meeting_signals`, `source_signal_candidates`, and promoted
+    `insight_cards`.
+- Removed the dead path:
+  - deleted the unused `_upsert_insight()` no-op;
+  - corrected stale extractor and orchestrator descriptions that still named
+    the retired legacy insights-table output as Stage 3 output.
+- Replacement owner:
+  - meeting intelligence writes now remain exclusively owned by `_upsert_task`
+    for tasks and `_safe_promote_meeting_signals` for candidate/card promotion.
+- Verification:
+  - static scan found no deleted `_upsert_insight()` no-op in active backend
+    source; remaining hits are proof docs and the active
+    `_upsert_insight_card_from_candidate` helper name;
+  - delegated backend syntax check passed for the touched extractor and
+    orchestrator modules;
+  - delegated focused backend tests passed with `14 passed`;
+  - recent compact AI/RAG verifier bundle passed all 7 commands after
+    `4225e8f18`.
+- Evidence:
+  - [Task](../tasks/2026-06-27-remove-extractor-pipeline-a-noop.md)
