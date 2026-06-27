@@ -45,7 +45,8 @@ from supabase_helpers import (
     update_ingestion_job_state,
 )
 
-TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
+# Minutes may exceed two digits for long meetings (e.g. [125:30]); seconds stay two.
+TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2,}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
 SECTION_PREFIX = "## "
 FIREFLIES_VIEW_URL_RE = re.compile(r"fireflies\.ai\/view\/([A-Za-z0-9_-]{8,})")
 logger = logging.getLogger(__name__)

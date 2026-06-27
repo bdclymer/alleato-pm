@@ -57,6 +57,8 @@ type MeetingSegment = Database["public"]["Tables"]["meeting_segments"]["Row"] & 
 type DocumentMetadata =
   Database["public"]["Tables"]["document_metadata"]["Row"] & {
     duration?: number;
+    transcript_source?: string | null;
+    teams_meeting_id?: string | null;
   };
 
 interface ParsedSections {
@@ -122,6 +124,8 @@ export interface MeetingDetailContentProps {
   allOpportunities: string[];
   meetingTasks?: MeetingTask[];
   transcriptContent: string | null;
+  /** Signed URL for the meeting's video recording (Teams native recordings). */
+  recordingUrl?: string | null;
   /** True when a stored transcript existed but the fetch failed (vs. never processed) */
   transcriptLoadFailed?: boolean;
   backHref: string;
@@ -463,6 +467,7 @@ export function MeetingDetailContent({
   allOpportunities,
   meetingTasks = [],
   transcriptContent,
+  recordingUrl = null,
   transcriptLoadFailed = false,
   backHref,
   backLabel,
@@ -648,6 +653,18 @@ export function MeetingDetailContent({
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Main content */}
         <div className="space-y-8">
+          {/* Recording — Teams meetings carry a native video recording. */}
+          {recordingUrl ? (
+            <section>
+              <video
+                src={recordingUrl}
+                controls
+                preload="metadata"
+                className="w-full rounded-lg border border-border bg-muted"
+              />
+            </section>
+          ) : null}
+
           {/* Meeting Overview — leads with the prose summary; the bulleted
               key points move to their own section below. */}
           {(overviewContent || shorthandBullet) ? (
