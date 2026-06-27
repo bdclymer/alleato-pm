@@ -6,8 +6,48 @@
   color-scheme: dark;
 }
 
-body {
-  background: theme(colors.bg);
-  color: theme(colors.fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@layer base {
+  body {
+    @apply bg-ink-950 text-text font-sans antialiased;
+    /* Subtle atmospheric depth: a faint warm glow top-left, fading to black. */
+    background-image:
+      radial-gradient(900px 500px at 12% -8%, rgba(232, 181, 74, 0.06), transparent 60%),
+      radial-gradient(700px 500px at 100% 0%, rgba(232, 181, 74, 0.03), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(232, 181, 74, 0.28);
+    color: #fff;
+  }
+
+  /* Refined scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #30303a transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #26262d;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #3a3a44;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Hairline grain/texture utility for panels */
+  .surface {
+    @apply rounded-xl border border-line bg-ink-850;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-ink-800 px-2.5 py-0.5 text-xs text-muted;
+  }
 }

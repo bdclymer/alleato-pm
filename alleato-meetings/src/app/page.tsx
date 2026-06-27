@@ -1,66 +1,58 @@
-import Link from "next/link";
 import { supabaseService } from "@/lib/supabase";
+import { MeetingsBrowser, type MeetingCard } from "@/components/meetings-browser";
 
 export const dynamic = "force-dynamic";
-
-interface MeetingRow {
-  id: string;
-  title: string;
-  started_at: string | null;
-  duration_minutes: number | null;
-  participants: string[] | null;
-  recording_storage_path: string | null;
-}
 
 export default async function HomePage() {
   const sb = supabaseService();
   const { data, error } = await sb
     .from("meetings")
-    .select("id, title, started_at, duration_minutes, participants, recording_storage_path")
+    .select(
+      "id, title, started_at, duration_minutes, participants, summary, recording_storage_path, action_items(count)",
+    )
     .order("started_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
   if (error) {
-    return <p className="text-sm text-muted">Could not load meetings: {error.message}</p>;
-  }
-  const meetings = (data ?? []) as MeetingRow[];
-
-  if (meetings.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-panel p-8 text-center">
-        <h1 className="text-base font-medium">No meetings yet</h1>
-        <p className="mt-2 text-sm text-muted">
-          Once Teams transcription is enabled and a sync runs, recorded meetings appear here
-          with AI summary, notes, and action items.
-        </p>
-      </div>
+      <Shell>
+        <div className="surface p-6 text-sm text-bad">Could not load meetings: {error.message}</div>
+      </Shell>
     );
   }
 
+  const meetings: MeetingCard[] = (data ?? []).map((m) => ({
+    id: m.id as string,
+    title: (m.title as string) ?? "Untitled meeting",
+    started_at: (m.started_at as string) ?? null,
+    duration_minutes: (m.duration_minutes as number) ?? null,
+    participants: (m.participants as string[]) ?? [],
+    summary: (m.summary as string) ?? null,
+    has_recording: Boolean(m.recording_storage_path),
+    action_count:
+      Array.isArray(m.action_items) && m.action_items[0]
+        ? Number((m.action_items[0] as { count: number }).count) || 0
+        : 0,
+  }));
+
+  return (
+    <Shell>
+      <MeetingsBrowser meetings={meetings} />
+    </Shell>
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <h1 className="mb-4 text-base font-medium">Meetings</h1>
-      <ul className="divide-y divide-border rounded-lg border border-border bg-panel">
-        {meetings.map((m) => (
-          <li key={m.id}>
-            <Link href={`/meetings/${m.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-white/5">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{m.title}</p>
-                <p className="text-xs text-muted">
-                  {m.started_at ? new Date(m.started_at).toLocaleString() : "Date unknown"}
-                  {m.duration_minutes ? ` · ${m.duration_minutes} min` : ""}
-                  {m.participants?.length ? ` · ${m.participants.length} attendees` : ""}
-                </p>
-              </div>
-              {m.recording_storage_path ? (
-                <span className="ml-3 shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] text-muted">
-                  video
-                </span>
-              ) : null}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <header className="mb-8">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">Dashboard</p>
+        <h1 className="mt-1 font-display text-3xl font-500 tracking-tight">Meetings</h1>
+        <p className="mt-1 text-sm text-muted">
+          Every Teams meeting, transcribed and distilled — summary, action items, decisions.
+        </p>
+      </header>
+      {children}
     </div>
   );
 }
