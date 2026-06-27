@@ -16,12 +16,14 @@ import {
   createCommitmentInputSchema,
   createGeneratedTaskInputSchema,
   createMeetingNoteInputSchema,
+  createOutlookCalendarInviteInputSchema,
   createProjectCompanyInputSchema,
   createProjectContactInputSchema,
   createRFIInputSchema,
   createSubmittalInputSchema,
   createTaskInputSchema,
   deleteGeneratedTaskInputSchema,
+  draftOutlookEmailInputSchema,
   flagProjectRiskInputSchema,
   generateProjectSummaryInputSchema,
   findProjectDocumentsInputSchema,
@@ -41,6 +43,7 @@ import {
   searchExternalDocumentsInputSchema,
   searchMeetingsByTopicInputSchema,
   searchTeamsMessagesInputSchema,
+  sendTeamsMessageInputSchema,
   semanticSearchInputSchema,
   getVendorSpendReportInputSchema,
   logDailyReportInputSchema,
@@ -204,7 +207,7 @@ describe("global AI assistant tool registry", () => {
     ).toMatchObject({
       requiresWritePermission: true,
       requiresDeliveryPermission: true,
-      allowedChannels: expect.arrayContaining(["email", "teams"]),
+      allowedChannels: ["teams"],
     });
   });
 
@@ -449,10 +452,13 @@ describe("global AI assistant tool registry", () => {
         "logDailyReport",
         "generateProjectSummary",
         "createCommitment",
+        "createOutlookCalendarInvite",
+        "draftOutlookEmail",
+        "sendTeamsMessage",
       ],
     });
 
-    expect(definitions).toHaveLength(17);
+    expect(definitions).toHaveLength(20);
     expect(
       definitions.map((definition) => [
         definition.name,
@@ -618,6 +624,47 @@ describe("global AI assistant tool registry", () => {
           expect.objectContaining({ ledgerRequired: true }),
           ["write"],
         ],
+        [
+          "createOutlookCalendarInvite",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write", "delivery"],
+        ],
+        [
+          "draftOutlookEmail",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write", "delivery"],
+        ],
+        [
+          "sendTeamsMessage",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write", "delivery"],
+        ],
+      ]),
+    );
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.requiresDeliveryPermission,
+        definition.metadata.allowedChannels,
+        definition.metadata.deliveryAction,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["createOutlookCalendarInvite", true, ["email"], true],
+        ["draftOutlookEmail", true, ["email"], true],
+        ["sendTeamsMessage", true, ["teams"], true],
       ]),
     );
     expect(
@@ -893,6 +940,49 @@ describe("global AI assistant tool registry", () => {
       type: "subcontract",
       title: "Electrical Rough-In",
       status: "Draft",
+      confirmed: false,
+    });
+    expect(
+      createOutlookCalendarInviteInputSchema.parse({
+        subject: "Coordination Meeting",
+        body: "Review open RFIs.",
+        startDateTime: "2026-06-27T14:00:00",
+        endDateTime: "2026-06-27T14:30:00",
+        attendees: [{ email: "sam@example.com" }],
+      }),
+    ).toEqual({
+      subject: "Coordination Meeting",
+      body: "Review open RFIs.",
+      startDateTime: "2026-06-27T14:00:00",
+      endDateTime: "2026-06-27T14:30:00",
+      timeZone: "Eastern Standard Time",
+      location: "Microsoft Teams",
+      attendees: [{ email: "sam@example.com", type: "required" }],
+      isOnlineMeeting: true,
+      confirmed: false,
+    });
+    expect(
+      draftOutlookEmailInputSchema.parse({
+        subject: "RE: Permit review",
+        body: "I will confirm the review status today.",
+      }),
+    ).toEqual({
+      subject: "RE: Permit review",
+      body: "I will confirm the review status today.",
+      toRecipients: [],
+      ccRecipients: [],
+      bccRecipients: [],
+      importance: "normal",
+      confirmed: false,
+    });
+    expect(
+      sendTeamsMessageInputSchema.parse({
+        recipientName: "Sam Foreman",
+        message: "Can you confirm RFI 12 today?",
+      }),
+    ).toEqual({
+      recipientName: "Sam Foreman",
+      message: "Can you confirm RFI 12 today?",
       confirmed: false,
     });
   });

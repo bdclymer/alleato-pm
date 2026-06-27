@@ -105,6 +105,40 @@ const confirmedWriteDescriptorDefaults = {
   },
 };
 
+const deliveryRoutingPolicy: AssistantToolRoutingPolicy = {
+  useWhen: [
+    "User explicitly asks the assistant to draft, schedule, invite, email, or message someone through Outlook or Teams.",
+    "The tool input includes enough recipient, timing, subject, or message detail to prepare a confirmed delivery preview.",
+  ],
+  doNotUseWhen: [
+    "User is asking for analysis, search, summary, or source retrieval only.",
+    "The user has not confirmed the delivery action or required recipient/channel details are ambiguous.",
+    "The requested channel is not one of the tool's allowed delivery channels.",
+  ],
+  preferredFreshness:
+    "Use live Microsoft Graph or Teams-linked recipient data during execution, and verify channel configuration before writing delivery artifacts.",
+  emptyResultBehavior:
+    "Return the tool's blocked/error result with the missing recipient, mailbox, Teams-link, approval, or idempotency reason rather than claiming delivery occurred.",
+  citationRule:
+    "Delivery tools do not cite source evidence by default; report the created draft/event/message status, channel, recipient, and ledger/audit result when available.",
+  regressionPrompts: [
+    "draft an Outlook reply to Brandon",
+    "schedule a Teams meeting with the project team",
+    "send Sam a Teams message about the RFI",
+  ],
+};
+
+const deliveryDescriptorDefaults = {
+  ...confirmedWriteDescriptorDefaults,
+  capabilities: ["write", "delivery"] as AssistantToolCapability[],
+  requiresDeliveryPermission: true,
+  routingPolicy: deliveryRoutingPolicy,
+  metadata: {
+    ...confirmedWriteDescriptorDefaults.metadata,
+    deliveryAction: true,
+  },
+};
+
 export const getRecentEmailsDescription =
   "Get a list of Outlook emails received within a specific date range. " +
   "Use this when the user asks a time-based question about emails: " +
@@ -1059,6 +1093,95 @@ export const createCommitmentInputSchema = z.object({
     .describe("Optional idempotency key to prevent duplicate writes"),
 });
 
+export const outlookInviteAttendeeSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
+  type: z.enum(["required", "optional"]).default("required"),
+});
+
+export const outlookMailRecipientSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
+});
+
+export const createOutlookCalendarInviteDescription =
+  "Create an Outlook calendar invite through Microsoft Graph. Use when the user asks to schedule a meeting, " +
+  "send a calendar invite, add something to Outlook, or create a Teams meeting invite. Always return a preview " +
+  "first with the adaptive-card calendar widget, then write only after confirmation.";
+
+export const createOutlookCalendarInviteInputSchema = z.object({
+  organizerEmail: z
+    .string()
+    .email()
+    .optional()
+    .describe("Organizer mailbox. If omitted, the configured Outlook calendar user is used."),
+  subject: z.string().describe("Invite subject"),
+  body: z.string().describe("Invite body or agenda"),
+  startDateTime: z
+    .string()
+    .describe("ISO-compatible local start date/time, e.g. 2026-05-13T14:00:00"),
+  endDateTime: z.string().describe("ISO-compatible local end date/time"),
+  timeZone: z.string().default("Eastern Standard Time"),
+  location: z.string().default("Microsoft Teams"),
+  attendees: z.array(outlookInviteAttendeeSchema).min(1),
+  isOnlineMeeting: z.boolean().default(true),
+  projectId: z.number().optional().describe("Project ID if this invite is tied to a project"),
+  confirmed: z
+    .boolean()
+    .default(false)
+    .describe("Set to true only after the user confirms the preview"),
+  idempotencyKey: z.string().optional(),
+});
+
+export const draftOutlookEmailDescription =
+  "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. For reply drafts, ground the response through the Microsoft Executive Assistant specialist or a live Graph message/thread lookup before calling this tool. When drafting from Brandon's mailbox, apply the Brandon communication resources: docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md for voice, docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md for owner/operator judgment, and docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md for reply patterns. Drafts must be short, direct, action-oriented, grounded in the current thread, and must ask for confirmation when cost, scope, schedule, owner, or attachment evidence is missing.";
+
+export const draftOutlookEmailInputSchema = z.object({
+  mailboxUserId: z
+    .string()
+    .optional()
+    .describe("Mailbox user ID/email to create the draft in. If omitted, the configured Outlook mail user is used."),
+  replyToGraphMessageId: z
+    .string()
+    .optional()
+    .describe("Graph message ID when this should be a reply draft instead of a new message draft."),
+  subject: z.string().describe("Draft subject. For replies, use the source email subject or RE: subject."),
+  body: z.string().describe("Draft body written as the email content Brandon should review."),
+  toRecipients: z
+    .array(outlookMailRecipientSchema)
+    .default([])
+    .describe(
+      "Primary recipients for a new draft. Reply drafts may infer recipients from the original Graph message.",
+    ),
+  ccRecipients: z.array(outlookMailRecipientSchema).optional().default([]),
+  bccRecipients: z.array(outlookMailRecipientSchema).optional().default([]),
+  importance: z.enum(["low", "normal", "high"]).optional().default("normal"),
+  projectId: z.number().optional().describe("Project ID if the draft is tied to a project"),
+  confirmed: z
+    .boolean()
+    .default(false)
+    .describe("Set to true only after the user confirms the preview"),
+  idempotencyKey: z.string().optional(),
+});
+
+export const sendTeamsMessageDescription =
+  "Send a direct Teams message to a person via the Archon bot. Use when the user says " +
+  "'send [person] a Teams message', 'message [person] on Teams', 'follow up with [person] about [topic]', " +
+  "'ping [person]', or describes wanting to communicate with a team member via Teams. " +
+  "Look up the person by name first, then preview the message before sending. " +
+  "The recipient must have linked their Alleato account to Teams (messaged the Archon bot before).";
+
+export const sendTeamsMessageInputSchema = z.object({
+  recipientName: z.string().describe("Full name or first name of the person to message"),
+  recipientEmail: z.string().optional().describe("Email address if known — helps with exact lookup"),
+  message: z.string().describe("The message text to send — write it as if you are sending it directly"),
+  confirmed: z
+    .boolean()
+    .default(false)
+    .describe("Set to true only after user confirms the preview"),
+  idempotencyKey: z.string().optional(),
+});
+
 const outlookRoutingPolicy: AssistantToolRoutingPolicy = {
   useWhen: [
     "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
@@ -1577,6 +1700,42 @@ export const assistantActionToolDescriptors: AssistantToolDescriptor[] = [
     inputSchema: createCommitmentInputSchema,
     category: "workflow",
     sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...deliveryDescriptorDefaults,
+    name: "createOutlookCalendarInvite",
+    description: createOutlookCalendarInviteDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createOutlookCalendarInvite.input",
+    outputSchemaName: "createOutlookCalendarInvite.output",
+    inputSchema: createOutlookCalendarInviteInputSchema,
+    category: "delivery",
+    sourceFamilies: ["outlook", "email", "delivery"],
+    allowedChannels: ["email"],
+  },
+  {
+    ...deliveryDescriptorDefaults,
+    name: "draftOutlookEmail",
+    description: draftOutlookEmailDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "draftOutlookEmail.input",
+    outputSchemaName: "draftOutlookEmail.output",
+    inputSchema: draftOutlookEmailInputSchema,
+    category: "delivery",
+    sourceFamilies: ["outlook", "email", "delivery"],
+    allowedChannels: ["email"],
+  },
+  {
+    ...deliveryDescriptorDefaults,
+    name: "sendTeamsMessage",
+    description: sendTeamsMessageDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "sendTeamsMessage.input",
+    outputSchemaName: "sendTeamsMessage.output",
+    inputSchema: sendTeamsMessageInputSchema,
+    category: "delivery",
+    sourceFamilies: ["teams", "delivery"],
+    allowedChannels: ["teams"],
   },
 ];
 
