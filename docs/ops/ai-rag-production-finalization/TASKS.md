@@ -995,6 +995,11 @@ Evidence directory:
   - exclude routine/no-reply noise from `important emails this morning` answers;
   - summarize non-reply Watch/Ignore items in reply triage instead of listing them as equal reply work;
   - add reply draft direction for reply/delegate items without claiming a draft was created.
+- Third backend tightening in progress:
+  - remove Outlook safety-banner text from evidence snippets;
+  - make ownership wording explicit that ownership is not confirmed by inbox presence alone;
+  - enforce same-day filtering for reply-triage prompts;
+  - add an explicit no-critical-email lead for urgent triage when no `Alert now` item exists.
 - Verification:
   - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
   - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;

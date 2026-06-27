@@ -594,6 +594,7 @@ def _message_evidence(message: dict[str, Any]) -> str:
         if segment.strip()
         and "you don't often get email" not in segment.lower()
         and "this sender is outside your organization" not in segment.lower()
+        and "learn why this is important" not in segment.lower()
     ]
     priority_tokens = (
         "can you",
@@ -633,7 +634,7 @@ def _reply_draft_direction(message: dict[str, Any], bucket: str) -> str:
 
 def _action_owner(message: dict[str, Any], bucket: str) -> str:
     if bucket in {"Alert now", "Reply"}:
-        return "Likely Brandon should reply; confirm ownership if this belongs to another team member"
+        return "Confirmed owner not shown; practical next owner is Brandon as mailbox owner unless this thread belongs to another team member"
     if bucket == "Delegate":
         return "Someone on the Alleato team should pick this up"
     if bucket == "Watch":
@@ -820,6 +821,11 @@ def _render_bucketed_triage_answer(
             "No clear emergency was identified in the live inbox read; the items below are the strongest reply candidates, separated from watch/no-reply items."
         )
         lines.append("")
+    elif not buckets["Alert now"]:
+        lines.append(
+            "No true urgent/critical email was identified from the available evidence; the items below are routine replies, watch items, and noise separated by action level."
+        )
+        lines.append("")
 
     for bucket in render_buckets:
         rows = buckets[bucket]
@@ -931,6 +937,7 @@ def _deterministic_inbox_answer(
             messages=messages,
             mailbox_owner=owner,
             include_only_reply_needed=True,
+            same_day_only=True,
         )
     return None
 
