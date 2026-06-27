@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createToolContext, type ToolContext } from "./tool-context";
-import { createProjectRepo } from "@/lib/ai/data/project-repo";
+import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
 import { createFinancialTools, isMissingBudgetViewError, fetchBudgetRowsForBriefing } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
@@ -516,7 +516,9 @@ export function createProjectTools(
             0,
           );
 
-          const openRfis = rfis.filter((row) => !isClosedStatus(row.status));
+          // Use isOpenRfiStatus (from project-repo) — it excludes both "closed"
+          // and "closed-draft", which isClosedStatus() does not cover.
+          const openRfis = rfis.filter((row) => isOpenRfiStatus(row.status));
           const overdueRfis = openRfis.filter((row) => isDateBeforeToday(row.due_date));
           const scheduleSensitiveRfis = openRfis.filter((row) => {
             const value = `${row.schedule_impact ?? ""} ${row.subject ?? ""}`.toLowerCase();
