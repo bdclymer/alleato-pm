@@ -679,6 +679,141 @@ export async function ingestAdminFeedbackLearning(params: {
   });
 }
 
+/**
+ * Per-category prevention guidance for AI submittal-review corrections. Each line
+ * tells the reviewer how to avoid repeating the mistake the human just corrected.
+ */
+const SUBMITTAL_REVIEW_PREVENTION_HINTS: Record<string, string> = {
+  missed_requirement:
+    "Enumerate each spec requirement and confirm explicit coverage in the submittal before concluding it is satisfied; do not assume a requirement is met without locating it.",
+  wrong_document_match:
+    "Confirm the submittal is being compared against the correct drawing and spec section before reporting a match or conflict.",
+  bad_interpretation:
+    "Read the cited spec/drawing text literally; do not infer requirements beyond what the document states.",
+  hallucinated_issue:
+    "Only report a conflict or deficiency that is supported by specific cited text. If you cannot cite the source, do not raise the finding.",
+  too_vague:
+    "State the exact spec section, sheet number, and value involved in each finding instead of a general observation.",
+  needs_expert_review:
+    "Flag low-confidence findings for expert review explicitly rather than asserting a definitive status.",
+};
+
+export interface SubmittalReviewCorrectionInput {
+  reviewType: string;
+  aiFinding: string;
+  aiStatus: string;
+  feedbackCategory: string;
+  specSection?: string | null;
+  requirementType?: string | null;
+  correctedStatus?: string | null;
+  correctedReason?: string | null;
+  sourceOfTruthRef?: string | null;
+  projectId?: number | null;
+  feedbackId?: string | null;
+}
+
+/**
+ * Pure builder: maps a human correction of an AI document-review finding into the
+ * shape of an agent learning. Returns null for positive signals (`correct`,
+ * `useful_low_priority`) that need no prevention prompt. Kept IO-free so it is
+ * unit-testable without OpenAI/Supabase.
+ */
+export function buildSubmittalReviewCorrectionLearning(
+  params: SubmittalReviewCorrectionInput,
+): UpsertAgentLearningInput | null {
+  if (
+    params.feedbackCategory === "correct" ||
+    params.feedbackCategory === "useful_low_priority"
+  ) {
+    return null;
+  }
+
+  const categoryHint =
+    SUBMITTAL_REVIEW_PREVENTION_HINTS[params.feedbackCategory] ?? null;
+  const findingExcerpt = params.aiFinding.slice(0, 280);
+
+  const scopeTags = uniqueStrings([
+    "submittal_review",
+    "document_review",
+    params.reviewType,
+    params.feedbackCategory,
+    ...(params.requirementType ? [params.requirementType] : []),
+    ...(params.specSection ? extractKeywords(params.specSection, 4) : []),
+    ...extractKeywords(findingExcerpt),
+  ]);
+
+  const preventionPrompt = uniqueStrings([
+    categoryHint,
+    params.correctedReason ? `Verified correction: ${params.correctedReason}` : null,
+    params.correctedStatus
+      ? `The correct status here is "${params.correctedStatus}", not "${params.aiStatus}".`
+      : null,
+    params.sourceOfTruthRef ? `Source of truth: ${params.sourceOfTruthRef}.` : null,
+    params.specSection
+      ? `Applies when reviewing spec section ${params.specSection}.`
+      : null,
+  ]).join(" ");
+
+  const titleSection = params.specSection ? ` (${params.specSection})` : "";
+
+  return {
+    title:
+      `Submittal review correction — ${params.feedbackCategory.replace(/_/g, " ")}${titleSection}`.slice(
+        0,
+        160,
+      ),
+    source: "eval_failure",
+    // A human correction with an explicit category is a high-signal eval failure;
+    // activate immediately rather than waiting for a second occurrence.
+    status: "active",
+    problemSignature:
+      `${params.reviewType} ${params.feedbackCategory} ${params.specSection ?? ""} ${params.aiStatus} ${findingExcerpt}`.trim(),
+    symptoms: [
+      `AI finding (${params.aiStatus}): ${findingExcerpt}`,
+      `Correction category: ${params.feedbackCategory}`,
+      params.correctedReason ? `Why it was wrong: ${params.correctedReason}` : null,
+      params.sourceOfTruthRef ? `Source of truth: ${params.sourceOfTruthRef}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    fixPattern: params.correctedReason ?? null,
+    preventionPrompt:
+      preventionPrompt ||
+      categoryHint ||
+      "Re-verify this finding against the cited source before reporting it.",
+    scopeTags,
+    projectId: params.projectId ?? null,
+    confidence: 0.75,
+    evidence: {
+      feedbackId: params.feedbackId ?? null,
+      reviewType: params.reviewType,
+      feedbackCategory: params.feedbackCategory,
+      specSection: params.specSection ?? null,
+      requirementType: params.requirementType ?? null,
+      aiStatus: params.aiStatus,
+      correctedStatus: params.correctedStatus ?? null,
+      sourceOfTruthRef: params.sourceOfTruthRef ?? null,
+    },
+  };
+}
+
+/**
+ * Turns a human correction of an AI document-review finding (logged via the
+ * `logFeedback` tool into `ai_review_feedback`) into a durable agent learning.
+ * Scope-tagged to `submittal_review` so `getRelevantAgentLearnings` injects it
+ * into the assistant prompt the next time a similar review runs — closing the
+ * loop that previously dead-ended at the `ai_review_feedback` table.
+ */
+export async function ingestSubmittalReviewCorrectionLearning(
+  params: SubmittalReviewCorrectionInput,
+) {
+  const learning = buildSubmittalReviewCorrectionLearning(params);
+  if (!learning) {
+    return null;
+  }
+  return upsertAgentLearning(learning);
+}
+
 export function summarizeAgentLearningUsage(learnings: AgentLearning[]): AgentLearningUsageSummary {
   return {
     totalUsed: learnings.length,

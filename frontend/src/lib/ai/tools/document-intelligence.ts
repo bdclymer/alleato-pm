@@ -8,6 +8,7 @@ import {
   withTrace as _withTrace,
 } from "./tool-utils";
 import { createToolContext, type ToolContext } from "./tool-context";
+import { ingestSubmittalReviewCorrectionLearning } from "@/lib/ai/services/agent-learning-service";
 
 type AnyRow = Record<string, unknown>;
 
@@ -1598,9 +1599,40 @@ export function createDocumentIntelligenceTools(
           if (error)
             return { error: `Failed to log feedback: ${error.message}` };
 
+          const feedbackId = (data as AnyRow).id as string;
+
+          // Close the learning loop: turn a correction into a durable agent
+          // learning so future reviews are prompted to avoid the same mistake.
+          // Positive signals are skipped inside the ingest function. Failure here
+          // must not fail the feedback write itself.
+          if (feedbackCategory !== "correct") {
+            try {
+              await ingestSubmittalReviewCorrectionLearning({
+                reviewType,
+                aiFinding,
+                aiStatus,
+                feedbackCategory,
+                specSection,
+                requirementType,
+                correctedStatus,
+                correctedReason,
+                sourceOfTruthRef,
+                projectId: projectId ?? null,
+                feedbackId,
+              });
+            } catch (learningError) {
+              console.warn(
+                "[document-intelligence] failed to ingest submittal-review learning:",
+                learningError instanceof Error
+                  ? learningError.message
+                  : learningError,
+              );
+            }
+          }
+
           return {
             success: true,
-            feedbackId: (data as AnyRow).id,
+            feedbackId,
             message:
               feedbackCategory === "correct"
                 ? "Confirmed — logged as correct. This reinforces the detection pattern."
