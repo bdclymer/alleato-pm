@@ -11,6 +11,9 @@ import {
 } from "../tool-registry";
 import type { ToolSet } from "ai";
 import {
+  createChangeEventInputSchema,
+  createRFIInputSchema,
+  createTaskInputSchema,
   findProjectDocumentsInputSchema,
   getAcumaticaProjectBudgetInputSchema,
   getAcumaticaProjectListInputSchema,
@@ -30,6 +33,7 @@ import {
   searchTeamsMessagesInputSchema,
   semanticSearchInputSchema,
   getVendorSpendReportInputSchema,
+  updateProjectStatusInputSchema,
 } from "../tool-descriptors";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
@@ -411,6 +415,74 @@ describe("global AI assistant tool registry", () => {
     });
   });
 
+  it("uses descriptor-owned setup for core confirmed-write tools", () => {
+    const definitions = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: [
+        "createChangeEvent",
+        "updateProjectStatus",
+        "createRFI",
+        "createTask",
+      ],
+    });
+
+    expect(definitions).toHaveLength(4);
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.descriptorOwned,
+        definition.metadata.inputSchemaOwned,
+        definition.metadata.confirmedWrite,
+        definition.metadata.approvalRequired,
+        definition.metadata.evidencePolicy,
+        definition.metadata.capabilities,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          "createChangeEvent",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "updateProjectStatus",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createRFI",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createTask",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+      ]),
+    );
+    expect(
+      definitions.find((definition) => definition.name === "createTask")
+        ?.description,
+    ).toContain("use createGeneratedTask instead");
+  });
+
   it("keeps source-read input schemas on the descriptor surface", () => {
     expect(getRecentEmailsInputSchema.parse({})).toMatchObject({
       daysBack: 1,
@@ -485,6 +557,51 @@ describe("global AI assistant tool registry", () => {
     expect(getAcumaticaProjectListInputSchema.parse({})).toEqual({});
     expect(getPurchaseOrderSummaryInputSchema.parse({})).toEqual({
       limit: 30,
+    });
+    expect(
+      createChangeEventInputSchema.parse({
+        projectId: 101,
+        title: "Owner scope change",
+      }),
+    ).toMatchObject({
+      projectId: 101,
+      title: "Owner scope change",
+      confirmed: false,
+    });
+    expect(
+      updateProjectStatusInputSchema.parse({
+        projectId: 101,
+        healthStatus: "at_risk",
+      }),
+    ).toEqual({
+      projectId: 101,
+      healthStatus: "at_risk",
+      confirmed: false,
+    });
+    expect(
+      createRFIInputSchema.parse({
+        projectId: 101,
+        subject: "Slab opening",
+        question: "Confirm sleeve location.",
+      }),
+    ).toMatchObject({
+      projectId: 101,
+      subject: "Slab opening",
+      question: "Confirm sleeve location.",
+      costImpact: "tbd",
+      scheduleImpact: "tbd",
+      confirmed: false,
+    });
+    expect(
+      createTaskInputSchema.parse({
+        projectId: 101,
+        name: "Pour slab",
+      }),
+    ).toEqual({
+      projectId: 101,
+      name: "Pour slab",
+      priority: "normal",
+      confirmed: false,
     });
   });
 

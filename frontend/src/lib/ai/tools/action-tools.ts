@@ -40,8 +40,17 @@ import {
 } from "@/lib/microsoft-graph/mail";
 import {
   buildChangeRequestReviewCard,
-  renderChangeRequestToolDescription,
 } from "@/lib/ai/change-request-field-guide";
+import {
+  createChangeEventDescription,
+  createChangeEventInputSchema,
+  createRFIDescription,
+  createRFIInputSchema,
+  createTaskDescription,
+  createTaskInputSchema,
+  updateProjectStatusDescription,
+  updateProjectStatusInputSchema,
+} from "@/lib/ai/tool-descriptors";
 import {
   buildChangeRequestPreviewFields,
   normalizeChangeRequestDraft,
@@ -925,39 +934,8 @@ export function createActionTools(
     }),
 
     createChangeEvent: tool({
-      description: renderChangeRequestToolDescription(),
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID — required"),
-        title: z.string().min(1).describe("Short descriptive title"),
-        description: z.string().optional().describe("Detailed description"),
-        scope: z
-          .string()
-          .optional()
-          .describe("Native scope such as TBD, In Scope, Out of Scope, or legacy owner_change/design_error aliases."),
-        type: z
-          .string()
-          .optional()
-          .describe("Native type such as Owner Change, Design Change, Allowance, Scope Gap, or supported legacy aliases."),
-        status: z
-          .string()
-          .optional()
-          .describe("Native status such as Open, Pending Approval, Approved, Rejected, Closed, or Converted."),
-        reason: z.string().optional().describe("Optional native reason."),
-        origin: z.string().optional().describe("Optional native origin."),
-        expectingRevenue: z
-          .boolean()
-          .optional()
-          .describe("Whether revenue is expected. Defaults to true."),
-        lineItemRevenueSource: z
-          .string()
-          .optional()
-          .describe("Optional line item revenue calculation mode."),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createChangeEventDescription,
+      inputSchema: createChangeEventInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createChangeEvent", options, async (input) => {
         const normalized = normalizeChangeRequestDraft(input);
@@ -1092,27 +1070,8 @@ export function createActionTools(
     }),
 
     updateProjectStatus: tool({
-      description:
-        "Update a project's health status or phase. Use when the user says " +
-        "'mark [project] as at-risk', 'update status to [value]', or " +
-        "'[project] is now in [phase]'. Always confirm before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        healthStatus: z
-          .enum(["on_track", "at_risk", "critical", "complete", "on_hold"])
-          .optional()
-          .describe("New health status"),
-        phase: z
-          .enum(["Estimating", "Planning", "Current", "Complete", "On Hold"])
-          .optional()
-          .describe("New project phase"),
-        reason: z.string().optional().describe("Brief reason for the status change"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: updateProjectStatusDescription,
+      inputSchema: updateProjectStatusInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("updateProjectStatus", options, async (input) => {
         const { projectId, healthStatus, phase, reason, confirmed } = input;
@@ -1194,24 +1153,8 @@ export function createActionTools(
     }),
 
     createRFI: tool({
-      description:
-        "Create a new Request for Information (RFI). Use when the user says " +
-        "'create an RFI', 'log an RFI about [topic]', or describes a field " +
-        "question that needs a formal answer from the design team. Preview before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        subject: z.string().describe("RFI subject / title"),
-        question: z.string().describe("The actual question being asked"),
-        ballInCourt: z.string().optional().describe("Who is responsible for answering"),
-        dueDate: z.string().optional().describe("ISO date string for response due date"),
-        costImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
-        scheduleImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createRFIDescription,
+      inputSchema: createRFIInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createRFI", options, async (input) => {
         const { projectId, subject, question, ballInCourt, dueDate, costImpact, scheduleImpact, confirmed } = input;
@@ -1291,23 +1234,8 @@ export function createActionTools(
     }),
 
     createTask: tool({
-      description:
-        "Create a schedule/Gantt task backed by schedule_tasks. Use only when the user is creating " +
-        "a project schedule activity, milestone, or Gantt item. For action items, follow-ups, reminders, " +
-        "or Tasks page records, use createGeneratedTask instead. Always show a preview and ask for confirmation before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        name: z.string().describe("Task name / description"),
-        assignee: z.string().optional().describe("Person responsible"),
-        dueDate: z.string().optional().describe("ISO due date"),
-        notes: z.string().optional().describe("Additional context"),
-        priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createTaskDescription,
+      inputSchema: createTaskInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createTask", options, async (input) => {
         const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;

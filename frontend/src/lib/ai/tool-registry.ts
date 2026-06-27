@@ -5,7 +5,7 @@ import type {
   ToolPolicy,
 } from "@/lib/ai-ops/contracts";
 import {
-  assistantSourceReadToolDescriptorByName,
+  assistantToolDescriptorByName,
   registryEntryFromAssistantToolDescriptor,
 } from "@/lib/ai/tool-descriptors";
 
@@ -694,7 +694,7 @@ const projectToolNames = [
 
 const projectAssistantTools: AssistantToolRegistryEntry[] =
   projectToolNames.map((name) => {
-    const descriptor = assistantSourceReadToolDescriptorByName.get(name);
+    const descriptor = assistantToolDescriptorByName.get(name);
     if (descriptor) return registryEntryFromAssistantToolDescriptor(descriptor);
 
     return assistantChatTool({
@@ -803,6 +803,9 @@ const nonProjectScopedActionTools = new Set([
 
 const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(
   (name) => {
+    const descriptor = assistantToolDescriptorByName.get(name);
+    if (descriptor) return registryEntryFromAssistantToolDescriptor(descriptor);
+
     const isDelivery = deliveryActionTools.has(name);
     return assistantChatTool({
       name,

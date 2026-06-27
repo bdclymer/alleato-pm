@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { renderChangeRequestToolDescription } from "@/lib/ai/change-request-field-guide";
 import type { ToolPolicy } from "@/lib/ai-ops/contracts";
 import type {
   AssistantToolCategory,
@@ -20,6 +21,7 @@ type AssistantToolDescriptor = {
   workflows: string[];
   actorModes: ToolPolicy["actorMode"][];
   sourceFamilies?: AssistantToolRegistryEntry["sourceFamilies"];
+  allowedChannels?: AssistantToolRegistryEntry["allowedChannels"];
   requiresProjectScope: boolean;
   requiresWritePermission: boolean;
   requiresDeliveryPermission: boolean;
@@ -34,6 +36,10 @@ const AI_ASSISTANT_CHAT_WORKFLOW_ID = "ai_assistant_chat";
 const PROJECT_TOOL_FACTORY = {
   modulePath: "frontend/src/lib/ai/tools/project-tools.ts",
   exportName: "createProjectTools",
+} as const;
+const ACTION_TOOL_FACTORY = {
+  modulePath: "frontend/src/lib/ai/tools/action-tools.ts",
+  exportName: "createActionTools",
 } as const;
 
 const sourceReadDescriptorDefaults = {
@@ -51,6 +57,52 @@ const sourceReadDescriptorDefaults = {
   },
   factory: PROJECT_TOOL_FACTORY,
   failureShape: "result_error" as const,
+};
+
+const confirmedWriteRoutingPolicy: AssistantToolRoutingPolicy = {
+  useWhen: [
+    "User explicitly asks the assistant to create, update, or record a project workflow item.",
+    "The tool input includes enough project-scoped detail to prepare a confirmed write request.",
+  ],
+  doNotUseWhen: [
+    "User is asking for analysis, search, summary, or source retrieval only.",
+    "The user has not confirmed the write or required write fields are still ambiguous.",
+    "A generated-preview tool is more appropriate than writing a persistent workflow record.",
+  ],
+  preferredFreshness:
+    "Use the current user request and any provided project context; re-check access during execution before persisting.",
+  emptyResultBehavior:
+    "Return the tool's blocked/error result with the missing field, access, approval, or idempotency reason rather than claiming a write happened.",
+  citationRule:
+    "Confirmed writes do not cite source evidence by default; report the created or updated record id, status, and ledger/audit result when available.",
+  regressionPrompts: [
+    "create an RFI for this project",
+    "update the project status to at risk",
+    "create a change event for this scope issue",
+  ],
+};
+
+const confirmedWriteDescriptorDefaults = {
+  owner: "ai_assistant",
+  workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+  actorModes: ["user_delegated"] as ToolPolicy["actorMode"][],
+  capabilities: ["write"] as AssistantToolCapability[],
+  requiresProjectScope: false,
+  requiresWritePermission: true,
+  requiresDeliveryPermission: false,
+  evidencePolicy: {
+    sourceBearing: false,
+    requiresSourceRefs: false,
+    ledgerRequired: true,
+  },
+  routingPolicy: confirmedWriteRoutingPolicy,
+  factory: ACTION_TOOL_FACTORY,
+  failureShape: "result_error" as const,
+  metadata: {
+    confirmedWrite: true,
+    approvalRequired: true,
+    idempotencySupported: true,
+  },
 };
 
 export const getRecentEmailsDescription =
@@ -573,6 +625,109 @@ export const getPurchaseOrderSummaryInputSchema = z.object({
   limit: z.number().optional().default(30).describe("Max POs to return (default 30)"),
 });
 
+export const createChangeEventDescription = renderChangeRequestToolDescription();
+
+export const createChangeEventInputSchema = z.object({
+  projectId: z.number().describe("Project ID — required"),
+  title: z.string().min(1).describe("Short descriptive title"),
+  description: z.string().optional().describe("Detailed description"),
+  scope: z
+    .string()
+    .optional()
+    .describe(
+      "Native scope such as TBD, In Scope, Out of Scope, or legacy owner_change/design_error aliases.",
+    ),
+  type: z
+    .string()
+    .optional()
+    .describe(
+      "Native type such as Owner Change, Design Change, Allowance, Scope Gap, or supported legacy aliases.",
+    ),
+  status: z
+    .string()
+    .optional()
+    .describe(
+      "Native status such as Open, Pending Approval, Approved, Rejected, Closed, or Converted.",
+    ),
+  reason: z.string().optional().describe("Optional native reason."),
+  origin: z.string().optional().describe("Optional native origin."),
+  expectingRevenue: z
+    .boolean()
+    .optional()
+    .describe("Whether revenue is expected. Defaults to true."),
+  lineItemRevenueSource: z
+    .string()
+    .optional()
+    .describe("Optional line item revenue calculation mode."),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z
+    .string()
+    .optional()
+    .describe("Optional idempotency key to prevent duplicate writes"),
+});
+
+export const updateProjectStatusDescription =
+  "Update a project's health status or phase. Use when the user says " +
+  "'mark [project] as at-risk', 'update status to [value]', or " +
+  "'[project] is now in [phase]'. Always confirm before writing.";
+
+export const updateProjectStatusInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  healthStatus: z
+    .enum(["on_track", "at_risk", "critical", "complete", "on_hold"])
+    .optional()
+    .describe("New health status"),
+  phase: z
+    .enum(["Estimating", "Planning", "Current", "Complete", "On Hold"])
+    .optional()
+    .describe("New project phase"),
+  reason: z.string().optional().describe("Brief reason for the status change"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z
+    .string()
+    .optional()
+    .describe("Optional idempotency key to prevent duplicate writes"),
+});
+
+export const createRFIDescription =
+  "Create a new Request for Information (RFI). Use when the user says " +
+  "'create an RFI', 'log an RFI about [topic]', or describes a field " +
+  "question that needs a formal answer from the design team. Preview before writing.";
+
+export const createRFIInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  subject: z.string().describe("RFI subject / title"),
+  question: z.string().describe("The actual question being asked"),
+  ballInCourt: z.string().optional().describe("Who is responsible for answering"),
+  dueDate: z.string().optional().describe("ISO date string for response due date"),
+  costImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
+  scheduleImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z
+    .string()
+    .optional()
+    .describe("Optional idempotency key to prevent duplicate writes"),
+});
+
+export const createTaskDescription =
+  "Create a schedule/Gantt task backed by schedule_tasks. Use only when the user is creating " +
+  "a project schedule activity, milestone, or Gantt item. For action items, follow-ups, reminders, " +
+  "or Tasks page records, use createGeneratedTask instead. Always show a preview and ask for confirmation before writing.";
+
+export const createTaskInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  name: z.string().describe("Task name / description"),
+  assignee: z.string().optional().describe("Person responsible"),
+  dueDate: z.string().optional().describe("ISO due date"),
+  notes: z.string().optional().describe("Additional context"),
+  priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z
+    .string()
+    .optional()
+    .describe("Optional idempotency key to prevent duplicate writes"),
+});
+
 const outlookRoutingPolicy: AssistantToolRoutingPolicy = {
   useWhen: [
     "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
@@ -904,12 +1059,62 @@ export const assistantSourceReadToolDescriptors: AssistantToolDescriptor[] = [
   },
 ];
 
-export const assistantSourceReadToolDescriptorByName = new Map(
-  assistantSourceReadToolDescriptors.map((descriptor) => [
+export const assistantActionToolDescriptors: AssistantToolDescriptor[] = [
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "createChangeEvent",
+    description: createChangeEventDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createChangeEvent.input",
+    outputSchemaName: "createChangeEvent.output",
+    inputSchema: createChangeEventInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "updateProjectStatus",
+    description: updateProjectStatusDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "updateProjectStatus.input",
+    outputSchemaName: "updateProjectStatus.output",
+    inputSchema: updateProjectStatusInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "createRFI",
+    description: createRFIDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createRFI.input",
+    outputSchemaName: "createRFI.output",
+    inputSchema: createRFIInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "createTask",
+    description: createTaskDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createTask.input",
+    outputSchemaName: "createTask.output",
+    inputSchema: createTaskInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+];
+
+export const assistantToolDescriptorByName = new Map(
+  [...assistantSourceReadToolDescriptors, ...assistantActionToolDescriptors].map((descriptor) => [
     descriptor.name,
     descriptor,
   ]),
 );
+
+export const assistantSourceReadToolDescriptorByName =
+  assistantToolDescriptorByName;
 
 const READONLY_MCP_TOOL_PATTERNS = [
   /^get/i,
@@ -1051,6 +1256,7 @@ export function registryEntryFromAssistantToolDescriptor(
     workflows: descriptor.workflows,
     actorModes: descriptor.actorModes,
     sourceFamilies: descriptor.sourceFamilies,
+    allowedChannels: descriptor.allowedChannels,
     requiresProjectScope: descriptor.requiresProjectScope,
     requiresWritePermission: descriptor.requiresWritePermission,
     requiresDeliveryPermission: descriptor.requiresDeliveryPermission,
