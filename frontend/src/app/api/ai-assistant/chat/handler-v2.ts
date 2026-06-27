@@ -3081,7 +3081,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             writeTextResponse(
               writer,
               "strategist-microsoft-executive-assistant",
-              inboxWidget!.summary,
+              content,
             );
           } else {
             writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
@@ -3091,7 +3091,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "assistant",
-            content: inboxWidget ? inboxWidget.summary : content,
+            content,
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",

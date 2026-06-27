@@ -959,6 +959,35 @@ Evidence directory:
 - Evidence:
   - [AAI-718 evidence](../evidence/2026-06-25-ai-rag-production-finalization/outlook-stale-subscription-prevention-aai-718.md)
 
+### 2026-06-26: Outlook Assistant Runtime Gate Found And Render Restart Triggered
+
+- Confirmed Outlook sync/cache health was not the remaining assistant blocker:
+  - `npm run verify:microsoft-assistant-health -- --json` passed before the runtime investigation.
+  - Production inbox eval still failed 0/5 because the frontend bridge received the fallback answer: "I couldn't reach the Microsoft inbox assistant in time..."
+- Root cause proved by direct backend probe:
+  - `POST https://alleato-backend-rbnj.onrender.com/api/intelligence/microsoft-executive-assistant`
+  - response: `503 Service Unavailable`
+  - detail: `Deep Agents Microsoft Executive Assistant is disabled. Set DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED=true to run the specialist.`
+- Patched live Render service `alleato-backend` through individual env-var updates, not the unsafe full env replacement endpoint:
+  - `DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED`
+  - `DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL`
+  - `MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX`
+  - `MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT`
+  - `MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT`
+- Read-back proved all required env keys are present, but the live instance still returned the disabled-gate 503 until restart.
+- Triggered Render deploy/restart for `alleato-backend`:
+  - deploy id: `dep-d8vko5ok1i2s73ercb70`
+  - commit: `eaa5067bd942a0ba450f80c4ab1b8f0a3c225f56`
+- Verification delegated:
+  - watch Render deploy to live/failed;
+  - rerun direct backend probe;
+  - rerun `npm run verify:microsoft-assistant-health -- --json`;
+  - rerun `npm run rag:verify:inbox-evals:prod`.
+- Remaining:
+  - if the backend probe advances from 503 to 502, fix the Deep Agents provider/runtime path;
+  - if the probe returns 200 but eval fails, fix the assistant bridge/eval-answer contract;
+  - do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
+
 ### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
 
 - Published to `origin/main`:
