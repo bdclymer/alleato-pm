@@ -74,8 +74,9 @@ These are not referenced by package scripts, provider schedules, or live routes 
   - Referenced by `backend/src/services/pipeline/contextualize.py`.
   - Still tied to the contextual retrieval pilot; do not delete until contextual retrieval is either finalized or explicitly retired.
 - `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py`
-  - Referenced by architecture and handoff docs as the RAG-to-app-catalog bridge for Outlook promotion repair.
-  - Keep until a replacement bridge/repair command is documented.
+  - Retired by AAI-732 after the replacement owner was proven:
+    `backfill_outlook_intake_rag_documents()` plus
+    `SupabaseRagStore.upsert_document_metadata()`.
 
 ## Deletion Decision
 

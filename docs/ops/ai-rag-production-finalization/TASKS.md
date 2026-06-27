@@ -47,6 +47,10 @@ Completed Outlook legacy mirroring removal slice:
 
 - [2026-06-26-remove-outlook-legacy-mirroring-gates.md](../tasks/2026-06-26-remove-outlook-legacy-mirroring-gates.md)
 
+Completed Outlook RAG-to-app bridge retirement slice:
+
+- [2026-06-27-retire-outlook-rag-app-bridge.md](../tasks/2026-06-27-retire-outlook-rag-app-bridge.md)
+
 Completed legacy Fireflies file-ingest removal slice:
 
 - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
@@ -158,6 +162,7 @@ Evidence directory:
 - [x] Remove AAI-703-proven obsolete manual Graph/email eval implementations.
 - [x] Repair AAI-705 database inventory drift so active AI/RAG/workflow tables are documented instead of false orphan candidates.
 - [x] Remove Outlook legacy mirroring gates after raw intake and canonical RAG ownership are proven.
+- [x] Retire the Outlook RAG-to-app incident bridge after canonical Outlook intake repair ownership is proven.
 - [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
 - [ ] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
@@ -921,6 +926,22 @@ Evidence directory:
 - Evidence:
   - [Task](../tasks/2026-06-26-remove-outlook-legacy-mirroring-gates.md)
   - [Proof](../evidence/2026-06-25-ai-rag-production-finalization/outlook-legacy-mirroring-removal-aai-709.md)
+
+### 2026-06-27: AAI-732 Outlook RAG-To-App Incident Bridge Retired
+
+- Deleted the obsolete standalone incident bridge `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py`.
+- Replacement owner is now documented as:
+  - live Outlook sync plus `SupabaseRagStore.upsert_document_metadata()` for app+RAG document writes;
+  - `backfill_outlook_intake_rag_documents()` for bounded Outlook intake repair;
+  - `outlook_promotion_freshness.py` for fail-loud intake/document promotion drift monitoring.
+- Updated architecture/rebuild docs and AAI-703/AAI-682 cleanup inventories so the old bridge is no longer advertised as an active repair path.
+- `npm run db:inventory` initially failed on unrelated schema inventory entries for the training-docs support pair; added dormant stubs to `tables.yaml`, reran inventory successfully, and regenerated the DB inventory artifacts.
+- Verification:
+  - Python compile passed for Outlook service, shared RAG store, and Outlook promotion health modules.
+  - Generated DB inventory has zero references to the deleted bridge.
+- Evidence:
+  - [Task](../tasks/2026-06-27-retire-outlook-rag-app-bridge.md)
+  - [Proof](../evidence/2026-06-25-ai-rag-production-finalization/outlook-rag-app-bridge-retirement-aai-732.md)
 
 ### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
 

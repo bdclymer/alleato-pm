@@ -452,7 +452,7 @@ def test_fetch_file_attachment_detail_escapes_graph_path_ids():
     call = graph.calls[0]
     assert call["path"] == (
         "/users/awehner@alleatogroup.com/messages/message%2F1%3D/"
-        "attachments/attachment%2F1%3D/microsoft.graph.fileAttachment"
+        "attachments/attachment%2F1%3D"
     )
     assert call["params"]["$select"] == "id,name,contentType,size,isInline,contentBytes"
 

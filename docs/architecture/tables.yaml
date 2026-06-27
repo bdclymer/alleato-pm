@@ -3313,6 +3313,24 @@ tables:
     purpose: "Dormant knowledge base page sections. No code references."
     relatedTables: []
 
+  - name: training_docs
+    db: MAIN
+    domain: support
+    owner: unknown
+    status: dormant
+    purpose: "Training document records present in MAIN. No code references found during AAI-732 DB inventory drift repair."
+    relatedTables:
+      - training_doc_assets
+
+  - name: training_doc_assets
+    db: MAIN
+    domain: support
+    owner: unknown
+    status: dormant
+    purpose: "Assets attached to training_docs. No code references found during AAI-732 DB inventory drift repair."
+    relatedTables:
+      - training_docs
+
 # ─────────────────────────────────────────────────────────
   # DOMAIN: TEST / ADMIN / DEV INFRASTRUCTURE
   # ─────────────────────────────────────────────────────────

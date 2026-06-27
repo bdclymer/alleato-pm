@@ -57,10 +57,11 @@ migrating readers:
 | `onedrive_project_assignment_backfill` | **WIRED** | imported by `admin_endpoints.py` |
 | `project_document_backfill` (module) | **TESTED** utility | `test_graph_project_document_backfill.py` |
 
-**Genuinely orphaned (deleted 2026-06-24):** 4 one-off scripts with zero
-references — `backfill_outlook_rag_metadata_to_app_documents.py`,
-`promote_outlook_attachments.py`, `backfill_fireflies_meeting_embeddings.py`,
-`microsoft_graph/cli_extract_attachment_text.py`.
+**Genuinely orphaned/retired one-off scripts:** `promote_outlook_attachments.py`,
+`backfill_fireflies_meeting_embeddings.py`,
+`microsoft_graph/cli_extract_attachment_text.py`, and the former incident bridge
+`backfill_outlook_rag_metadata_to_app_documents.py` (retired by AAI-732 after
+canonical Outlook intake repair replaced it).
 
 ## Phased execution — LIVE STATUS (replace-then-remove, never delete-first)
 
@@ -69,9 +70,9 @@ references — `backfill_outlook_rag_metadata_to_app_documents.py`,
   0 block triggers remain; deleted 4 orphan scripts. Committed + on `origin/main`.
 - [x] **Phase 1 — backfill the gap** *(done 2026-06-24)*. Verified the real gap was
   **45** project-assigned docs — not the feared ~1,657 (those were duplicate retries
-  or already-embedded). Bridged via `backfill_outlook_rag_metadata_to_app_documents.py`
-  (`--days 8 --apply true`): `created: 45`; re-run shows `missing_app_rows: 0`.
-  Unassigned stragglers intentionally left per the tool's own policy.
+  or already-embedded). The one-time incident bridge created 45 rows and was later
+  retired by AAI-732. Current repairs use `backfill_outlook_intake_rag_documents()`
+  and the live Outlook sync path through `SupabaseRagStore.upsert_document_metadata()`.
 - [x] **Phase 5 — guardrail** *(done + DEPLOYED LIVE 2026-06-24, commit `ad54606aa`)*.
   `backend/src/services/health/outlook_promotion_freshness.py` detects "intake fresh
   but document store stale"; wired into `pipeline_alert_notifier.py` (run_pipeline_alert_check)

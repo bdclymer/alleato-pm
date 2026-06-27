@@ -94,7 +94,7 @@ filled in. If any item cannot be completed, change `Status` to
 - The broad `docs/` tree is ignored by Git; task/evidence files must be force-added when publishing.
 - `npm run db:inventory` is blocked by unrelated `tables.yaml` schema drift, so the generated inventory could not be fully regenerated in this slice.
 - `backend/src/scripts/backfill_contextual_embeddings.py` remains `migrate-first` until contextual retrieval is finalized or explicitly retired.
-- `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py` remains a documented manual repair bridge until a replacement workflow exists.
+- `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py` was retired in AAI-732 after `backfill_outlook_intake_rag_documents()` and `SupabaseRagStore.upsert_document_metadata()` were proven as the replacement repair owner.
 
 ## Final Status
 

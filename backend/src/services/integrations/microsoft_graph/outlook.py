@@ -513,7 +513,7 @@ def _fetch_file_attachment_detail(graph, user_id: str, msg_id: str, attachment_i
     encoded_msg_id = quote(msg_id, safe="")
     encoded_attachment_id = quote(attachment_id, safe="")
     return graph.get(
-        f"/users/{encoded_user_id}/messages/{encoded_msg_id}/attachments/{encoded_attachment_id}/microsoft.graph.fileAttachment",
+        f"/users/{encoded_user_id}/messages/{encoded_msg_id}/attachments/{encoded_attachment_id}",
         params={"$select": "id,name,contentType,size,isInline,contentBytes"},
     )
 
