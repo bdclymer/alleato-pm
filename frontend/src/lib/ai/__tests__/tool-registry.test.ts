@@ -11,12 +11,16 @@ import {
 } from "../tool-registry";
 import type { ToolSet } from "ai";
 import {
+  findProjectDocumentsInputSchema,
   getMeetingDetailsInputSchema,
   getMeetingsByDateInputSchema,
   getRecentEmailsInputSchema,
+  searchDocumentsInputSchema,
   searchEmailsInputSchema,
+  searchExternalDocumentsInputSchema,
   searchMeetingsByTopicInputSchema,
   searchTeamsMessagesInputSchema,
+  semanticSearchInputSchema,
 } from "../tool-descriptors";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
@@ -309,6 +313,46 @@ describe("global AI assistant tool registry", () => {
     });
   });
 
+  it("uses descriptor-owned setup for broad document source-read tools", () => {
+    const definitions = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: [
+        "semanticSearch",
+        "searchExternalDocuments",
+        "findProjectDocuments",
+        "searchDocuments",
+      ],
+    });
+
+    expect(definitions).toHaveLength(4);
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.descriptorOwned,
+        definition.metadata.inputSchemaOwned,
+        definition.metadata.sourceFamilies,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["semanticSearch", true, true, ["document", "rag"]],
+        ["searchExternalDocuments", true, true, ["document", "rag"]],
+        ["findProjectDocuments", true, true, ["document", "rag"]],
+        ["searchDocuments", true, true, ["document", "rag"]],
+      ]),
+    );
+    expect(
+      definitions.find((definition) => definition.name === "semanticSearch")
+        ?.metadata.routingPolicy,
+    ).toMatchObject({
+      emptyResultBehavior: expect.stringContaining(
+        "identify the queried source scope",
+      ),
+      regressionPrompts: expect.arrayContaining([
+        "search documents for the insurance requirement",
+      ]),
+    });
+  });
+
   it("keeps source-read input schemas on the descriptor surface", () => {
     expect(getRecentEmailsInputSchema.parse({})).toMatchObject({
       daysBack: 1,
@@ -336,6 +380,28 @@ describe("global AI assistant tool registry", () => {
     });
     expect(getMeetingsByDateInputSchema.parse({})).toEqual({
       maxResults: 25,
+    });
+    expect(semanticSearchInputSchema.parse({ query: "insurance" })).toEqual({
+      query: "insurance",
+      matchCount: 10,
+      threshold: 0.3,
+      skipRerank: false,
+    });
+    expect(
+      searchExternalDocumentsInputSchema.parse({
+        query: "liquidated damages",
+      }),
+    ).toEqual({
+      query: "liquidated damages",
+      matchCount: 8,
+    });
+    expect(findProjectDocumentsInputSchema.parse({})).toEqual({
+      category: "any",
+      limit: 15,
+    });
+    expect(searchDocumentsInputSchema.parse({ query: "fire ratings" })).toEqual({
+      query: "fire ratings",
+      maxResults: 10,
     });
   });
 

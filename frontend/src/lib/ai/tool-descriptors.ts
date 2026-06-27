@@ -223,6 +223,213 @@ export const getMeetingsByDateInputSchema = z.object({
   maxResults: z.number().optional().default(25).describe("Max meetings to return"),
 });
 
+export const semanticSearchDescription =
+  "Search across ALL project knowledge using semantic similarity: " +
+  "meeting transcripts (full chunked transcripts, segment summaries, meeting summaries), " +
+  "emails, Teams messages, OneDrive documents, insights (decisions/risks/opportunities), " +
+  "company knowledge base entries (lessons learned, pricing intel, vendor intel), " +
+  "and other indexed content. " +
+  "Uses unified document_chunks table (24K+ chunks) + insights + knowledge base. " +
+  "Works CROSS-PROJECT by default — no project filter needed. " +
+  "Optionally filter by project name or ID, or by source type. Use when " +
+  "the user asks a broad question that could span multiple data types, " +
+  "or when keyword search isn't finding results.";
+
+export const semanticSearchInputSchema = z.object({
+  query: z.string().describe("Natural language search query"),
+  projectId: z
+    .number()
+    .optional()
+    .describe(
+      "Optional project ID filter. When provided, non-matching document chunks are excluded.",
+    ),
+  projectName: z
+    .string()
+    .optional()
+    .describe(
+      "Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')",
+    ),
+  matchCount: z.number().optional().default(10).describe("Number of results to return"),
+  threshold: z
+    .number()
+    .optional()
+    .default(0.3)
+    .describe("Minimum similarity threshold (0-1)"),
+  skipRerank: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Skip the LLM reranker when the caller needs fast deterministic retrieval.",
+    ),
+});
+
+export const searchExternalDocumentsDescription =
+  "Search OneDrive files and uploaded project documents (PDFs, Word docs, spreadsheets, etc.). " +
+  "Use this when the user asks about specific documents, reports, specs, or files " +
+  "(e.g. 'find the geotechnical report', 'what does the contract say about liquidated damages?', " +
+  "'search the RFP document for insurance requirements'). " +
+  "Distinct from meeting transcripts — this searches files and documents. " +
+  "Always cite results as 'document: [title] ([date if available])'.";
+
+export const searchExternalDocumentsInputSchema = z.object({
+  query: z
+    .string()
+    .describe(
+      "What to search for in documents — e.g. 'liquidated damages clause' or 'geotechnical boring results'",
+    ),
+  matchCount: z
+    .number()
+    .optional()
+    .default(8)
+    .describe("Number of document chunks to return"),
+});
+
+export const findProjectDocumentsDescription =
+  "**USE THIS to FIND specific documents/files for a project** — " +
+  "permits, contracts, drawings, specs, certificates, daily reports, " +
+  "RFIs, submittals, change orders, financial docs. " +
+  "This is a STRUCTURED lookup against document_metadata by project " +
+  "and document category/type/title keyword. NOT a content search — " +
+  "use searchDocuments for content-inside-the-document queries " +
+  "(e.g. 'what does the spec say about fire ratings'). " +
+  "Returns: file_name, title, type, category, date, OneDrive link, " +
+  "summary, and a content preview. " +
+  "Examples: 'find the permit for Westfield Collective' " +
+  "→ category='permit' or titleKeyword='permit'; " +
+  "'show me drawings for Goodwill' → category='drawing' or titleKeyword='drawing'; " +
+  "'pull the latest contract' → category='contract' ordered by date desc.";
+
+export const findProjectDocumentsInputSchema = z.object({
+  projectId: z.number().optional().describe("Project ID — use this when known"),
+  projectName: z
+    .string()
+    .optional()
+    .describe("Project name (partial, case-insensitive match)"),
+  category: z
+    .enum([
+      "contract",
+      "permit",
+      "drawing",
+      "specification",
+      "submittal",
+      "rfi",
+      "daily_report",
+      "change_order",
+      "certificate",
+      "insurance",
+      "financial_document",
+      "meeting",
+      "email",
+      "any",
+    ])
+    .optional()
+    .default("any")
+    .describe(
+      "Filter by document category (legacy). 'any' returns all categories. Prefer documentType when available.",
+    ),
+  documentType: z
+    .enum([
+      "psr",
+      "schedule",
+      "submittal",
+      "pay_app",
+      "proposal",
+      "estimate",
+      "bid",
+      "drawing",
+      "specification",
+      "permit",
+      "rfi",
+      "change_order",
+      "subcontract",
+      "contract",
+      "safety",
+      "closeout",
+      "design",
+      "photo",
+      "executed_contract",
+      "contract_proposal",
+      "change_order_executed",
+      "insurance_certificate",
+      "lien_waiver_progress",
+      "lien_waiver_final",
+      "w9",
+      "closeout_manual",
+      "closeout_warranty",
+      "closeout_asbuilt",
+      "permit_inspection",
+      "drawing_revision",
+      "progress_photo",
+      "email_message",
+      "teams_message",
+      "meeting_transcript",
+      "invoice_document",
+      "rfi_response",
+      "daily_report",
+      "email_attachment",
+      "other",
+    ])
+    .optional()
+    .describe(
+      "Filter by structured document type. Prefer the canonical keys derived " +
+        "from the SharePoint/OneDrive folder structure: " +
+        "'show PSRs' → 'psr'; 'find the schedule' → 'schedule'; " +
+        "'latest pay app' → 'pay_app'; 'submittals' → 'submittal'; " +
+        "'the proposal' → 'proposal'; 'estimate' → 'estimate'; " +
+        "'bid responses' → 'bid'; 'drawings' → 'drawing'; 'permit' → 'permit'; " +
+        "'RFIs' → 'rfi'; 'change orders' → 'change_order'; " +
+        "'subcontracts' → 'subcontract'; 'owner contract' → 'contract'; " +
+        "'closeout / warranty / lien waiver' → 'closeout'. " +
+        "(WIP financials live in PSR folders → use 'psr'.)",
+    ),
+  titleKeyword: z
+    .string()
+    .optional()
+    .describe(
+      "Substring to look for in file_name, title, or summary " +
+        "(case-insensitive). Use when category alone isn't enough " +
+        "(e.g. titleKeyword='certificate of occupancy').",
+    ),
+  sinceIso: z
+    .string()
+    .optional()
+    .describe("Only documents whose date is >= this ISO timestamp"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(50)
+    .optional()
+    .default(15)
+    .describe("Max documents to return (1-50, default 15)"),
+});
+
+export const searchDocumentsDescription =
+  "Vector SEARCH inside document CONTENT — meeting transcripts, email " +
+  "bodies, doc text — by topic or keyword. Use ONLY when you need to " +
+  "find the specific TEXT inside documents (e.g. 'what does the spec " +
+  "say about fire ratings'). " +
+  "For finding a specific FILE (the permit, the contract, the drawings) " +
+  "use findProjectDocuments instead. " +
+  "For project FACTS (address, phase, manager) use getProjectDetails. " +
+  "Works across ALL projects by default; optionally filter by projectId/Name.";
+
+export const searchDocumentsInputSchema = z.object({
+  query: z.string().describe("Search keywords or phrases to find in documents"),
+  projectId: z
+    .number()
+    .optional()
+    .describe("Optional project ID to scope the search"),
+  projectName: z
+    .string()
+    .optional()
+    .describe(
+      "Optional project name to resolve and filter by (e.g. 'Uniqlo', 'Cedar Park')",
+    ),
+  maxResults: z.number().optional().default(10).describe("Max results to return"),
+});
+
 const outlookRoutingPolicy: AssistantToolRoutingPolicy = {
   useWhen: [
     "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
@@ -260,6 +467,27 @@ const meetingRoutingPolicy: AssistantToolRoutingPolicy = {
   regressionPrompts: [
     "what meetings were held today?",
     "what did the Westfield OAC decide?",
+  ],
+};
+
+const documentRoutingPolicy: AssistantToolRoutingPolicy = {
+  useWhen: [
+    "User asks to search across documents, RAG chunks, OneDrive/SharePoint files, specs, drawings, or broad unstructured evidence.",
+    "User asks a cross-source investigation spanning more than one source family.",
+  ],
+  doNotUseWhen: [
+    "A narrower source-specific path exists for same-day Teams, Outlook inbox, or meeting-date questions.",
+    "User asks for structured project/accounting rows rather than unstructured evidence.",
+  ],
+  preferredFreshness:
+    "Use source-specific live/structured retrieval before broad semantic search when the user names one current communication source.",
+  emptyResultBehavior:
+    "State that document/RAG search returned no matching passages and identify the queried source scope.",
+  citationRule:
+    "Cite as document/RAG result with title, source type, and date when available.",
+  regressionPrompts: [
+    "search documents for the insurance requirement",
+    "research the emails, Teams, and meetings to see where this started",
   ],
 };
 
@@ -354,6 +582,54 @@ export const assistantSourceReadToolDescriptors: AssistantToolDescriptor[] = [
     category: "operational",
     sourceFamilies: ["meeting", "fireflies"],
     routingPolicy: meetingRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "semanticSearch",
+    description: semanticSearchDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "semanticSearch.input",
+    outputSchemaName: "semanticSearch.output",
+    inputSchema: semanticSearchInputSchema,
+    category: "document",
+    sourceFamilies: ["document", "rag"],
+    routingPolicy: documentRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "searchExternalDocuments",
+    description: searchExternalDocumentsDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "searchExternalDocuments.input",
+    outputSchemaName: "searchExternalDocuments.output",
+    inputSchema: searchExternalDocumentsInputSchema,
+    category: "document",
+    sourceFamilies: ["document", "rag"],
+    routingPolicy: documentRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "findProjectDocuments",
+    description: findProjectDocumentsDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "findProjectDocuments.input",
+    outputSchemaName: "findProjectDocuments.output",
+    inputSchema: findProjectDocumentsInputSchema,
+    category: "document",
+    sourceFamilies: ["document", "rag"],
+    routingPolicy: documentRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "searchDocuments",
+    description: searchDocumentsDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "searchDocuments.input",
+    outputSchemaName: "searchDocuments.output",
+    inputSchema: searchDocumentsInputSchema,
+    category: "document",
+    sourceFamilies: ["document", "rag"],
+    routingPolicy: documentRoutingPolicy,
   },
 ];
 

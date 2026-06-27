@@ -12,8 +12,12 @@ import { createSaisTools } from "./sais";
 import { createSessionSearchTools } from "./search-past-conversations";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import {
+  findProjectDocumentsDescription,
+  findProjectDocumentsInputSchema,
   getMeetingsByDateDescription,
   getMeetingsByDateInputSchema,
+  searchDocumentsDescription,
+  searchDocumentsInputSchema,
 } from "@/lib/ai/tool-descriptors";
 import {
   RISK_CARD_TYPES,
@@ -2196,130 +2200,8 @@ export function createProjectTools(
     }),
 
     findProjectDocuments: tool({
-      description:
-        "**USE THIS to FIND specific documents/files for a project** — " +
-        "permits, contracts, drawings, specs, certificates, daily reports, " +
-        "RFIs, submittals, change orders, financial docs. " +
-        "This is a STRUCTURED lookup against document_metadata by project " +
-        "and document category/type/title keyword. NOT a content search — " +
-        "use searchDocuments for content-inside-the-document queries " +
-        "(e.g. 'what does the spec say about fire ratings'). " +
-        "Returns: file_name, title, type, category, date, OneDrive link, " +
-        "summary, and a content preview. " +
-        "Examples: 'find the permit for Westfield Collective' " +
-        "→ category='permit' or titleKeyword='permit'; " +
-        "'show me drawings for Goodwill' → category='drawing' or titleKeyword='drawing'; " +
-        "'pull the latest contract' → category='contract' ordered by date desc.",
-      inputSchema: z.object({
-        projectId: z
-          .number()
-          .optional()
-          .describe("Project ID — use this when known"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Project name (partial, case-insensitive match)"),
-        category: z
-          .enum([
-            "contract",
-            "permit",
-            "drawing",
-            "specification",
-            "submittal",
-            "rfi",
-            "daily_report",
-            "change_order",
-            "certificate",
-            "insurance",
-            "financial_document",
-            "meeting",
-            "email",
-            "any",
-          ])
-          .optional()
-          .default("any")
-          .describe(
-            "Filter by document category (legacy). 'any' returns all categories. Prefer documentType when available.",
-          ),
-        documentType: z
-          .enum([
-            // Canonical folder-derived construction document types
-            // (classify_document_type / document_type_taxonomy).
-            "psr",
-            "schedule",
-            "submittal",
-            "pay_app",
-            "proposal",
-            "estimate",
-            "bid",
-            "drawing",
-            "specification",
-            "permit",
-            "rfi",
-            "change_order",
-            "subcontract",
-            "contract",
-            "safety",
-            "closeout",
-            "design",
-            "photo",
-            // Legacy taxonomy keys (still valid for older rows).
-            "executed_contract",
-            "contract_proposal",
-            "change_order_executed",
-            "insurance_certificate",
-            "lien_waiver_progress",
-            "lien_waiver_final",
-            "w9",
-            "closeout_manual",
-            "closeout_warranty",
-            "closeout_asbuilt",
-            "permit_inspection",
-            "drawing_revision",
-            "progress_photo",
-            "email_message",
-            "teams_message",
-            "meeting_transcript",
-            "invoice_document",
-            "rfi_response",
-            "daily_report",
-            "email_attachment",
-            "other",
-          ])
-          .optional()
-          .describe(
-            "Filter by structured document type. Prefer the canonical keys derived " +
-            "from the SharePoint/OneDrive folder structure: " +
-            "'show PSRs' → 'psr'; 'find the schedule' → 'schedule'; " +
-            "'latest pay app' → 'pay_app'; 'submittals' → 'submittal'; " +
-            "'the proposal' → 'proposal'; 'estimate' → 'estimate'; " +
-            "'bid responses' → 'bid'; 'drawings' → 'drawing'; 'permit' → 'permit'; " +
-            "'RFIs' → 'rfi'; 'change orders' → 'change_order'; " +
-            "'subcontracts' → 'subcontract'; 'owner contract' → 'contract'; " +
-            "'closeout / warranty / lien waiver' → 'closeout'. " +
-            "(WIP financials live in PSR folders → use 'psr'.)",
-          ),
-        titleKeyword: z
-          .string()
-          .optional()
-          .describe(
-            "Substring to look for in file_name, title, or summary " +
-            "(case-insensitive). Use when category alone isn't enough " +
-            "(e.g. titleKeyword='certificate of occupancy').",
-          ),
-        sinceIso: z
-          .string()
-          .optional()
-          .describe("Only documents whose date is >= this ISO timestamp"),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(50)
-          .optional()
-          .default(15)
-          .describe("Max documents to return (1-50, default 15)"),
-      }),
+      description: findProjectDocumentsDescription,
+      inputSchema: findProjectDocumentsInputSchema,
       execute: withTrace(
         "findProjectDocuments",
         options,
@@ -2517,33 +2399,8 @@ export function createProjectTools(
     }),
 
     searchDocuments: tool({
-      description:
-        "Vector SEARCH inside document CONTENT — meeting transcripts, email " +
-        "bodies, doc text — by topic or keyword. Use ONLY when you need to " +
-        "find the specific TEXT inside documents (e.g. 'what does the spec " +
-        "say about fire ratings'). " +
-        "For finding a specific FILE (the permit, the contract, the drawings) " +
-        "use findProjectDocuments instead. " +
-        "For project FACTS (address, phase, manager) use getProjectDetails. " +
-        "Works across ALL projects by default; optionally filter by projectId/Name.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe("Search keywords or phrases to find in documents"),
-        projectId: z
-          .number()
-          .optional()
-          .describe("Optional project ID to scope the search"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Optional project name to resolve and filter by (e.g. 'Uniqlo', 'Cedar Park')"),
-        maxResults: z
-          .number()
-          .optional()
-          .default(10)
-          .describe("Max results to return"),
-      }),
+      description: searchDocumentsDescription,
+      inputSchema: searchDocumentsInputSchema,
       execute: withTrace(
         "searchDocuments",
         options,

@@ -11,10 +11,14 @@ import {
   getRecentEmailsInputSchema,
   searchEmailsDescription,
   searchEmailsInputSchema,
+  searchExternalDocumentsDescription,
+  searchExternalDocumentsInputSchema,
   searchMeetingsByTopicDescription,
   searchMeetingsByTopicInputSchema,
   searchTeamsMessagesDescription,
   searchTeamsMessagesInputSchema,
+  semanticSearchDescription,
+  semanticSearchInputSchema,
 } from "@/lib/ai/tool-descriptors";
 import { type ToolGuardrails } from "./guardrails";
 import { createToolContext, type ToolContext } from "./tool-context";
@@ -1455,49 +1459,8 @@ export function createOperationalTools(
     // 9. Semantic Search (unified document_chunks + insights + knowledge base)
     // -----------------------------------------------------------------------
     semanticSearch: tool({
-      description:
-        "Search across ALL project knowledge using semantic similarity: " +
-        "meeting transcripts (full chunked transcripts, segment summaries, meeting summaries), " +
-        "emails, Teams messages, OneDrive documents, insights (decisions/risks/opportunities), " +
-        "company knowledge base entries (lessons learned, pricing intel, vendor intel), " +
-        "and other indexed content. " +
-        "Uses unified document_chunks table (24K+ chunks) + insights + knowledge base. " +
-        "Works CROSS-PROJECT by default — no project filter needed. " +
-        "Optionally filter by project name or ID, or by source type. Use when " +
-        "the user asks a broad question that could span multiple data types, " +
-        "or when keyword search isn't finding results.",
-      inputSchema: z.object({
-        query: z.string().describe("Natural language search query"),
-        projectId: z
-          .number()
-          .optional()
-          .describe(
-            "Optional project ID filter. When provided, non-matching document chunks are excluded.",
-          ),
-        projectName: z
-          .string()
-          .optional()
-          .describe(
-            "Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(10)
-          .describe("Number of results to return"),
-        threshold: z
-          .number()
-          .optional()
-          .default(0.3)
-          .describe("Minimum similarity threshold (0-1)"),
-        skipRerank: z
-          .boolean()
-          .optional()
-          .default(false)
-          .describe(
-            "Skip the LLM reranker when the caller needs fast deterministic retrieval.",
-          ),
-      }),
+      description: semanticSearchDescription,
+      inputSchema: semanticSearchInputSchema,
       execute: withTrace(
         "semanticSearch",
         options,
@@ -3484,25 +3447,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchExternalDocuments: tool({
-      description:
-        "Search OneDrive files and uploaded project documents (PDFs, Word docs, spreadsheets, etc.). " +
-        "Use this when the user asks about specific documents, reports, specs, or files " +
-        "(e.g. 'find the geotechnical report', 'what does the contract say about liquidated damages?', " +
-        "'search the RFP document for insurance requirements'). " +
-        "Distinct from meeting transcripts — this searches files and documents. " +
-        "Always cite results as 'document: [title] ([date if available])'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in documents — e.g. 'liquidated damages clause' or 'geotechnical boring results'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of document chunks to return"),
-      }),
+      description: searchExternalDocumentsDescription,
+      inputSchema: searchExternalDocumentsInputSchema,
       execute: withTrace(
         "searchExternalDocuments",
         options,
