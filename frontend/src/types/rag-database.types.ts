@@ -82,45 +82,36 @@ export type Database = {
       }
       document_chunks: {
         Row: {
-          chunk_context: string | null
           chunk_id: string
           chunk_index: number
           content_hash: string | null
-          contextualized_at: string | null
           created_at: string | null
           document_id: string
           embedding: unknown
-          embedding_contextual: unknown
           metadata: Json | null
           source_type: string | null
           text: string
           updated_at: string | null
         }
         Insert: {
-          chunk_context?: string | null
           chunk_id: string
           chunk_index: number
           content_hash?: string | null
-          contextualized_at?: string | null
           created_at?: string | null
           document_id: string
           embedding?: unknown
-          embedding_contextual?: unknown
           metadata?: Json | null
           source_type?: string | null
           text: string
           updated_at?: string | null
         }
         Update: {
-          chunk_context?: string | null
           chunk_id?: string
           chunk_index?: number
           content_hash?: string | null
-          contextualized_at?: string | null
           created_at?: string | null
           document_id?: string
           embedding?: unknown
-          embedding_contextual?: unknown
           metadata?: Json | null
           source_type?: string | null
           text?: string
@@ -1103,30 +1094,6 @@ export type Database = {
     }
     Functions: {
       search_document_chunks: {
-        Args: {
-          filter_project_id?: number
-          filter_source_types?: string[]
-          match_count?: number
-          match_threshold?: number
-          query_embedding: unknown
-        }
-        Returns: {
-          chunk_id: string
-          chunk_index: number
-          chunk_text: string
-          doc_category: string
-          doc_created_at: string
-          doc_date: string
-          doc_metadata: Json
-          doc_project_id: number
-          doc_source: string
-          doc_title: string
-          document_id: string
-          similarity: number
-          source_type: string
-        }[]
-      }
-      search_document_chunks_contextual: {
         Args: {
           filter_project_id?: number
           filter_source_types?: string[]

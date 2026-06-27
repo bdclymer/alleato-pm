@@ -300,7 +300,7 @@ Evidence directory:
 - Added a guardrail to `npm run rag:verify:chat-architecture` so those removed paths cannot silently reappear.
 - Kept active or not-yet-replaced paths with explicit classification:
   - local admin RAG eval scripts remain `active-keep`;
-  - contextual embedding backfill remains `migrate-first`;
+  - contextual embedding backfill remained `migrate-first` until AAI-734 explicitly retired the pilot;
   - Outlook RAG-to-app metadata bridge remains `manual/dev-only`.
 - Evidence:
   - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
@@ -942,6 +942,34 @@ Evidence directory:
 - Evidence:
   - [Task](../tasks/2026-06-27-retire-outlook-rag-app-bridge.md)
   - [Proof](../evidence/2026-06-25-ai-rag-production-finalization/outlook-rag-app-bridge-retirement-aai-732.md)
+
+### 2026-06-27: AAI-734 Contextual Retrieval Pilot Retired
+
+- Retired the remaining AAI-703 `migrate-first` contextual retrieval pilot after
+  proving it had no direct callers, no package script, no Render route/schedule,
+  no checked Render env enabling the contextual variant, and no live frontend
+  RAG consumer.
+- Deleted the manual contextual backfill script and pilot helper:
+  - `backend/src/scripts/backfill_contextual_embeddings.py`
+  - `backend/src/services/pipeline/contextualize.py`
+- Removed the backend agent contextual variant switch so backend retrieval uses
+  the finalized `search_document_chunks` RPC only.
+- Applied RAG migration
+  `scripts/database/rag/migrations/20260627114000_retire_contextual_retrieval_pilot.sql`
+  to drop the unused contextual RPC, index, and `document_chunks` pilot columns.
+- Regenerated RAG DB inventory/types and updated architecture/current cleanup
+  inventories so contextual retrieval is documented as retired, not current or
+  `migrate-first`.
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - backend py_compile for RAG helper/store modules;
+  - RAG migration dry-run, apply, ledger, and schema read-back;
+  - `npm run db:inventory` and `npm run db:inventory -- --check-only`;
+  - `npm run rag:verify:client-boundary`;
+  - `npm run rag:verify:retrieval-contract`.
+- Evidence:
+  - [Task](../tasks/2026-06-27-retire-contextual-retrieval-pilot.md)
+  - [Proof](../evidence/2026-06-25-ai-rag-production-finalization/contextual-retrieval-pilot-retirement-aai-734.md)
 
 ### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
 

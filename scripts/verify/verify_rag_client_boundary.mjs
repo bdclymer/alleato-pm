@@ -27,7 +27,6 @@ const ragTables = [
 const ragRpcs = [
   "search_document_chunks",
   "search_document_chunks_by_category",
-  "search_document_chunks_contextual",
 ];
 
 const findings = [];

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T11:21:13.560Z",
+  "generatedAt": "2026-06-27T11:41:37.208Z",
   "generatorVersion": "1",
   "tables": [
     {
@@ -19,7 +19,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:13.560Z"
+        "refreshedAt": "2026-06-27T11:41:37.209Z"
       },
       "columns": [
         {
@@ -57,7 +57,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:15.051Z"
+        "refreshedAt": "2026-06-27T11:41:38.377Z"
       },
       "columns": [
         {
@@ -124,8 +124,8 @@
         "totalSize": "872 kB",
         "lastAutoanalyze": "2026-06-27T00:04:16.788Z",
         "nLiveTup": 116,
-        "nDeadTup": 58,
-        "refreshedAt": "2026-06-27T11:21:15.636Z"
+        "nDeadTup": 59,
+        "refreshedAt": "2026-06-27T11:41:38.821Z"
       },
       "columns": [
         {
@@ -1755,12 +1755,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 20571,
+        "approxRows": 20572,
         "totalSize": "44 MB",
         "lastAutoanalyze": "2026-06-27T00:02:17.423Z",
-        "nLiveTup": 20571,
+        "nLiveTup": 20572,
         "nDeadTup": 91,
-        "refreshedAt": "2026-06-27T11:21:16.377Z"
+        "refreshedAt": "2026-06-27T11:41:39.771Z"
       },
       "columns": [
         {
@@ -1852,7 +1852,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:19.056Z"
+        "refreshedAt": "2026-06-27T11:41:41.656Z"
       },
       "columns": [
         {
@@ -1900,7 +1900,7 @@
         "lastAutoanalyze": "2026-06-23T12:57:08.190Z",
         "nLiveTup": 103,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:21:19.654Z"
+        "refreshedAt": "2026-06-27T11:41:42.245Z"
       },
       "columns": [
         {
@@ -2262,7 +2262,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6041,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:20.229Z"
+        "refreshedAt": "2026-06-27T11:41:42.829Z"
       },
       "columns": [
         {
@@ -2472,7 +2472,7 @@
         "lastAutoanalyze": "2026-06-25T13:22:34.401Z",
         "nLiveTup": 3288,
         "nDeadTup": 25,
-        "refreshedAt": "2026-06-27T11:21:20.880Z"
+        "refreshedAt": "2026-06-27T11:41:43.463Z"
       },
       "columns": [
         {
@@ -2859,7 +2859,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:21.413Z"
+        "refreshedAt": "2026-06-27T11:41:44.036Z"
       },
       "columns": [
         {
@@ -2996,7 +2996,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1257,
         "nDeadTup": 22,
-        "refreshedAt": "2026-06-27T11:21:21.879Z"
+        "refreshedAt": "2026-06-27T11:41:44.478Z"
       },
       "columns": [
         {
@@ -3430,7 +3430,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 570,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:21:22.723Z"
+        "refreshedAt": "2026-06-27T11:41:45.080Z"
       },
       "columns": [
         {
@@ -3593,7 +3593,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3459,
         "nDeadTup": 41,
-        "refreshedAt": "2026-06-27T11:21:23.317Z"
+        "refreshedAt": "2026-06-27T11:41:45.605Z"
       },
       "columns": [
         {
@@ -4038,7 +4038,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:23.967Z"
+        "refreshedAt": "2026-06-27T11:41:46.111Z"
       },
       "columns": [
         {
@@ -4169,7 +4169,7 @@
         "lastAutoanalyze": "2026-06-26T22:41:12.597Z",
         "nLiveTup": 78,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:24.436Z"
+        "refreshedAt": "2026-06-27T11:41:46.530Z"
       },
       "columns": [
         {
@@ -4992,7 +4992,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 15,
         "nDeadTup": 2,
-        "refreshedAt": "2026-06-27T11:21:25.016Z"
+        "refreshedAt": "2026-06-27T11:41:47.094Z"
       },
       "columns": [
         {
@@ -5236,7 +5236,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:25.569Z"
+        "refreshedAt": "2026-06-27T11:41:47.602Z"
       },
       "columns": [
         {
@@ -5385,7 +5385,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:26.050Z"
+        "refreshedAt": "2026-06-27T11:41:48.110Z"
       },
       "columns": [
         {
@@ -5628,7 +5628,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:26.551Z"
+        "refreshedAt": "2026-06-27T11:41:48.643Z"
       },
       "columns": [
         {
@@ -5733,7 +5733,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 367,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:21:27.114Z"
+        "refreshedAt": "2026-06-27T11:41:49.157Z"
       },
       "columns": [
         {
@@ -5901,7 +5901,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 51,
         "nDeadTup": 9,
-        "refreshedAt": "2026-06-27T11:21:27.668Z"
+        "refreshedAt": "2026-06-27T11:41:49.735Z"
       },
       "columns": [
         {
@@ -6053,7 +6053,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:28.119Z"
+        "refreshedAt": "2026-06-27T11:41:50.242Z"
       },
       "columns": [
         {
@@ -6174,7 +6174,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:28.685Z"
+        "refreshedAt": "2026-06-27T11:41:50.764Z"
       },
       "columns": [
         {
@@ -6370,7 +6370,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:29.159Z"
+        "refreshedAt": "2026-06-27T11:41:51.255Z"
       },
       "columns": [
         {
@@ -6467,7 +6467,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:29.700Z"
+        "refreshedAt": "2026-06-27T11:41:51.775Z"
       },
       "columns": [
         {
@@ -6546,7 +6546,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:30.240Z"
+        "refreshedAt": "2026-06-27T11:41:52.307Z"
       },
       "columns": [
         {
@@ -6654,7 +6654,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:30.792Z"
+        "refreshedAt": "2026-06-27T11:41:52.838Z"
       },
       "columns": [
         {
@@ -6714,7 +6714,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:31.324Z"
+        "refreshedAt": "2026-06-27T11:41:53.367Z"
       },
       "columns": [
         {
@@ -6800,7 +6800,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:31.798Z"
+        "refreshedAt": "2026-06-27T11:41:53.883Z"
       },
       "columns": [
         {
@@ -6858,7 +6858,7 @@
         "lastAutoanalyze": "2026-06-23T04:48:43.940Z",
         "nLiveTup": 771,
         "nDeadTup": 24,
-        "refreshedAt": "2026-06-27T11:21:32.325Z"
+        "refreshedAt": "2026-06-27T11:41:54.403Z"
       },
       "columns": [
         {
@@ -7835,7 +7835,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:32.873Z"
+        "refreshedAt": "2026-06-27T11:41:55.017Z"
       },
       "columns": [
         {
@@ -8007,10 +8007,10 @@
       "liveStats": {
         "approxRows": 1795,
         "totalSize": "2536 kB",
-        "lastAutoanalyze": "2026-06-27T10:47:18.737Z",
+        "lastAutoanalyze": "2026-06-27T11:30:20.990Z",
         "nLiveTup": 1795,
-        "nDeadTup": 145,
-        "refreshedAt": "2026-06-27T11:21:33.355Z"
+        "nDeadTup": 199,
+        "refreshedAt": "2026-06-27T11:41:55.485Z"
       },
       "columns": [
         {
@@ -9226,7 +9226,7 @@
         "lastAutoanalyze": "2026-06-25T21:40:58.318Z",
         "nLiveTup": 53,
         "nDeadTup": 7,
-        "refreshedAt": "2026-06-27T11:21:33.989Z"
+        "refreshedAt": "2026-06-27T11:41:56.107Z"
       },
       "columns": [
         {
@@ -9336,7 +9336,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:21:34.472Z"
+        "refreshedAt": "2026-06-27T11:41:56.545Z"
       },
       "columns": [
         {
@@ -9411,7 +9411,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:34.996Z"
+        "refreshedAt": "2026-06-27T11:41:57.034Z"
       },
       "columns": [
         {
@@ -9614,7 +9614,7 @@
         "lastAutoanalyze": "2026-06-25T21:40:58.365Z",
         "nLiveTup": 46,
         "nDeadTup": 60,
-        "refreshedAt": "2026-06-27T11:21:35.468Z"
+        "refreshedAt": "2026-06-27T11:41:57.563Z"
       },
       "columns": [
         {
@@ -9984,7 +9984,7 @@
         "lastAutoanalyze": "2026-06-26T22:55:13.397Z",
         "nLiveTup": 47,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:21:35.982Z"
+        "refreshedAt": "2026-06-27T11:41:58.061Z"
       },
       "columns": [
         {
@@ -11025,7 +11025,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:21:36.559Z"
+        "refreshedAt": "2026-06-27T11:41:58.602Z"
       },
       "columns": [
         {
@@ -11210,7 +11210,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:37.031Z"
+        "refreshedAt": "2026-06-27T11:41:59.124Z"
       },
       "columns": [
         {
@@ -11408,7 +11408,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:37.598Z"
+        "refreshedAt": "2026-06-27T11:41:59.647Z"
       },
       "columns": [
         {
@@ -11535,7 +11535,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:38.087Z"
+        "refreshedAt": "2026-06-27T11:42:00.381Z"
       },
       "columns": [
         {
@@ -11673,7 +11673,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:38.606Z"
+        "refreshedAt": "2026-06-27T11:42:00.891Z"
       },
       "columns": [
         {
@@ -11835,7 +11835,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:39.130Z"
+        "refreshedAt": "2026-06-27T11:42:01.482Z"
       },
       "columns": [
         {
@@ -11982,7 +11982,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 15,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:39.638Z"
+        "refreshedAt": "2026-06-27T11:42:02.066Z"
       },
       "columns": [
         {
@@ -12376,7 +12376,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:21:40.217Z"
+        "refreshedAt": "2026-06-27T11:42:02.632Z"
       },
       "columns": [
         {
@@ -12511,7 +12511,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:40.714Z"
+        "refreshedAt": "2026-06-27T11:42:03.307Z"
       },
       "columns": [
         {
@@ -12666,7 +12666,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:41.228Z"
+        "refreshedAt": "2026-06-27T11:42:03.894Z"
       },
       "columns": [
         {
@@ -12782,7 +12782,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:41.744Z"
+        "refreshedAt": "2026-06-27T11:42:04.386Z"
       },
       "columns": [
         {
@@ -12837,7 +12837,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:42.295Z"
+        "refreshedAt": "2026-06-27T11:42:04.881Z"
       },
       "columns": [
         {
@@ -12880,7 +12880,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:42.923Z"
+        "refreshedAt": "2026-06-27T11:42:05.461Z"
       },
       "columns": [
         {
@@ -12935,7 +12935,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:43.326Z"
+        "refreshedAt": "2026-06-27T11:42:05.948Z"
       },
       "columns": [
         {
@@ -13006,7 +13006,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:43.838Z"
+        "refreshedAt": "2026-06-27T11:42:06.525Z"
       },
       "columns": [
         {
@@ -13044,7 +13044,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:44.374Z"
+        "refreshedAt": "2026-06-27T11:42:07.027Z"
       },
       "columns": [
         {
@@ -13112,7 +13112,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:44.914Z"
+        "refreshedAt": "2026-06-27T11:42:07.561Z"
       },
       "columns": [
         {
@@ -13322,7 +13322,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 2,
-        "refreshedAt": "2026-06-27T11:21:45.427Z"
+        "refreshedAt": "2026-06-27T11:42:08.136Z"
       },
       "columns": [
         {
@@ -13419,7 +13419,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:45.932Z"
+        "refreshedAt": "2026-06-27T11:42:08.573Z"
       },
       "columns": [
         {
@@ -13540,7 +13540,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 7,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:46.461Z"
+        "refreshedAt": "2026-06-27T11:42:09.119Z"
       },
       "columns": [
         {
@@ -13661,7 +13661,7 @@
         "lastAutoanalyze": "2026-06-26T12:18:41.085Z",
         "nLiveTup": 662,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:46.980Z"
+        "refreshedAt": "2026-06-27T11:42:09.606Z"
       },
       "columns": [
         {
@@ -13754,7 +13754,7 @@
         "lastAutoanalyze": "2026-06-17T16:45:31.692Z",
         "nLiveTup": 3559,
         "nDeadTup": 169,
-        "refreshedAt": "2026-06-27T11:21:47.584Z"
+        "refreshedAt": "2026-06-27T11:42:10.200Z"
       },
       "columns": [
         {
@@ -14028,7 +14028,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:48.389Z"
+        "refreshedAt": "2026-06-27T11:42:11.075Z"
       },
       "columns": [
         {
@@ -14144,7 +14144,7 @@
         "lastAutoanalyze": "2026-06-27T00:01:17.203Z",
         "nLiveTup": 4571,
         "nDeadTup": 537,
-        "refreshedAt": "2026-06-27T11:21:48.929Z"
+        "refreshedAt": "2026-06-27T11:42:11.634Z"
       },
       "columns": [
         {
@@ -14304,7 +14304,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 154,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:49.514Z"
+        "refreshedAt": "2026-06-27T11:42:12.544Z"
       },
       "columns": [
         {
@@ -14418,7 +14418,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 500,
         "nDeadTup": 18,
-        "refreshedAt": "2026-06-27T11:21:50.024Z"
+        "refreshedAt": "2026-06-27T11:42:13.109Z"
       },
       "columns": [
         {
@@ -14704,7 +14704,7 @@
         "lastAutoanalyze": "2026-06-27T00:03:23.681Z",
         "nLiveTup": 2570,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:50.581Z"
+        "refreshedAt": "2026-06-27T11:42:13.657Z"
       },
       "columns": [
         {
@@ -14834,7 +14834,7 @@
         "lastAutoanalyze": "2026-06-17T16:49:31.459Z",
         "nLiveTup": 2318,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:51.131Z"
+        "refreshedAt": "2026-06-27T11:42:14.248Z"
       },
       "columns": [
         {
@@ -15058,7 +15058,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2795,
         "nDeadTup": 235,
-        "refreshedAt": "2026-06-27T11:21:51.675Z"
+        "refreshedAt": "2026-06-27T11:42:14.873Z"
       },
       "columns": [
         {
@@ -15260,7 +15260,7 @@
         "lastAutoanalyze": "2026-06-25T00:14:54.318Z",
         "nLiveTup": 61,
         "nDeadTup": 46,
-        "refreshedAt": "2026-06-27T11:21:52.539Z"
+        "refreshedAt": "2026-06-27T11:42:15.678Z"
       },
       "columns": [
         {
@@ -15389,7 +15389,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 406,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:21:53.106Z"
+        "refreshedAt": "2026-06-27T11:42:16.356Z"
       },
       "columns": [
         {
@@ -15623,7 +15623,7 @@
         "lastAutoanalyze": "2026-06-27T00:03:23.715Z",
         "nLiveTup": 1682,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:53.648Z"
+        "refreshedAt": "2026-06-27T11:42:16.919Z"
       },
       "columns": [
         {
@@ -15791,8 +15791,8 @@
         "totalSize": "19 MB",
         "lastAutoanalyze": null,
         "nLiveTup": 6730,
-        "nDeadTup": 388,
-        "refreshedAt": "2026-06-27T11:21:54.158Z"
+        "nDeadTup": 378,
+        "refreshedAt": "2026-06-27T11:42:17.493Z"
       },
       "columns": [
         {
@@ -16040,7 +16040,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 87,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:55.774Z"
+        "refreshedAt": "2026-06-27T11:42:18.893Z"
       },
       "columns": [
         {
@@ -16231,7 +16231,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 108,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:21:56.325Z"
+        "refreshedAt": "2026-06-27T11:42:19.478Z"
       },
       "columns": [
         {
@@ -16345,7 +16345,7 @@
         "lastAutoanalyze": "2026-06-17T16:49:31.779Z",
         "nLiveTup": 125,
         "nDeadTup": 10,
-        "refreshedAt": "2026-06-27T11:21:56.850Z"
+        "refreshedAt": "2026-06-27T11:42:20.034Z"
       },
       "columns": [
         {
@@ -16571,7 +16571,7 @@
         "lastAutoanalyze": "2026-06-17T16:49:31.738Z",
         "nLiveTup": 396,
         "nDeadTup": 50,
-        "refreshedAt": "2026-06-27T11:21:57.404Z"
+        "refreshedAt": "2026-06-27T11:42:20.809Z"
       },
       "columns": [
         {
@@ -16812,7 +16812,7 @@
         "lastAutoanalyze": "2026-06-26T12:01:40.225Z",
         "nLiveTup": 31,
         "nDeadTup": 26,
-        "refreshedAt": "2026-06-27T11:21:57.979Z"
+        "refreshedAt": "2026-06-27T11:42:21.654Z"
       },
       "columns": [
         {
@@ -16894,7 +16894,7 @@
         "lastAutoanalyze": "2026-06-26T12:02:41.585Z",
         "nLiveTup": 622,
         "nDeadTup": 22,
-        "refreshedAt": "2026-06-27T11:21:58.542Z"
+        "refreshedAt": "2026-06-27T11:42:22.217Z"
       },
       "columns": [
         {
@@ -17031,7 +17031,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 7,
-        "refreshedAt": "2026-06-27T11:21:59.091Z"
+        "refreshedAt": "2026-06-27T11:42:22.773Z"
       },
       "columns": [
         {
@@ -17146,7 +17146,7 @@
         "lastAutoanalyze": "2026-06-17T16:06:28.598Z",
         "nLiveTup": 3367,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:21:59.564Z"
+        "refreshedAt": "2026-06-27T11:42:23.239Z"
       },
       "columns": [
         {
@@ -17354,7 +17354,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:00.099Z"
+        "refreshedAt": "2026-06-27T11:42:23.808Z"
       },
       "columns": [
         {
@@ -17511,7 +17511,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 75,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:00.627Z"
+        "refreshedAt": "2026-06-27T11:42:24.293Z"
       },
       "columns": [
         {
@@ -17579,7 +17579,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 688,
         "nDeadTup": 60,
-        "refreshedAt": "2026-06-27T11:22:01.173Z"
+        "refreshedAt": "2026-06-27T11:42:24.806Z"
       },
       "columns": [
         {
@@ -18202,7 +18202,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2095,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:01.761Z"
+        "refreshedAt": "2026-06-27T11:42:25.422Z"
       },
       "columns": [
         {
@@ -18426,7 +18426,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 35,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:02.239Z"
+        "refreshedAt": "2026-06-27T11:42:25.900Z"
       },
       "columns": [
         {
@@ -18675,7 +18675,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 107,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:02.727Z"
+        "refreshedAt": "2026-06-27T11:42:26.425Z"
       },
       "columns": [
         {
@@ -18886,7 +18886,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:03.286Z"
+        "refreshedAt": "2026-06-27T11:42:26.935Z"
       },
       "columns": [
         {
@@ -19023,7 +19023,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:03.767Z"
+        "refreshedAt": "2026-06-27T11:42:27.575Z"
       },
       "columns": [
         {
@@ -19145,7 +19145,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 26,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:04.309Z"
+        "refreshedAt": "2026-06-27T11:42:27.999Z"
       },
       "columns": [
         {
@@ -19395,7 +19395,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 312,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:04.813Z"
+        "refreshedAt": "2026-06-27T11:42:28.501Z"
       },
       "columns": [
         {
@@ -19565,7 +19565,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 353,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:05.344Z"
+        "refreshedAt": "2026-06-27T11:42:28.994Z"
       },
       "columns": [
         {
@@ -19852,7 +19852,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 40,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:05.868Z"
+        "refreshedAt": "2026-06-27T11:42:29.544Z"
       },
       "columns": [
         {
@@ -19948,7 +19948,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 9,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:06.376Z"
+        "refreshedAt": "2026-06-27T11:42:30.043Z"
       },
       "columns": [
         {
@@ -20099,7 +20099,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:06.909Z"
+        "refreshedAt": "2026-06-27T11:42:30.700Z"
       },
       "columns": [
         {
@@ -20316,7 +20316,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:07.439Z"
+        "refreshedAt": "2026-06-27T11:42:31.196Z"
       },
       "columns": [
         {
@@ -20457,7 +20457,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:07.965Z"
+        "refreshedAt": "2026-06-27T11:42:31.697Z"
       },
       "columns": [
         {
@@ -20580,7 +20580,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:08.474Z"
+        "refreshedAt": "2026-06-27T11:42:32.147Z"
       },
       "columns": [
         {
@@ -20750,7 +20750,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 8,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:09.017Z"
+        "refreshedAt": "2026-06-27T11:42:32.694Z"
       },
       "columns": [
         {
@@ -20826,7 +20826,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:09.529Z"
+        "refreshedAt": "2026-06-27T11:42:33.190Z"
       },
       "columns": [
         {
@@ -20915,7 +20915,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:10.064Z"
+        "refreshedAt": "2026-06-27T11:42:33.727Z"
       },
       "columns": [
         {
@@ -20980,7 +20980,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6885,
         "nDeadTup": 257,
-        "refreshedAt": "2026-06-27T11:22:10.573Z"
+        "refreshedAt": "2026-06-27T11:42:34.231Z"
       },
       "columns": [
         {
@@ -21336,7 +21336,7 @@
         "lastAutoanalyze": "2026-06-25T21:22:57.668Z",
         "nLiveTup": 9478,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:11.483Z"
+        "refreshedAt": "2026-06-27T11:42:35.119Z"
       },
       "columns": [
         {
@@ -21566,7 +21566,7 @@
         "lastAutoanalyze": "2026-06-27T00:02:17.502Z",
         "nLiveTup": 476,
         "nDeadTup": 101,
-        "refreshedAt": "2026-06-27T11:22:12.062Z"
+        "refreshedAt": "2026-06-27T11:42:35.651Z"
       },
       "columns": [
         {
@@ -22126,8 +22126,8 @@
         "totalSize": "608 kB",
         "lastAutoanalyze": "2026-06-27T00:02:17.455Z",
         "nLiveTup": 1090,
-        "nDeadTup": 181,
-        "refreshedAt": "2026-06-27T11:22:12.696Z"
+        "nDeadTup": 122,
+        "refreshedAt": "2026-06-27T11:42:36.728Z"
       },
       "columns": [
         {
@@ -22436,7 +22436,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:13.268Z"
+        "refreshedAt": "2026-06-27T11:42:37.374Z"
       },
       "columns": [
         {
@@ -22595,7 +22595,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 50,
         "nDeadTup": 3,
-        "refreshedAt": "2026-06-27T11:22:13.724Z"
+        "refreshedAt": "2026-06-27T11:42:37.919Z"
       },
       "columns": [
         {
@@ -22794,7 +22794,7 @@
         "lastAutoanalyze": "2026-06-17T16:45:31.328Z",
         "nLiveTup": 2433,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:14.251Z"
+        "refreshedAt": "2026-06-27T11:42:38.472Z"
       },
       "columns": [
         {
@@ -23267,7 +23267,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 17,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:14.794Z"
+        "refreshedAt": "2026-06-27T11:42:39.035Z"
       },
       "columns": [
         {
@@ -23492,7 +23492,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2444,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:15.298Z"
+        "refreshedAt": "2026-06-27T11:42:39.542Z"
       },
       "columns": [
         {
@@ -23645,7 +23645,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1313,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:15.901Z"
+        "refreshedAt": "2026-06-27T11:42:40.090Z"
       },
       "columns": [
         {
@@ -23728,7 +23728,7 @@
         "lastAutoanalyze": "2026-06-27T00:04:17.116Z",
         "nLiveTup": 4039,
         "nDeadTup": 521,
-        "refreshedAt": "2026-06-27T11:22:16.410Z"
+        "refreshedAt": "2026-06-27T11:42:40.640Z"
       },
       "columns": [
         {
@@ -23954,7 +23954,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:17.018Z"
+        "refreshedAt": "2026-06-27T11:42:41.596Z"
       },
       "columns": [
         {
@@ -24320,7 +24320,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:17.614Z"
+        "refreshedAt": "2026-06-27T11:42:42.183Z"
       },
       "columns": [
         {
@@ -24488,7 +24488,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:18.022Z"
+        "refreshedAt": "2026-06-27T11:42:42.744Z"
       },
       "columns": [
         {
@@ -24690,7 +24690,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 21,
         "nDeadTup": 10,
-        "refreshedAt": "2026-06-27T11:22:18.458Z"
+        "refreshedAt": "2026-06-27T11:42:43.185Z"
       },
       "columns": [
         {
@@ -25645,7 +25645,7 @@
         "lastAutoanalyze": "2026-06-27T00:01:17.363Z",
         "nLiveTup": 156,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:19.021Z"
+        "refreshedAt": "2026-06-27T11:42:43.714Z"
       },
       "columns": [
         {
@@ -26350,7 +26350,7 @@
         "lastAutoanalyze": "2026-06-27T00:04:16.545Z",
         "nLiveTup": 49,
         "nDeadTup": 48,
-        "refreshedAt": "2026-06-27T11:22:19.560Z"
+        "refreshedAt": "2026-06-27T11:42:44.252Z"
       },
       "columns": [
         {
@@ -26660,7 +26660,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:20.068Z"
+        "refreshedAt": "2026-06-27T11:42:44.818Z"
       },
       "columns": [
         {
@@ -26829,7 +26829,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:20.650Z"
+        "refreshedAt": "2026-06-27T11:42:45.269Z"
       },
       "columns": [
         {
@@ -26994,7 +26994,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 170,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:21.110Z"
+        "refreshedAt": "2026-06-27T11:42:45.858Z"
       },
       "columns": [
         {
@@ -27691,7 +27691,7 @@
         "lastAutoanalyze": "2026-06-22T21:29:22.675Z",
         "nLiveTup": 311,
         "nDeadTup": 86,
-        "refreshedAt": "2026-06-27T11:22:21.700Z"
+        "refreshedAt": "2026-06-27T11:42:46.337Z"
       },
       "columns": [
         {
@@ -27955,7 +27955,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:22.226Z"
+        "refreshedAt": "2026-06-27T11:42:46.882Z"
       },
       "columns": [
         {
@@ -28096,7 +28096,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:22.695Z"
+        "refreshedAt": "2026-06-27T11:42:47.391Z"
       },
       "columns": [
         {
@@ -28452,7 +28452,7 @@
         "lastAutoanalyze": "2026-06-17T21:37:44.461Z",
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:23.223Z"
+        "refreshedAt": "2026-06-27T11:42:47.895Z"
       },
       "columns": [
         {
@@ -28555,7 +28555,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:23.739Z"
+        "refreshedAt": "2026-06-27T11:42:48.480Z"
       },
       "columns": [
         {
@@ -28938,7 +28938,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:24.264Z"
+        "refreshedAt": "2026-06-27T11:42:48.975Z"
       },
       "columns": [
         {
@@ -29115,7 +29115,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:24.800Z"
+        "refreshedAt": "2026-06-27T11:42:49.503Z"
       },
       "columns": [
         {
@@ -29254,7 +29254,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:25.304Z"
+        "refreshedAt": "2026-06-27T11:42:49.993Z"
       },
       "columns": [
         {
@@ -29399,7 +29399,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:25.825Z"
+        "refreshedAt": "2026-06-27T11:42:50.527Z"
       },
       "columns": [
         {
@@ -29486,7 +29486,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:26.331Z"
+        "refreshedAt": "2026-06-27T11:42:51.064Z"
       },
       "columns": [
         {
@@ -29653,7 +29653,7 @@
         "lastAutoanalyze": "2026-06-25T03:35:04.345Z",
         "nLiveTup": 63,
         "nDeadTup": 45,
-        "refreshedAt": "2026-06-27T11:22:26.865Z"
+        "refreshedAt": "2026-06-27T11:42:51.564Z"
       },
       "columns": [
         {
@@ -30331,7 +30331,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 54,
         "nDeadTup": 9,
-        "refreshedAt": "2026-06-27T11:22:27.460Z"
+        "refreshedAt": "2026-06-27T11:42:52.169Z"
       },
       "columns": [
         {
@@ -30630,7 +30630,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 81,
         "nDeadTup": 8,
-        "refreshedAt": "2026-06-27T11:22:27.916Z"
+        "refreshedAt": "2026-06-27T11:42:52.677Z"
       },
       "columns": [
         {
@@ -30779,7 +30779,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:22:28.467Z"
+        "refreshedAt": "2026-06-27T11:42:53.140Z"
       },
       "columns": [
         {
@@ -31056,7 +31056,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:28.938Z"
+        "refreshedAt": "2026-06-27T11:42:53.697Z"
       },
       "columns": [
         {
@@ -31241,7 +31241,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:29.475Z"
+        "refreshedAt": "2026-06-27T11:42:54.193Z"
       },
       "columns": [
         {
@@ -31349,7 +31349,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 8,
-        "refreshedAt": "2026-06-27T11:22:29.981Z"
+        "refreshedAt": "2026-06-27T11:42:54.697Z"
       },
       "columns": [
         {
@@ -31439,7 +31439,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 9,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:30.539Z"
+        "refreshedAt": "2026-06-27T11:42:55.247Z"
       },
       "columns": [
         {
@@ -31638,7 +31638,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:31.044Z"
+        "refreshedAt": "2026-06-27T11:42:55.822Z"
       },
       "columns": [
         {
@@ -31777,7 +31777,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:31.658Z"
+        "refreshedAt": "2026-06-27T11:42:56.294Z"
       },
       "columns": [
         {
@@ -31882,7 +31882,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:32.210Z"
+        "refreshedAt": "2026-06-27T11:42:56.940Z"
       },
       "columns": [
         {
@@ -32050,7 +32050,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:32.724Z"
+        "refreshedAt": "2026-06-27T11:42:57.423Z"
       },
       "columns": [
         {
@@ -32271,7 +32271,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:33.233Z"
+        "refreshedAt": "2026-06-27T11:42:58.000Z"
       },
       "columns": [
         {
@@ -32394,7 +32394,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:33.686Z"
+        "refreshedAt": "2026-06-27T11:42:58.464Z"
       },
       "columns": [
         {
@@ -32747,7 +32747,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:34.223Z"
+        "refreshedAt": "2026-06-27T11:42:58.934Z"
       },
       "columns": [
         {
@@ -32916,7 +32916,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 18,
         "nDeadTup": 3,
-        "refreshedAt": "2026-06-27T11:22:34.793Z"
+        "refreshedAt": "2026-06-27T11:42:59.492Z"
       },
       "columns": [
         {
@@ -33030,7 +33030,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:35.259Z"
+        "refreshedAt": "2026-06-27T11:42:59.982Z"
       },
       "columns": [
         {
@@ -33134,7 +33134,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:35.775Z"
+        "refreshedAt": "2026-06-27T11:43:00.865Z"
       },
       "columns": [
         {
@@ -33243,7 +33243,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:36.303Z"
+        "refreshedAt": "2026-06-27T11:43:01.585Z"
       },
       "columns": [
         {
@@ -33454,7 +33454,7 @@
         "lastAutoanalyze": "2026-06-27T00:02:17.544Z",
         "nLiveTup": 158,
         "nDeadTup": 58,
-        "refreshedAt": "2026-06-27T11:22:36.827Z"
+        "refreshedAt": "2026-06-27T11:43:02.122Z"
       },
       "columns": [
         {
@@ -34049,7 +34049,7 @@
         "lastAutoanalyze": "2026-06-27T00:03:16.608Z",
         "nLiveTup": 270,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:37.426Z"
+        "refreshedAt": "2026-06-27T11:43:02.852Z"
       },
       "columns": [
         {
@@ -34329,7 +34329,7 @@
         "lastAutoanalyze": "2026-06-27T00:03:16.539Z",
         "nLiveTup": 97,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:37.880Z"
+        "refreshedAt": "2026-06-27T11:43:03.545Z"
       },
       "columns": [
         {
@@ -34860,7 +34860,7 @@
         "lastAutoanalyze": "2026-06-27T00:03:16.697Z",
         "nLiveTup": 1666,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:38.450Z"
+        "refreshedAt": "2026-06-27T11:43:04.635Z"
       },
       "columns": [
         {
@@ -35117,7 +35117,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 35,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:38.971Z"
+        "refreshedAt": "2026-06-27T11:43:05.610Z"
       },
       "columns": [
         {
@@ -35398,7 +35398,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 594,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:39.478Z"
+        "refreshedAt": "2026-06-27T11:43:06.279Z"
       },
       "columns": [
         {
@@ -35673,7 +35673,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5174,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:39.996Z"
+        "refreshedAt": "2026-06-27T11:43:06.919Z"
       },
       "columns": [
         {
@@ -35889,7 +35889,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2056,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:40.558Z"
+        "refreshedAt": "2026-06-27T11:43:07.737Z"
       },
       "columns": [
         {
@@ -36087,7 +36087,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:41.050Z"
+        "refreshedAt": "2026-06-27T11:43:08.638Z"
       },
       "columns": [
         {
@@ -36205,7 +36205,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:41.510Z"
+        "refreshedAt": "2026-06-27T11:43:09.271Z"
       },
       "columns": [
         {
@@ -36323,7 +36323,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:42.038Z"
+        "refreshedAt": "2026-06-27T11:43:09.865Z"
       },
       "columns": [
         {
@@ -36655,7 +36655,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:42.584Z"
+        "refreshedAt": "2026-06-27T11:43:10.520Z"
       },
       "columns": [
         {
@@ -36761,7 +36761,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:43.109Z"
+        "refreshedAt": "2026-06-27T11:43:10.988Z"
       },
       "columns": [
         {
@@ -36836,7 +36836,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:43.843Z"
+        "refreshedAt": "2026-06-27T11:43:11.502Z"
       },
       "columns": [
         {
@@ -37002,7 +37002,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:44.409Z"
+        "refreshedAt": "2026-06-27T11:43:12.061Z"
       },
       "columns": [
         {
@@ -37108,7 +37108,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 32,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:45.069Z"
+        "refreshedAt": "2026-06-27T11:43:12.579Z"
       },
       "columns": [
         {
@@ -37281,7 +37281,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:45.700Z"
+        "refreshedAt": "2026-06-27T11:43:13.098Z"
       },
       "columns": [
         {
@@ -37409,7 +37409,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:46.246Z"
+        "refreshedAt": "2026-06-27T11:43:13.581Z"
       },
       "columns": [
         {
@@ -37472,7 +37472,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:46.818Z"
+        "refreshedAt": "2026-06-27T11:43:14.211Z"
       },
       "columns": [
         {
@@ -37579,7 +37579,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:47.317Z"
+        "refreshedAt": "2026-06-27T11:43:14.697Z"
       },
       "columns": [
         {
@@ -37723,7 +37723,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:47.939Z"
+        "refreshedAt": "2026-06-27T11:43:15.172Z"
       },
       "columns": [
         {
@@ -37842,7 +37842,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:48.364Z"
+        "refreshedAt": "2026-06-27T11:43:15.771Z"
       },
       "columns": [
         {
@@ -38082,7 +38082,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:48.849Z"
+        "refreshedAt": "2026-06-27T11:43:16.256Z"
       },
       "columns": [
         {
@@ -38175,7 +38175,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 9,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:49.416Z"
+        "refreshedAt": "2026-06-27T11:43:16.780Z"
       },
       "columns": [
         {
@@ -38356,7 +38356,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:49.923Z"
+        "refreshedAt": "2026-06-27T11:43:17.264Z"
       },
       "columns": [
         {
@@ -38467,7 +38467,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:50.500Z"
+        "refreshedAt": "2026-06-27T11:43:17.824Z"
       },
       "columns": [
         {
@@ -38576,7 +38576,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:50.958Z"
+        "refreshedAt": "2026-06-27T11:43:18.329Z"
       },
       "columns": [
         {
@@ -38660,12 +38660,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 40826,
+        "approxRows": 40828,
         "totalSize": "357 MB",
         "lastAutoanalyze": "2026-06-26T21:55:34.755Z",
-        "nLiveTup": 40826,
-        "nDeadTup": 4220,
-        "refreshedAt": "2026-06-27T11:22:51.498Z"
+        "nLiveTup": 40828,
+        "nDeadTup": 4257,
+        "refreshedAt": "2026-06-27T11:43:18.803Z"
       },
       "columns": [
         {
@@ -41204,7 +41204,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 13229,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:53.878Z"
+        "refreshedAt": "2026-06-27T11:43:21.469Z"
       },
       "columns": [
         {
@@ -41456,7 +41456,7 @@
         "lastAutoanalyze": "2026-06-25T23:53:05.496Z",
         "nLiveTup": 663,
         "nDeadTup": 97,
-        "refreshedAt": "2026-06-27T11:22:54.549Z"
+        "refreshedAt": "2026-06-27T11:43:22.455Z"
       },
       "columns": [
         {
@@ -41623,7 +41623,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 13062,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:55.226Z"
+        "refreshedAt": "2026-06-27T11:43:23.313Z"
       },
       "columns": [
         {
@@ -41717,7 +41717,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:55.796Z"
+        "refreshedAt": "2026-06-27T11:43:23.978Z"
       },
       "columns": [
         {
@@ -41803,7 +41803,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:56.244Z"
+        "refreshedAt": "2026-06-27T11:43:24.577Z"
       },
       "columns": [
         {
@@ -41853,7 +41853,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:56.733Z"
+        "refreshedAt": "2026-06-27T11:43:25.522Z"
       },
       "columns": [
         {
@@ -42143,7 +42143,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:57.592Z"
+        "refreshedAt": "2026-06-27T11:43:26.254Z"
       },
       "columns": [
         {
@@ -42281,7 +42281,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:58.215Z"
+        "refreshedAt": "2026-06-27T11:43:26.705Z"
       },
       "columns": [
         {
@@ -42386,7 +42386,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:58.802Z"
+        "refreshedAt": "2026-06-27T11:43:27.203Z"
       },
       "columns": [
         {
@@ -42491,7 +42491,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:22:59.426Z"
+        "refreshedAt": "2026-06-27T11:43:27.957Z"
       },
       "columns": [
         {
@@ -42554,7 +42554,7 @@
         "lastAutoanalyze": "2026-06-25T00:25:54.791Z",
         "nLiveTup": 194,
         "nDeadTup": 62,
-        "refreshedAt": "2026-06-27T11:22:59.981Z"
+        "refreshedAt": "2026-06-27T11:43:28.646Z"
       },
       "columns": [
         {
@@ -43115,7 +43115,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:00.484Z"
+        "refreshedAt": "2026-06-27T11:43:29.328Z"
       },
       "columns": [
         {
@@ -43239,7 +43239,7 @@
         "lastAutoanalyze": "2026-06-25T00:25:54.853Z",
         "nLiveTup": 245,
         "nDeadTup": 27,
-        "refreshedAt": "2026-06-27T11:23:00.970Z"
+        "refreshedAt": "2026-06-27T11:43:29.877Z"
       },
       "columns": [
         {
@@ -43571,7 +43571,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 23,
         "nDeadTup": 3,
-        "refreshedAt": "2026-06-27T11:23:01.499Z"
+        "refreshedAt": "2026-06-27T11:43:30.391Z"
       },
       "columns": [
         {
@@ -43731,7 +43731,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1452,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:02.084Z"
+        "refreshedAt": "2026-06-27T11:43:30.945Z"
       },
       "columns": [
         {
@@ -43840,7 +43840,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 13,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:02.663Z"
+        "refreshedAt": "2026-06-27T11:43:31.590Z"
       },
       "columns": [
         {
@@ -43994,7 +43994,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 12,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:03.182Z"
+        "refreshedAt": "2026-06-27T11:43:32.077Z"
       },
       "columns": [
         {
@@ -44146,7 +44146,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:03.615Z"
+        "refreshedAt": "2026-06-27T11:43:32.539Z"
       },
       "columns": [
         {
@@ -44318,7 +44318,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:04.089Z"
+        "refreshedAt": "2026-06-27T11:43:33.077Z"
       },
       "columns": [
         {
@@ -44472,7 +44472,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:04.584Z"
+        "refreshedAt": "2026-06-27T11:43:33.522Z"
       },
       "columns": [
         {
@@ -44611,7 +44611,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:05.137Z"
+        "refreshedAt": "2026-06-27T11:43:34.028Z"
       },
       "columns": [
         {
@@ -44716,7 +44716,7 @@
         "lastAutoanalyze": "2026-06-17T13:34:23.127Z",
         "nLiveTup": 2111,
         "nDeadTup": 388,
-        "refreshedAt": "2026-06-27T11:23:05.647Z"
+        "refreshedAt": "2026-06-27T11:43:34.583Z"
       },
       "columns": [
         {
@@ -45206,7 +45206,7 @@
         "lastAutoanalyze": "2026-06-17T13:21:29.131Z",
         "nLiveTup": 1606,
         "nDeadTup": 291,
-        "refreshedAt": "2026-06-27T11:23:06.472Z"
+        "refreshedAt": "2026-06-27T11:43:35.417Z"
       },
       "columns": [
         {
@@ -45479,7 +45479,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 935,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:07.055Z"
+        "refreshedAt": "2026-06-27T11:43:36.147Z"
       },
       "columns": [
         {
@@ -45682,7 +45682,7 @@
         "lastAutoanalyze": "2026-06-17T13:36:21.269Z",
         "nLiveTup": 126,
         "nDeadTup": 41,
-        "refreshedAt": "2026-06-27T11:23:07.718Z"
+        "refreshedAt": "2026-06-27T11:43:36.807Z"
       },
       "columns": [
         {
@@ -45865,7 +45865,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:08.285Z"
+        "refreshedAt": "2026-06-27T11:43:37.286Z"
       },
       "columns": [
         {
@@ -46069,7 +46069,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:08.774Z"
+        "refreshedAt": "2026-06-27T11:43:37.739Z"
       },
       "columns": [
         {
@@ -46258,7 +46258,7 @@
         "lastAutoanalyze": "2026-06-26T23:02:13.600Z",
         "nLiveTup": 98,
         "nDeadTup": 25,
-        "refreshedAt": "2026-06-27T11:23:09.310Z"
+        "refreshedAt": "2026-06-27T11:43:38.233Z"
       },
       "columns": [
         {
@@ -46554,7 +46554,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:09.856Z"
+        "refreshedAt": "2026-06-27T11:43:38.819Z"
       },
       "columns": [
         {
@@ -46627,12 +46627,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 31678,
+        "approxRows": 31680,
         "totalSize": "19 MB",
         "lastAutoanalyze": "2026-06-25T14:18:36.762Z",
-        "nLiveTup": 31678,
-        "nDeadTup": 3095,
-        "refreshedAt": "2026-06-27T11:23:10.350Z"
+        "nLiveTup": 31680,
+        "nDeadTup": 3094,
+        "refreshedAt": "2026-06-27T11:43:39.309Z"
       },
       "columns": [
         {
@@ -46876,7 +46876,7 @@
         "lastAutoanalyze": "2026-06-25T19:58:55.685Z",
         "nLiveTup": 26461,
         "nDeadTup": 2697,
-        "refreshedAt": "2026-06-27T11:23:11.472Z"
+        "refreshedAt": "2026-06-27T11:43:40.448Z"
       },
       "columns": [
         {
@@ -47187,7 +47187,7 @@
         "lastAutoanalyze": "2026-06-25T03:25:03.618Z",
         "nLiveTup": 98,
         "nDeadTup": 50,
-        "refreshedAt": "2026-06-27T11:23:13.886Z"
+        "refreshedAt": "2026-06-27T11:43:43.349Z"
       },
       "columns": [
         {
@@ -47460,7 +47460,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:14.552Z"
+        "refreshedAt": "2026-06-27T11:43:44.012Z"
       },
       "columns": [
         {
@@ -47533,7 +47533,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:15.119Z"
+        "refreshedAt": "2026-06-27T11:43:44.524Z"
       },
       "columns": [
         {
@@ -47680,7 +47680,7 @@
         "lastAutoanalyze": "2026-06-27T04:37:32.262Z",
         "nLiveTup": 4544,
         "nDeadTup": 34,
-        "refreshedAt": "2026-06-27T11:23:15.695Z"
+        "refreshedAt": "2026-06-27T11:43:45.025Z"
       },
       "columns": [
         {
@@ -48009,7 +48009,7 @@
         "lastAutoanalyze": "2026-06-26T07:19:26.471Z",
         "nLiveTup": 494,
         "nDeadTup": 28,
-        "refreshedAt": "2026-06-27T11:23:16.504Z"
+        "refreshedAt": "2026-06-27T11:43:46.116Z"
       },
       "columns": [
         {
@@ -48255,7 +48255,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:17.095Z"
+        "refreshedAt": "2026-06-27T11:43:46.848Z"
       },
       "columns": [
         {
@@ -48295,7 +48295,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 32,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:17.670Z"
+        "refreshedAt": "2026-06-27T11:43:47.652Z"
       },
       "columns": [
         {
@@ -48408,7 +48408,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:18.236Z"
+        "refreshedAt": "2026-06-27T11:43:48.306Z"
       },
       "columns": [
         {
@@ -48527,7 +48527,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 90,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:23:18.752Z"
+        "refreshedAt": "2026-06-27T11:43:48.810Z"
       },
       "columns": [
         {
@@ -48688,7 +48688,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:19.303Z"
+        "refreshedAt": "2026-06-27T11:43:49.310Z"
       },
       "columns": [
         {
@@ -48810,7 +48810,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:19.800Z"
+        "refreshedAt": "2026-06-27T11:43:49.766Z"
       },
       "columns": [
         {
@@ -48991,7 +48991,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:20.347Z"
+        "refreshedAt": "2026-06-27T11:43:50.326Z"
       },
       "columns": [
         {
@@ -49136,7 +49136,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:20.854Z"
+        "refreshedAt": "2026-06-27T11:43:50.874Z"
       },
       "columns": [
         {
@@ -49276,7 +49276,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:21.387Z"
+        "refreshedAt": "2026-06-27T11:43:51.382Z"
       },
       "columns": [
         {
@@ -49370,7 +49370,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:21.889Z"
+        "refreshedAt": "2026-06-27T11:43:51.883Z"
       },
       "columns": [
         {
@@ -49433,7 +49433,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:22.437Z"
+        "refreshedAt": "2026-06-27T11:43:52.414Z"
       },
       "columns": [
         {
@@ -49511,7 +49511,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:22.937Z"
+        "refreshedAt": "2026-06-27T11:43:52.901Z"
       },
       "columns": [
         {
@@ -49616,7 +49616,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:23.464Z"
+        "refreshedAt": "2026-06-27T11:43:53.444Z"
       },
       "columns": [
         {
@@ -49778,7 +49778,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 111,
         "nDeadTup": 8,
-        "refreshedAt": "2026-06-27T11:23:23.994Z"
+        "refreshedAt": "2026-06-27T11:43:54.069Z"
       },
       "columns": [
         {
@@ -50126,7 +50126,7 @@
         "lastAutoanalyze": "2026-06-24T17:28:33.712Z",
         "nLiveTup": 105,
         "nDeadTup": 6,
-        "refreshedAt": "2026-06-27T11:23:24.545Z"
+        "refreshedAt": "2026-06-27T11:43:54.576Z"
       },
       "columns": [
         {
@@ -50401,7 +50401,7 @@
         "lastAutoanalyze": "2026-06-25T00:14:54.735Z",
         "nLiveTup": 3183,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:25.051Z"
+        "refreshedAt": "2026-06-27T11:43:55.052Z"
       },
       "columns": [
         {
@@ -50527,7 +50527,7 @@
         "lastAutoanalyze": "2026-06-26T03:49:17.878Z",
         "nLiveTup": 11417,
         "nDeadTup": 884,
-        "refreshedAt": "2026-06-27T11:23:25.653Z"
+        "refreshedAt": "2026-06-27T11:43:55.616Z"
       },
       "columns": [
         {
@@ -50937,7 +50937,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 21156,
         "nDeadTup": 423,
-        "refreshedAt": "2026-06-27T11:23:26.918Z"
+        "refreshedAt": "2026-06-27T11:43:56.673Z"
       },
       "columns": [
         {
@@ -51163,7 +51163,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10163,
         "nDeadTup": 104,
-        "refreshedAt": "2026-06-27T11:23:28.394Z"
+        "refreshedAt": "2026-06-27T11:43:57.816Z"
       },
       "columns": [
         {
@@ -51308,7 +51308,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:29.122Z"
+        "refreshedAt": "2026-06-27T11:43:58.494Z"
       },
       "columns": [
         {
@@ -51446,7 +51446,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3815,
         "nDeadTup": 6,
-        "refreshedAt": "2026-06-27T11:23:29.718Z"
+        "refreshedAt": "2026-06-27T11:43:59.078Z"
       },
       "columns": [
         {
@@ -51680,7 +51680,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:30.410Z"
+        "refreshedAt": "2026-06-27T11:43:59.766Z"
       },
       "columns": [
         {
@@ -51896,7 +51896,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 322,
         "nDeadTup": 70,
-        "refreshedAt": "2026-06-27T11:23:30.853Z"
+        "refreshedAt": "2026-06-27T11:44:00.230Z"
       },
       "columns": [
         {
@@ -52023,7 +52023,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 449,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:31.351Z"
+        "refreshedAt": "2026-06-27T11:44:00.769Z"
       },
       "columns": [
         {
@@ -52111,7 +52111,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 654,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:31.920Z"
+        "refreshedAt": "2026-06-27T11:44:01.331Z"
       },
       "columns": [
         {
@@ -52305,7 +52305,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1218,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:32.498Z"
+        "refreshedAt": "2026-06-27T11:44:01.844Z"
       },
       "columns": [
         {
@@ -52370,7 +52370,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:33.020Z"
+        "refreshedAt": "2026-06-27T11:44:02.339Z"
       },
       "columns": [
         {
@@ -52422,7 +52422,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:33.451Z"
+        "refreshedAt": "2026-06-27T11:44:02.876Z"
       },
       "columns": [
         {
@@ -52534,7 +52534,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:33.964Z"
+        "refreshedAt": "2026-06-27T11:44:03.398Z"
       },
       "columns": [
         {
@@ -52621,7 +52621,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 17,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:34.498Z"
+        "refreshedAt": "2026-06-27T11:44:03.916Z"
       },
       "columns": [
         {
@@ -52669,7 +52669,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 62517,
         "nDeadTup": 78,
-        "refreshedAt": "2026-06-27T11:23:35.067Z"
+        "refreshedAt": "2026-06-27T11:44:04.431Z"
       },
       "columns": [
         {
@@ -53037,7 +53037,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2169,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:37.686Z"
+        "refreshedAt": "2026-06-27T11:44:06.908Z"
       },
       "columns": [
         {
@@ -53243,7 +53243,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 32,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:38.189Z"
+        "refreshedAt": "2026-06-27T11:44:07.554Z"
       },
       "columns": [
         {
@@ -53512,7 +53512,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:38.713Z"
+        "refreshedAt": "2026-06-27T11:44:08.191Z"
       },
       "columns": [
         {
@@ -53891,7 +53891,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 67,
         "nDeadTup": 5,
-        "refreshedAt": "2026-06-27T11:23:39.226Z"
+        "refreshedAt": "2026-06-27T11:44:08.683Z"
       },
       "columns": [
         {
@@ -54134,7 +54134,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:39.809Z"
+        "refreshedAt": "2026-06-27T11:44:09.303Z"
       },
       "columns": [
         {
@@ -54226,7 +54226,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:40.393Z"
+        "refreshedAt": "2026-06-27T11:44:10.144Z"
       },
       "columns": [
         {
@@ -54411,7 +54411,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:40.826Z"
+        "refreshedAt": "2026-06-27T11:44:10.740Z"
       },
       "columns": [
         {
@@ -54592,7 +54592,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 2,
-        "refreshedAt": "2026-06-27T11:23:41.314Z"
+        "refreshedAt": "2026-06-27T11:44:11.264Z"
       },
       "columns": [
         {
@@ -54772,7 +54772,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:41.828Z"
+        "refreshedAt": "2026-06-27T11:44:11.832Z"
       },
       "columns": [
         {
@@ -54877,7 +54877,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:42.354Z"
+        "refreshedAt": "2026-06-27T11:44:12.369Z"
       },
       "columns": [
         {
@@ -54955,7 +54955,7 @@
         "lastAutoanalyze": "2026-06-26T15:30:51.983Z",
         "nLiveTup": 174,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:42.892Z"
+        "refreshedAt": "2026-06-27T11:44:12.814Z"
       },
       "columns": [
         {
@@ -55041,7 +55041,7 @@
         "lastAutoanalyze": "2026-06-24T21:22:45.701Z",
         "nLiveTup": 227,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:43.481Z"
+        "refreshedAt": "2026-06-27T11:44:13.390Z"
       },
       "columns": [
         {
@@ -55169,7 +55169,7 @@
         "lastAutoanalyze": "2026-06-24T22:55:50.277Z",
         "nLiveTup": 59,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:43.980Z"
+        "refreshedAt": "2026-06-27T11:44:13.910Z"
       },
       "columns": [
         {
@@ -55297,7 +55297,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 28,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:44.512Z"
+        "refreshedAt": "2026-06-27T11:44:14.474Z"
       },
       "columns": [
         {
@@ -55446,7 +55446,7 @@
         "lastAutoanalyze": "2026-06-19T07:16:20.149Z",
         "nLiveTup": 665,
         "nDeadTup": 46,
-        "refreshedAt": "2026-06-27T11:23:44.987Z"
+        "refreshedAt": "2026-06-27T11:44:14.917Z"
       },
       "columns": [
         {
@@ -55708,7 +55708,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 14,
         "nDeadTup": 6,
-        "refreshedAt": "2026-06-27T11:23:45.580Z"
+        "refreshedAt": "2026-06-27T11:44:15.579Z"
       },
       "columns": [
         {
@@ -55948,7 +55948,7 @@
         "lastAutoanalyze": "2026-06-27T07:16:38.520Z",
         "nLiveTup": 1330,
         "nDeadTup": 312,
-        "refreshedAt": "2026-06-27T11:23:46.054Z"
+        "refreshedAt": "2026-06-27T11:44:16.062Z"
       },
       "columns": [
         {
@@ -56601,7 +56601,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:46.652Z"
+        "refreshedAt": "2026-06-27T11:44:16.590Z"
       },
       "columns": [
         {
@@ -56770,7 +56770,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:47.085Z"
+        "refreshedAt": "2026-06-27T11:44:17.015Z"
       },
       "columns": [
         {
@@ -56886,7 +56886,7 @@
         "lastAutoanalyze": "2026-06-26T14:14:48.055Z",
         "nLiveTup": 36,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:23:47.611Z"
+        "refreshedAt": "2026-06-27T11:44:17.568Z"
       },
       "columns": [
         {
@@ -57528,7 +57528,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 2,
-        "refreshedAt": "2026-06-27T11:23:48.146Z"
+        "refreshedAt": "2026-06-27T11:44:18.130Z"
       },
       "columns": [
         {
@@ -57662,7 +57662,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:48.681Z"
+        "refreshedAt": "2026-06-27T11:44:18.714Z"
       },
       "columns": [
         {
@@ -57756,7 +57756,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:49.170Z"
+        "refreshedAt": "2026-06-27T11:44:19.312Z"
       },
       "columns": [
         {
@@ -57804,7 +57804,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:49.683Z"
+        "refreshedAt": "2026-06-27T11:44:19.784Z"
       },
       "columns": [
         {
@@ -57916,7 +57916,7 @@
         "lastAutoanalyze": "2026-06-24T23:21:51.612Z",
         "nLiveTup": 212,
         "nDeadTup": 68,
-        "refreshedAt": "2026-06-27T11:23:50.262Z"
+        "refreshedAt": "2026-06-27T11:44:20.269Z"
       },
       "columns": [
         {
@@ -58586,7 +58586,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:50.796Z"
+        "refreshedAt": "2026-06-27T11:44:20.780Z"
       },
       "columns": [
         {
@@ -58769,7 +58769,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10,
         "nDeadTup": 10,
-        "refreshedAt": "2026-06-27T11:23:51.285Z"
+        "refreshedAt": "2026-06-27T11:44:21.243Z"
       },
       "columns": [
         {
@@ -58900,7 +58900,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 24,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:23:51.801Z"
+        "refreshedAt": "2026-06-27T11:44:21.778Z"
       },
       "columns": [
         {
@@ -59041,7 +59041,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:52.352Z"
+        "refreshedAt": "2026-06-27T11:44:22.322Z"
       },
       "columns": [
         {
@@ -59160,7 +59160,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:52.821Z"
+        "refreshedAt": "2026-06-27T11:44:22.778Z"
       },
       "columns": [
         {
@@ -59238,7 +59238,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 441,
         "nDeadTup": 9,
-        "refreshedAt": "2026-06-27T11:23:53.354Z"
+        "refreshedAt": "2026-06-27T11:44:23.344Z"
       },
       "columns": [
         {
@@ -59586,7 +59586,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:53.956Z"
+        "refreshedAt": "2026-06-27T11:44:23.921Z"
       },
       "columns": [
         {
@@ -59665,7 +59665,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:54.469Z"
+        "refreshedAt": "2026-06-27T11:44:24.340Z"
       },
       "columns": [
         {
@@ -59780,7 +59780,7 @@
         "lastAutoanalyze": "2026-06-17T19:52:39.778Z",
         "nLiveTup": 36,
         "nDeadTup": 17,
-        "refreshedAt": "2026-06-27T11:23:54.962Z"
+        "refreshedAt": "2026-06-27T11:44:25.138Z"
       },
       "columns": [
         {
@@ -60199,7 +60199,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:55.528Z"
+        "refreshedAt": "2026-06-27T11:44:25.797Z"
       },
       "columns": [
         {
@@ -60322,7 +60322,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:56.015Z"
+        "refreshedAt": "2026-06-27T11:44:26.395Z"
       },
       "columns": [
         {
@@ -60453,7 +60453,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:56.547Z"
+        "refreshedAt": "2026-06-27T11:44:27.015Z"
       },
       "columns": [
         {
@@ -60534,7 +60534,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:57.045Z"
+        "refreshedAt": "2026-06-27T11:44:27.565Z"
       },
       "columns": [
         {
@@ -60708,7 +60708,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 9,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:57.571Z"
+        "refreshedAt": "2026-06-27T11:44:28.020Z"
       },
       "columns": [
         {
@@ -60861,7 +60861,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:58.076Z"
+        "refreshedAt": "2026-06-27T11:44:28.526Z"
       },
       "columns": [
         {
@@ -60935,7 +60935,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 8,
         "nDeadTup": 9,
-        "refreshedAt": "2026-06-27T11:23:58.589Z"
+        "refreshedAt": "2026-06-27T11:44:29.086Z"
       },
       "columns": [
         {
@@ -61343,7 +61343,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 16,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:59.127Z"
+        "refreshedAt": "2026-06-27T11:44:29.612Z"
       },
       "columns": [
         {
@@ -61444,7 +61444,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:23:59.653Z"
+        "refreshedAt": "2026-06-27T11:44:30.160Z"
       },
       "columns": [
         {
@@ -61561,7 +61561,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:00.173Z"
+        "refreshedAt": "2026-06-27T11:44:30.845Z"
       },
       "columns": [
         {
@@ -61732,7 +61732,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:00.680Z"
+        "refreshedAt": "2026-06-27T11:44:31.314Z"
       },
       "columns": [
         {
@@ -61819,7 +61819,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 329,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:24:01.222Z"
+        "refreshedAt": "2026-06-27T11:44:31.761Z"
       },
       "columns": [
         {
@@ -62263,7 +62263,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 32,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:01.847Z"
+        "refreshedAt": "2026-06-27T11:44:32.300Z"
       },
       "columns": [
         {
@@ -62381,7 +62381,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:02.290Z"
+        "refreshedAt": "2026-06-27T11:44:32.770Z"
       },
       "columns": [
         {
@@ -62517,7 +62517,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 7,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:02.805Z"
+        "refreshedAt": "2026-06-27T11:44:33.274Z"
       },
       "columns": [
         {
@@ -62620,7 +62620,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:03.328Z"
+        "refreshedAt": "2026-06-27T11:44:33.786Z"
       },
       "columns": [
         {
@@ -62781,7 +62781,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:03.859Z"
+        "refreshedAt": "2026-06-27T11:44:34.330Z"
       },
       "columns": [
         {
@@ -62970,7 +62970,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 50,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:04.361Z"
+        "refreshedAt": "2026-06-27T11:44:34.844Z"
       },
       "columns": [
         {
@@ -63049,7 +63049,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:04.888Z"
+        "refreshedAt": "2026-06-27T11:44:35.345Z"
       },
       "columns": [
         {
@@ -63191,7 +63191,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:05.402Z"
+        "refreshedAt": "2026-06-27T11:44:35.937Z"
       },
       "columns": [
         {
@@ -63302,7 +63302,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 16,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:05.931Z"
+        "refreshedAt": "2026-06-27T11:44:36.443Z"
       },
       "columns": [
         {
@@ -63461,7 +63461,7 @@
         "lastAutoanalyze": "2026-06-26T15:29:51.723Z",
         "nLiveTup": 49,
         "nDeadTup": 12,
-        "refreshedAt": "2026-06-27T11:24:06.454Z"
+        "refreshedAt": "2026-06-27T11:44:36.978Z"
       },
       "columns": [
         {
@@ -63700,7 +63700,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:06.989Z"
+        "refreshedAt": "2026-06-27T11:44:37.527Z"
       },
       "columns": [
         {
@@ -63813,7 +63813,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:07.534Z"
+        "refreshedAt": "2026-06-27T11:44:37.990Z"
       },
       "columns": [
         {
@@ -63896,7 +63896,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:08.022Z"
+        "refreshedAt": "2026-06-27T11:44:38.533Z"
       },
       "columns": [
         {
@@ -63977,7 +63977,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:08.557Z"
+        "refreshedAt": "2026-06-27T11:44:39.064Z"
       },
       "columns": [
         {
@@ -64112,7 +64112,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:09.073Z"
+        "refreshedAt": "2026-06-27T11:44:39.574Z"
       },
       "columns": [
         {
@@ -64269,7 +64269,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:24:09.603Z"
+        "refreshedAt": "2026-06-27T11:44:40.155Z"
       },
       "columns": [
         {
@@ -64376,7 +64376,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 41,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:10.130Z"
+        "refreshedAt": "2026-06-27T11:44:40.727Z"
       },
       "columns": [
         {
@@ -64516,7 +64516,7 @@
         "lastAutoanalyze": "2026-06-19T18:52:52.678Z",
         "nLiveTup": 142,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:10.640Z"
+        "refreshedAt": "2026-06-27T11:44:41.169Z"
       },
       "columns": [
         {
@@ -64678,7 +64678,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:11.173Z"
+        "refreshedAt": "2026-06-27T11:44:41.659Z"
       },
       "columns": [
         {
@@ -64820,7 +64820,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:11.704Z"
+        "refreshedAt": "2026-06-27T11:44:42.212Z"
       },
       "columns": [
         {
@@ -64996,7 +64996,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:12.234Z"
+        "refreshedAt": "2026-06-27T11:44:42.760Z"
       },
       "columns": [
         {
@@ -65113,7 +65113,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:12.743Z"
+        "refreshedAt": "2026-06-27T11:44:43.237Z"
       },
       "columns": [
         {
@@ -65275,7 +65275,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:13.273Z"
+        "refreshedAt": "2026-06-27T11:44:43.730Z"
       },
       "columns": [
         {
@@ -65368,7 +65368,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:13.790Z"
+        "refreshedAt": "2026-06-27T11:44:44.263Z"
       },
       "columns": [
         {
@@ -65628,7 +65628,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:14.314Z"
+        "refreshedAt": "2026-06-27T11:44:44.799Z"
       },
       "columns": [
         {
@@ -65727,7 +65727,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 13,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:14.829Z"
+        "refreshedAt": "2026-06-27T11:44:45.308Z"
       },
       "columns": [
         {
@@ -65919,7 +65919,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:15.359Z"
+        "refreshedAt": "2026-06-27T11:44:45.864Z"
       },
       "columns": [
         {
@@ -66124,7 +66124,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:15.904Z"
+        "refreshedAt": "2026-06-27T11:44:46.428Z"
       },
       "columns": [
         {
@@ -66270,7 +66270,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:16.428Z"
+        "refreshedAt": "2026-06-27T11:44:46.947Z"
       },
       "columns": [
         {
@@ -66395,7 +66395,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:16.938Z"
+        "refreshedAt": "2026-06-27T11:44:47.406Z"
       },
       "columns": [
         {
@@ -66564,7 +66564,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:24:17.515Z"
+        "refreshedAt": "2026-06-27T11:44:47.994Z"
       },
       "columns": [
         {
@@ -66837,7 +66837,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 46,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:17.996Z"
+        "refreshedAt": "2026-06-27T11:44:48.489Z"
       },
       "columns": [
         {
@@ -67105,7 +67105,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 19,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:18.561Z"
+        "refreshedAt": "2026-06-27T11:44:49.032Z"
       },
       "columns": [
         {
@@ -67271,7 +67271,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 31,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:19.039Z"
+        "refreshedAt": "2026-06-27T11:44:49.520Z"
       },
       "columns": [
         {
@@ -67569,7 +67569,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 66,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:19.603Z"
+        "refreshedAt": "2026-06-27T11:44:50.093Z"
       },
       "columns": [
         {
@@ -67698,7 +67698,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:20.110Z"
+        "refreshedAt": "2026-06-27T11:44:50.679Z"
       },
       "columns": [
         {
@@ -67853,7 +67853,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:20.603Z"
+        "refreshedAt": "2026-06-27T11:44:51.318Z"
       },
       "columns": [
         {
@@ -67936,7 +67936,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:21.145Z"
+        "refreshedAt": "2026-06-27T11:44:51.898Z"
       },
       "columns": [
         {
@@ -68029,7 +68029,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:21.663Z"
+        "refreshedAt": "2026-06-27T11:44:52.688Z"
       },
       "columns": [
         {
@@ -68087,7 +68087,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 629,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:22.169Z"
+        "refreshedAt": "2026-06-27T11:44:53.286Z"
       },
       "columns": [
         {
@@ -68218,7 +68218,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 7,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:22.735Z"
+        "refreshedAt": "2026-06-27T11:44:53.819Z"
       },
       "columns": [
         {
@@ -68286,7 +68286,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:23.238Z"
+        "refreshedAt": "2026-06-27T11:44:54.351Z"
       },
       "columns": [
         {
@@ -68410,7 +68410,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 45,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:23.783Z"
+        "refreshedAt": "2026-06-27T11:44:54.923Z"
       },
       "columns": [
         {
@@ -68516,7 +68516,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 43,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:24.323Z"
+        "refreshedAt": "2026-06-27T11:44:55.444Z"
       },
       "columns": [
         {
@@ -68738,7 +68738,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 70,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:24.848Z"
+        "refreshedAt": "2026-06-27T11:44:56.036Z"
       },
       "columns": [
         {
@@ -68815,7 +68815,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 476,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:25.340Z"
+        "refreshedAt": "2026-06-27T11:44:56.812Z"
       },
       "columns": [
         {
@@ -68903,7 +68903,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:25.915Z"
+        "refreshedAt": "2026-06-27T11:44:57.514Z"
       },
       "columns": [
         {
@@ -68984,7 +68984,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:26.406Z"
+        "refreshedAt": "2026-06-27T11:44:58.165Z"
       },
       "columns": [
         {
@@ -69084,7 +69084,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:26.937Z"
+        "refreshedAt": "2026-06-27T11:44:58.905Z"
       },
       "columns": [
         {
@@ -69187,7 +69187,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:27.452Z"
+        "refreshedAt": "2026-06-27T11:44:59.582Z"
       },
       "columns": [
         {
@@ -69290,7 +69290,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:27.948Z"
+        "refreshedAt": "2026-06-27T11:45:00.153Z"
       },
       "columns": [
         {
@@ -69328,7 +69328,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:28.508Z"
+        "refreshedAt": "2026-06-27T11:45:00.660Z"
       },
       "columns": [
         {
@@ -69414,7 +69414,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:29.034Z"
+        "refreshedAt": "2026-06-27T11:45:01.089Z"
       },
       "columns": [
         {
@@ -69557,7 +69557,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 35,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:29.586Z"
+        "refreshedAt": "2026-06-27T11:45:01.580Z"
       },
       "columns": [
         {
@@ -69747,7 +69747,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 138,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:30.084Z"
+        "refreshedAt": "2026-06-27T11:45:02.107Z"
       },
       "columns": [
         {
@@ -69894,7 +69894,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 391,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:30.651Z"
+        "refreshedAt": "2026-06-27T11:45:02.744Z"
       },
       "columns": [
         {
@@ -70059,7 +70059,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 24,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:31.218Z"
+        "refreshedAt": "2026-06-27T11:45:03.370Z"
       },
       "columns": [
         {
@@ -70180,7 +70180,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 22,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:31.656Z"
+        "refreshedAt": "2026-06-27T11:45:04.080Z"
       },
       "columns": [
         {
@@ -70348,7 +70348,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:32.213Z"
+        "refreshedAt": "2026-06-27T11:45:04.764Z"
       },
       "columns": [
         {
@@ -70416,7 +70416,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 148,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:32.693Z"
+        "refreshedAt": "2026-06-27T11:45:05.240Z"
       },
       "columns": [
         {
@@ -70606,7 +70606,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 864,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:33.230Z"
+        "refreshedAt": "2026-06-27T11:45:05.790Z"
       },
       "columns": [
         {
@@ -70712,7 +70712,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:33.744Z"
+        "refreshedAt": "2026-06-27T11:45:06.313Z"
       },
       "columns": [
         {
@@ -70819,7 +70819,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2334,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:34.276Z"
+        "refreshedAt": "2026-06-27T11:45:06.844Z"
       },
       "columns": [
         {
@@ -71031,7 +71031,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 5218,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:35.123Z"
+        "refreshedAt": "2026-06-27T11:45:07.693Z"
       },
       "columns": [
         {
@@ -71144,7 +71144,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 6,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:36.170Z"
+        "refreshedAt": "2026-06-27T11:45:08.513Z"
       },
       "columns": [
         {
@@ -71220,7 +71220,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:36.875Z"
+        "refreshedAt": "2026-06-27T11:45:08.981Z"
       },
       "columns": [
         {
@@ -71290,7 +71290,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 3,
-        "refreshedAt": "2026-06-27T11:24:37.401Z"
+        "refreshedAt": "2026-06-27T11:45:09.447Z"
       },
       "columns": [
         {
@@ -71408,7 +71408,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:37.984Z"
+        "refreshedAt": "2026-06-27T11:45:09.987Z"
       },
       "columns": [
         {
@@ -71506,7 +71506,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 812,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:38.446Z"
+        "refreshedAt": "2026-06-27T11:45:10.488Z"
       },
       "columns": [
         {
@@ -72606,7 +72606,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 307,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:39.035Z"
+        "refreshedAt": "2026-06-27T11:45:11.044Z"
       },
       "columns": [
         {
@@ -72781,7 +72781,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 51,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:39.513Z"
+        "refreshedAt": "2026-06-27T11:45:11.572Z"
       },
       "columns": [
         {
@@ -72941,7 +72941,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 42,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:40.138Z"
+        "refreshedAt": "2026-06-27T11:45:12.095Z"
       },
       "columns": [
         {
@@ -73736,7 +73736,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 40,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:40.601Z"
+        "refreshedAt": "2026-06-27T11:45:12.648Z"
       },
       "columns": [
         {
@@ -73821,7 +73821,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 318,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:41.061Z"
+        "refreshedAt": "2026-06-27T11:45:13.109Z"
       },
       "columns": [
         {
@@ -73926,7 +73926,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 484,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:41.576Z"
+        "refreshedAt": "2026-06-27T11:45:13.641Z"
       },
       "columns": [
         {
@@ -74134,7 +74134,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:42.161Z"
+        "refreshedAt": "2026-06-27T11:45:14.211Z"
       },
       "columns": [
         {
@@ -74291,7 +74291,7 @@
         "lastAutoanalyze": "2026-06-24T11:15:17.908Z",
         "nLiveTup": 5868,
         "nDeadTup": 106,
-        "refreshedAt": "2026-06-27T11:24:42.655Z"
+        "refreshedAt": "2026-06-27T11:45:14.674Z"
       },
       "columns": [
         {
@@ -74489,8 +74489,8 @@
         "totalSize": "1576 kB",
         "lastAutoanalyze": "2026-06-26T23:22:14.581Z",
         "nLiveTup": 1411,
-        "nDeadTup": 107,
-        "refreshedAt": "2026-06-27T11:24:44.031Z"
+        "nDeadTup": 96,
+        "refreshedAt": "2026-06-27T11:45:16.086Z"
       },
       "columns": [
         {
@@ -74708,7 +74708,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:44.718Z"
+        "refreshedAt": "2026-06-27T11:45:16.719Z"
       },
       "columns": [
         {
@@ -74791,7 +74791,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:45.290Z"
+        "refreshedAt": "2026-06-27T11:45:17.732Z"
       },
       "columns": [
         {
@@ -74854,7 +74854,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:45.864Z"
+        "refreshedAt": "2026-06-27T11:45:18.385Z"
       },
       "columns": [
         {
@@ -74922,7 +74922,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 7,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:46.341Z"
+        "refreshedAt": "2026-06-27T11:45:18.970Z"
       },
       "columns": [
         {
@@ -74985,7 +74985,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 831,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:46.873Z"
+        "refreshedAt": "2026-06-27T11:45:19.410Z"
       },
       "columns": [
         {
@@ -75078,7 +75078,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 19,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:47.382Z"
+        "refreshedAt": "2026-06-27T11:45:19.939Z"
       },
       "columns": [
         {
@@ -75173,7 +75173,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:47.905Z"
+        "refreshedAt": "2026-06-27T11:45:20.462Z"
       },
       "columns": [
         {
@@ -75241,7 +75241,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:48.417Z"
+        "refreshedAt": "2026-06-27T11:45:21.080Z"
       },
       "columns": [
         {
@@ -75289,7 +75289,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:48.918Z"
+        "refreshedAt": "2026-06-27T11:45:21.555Z"
       },
       "columns": [
         {
@@ -75367,7 +75367,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:49.456Z"
+        "refreshedAt": "2026-06-27T11:45:22.013Z"
       },
       "columns": [
         {
@@ -75410,7 +75410,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:49.979Z"
+        "refreshedAt": "2026-06-27T11:45:22.634Z"
       },
       "columns": [
         {
@@ -75535,7 +75535,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 7,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:50.554Z"
+        "refreshedAt": "2026-06-27T11:45:23.105Z"
       },
       "columns": [
         {
@@ -75721,7 +75721,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:51.060Z"
+        "refreshedAt": "2026-06-27T11:45:23.730Z"
       },
       "columns": [
         {
@@ -75814,7 +75814,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 40,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:51.536Z"
+        "refreshedAt": "2026-06-27T11:45:24.173Z"
       },
       "columns": [
         {
@@ -75894,7 +75894,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 31,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:24:52.093Z"
+        "refreshedAt": "2026-06-27T11:45:24.705Z"
       },
       "columns": [
         {
@@ -75969,12 +75969,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 152423,
-        "totalSize": "5611 MB",
+        "approxRows": 152425,
+        "totalSize": "5194 MB",
         "lastAutoanalyze": "2026-06-26T18:54:39.651Z",
-        "nLiveTup": 152423,
+        "nLiveTup": 152425,
         "nDeadTup": 9593,
-        "refreshedAt": "2026-06-27T11:24:52.636Z"
+        "refreshedAt": "2026-06-27T11:45:25.177Z"
       },
       "columns": [
         {
@@ -76025,21 +76025,6 @@
         {
           "name": "source_type",
           "dataType": "text",
-          "isNullable": true
-        },
-        {
-          "name": "chunk_context",
-          "dataType": "text",
-          "isNullable": true
-        },
-        {
-          "name": "embedding_contextual",
-          "dataType": "USER-DEFINED",
-          "isNullable": true
-        },
-        {
-          "name": "contextualized_at",
-          "dataType": "timestamp with time zone",
           "isNullable": true
         }
       ],
@@ -76253,7 +76238,7 @@
           },
           {
             "filePath": "backend/src/services/agents/alleato_ai_tools/rag.py",
-            "lineNumber": 429,
+            "lineNumber": 407,
             "kind": "read",
             "snippet": ".table(\"document_chunks\")"
           },
@@ -76544,7 +76529,7 @@
         "lastAutoanalyze": "2026-06-26T01:26:47.837Z",
         "nLiveTup": 16,
         "nDeadTup": 32,
-        "refreshedAt": "2026-06-27T11:24:54.656Z"
+        "refreshedAt": "2026-06-27T11:45:26.343Z"
       },
       "columns": [
         {
@@ -76637,12 +76622,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 40512,
+        "approxRows": 40514,
         "totalSize": "336 MB",
         "lastAutoanalyze": "2026-06-24T16:44:22.026Z",
-        "nLiveTup": 40512,
-        "nDeadTup": 5273,
-        "refreshedAt": "2026-06-27T11:24:55.176Z"
+        "nLiveTup": 40514,
+        "nDeadTup": 5279,
+        "refreshedAt": "2026-06-27T11:45:26.722Z"
       },
       "columns": [
         {
@@ -77009,7 +76994,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 27406,
         "nDeadTup": 1517,
-        "refreshedAt": "2026-06-27T11:24:56.223Z"
+        "refreshedAt": "2026-06-27T11:45:27.254Z"
       },
       "columns": [
         {
@@ -77253,7 +77238,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 14441,
         "nDeadTup": 254,
-        "refreshedAt": "2026-06-27T11:24:56.791Z"
+        "refreshedAt": "2026-06-27T11:45:27.800Z"
       },
       "columns": [
         {
@@ -77500,12 +77485,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 17572,
+        "approxRows": 17574,
         "totalSize": "22 MB",
         "lastAutoanalyze": "2026-06-27T07:05:12.805Z",
-        "nLiveTup": 17572,
+        "nLiveTup": 17574,
         "nDeadTup": 2440,
-        "refreshedAt": "2026-06-27T11:24:57.334Z"
+        "refreshedAt": "2026-06-27T11:45:28.263Z"
       },
       "columns": [
         {
@@ -77782,7 +77767,7 @@
         "lastAutoanalyze": "2026-06-23T11:20:56.764Z",
         "nLiveTup": 9633,
         "nDeadTup": 1479,
-        "refreshedAt": "2026-06-27T11:24:58.195Z"
+        "refreshedAt": "2026-06-27T11:45:28.760Z"
       },
       "columns": [
         {
@@ -78035,12 +78020,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 20665,
+        "approxRows": 20674,
         "totalSize": "13 MB",
         "lastAutoanalyze": "2026-06-25T13:18:13.798Z",
-        "nLiveTup": 20665,
+        "nLiveTup": 20674,
         "nDeadTup": 606,
-        "refreshedAt": "2026-06-27T11:24:58.998Z"
+        "refreshedAt": "2026-06-27T11:45:29.268Z"
       },
       "columns": [
         {
@@ -78269,12 +78254,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 6066,
+        "approxRows": 6068,
         "totalSize": "11 MB",
         "lastAutoanalyze": "2026-06-27T10:46:21.640Z",
-        "nLiveTup": 6066,
-        "nDeadTup": 331,
-        "refreshedAt": "2026-06-27T11:24:59.997Z"
+        "nLiveTup": 6068,
+        "nDeadTup": 335,
+        "refreshedAt": "2026-06-27T11:45:29.779Z"
       },
       "columns": [
         {
@@ -78432,12 +78417,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 7308,
+        "approxRows": 7310,
         "totalSize": "2320 kB",
         "lastAutoanalyze": "2026-06-27T07:36:12.761Z",
-        "nLiveTup": 7308,
+        "nLiveTup": 7310,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:00.850Z"
+        "refreshedAt": "2026-06-27T11:45:30.286Z"
       },
       "columns": [
         {
@@ -78594,7 +78579,7 @@
         "lastAutoanalyze": "2026-06-24T16:09:15.387Z",
         "nLiveTup": 1871,
         "nDeadTup": 184,
-        "refreshedAt": "2026-06-27T11:25:01.331Z"
+        "refreshedAt": "2026-06-27T11:45:30.902Z"
       },
       "columns": [
         {
@@ -78885,7 +78870,7 @@
         "lastAutoanalyze": "2026-06-26T19:43:38.872Z",
         "nLiveTup": 659,
         "nDeadTup": 73,
-        "refreshedAt": "2026-06-27T11:25:01.862Z"
+        "refreshedAt": "2026-06-27T11:45:31.396Z"
       },
       "columns": [
         {
@@ -78973,7 +78958,7 @@
         "lastAutoanalyze": "2026-06-27T08:06:13.993Z",
         "nLiveTup": 340,
         "nDeadTup": 75,
-        "refreshedAt": "2026-06-27T11:25:02.392Z"
+        "refreshedAt": "2026-06-27T11:45:31.893Z"
       },
       "columns": [
         {
@@ -79136,7 +79121,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 17,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:02.965Z"
+        "refreshedAt": "2026-06-27T11:45:32.405Z"
       },
       "columns": [
         {
@@ -79184,7 +79169,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:03.558Z"
+        "refreshedAt": "2026-06-27T11:45:33.019Z"
       },
       "columns": [
         {
@@ -79266,7 +79251,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:04.060Z"
+        "refreshedAt": "2026-06-27T11:45:33.514Z"
       },
       "columns": [
         {
@@ -79319,7 +79304,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:05.128Z"
+        "refreshedAt": "2026-06-27T11:45:34.076Z"
       },
       "columns": [
         {
@@ -79367,7 +79352,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 8,
-        "refreshedAt": "2026-06-27T11:25:05.645Z"
+        "refreshedAt": "2026-06-27T11:45:34.599Z"
       },
       "columns": [
         {
@@ -79561,7 +79546,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:06.186Z"
+        "refreshedAt": "2026-06-27T11:45:35.143Z"
       },
       "columns": [
         {
@@ -79713,7 +79698,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:06.767Z"
+        "refreshedAt": "2026-06-27T11:45:35.685Z"
       },
       "columns": [
         {
@@ -79781,7 +79766,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:07.309Z"
+        "refreshedAt": "2026-06-27T11:45:36.467Z"
       },
       "columns": [
         {
@@ -79849,7 +79834,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 12,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:07.809Z"
+        "refreshedAt": "2026-06-27T11:45:37.068Z"
       },
       "columns": [
         {
@@ -79924,7 +79909,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:08.323Z"
+        "refreshedAt": "2026-06-27T11:45:37.657Z"
       },
       "columns": [
         {
@@ -80114,7 +80099,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:08.856Z"
+        "refreshedAt": "2026-06-27T11:45:38.273Z"
       },
       "columns": [
         {
@@ -80219,7 +80204,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:09.403Z"
+        "refreshedAt": "2026-06-27T11:45:38.836Z"
       },
       "columns": [
         {
@@ -80445,7 +80430,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:09.954Z"
+        "refreshedAt": "2026-06-27T11:45:39.345Z"
       },
       "columns": [
         {
@@ -80655,7 +80640,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:10.452Z"
+        "refreshedAt": "2026-06-27T11:45:39.912Z"
       },
       "columns": [
         {
@@ -80705,7 +80690,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 2,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:10.959Z"
+        "refreshedAt": "2026-06-27T11:45:40.366Z"
       },
       "columns": [
         {
@@ -80765,7 +80750,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:11.480Z"
+        "refreshedAt": "2026-06-27T11:45:40.921Z"
       },
       "columns": [
         {
@@ -80884,7 +80869,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 2,
-        "refreshedAt": "2026-06-27T11:25:12.020Z"
+        "refreshedAt": "2026-06-27T11:45:41.536Z"
       },
       "columns": [
         {
@@ -81023,7 +81008,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:12.546Z"
+        "refreshedAt": "2026-06-27T11:45:41.989Z"
       },
       "columns": [
         {
@@ -81129,7 +81114,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:13.138Z"
+        "refreshedAt": "2026-06-27T11:45:42.519Z"
       },
       "columns": [
         {
@@ -81235,7 +81220,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:13.589Z"
+        "refreshedAt": "2026-06-27T11:45:43.001Z"
       },
       "columns": [
         {
@@ -81343,7 +81328,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:14.094Z"
+        "refreshedAt": "2026-06-27T11:45:43.555Z"
       },
       "columns": [
         {
@@ -81421,7 +81406,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 8,
         "nDeadTup": 11,
-        "refreshedAt": "2026-06-27T11:25:14.619Z"
+        "refreshedAt": "2026-06-27T11:45:44.052Z"
       },
       "columns": [
         {
@@ -81545,7 +81530,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 19,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:15.137Z"
+        "refreshedAt": "2026-06-27T11:45:44.565Z"
       },
       "columns": [
         {
@@ -81627,7 +81612,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 8,
         "nDeadTup": 5,
-        "refreshedAt": "2026-06-27T11:25:15.769Z"
+        "refreshedAt": "2026-06-27T11:45:45.111Z"
       },
       "columns": [
         {
@@ -81773,7 +81758,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:16.261Z"
+        "refreshedAt": "2026-06-27T11:45:45.605Z"
       },
       "columns": [
         {
@@ -81833,7 +81818,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:17.181Z"
+        "refreshedAt": "2026-06-27T11:45:46.710Z"
       },
       "columns": [
         {
@@ -81935,7 +81920,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:17.711Z"
+        "refreshedAt": "2026-06-27T11:45:47.196Z"
       },
       "columns": [
         {
@@ -81995,7 +81980,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:18.223Z"
+        "refreshedAt": "2026-06-27T11:45:47.768Z"
       },
       "columns": [
         {
@@ -82068,7 +82053,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:18.770Z"
+        "refreshedAt": "2026-06-27T11:45:48.298Z"
       },
       "columns": [
         {
@@ -82128,7 +82113,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:19.326Z"
+        "refreshedAt": "2026-06-27T11:45:48.772Z"
       },
       "columns": [
         {
@@ -82188,7 +82173,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 14,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:19.847Z"
+        "refreshedAt": "2026-06-27T11:45:49.386Z"
       },
       "columns": [
         {
@@ -82248,7 +82233,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:20.373Z"
+        "refreshedAt": "2026-06-27T11:45:49.855Z"
       },
       "columns": [
         {
@@ -82326,7 +82311,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:20.903Z"
+        "refreshedAt": "2026-06-27T11:45:50.398Z"
       },
       "columns": [
         {
@@ -82428,7 +82413,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:21.413Z"
+        "refreshedAt": "2026-06-27T11:45:50.904Z"
       },
       "columns": [
         {
@@ -82530,7 +82515,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:21.938Z"
+        "refreshedAt": "2026-06-27T11:45:51.385Z"
       },
       "columns": [
         {
@@ -82626,7 +82611,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 10,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:22.494Z"
+        "refreshedAt": "2026-06-27T11:45:51.932Z"
       },
       "columns": [
         {
@@ -82705,7 +82690,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 42,
         "nDeadTup": 9,
-        "refreshedAt": "2026-06-27T11:25:23.003Z"
+        "refreshedAt": "2026-06-27T11:45:52.496Z"
       },
       "columns": [
         {
@@ -82833,7 +82818,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 14,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:23.559Z"
+        "refreshedAt": "2026-06-27T11:45:52.962Z"
       },
       "columns": [
         {
@@ -82899,7 +82884,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:24.044Z"
+        "refreshedAt": "2026-06-27T11:45:53.509Z"
       },
       "columns": [
         {
@@ -82985,7 +82970,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 1,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:24.577Z"
+        "refreshedAt": "2026-06-27T11:45:54.079Z"
       },
       "columns": [
         {
@@ -83115,7 +83100,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 3,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:25.096Z"
+        "refreshedAt": "2026-06-27T11:45:54.621Z"
       },
       "columns": [
         {
@@ -83212,7 +83197,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 34,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:25.637Z"
+        "refreshedAt": "2026-06-27T11:45:55.132Z"
       },
       "columns": [
         {
@@ -83347,7 +83332,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 20,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:26.185Z"
+        "refreshedAt": "2026-06-27T11:45:55.629Z"
       },
       "columns": [
         {
@@ -83533,7 +83518,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:26.693Z"
+        "refreshedAt": "2026-06-27T11:45:56.189Z"
       },
       "columns": [
         {
@@ -83647,7 +83632,7 @@
         "lastAutoanalyze": "2026-06-19T07:29:20.657Z",
         "nLiveTup": 49,
         "nDeadTup": 44,
-        "refreshedAt": "2026-06-27T11:25:27.248Z"
+        "refreshedAt": "2026-06-27T11:45:56.668Z"
       },
       "columns": [
         {
@@ -83832,7 +83817,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 6,
-        "refreshedAt": "2026-06-27T11:25:27.739Z"
+        "refreshedAt": "2026-06-27T11:45:57.194Z"
       },
       "columns": [
         {
@@ -84121,7 +84106,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 0,
         "nDeadTup": 3,
-        "refreshedAt": "2026-06-27T11:25:28.298Z"
+        "refreshedAt": "2026-06-27T11:45:57.843Z"
       },
       "columns": [
         {
@@ -84256,7 +84241,7 @@
         "lastAutoanalyze": "2026-06-19T07:29:20.675Z",
         "nLiveTup": 50,
         "nDeadTup": 47,
-        "refreshedAt": "2026-06-27T11:25:28.758Z"
+        "refreshedAt": "2026-06-27T11:45:58.494Z"
       },
       "columns": [
         {
@@ -84514,7 +84499,7 @@
         "lastAutoanalyze": "2026-06-24T22:58:50.478Z",
         "nLiveTup": 140,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:29.306Z"
+        "refreshedAt": "2026-06-27T11:45:59.169Z"
       },
       "columns": [
         {
@@ -84636,7 +84621,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 9,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:25:29.827Z"
+        "refreshedAt": "2026-06-27T11:45:59.766Z"
       },
       "columns": [
         {
@@ -84807,7 +84792,7 @@
         "lastAutoanalyze": "2026-06-24T15:49:29.463Z",
         "nLiveTup": 46,
         "nDeadTup": 42,
-        "refreshedAt": "2026-06-27T11:25:30.381Z"
+        "refreshedAt": "2026-06-27T11:46:00.339Z"
       },
       "columns": [
         {
@@ -84956,7 +84941,7 @@
         "lastAutoanalyze": "2026-06-23T05:31:46.801Z",
         "nLiveTup": 252,
         "nDeadTup": 26,
-        "refreshedAt": "2026-06-27T11:25:30.868Z"
+        "refreshedAt": "2026-06-27T11:46:00.860Z"
       },
       "columns": [
         {
@@ -85154,7 +85139,7 @@
         "lastAutoanalyze": "2026-06-23T05:31:46.895Z",
         "nLiveTup": 252,
         "nDeadTup": 17,
-        "refreshedAt": "2026-06-27T11:25:31.463Z"
+        "refreshedAt": "2026-06-27T11:46:01.431Z"
       },
       "columns": [
         {
@@ -85287,7 +85272,7 @@
         "lastAutoanalyze": "2026-06-23T05:31:46.631Z",
         "nLiveTup": 292,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:25:31.961Z"
+        "refreshedAt": "2026-06-27T11:46:01.920Z"
       },
       "columns": [
         {
@@ -85424,7 +85409,7 @@
         "lastAutoanalyze": "2026-06-23T20:49:31.672Z",
         "nLiveTup": 198,
         "nDeadTup": 66,
-        "refreshedAt": "2026-06-27T11:25:32.485Z"
+        "refreshedAt": "2026-06-27T11:46:02.432Z"
       },
       "columns": [
         {
@@ -85604,7 +85589,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 4,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:32.986Z"
+        "refreshedAt": "2026-06-27T11:46:02.935Z"
       },
       "columns": [
         {
@@ -85707,7 +85692,7 @@
         "lastAutoanalyze": "2026-06-23T23:28:40.028Z",
         "nLiveTup": 4085,
         "nDeadTup": 0,
-        "refreshedAt": "2026-06-27T11:25:33.485Z"
+        "refreshedAt": "2026-06-27T11:46:03.443Z"
       },
       "columns": [
         {
@@ -85815,7 +85800,7 @@
         "lastAutoanalyze": "2026-06-24T06:56:04.203Z",
         "nLiveTup": 11170,
         "nDeadTup": 1,
-        "refreshedAt": "2026-06-27T11:25:34.354Z"
+        "refreshedAt": "2026-06-27T11:46:04.316Z"
       },
       "columns": [
         {
@@ -85963,7 +85948,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 11,
         "nDeadTup": 4,
-        "refreshedAt": "2026-06-27T11:25:35.060Z"
+        "refreshedAt": "2026-06-27T11:46:05.056Z"
       },
       "columns": [
         {
@@ -86178,8 +86163,8 @@
         "totalSize": "272 kB",
         "lastAutoanalyze": "2026-06-25T21:22:35.879Z",
         "nLiveTup": 324,
-        "nDeadTup": 104,
-        "refreshedAt": "2026-06-27T11:25:36.037Z"
+        "nDeadTup": 105,
+        "refreshedAt": "2026-06-27T11:46:06.132Z"
       },
       "columns": [
         {
@@ -86301,12 +86286,12 @@
       "relatedTables": [],
       "notesForAi": null,
       "liveStats": {
-        "approxRows": 2973,
+        "approxRows": 2975,
         "totalSize": "17 MB",
         "lastAutoanalyze": "2026-06-27T07:05:12.174Z",
-        "nLiveTup": 2973,
-        "nDeadTup": 224,
-        "refreshedAt": "2026-06-27T11:25:36.545Z"
+        "nLiveTup": 2975,
+        "nDeadTup": 233,
+        "refreshedAt": "2026-06-27T11:46:06.508Z"
       },
       "columns": [
         {
@@ -86813,10 +86798,10 @@
       "liveStats": {
         "approxRows": 650,
         "totalSize": "158 MB",
-        "lastAutoanalyze": "2026-06-27T05:04:05.607Z",
+        "lastAutoanalyze": "2026-06-27T11:29:23.335Z",
         "nLiveTup": 650,
-        "nDeadTup": 98,
-        "refreshedAt": "2026-06-27T11:25:37.079Z"
+        "nDeadTup": 101,
+        "refreshedAt": "2026-06-27T11:46:07.011Z"
       },
       "columns": [
         {
@@ -87089,7 +87074,7 @@
         "lastAutoanalyze": null,
         "nLiveTup": 151,
         "nDeadTup": 6,
-        "refreshedAt": "2026-06-27T11:25:37.669Z"
+        "refreshedAt": "2026-06-27T11:46:07.528Z"
       },
       "columns": [
         {
@@ -87271,8 +87256,8 @@
         "totalSize": "1152 kB",
         "lastAutoanalyze": "2026-06-25T22:48:39.964Z",
         "nLiveTup": 134,
-        "nDeadTup": 58,
-        "refreshedAt": "2026-06-27T11:25:38.164Z"
+        "nDeadTup": 53,
+        "refreshedAt": "2026-06-27T11:46:08.003Z"
       },
       "columns": [
         {
@@ -87465,7 +87450,7 @@
         "lastAutoanalyze": "2026-06-25T22:34:42.141Z",
         "nLiveTup": 912,
         "nDeadTup": 59,
-        "refreshedAt": "2026-06-27T11:25:38.704Z"
+        "refreshedAt": "2026-06-27T11:46:08.487Z"
       },
       "columns": [
         {
@@ -87686,7 +87671,7 @@
         "lastAutoanalyze": "2026-06-27T04:07:02.661Z",
         "nLiveTup": 80,
         "nDeadTup": 30,
-        "refreshedAt": "2026-06-27T11:25:39.378Z"
+        "refreshedAt": "2026-06-27T11:46:08.988Z"
       },
       "columns": [
         {
@@ -87880,12 +87865,12 @@
       "relatedTables": [],
       "notesForAi": "Query this table to answer 'who changed X and when' questions. Filter by table_name + record_id for per-record history. changed_by is null for service-role/cron writes.",
       "liveStats": {
-        "approxRows": 41139,
+        "approxRows": 41165,
         "totalSize": "110 MB",
         "lastAutoanalyze": "2026-06-27T00:03:23.381Z",
-        "nLiveTup": 41139,
+        "nLiveTup": 41165,
         "nDeadTup": 13,
-        "refreshedAt": "2026-06-27T11:25:39.754Z"
+        "refreshedAt": "2026-06-27T11:46:09.494Z"
       },
       "columns": [
         {

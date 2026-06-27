@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED — DO NOT EDIT BY HAND.**
 > Regenerate with `npm run db:inventory`. Source: `docs/architecture/tables.yaml` + live Supabase stats.
-> Last generated: 2026-06-27T11:21:13.560Z
+> Last generated: 2026-06-27T11:41:37.208Z
 
 This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
 
@@ -315,7 +315,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `optimization_rules` | fm-asrs | dormant | 0 | 0 | Dormant generic optimization rules. |  |
 | `__drizzle_migrations` | infrastructure | live | 1 | 0 | Drizzle ORM migration ledger. Tracks applied migrations. |  |
 | `_prisma_migrations` | infrastructure | legacy | 1 | 0 | Prisma migration ledger from prior ORM. Kept for historical record; Supabase migrations are authoritative. |  |
-| `db_audit_log` | infrastructure | live | 41.1k | 1 | Central audit log for all key business entity tables. Populated by fn_audit_log_generic trigger (trg_audit_log) on 37 tables covering projects, financial, cont… | Query this table to answer 'who changed X and when' questions. Filter by table_name + record_id for per-record history. changed_by is null for service-role/cro… |
+| `db_audit_log` | infrastructure | live | 41.2k | 1 | Central audit log for all key business entity tables. Populated by fn_audit_log_generic trigger (trg_audit_log) on 37 tables covering projects, financial, cont… | Query this table to answer 'who changed X and when' questions. Filter by table_name + record_id for per-record history. changed_by is null for service-role/cro… |
 | `briefing_runs` | intelligence | dormant | 0 | 0 | Dormant briefing run tracker. |  |
 | `daily_recaps` | intelligence | live | 98 | 12 | Executive briefing packet store. Executive Daily Brief generation now writes canonical AI Ops run linkage through ai_work_run_id. | Legacy mechanism, but still actively generated for Executive Daily Brief. ai_work_run_id is the canonical generation run pointer; ai_work_runs.daily_recap_id r… |
 | `executive_briefing_follow_ups` | intelligence | live | 665 | 8 | Follow-up actions from executive briefings. 108 rows. |  |

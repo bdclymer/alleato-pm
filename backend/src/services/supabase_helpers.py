@@ -669,7 +669,7 @@ class SupabaseRagStore:
         return {
             "document_id": row.get("document_id"),
             "chunk_index": row.get("chunk_index"),
-            "text": row.get("text") or row.get("chunk_context") or "",
+            "text": row.get("text") or "",
             "metadata": metadata,
         }
 

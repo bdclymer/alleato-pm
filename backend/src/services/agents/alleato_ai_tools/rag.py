@@ -107,15 +107,7 @@ def _corpus_search_healthy(rpc_name: str) -> bool:
     _health_cache["healthy"] = healthy
     return healthy
 
-# Embedding-variant selection — flips between the legacy vector and the contextual
-# vector once alleato-pm finishes the Contextual Retrieval backfill (see
-# docs/contextual-retrieval-handoff.md). Both RPCs share an identical signature
-# so this is a one-line swap.
-_RPC_BY_VARIANT = {
-    "baseline": "search_document_chunks",
-    "contextual": "search_document_chunks_contextual",
-}
-_DEFAULT_VARIANT = "baseline"
+_SEARCH_RPC = "search_document_chunks"
 
 MEETING_SOURCE_TYPES = [
     "meeting_transcript",
@@ -197,16 +189,6 @@ def _format_results(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines).rstrip()
 
 
-def _resolve_variant(variant: str | None) -> str:
-    if variant is None:
-        variant = os.environ.get("RAG_EMBEDDING_VARIANT", _DEFAULT_VARIANT)
-    if variant not in _RPC_BY_VARIANT:
-        raise ValueError(
-            f"unknown embedding variant {variant!r}; expected one of {list(_RPC_BY_VARIANT)}"
-        )
-    return variant
-
-
 def retrieve(
     query: str,
     source_types: list[str] | None = None,
@@ -216,7 +198,6 @@ def retrieve(
     version_status: str | None = None,
     max_results: int = 8,
     rerank: bool | None = None,
-    variant: str | None = None,
 ) -> list[dict[str, Any]]:
     """Retrieve ranked chunks. Returns raw rows so callers (tools, evals) can format as needed.
 
@@ -228,9 +209,6 @@ def retrieve(
         version_status: Match `doc_metadata->>'version_status'`; applied in-process.
         max_results: Final result count returned.
         rerank: Force rerank on/off. If None, enabled when COHERE_API_KEY is set.
-        variant: Embedding variant — "baseline" (raw-text embedding) or "contextual"
-            (Anthropic Contextual Retrieval, see docs/contextual-retrieval-handoff.md).
-            If None, reads `RAG_EMBEDDING_VARIANT` env var, defaulting to "baseline".
 
     Returns:
         Ordered list of result dicts (most relevant first). Each row includes
@@ -244,7 +222,7 @@ def retrieve(
     if max_results <= 0:
         raise ValueError("max_results must be positive")
 
-    rpc_name = _RPC_BY_VARIANT[_resolve_variant(variant)]
+    rpc_name = _SEARCH_RPC
     embedding = _embed_query(query)
     pid = _coerce_project_id(project_id)
     df = _parse_iso_date(date_from)

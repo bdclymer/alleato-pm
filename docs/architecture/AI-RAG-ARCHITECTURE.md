@@ -471,18 +471,26 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 | `search_all_knowledge` | Searches structured intelligence tables: decisions, risks, opportunities, ai_insights. |
 | `search_knowledge_base` | Searches `company_knowledge` table only. |
 
-### Contextual Retrieval Pilot (added 2026-05-17)
+### Contextual Retrieval Pilot — Retired 2026-06-27
 
-`document_chunks` now carries two additional columns for the Anthropic Contextual Retrieval technique:
+The Anthropic-style contextual retrieval pilot was retired in AAI-734. It was a
+manual, unscheduled alternate embedding path, not the production RAG workflow.
+No Render backend or cron service set `RAG_EMBEDDING_VARIANT`, no package script
+ran the backfill, and no frontend RAG tool consumed the contextual RPC.
 
-| Column | Purpose |
-|--------|---------|
-| `contextual_prefix` | LLM-generated context sentence prepended to each chunk before embedding to reduce ambiguity |
-| `is_contextualized` | bool flag — `true` once the chunk has been through the context enrichment step |
+Retired artifacts:
 
-**Backfill:** `POST /admin/documents/contextual-backfill` triggers the enrichment pipeline. Batch size capped at 128 per run (raised from earlier default). Template-only fast path skips LLM for simple short chunks.
+| Artifact | Disposition |
+|----------|-------------|
+| `backend/src/scripts/backfill_contextual_embeddings.py` | Deleted; no route, package script, or Render schedule owned it. |
+| `backend/src/services/pipeline/contextualize.py` | Deleted with the manual pilot backfill. |
+| `search_document_chunks_contextual` | Dropped by RAG migration `20260627114000_retire_contextual_retrieval_pilot.sql`. |
+| `document_chunks.chunk_context`, `embedding_contextual`, `contextualized_at` | Dropped by the same RAG migration. |
+| `RAG_EMBEDDING_VARIANT=contextual` backend switch | Removed; backend retrieval uses `search_document_chunks`. |
 
-**RPC impact:** The `search_document_chunks` RPC returns higher-quality results for ambiguous queries (e.g. "project budget" now returns the right project, not a random one) because the context prefix removes chunk-level ambiguity.
+Production retrieval remains the finalized `search_document_chunks` baseline /
+hybrid RPC with metadata filters, project filters, permissions, citations, and
+health guardrails.
 
 ### Legacy `documents` table — DROPPED 2026-05-18
 
