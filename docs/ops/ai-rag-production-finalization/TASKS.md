@@ -23,7 +23,7 @@ Active Acumatica readiness slice:
 
 - [2026-06-26-acumatica-sync-production-readiness.md](../tasks/2026-06-26-acumatica-sync-production-readiness.md)
 
-Active AI assistant architecture slice:
+Completed AI assistant architecture slice:
 
 - [2026-06-26-ai-assistant-final-architecture-verification.md](../tasks/2026-06-26-ai-assistant-final-architecture-verification.md)
 
@@ -31,15 +31,15 @@ Active event-driven intelligence/task write slice:
 
 - [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
 
-Active cleanup/deletion proof slice:
+Completed cleanup/deletion proof slice:
 
 - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
 
-Active Outlook project Emails repair:
+Completed Outlook project Emails repair:
 
 - [2026-06-26-outlook-project-emails-intake.md](../tasks/2026-06-26-outlook-project-emails-intake.md)
 
-Active env/database cleanup proof slice:
+Completed env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
 
@@ -877,14 +877,15 @@ Evidence directory:
   - [assistant-operational-readiness-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt)
   - [frontend-typecheck-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt)
 
-## Remaining Blockers
+## Current Remaining Work
 
 - No active Fireflies meeting error backlog remains inside the two-month operational concern window.
 - No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
 - SharePoint source sync/retrieval is healthy.
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
-- AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.
-- Unrelated typecheck blocker: untracked `frontend/src/lib/ai/workflow-registry.ts` currently fails frontend typecheck outside this AAI-682 slice.
+- AAI-682 boundary verifiers were repaired in later AAI-705 evidence; keep them in the final all-pipeline verifier bundle instead of treating this as an open blocker.
+- A prior unrelated typecheck blocker in untracked `frontend/src/lib/ai/workflow-registry.ts` was outside the AAI-682 slice; current full/project typecheck status must be delegated and rechecked before final closeout.
+- Remaining finalization gates are the unchecked master checklist items above: Fireflies final E2E proof, Outlook assistant-consumption proof, continued cleanup/deletion proof, and final all-pipeline production-readiness evidence.
 
 ### 2026-06-26: AAI-715 Outlook Webhook Subscription Blocker Opened
 
@@ -1016,7 +1017,7 @@ Evidence directory:
   - local `HEAD` equals `origin/main`.
   - Linear AAI-720 marked Done.
 
-### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Started
+### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Completed
 
 - Opened urgent follow-up after the project Emails page rendered an empty inbox while Outlook sync data existed.
 - Confirmed first root cause:
@@ -1058,3 +1059,62 @@ Evidence directory:
 - Links:
   - [Task](../tasks/2026-06-26-outlook-project-emails-intake.md)
   - [Linear AAI-721](https://linear.app/megankharrison/issue/AAI-721/repair-project-emails-route-to-read-live-outlook-intake)
+
+### 2026-06-27: Final Verifier Repair Slice - Source Lifecycle, Graph Subscriptions, Chunk Integrity
+
+- Repaired Fireflies/meeting finalization gates:
+  - `backend/src/services/pipeline/llm.py` no longer sends unsupported `response_format` payloads through the AI Gateway provider path.
+  - `scripts/verify/verify_meeting_pipeline_contract.mjs` now checks the provider-path contract and the actual `error_message=None` cleanup code.
+  - Bounded Fireflies chunk repair inserted missing chunks for recent eligible meetings.
+  - `npm run rag:verify:meeting-pipeline` passed.
+  - `npm run rag:verify:meetings` passed with `75/75` recent eligible meetings embedded.
+- Repaired source lifecycle finalization gate:
+  - `scripts/verify/verify_source_lifecycle_health.mjs` now measures task project disposition, not only direct `project_id`, so deterministic project links and explicit manual-review/non-project dispositions both satisfy the target architecture.
+  - Refreshed one current Project Intelligence packet for project `1009` after stale packet detection.
+  - `npm run rag:verify:source-lifecycle` passed with no failures.
+- Repaired local Graph subscription verifier drift:
+  - Local `.env` and `frontend/.env.local` now match the already-published/provider-verified 11-user `MICROSOFT_SYNC_USERS` set including `mharrison@alleatogroup.com`.
+  - `npm run verify:graph-subscriptions -- --json` passed with `activeSubscriptionCount=11`, `missingActiveTargets=[]`, `staleSubscriptionCount=0`, and `unconfiguredSubscriptionCount=0`.
+- Repaired RAG chunk metadata integrity:
+  - `scripts/verify/verify_rag_chunk_integrity.mjs` now has an explicit `--repair-orphan-metadata` mode.
+  - Ran `npm run rag:verify:chunk-integrity -- --repair-orphan-metadata`; it repaired `34` orphan `rag_document_metadata` rows and then passed.
+  - `scripts/backfill-recent-meeting-chunks.mjs` now writes `rag_document_metadata` before inserting meeting chunks so the fresh-orphan recurrence path is closed.
+- Delegated verification passed:
+  - `node --check` for all touched `.mjs` files.
+  - `python3 -m py_compile backend/src/services/pipeline/llm.py`.
+  - `frontend: npm run typecheck:changed`.
+- Remaining from this slice:
+  - The scoped sync still logged PM final-projection guard errors inside nested intelligence extraction. Those are non-fatal to Outlook intake/RAG embedding but must be closed before final platform completion.
+
+### 2026-06-27: Outlook Assistant Cache And Vectorization Status Repaired
+
+- Confirmed the assistant health failure was real and source-specific:
+  - Live Graph inbox for `bclymer@alleatogroup.com` saw latest actionable mail at `2026-06-27T02:42:57Z`.
+  - `outlook_email_intake` was stale at `2026-06-26T11:20:05Z`.
+  - `npm run verify:microsoft-assistant-health -- --json` failed on `cached_intake`.
+- Ran a scoped Brandon Outlook sync:
+  - `MICROSOFT_SYNC_USERS=bclymer@alleatogroup.com`
+  - `OUTLOOK_SYNC_MAX_USERS=1`
+  - `OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX=25`
+  - `GRAPH_DELTA_MAX_PAGES=3`
+  - `GRAPH_DELTA_MAX_ITEMS=250`
+  - Result: `19` Outlook items synced and `10` email documents embedded.
+- Confirmed cache recovery:
+  - `npm run verify:microsoft-assistant-health -- --json` passed.
+  - Cache latest now matches Graph latest at `2026-06-27T02:42:57+00:00`.
+- Closed the vectorization status mismatch:
+  - Root cause: `run_graph_sync()` called `embed_pending_graph_documents()` but did not project actual RAG chunk state back onto `outlook_email_intake.vectorization_status`.
+  - Prevention: `backend/src/services/integrations/microsoft_graph/sync.py` now calls `refresh_outlook_intake_vectorization_statuses()` for selected Outlook mailboxes after embedding.
+  - Bounded follow-up embedding pass embedded the two latest Brandon emails.
+  - Read-back now shows both post-midnight Brandon rows as `vectorization_status='embedded'` with `vectorization_chunk_count=3`.
+- Verification:
+  - Delegated Python compile passed for `backend/src/services/integrations/microsoft_graph/sync.py` and `backend/src/services/pipeline/llm.py`.
+  - Delegated Node syntax checks passed for touched `.mjs` scripts.
+  - Delegated `frontend: npm run typecheck:changed` passed.
+- Final compact verifier pass:
+  - `npm run rag:verify:meeting-pipeline` passed.
+  - `npm run rag:verify:meetings` passed with `75/75` recent eligible meetings embedded.
+  - `npm run rag:verify:source-lifecycle` passed with no failures.
+  - `npm run verify:graph-subscriptions -- --json` passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
+  - `npm run verify:microsoft-assistant-health -- --json` passed for `bclymer@alleatogroup.com`.
+  - `npm run rag:verify:chunk-integrity` passed with no missing embeddings and no orphan `rag_document_metadata` failures.

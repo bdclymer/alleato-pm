@@ -11,7 +11,7 @@ from typing import Any, Optional
 from supabase import Client
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
-from .outlook import sync_outlook_emails
+from .outlook import refresh_outlook_intake_vectorization_statuses, sync_outlook_emails
 from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
@@ -776,6 +776,25 @@ def run_graph_sync(
             summary["embed"] = {"error": str(e)}
     else:
         summary["embed"] = {"status": "skipped", "reason": "run_embedding=false"}
+
+    if sync_emails and run_embedding:
+        vectorization_results: dict[str, Any] = {}
+        for user_email in summary.get("outlook_users_selected") or []:
+            try:
+                vectorization_results[user_email] = refresh_outlook_intake_vectorization_statuses(
+                    mailbox_user_id=user_email,
+                    limit=max(embed_limit * 3, 25),
+                    since=sync_started_at.isoformat(),
+                )
+            except Exception as exc:
+                logger.warning(
+                    "[GraphSync] Outlook vectorization status refresh failed for %s: %s",
+                    user_email,
+                    exc,
+                    exc_info=True,
+                )
+                vectorization_results[user_email] = {"error": str(exc)}
+        summary["outlook_vectorization_status"] = vectorization_results
 
     # ── OCR fallback for scanned PDFs (no_text → raw_ingested or ocr_partial) ─
     # Runs after the first embed pass so newly-OCR'd docs can be embedded

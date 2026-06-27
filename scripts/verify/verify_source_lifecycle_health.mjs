@@ -336,19 +336,61 @@ try {
     lifecycleByDocumentId.set(String(row.id), lifecycleRows.filter((job) => matchesLifecycle(row, job)));
   }
 
-  const taskRows = (await appClient.query(
+  const taskDetailRows = (await appClient.query(
     `
-      select source_system, status, count(*)::int as count,
-        count(*) filter (where project_id is not null)::int as with_project,
-        max(created_at) as newest
+      select id::text, title, source_system, status, project_id, metadata_id::text, created_at
       from public.tasks
       where created_at >= now() - ($1::text || ' days')::interval
         and source_system in ('fireflies', 'meeting', 'email', 'teams_dm_conversation', 'microsoft_graph')
-      group by source_system, status
-      order by newest desc nulls last
+      order by created_at desc
     `,
     [Math.max(lookbackDays, 14)],
   )).rows;
+  const taskMetadataIds = [...new Set(taskDetailRows.map((row) => row.metadata_id).filter(Boolean).map(String))];
+  const lifecycleByTaskMetadataId = new Map(
+    taskMetadataIds.map((id) => [
+      id,
+      lifecycleRows.filter((job) =>
+        (job.source_document_id && String(job.source_document_id) === id) ||
+        (job.source_item_id && String(job.source_item_id) === id),
+      ),
+    ]),
+  );
+  const taskHasProjectDisposition = (task) => {
+    if (task.project_id !== null && task.project_id !== undefined) return true;
+    const jobs = lifecycleByTaskMetadataId.get(String(task.metadata_id ?? "")) ?? [];
+    return jobs.some((job) => {
+      const applicability = job.metadata?.project_applicability;
+      return (
+        job.status === "project_assignment_review" ||
+        applicability === "project_assignment_review" ||
+        applicability === "multi_project_review" ||
+        applicability === "not_project_applicable" ||
+        applicability === "internal_project" ||
+        applicability === "company_level"
+      );
+    });
+  };
+  const taskRowsByKey = new Map();
+  for (const task of taskDetailRows) {
+    const key = `${task.source_system}::${task.status}`;
+    const current = taskRowsByKey.get(key) ?? {
+      source_system: task.source_system,
+      status: task.status,
+      count: 0,
+      with_project: 0,
+      with_project_disposition: 0,
+      newest: task.created_at,
+    };
+    current.count += 1;
+    if (task.project_id !== null && task.project_id !== undefined) current.with_project += 1;
+    if (taskHasProjectDisposition(task)) current.with_project_disposition += 1;
+    if (String(task.created_at ?? "") > String(current.newest ?? "")) current.newest = task.created_at;
+    taskRowsByKey.set(key, current);
+  }
+  const taskRows = [...taskRowsByKey.values()].sort((a, b) =>
+    String(b.newest ?? "").localeCompare(String(a.newest ?? "")),
+  );
 
   const packetResult = await appClient.query(
     `
@@ -523,8 +565,9 @@ try {
   const taskTotals = taskRows.reduce((totals, row) => {
     totals.count += Number(row.count ?? 0);
     totals.with_project += Number(row.with_project ?? 0);
+    totals.with_project_disposition += Number(row.with_project_disposition ?? 0);
     return totals;
-  }, { count: 0, with_project: 0 });
+  }, { count: 0, with_project: 0, with_project_disposition: 0 });
 
   const packetSummary = packetResult.rows[0] ?? {
     current_packets: 0,
@@ -567,12 +610,13 @@ try {
     }
   }
 
-  if (taskTotals.count > 0 && ratio(taskTotals.with_project, taskTotals.count) < minTaskAssignedRatio) {
-    pushFailure(failures, "Generated task project-assignment coverage is below threshold.", {
+  if (taskTotals.count > 0 && ratio(taskTotals.with_project_disposition, taskTotals.count) < minTaskAssignedRatio) {
+    pushFailure(failures, "Generated task project-disposition coverage is below threshold.", {
       threshold: minTaskAssignedRatio,
       tasks: taskTotals.count,
       withProject: taskTotals.with_project,
-      ratio: ratio(taskTotals.with_project, taskTotals.count),
+      withProjectDisposition: taskTotals.with_project_disposition,
+      ratio: ratio(taskTotals.with_project_disposition, taskTotals.count),
       bySource: taskRows,
     });
   }
@@ -617,7 +661,9 @@ try {
     tasks: {
       total: taskTotals.count,
       with_project: taskTotals.with_project,
+      with_project_disposition: taskTotals.with_project_disposition,
       project_assigned_ratio: ratio(taskTotals.with_project, taskTotals.count),
+      project_disposition_ratio: ratio(taskTotals.with_project_disposition, taskTotals.count),
       by_source_and_status: taskRows,
     },
     project_intelligence: {
