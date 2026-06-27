@@ -11,9 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0",
     "@supabase/supabase-js": "^2.45.0",
     "next": "15.1.0",
-    "openai": "^4.67.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },

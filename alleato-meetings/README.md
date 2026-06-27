@@ -24,7 +24,7 @@ Teams records + transcribes a meeting (native)
 Microsoft Graph  /communications/onlineMeetings/getAllTranscripts  (+ getAllRecordings)
         │  (app-only / client credentials, incremental by createdDateTime)
         ▼
-src/lib/sync.ts → parse WebVTT (src/lib/vtt.ts) → OpenAI extraction (src/lib/ai.ts)
+src/lib/sync.ts → parse WebVTT (src/lib/vtt.ts) → Claude extraction (src/lib/ai.ts)
         │
         ▼
 Supabase: meetings, meeting_segments, action_items, meeting_insights  (+ recordings bucket)
@@ -65,7 +65,7 @@ Use the existing Alleato Graph app registration or create a dedicated one. Then:
 ### 3. Environment
 Copy [`.env.example`](./.env.example) → `.env.local` (local) or set in Vercel. You need
 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MS_TENANT_ID`,
-`MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `OPENAI_API_KEY`, `SYNC_SECRET`, `APP_PASSWORD`.
+`MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `ANTHROPIC_API_KEY`, `SYNC_SECRET`, `APP_PASSWORD`.
 
 ### 4. Run
 ```bash
