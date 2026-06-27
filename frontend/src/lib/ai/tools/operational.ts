@@ -878,11 +878,10 @@ export function createOperationalTools(
               r.schedule_impact !== "no",
           );
 
-          // Average days open for closed RFIs
+          // Average days open for closed RFIs (uses canonical predicate so closed-draft
+          // is counted as closed, matching what every other surface does).
           const closedRfis = rfis.filter(
-            (r) =>
-              (r.status as string) === "closed" ||
-              (r.status as string) === "Closed",
+            (r) => typeof r.status === "string" && !isOpenRfiStatus(r.status),
           );
           let avgDaysToClose = 0;
           if (closedRfis.length > 0) {
@@ -1204,11 +1203,7 @@ export function createOperationalTools(
             const fins = finByProject.get(pid) ?? [];
             const ces = ceByProject.get(pid) ?? [];
 
-            const openRfis = rfis.filter(
-              (r) =>
-                (r.status as string) !== "closed" &&
-                (r.status as string) !== "Closed",
-            );
+            const openRfis = rfis.filter((r) => isOpenRfiStatus(r.status));
             const overdueRfis = openRfis.filter(
               (r) => r.due_date && (r.due_date as string) < now,
             );

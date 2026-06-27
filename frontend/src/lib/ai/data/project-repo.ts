@@ -18,15 +18,20 @@
 import type { ToolContext } from "@/lib/ai/tools/tool-context";
 
 // Canonical RFI status semantics. DB statuses verified 2026-06-26 on the PM APP
-// project (`rfis.status`): closed | open | answered | draft — all lowercase.
-// "Open" = anything not closed (open, answered, draft are all actionable). This
-// is the single source of truth for the open/closed split; update it here if the
-// status vocabulary ever changes, instead of in each tool.
+// project (`rfis.status`): closed | open | answered | draft | closed-draft — all
+// lowercase. `closed-draft` is written when an RFI is closed while still in draft
+// state; every app surface (respond page, table, header actions) treats it as closed.
+// "Open" = anything not in the closed set (open, answered, draft are all actionable).
+// This is the single source of truth for the open/closed split; update the set below
+// if the status vocabulary ever changes, instead of in each tool.
 export const CLOSED_RFI_STATUS = "closed" as const;
+
+/** All status values the app treats as closed — single source of truth for the predicate and DB queries. */
+const CLOSED_RFI_STATUS_SET = new Set<string>([CLOSED_RFI_STATUS, "closed-draft"]);
 
 export function isOpenRfiStatus(status: unknown): boolean {
   if (typeof status !== "string") return false;
-  return status.trim().toLowerCase() !== CLOSED_RFI_STATUS;
+  return !CLOSED_RFI_STATUS_SET.has(status.trim().toLowerCase());
 }
 
 /** Columns the briefing/alert surfaces need for an open-RFI row. */
@@ -84,16 +89,22 @@ export function createProjectRepo(ctx: ToolContext) {
      * `due_date < asOf` cutoff used by the overdue-RFI alert.
      */
     async openRfisByDueDate(opts: OpenRfiQuery) {
+      if (opts.overdueOnly && !opts.asOf) {
+        throw new Error("openRfisByDueDate: asOf is required when overdueOnly is true");
+      }
+
       let query = db
         .from("rfis")
         .select(OPEN_RFI_COLUMNS)
         .in("project_id", opts.projectIds)
-        .neq("status", CLOSED_RFI_STATUS)
+        .neq("status", "closed")
+        .neq("status", "closed-draft")
         .order("due_date", { ascending: true })
         .limit(opts.limit ?? 20);
 
-      if (opts.overdueOnly && opts.asOf) {
-        query = query.lt("due_date", opts.asOf);
+      if (opts.overdueOnly) {
+        // asOf presence is guaranteed by the guard above
+        query = query.lt("due_date", opts.asOf!);
       }
 
       const { data, error } = await query;

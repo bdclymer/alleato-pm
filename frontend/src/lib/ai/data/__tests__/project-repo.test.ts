@@ -47,6 +47,9 @@ describe("isOpenRfiStatus", () => {
     ["closed", false],
     ["Closed", false], // case-insensitive guard against status drift
     [" CLOSED ", false],
+    ["closed-draft", false], // RFI closed while still in draft state
+    ["Closed-Draft", false],
+    ["", true], // empty string is not a recognized closed status
     [null, false],
     [undefined, false],
   ])("isOpenRfiStatus(%p) === %p", (input, expected) => {
@@ -91,7 +94,7 @@ describe("ProjectRepo.rfisForProject", () => {
 });
 
 describe("ProjectRepo.openRfisByDueDate", () => {
-  test("scopes to projects, excludes closed, orders by due date", async () => {
+  test("scopes to projects, excludes closed and closed-draft, orders by due date", async () => {
     const calls: Call[] = [];
     const repo = createProjectRepo(fakeCtx({ data: [], error: null }, calls));
     await repo.openRfisByDueDate({ projectIds: [1, 2] });
@@ -100,22 +103,35 @@ describe("ProjectRepo.openRfisByDueDate", () => {
       expect.arrayContaining([
         { method: "in", args: ["project_id", [1, 2]] },
         { method: "neq", args: ["status", "closed"] },
+        { method: "neq", args: ["status", "closed-draft"] },
         { method: "order", args: ["due_date", { ascending: true }] },
       ]),
     );
   });
 
-  test("adds the overdue cutoff only when overdueOnly + asOf are set", async () => {
+  test("adds the overdue cutoff when overdueOnly and asOf are both set", async () => {
     const calls: Call[] = [];
     const repo = createProjectRepo(fakeCtx({ data: [], error: null }, calls));
     await repo.openRfisByDueDate({ projectIds: [1], overdueOnly: true, asOf: "2026-06-26" });
     expect(calls).toContainEqual({ method: "lt", args: ["due_date", "2026-06-26"] });
   });
 
-  test("omits the overdue cutoff when overdueOnly is false", async () => {
+  test("throws when overdueOnly is true but asOf is missing", async () => {
+    const repo = createProjectRepo(fakeCtx({ data: [], error: null }, []));
+    await expect(
+      repo.openRfisByDueDate({ projectIds: [1], overdueOnly: true }),
+    ).rejects.toThrow("asOf is required when overdueOnly is true");
+  });
+
+  test("omits the overdue cutoff when overdueOnly is not set", async () => {
     const calls: Call[] = [];
     const repo = createProjectRepo(fakeCtx({ data: [], error: null }, calls));
     await repo.openRfisByDueDate({ projectIds: [1] });
     expect(calls.find((c) => c.method === "lt")).toBeUndefined();
+  });
+
+  test("throws (does not swallow) on a DB error", async () => {
+    const repo = createProjectRepo(fakeCtx({ data: null, error: { message: "db fail" } }, []));
+    await expect(repo.openRfisByDueDate({ projectIds: [1] })).rejects.toThrow("db fail");
   });
 });
