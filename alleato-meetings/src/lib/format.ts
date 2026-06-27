@@ -39,6 +39,19 @@ export function monthDay(iso: string | null): { month: string; day: string } {
   };
 }
 
+export function relativeTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (diffMs < 0) return "just now";
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export function dueState(due: string | null): "none" | "overdue" | "soon" | "later" {
   if (!due) return "none";
   const d = new Date(due + "T00:00:00");
