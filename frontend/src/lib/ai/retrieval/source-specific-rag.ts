@@ -279,7 +279,7 @@ function formatSourceSpecificRagContent(
       ? `Source checked: live Microsoft Graph Outlook inbox first, then Supabase document_metadata/document_chunks-backed email index.`
       : request.kind === "recent_teams_discussions"
         ? `Source checked: live Microsoft Graph Teams messages first, then Supabase document_metadata/document_chunks-backed Teams index.`
-        : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed RAG index.`;
+        : `Source checked: ${request.label} in Supabase document_metadata/document_chunks-backed source index.`;
   const liveLine =
     request.kind === "recent_emails" && liveEmails
       ? liveEmails.ok

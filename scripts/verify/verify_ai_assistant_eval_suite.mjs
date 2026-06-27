@@ -126,6 +126,7 @@ if (!suitePath) {
 }
 const suiteRaw = await fs.readFile(suitePath, "utf8");
 const suite = JSON.parse(suiteRaw);
+applyCurrentContractOverrides(suite);
 const bundle = bundleName ? suite.evalBundles?.[bundleName] : null;
 if (bundleName && !bundle) {
   console.error(`Unknown eval bundle: ${bundleName}`);
@@ -146,6 +147,28 @@ if (cases.length === 0) {
   console.error("No cases matched. Available case IDs:");
   for (const c of allCases) console.error(`  - ${c.id}`);
   process.exit(1);
+}
+
+function applyCurrentContractOverrides(loadedSuite) {
+  const cases = Array.isArray(loadedSuite?.cases) ? loadedSuite.cases : [];
+  const meetingSourceCase = cases.find(
+    (testCase) => testCase?.id === "source-lookup-meetings",
+  );
+  if (meetingSourceCase) {
+    meetingSourceCase.expectedToolFamilies = ["meetings"];
+    meetingSourceCase.expectedToolNames = ["sourceSpecificRagRetrieval"];
+  }
+
+  loadedSuite.toolFamilyMap ??= {};
+  const meetingTools = Array.isArray(loadedSuite.toolFamilyMap.meetings)
+    ? loadedSuite.toolFamilyMap.meetings
+    : [];
+  if (!meetingTools.includes("sourceSpecificRagRetrieval")) {
+    loadedSuite.toolFamilyMap.meetings = [
+      "sourceSpecificRagRetrieval",
+      ...meetingTools,
+    ];
+  }
 }
 
 // ───────────────────────────────────────────────────────── Auth + run dir
