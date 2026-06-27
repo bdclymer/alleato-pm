@@ -930,13 +930,25 @@ def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -
     lead = "No confirmed user-owned urgent action was proven from today's Outlook arrivals; reply candidates and security/watch notices are separated below."
     if omitted_noise:
         lead += f" {omitted_noise} routine/no-reply item(s) were excluded."
-    return _render_action_lists(
+    answer = _render_action_lists(
         heading=f"Outlook emails received today that may need attention for {mailbox}:",
         action_needed=action_needed,
         informational=informational,
         lead=lead,
         include_draft_direction=False,
     )
+    decision_lines = ["", "Decision summary"]
+    if action_needed:
+        subjects = "; ".join(str(message.get("subject") or "(no subject)") for message in action_needed[:3])
+        decision_lines.append(
+            f"- Reply candidate(s): {subjects}. Ownership is not confirmed by the inbox row; verify before replying."
+        )
+    else:
+        decision_lines.append("- Reply candidate(s): none confirmed from today's live Outlook rows.")
+    if informational:
+        subjects = "; ".join(str(message.get("subject") or "(no subject)") for message in informational[:3])
+        decision_lines.append(f"- Watch item(s): {subjects}. Review only if unexpected or tied to active work.")
+    return answer + "\n".join(decision_lines)
 
 
 def _deterministic_inbox_answer(
