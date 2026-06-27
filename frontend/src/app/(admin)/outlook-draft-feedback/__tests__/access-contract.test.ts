@@ -15,4 +15,15 @@ describe("outlook draft feedback access contract", () => {
     expect(layoutSource).toContain("bclymer@alleatogroup.com");
     expect(pageSource).not.toContain("requireAdmin");
   });
+
+  it("keeps the training page read-only and connected to the canonical inbox queue", () => {
+    const pageSource = readFileSync(join(routeDir, "page.tsx"), "utf8");
+
+    expect(pageSource).toContain("Brandon Email Training Queue");
+    expect(pageSource).toContain("outlook_email_assistant_reviews");
+    expect(pageSource).toContain("/emails?tab=brandon-queue");
+    expect(pageSource).not.toContain("draft-reply");
+    expect(pageSource).not.toContain("archive");
+    expect(pageSource).not.toContain("graph.microsoft.com");
+  });
 });

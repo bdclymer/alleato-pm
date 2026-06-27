@@ -1,12 +1,26 @@
+import Link from "next/link";
 import { PageShell } from "@/components/layout";
 import { generateEmailVoicePromotionCandidates } from "@/lib/ai/services/feedback-event-service";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
 
 export const dynamic = "force-dynamic";
 
 type FeedbackEvent =
   Database["public"]["Tables"]["ai_feedback_events"]["Row"];
+type AssistantReview =
+  Database["public"]["Tables"]["outlook_email_assistant_reviews"]["Row"];
+
+type IntakeEmailSummary = {
+  id: number;
+  subject: string | null;
+  from_name: string | null;
+  from_email: string | null;
+  received_at: string | null;
+};
 
 function asRecord(value: Json | null): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -34,6 +48,33 @@ function formatDate(value: string | null): string {
 function reasonLabel(value: string | null): string {
   if (!value) return "No reason";
   return value.replaceAll("_", " ");
+}
+
+function scoreLabel(value: number | null): string {
+  if (typeof value !== "number" || Number.isNaN(value)) return "No score";
+  return Math.round(value).toString();
+}
+
+function outcomeLabel(value: string): string {
+  const labels: Record<string, string> = {
+    draft_copied: "Draft copied",
+    draft_edited: "Draft edited",
+    delegated: "Delegated",
+    watched: "Watching",
+    skipped: "Skipped",
+    marked_no_action: "No action",
+  };
+  return labels[value] ?? reasonLabel(value);
+}
+
+function actionLabel(value: string): string {
+  const labels: Record<string, string> = {
+    reply: "Reply",
+    delegate: "Delegate",
+    watch: "Watch",
+    ignore: "No action",
+  };
+  return labels[value] ?? reasonLabel(value);
 }
 
 function feedbackSummary(event: FeedbackEvent) {
@@ -72,8 +113,73 @@ function feedbackSummary(event: FeedbackEvent) {
   };
 }
 
+function decisionSummary(
+  review: AssistantReview,
+  emailById: Map<number, IntakeEmailSummary>,
+) {
+  const email = emailById.get(review.intake_email_id);
+
+  return {
+    id: review.id,
+    createdAt: formatDate(review.created_at),
+    mailboxUserId: review.mailbox_user_id,
+    subject: email?.subject || "Untitled email",
+    sender:
+      textValue(email?.from_name) ??
+      textValue(email?.from_email) ??
+      "Unknown sender",
+    receivedAt: formatDate(email?.received_at ?? null),
+    assistantAction: actionLabel(review.assistant_action),
+    assistantPriority: reasonLabel(review.assistant_priority),
+    assistantScore: scoreLabel(review.assistant_score),
+    reviewOutcome: outcomeLabel(review.review_outcome),
+    reviewerNote: review.reviewer_note,
+    assistantReason: review.assistant_reason,
+    assistantOwner: review.assistant_owner,
+    assistantRisk: review.assistant_risk,
+    assistantEvidence: review.assistant_evidence,
+  };
+}
+
 export default async function OutlookDraftFeedbackPage() {
   const supabase = createServiceClient();
+  const outlookIntake = createOutlookIntakeServiceClient();
+
+  const { data: reviewRows, error: reviewError } = await supabase
+    .from("outlook_email_assistant_reviews")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (reviewError) {
+    throw new Error(
+      `Failed to load Brandon email decision reviews: ${reviewError.message}`,
+    );
+  }
+
+  const intakeIds = [
+    ...new Set((reviewRows ?? []).map((review) => review.intake_email_id)),
+  ];
+  const { data: intakeRows, error: intakeError } = intakeIds.length
+    ? await outlookIntake
+        .from("outlook_email_intake")
+        .select("id, subject, from_name, from_email, received_at")
+        .in("id", intakeIds)
+    : { data: [], error: null };
+
+  if (intakeError) {
+    throw new Error(
+      `Failed to load source emails for Brandon training reviews: ${intakeError.message}`,
+    );
+  }
+
+  const emailById = new Map<number, IntakeEmailSummary>(
+    ((intakeRows ?? []) as IntakeEmailSummary[]).map((row) => [row.id, row]),
+  );
+  const decisionReviews = (reviewRows ?? []).map((review) =>
+    decisionSummary(review, emailById),
+  );
+
   const { data, error } = await supabase
     .from("ai_feedback_events")
     .select("*")
@@ -96,14 +202,123 @@ export default async function OutlookDraftFeedbackPage() {
   return (
     <PageShell
       variant="table"
-      title="Outlook Draft Feedback"
-      description="Review Brandon draft feedback captured from assistant Outlook draft widgets."
+      title="Brandon Email Training Queue"
+      description="Review what the Microsoft email assistant would do before any Outlook write access is enabled."
     >
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Email decision reviews
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The email inbox is the source of truth; this table audits the
+              human feedback captured from reviewed Brandon emails.
+            </p>
+          </div>
+          <Link
+            href="/emails?tab=brandon-queue"
+            className="text-sm font-medium text-primary hover:text-primary/80"
+          >
+            Review new emails
+          </Link>
+        </div>
+
+        <div className="overflow-hidden rounded-md border border-border">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium">Reviewed</th>
+                  <th className="px-3 py-2 text-left font-medium">Email</th>
+                  <th className="px-3 py-2 text-left font-medium">AI decision</th>
+                  <th className="px-3 py-2 text-left font-medium">Human outcome</th>
+                  <th className="px-3 py-2 text-left font-medium">Reason / correction</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {decisionReviews.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-8 text-center text-muted-foreground"
+                    >
+                      No Brandon email decision reviews have been recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  decisionReviews.map((review) => (
+                    <tr key={review.id} className="align-top">
+                      <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
+                        {review.createdAt}
+                      </td>
+                      <td className="max-w-sm px-3 py-3">
+                        <div className="font-medium text-foreground">
+                          {review.subject}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {review.sender}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Received {review.receivedAt}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-foreground">
+                          {review.assistantAction}
+                        </div>
+                        <div className="mt-1 text-xs capitalize text-muted-foreground">
+                          {review.assistantPriority} priority · score{" "}
+                          {review.assistantScore}
+                        </div>
+                        {review.assistantOwner ? (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Owner: {review.assistantOwner}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-foreground">
+                          {review.reviewOutcome}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {review.mailboxUserId}
+                        </div>
+                      </td>
+                      <td className="max-w-md px-3 py-3 text-muted-foreground">
+                        {review.reviewerNote ? (
+                          <div className="text-foreground">
+                            {review.reviewerNote}
+                          </div>
+                        ) : null}
+                        {review.assistantReason ? (
+                          <div className="mt-1">{review.assistantReason}</div>
+                        ) : null}
+                        {review.assistantRisk ? (
+                          <div className="mt-1 text-xs">
+                            Risk: {review.assistantRisk}
+                          </div>
+                        ) : null}
+                        {review.assistantEvidence ? (
+                          <div className="mt-1 text-xs">
+                            Evidence: {review.assistantEvidence}
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section className="space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-foreground">
-              Suggested voice-profile updates
+              Suggested Brandon voice-profile updates
             </h2>
             <span className="text-sm text-muted-foreground">
               {suggestions.candidatesFound} suggestion
@@ -149,7 +364,7 @@ export default async function OutlookDraftFeedbackPage() {
 
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">
-            Recent draft feedback
+            Draft voice feedback
           </h2>
           <span className="text-sm text-muted-foreground">
             {events.length} event{events.length === 1 ? "" : "s"}
