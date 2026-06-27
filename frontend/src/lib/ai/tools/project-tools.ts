@@ -12,6 +12,10 @@ import { createSaisTools } from "./sais";
 import { createSessionSearchTools } from "./search-past-conversations";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import {
+  getMeetingsByDateDescription,
+  getMeetingsByDateInputSchema,
+} from "@/lib/ai/tool-descriptors";
+import {
   RISK_CARD_TYPES,
   deriveSeverity,
   resolveTargetIdsForProjects,
@@ -2059,37 +2063,8 @@ export function createProjectTools(
     }),
 
     getMeetingsByDate: tool({
-      description:
-        "Get meetings for a specific date or date range. Use this for temporal " +
-        "queries like 'today meetings', 'yesterday', or 'meetings this week'. " +
-        "Returns only meeting records.",
-      inputSchema: z.object({
-        projectId: z
-          .number()
-          .optional()
-          .describe("Optional project ID to filter by"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Optional project name to resolve and filter by"),
-        date: z
-          .string()
-          .optional()
-          .describe("Exact date in YYYY-MM-DD format; defaults to today if no range is provided"),
-        startDate: z
-          .string()
-          .optional()
-          .describe("Range start in YYYY-MM-DD format"),
-        endDate: z
-          .string()
-          .optional()
-          .describe("Range end in YYYY-MM-DD format"),
-        maxResults: z
-          .number()
-          .optional()
-          .default(25)
-          .describe("Max meetings to return"),
-      }),
+      description: getMeetingsByDateDescription,
+      inputSchema: getMeetingsByDateInputSchema,
       execute: withTrace(
         "getMeetingsByDate",
         options,

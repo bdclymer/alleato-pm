@@ -156,6 +156,73 @@ export const searchTeamsMessagesInputSchema = z.object({
     .describe("Number of Teams message chunks to return"),
 });
 
+export const searchMeetingsByTopicDescription =
+  "Search for meetings about a specific topic across ALL projects. " +
+  "Returns enriched results with speaker quotes, decisions, risks, " +
+  "and action items from meeting digests and segments. " +
+  "Use this when the user asks 'find meetings about X' or " +
+  "'what have we discussed about Y'. Works cross-project by default. " +
+  "Combines keyword search AND semantic search for best coverage.";
+
+export const searchMeetingsByTopicInputSchema = z.object({
+  topic: z
+    .string()
+    .describe(
+      "The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')",
+    ),
+  projectId: z.number().optional().describe("Optional project ID to filter by"),
+  projectName: z
+    .string()
+    .optional()
+    .describe("Optional project name to filter by (e.g. 'Uniqlo')"),
+  maxResults: z.number().optional().default(10).describe("Max meetings to return"),
+});
+
+export const getMeetingDetailsDescription =
+  "Get the FULL details of a specific meeting including its digest, " +
+  "segments with speaker discussion topics, decisions, risks, and " +
+  "action items. Provide EITHER meetingId (exact DB id from a prior search) " +
+  "OR meetingTitle (the meeting name — will be looked up automatically). " +
+  "NEVER guess or construct a meetingId from a date or title string. " +
+  "If you only know the title, pass meetingTitle and the ID will be resolved.";
+
+export const getMeetingDetailsInputSchema = z.object({
+  meetingId: z
+    .string()
+    .optional()
+    .describe(
+      "The exact meeting ID from document_metadata.id — only use this if you got it from a prior searchMeetingsByTopic or getMeetingsByDate call",
+    ),
+  meetingTitle: z
+    .string()
+    .optional()
+    .describe(
+      "The meeting title to search for — use this when you know the name but not the ID",
+    ),
+});
+
+export const getMeetingsByDateDescription =
+  "Get meetings for a specific date or date range. Use this for temporal " +
+  "queries like 'today meetings', 'yesterday', or 'meetings this week'. " +
+  "Returns only meeting records.";
+
+export const getMeetingsByDateInputSchema = z.object({
+  projectId: z.number().optional().describe("Optional project ID to filter by"),
+  projectName: z
+    .string()
+    .optional()
+    .describe("Optional project name to resolve and filter by"),
+  date: z
+    .string()
+    .optional()
+    .describe(
+      "Exact date in YYYY-MM-DD format; defaults to today if no range is provided",
+    ),
+  startDate: z.string().optional().describe("Range start in YYYY-MM-DD format"),
+  endDate: z.string().optional().describe("Range end in YYYY-MM-DD format"),
+  maxResults: z.number().optional().default(25).describe("Max meetings to return"),
+});
+
 const outlookRoutingPolicy: AssistantToolRoutingPolicy = {
   useWhen: [
     "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
@@ -173,6 +240,26 @@ const outlookRoutingPolicy: AssistantToolRoutingPolicy = {
   regressionPrompts: [
     "what are my most important emails from today?",
     "anything urgent in my inbox this morning?",
+  ],
+};
+
+const meetingRoutingPolicy: AssistantToolRoutingPolicy = {
+  useWhen: [
+    "User asks what was discussed, decided, raised, or assigned in meetings.",
+    "User asks for Fireflies, meeting transcripts, OACs, huddles, or meeting intelligence.",
+  ],
+  doNotUseWhen: [
+    "User asks specifically for Teams messages, chats, or DMs.",
+    "User asks specifically for Outlook inbox or email results.",
+  ],
+  preferredFreshness:
+    "Use date-aware meeting retrieval for today/yesterday/specific dates; use semantic meeting search for topical historical questions.",
+  emptyResultBehavior:
+    "State that meeting retrieval returned no matching rows and do not fill the gap with Teams/email unless the user requested cross-source context.",
+  citationRule: "Cite as Fireflies/meeting with meeting title and date.",
+  regressionPrompts: [
+    "what meetings were held today?",
+    "what did the Westfield OAC decide?",
   ],
 };
 
@@ -232,6 +319,42 @@ export const assistantSourceReadToolDescriptors: AssistantToolDescriptor[] = [
       ],
     },
   },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "searchMeetingsByTopic",
+    description: searchMeetingsByTopicDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "searchMeetingsByTopic.input",
+    outputSchemaName: "searchMeetingsByTopic.output",
+    inputSchema: searchMeetingsByTopicInputSchema,
+    category: "operational",
+    sourceFamilies: ["meeting", "fireflies"],
+    routingPolicy: meetingRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "getMeetingDetails",
+    description: getMeetingDetailsDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "getMeetingDetails.input",
+    outputSchemaName: "getMeetingDetails.output",
+    inputSchema: getMeetingDetailsInputSchema,
+    category: "operational",
+    sourceFamilies: ["meeting", "fireflies"],
+    routingPolicy: meetingRoutingPolicy,
+  },
+  {
+    ...sourceReadDescriptorDefaults,
+    name: "getMeetingsByDate",
+    description: getMeetingsByDateDescription,
+    owningAdapter: "project_tools",
+    inputSchemaName: "getMeetingsByDate.input",
+    outputSchemaName: "getMeetingsByDate.output",
+    inputSchema: getMeetingsByDateInputSchema,
+    category: "operational",
+    sourceFamilies: ["meeting", "fireflies"],
+    routingPolicy: meetingRoutingPolicy,
+  },
 ];
 
 export const assistantSourceReadToolDescriptorByName = new Map(
@@ -245,13 +368,19 @@ export function registryEntryFromAssistantToolDescriptor(
   descriptor: AssistantToolDescriptor,
 ): AssistantToolRegistryEntry {
   if (!descriptor.description.trim()) {
-    throw new Error(`Assistant tool descriptor ${descriptor.name} is missing a description`);
+    throw new Error(
+      `Assistant tool descriptor ${descriptor.name} is missing a description`,
+    );
   }
   if (!descriptor.inputSchema) {
-    throw new Error(`Assistant tool descriptor ${descriptor.name} is missing an input schema`);
+    throw new Error(
+      `Assistant tool descriptor ${descriptor.name} is missing an input schema`,
+    );
   }
   if (!descriptor.routingPolicy) {
-    throw new Error(`Assistant tool descriptor ${descriptor.name} is missing routing policy`);
+    throw new Error(
+      `Assistant tool descriptor ${descriptor.name} is missing routing policy`,
+    );
   }
 
   return {

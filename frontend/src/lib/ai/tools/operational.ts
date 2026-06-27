@@ -5,10 +5,14 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 import {
+  getMeetingDetailsDescription,
+  getMeetingDetailsInputSchema,
   getRecentEmailsDescription,
   getRecentEmailsInputSchema,
   searchEmailsDescription,
   searchEmailsInputSchema,
+  searchMeetingsByTopicDescription,
+  searchMeetingsByTopicInputSchema,
   searchTeamsMessagesDescription,
   searchTeamsMessagesInputSchema,
 } from "@/lib/ai/tool-descriptors";
@@ -2229,33 +2233,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchMeetingsByTopic: tool({
-      description:
-        "Search for meetings about a specific topic across ALL projects. " +
-        "Returns enriched results with speaker quotes, decisions, risks, " +
-        "and action items from meeting digests and segments. " +
-        "Use this when the user asks 'find meetings about X' or " +
-        "'what have we discussed about Y'. Works cross-project by default. " +
-        "Combines keyword search AND semantic search for best coverage.",
-      inputSchema: z.object({
-        topic: z
-          .string()
-          .describe(
-            "The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')",
-          ),
-        projectId: z
-          .number()
-          .optional()
-          .describe("Optional project ID to filter by"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Optional project name to filter by (e.g. 'Uniqlo')"),
-        maxResults: z
-          .number()
-          .optional()
-          .default(10)
-          .describe("Max meetings to return"),
-      }),
+      description: searchMeetingsByTopicDescription,
+      inputSchema: searchMeetingsByTopicInputSchema,
       execute: withTrace(
         "searchMeetingsByTopic",
         options,
@@ -2422,27 +2401,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     getMeetingDetails: tool({
-      description:
-        "Get the FULL details of a specific meeting including its digest, " +
-        "segments with speaker discussion topics, decisions, risks, and " +
-        "action items. Provide EITHER meetingId (exact DB id from a prior search) " +
-        "OR meetingTitle (the meeting name — will be looked up automatically). " +
-        "NEVER guess or construct a meetingId from a date or title string. " +
-        "If you only know the title, pass meetingTitle and the ID will be resolved.",
-      inputSchema: z.object({
-        meetingId: z
-          .string()
-          .optional()
-          .describe(
-            "The exact meeting ID from document_metadata.id — only use this if you got it from a prior searchMeetingsByTopic or getMeetingsByDate call",
-          ),
-        meetingTitle: z
-          .string()
-          .optional()
-          .describe(
-            "The meeting title to search for — use this when you know the name but not the ID",
-          ),
-      }),
+      description: getMeetingDetailsDescription,
+      inputSchema: getMeetingDetailsInputSchema,
       execute: withTrace(
         "getMeetingDetails",
         options,

@@ -11,8 +11,11 @@ import {
 } from "../tool-registry";
 import type { ToolSet } from "ai";
 import {
+  getMeetingDetailsInputSchema,
+  getMeetingsByDateInputSchema,
   getRecentEmailsInputSchema,
   searchEmailsInputSchema,
+  searchMeetingsByTopicInputSchema,
   searchTeamsMessagesInputSchema,
 } from "../tool-descriptors";
 import {
@@ -268,6 +271,44 @@ describe("global AI assistant tool registry", () => {
     });
   });
 
+  it("uses descriptor-owned setup for meeting source-read tools", () => {
+    const definitions = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: [
+        "getMeetingsByDate",
+        "searchMeetingsByTopic",
+        "getMeetingDetails",
+      ],
+    });
+
+    expect(definitions).toHaveLength(3);
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.descriptorOwned,
+        definition.metadata.inputSchemaOwned,
+        definition.metadata.sourceFamilies,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["getMeetingsByDate", true, true, ["meeting", "fireflies"]],
+        ["searchMeetingsByTopic", true, true, ["meeting", "fireflies"]],
+        ["getMeetingDetails", true, true, ["meeting", "fireflies"]],
+      ]),
+    );
+    expect(
+      definitions.find((definition) => definition.name === "getMeetingsByDate")
+        ?.metadata.routingPolicy,
+    ).toMatchObject({
+      emptyResultBehavior: expect.stringContaining(
+        "do not fill the gap with Teams/email",
+      ),
+      regressionPrompts: expect.arrayContaining([
+        "what meetings were held today?",
+      ]),
+    });
+  });
+
   it("keeps source-read input schemas on the descriptor surface", () => {
     expect(getRecentEmailsInputSchema.parse({})).toMatchObject({
       daysBack: 1,
@@ -285,6 +326,16 @@ describe("global AI assistant tool registry", () => {
     ).toEqual({
       query: "schedule delay",
       matchCount: 8,
+    });
+    expect(searchMeetingsByTopicInputSchema.parse({ topic: "OAC" })).toEqual({
+      topic: "OAC",
+      maxResults: 10,
+    });
+    expect(getMeetingDetailsInputSchema.parse({ meetingTitle: "Westfield OAC" })).toEqual({
+      meetingTitle: "Westfield OAC",
+    });
+    expect(getMeetingsByDateInputSchema.parse({})).toEqual({
+      maxResults: 25,
     });
   });
 
