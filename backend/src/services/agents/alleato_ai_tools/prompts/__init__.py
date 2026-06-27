@@ -46,6 +46,11 @@ _ORCHESTRATOR_BODY = _read("orchestrator.md")
 _SUBAGENT_OUTPUT_RULE = _read("_subagent_output_rule.md")
 
 
+# Public aliases so other agents (e.g. the Microsoft Executive Assistant) can
+# share the same voice instead of redefining a divergent personality.
+IDENTITY_PROMPT = _IDENTITY
+SOUL_PROMPT = _SOUL
+
 ORCHESTRATOR_PROMPT = _compose(_IDENTITY, _SOUL, _USER, _ORCHESTRATOR_BODY)
 
 FINANCIAL_ANALYST_PROMPT = _compose(_read("financial_analyst.md"), _SUBAGENT_OUTPUT_RULE)
@@ -60,6 +65,8 @@ BUSINESS_DEVELOPMENT_ANALYST_PROMPT = _compose(
 
 
 __all__ = [
+    "IDENTITY_PROMPT",
+    "SOUL_PROMPT",
     "ORCHESTRATOR_PROMPT",
     "FINANCIAL_ANALYST_PROMPT",
     "SCHEDULE_ANALYST_PROMPT",

@@ -41,9 +41,8 @@ jobs:
             exit 1
           fi
           pnpm --dir frontend exec playwright test \
-            --project=chromium \
-            --reporter=html,list
-        working-directory: frontend
+            --config=config/playwright/playwright.no-webserver.config.ts \
+            --project=chromium
 
       - name: Upload test report
         if: always()

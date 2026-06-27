@@ -58,6 +58,7 @@ const config = {
         /* Surface Colors */
         "surface-inverse": "hsl(var(--surface-inverse))",
         "surface-elevated": "hsl(var(--surface-elevated))",
+        "surface-summary": "hsl(var(--surface-summary))",
 
         /* Semantic Status Colors */
         status: {
@@ -214,6 +215,14 @@ const config = {
         "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",     // slight overshoot
       },
       keyframes: {
+        move: {
+          "0%": { transform: "translateX(-200px)" },
+          "100%": { transform: "translateX(200px)" },
+        },
+        orbit: {
+          "0%": { transform: "rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg))" },
+          "100%": { transform: "rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg + -360deg))" },
+        },
         "spring-in": {
           from: { opacity: "0", transform: "translateY(-8px) scale(0.96)" },
           to: { opacity: "1", transform: "translateY(0) scale(1)" },
@@ -228,6 +237,8 @@ const config = {
         },
       },
       animation: {
+        move: "move 5s linear infinite",
+        orbit: "orbit calc(var(--duration) * 1s) linear infinite",
         "spring-in": "spring-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
         "slide-out-right": "slide-out-right 150ms ease-out forwards",
         "row-fill": "row-fill 150ms ease-out",

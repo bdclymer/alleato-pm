@@ -124,7 +124,7 @@ function CommitmentChangeOrdersRow({
                     <td className="py-1.5 pr-6 capitalize">{co.status}</td>
                     <td className="py-1.5 pr-6 text-right tabular-nums">{fmt(co.amount)}</td>
                     <td className="py-1.5 text-muted-foreground">
-                      {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+                      {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : null}
                     </td>
                   </tr>
                 ))}

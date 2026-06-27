@@ -1,0 +1,47 @@
+# RAG Chunk Integrity (2d)
+
+| Source | Docs | Chunks | Embedded | Missing Embeddings | Short Chunks |
+| --- | --- | --- | --- | --- | --- |
+| agent_learning | 6 | 6 | 6 | 0 | 0 |
+| ai_memory | 557 | 557 | 557 | 0 | 16 |
+| document | 65 | 982 | 982 | 0 | 23 |
+| email | 448 | 770 | 770 | 0 | 0 |
+| meeting_segment_summary | 99 | 1,228 | 1,228 | 0 | 1 |
+| meeting_summary | 98 | 98 | 98 | 0 | 0 |
+| meeting_transcript | 11 | 571 | 571 | 0 | 0 |
+| microsoft_graph | 47 | 47 | 47 | 0 | 0 |
+| sharepoint_document | 25 | 57 | 57 | 0 | 0 |
+| teams_dm | 201 | 218 | 218 | 0 | 0 |
+| vision_page_summary | 95 | 178 | 178 | 0 | 0 |
+| workspace_artifact | 1 | 1 | 1 | 0 | 0 |
+
+Non-sequential documents, warning only:
+| Source | Docs |
+| --- | --- |
+| vision_page_summary | 95 |
+| meeting_segment_summary | 94 |
+| document | 60 |
+
+Orphan chunk metadata:
+| Source | Docs | Chunks | Newest Chunk |
+| --- | --- | --- | --- |
+| meeting_segment_summary | 34 | 288 | Wed Jun 24 2026 01:37:15 GMT-0400 (Eastern Daylight Time) |
+| meeting_summary | 34 | 34 | Wed Jun 24 2026 01:37:11 GMT-0400 (Eastern Daylight Time) |
+| vision_page_summary | 34 | 34 | Wed Jun 24 2026 01:37:16 GMT-0400 (Eastern Daylight Time) |
+
+Orphan metadata examples:
+| Source | Document | Chunks | Embedded | Newest Chunk |
+| --- | --- | --- | --- | --- |
+| vision_page_summary | 6a9ea3c2-bd06-4812-9ead-77d7a3163fe8 | 1 | 1 | Wed Jun 24 2026 01:37:16 GMT-0400 (Eastern Daylight Time) |
+| meeting_segment_summary | 6a9ea3c2-bd06-4812-9ead-77d7a3163fe8 | 17 | 17 | Wed Jun 24 2026 01:37:15 GMT-0400 (Eastern Daylight Time) |
+| meeting_summary | 6a9ea3c2-bd06-4812-9ead-77d7a3163fe8 | 1 | 1 | Wed Jun 24 2026 01:37:11 GMT-0400 (Eastern Daylight Time) |
+| vision_page_summary | 55abad56-4c24-408e-8fce-b4f1aef63fd1 | 1 | 1 | Wed Jun 24 2026 01:36:18 GMT-0400 (Eastern Daylight Time) |
+| meeting_segment_summary | 55abad56-4c24-408e-8fce-b4f1aef63fd1 | 5 | 5 | Wed Jun 24 2026 01:36:18 GMT-0400 (Eastern Daylight Time) |
+| meeting_summary | 55abad56-4c24-408e-8fce-b4f1aef63fd1 | 1 | 1 | Wed Jun 24 2026 01:36:17 GMT-0400 (Eastern Daylight Time) |
+| vision_page_summary | 52ed86c2-13da-4e39-af89-5f425f1e2ae5 | 1 | 1 | Wed Jun 24 2026 01:35:50 GMT-0400 (Eastern Daylight Time) |
+| meeting_segment_summary | 52ed86c2-13da-4e39-af89-5f425f1e2ae5 | 3 | 3 | Wed Jun 24 2026 01:35:49 GMT-0400 (Eastern Daylight Time) |
+| meeting_summary | 52ed86c2-13da-4e39-af89-5f425f1e2ae5 | 1 | 1 | Wed Jun 24 2026 01:35:49 GMT-0400 (Eastern Daylight Time) |
+| vision_page_summary | 3a7cfa94-846d-459d-8fad-ae22c07c4fd4 | 1 | 1 | Wed Jun 24 2026 01:35:23 GMT-0400 (Eastern Daylight Time) |
+
+RAG chunk integrity: FAIL
+- Document-like chunks without rag_document_metadata rows found.

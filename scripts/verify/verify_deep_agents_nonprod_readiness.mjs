@@ -145,7 +145,6 @@ function verifyVercelProductionBridgeEnv() {
 
 async function main() {
   verifyManifest("render.yaml");
-  verifyManifest("backend/render.yaml");
 
   if (!backendUrl.includes(ACTIVE_BACKEND_HOST)) {
     fail(`Backend URL must point at ${ACTIVE_BACKEND_HOST}; found ${backendUrl}`);

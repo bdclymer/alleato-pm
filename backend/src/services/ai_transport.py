@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar
 
 import httpx
 
@@ -52,6 +52,39 @@ def is_transient_ai_error(exc: Exception) -> bool:
     return is_transient_ai_error_message(str(exc))
 
 
+_AUTH_CREDIT_MESSAGE_SNIPPETS = (
+    "authentication failed",
+    "incorrect api key",
+    "invalid api key",
+    "ai_gateway_api_key",
+    "insufficient_quota",
+    "insufficient quota",
+    "exceeded your current quota",
+    "credit",
+    "billing",
+    "payment required",
+    "402",
+    "401",
+    "403",
+)
+
+
+def is_auth_or_credit_error(exc: Exception) -> bool:
+    """True for provider failures a *different* provider could satisfy.
+
+    Auth (401/403), quota/credit/billing (402, insufficient_quota), and the
+    Vercel AI Gateway's selective "set AI_GATEWAY_API_KEY" 401 it returns when a
+    spend cap is hit mid-run. These are NOT transient — retrying the same
+    provider will fail identically — but the *alternate* provider (direct OpenAI
+    vs. gateway) is usually healthy, so they are the trigger for failover.
+    """
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if status in {401, 402, 403, 429} or str(status) in {"401", "402", "403"}:
+        return True
+    normalized = str(exc or "").lower()
+    return any(snippet in normalized for snippet in _AUTH_CREDIT_MESSAGE_SNIPPETS)
+
+
 def ai_gateway_required() -> bool:
     return (os.getenv("AI_GATEWAY_REQUIRED") or "").strip().lower() in {
         "1",
@@ -92,15 +125,34 @@ def embedding_provider_configured() -> bool:
     return openai_configured()
 
 
-def get_openai_client():
+def alternate_provider_path(provider_path: str) -> Optional[str]:
+    """Return the other provider path if it is configured and usable.
+
+    Failover only makes sense when the gateway is NOT mandatory (AI_GATEWAY_REQUIRED)
+    and the alternate provider actually has credentials. Returns None otherwise.
+    """
+    if ai_gateway_required():
+        return None
+    if provider_path == "vercel_gateway":
+        return "openai" if openai_configured() else None
+    if provider_path == "openai":
+        return "vercel_gateway" if ai_gateway_configured() else None
+    return None
+
+
+def get_openai_client(force_path: Optional[str] = None):
     """Return an OpenAI-compatible client for the configured backend provider.
 
     Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is present. Direct
     OpenAI is only used when explicitly selected or no gateway key is available.
+
+    Pass ``force_path`` ('openai' | 'vercel_gateway') to bypass the configured
+    routing — used by embedding failover to reach the healthy provider when the
+    primary one has hit an auth/credit wall.
     """
     from openai import OpenAI
 
-    provider_path = get_ai_provider_path()
+    provider_path = force_path or get_ai_provider_path()
     if provider_path == "vercel_gateway":
         api_key = (os.getenv("AI_GATEWAY_API_KEY") or "").strip()
         if not api_key:

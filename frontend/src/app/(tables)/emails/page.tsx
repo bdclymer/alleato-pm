@@ -10,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default function EmailsPage() {
   return (
-    <Suspense>
-      <EmailsSurfaceClient />
-    </Suspense>
+    <div className="-mt-2">
+      <Suspense>
+        <EmailsSurfaceClient />
+      </Suspense>
+    </div>
   );
 }

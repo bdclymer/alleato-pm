@@ -48,7 +48,7 @@ if (!ragDatabaseUrl && (!ragRestUrl || !ragRestKey)) {
 
 const STALENESS_DAYS = 7;
 const RECENT_WINDOW_DAYS = 14;
-const HISTORY_WINDOW_DAYS = 180;
+const FIREFLIES_BACKLOG_CONCERN_WINDOW_DAYS = 60;
 const MEETING_SIGNAL_LIMIT = 2_000;
 const RECENT_MIN_EMBEDDED_RATIO = 1;
 const RECENT_MIN_CHUNK_RATIO = 1;
@@ -590,22 +590,36 @@ try {
 
   const pipelineJobs = await ragSql`
     select
-      stage,
+      j.stage,
       count(*)::int as count,
-      min(created_at) as oldest_created_at,
-      max(updated_at) as newest_updated_at
-    from public.fireflies_ingestion_jobs
-    where updated_at >= now() - (${HISTORY_WINDOW_DAYS} || ' days')::interval
-    group by stage
+      min(j.created_at) as oldest_created_at,
+      max(j.updated_at) as newest_updated_at
+    from public.fireflies_ingestion_jobs j
+    join public.rag_document_metadata r on r.id = j.metadata_id
+    where j.created_at >= now() - (${FIREFLIES_BACKLOG_CONCERN_WINDOW_DAYS} || ' days')::interval
+      and (
+        r.source = 'fireflies'
+        or r.fireflies_id is not null
+        or r.type in ('meeting', 'meeting_transcript')
+        or r.category = 'meeting'
+      )
+    group by j.stage
     order by count desc
   `;
 
   const quotaErrorJobs = await ragSql`
     select count(*)::int as count
-    from public.fireflies_ingestion_jobs
-    where stage = 'error'
-      and error_message ilike '%quota%'
-      and updated_at >= now() - (${HISTORY_WINDOW_DAYS} || ' days')::interval
+    from public.fireflies_ingestion_jobs j
+    join public.rag_document_metadata r on r.id = j.metadata_id
+    where j.stage = 'error'
+      and j.error_message ilike '%quota%'
+      and j.created_at >= now() - (${FIREFLIES_BACKLOG_CONCERN_WINDOW_DAYS} || ' days')::interval
+      and (
+        r.source = 'fireflies'
+        or r.fireflies_id is not null
+        or r.type in ('meeting', 'meeting_transcript')
+        or r.category = 'meeting'
+      )
   `;
 
   const provider = await probeEmbeddingProvider();
@@ -687,10 +701,18 @@ try {
         `Retry them through the AI Gateway-backed pipeline after backend config is deployed.`
     );
   } else if (errorJobs > 100) {
-    warn(`${errorJobs} Fireflies ingestion jobs are in error stage; inspect grouped error messages before relying on meeting recall.`);
+    warn(
+      `${errorJobs} Fireflies ingestion jobs created in the last ` +
+        `${FIREFLIES_BACKLOG_CONCERN_WINDOW_DAYS} days are in error stage; ` +
+        `inspect grouped error messages before relying on meeting recall.`
+    );
   }
 
   const result = {
+    policy: {
+      recentMeetingCoverageWindowDays: RECENT_WINDOW_DAYS,
+      firefliesBacklogConcernWindowDays: FIREFLIES_BACKLOG_CONCERN_WINDOW_DAYS,
+    },
     metadata,
     summaryMetadata,
     recent,

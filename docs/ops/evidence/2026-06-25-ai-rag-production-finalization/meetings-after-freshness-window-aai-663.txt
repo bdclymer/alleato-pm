@@ -1,0 +1,95 @@
+
+> alleato-procore@0.1.0 rag:verify:meetings
+> node scripts/verify/verify_meeting_vectorization_health.mjs
+
+{
+  "policy": {
+    "recentMeetingCoverageWindowDays": 14,
+    "firefliesBacklogConcernWindowDays": 60
+  },
+  "metadata": {
+    "total_meetings": 1735,
+    "latest_meeting_at": "2026-06-25T19:00:00.000Z"
+  },
+  "summaryMetadata": {
+    "total_rag_metadata": 40130,
+    "embedded_summaries": 4863,
+    "latest_summary_embedding_at": "2026-06-25T21:39:00.760Z"
+  },
+  "recent": {
+    "recent_meetings": 75
+  },
+  "chunks": {
+    "total_chunks": 39429,
+    "embedded_chunks": 39429,
+    "docs_with_embedded_chunks": 2144,
+    "latest_chunk_embedding_at": "2026-06-25T21:39:00.193Z"
+  },
+  "recentChunkCoverage": {
+    "recent_meetings": 75,
+    "recent_meetings_with_chunks": 75,
+    "recent_meetings_with_embedded_chunks": 75,
+    "transcript_expected_meetings": 0,
+    "transcript_expected_meetings_with_embedded_transcript_chunks": 0,
+    "recent_chunks": 1739,
+    "recent_embedded_chunks": 1739,
+    "latest_recent_chunk_embedding_at": "2026-06-25T21:39:00.193Z"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "done",
+      "count": 2000,
+      "oldest_created_at": "2026-04-27T13:12:55.980Z",
+      "newest_updated_at": "2026-06-25T19:17:26.966Z"
+    },
+    {
+      "stage": "error",
+      "count": 1600,
+      "oldest_created_at": "2026-04-27T13:56:13.181Z",
+      "newest_updated_at": "2026-06-25T19:52:32.383Z"
+    },
+    {
+      "stage": "embedded",
+      "count": 533,
+      "oldest_created_at": "2026-04-26T22:42:52.512Z",
+      "newest_updated_at": "2026-05-14T18:05:18.072Z"
+    },
+    {
+      "stage": "raw_ingested",
+      "count": 81,
+      "oldest_created_at": "2026-05-13T20:56:06.145Z",
+      "newest_updated_at": "2026-06-22T22:43:23.479Z"
+    },
+    {
+      "stage": "segmented",
+      "count": 4,
+      "oldest_created_at": "2026-06-23T00:44:47.668Z",
+      "newest_updated_at": "2026-06-25T19:53:30.273Z"
+    },
+    {
+      "stage": "chunked",
+      "count": 2,
+      "oldest_created_at": "2026-04-30T22:57:21.603Z",
+      "newest_updated_at": "2026-05-06T20:21:55.896Z"
+    }
+  ],
+  "probes": {
+    "documentChunkSearch": {
+      "result_count": 5,
+      "max_similarity": 0.761450707773598
+    },
+    "embeddingProvider": {
+      "ok": true,
+      "providers": [
+        "ai-gateway",
+        "openai-direct"
+      ]
+    }
+  },
+  "warnings": [
+    "1600 Fireflies ingestion jobs created in the last 60 days are in error stage; inspect grouped error messages before relying on meeting recall."
+  ],
+  "failures": []
+}
+
+Meeting vectorization health: PASS

@@ -16,6 +16,7 @@ from src.services.agents.runtime_common import (
 )
 from src.services.agents.microsoft_executive_assistant.contracts import (
     MicrosoftAssistantAction,
+    MicrosoftAssistantEmailItem,
     MicrosoftAssistantTraceItem,
     MicrosoftExecutiveAssistantRequest,
     MicrosoftExecutiveAssistantResponse,
@@ -27,6 +28,54 @@ from src.services.agents.microsoft_executive_assistant.tools import (
 
 ORCHESTRATOR_NAME = "microsoft-executive-assistant"
 RUNTIME_DIR = Path(__file__).resolve().parent / "runtime"
+
+
+def _voice_prompt() -> str:
+    """Identity + soul shared with the main Alleato AI so the specialist answers
+    in the same voice rather than a separate compliance tone. Falls back to a
+    concise inline voice if the shared prompt files can't be loaded."""
+    try:
+        from src.services.agents.alleato_ai_tools.prompts import (
+            IDENTITY_PROMPT,
+            SOUL_PROMPT,
+        )
+
+        return f"{IDENTITY_PROMPT}\n\n{SOUL_PROMPT}\n\n"
+    except Exception:
+        return (
+            "You are Alleato AI: a direct, grounded, useful advisor. Bottom line "
+            "first, no filler, no corporate polish. Say what you found and the next move.\n\n"
+        )
+
+
+_MICROSOFT_OPERATOR_ADDENDUM = (
+    "# Your post right now\n"
+    "You are Alleato AI working as Brandon's Microsoft Executive Assistant — the same advisor described "
+    "above, focused on his Outlook, Teams, calendar, and Microsoft files. The Chief Strategist delegates "
+    "Microsoft work to you; you answer in that same voice, not as a separate tool.\n\n"
+    "# How you work this post\n"
+    "- Lead with the read, not the process. Bottom line first: what matters in the inbox/calendar and the "
+    "next move. Do not narrate which tools you called.\n"
+    "- Use live Outlook inbox reads for date-based inbox questions when a mailbox is available.\n"
+    "- Treat emails as evidence: sender, local time, and a link — never a wall of prose or raw UTC.\n"
+    "- Drop the compliance scaffolding. No 'What I can and cannot support', no 'Approvals needed: none'. "
+    "Say what you found and what you would do.\n\n"
+    "# Hard guardrails (these never bend)\n"
+    "- Fail loudly for missing provider keys, Microsoft Graph credentials, Graph HTTP failures, stale "
+    "context, or empty results. Never silently skip a tool failure.\n"
+    "- If any search tool returns a result beginning with SEARCH_BACKEND_DEGRADED (or *_SEARCH_FAILED), the "
+    "search subsystem is broken — do NOT report 'no matching passages' or conclude evidence is absent. Say "
+    "plainly that search was unavailable, state which corpora could not be searched, and never present a "
+    "confident negative.\n"
+    "- Never send email, post Teams messages, or mutate calendar events unless an explicit approved action "
+    "path exists. Draft for review only."
+)
+
+
+def _microsoft_system_prompt() -> str:
+    """The specialist's system prompt: shared identity + soul, then a focused
+    Microsoft-operator addendum that keeps the hard guardrails but leads with voice."""
+    return _voice_prompt() + _MICROSOFT_OPERATOR_ADDENDUM
 
 
 def _repo_root() -> Path:
@@ -799,6 +848,122 @@ def _deterministic_inbox_answer(
     return None
 
 
+def _wants_inbox_card(prompt: str) -> bool:
+    """True when an inbox-listing/triage answer should render as the card.
+
+    Broader than `_inbox_request_kind` (which only catches a few exact phrasings):
+    any inbox-noun request that ISN'T a pure single-thread drafting action. Pure
+    "draft a reply to X" requests read the inbox to find a thread but want a draft,
+    not an inbox listing, so they're excluded.
+    """
+    normalized = " ".join(prompt.lower().split())
+    if any(
+        token in normalized
+        for token in ("draft ", "reply to ", "respond to ", "write back", "compose ", "send a ")
+    ):
+        return False
+    return any(token in normalized for token in ("email", "emails", "inbox", "mail", "message"))
+
+
+def _fetch_draft_conversation_ids(mailbox: str) -> set[str]:
+    """Return the set of conversationIds that already have a draft in the Drafts
+    folder for the given mailbox. One Graph call; empty set on any error so the
+    pencil simply stays muted rather than surfacing a runtime failure."""
+    if not mailbox or "@" not in mailbox:
+        return set()
+    try:
+        from urllib.parse import quote as _quote, urlencode as _urlencode
+
+        from src.services.integrations.microsoft_graph.client import get_graph_client
+
+        graph = get_graph_client()
+        if not graph.is_configured():
+            return set()
+        params = _urlencode(
+            {"$select": "id,conversationId", "$top": "100"}
+        )
+        path = f"{graph.GRAPH_BASE}/users/{_quote(mailbox)}/mailFolders/drafts/messages?{params}"
+        data = graph._get_with_retry(path, max_retries=1, base_delay=0.5)
+        items = data.get("value") if isinstance(data, dict) else []
+        return {
+            str(item["conversationId"])
+            for item in (items or [])
+            if isinstance(item, dict) and item.get("conversationId")
+        }
+    except Exception:
+        return set()
+
+
+def _structured_inbox_emails(
+    request: MicrosoftExecutiveAssistantRequest,
+    result: Any,
+) -> list[MicrosoftAssistantEmailItem]:
+    """Shape the same live-inbox rows used for the text answer into structured
+    email items the frontend renders as the outlook_inbox_summary card.
+
+    Triggers whenever the agent actually performed a successful live inbox read
+    (so the data exists) AND the request is an inbox listing/triage — NOT gated on
+    the narrow `_inbox_request_kind` phrasings. Returns [] otherwise so the
+    frontend falls back to the text answer unchanged.
+    """
+    messages = _extract_live_inbox_messages(result)
+    if not messages:
+        return []
+    if not _wants_inbox_card(request.prompt):
+        return []
+
+    mailbox = (request.mailbox_user_id or "").strip().lower()
+    draft_conversation_ids = _fetch_draft_conversation_ids(mailbox)
+
+    items: list[MicrosoftAssistantEmailItem] = []
+    for index, message in enumerate(messages[: request.max_messages]):
+        subject = str(message.get("subject") or "(no subject)").strip() or "(no subject)"
+        body_text = str(message.get("body_text") or "").strip() or None
+        preview = re.sub(r"\s+", " ", body_text).strip()[:200] if body_text else None
+        graph_id = str(message.get("graph_message_id") or message.get("id") or "").strip() or None
+        conversation_id = str(message.get("conversation_id") or "").strip() or None
+        item_id = graph_id or conversation_id or f"inbox-{index}"
+        bucket = _action_bucket(message)
+        draft_ready = bool(conversation_id and conversation_id in draft_conversation_ids)
+        reply_prompt = "\n".join(
+            [
+                "OUTLOOK_INBOX_CARD_ACTION",
+                "Mode: reply",
+                "Draft a short Outlook reply to this email thread.",
+                f"Subject: {subject}",
+                *([f"Graph message ID: {graph_id}"] if graph_id else []),
+            ]
+        )
+        draft_prompt = "\n".join(
+            [
+                "OUTLOOK_INBOX_CARD_ACTION",
+                "Mode: new",
+                "Draft a short Outlook email about this inbox item.",
+                f"Subject: {subject}",
+            ]
+        )
+        items.append(
+            MicrosoftAssistantEmailItem(
+                id=item_id,
+                graphMessageId=graph_id,
+                conversationId=conversation_id,
+                subject=subject,
+                fromName=str(message.get("from_name") or "").strip() or None,
+                fromEmail=str(message.get("from_email") or "").strip() or None,
+                receivedAt=str(message.get("received_at") or "").strip() or None,
+                hasAttachments=bool(message.get("has_attachments")),
+                preview=preview,
+                bodyText=body_text,
+                webLink=str(message.get("web_link") or "").strip() or None,
+                recommendedAction=_message_reason(message, bucket),
+                replyPrompt=reply_prompt,
+                draftPrompt=draft_prompt,
+                draftReady=draft_ready,
+            )
+        )
+    return items
+
+
 def _tool_trace_from_result(result: Any, *, runtime_trace: MicrosoftAssistantTraceItem) -> list[MicrosoftAssistantTraceItem]:
     traces: list[MicrosoftAssistantTraceItem] = []
     known_tools = {
@@ -821,6 +986,19 @@ def _tool_trace_from_result(result: Any, *, runtime_trace: MicrosoftAssistantTra
         ok = parsed.get("ok") if isinstance(parsed.get("ok"), bool) else None
         if ok is False and not error:
             error = content[:500] if content else f"{tool_name} failed"
+        # The corpus-search tools return markdown (not JSON), so failures were
+        # invisible in the trace — a degraded backend looked like a clean success.
+        # Surface known failure markers so the trace and persisted metadata are honest.
+        if not error and isinstance(content, str):
+            stripped = content.lstrip()
+            if (
+                "SEARCH_BACKEND_DEGRADED" in content
+                or stripped.startswith("Error searching")
+                or stripped.startswith("Error executing retrieval")
+                or "_SEARCH_FAILED" in content
+                or "FILE_SEARCH_FAILED" in content
+            ):
+                error = content[:500]
         traces.append(
             MicrosoftAssistantTraceItem(
                 agent=ORCHESTRATOR_NAME,
@@ -876,14 +1054,7 @@ def run_microsoft_executive_assistant(
             "model": model,
             "tools": microsoft_executive_assistant_tools(),
             "backend": _microsoft_backend(allow_fallback=create_agent is not None),
-            "system_prompt": (
-                "You are Alleato's Microsoft Executive Assistant, a specialist delegated to by the Chief Strategist. "
-                "Your domain is Outlook, Teams, Microsoft calendar, and Microsoft files. Use Deep Agents planning and "
-                "specialized skills for inbox triage, drafting, urgent escalation, calendar review, and Microsoft file context. "
-                "Fail loudly for missing provider keys, Microsoft Graph credentials, Graph HTTP failures, stale source context, "
-                "or empty results. Never silently skip a tool failure. Never send email, post Teams messages, or mutate calendar "
-                "events unless an explicit approved action path exists."
-            ),
+            "system_prompt": _microsoft_system_prompt(),
         }
         skill_roots = _skill_roots()
         if skill_roots:
@@ -919,6 +1090,7 @@ def run_microsoft_executive_assistant(
             answer=answer,
             mode="deep_agents",
             actions=_extract_actions(answer, result),
+            emails=_structured_inbox_emails(request, result),
             toolTrace=_tool_trace_from_result(result, runtime_trace=runtime_trace),
             skillsLoaded=loaded_skills,
             approvedSkillContext=request.approved_skill_context,

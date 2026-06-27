@@ -20,6 +20,8 @@ import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { usePeople } from "@/hooks/use-people";
+import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
+import { useSpecifications } from "@/hooks/use-specifications";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
 
 interface DirectoryPerson {
@@ -65,7 +67,12 @@ function buildPersonOptions(people: DirectoryPerson[]): PersonOption[] {
  * the latter is empty for most projects, which left these fields blank.
  */
 export function useRfiPeopleOptions() {
-  const { people: users, isLoading: isLoadingUsers } = usePeople({ type: "user" });
+  // "Internal users" for RFI Manager / Assignees = all internal staff, not just
+  // the handful of accounts with a login. type:"employee" resolves to
+  // person_type IN ('employee','user') in /api/people, so employees added to the
+  // directory (e.g. Jesse Remillard) are selectable. type:"user" alone returned
+  // only the 3 login accounts.
+  const { people: users, isLoading: isLoadingUsers } = usePeople({ type: "employee" });
   const { people: directory, isLoading: isLoadingDirectory } = usePeople({ type: "all" });
 
   const userOptions = useMemo(
@@ -99,6 +106,56 @@ export function useRfiPeopleOptions() {
   };
 }
 
+/**
+ * Specification options for the RFI "Specification" field, sourced from the
+ * project's Specifications module (specification_sections). The RFI column is
+ * free text, so the selected value is stored as "section_number — title" for a
+ * self-explanatory display wherever it's rendered.
+ */
+function useSpecificationOptions(projectId: number) {
+  const { data, isLoading } = useSpecifications(String(projectId));
+
+  const options = useMemo<PersonOption[]>(() => {
+    const specs = data?.specifications ?? [];
+    return specs
+      .map((spec) => {
+        const number = spec.section_number?.trim() || "";
+        const title = spec.title?.trim() || "";
+        const label = [number, title].filter(Boolean).join(" — ") || number || title;
+        return { value: label, label, keywords: [number, title].filter(Boolean) };
+      })
+      .filter((opt) => opt.label)
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [data]);
+
+  return { specificationOptions: options, isLoadingSpecifications: isLoading };
+}
+
+/**
+ * Cost-code options for the RFI "Cost Code" field, sourced from the budget codes
+ * added to the project (project_budget_codes). The RFI column is free text, so
+ * the full label is stored for a self-explanatory display.
+ */
+function useCostCodeOptions(projectId: number) {
+  const { budgetCodes, loadingCodes } = useProjectBudgetCodes(String(projectId));
+
+  const options = useMemo<PersonOption[]>(() => {
+    return budgetCodes
+      .map((bc) => {
+        const label = bc.fullLabel?.trim() || bc.code?.trim() || "";
+        return {
+          value: label,
+          label,
+          keywords: [bc.code || "", bc.description || ""].filter(Boolean),
+        };
+      })
+      .filter((opt) => opt.label)
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [budgetCodes]);
+
+  return { costCodeOptions: options, isLoadingCostCodes: loadingCodes };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RfiFormFieldsProps {
@@ -123,10 +180,14 @@ interface RfiFormFieldsProps {
  */
 export function RfiFormFields({
   form,
+  projectId,
   withFormProvider = true,
 }: RfiFormFieldsProps) {
   const { userOptions, directoryOptions, companyForPerson, isLoading: isLoadingPeople } =
     useRfiPeopleOptions();
+  const { specificationOptions, isLoadingSpecifications } =
+    useSpecificationOptions(projectId);
+  const { costCodeOptions, isLoadingCostCodes } = useCostCodeOptions(projectId);
 
   // Procore: Responsible Contractor is auto-prefilled (read-only) from the
   // company of the person chosen in Received From. Re-derive on change; skip the
@@ -238,18 +299,28 @@ export function RfiFormFields({
             placeholder="Enter location"
           />
 
-          <RHFTextField
+          <RHFComboboxField
             control={form.control}
             name="specification"
             label="Specification"
-            placeholder="Enter specification section"
+            placeholder="Select specification section"
+            searchPlaceholder="Search specifications..."
+            emptyMessage="No specifications found for this project."
+            options={specificationOptions}
+            disabled={isLoadingSpecifications}
+            clearable
           />
 
-          <RHFTextField
+          <RHFComboboxField
             control={form.control}
             name="cost_code"
             label="Cost Code"
-            placeholder="Enter cost code"
+            placeholder="Select cost code"
+            searchPlaceholder="Search cost codes..."
+            emptyMessage="No cost codes added to this project."
+            options={costCodeOptions}
+            disabled={isLoadingCostCodes}
+            clearable
           />
 
           <RHFTextField

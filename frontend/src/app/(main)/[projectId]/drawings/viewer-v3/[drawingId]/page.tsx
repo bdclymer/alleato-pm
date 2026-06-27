@@ -39,7 +39,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/layout";
-import { EmptyState, ExpandingSearch } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import {
   Tooltip,
   TooltipContent,
@@ -902,10 +903,11 @@ export default function DrawingViewerV3Page() {
                 {activePanel === "search" && (
                   <div className="flex-1 flex flex-col overflow-hidden">
                     <div className="px-3 py-3 border-b border-border">
-                      <ExpandingSearch
+                      <ExpandableSearch
                         placeholder="Search drawings…"
                         value={searchQuery}
                         onChange={setSearchQuery}
+                        ariaLabel="Search drawings"
                       />
                     </div>
                     <div className="flex-1 overflow-y-auto">

@@ -10,9 +10,14 @@ import {
   CheckCircle2,
   CheckSquare2,
   ClipboardList,
+  KanbanSquare,
+  ListFilter,
   Loader2,
+  PanelLeft,
   Pencil,
+  Search,
   Tag,
+  Table2,
   Trash2,
   UserRound,
   X,
@@ -51,6 +56,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { SplitPageFrame } from "@/components/ui/split-page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -991,6 +997,110 @@ export function TaskListItem({
         </div>
       </div>
     </SwipeableListRow>
+  );
+}
+
+function TaskSplitListItem({
+  item,
+  projects,
+  isSelected,
+  isChecked,
+  onClick,
+  onCheckedChange,
+  onDelete,
+}: {
+  item: TasksRow;
+  projects: ProjectOption[];
+  isSelected: boolean;
+  isChecked: boolean;
+  onClick: () => void;
+  onCheckedChange: (checked: boolean) => void;
+  onDelete?: () => void;
+}) {
+  const ds = toDisplayStatus(item.status);
+  const priority = (item.priority ?? "").toLowerCase();
+  const priorityMeta = PRIORITY_META[priority];
+  const sourceLabel = getTaskSourceLabel(item);
+  const projectLabel = taskProjectLabel(item, projects);
+  const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
+  const dateLabel = formatShortDate(item.source_date ?? item.created_at);
+  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      data-task-item
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      className={cn(
+        "group flex cursor-pointer gap-3 border-b border-l-2 border-border/50 px-5 py-4 text-left transition-colors",
+        isSelected
+          ? "border-l-primary bg-muted/70"
+          : "border-l-transparent hover:bg-muted/40",
+      )}
+    >
+      <Checkbox
+        checked={isChecked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+        onClick={(event) => event.stopPropagation()}
+        aria-label={`Select ${item.description || item.title || "task"}`}
+        className="mt-0.5 shrink-0"
+      />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <p
+            className={cn(
+              "line-clamp-2 text-sm font-medium leading-5 text-foreground",
+              ds === "done" &&
+                "text-muted-foreground line-through decoration-muted-foreground/40",
+            )}
+          >
+            {item.description || item.title || "Untitled task"}
+          </p>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {dateLabel}
+          </span>
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <span className="max-w-48 truncate">{projectLabel}</span>
+          <span aria-hidden="true">/</span>
+          <span className="max-w-32 truncate">{assignedTo}</span>
+          <span aria-hidden="true">/</span>
+          <span className="max-w-32 truncate">{sourceLabel || "Source"}</span>
+          {priorityMeta ? (
+            <>
+              <span aria-hidden="true">/</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)}
+                />
+                {formatPriorityLabel(priority)}
+              </span>
+            </>
+          ) : null}
+        </div>
+        {showFeedback && item.id ? (
+          <div
+            className="flex items-center"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <TaskFeedbackButtons
+              projectId={buildTaskFeedbackSnapshot(item).projectId}
+              taskId={item.id}
+              taskSnapshot={buildTaskFeedbackSnapshot(item)}
+              onRemove={onDelete}
+              className="text-[11px]"
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -2524,6 +2634,237 @@ export function TasksInbox({
       ? `Tasks associated with ${projectName}`
       : "Tasks for this project"
     : "Tasks assigned from meetings, emails, documents, and source intelligence.";
+
+  if (rawView === "split") {
+    return (
+      <>
+        <SplitPageFrame height="viewport" className="flex-row bg-background">
+          <div
+            className={cn(
+              "flex h-full w-full min-w-0 flex-col overflow-hidden border-r border-border/70 bg-background xl:w-96 xl:shrink-0",
+              mobileShowDetail ? "hidden xl:flex" : "flex",
+            )}
+          >
+            <div className="border-b border-border/70 px-5 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">
+                    Tasks
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      tableState.setCurrentView("table");
+                      tableState.setSearchParams({ view: "table" });
+                    }}
+                    aria-label="Table view"
+                    title="Table view"
+                    className="h-8 w-8 rounded-full shadow-none"
+                  >
+                    <Table2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      tableState.setCurrentView("board");
+                      tableState.setSearchParams({ view: "board" });
+                    }}
+                    aria-label="Board view"
+                    title="Board view"
+                    className="h-8 w-8 rounded-full shadow-none"
+                  >
+                    <KanbanSquare className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Split view"
+                    title="Split view"
+                    className="h-8 w-8 rounded-full bg-muted text-foreground shadow-none"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Search tasks"
+                    title="Search tasks"
+                    className="h-8 w-8 rounded-full shadow-none"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Filter tasks"
+                    title="Filter tasks"
+                    className="h-8 w-8 rounded-full shadow-none"
+                  >
+                    <ListFilter className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {showTabs && !profileLoading ? (
+                <nav className="mt-3 flex items-center gap-5">
+                  {scopeTabs.map((tab) => (
+                    <Button
+                      key={tab.label}
+                      type="button"
+                      variant="ghost"
+                      onClick={() => router.push(`${tab.href}&view=split`)}
+                      className={cn(
+                        "relative h-auto rounded-none px-0 py-2 text-sm font-medium shadow-none hover:bg-transparent",
+                        tab.isActive
+                          ? "text-primary"
+                          : "text-foreground/70 hover:text-foreground/90",
+                      )}
+                    >
+                      {tab.label}
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
+                          tab.isActive ? "bg-primary" : "bg-transparent",
+                        )}
+                      />
+                    </Button>
+                  ))}
+                </nav>
+              ) : null}
+
+              <Tabs
+                value={filter}
+                onValueChange={(value) => {
+                  if (value === "open" || value === "done") {
+                    setFilter(value);
+                    tableState.setActiveFilters((current) => ({
+                      ...current,
+                      status: value,
+                    }));
+                    setSelectedId(null);
+                    setMobileShowDetail(false);
+                  }
+                }}
+                className="mt-4"
+              >
+                <TabsList>
+                  {STATUS_FILTERS.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div data-task-list-scroll className="min-h-0 flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="px-6 py-10 text-sm text-muted-foreground">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div className="mt-5 text-lg font-semibold tracking-[-0.02em] text-foreground">
+                    Nothing here
+                  </div>
+                  <p className="mt-2 max-w-xs leading-6">
+                    No {filter} tasks{scope === "mine" ? " assigned to you" : ""}.
+                  </p>
+                </div>
+              ) : (
+                filteredItems.map((item) => (
+                  <TaskSplitListItem
+                    key={item.id}
+                    item={item}
+                    projects={projects}
+                    isSelected={selectedId === item.id}
+                    isChecked={
+                      item.id ? selectedTaskIds.includes(item.id) : false
+                    }
+                    onClick={() => item.id && selectItem(item.id)}
+                    onCheckedChange={(checked) =>
+                      item.id && toggleTaskSelection(item.id, checked)
+                    }
+                    onDelete={() => item.id && deleteItem(item.id)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="hidden min-w-0 flex-1 flex-col overflow-hidden xl:flex">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {!selectedWithContext ? (
+                <EmptyDetail
+                  total={total}
+                  openCount={openCount}
+                  doneCount={doneCount}
+                  loading={loading}
+                  scope={scope}
+                  isProjectScoped={isProjectScoped}
+                />
+              ) : (
+                <TaskDetail
+                  task={selectedWithContext}
+                  updatingId={updatingId}
+                  deletingId={deletingId}
+                  onUpdateStatus={updateStatus}
+                  onUpdateTask={updateTask}
+                  onDelete={deleteItem}
+                  projects={projects}
+                  projectsLoading={projectsLoading}
+                  users={users}
+                  usersLoading={usersLoading}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="hidden h-full w-80 shrink-0 overflow-y-auto border-l border-border/70 bg-background px-7 py-8 xl:block">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Task Context
+            </p>
+            <div className="mt-7 space-y-6 text-sm">
+              <div>
+                <p className="font-semibold text-foreground">Inbox</p>
+                <p className="mt-2 leading-6 text-muted-foreground">
+                  Open tasks stay in the left rail so the selected task remains
+                  focused in the center pane.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Source</p>
+                <p className="mt-2 leading-6 text-muted-foreground">
+                  Meeting, email, and document context stays attached to the
+                  selected task.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Training</p>
+                <p className="mt-2 leading-6 text-muted-foreground">
+                  AI-generated tasks can be marked useful or not useful from the
+                  task row or detail pane.
+                </p>
+              </div>
+            </div>
+          </div>
+        </SplitPageFrame>
+      </>
+    );
+  }
 
   return (
     <>

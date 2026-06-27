@@ -17,6 +17,7 @@ import {
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { createOperationalTools } from "@/lib/ai/tools/operational";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
+import { createToolContext } from "@/lib/ai/tools/tool-context";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateDailyBrief } from "@/lib/executive/daily-brief";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
@@ -71,6 +72,74 @@ function buildSyntheticRagRequest(kind: SourceSpecificRagKind, message?: string)
   }
 }
 
+function projectNameCandidatesFromQuery(query: string): string[] {
+  const candidates = new Set<string>();
+  const normalized = query.trim();
+  const relationMatch = normalized.match(
+    /\b(?:for|on|about)\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:,|\bincluding\b|\bwith\b|\band\b|[?.]|$)/i,
+  );
+  if (relationMatch?.[1]) candidates.add(relationMatch[1].trim());
+
+  for (const quoted of normalized.matchAll(/["“]([^"”]{3,80})["”]/g)) {
+    candidates.add(quoted[1].trim());
+  }
+
+  const ignored = new Set([
+    "give",
+    "current",
+    "executive",
+    "project",
+    "update",
+    "including",
+    "hard",
+    "facts",
+    "open",
+    "risks",
+    "recommended",
+    "next",
+    "actions",
+    "status",
+    "latest",
+  ]);
+  for (const token of normalized.match(/\b[A-Za-z][A-Za-z0-9'&.-]{2,}\b/g) ?? []) {
+    const lower = token.toLowerCase();
+    if (!ignored.has(lower)) candidates.add(token);
+  }
+
+  return [...candidates]
+    .map((candidate) => candidate.replace(/\s+/g, " ").trim())
+    .filter((candidate) => candidate.length >= 3)
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 6);
+}
+
+async function resolveProjectFromProjectsTable(params: {
+  supabase: SupabaseClient<Database>;
+  guardrails: ReturnType<typeof createToolGuardrails>;
+  query: string;
+}): Promise<{ projectId: number } | null> {
+  const scopedProjectIds = await params.guardrails.getScopedProjectIds();
+  if (scopedProjectIds.length === 0) return null;
+
+  for (const candidate of projectNameCandidatesFromQuery(params.query)) {
+    const { data, error } = await params.supabase
+      .from("projects")
+      .select("id,name")
+      .eq("archived", false)
+      .in("id", scopedProjectIds)
+      .ilike("name", `%${candidate}%`)
+      .order("name", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && typeof data?.id === "number") {
+      return { projectId: data.id };
+    }
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -82,12 +151,13 @@ export type BuildExecutorDepsInput = {
 };
 
 export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutorDepsInput): ExecutorDeps {
-  // Lazy-initialized tool factories — createServiceClient() inside each factory
-  // uses the module-level service client singleton, so calling them multiple times
-  // is safe. We create them once per request inside the closure.
-  const projectTools = createProjectTools(userId);
-  const operationalTools = createOperationalTools(userId);
-  const guardrails = createToolGuardrails(userId);
+  // One ToolContext per request: reuse the caller's supabase client as ctx.db so
+  // the tool factories, guardrails, and this executor all share a single set of
+  // clients instead of each constructing their own.
+  const ctx = createToolContext({ userId, overrides: { db: supabase } });
+  const projectTools = createProjectTools(userId, { ctx });
+  const operationalTools = createOperationalTools(userId, { ctx });
+  const guardrails = ctx.guardrails;
 
   // 1. loadIntelligencePacket
   //    Resolves the intelligence target for the projectId then loads the current packet.
@@ -255,8 +325,8 @@ export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutor
   ): Promise<{ projectId: number } | null> => {
     if (!query.trim()) return null;
     const target = await resolveIntelligenceTarget({ query, supabase });
-    if (!target?.projectId) return null;
-    return { projectId: target.projectId };
+    if (target?.projectId) return { projectId: target.projectId };
+    return resolveProjectFromProjectsTable({ supabase, guardrails, query });
   };
 
   return {

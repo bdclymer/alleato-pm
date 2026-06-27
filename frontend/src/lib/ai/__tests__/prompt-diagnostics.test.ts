@@ -15,8 +15,9 @@ import {
   redactSystemPrompt,
 } from "../prompt-diagnostics";
 
-const mockAssembleSystemPrompt =
-  assembleSystemPrompt as jest.MockedFunction<typeof assembleSystemPrompt>;
+const mockAssembleSystemPrompt = assembleSystemPrompt as jest.MockedFunction<
+  typeof assembleSystemPrompt
+>;
 const mockLoadAssistantSourceHealthContext =
   loadAssistantSourceHealthContext as jest.MockedFunction<
     typeof loadAssistantSourceHealthContext
@@ -45,15 +46,19 @@ describe("prompt diagnostics", () => {
   });
 
   it("detects base and dynamic prompt sections in the assembled runtime prompt", async () => {
-    mockAssembleSystemPrompt.mockResolvedValue([
-      "## Soul",
-      "## Identity",
-      "SEARCH FIRST, ADMIT LAST",
-      "You are the Chief Strategist of Alleato AI.",
-      "## Runtime Date Context",
-      "## Active Project Context",
-      "The user has pinned: Ulta Beauty Fresno.",
-    ].join("\n\n"));
+    mockAssembleSystemPrompt.mockResolvedValue(
+      [
+        "## Soul",
+        "## Identity",
+        "SEARCH FIRST, ADMIT LAST",
+        "You are the Chief Strategist of Alleato AI.",
+        "## Runtime Date Context",
+        "## Tool Routing Policy",
+        "- searchTeamsMessages: Use when user asks for Teams messages.",
+        "## Active Project Context",
+        "The user has pinned: Ulta Beauty Fresno.",
+      ].join("\n\n"),
+    );
     mockLoadAssistantSourceHealthContext.mockResolvedValue({
       metadata: {
         generatedAt: "2026-05-11T00:00:00.000Z",
@@ -105,6 +110,7 @@ describe("prompt diagnostics", () => {
         expect.objectContaining({ id: "search_first", present: true }),
         expect.objectContaining({ id: "strategist", present: true }),
         expect.objectContaining({ id: "runtime_date", present: true }),
+        expect.objectContaining({ id: "tool_routing_policy", present: true }),
         expect.objectContaining({ id: "active_project", present: true }),
         expect.objectContaining({ id: "source_health", present: true }),
         expect.objectContaining({ id: "intelligence_packet", present: true }),

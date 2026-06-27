@@ -110,6 +110,7 @@ _stub_modules()
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-key")
 os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+os.environ.setdefault("ADMIN_API_KEY", "test-admin-key")
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +139,12 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
         "src.yokeflow.api": MagicMock(),
         "src.yokeflow.api.router": MagicMock(),
     }):
-        from src.api.main import app, get_rag_store as _get_rag_store, get_ingestion_pipeline as _get_ingestion_pipeline  # noqa: E402
+        from src.api.main import (  # noqa: E402
+            app,
+            get_ingestion_pipeline as _get_ingestion_pipeline,
+            get_rag_store as _get_rag_store,
+            require_admin_api_key as _require_admin_api_key,
+        )
 
 
 from fastapi.testclient import TestClient
@@ -151,6 +157,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def client():
     """FastAPI test client."""
+    app.dependency_overrides[_require_admin_api_key] = lambda: None
     return TestClient(app)
 
 
@@ -176,15 +183,7 @@ def mock_fireflies_pipeline():
     """Mock FirefliesIngestionPipeline injected via dependency override."""
     pipeline = MagicMock()
 
-    class _IngestionResult:
-        def __init__(self):
-            self.status = "success"
-            self.documents_created = 1
-            self.chunks_created = 10
-            self.tasks_created = 5
-            self.insights_created = 3
-
-    pipeline.ingest_file.return_value = _IngestionResult()
+    pipeline.sync_recent_transcripts.return_value = {"status": "success", "processed": 1, "dry_run": True}
 
     app.dependency_overrides[_get_ingestion_pipeline] = lambda: pipeline
     yield pipeline
@@ -207,9 +206,14 @@ def sample_chat_request():
 
 
 @pytest.fixture
+def admin_headers():
+    return {"X-Admin-Api-Key": "test-admin-key"}
+
+
+@pytest.fixture
 def sample_ingest_request():
     return {
-        "path": "/path/to/fireflies/transcript.json",
+        "limit": 5,
         "project_id": 1,
         "dry_run": True,
     }

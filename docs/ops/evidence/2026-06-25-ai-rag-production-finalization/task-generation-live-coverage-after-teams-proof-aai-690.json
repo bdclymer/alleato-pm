@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-06-26T03:49:17.177Z",
+  "lookbackDays": 7,
+  "taskSummary": [
+    {
+      "source_system": "teams",
+      "tasks": 4,
+      "with_project_id": 4,
+      "with_project_ids": 4,
+      "project_array_mismatches": 0,
+      "with_owner": 4,
+      "oldest_created_at": "2026-06-26T03:48:34.125Z",
+      "newest_created_at": "2026-06-26T03:48:35.677Z"
+    },
+    {
+      "source_system": "email",
+      "tasks": 1,
+      "with_project_id": 1,
+      "with_project_ids": 1,
+      "project_array_mismatches": 0,
+      "with_owner": 1,
+      "oldest_created_at": "2026-06-26T03:40:55.479Z",
+      "newest_created_at": "2026-06-26T03:40:55.479Z"
+    }
+  ],
+  "duplicateGroups": []
+}

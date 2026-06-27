@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   useParams,
   usePathname,
@@ -95,7 +95,10 @@ import {
   matchesDrawingPublishState,
   renderDrawingCard,
   renderDrawingList,
+  type ImpliedSubmittalCounts,
 } from "@/features/drawings/drawings-table-config";
+import { useRequiredSubmittals } from "@/hooks/use-submittals";
+import { ScanDrawingsSheet } from "@/features/submittals/scan-drawings-sheet";
 
 type DrawingFilterState = Record<string, FilterValue>;
 type GalleryImageSize = "small" | "medium" | "large" | "xlarge";
@@ -194,6 +197,7 @@ export default function ProjectDrawingsPage() {
     drawingType: SELECT_NO_CHANGE,
   });
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [scanDrawingsOpen, setScanDrawingsOpen] = useState(false);
   const dragCounter = useRef(0);
 
   const projectId = params.projectId ?? "";
@@ -206,6 +210,17 @@ export default function ProjectDrawingsPage() {
   const drawingSubscription = useDrawingSubscription(projectId);
   const toggleDrawingSubscription = useToggleDrawingSubscription(projectId);
   const { data: drawingSets = [] } = useDrawingSets(projectId);
+  const { data: requiredSubmittals } = useRequiredSubmittals(parseInt(projectId, 10));
+  const impliedSubmittalCounts = useMemo<ImpliedSubmittalCounts>(() => {
+    const counts = new Map<string, { total: number; missing: number }>();
+    for (const item of requiredSubmittals?.items ?? []) {
+      const existing = counts.get(item.drawingId) ?? { total: 0, missing: 0 };
+      existing.total += 1;
+      if (!item.existingSubmittal) existing.missing += 1;
+      counts.set(item.drawingId, existing);
+    }
+    return counts;
+  }, [requiredSubmittals]);
   const urlDiscipline = searchParams.get("discipline") ?? undefined;
   const urlSetId = searchParams.get("set") ?? undefined;
   const urlAreaId = searchParams.get("area_id") ?? undefined;
@@ -415,11 +430,14 @@ export default function ProjectDrawingsPage() {
 
   const tableColumns = React.useMemo(
     () =>
-      buildDrawingTableColumns({
-        disciplines: allDisciplines,
-        onUpdate: handleInlineUpdate,
-      }),
-    [allDisciplines, handleInlineUpdate],
+      buildDrawingTableColumns(
+        {
+          disciplines: allDisciplines,
+          onUpdate: handleInlineUpdate,
+        },
+        impliedSubmittalCounts,
+      ),
+    [allDisciplines, handleInlineUpdate, impliedSubmittalCounts],
   );
   const activeSetId = urlSetId;
   const activeSet = activeSetId
@@ -857,6 +875,9 @@ export default function ProjectDrawingsPage() {
       </>
     ) : (
       <>
+        <Button size="sm" variant="outline" onClick={() => setScanDrawingsOpen(true)}>
+          Scan for submittals
+        </Button>
         <Button size="sm" onClick={() => setUploadOpen(true)}>
           <Plus className="h-4 w-4" />
           Upload
@@ -895,7 +916,7 @@ export default function ProjectDrawingsPage() {
               onClick={() =>
                 toast.info("Measurements report is not connected yet.", {
                   description:
-                    "This control is visible for Procore parity while the measurement report is still pending.",
+                    "This control is visible while the measurement report is still pending.",
                 })
               }
             >
@@ -1275,6 +1296,12 @@ export default function ProjectDrawingsPage() {
         open={uploadOpen}
         onOpenChange={handleUploadOpenChange}
         initialFiles={droppedFiles.length > 0 ? droppedFiles : undefined}
+      />
+
+      <ScanDrawingsSheet
+        projectId={parseInt(projectId, 10)}
+        open={scanDrawingsOpen}
+        onOpenChange={setScanDrawingsOpen}
       />
 
       <AlertDialog

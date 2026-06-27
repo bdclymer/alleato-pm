@@ -1,0 +1,66 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-routing
+> pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium
+
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Already up to date
+Done in 252ms using pnpm v11.7.0
+[dotenv@17.2.3] injecting env (150) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (8) from ../.env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+Running 6 tests using 1 worker
+
+(node:7024) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7024) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from ../.env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Existing auth session is still valid; verifying protected route access
+  ✓  1 [setup] › tests/auth.setup.ts:159:6 › authenticate (509ms)
+(node:7253) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7253) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+  ✓  2 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling (2.4s)
+  ✓  3 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing (2.9s)
+  ✘  4 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project (17.0s)
+  -  5 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction
+  -  6 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+
+
+  1) [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"daily operating brief"[39m
+    Received string:    [31m"What are you referring to by “this”?·[39m
+    [31mIf you mean:[39m
+    [31m- a **project summary / briefing** — tell me which project or paste the title[39m
+    [31m- a **draft/change request/RFI/task** — send the name or number[39m
+    [31m- a **document/file** — send the filename or screenshot[39m
+    [31m- **the last answer I gave** — say that, and I’ll explain what I used and when it was generated·[39m
+    [31mI need the specific item before I can tell you when it was regenerated."[39m
+
+      196 |     );
+      197 |
+    > 198 |     expect(report.content).toContain("daily operating brief");
+          |                            ^
+      199 |     expect(report.content).toContain("daily_recaps.recap_kind=executive_briefing");
+      200 |     expect(report.content).not.toContain("Which project?");
+      201 |     expect(report.content).not.toContain("give me the project name");
+        at /Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:198:28
+
+  1 failed
+    [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project
+  2 did not run
+  3 passed (24.5s)

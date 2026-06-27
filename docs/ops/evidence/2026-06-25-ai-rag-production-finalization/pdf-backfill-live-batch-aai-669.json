@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-06-25T22:19:17.631Z",
+  "backendUrl": "https://alleato-backend-rbnj.onrender.com",
+  "batch_count": 10,
+  "results": [
+    {
+      "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+      "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd"
+      }
+    },
+    {
+      "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+      "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18"
+      }
+    },
+    {
+      "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+      "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf"
+      }
+    },
+    {
+      "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+      "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf"
+      }
+    },
+    {
+      "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+      "title": "[011] A401 - ENLARGED PLANS.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860"
+      }
+    },
+    {
+      "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+      "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "complete",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c"
+      }
+    },
+    {
+      "id": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8",
+      "title": "[008] A101R - FIRST FLOOR REFERENCE PLAN.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "raw_ingested",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8"
+      }
+    },
+    {
+      "id": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3",
+      "title": "[007] A101D - FIRST FLOOR DIMENSION PLAN.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "raw_ingested",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3"
+      }
+    },
+    {
+      "id": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1",
+      "title": "[006] A001 - WALL TYPES.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "raw_ingested",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1"
+      }
+    },
+    {
+      "id": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418",
+      "title": "[005] AD101 - DEMOLITION PLAN.pdf",
+      "source_system": "drawing_upload",
+      "previous_status": "raw_ingested",
+      "ok": true,
+      "http_status": 200,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418"
+      }
+    }
+  ]
+}

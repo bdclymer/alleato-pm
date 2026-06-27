@@ -1,0 +1,7 @@
+frontend/vercel.json JSON: PASS
+
+> alleato-procore@0.1.0 check:routes
+> bash scripts/check-route-conflicts.sh
+
+Checking for dynamic route conflicts...
+✅ No route conflicts found

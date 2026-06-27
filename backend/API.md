@@ -40,7 +40,6 @@ Production AI strategist chat is handled by the frontend Next.js route at `front
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/ingest/fireflies/recent` | Ingest recent Fireflies meetings |
-| `POST` | `/api/ingest/fireflies` | Legacy file-based Fireflies ingest, disabled unless explicitly enabled |
 
 ### Admin (`/api/admin`)
 
@@ -74,11 +73,9 @@ The following endpoints require either:
 
 Protected endpoints:
 - All `/api/admin/*` routes
-- `POST /api/ingest/fireflies`
 - `POST /api/ingest/fireflies/recent`
 - `POST /api/graph/sync`
 - `POST /api/intelligence/teams-compiler/run`
-- `POST /api/digests/daily/generate`
 
 If `ADMIN_API_KEY` is not set in the environment, protected endpoints return `503`.
 

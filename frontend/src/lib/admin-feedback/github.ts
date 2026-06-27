@@ -2,6 +2,10 @@ import type {
   AdminFeedbackRequestType,
   AdminFeedbackSeverity,
 } from "./constants";
+import {
+  ADMIN_FEEDBACK_REQUEST_TYPE_GITHUB_LABELS,
+  ADMIN_FEEDBACK_REQUEST_TYPE_LABELS,
+} from "./constants";
 import type { ToolContextBundle } from "./context-resolver";
 
 type GitHubIssuePayload = {
@@ -48,13 +52,16 @@ function getRepoConfig() {
   return { owner, repo, token };
 }
 
-function buildLabels(requestType: AdminFeedbackRequestType) {
+export function buildAdminFeedbackGitHubLabels(requestType: AdminFeedbackRequestType) {
   const baseLabels = (process.env.GITHUB_FEEDBACK_LABELS ?? "admin-feedback")
     .split(",")
     .map((label) => label.trim())
     .filter(Boolean);
 
-  return [...baseLabels, `feedback:${requestType}`];
+  return [
+    ...baseLabels,
+    ADMIN_FEEDBACK_REQUEST_TYPE_GITHUB_LABELS[requestType],
+  ];
 }
 
 function buildIssueBody(input: CreateGitHubIssueInput) {
@@ -93,7 +100,7 @@ function buildIssueBody(input: CreateGitHubIssueInput) {
     `- DOM path: \`${input.domPath ?? "Unknown"}\``,
     "",
     "## Request",
-    `- Type: ${input.requestType}`,
+    `- Type: ${ADMIN_FEEDBACK_REQUEST_TYPE_LABELS[input.requestType]} (${input.requestType})`,
     `- Severity: ${input.severity}`,
   ];
 
@@ -233,7 +240,7 @@ export async function createGitHubIssue(input: CreateGitHubIssueInput) {
     return null;
   }
 
-  const labels = buildLabels(input.requestType);
+  const labels = buildAdminFeedbackGitHubLabels(input.requestType);
 
   // Create issue WITHOUT labels first
   const payload: GitHubIssuePayload = {

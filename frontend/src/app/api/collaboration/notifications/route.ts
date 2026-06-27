@@ -8,14 +8,35 @@ import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   cursor: z.string().datetime().optional(),
+  kind: z.string().trim().min(1).max(80).optional(),
+  projectId: z.coerce.number().int().positive().optional(),
+  unreadOnly: z.coerce.boolean().optional(),
 });
 
 const patchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("mark-read"), id: z.string().uuid() }),
+  z.object({
+    action: z.literal("mark-reviewed"),
+    id: z.string().uuid(),
+    review: z
+      .object({
+        checkedIds: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+        checkedLabels: z.array(z.string().trim().min(1).max(200)).max(20).default([]),
+      })
+      .optional(),
+  }),
   z.object({ action: z.literal("mark-all-read") }),
   z.object({ action: z.literal("delete"), id: z.string().uuid() }),
   z.object({ action: z.literal("delete-all") }),
 ]);
+
+function getMetadataRecord(metadata: unknown): Record<string, unknown> {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+
+  return metadata as Record<string, unknown>;
+}
 
 export const GET = withApiGuardrails(
   "collaboration/notifications#GET",
@@ -41,17 +62,30 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const { limit, cursor } = parsed.data;
+    const { limit, cursor, kind, projectId, unreadOnly } = parsed.data;
     const supabase = await createClient();
 
     let query = supabase
       .from("collaboration_notifications")
       .select(
-        "id, kind, title, body, created_at, read_at, entity_type, entity_id, project_id",
+        "id, kind, title, body, metadata, created_at, read_at, entity_type, entity_id, project_id",
       )
+      .eq("user_id", user.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(limit + 1);
+
+    if (kind) {
+      query = query.eq("kind", kind);
+    }
+
+    if (projectId) {
+      query = query.eq("project_id", projectId);
+    }
+
+    if (unreadOnly) {
+      query = query.is("read_at", null);
+    }
 
     if (cursor) {
       query = query.lt("created_at", cursor);
@@ -71,11 +105,22 @@ export const GET = withApiGuardrails(
     const hasMore = (data?.length ?? 0) > limit;
     const page = hasMore ? data!.slice(0, limit) : data ?? [];
 
-    const { count: unreadCount, error: unreadError } = await supabase
+    let unreadQuery = supabase
       .from("collaboration_notifications")
       .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
       .is("deleted_at", null)
       .is("read_at", null);
+
+    if (kind) {
+      unreadQuery = unreadQuery.eq("kind", kind);
+    }
+
+    if (projectId) {
+      unreadQuery = unreadQuery.eq("project_id", projectId);
+    }
+
+    const { count: unreadCount, error: unreadError } = await unreadQuery;
 
     if (unreadError) {
       throw new GuardrailError({
@@ -92,6 +137,7 @@ export const GET = withApiGuardrails(
         kind: row.kind,
         title: row.title,
         body: row.body,
+        metadata: row.metadata,
         createdAt: row.created_at,
         readAt: row.read_at,
         entityType: row.entity_type,
@@ -129,6 +175,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .update({ read_at: new Date().toISOString() })
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null);
 
       if (error) {
@@ -143,10 +190,60 @@ export const PATCH = withApiGuardrails(
       return NextResponse.json({ success: true });
     }
 
+    if (payload.action === "mark-reviewed") {
+      const reviewedAt = new Date().toISOString();
+      const { data: existing, error: existingError } = await supabase
+        .from("collaboration_notifications")
+        .select("metadata")
+        .eq("id", payload.id)
+        .eq("user_id", user.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Failed to load notification review metadata: ${existingError.message}`,
+          details: existingError,
+        });
+      }
+
+      const metadata = {
+        ...getMetadataRecord(existing?.metadata),
+        review: {
+          source: "ai_approval_queue",
+          reviewedAt,
+          reviewedBy: user.id,
+          checkedIds: payload.review?.checkedIds ?? [],
+          checkedLabels: payload.review?.checkedLabels ?? [],
+        },
+      };
+
+      const { error } = await supabase
+        .from("collaboration_notifications")
+        .update({ read_at: reviewedAt, metadata })
+        .eq("id", payload.id)
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
+
+      if (error) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Failed to mark notification as reviewed: ${error.message}`,
+          details: error,
+        });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
     if (payload.action === "mark-all-read") {
       const { error } = await supabase
         .from("collaboration_notifications")
         .update({ read_at: new Date().toISOString() })
+        .eq("user_id", user.id)
         .is("deleted_at", null)
         .is("read_at", null);
 
@@ -167,6 +264,7 @@ export const PATCH = withApiGuardrails(
         .from("collaboration_notifications")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", payload.id)
+        .eq("user_id", user.id)
         .is("deleted_at", null);
 
       if (error) {
@@ -184,6 +282,7 @@ export const PATCH = withApiGuardrails(
     const { error } = await supabase
       .from("collaboration_notifications")
       .update({ deleted_at: new Date().toISOString() })
+      .eq("user_id", user.id)
       .is("deleted_at", null);
 
     if (error) {

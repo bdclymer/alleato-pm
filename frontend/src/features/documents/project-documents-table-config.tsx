@@ -251,7 +251,7 @@ export function buildDocumentTableColumns(opts?: {
             {item.is_private && (
               <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             )}
-            <span className="truncate font-medium text-primary underline decoration-primary/40 underline-offset-4">
+            <span className="truncate font-medium text-foreground">
               {item.title}
             </span>
           </div>

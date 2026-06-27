@@ -71,7 +71,7 @@ async function buildInviteUrl(args: {
     };
   }
 
-  const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent(invoicePath)}`;
+  const passwordSetupUrl = `/auth/update-password?email=${encodeURIComponent(recipient.email)}&next=${encodeURIComponent(invoicePath)}`;
   const confirmBaseUrl = `${appUrl}/auth/confirm`;
   const { data: linkData, error: linkError } = await service.auth.admin.generateLink({
     type: "invite",

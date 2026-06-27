@@ -16,7 +16,9 @@ losing hits to post-filtering we over-fetch (3× `match_count`) and truncate.
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Any
@@ -28,10 +30,82 @@ from src.services.supabase_helpers import get_rag_read_client
 from src.services.ai_transport import get_openai_client
 from ._retry import with_db_retry
 
+logger = logging.getLogger(__name__)
+
 _EMBEDDING_MODEL = "text-embedding-3-large"
 _MATCH_THRESHOLD = 0.3
 _OVERFETCH_MULTIPLIER = 3
 _RERANK_CANDIDATE_FLOOR = 30
+
+# --- Degraded-search guardrail -------------------------------------------------
+# A vector search returning zero rows is normally a genuine "no matching passages".
+# But it is ALSO what a degraded embedding/search backend looks like: if the live
+# provider drifts (wrong key, wrong model, incompatible embedding space — a
+# recurring failure class in this stack), every query embeds into a space that
+# does not match the stored corpus, so EVERYTHING falls below threshold and every
+# search silently returns empty. An agent then reports a confident false negative
+# ("no evidence of a resignation") over a corpus that actually contains the answer.
+#
+# Guard: on an empty RPC result, run a cached sentinel probe — embed a generic
+# in-domain phrase that is guaranteed to have a strong neighbour in a healthy
+# index. If even the sentinel cannot clear a floor, the backend is degraded and we
+# raise instead of returning a clean empty. Bounded cost: only on empty results,
+# verdict cached for a short TTL.
+_SEARCH_HEALTHCHECK_ENABLED_DEFAULT = "true"
+_HEALTH_SENTINEL_QUERY = "weekly project meeting budget schedule update and action items"
+_HEALTH_MIN_SIMILARITY = 0.15
+_HEALTH_TTL_SECONDS = 120.0
+_health_cache: dict[str, float | bool] = {"checked_at": 0.0, "healthy": True}
+
+
+class CorpusSearchDegradedError(RuntimeError):
+    """Vector search returned empty AND a sentinel probe confirms the embedding /
+    search backend is degraded (provider/key/model drift). Distinguishes a true
+    'no matching passages' from a silent search outage so callers fail loudly."""
+
+
+def _search_healthcheck_enabled() -> bool:
+    return os.environ.get(
+        "RAG_SEARCH_HEALTHCHECK_ENABLED", _SEARCH_HEALTHCHECK_ENABLED_DEFAULT
+    ).strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _corpus_search_healthy(rpc_name: str) -> bool:
+    """Sentinel probe: is the embedding+search backend producing usable results?
+
+    Cached for `_HEALTH_TTL_SECONDS`. Returns True when a generic in-domain query
+    retrieves a neighbour above `_HEALTH_MIN_SIMILARITY`; False when the probe
+    returns nothing or only near-zero similarities (incompatible embedding space)
+    or the probe itself errors.
+    """
+    now = time.monotonic()
+    if now - float(_health_cache["checked_at"]) < _HEALTH_TTL_SECONDS:
+        return bool(_health_cache["healthy"])
+
+    healthy = False
+    try:
+        probe_embedding = _embed_query(_HEALTH_SENTINEL_QUERY)
+        client = get_rag_read_client()
+        response = client.rpc(
+            rpc_name,
+            {
+                "query_embedding": probe_embedding,
+                "filter_source_types": None,
+                "filter_project_id": None,
+                "match_count": 1,
+                "match_threshold": 0.0,
+            },
+        ).execute()
+        rows = list(response.data or [])
+        top = rows[0].get("similarity") if rows else None
+        healthy = isinstance(top, (int, float)) and float(top) >= _HEALTH_MIN_SIMILARITY
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("corpus search healthcheck probe failed: %s", exc)
+        healthy = False
+
+    _health_cache["checked_at"] = now
+    _health_cache["healthy"] = healthy
+    return healthy
 
 # Embedding-variant selection — flips between the legacy vector and the contextual
 # vector once alleato-pm finishes the Contextual Retrieval backfill (see
@@ -201,6 +275,16 @@ def retrieve(
 
     rows = _run()
 
+    # Degraded-search guardrail: an empty RPC result is either a true negative or a
+    # silent backend outage. Probe to tell them apart, and fail loudly on outage so
+    # no caller can report a false "no matching passages" over a populated corpus.
+    if not rows and _search_healthcheck_enabled() and not _corpus_search_healthy(rpc_name):
+        raise CorpusSearchDegradedError(
+            "Vector search returned no rows and the sentinel health probe failed — "
+            "the embedding/search backend appears degraded (likely provider/key/model "
+            "drift). Treating this as a capability failure, not 'no results'."
+        )
+
     def keep(row: dict[str, Any]) -> bool:
         d = row.get("doc_date")
         if isinstance(d, datetime):
@@ -253,6 +337,8 @@ def _search(
             version_status=version_status,
             max_results=max_results,
         )
+    except CorpusSearchDegradedError as exc:
+        return f"SEARCH_BACKEND_DEGRADED: search unavailable — {exc}"
     except ValueError as exc:
         return f"Error: {exc}."
     except Exception as exc:  # noqa: BLE001

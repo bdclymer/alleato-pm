@@ -114,7 +114,7 @@ export function InlineEditField({
         }}
         title="Click to edit"
         className={cn(
-          "group/inline-edit -mx-1.5 -my-0.5 flex h-auto w-full items-center justify-start rounded px-1.5 py-0.5 text-left text-sm font-medium hover:bg-muted/60 focus-visible:bg-muted/60",
+          "group/inline-edit -mx-1.5 -my-0.5 flex h-auto w-full items-center justify-start rounded px-1.5 py-0.5 text-left text-sm !font-normal hover:bg-muted/60 focus-visible:bg-muted/60",
           className,
         )}
       >

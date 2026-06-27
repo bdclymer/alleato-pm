@@ -68,6 +68,9 @@ export interface DocumentsTablePageProps {
   tableColumns?: TableColumn<PipelineDoc>[];
   renderCard?: (item: PipelineDoc, onView: (item: PipelineDoc) => void) => React.ReactElement;
   renderList?: (item: PipelineDoc, onView: (item: PipelineDoc) => void) => React.ReactElement;
+  selectedDocId?: string;
+  onSelectDoc?: (doc: PipelineDoc) => void;
+  cardGridClassName?: string;
 }
 
 function UploadDialog({
@@ -358,6 +361,9 @@ export function DocumentsTablePage({
   tableColumns: customTableColumns,
   renderCard: customRenderCard,
   renderList: customRenderList,
+  selectedDocId: _selectedDocId,
+  onSelectDoc,
+  cardGridClassName,
 }: DocumentsTablePageProps) {
   const router = useRouter();
   const pathname = usePathname()!;
@@ -589,6 +595,7 @@ export function DocumentsTablePage({
         />
       ) : null}
       <UnifiedTablePage
+        layout={cardGridClassName ? { cardGridClassName } : undefined}
         header={{
           title,
           eyebrow,
@@ -656,8 +663,16 @@ export function DocumentsTablePage({
           onSortChange: handleSortChange,
         }}
         views={{
-          card: (item) => (customRenderCard ?? renderDocumentCard)(item, handleView),
-          list: (item) => (customRenderList ?? renderDocumentList)(item, handleView),
+          card: (item) =>
+            (customRenderCard ?? renderDocumentCard)(
+              item,
+              onSelectDoc ?? handleView,
+            ),
+          list: (item) =>
+            (customRenderList ?? renderDocumentList)(
+              item,
+              onSelectDoc ?? handleView,
+            ),
         }}
         emptyState={{
           title: emptyTitle,

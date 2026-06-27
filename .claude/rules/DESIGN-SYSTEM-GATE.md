@@ -26,6 +26,7 @@ Read the output. If the component you are about to write is in that list — **u
 | Search input in a page or detail view | `<ExpandingSearch>` from `@/components/ds` — **ESLint-enforced, no exceptions** |
 | Date field in an RHF form | `<RHFDateField>` from `@/components/forms/fields` — **ESLint-enforced (Gate 23)**. Never `<Input type="date">`. |
 | Button in a `SectionRuleHeading` actions slot | `<SectionAction>` from `@/components/layout` — enforces outline/sm styling |
+| Two-column main + sidebar grid in a detail page | `<DetailLayout sidebar={...}>` from `@/components/layout` |
 
 Usage for every component: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
 

@@ -40,8 +40,12 @@ export {
   LabelValueRow,
   SectionAction,
   SectionRuleHeading,
+  SummaryPanel,
   SummaryValueRow,
 } from "./spacing";
+
+export { DetailLayout } from "./detail-layout";
+export type { DetailLayoutProps } from "./detail-layout";
 
 // ── Layout Primitives ────────────────────────────────────────────────────────
 export { Container } from "./container";

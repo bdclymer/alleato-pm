@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
+import { bundledLanguages, bundledLanguagesInfo } from "shiki";
 import type {
   BundledLanguage,
   BundledTheme,
@@ -17,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { downloadTextFile, copyTextWithFallback } from "@/lib/browser/clipboard";
+import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
 import {
   createContext,
   memo,
@@ -113,12 +115,42 @@ interface TokenizedCode {
 
 interface CodeBlockContextType {
   code: string;
+  language: BundledLanguage;
 }
 
 // Context
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
+  language: "tex",
 });
+
+const DEFAULT_CODE_LANGUAGE: BundledLanguage = "tex";
+
+const SUPPORTED_LANGUAGES = new Set(
+  Object.keys(bundledLanguages) as BundledLanguage[]
+);
+
+const LANGUAGE_ALIASES = new Map<string, BundledLanguage>(
+  bundledLanguagesInfo.flatMap((languageInfo) =>
+    (languageInfo.aliases ?? []).map<[string, BundledLanguage]>((alias) => [
+      alias.toLowerCase(),
+      languageInfo.id as BundledLanguage,
+    ])
+  )
+);
+
+export function resolveBundledLanguage(rawLanguage?: string): BundledLanguage {
+  if (!rawLanguage) {
+    return DEFAULT_CODE_LANGUAGE;
+  }
+
+  const normalized = rawLanguage.trim().toLowerCase();
+  const resolved = LANGUAGE_ALIASES.get(normalized) ?? normalized;
+
+  return SUPPORTED_LANGUAGES.has(resolved as BundledLanguage)
+    ? (resolved as BundledLanguage)
+    : DEFAULT_CODE_LANGUAGE;
+}
 
 // Highlighter cache (singleton per language)
 const highlighterCache = new Map<
@@ -199,7 +231,9 @@ export const highlightCode = (
     // oxlint-disable-next-line eslint-plugin-promise(prefer-await-to-then)
     .then((highlighter) => {
       const availableLangs = highlighter.getLoadedLanguages();
-      const langToUse = availableLangs.includes(language) ? language : "text";
+      const langToUse = availableLangs.includes(language)
+        ? language
+        : DEFAULT_CODE_LANGUAGE;
 
       const result = highlighter.codeToTokens(code, {
         lang: langToUse,
@@ -426,7 +460,7 @@ export const CodeBlock = ({
   children,
   ...props
 }: CodeBlockProps) => {
-  const contextValue = useMemo(() => ({ code }), [code]);
+  const contextValue = useMemo(() => ({ code, language }), [code, language]);
 
   return (
     <CodeBlockContext.Provider value={contextValue}>
@@ -442,7 +476,10 @@ export const CodeBlock = ({
   );
 };
 
-export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
+export type CodeBlockCopyButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "onCopy" | "onError"
+> & {
   onCopy?: () => void;
   onError?: (error: Error) => void;
   timeout?: number;
@@ -461,14 +498,9 @@ export const CodeBlockCopyButton = ({
   const { code } = useContext(CodeBlockContext);
 
   const copyToClipboard = useCallback(async () => {
-    if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-      onError?.(new Error("Clipboard API not available"));
-      return;
-    }
-
     try {
       if (!isCopied) {
-        await navigator.clipboard.writeText(code);
+        await copyTextWithFallback(code);
         setIsCopied(true);
         onCopy?.();
         timeoutRef.current = window.setTimeout(
@@ -492,13 +524,81 @@ export const CodeBlockCopyButton = ({
 
   return (
     <Button
+      aria-label="Copy code"
       className={cn("shrink-0", className)}
       onClick={copyToClipboard}
       size="icon"
+      title="Copy code"
       variant="ghost"
       {...props}
     >
       {children ?? <Icon size={14} />}
+    </Button>
+  );
+};
+
+export type CodeBlockDownloadButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "onError"
+> & {
+  fileName?: string;
+  mimeType?: string;
+  onDownload?: () => void;
+  onError?: (error: Error) => void;
+};
+
+const extensionForLanguage = (language: BundledLanguage): string => {
+  switch (language) {
+    case "tex":
+      return "txt";
+    case "tsx":
+    case "typescript":
+      return "ts";
+    case "javascript":
+      return "js";
+    case "shellscript":
+      return "sh";
+    default:
+      return language;
+  }
+};
+
+export const CodeBlockDownloadButton = ({
+  fileName,
+  mimeType = "text/plain;charset=utf-8",
+  onDownload,
+  onError,
+  children,
+  className,
+  ...props
+}: CodeBlockDownloadButtonProps) => {
+  const { code, language } = useContext(CodeBlockContext);
+
+  const handleDownload = useCallback(() => {
+    try {
+      downloadTextFile({
+        content: code,
+        fileName:
+          fileName ?? `assistant-artifact.${extensionForLanguage(language)}`,
+        mimeType,
+      });
+      onDownload?.();
+    } catch (error) {
+      onError?.(error as Error);
+    }
+  }, [code, fileName, language, mimeType, onDownload, onError]);
+
+  return (
+    <Button
+      aria-label="Download code"
+      className={cn("shrink-0", className)}
+      onClick={handleDownload}
+      size="icon"
+      title="Download code"
+      variant="ghost"
+      {...props}
+    >
+      {children ?? <DownloadIcon size={14} />}
     </Button>
   );
 };

@@ -1,0 +1,389 @@
+{
+  "generatedAt": "2026-06-26T03:46:31.393Z",
+  "candidates": [
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-25",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-25T23:46:03.362Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-25",
+        "text_chars": 1241,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-25 [message:1782413920142] [2026-06-25 18:58:40] aisun Mamedova: Maria &nbsp; Calcetero &nbsp;gw Noblesville today's carousel please check: https://drive.google.com/drive/"
+      }
+    },
+    {
+      "id": "teamsdm_2fd356072ca84358_2026-06-25",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "25108",
+      "created_at": "2026-06-25T15:46:28.801Z",
+      "date": "2026-06-25T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_2fd356072ca84358_2026-06-25",
+        "text_chars": 1497,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-25 [message:1782385476707] [2026-06-25 11:04:36] Colin Gillespie: I might swing by on my way back from Bloomington to see if I can fix it myself real quick [message:17823857901"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-24",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T22:46:02.721Z",
+      "date": "2026-06-24T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-24",
+        "text_chars": 1031,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-24 [message:1782323340196] [2026-06-24 17:49:00] Maria Calcetero: aisun &nbsp; Mamedova &nbsp;this blog post will be posted today from Goodwill! I asked them to tag us, pl"
+      }
+    },
+    {
+      "id": "teamsdm_2fd356072ca84358_2026-06-24",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "25108",
+      "created_at": "2026-06-24T20:46:59.596Z",
+      "date": "2026-06-24T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_2fd356072ca84358_2026-06-24",
+        "text_chars": 241,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-24 [message:1782316616802] [2026-06-24 15:56:56] Nick Jepson: Hi Colin, were you able to get the HVAC contractor to move his duct away from the sprinkler pipe at Tremont?&nbsp;"
+      }
+    },
+    {
+      "id": "teamsdm_87995dff49bfd540_2026-06-24",
+      "title": "Teams DM Conversation: 19:362f7b90-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1096",
+      "created_at": "2026-06-24T16:46:11.324Z",
+      "date": "2026-06-24T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_87995dff49bfd540_2026-06-24",
+        "text_chars": 391,
+        "preview": "[Teams Direct Message Conversation: 19:362f7b90-] Date: 2026-06-24 [message:1782304551883] [2026-06-24 12:35:51] Jesse Dawson: Good Morning Misty! &nbsp;project #26-124 was created for our office remodel, Andrew Cannon is the PM so you can "
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-21",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T09:49:43.030Z",
+      "date": "2026-06-21T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-21",
+        "text_chars": 504,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-21 [message:1782059897590] [2026-06-21 16:38:17] aisun Mamedova: Thank you so much dear 🫶🏻 [message:1782060183030] [2026-06-21 16:43:03] aisun Mamedova: Everyone &nbsp;Hap"
+      }
+    },
+    {
+      "id": "teamsdm_10ca21668a457e90_2026-06-19",
+      "title": "Teams DM Conversation: 19:9107cc15-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "178",
+      "created_at": "2026-06-24T09:43:42.987Z",
+      "date": "2026-06-19T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_10ca21668a457e90_2026-06-19",
+        "text_chars": 3218,
+        "preview": "[Teams Direct Message Conversation: 19:9107cc15-] Date: 2026-06-19 [message:1781884964179] [2026-06-19 16:02:44] Alec Wehner: Hey Misty, happy Friday! Could you look into payment on invoice PI-8862-0002 to Christopher Lopez for project Supe"
+      }
+    },
+    {
+      "id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "title": "Teams DM Conversation: 19:81e9018c-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1011",
+      "created_at": "2026-06-24T08:45:45.929Z",
+      "date": "2026-06-18T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+        "text_chars": 3956,
+        "preview": "[Teams Direct Message Conversation: 19:81e9018c-] Date: 2026-06-18 [message:1781793458179] [2026-06-18 14:37:38] Andrew Cannon: Can you confirm if we have received payment for 25-128 Vargo Permitting (Fort Worth, TX) [message:1781793494148]"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-18",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T08:41:16.875Z",
+      "date": "2026-06-18T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-18",
+        "text_chars": 3896,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-18 [message:1781796163388] [2026-06-18 15:22:43] Maria Calcetero: is the little text supposed to be there?&nbsp; [message:1781796393852] [2026-06-18 15:26:33] Maria Calcet"
+      }
+    },
+    {
+      "id": "teamsdm_19f77c715175e56a_2026-06-11",
+      "title": "Teams DM Conversation: 19:737d4feb-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "25108",
+      "created_at": "2026-06-24T05:31:21.466Z",
+      "date": "2026-06-11T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_19f77c715175e56a_2026-06-11",
+        "text_chars": 525,
+        "preview": "[Teams Direct Message Conversation: 19:737d4feb-] Date: 2026-06-11 [message:1781214535517] [2026-06-11 21:48:55] Colin Gillespie: Yessir, I can do that. Just know that I have to be at Bloomington GW Excel in the morning to make sure subs sh"
+      }
+    },
+    {
+      "id": "teamsdm_2fd356072ca84358_2026-06-22",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "25108",
+      "created_at": "2026-06-24T05:30:15.136Z",
+      "date": "2026-06-22T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_2fd356072ca84358_2026-06-22",
+        "text_chars": 599,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-22 [message:1782128512235] [2026-06-22 11:41:52] Colin Gillespie: I am meeting Roberto Flores down at Bloomington, on Wednesday @10, just so you know. [message:1782129670874] ["
+      }
+    },
+    {
+      "id": "teamsdm_dc2bbf1832626b92_2026-06-19",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1067",
+      "created_at": "2026-06-24T05:30:02.287Z",
+      "date": "2026-06-19T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_dc2bbf1832626b92_2026-06-19",
+        "text_chars": 484,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-19 [message:1781898908212] [2026-06-19 19:55:08] Misty Rogers: Hi Nick, can you tell me which project this is for? [message:1781899193130] [2026-06-19 19:59:53] Nick Jepson: Th"
+      }
+    },
+    {
+      "id": "teamsdm_45887244fa6c9170_2026-06-17",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1067",
+      "created_at": "2026-06-24T05:29:30.700Z",
+      "date": "2026-06-17T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_45887244fa6c9170_2026-06-17",
+        "text_chars": 364,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-17 [message:1781705305465] [2026-06-17 14:08:25] Nick Jepson: Job: 26-123 Playmakers &nbsp; &nbsp; &nbsp;Cost Code: 014126 Permit Requirements &nbsp; &nbsp;Cost Type: Expense &"
+      }
+    },
+    {
+      "id": "teamsdm_dc2bbf1832626b92_2026-06-11",
+      "title": "Teams DM Conversation: 19:05e7f199-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "25108",
+      "created_at": "2026-06-24T05:28:31.065Z",
+      "date": "2026-06-11T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_dc2bbf1832626b92_2026-06-11",
+        "text_chars": 835,
+        "preview": "[Teams Direct Message Conversation: 19:05e7f199-] Date: 2026-06-11 [message:1781198208269] [2026-06-11 17:16:48] Nick Jepson: Hi Misty, can you invoice Goodwill the remaining amount for the Tremont project?&nbsp; [message:1781199776409] [20"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-22",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:24:09.716Z",
+      "date": "2026-06-22T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-22",
+        "text_chars": 2606,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-22 [message:1782153353457] [2026-06-22 18:35:53] Jazmin Gaona: The ones where it is still being built is Allisonville GW, and the finished one is Noblesville GW!&nbsp; [me"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-19",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:23:44.473Z",
+      "date": "2026-06-19T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-19",
+        "text_chars": 1230,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-19 [message:1781897142624] [2026-06-19 19:25:42] Jazmin Gaona: Hi aisun &nbsp; Mamedova &nbsp;here is the link to photos I took today for the goodwill unboxing event we ha"
+      }
+    },
+    {
+      "id": "teamsdm_53a8b2ab5a0d2912_2026-06-19",
+      "title": "Teams DM Conversation: 19:af2384006",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "90",
+      "created_at": "2026-06-24T05:23:35.699Z",
+      "date": "2026-06-19T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_53a8b2ab5a0d2912_2026-06-19",
+        "text_chars": 2241,
+        "preview": "[Teams Direct Message Conversation: 19:af2384006] Date: 2026-06-19 [message:1781883325193] [2026-06-19 15:35:25] Jesse Dawson: Jazmin has updated our manpower schedule which is now organized to show who is working under who, we can review l"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-17",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:23:06.465Z",
+      "date": "2026-06-17T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-17",
+        "text_chars": 1280,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-17 [message:1781714097518] [2026-06-17 16:34:57] Jazmin Gaona: Yes, I have already reached out to a couple guys and we should be getting more footage for Uniqlo, GPC, and "
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-14",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:19:54.044Z",
+      "date": "2026-06-14T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-14",
+        "text_chars": 373,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-14 [message:1781452582212] [2026-06-14 15:56:22] Maria Calcetero: I think there is too much text in the graphic. [message:1781452606794] [2026-06-14 15:56:46] Maria Calcet"
+      }
+    },
+    {
+      "id": "teamsdm_974b7e444ef09815_2026-06-12",
+      "title": "Teams DM Conversation: 19:362f7b90-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1033",
+      "created_at": "2026-06-24T05:19:08.486Z",
+      "date": "2026-06-12T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_974b7e444ef09815_2026-06-12",
+        "text_chars": 226,
+        "preview": "[Teams Direct Message Conversation: 19:362f7b90-] Date: 2026-06-12 [message:1781263745914] [2026-06-12 11:29:05] Jesse Dawson: We went through Eye surgeons and Jake needed to clean up a few things and will get it to you today"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-12",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:19:02.095Z",
+      "date": "2026-06-12T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-12",
+        "text_chars": 624,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-12 [message:1781261898463] [2026-06-12 10:58:18] Maria Calcetero: I would say Colin Gillespie. He is &nbsp;Field Engineer, he loves AI and is helping set up workflows for "
+      }
+    },
+    {
+      "id": "teamsdm_c1a042ef5a4aca63_2026-06-11",
+      "title": "Teams DM Conversation: 19:362f7b90-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "90",
+      "created_at": "2026-06-24T05:18:19.173Z",
+      "date": "2026-06-11T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_c1a042ef5a4aca63_2026-06-11",
+        "text_chars": 301,
+        "preview": "[Teams Direct Message Conversation: 19:362f7b90-] Date: 2026-06-11 [message:1781180544353] [2026-06-11 12:22:24] Jesse Dawson: Good Morning Jazmin, do you have time this morning to review the manpower schedule? [message:1781180748602] [2026"
+      }
+    },
+    {
+      "id": "teamsdm_88eaa94af37cf3f5_2026-06-23",
+      "title": "Teams DM Conversation: Alleato Marketing",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "89",
+      "created_at": "2026-06-24T05:04:54.340Z",
+      "date": "2026-06-23T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_88eaa94af37cf3f5_2026-06-23",
+        "text_chars": 2492,
+        "preview": "[Teams Direct Message Conversation: Alleato Marketing] Date: 2026-06-23 [message:1782187867374] [2026-06-23 04:11:07] aisun Mamedova: Received, dear. This is really helpful. Thank you [message:1782233342631] [2026-06-23 16:49:02] aisun Mame"
+      }
+    },
+    {
+      "id": "teamsdm_c3e2df591742922c_2026-06-22",
+      "title": "Teams DM Conversation: 19:4c766a4f-",
+      "source_system": null,
+      "category": "teams_message",
+      "type": "teams_dm_conversation",
+      "project_id": "1009",
+      "created_at": "2026-06-22T21:40:33.584Z",
+      "date": "2026-06-22T00:00:00.000Z",
+      "captured_at": null,
+      "rag": {
+        "id": "teamsdm_c3e2df591742922c_2026-06-22",
+        "text_chars": 425,
+        "preview": "[Teams Direct Message Conversation: 19:4c766a4f-] Date: 2026-06-22 [message:1782149996410] [2026-06-22 17:39:56] Hunter Rutledge: New Vanity Options: GDFStudio Snowdon Transitional Elegant Line Design 30 in. Freestanding Bathroom Vanity wit"
+      }
+    }
+  ]
+}

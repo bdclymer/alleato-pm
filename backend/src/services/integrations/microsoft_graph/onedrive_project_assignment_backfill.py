@@ -24,6 +24,24 @@ BACKFILL_TAG = "project_auto_backfill:folder_match_v1"
 GRAPH_FILE_SOURCES = {"onedrive", "sharepoint"}
 
 
+def _load_rag_document_text(doc_id: str) -> str:
+    """Load heavy OCR/body text from the RAG store, not app metadata."""
+    try:
+        from src.services.supabase_helpers import fetch_optional_row, get_rag_read_client
+
+        row = fetch_optional_row(
+            get_rag_read_client(),
+            "rag_document_metadata",
+            "content,raw_text",
+            "id",
+            doc_id,
+        )
+        return str(row.get("content") or row.get("raw_text") or "")
+    except Exception as exc:
+        logger.warning("[OneDriveBackfill] RAG text lookup failed for %s: %s", doc_id, exc)
+        return ""
+
+
 def _infer_source_system(row: dict) -> Optional[str]:
     sys = str(row.get("source_system") or "").lower()
     if sys in GRAPH_FILE_SOURCES:
@@ -173,7 +191,7 @@ def run_onedrive_project_assignment_backfill(
         client.from_("document_metadata")
         .select(
             "id, title, file_name, source_path, source_web_url, url, source_system, "
-            "tags, project_id, content, raw_text, participants"
+            "tags, project_id, participants"
         )
         .eq("category", "document")
         .is_("project_id", "null")
@@ -224,7 +242,7 @@ def run_onedrive_project_assignment_backfill(
 
         # Strategy 2: content inference (opt-in)
         if not project_id and assigner and use_content_inference:
-            content = row.get("content") or row.get("raw_text") or ""
+            content = _load_rag_document_text(str(doc_id))
             participants = [p.strip() for p in (row.get("participants") or "").split(",") if p.strip()]
             min_confidence = float(os.environ.get("GRAPH_PROJECT_ASSIGN_MIN_CONFIDENCE", "0.70"))
             try:

@@ -1,0 +1,1025 @@
+
+> alleato-procore@0.1.0 rag:verify:source-lifecycle
+> node scripts/verify/verify_source_lifecycle_health.mjs
+
+{
+  "status": "pass",
+  "generatedAt": "2026-06-25T22:00:02.762Z",
+  "thresholds": {
+    "lookbackDays": 2,
+    "sourceLimit": 1500,
+    "maxPacketAgeHours": 36,
+    "minProjectAssignedRatio": 0.9,
+    "minEmbeddedRatio": 0.9,
+    "minTaskAssignedRatio": 0.9,
+    "requireLifecycleRows": true
+  },
+  "sources": {
+    "total_recent_sources": 825,
+    "by_family": [
+      {
+        "family": "fireflies",
+        "recent_sources": 16,
+        "project_required_sources": 16,
+        "project_not_required_sources": 0,
+        "project_applicability": {
+          "single_project": 14,
+          "project_assignment_review": 2
+        },
+        "with_project": 14,
+        "project_assigned_ratio": 0.875,
+        "with_project_disposition": 15,
+        "project_disposition_ratio": 0.9375,
+        "embedding_required_sources": 14,
+        "terminal_embedding_failures": 2,
+        "with_chunks": 14,
+        "with_embeddings": 14,
+        "embedded_ratio": 1,
+        "with_lifecycle": 16,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 12,
+        "with_project_intelligence_lifecycle": 12,
+        "newest_source": "2026-06-25T23:30:40.288Z",
+        "unassigned_samples": [
+          {
+            "id": "01KVV1ZXBWSG077B23VWVA0F7V",
+            "title": "Quarterly Meeting Brainstorm",
+            "type": "meeting",
+            "created_at": "2026-06-25T20:17:14.537Z"
+          },
+          {
+            "id": "01KV8RZP74R2SND8XNKGVZA248",
+            "title": "Rob+Brandon discussion",
+            "type": "meeting",
+            "created_at": "2026-06-25T00:30:28.604Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "01KVV1ZXBWSG077B23VWVA0F7V",
+            "title": "Quarterly Meeting Brainstorm",
+            "type": "meeting",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T20:17:14.537Z"
+          },
+          {
+            "id": "01KV8RZP74R2SND8XNKGVZA248",
+            "title": "Rob+Brandon discussion",
+            "type": "meeting",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T00:30:28.604Z"
+          }
+        ],
+        "not_project_required_samples": [],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "01KVRSVPDN1K5SPGX31YXF4FAB",
+            "title": "440 W - Alleato Group Interview",
+            "type": "meeting",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "intentionally_excluded",
+            "created_at": "2026-06-24T23:30:28.814Z"
+          },
+          {
+            "id": "01KVDNXX51X4577FW682AJEFQY",
+            "title": "Interview Alleato Group (Accountant-Jake)",
+            "type": "meeting",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "intentionally_excluded",
+            "created_at": "2026-06-24T21:30:28.626Z"
+          }
+        ]
+      },
+      {
+        "family": "teams",
+        "recent_sources": 293,
+        "project_required_sources": 43,
+        "project_not_required_sources": 250,
+        "project_applicability": {
+          "not_project_applicable": 247,
+          "single_project": 23,
+          "project_assignment_review": 20,
+          "internal_project": 3
+        },
+        "with_project": 23,
+        "project_assigned_ratio": 0.5348837209302325,
+        "with_project_disposition": 43,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 187,
+        "terminal_embedding_failures": 106,
+        "with_chunks": 189,
+        "with_embeddings": 187,
+        "embedded_ratio": 1,
+        "with_lifecycle": 293,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 190,
+        "with_project_intelligence_lifecycle": 190,
+        "newest_source": "2026-06-26T01:17:33.125Z",
+        "unassigned_samples": [
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_4ebcf74f0f650a96_2026-06-25",
+            "title": "Teams DM Conversation: 19:0b91490a2",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-26T00:43:15.388Z"
+          },
+          {
+            "id": "teamsdm_adf25d228efeb15f_2026-06-25",
+            "title": "Teams DM Conversation: 19:meeting_N",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-25T23:43:20.430Z"
+          },
+          {
+            "id": "teamsdm_862e0c3cd3fa9916_2026-06-25",
+            "title": "Teams DM Conversation: 19:38f414d6-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-25T22:47:08.405Z"
+          },
+          {
+            "id": "teamsdm_29fd3f8f3bfe7dac_2026-06-25",
+            "title": "Teams DM Conversation: 19:11a980385",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "created_at": "2026-06-25T22:42:52.011Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "teamsdm_b1b826e5a3c67c7a_2026-06-25",
+            "title": "Teams DM Conversation: Administration Communication",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T18:41:40.695Z"
+          },
+          {
+            "id": "teamsdm_f8040d175e4c02da_2026-06-25",
+            "title": "Teams DM Conversation: Accounting Team",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T17:44:35.552Z"
+          },
+          {
+            "id": "teamsdm_03109b1a9a7954f7_2026-06-25",
+            "title": "Teams DM Conversation: Operations",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-25T17:18:32.842Z"
+          },
+          {
+            "id": "teamsdm_2610c5c4e55d11cc_2026-06-24",
+            "title": "Teams DM Conversation: Printing Checks",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-24T22:42:48.112Z"
+          },
+          {
+            "id": "teamsdm_03109b1a9a7954f7_2026-06-24",
+            "title": "Teams DM Conversation: Operations",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-24T15:42:34.513Z"
+          }
+        ],
+        "not_project_required_samples": [
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_4ebcf74f0f650a96_2026-06-25",
+            "title": "Teams DM Conversation: 19:0b91490a2",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-26T00:43:15.388Z"
+          },
+          {
+            "id": "teamsdm_adf25d228efeb15f_2026-06-25",
+            "title": "Teams DM Conversation: 19:meeting_N",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-25T23:43:20.430Z"
+          },
+          {
+            "id": "teamsdm_862e0c3cd3fa9916_2026-06-25",
+            "title": "Teams DM Conversation: 19:38f414d6-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-25T22:47:08.405Z"
+          },
+          {
+            "id": "teamsdm_29fd3f8f3bfe7dac_2026-06-25",
+            "title": "Teams DM Conversation: 19:11a980385",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+            "created_at": "2026-06-25T22:42:52.011Z"
+          }
+        ],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "teamsdm_3134f3e637b9402d_2026-06-25",
+            "title": "Teams DM Conversation: 19:5ccd645d-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T01:17:33.125Z"
+          },
+          {
+            "id": "teamsdm_29fd3f8f3bfe7dac_2026-06-25",
+            "title": "Teams DM Conversation: 19:11a980385",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T22:42:52.011Z"
+          },
+          {
+            "id": "teamsdm_b407086ed7842167_2026-06-25",
+            "title": "Teams DM Conversation: 19:05e7f199-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T21:44:30.459Z"
+          },
+          {
+            "id": "teamsdm_9ffe0d2ffafe50c7_2026-06-25",
+            "title": "Teams DM Conversation: 19:459fd1b0-",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T20:41:36.034Z"
+          },
+          {
+            "id": "teamsdm_52a0f1bcb0e874cd_2026-06-25",
+            "title": "Teams DM Conversation: Sprinkler Division",
+            "category": "teams_message",
+            "type": "teams_dm_conversation",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-25T18:43:33.814Z"
+          }
+        ]
+      },
+      {
+        "family": "outlook_email",
+        "recent_sources": 516,
+        "project_required_sources": 508,
+        "project_not_required_sources": 8,
+        "project_applicability": {
+          "single_project": 416,
+          "project_assignment_review": 92,
+          "not_project_applicable": 2,
+          "internal_project": 5,
+          "multi_project_review": 1
+        },
+        "with_project": 416,
+        "project_assigned_ratio": 0.8188976377952756,
+        "with_project_disposition": 508,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 448,
+        "terminal_embedding_failures": 68,
+        "with_chunks": 495,
+        "with_embeddings": 448,
+        "embedded_ratio": 1,
+        "with_lifecycle": 516,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 506,
+        "with_project_intelligence_lifecycle": 504,
+        "newest_source": "2026-06-26T01:22:19.021Z",
+        "unassigned_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnXAAA=",
+            "title": "Email: Standing Instructions_Clymer",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:21:01.043Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnZAAA=",
+            "title": "Email: ATMI Cost Increase",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:56.328Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnaAAA=",
+            "title": "Email: Re: Abundance360 2027 - Please Secure Your Patron Spot.",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:54.181Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjneAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:46.672Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnhAAA=",
+            "title": "Email: Re: Wire Instructions for June 2026 Distribution",
+            "category": "email",
+            "type": "email",
+            "created_at": "2026-06-26T01:20:38.862Z"
+          }
+        ],
+        "project_assignment_review_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnXAAA=",
+            "title": "Email: Standing Instructions_Clymer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:21:01.043Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnZAAA=",
+            "title": "Email: ATMI Cost Increase",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:56.328Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnaAAA=",
+            "title": "Email: Re: Abundance360 2027 - Please Secure Your Patron Spot.",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:54.181Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjneAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:46.672Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnhAAA=",
+            "title": "Email: Re: Wire Instructions for June 2026 Distribution",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "project_assignment_review",
+            "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+            "created_at": "2026-06-26T01:20:38.862Z"
+          }
+        ],
+        "not_project_required_samples": [
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "terminal_status_skipped_low_content",
+            "created_at": "2026-06-26T01:20:25.323Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjmFAAA=",
+            "title": "Email: Re: Outreach Feasibility Study Interview",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\binterview\\b",
+            "created_at": "2026-06-25T18:18:16.870Z"
+          },
+          {
+            "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADnjUSTAAA=",
+            "title": "Email: Superior Bev - New Loose",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "not_project_applicable",
+            "project_applicability_reason": "terminal_status_skipped_low_content",
+            "created_at": "2026-06-25T17:18:08.668Z"
+          },
+          {
+            "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHpnlzUAAA=",
+            "title": "Email: You've added a credit card to your Home Depot Account",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "internal_project",
+            "project_applicability_reason": "matched_internal_pattern:\\bcredit card\\b",
+            "created_at": "2026-06-25T14:17:48.948Z"
+          },
+          {
+            "id": "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFNJ82mAAA=",
+            "title": "Email: Re: GW Indiana Projects Weekly OAC Meeting #21- MINUTES",
+            "category": "email",
+            "type": "email",
+            "project_applicability": "multi_project_review",
+            "project_applicability_reason": "matched_multi_project_pattern:\\boac meeting\\b",
+            "created_at": "2026-06-25T12:18:12.638Z"
+          }
+        ],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": [
+          {
+            "id": "outlook_attachment_4c2908dfcc8855bbc000053f_7b772968fec887d9bc53aa7f",
+            "title": "Hillsdale-Alleato_A141 (2014) Exhibit A - Design-Build Amendment (6.24.26).docx",
+            "category": "Permit",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-26T01:22:19.021Z"
+          },
+          {
+            "id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+            "title": "170569002_GOODWILL_-_KOKOMO_2026-05.pdf",
+            "category": "Invoice",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-26T01:22:17.141Z"
+          },
+          {
+            "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+            "title": "Email: Re: TAG 06/24/26 - VP Offer",
+            "category": "email",
+            "type": "email",
+            "terminal_source": "document_metadata.status",
+            "terminal_code": "skipped_low_content",
+            "created_at": "2026-06-26T01:20:25.323Z"
+          },
+          {
+            "id": "outlook_attachment_cc686b89d428cf64eb356e81_da925f5a686e539497fed362",
+            "title": "Rajane WH RE LLC_Alleato LLC_26-27 Master Template_6-25-2026_702103239.pdf",
+            "category": "Specification",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-25T20:23:15.100Z"
+          },
+          {
+            "id": "outlook_attachment_cc686b89d428cf64eb356e81_dbd7cc6fd08ef8bd0305c8ab",
+            "title": "Robinson Hospitality_Alleato LLC_26-27 Master Template_6-25-2026_595269788.pdf",
+            "category": "Specification",
+            "type": "email_attachment",
+            "terminal_source": "rag_document_metadata.parsing_status",
+            "terminal_code": "metadata_only",
+            "created_at": "2026-06-25T20:23:14.231Z"
+          }
+        ]
+      },
+      {
+        "family": "sharepoint_document",
+        "recent_sources": 0,
+        "project_required_sources": 0,
+        "project_not_required_sources": 0,
+        "project_applicability": {},
+        "with_project": 0,
+        "project_assigned_ratio": 1,
+        "with_project_disposition": 0,
+        "project_disposition_ratio": 1,
+        "embedding_required_sources": 0,
+        "terminal_embedding_failures": 0,
+        "with_chunks": 0,
+        "with_embeddings": 0,
+        "embedded_ratio": 1,
+        "with_lifecycle": 0,
+        "lifecycle_ratio": 1,
+        "with_project_assignment_lifecycle": 0,
+        "with_project_intelligence_lifecycle": 0,
+        "newest_source": null,
+        "unassigned_samples": [],
+        "project_assignment_review_samples": [],
+        "not_project_required_samples": [],
+        "unembedded_samples": [],
+        "terminal_unembeddable_samples": []
+      }
+    ]
+  },
+  "lifecycle": {
+    "total_rows": 5000,
+    "by_source_and_status": [
+      {
+        "source_system": "meeting",
+        "status": "project_intelligence_updated",
+        "count": 52,
+        "newest": "2026-06-24T17:33:11.649Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_intelligence_updated",
+        "count": 191,
+        "newest": "2026-06-24T17:32:48.058Z"
+      },
+      {
+        "source_system": "teams",
+        "status": "project_intelligence_updated",
+        "count": 25,
+        "newest": "2026-06-24T17:31:51.435Z"
+      },
+      {
+        "source_system": "outlook_attachment",
+        "status": "project_intelligence_updated",
+        "count": 30,
+        "newest": "2026-06-24T17:31:51.317Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_assigned",
+        "count": 2,
+        "newest": "2026-06-24T10:10:39.211Z"
+      },
+      {
+        "source_system": "microsoft_graph_onedrive",
+        "status": "project_intelligence_updated",
+        "count": 21,
+        "newest": "2026-06-17T12:45:53.194Z"
+      },
+      {
+        "source_system": "microsoft_graph_onedrive",
+        "status": "indexed_for_rag",
+        "count": 26,
+        "newest": "2026-06-17T12:45:53.194Z"
+      },
+      {
+        "source_system": "microsoft_graph_onedrive",
+        "status": "failed_permanent",
+        "count": 7,
+        "newest": "2026-06-17T12:45:53.194Z"
+      },
+      {
+        "source_system": "microsoft_graph_onedrive",
+        "status": "project_assignment_review",
+        "count": 10,
+        "newest": "2026-06-17T12:45:53.194Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "actions_routed",
+        "count": 2,
+        "newest": "2026-06-17T10:06:59.594Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "complete",
+        "count": 6,
+        "newest": "2026-06-17T10:02:24.512Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "captured",
+        "count": 2,
+        "newest": "2026-06-23T22:14:11.418Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_assignment_review",
+        "count": 594,
+        "newest": "2026-06-23T20:57:23.002Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "indexed_for_rag",
+        "count": 665,
+        "newest": "2026-06-23T20:57:23.002Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_intelligence_updated",
+        "count": 326,
+        "newest": "2026-06-23T20:57:23.002Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "project_assignment_review",
+        "count": 214,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "failed_permanent",
+        "count": 23,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "project_intelligence_updated",
+        "count": 67,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "project_assigned",
+        "count": 202,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_intelligence_updated",
+        "count": 116,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "project_assignment_review",
+        "count": 20,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "project_assignment_review",
+        "count": 136,
+        "newest": "2026-06-23T20:57:22.644Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "indexed_for_rag",
+        "count": 6,
+        "newest": "2026-06-23T13:26:30.336Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "project_intelligence_updated",
+        "count": 5,
+        "newest": "2026-06-23T11:21:32.331Z"
+      },
+      {
+        "source_system": "microsoft_graph_teams",
+        "status": "indexed_for_rag",
+        "count": 37,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "indexed_for_rag",
+        "count": 26,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "microsoft_graph_sharepoint",
+        "status": "failed_permanent",
+        "count": 7,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "microsoft_graph_outlook",
+        "status": "failed_permanent",
+        "count": 6,
+        "newest": "2026-06-23T06:06:49.211Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "actions_routed",
+        "count": 5,
+        "newest": "2026-06-23T06:06:48.827Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "project_assigned",
+        "count": 6,
+        "newest": "2026-06-23T04:31:11.122Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "project_assignment_review",
+        "count": 7,
+        "newest": "2026-06-23T04:31:10.605Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "project_assignment_review",
+        "count": 17,
+        "newest": "2026-06-23T04:31:09.936Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "failed_permanent",
+        "count": 121,
+        "newest": "2026-06-25T21:53:47.147Z"
+      },
+      {
+        "source_system": "outlook_attachment",
+        "status": "complete",
+        "count": 93,
+        "newest": "2026-06-25T21:53:45.546Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "complete",
+        "count": 228,
+        "newest": "2026-06-25T21:53:40.265Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "complete",
+        "count": 653,
+        "newest": "2026-06-25T21:53:30.753Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "failed_permanent",
+        "count": 36,
+        "newest": "2026-06-25T21:37:46.286Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "complete",
+        "count": 116,
+        "newest": "2026-06-25T21:05:40.555Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "failed_retryable",
+        "count": 622,
+        "newest": "2026-06-25T21:03:35.230Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "complete",
+        "count": 168,
+        "newest": "2026-06-25T21:03:04.116Z"
+      },
+      {
+        "source_system": "fireflies",
+        "status": "failed_permanent",
+        "count": 41,
+        "newest": "2026-06-25T19:18:25.931Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "project_assigned",
+        "count": 15,
+        "newest": "2026-06-20T16:54:51.089Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_assignment_review",
+        "count": 13,
+        "newest": "2026-06-20T15:54:56.865Z"
+      },
+      {
+        "source_system": "teams_message",
+        "status": "project_assigned",
+        "count": 2,
+        "newest": "2026-06-20T13:39:51.508Z"
+      },
+      {
+        "source_system": "outlook_email",
+        "status": "project_assigned",
+        "count": 25,
+        "newest": "2026-06-23T03:31:08.057Z"
+      },
+      {
+        "source_system": "onedrive",
+        "status": "failed_permanent",
+        "count": 7,
+        "newest": "2026-06-22T22:26:26.112Z"
+      },
+      {
+        "source_system": "sharepoint",
+        "status": "failed_permanent",
+        "count": 1,
+        "newest": "2026-06-22T22:22:04.947Z"
+      }
+    ],
+    "recent_failures": [
+      {
+        "source_system": "teams_message",
+        "source_item_id": "teamsdm_3134f3e637b9402d_2026-06-25",
+        "source_document_id": "teamsdm_3134f3e637b9402d_2026-06-25",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-25T21:53:47.147Z",
+        "completed_at": "2026-06-25T21:53:47.147Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Substantive text length 189 below minimum 200.",
+        "metadata": {
+          "type": "teams_dm_conversation",
+          "source": "microsoft_graph",
+          "category": "teams_message",
+          "embedding_path": "microsoft_graph.embed_graph_document"
+        }
+      },
+      {
+        "source_system": "outlook_email",
+        "source_item_id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnnAAA=",
+        "status": "failed_permanent",
+        "updated_at": "2026-06-25T21:37:46.286Z",
+        "completed_at": "2026-06-25T21:37:46.286Z",
+        "retry_count": 0,
+        "error_code": "skipped_low_content",
+        "error_message": "Substantive text length 245 below minimum 300.",
+        "metadata": {
+          "type": "email",
+          "source": "microsoft_graph",
+          "category": "email",
+          "embedding_path": "microsoft_graph.embed_graph_document"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "source_document_id": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "content_hash": "9143a2f6991bd493725fac37ca53afeb466c78482a79c7be1522a28a27ba6e61",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T21:03:35.230Z",
+        "retry_count": 1,
+        "error_code": "APIError",
+        "error_message": "{'message': 'canceling statement due to statement timeout', 'code': '57014', 'hint': None, 'details': None}",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+        "source_document_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+        "content_hash": "6f3b84db59365d70e39fb8547d80cabbb794b342ebb86648912dd53d9cc79900",
+        "project_id": "1009",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T21:02:50.418Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "source_document_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "content_hash": "cc76c8a4946a7f65d012d40dcabbdfc011f11494e0bd7955dfe8e7e7cb5fde95",
+        "project_id": "761",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T21:02:15.786Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+        "source_document_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+        "content_hash": "93bd09448283cfa9ec348fd3d7221fcdda27b893f10a7945b13bab4623253568",
+        "project_id": "1009",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T19:47:34.157Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVDGP7KGPTRWD1PC7T4S8S4D",
+        "source_document_id": "01KVDGP7KGPTRWD1PC7T4S8S4D",
+        "content_hash": "3b51400d0952296e90510d87bc919dc409314400c3427e9636fcd9246ab7c018",
+        "project_id": "1008",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T19:47:24.657Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "source_document_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "content_hash": "13325b540f9c742fff8f0c1c5244c9f9b967b1353660236f26d674020c26517a",
+        "project_id": "761",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T19:47:17.880Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVD844DVA183X1JZPB97H670",
+        "source_document_id": "01KVD844DVA183X1JZPB97H670",
+        "content_hash": "c02dcdc01d22ab9e17518a563cd6846052a1b863b6023dd04d4495ca691a6f58",
+        "project_id": "1009",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T19:32:46.860Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      },
+      {
+        "source_system": "fireflies",
+        "source_item_id": "01KVDGP7KV9EPC8TKW9F70Q1NQ",
+        "source_document_id": "01KVDGP7KV9EPC8TKW9F70Q1NQ",
+        "content_hash": "0c904ae3153aa68b3e8d8e1ae37a09d75f379ab75b7b69f4837837b0e9bf0549",
+        "project_id": "1008",
+        "status": "failed_retryable",
+        "updated_at": "2026-06-25T19:32:37.324Z",
+        "retry_count": 1,
+        "error_code": "ReadError",
+        "error_message": "[Errno 35] Resource temporarily unavailable",
+        "metadata": {
+          "ingest_path": "fireflies_pipeline.ingest_markdown_text"
+        }
+      }
+    ]
+  },
+  "tasks": {
+    "total": 397,
+    "with_project": 363,
+    "project_assigned_ratio": 0.9143576826196473,
+    "by_source_and_status": [
+      {
+        "source_system": "fireflies",
+        "status": "open",
+        "count": 348,
+        "with_project": 318,
+        "newest": "2026-06-25T21:18:07.806Z"
+      },
+      {
+        "source_system": "email",
+        "status": "open",
+        "count": 44,
+        "with_project": 44,
+        "newest": "2026-06-14T22:00:50.200Z"
+      },
+      {
+        "source_system": "teams_dm_conversation",
+        "status": "open",
+        "count": 3,
+        "with_project": 0,
+        "newest": "2026-06-13T07:01:51.674Z"
+      },
+      {
+        "source_system": "meeting",
+        "status": "open",
+        "count": 2,
+        "with_project": 1,
+        "newest": "2026-06-13T07:00:19.562Z"
+      }
+    ]
+  },
+  "project_intelligence": {
+    "packets": {
+      "current_packets": 104,
+      "fresh_packets": 19,
+      "newest_current_packet": "2026-06-25T00:14:49.150Z"
+    },
+    "evidence": {
+      "recent_evidence": 2057,
+      "cards_with_recent_evidence": 1043,
+      "newest_evidence": "2026-06-25T00:14:48.474Z"
+    }
+  },
+  "failures": []
+}

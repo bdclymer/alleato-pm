@@ -1,22 +1,37 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
   ExternalLink,
   Mail,
   MoreHorizontal,
-  SquarePen,
   Trash2,
 } from "lucide-react";
 
-import { PageShell, SectionRuleHeading } from "@/components/layout";
-import { EntityAttachments, StatusBadge } from "@/components/ds";
-import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
+import {
+  ContentSectionStack,
+  DetailLayout,
+  DetailPanel,
+  PageShell,
+  PageTabs,
+  SectionAction,
+  SectionRuleHeading,
+  SummaryPanel,
+  SummaryValueRow,
+} from "@/components/layout";
+import {
+  DetailField,
+  DetailFieldGrid,
+  EditableDetailField,
+  EmptyState,
+  EntityAttachments,
+  StatusBadge,
+} from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -35,23 +50,36 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { createClient } from "@/lib/supabase/client";
 import {
+  useAddLinkedDrawing,
   useAddWorkflowStep,
   useCreateWorkflowTemplate,
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
+  useSubmittalLinkedDrawings,
   useWorkflowTemplates,
+  submittalKeys,
   type SubmittalDetail,
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
+import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { useConfirm } from "@/hooks/use-confirm";
-import { SubmittalFormPage } from "./submittal-form-page";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
+import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
+import { parseAIReviewResponseComment } from "@/lib/submittals/ai-review/response-comment";
+import {
+  normalizeSubmittalDetailTab,
+  type SubmittalDetailTab,
+} from "@/lib/submittals/detail-tabs";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -68,10 +96,57 @@ const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveUserName(users: AuthUser[], id: string): string {
-  const u = users.find((u) => u.id === id);
-  if (!u) return id;
+  // Match by auth_user_id OR people.id (submittal fields store people.id)
+  const u = users.find((u) => u.id === id || u.person_id === id);
+  if (!u) return "";
   const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
   return name || u.email;
+}
+
+function userMatchesResponder({
+  authUserId,
+  personId,
+  responderId,
+}: {
+  authUserId: string | null;
+  personId: string | null;
+  responderId: string;
+}): boolean {
+  if (!authUserId) return false;
+  return responderId === authUserId || Boolean(personId && responderId === personId);
+}
+
+function AIReviewResponseSummary({ comment }: { comment: string }) {
+  const parsed = parseAIReviewResponseComment(comment);
+
+  if (!parsed) {
+    return <p className="text-sm leading-relaxed text-foreground">{comment}</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {parsed.summary && (
+        <p className="text-sm leading-relaxed text-foreground">
+          {parsed.summary}
+        </p>
+      )}
+      {parsed.recommendation && (
+        <p className="text-sm font-medium leading-relaxed text-foreground">
+          {parsed.recommendation}
+        </p>
+      )}
+      {parsed.findings.length > 0 && (
+        <ul className="space-y-1 text-sm leading-relaxed text-muted-foreground">
+          {parsed.findings.map((finding) => (
+            <li key={finding} className="flex gap-2">
+              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+              <span>{finding}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function getInitials(name: string): string {
@@ -87,6 +162,7 @@ function getDaysUntil(dateStr: string | null): number | null {
 }
 
 type StepState = "done" | "in-progress" | "rejected" | "not-started";
+type WorkflowResponseSource = "ai_review" | "workflow";
 
 function getStepState(
   step: SubmittalDetail["submittal_workflow_steps"][number],
@@ -104,6 +180,15 @@ function getStepState(
   return "done";
 }
 
+function getHistoryRecordMetadata(
+  metadata: unknown,
+): Record<string, unknown> | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  return metadata as Record<string, unknown>;
+}
+
 // ─── Ball in Court Chip ───────────────────────────────────────────────────────
 
 function BallInCourtChip({
@@ -114,7 +199,8 @@ function BallInCourtChip({
   users: AuthUser[];
 }) {
   const name = resolveUserName(users, userId);
-  const initials = getInitials(name === userId ? "??" : name);
+  if (!name) return null;
+  const initials = getInitials(name);
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -225,7 +311,6 @@ interface WorkflowBuilderProps {
   users: AuthUser[];
   currentSteps: {
     step_type: string;
-    required?: boolean;
     submittal_responses?: Array<{ responder_id: string; response_status: string }>;
   }[];
 }
@@ -239,7 +324,6 @@ function WorkflowBuilder({
   const router = useRouter();
   const [userId, setUserId] = React.useState("");
   const [stepType, setStepType] = React.useState<string>("Approver");
-  const [required, setRequired] = React.useState(true);
   const [templateName, setTemplateName] = React.useState("");
   const [savingTemplate, setSavingTemplate] = React.useState(false);
   const mutation = useAddWorkflowStep(projectId, submittalId);
@@ -249,10 +333,9 @@ function WorkflowBuilder({
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
-    await mutation.mutateAsync({ user_id: userId, step_type: stepType, required });
+    await mutation.mutateAsync({ user_id: userId, step_type: stepType });
     setUserId("");
     setStepType("Approver");
-    setRequired(true);
     router.refresh();
   }
 
@@ -265,7 +348,6 @@ function WorkflowBuilder({
       await mutation.mutateAsync({
         user_id: step.user_id ?? "",
         step_type: step.step_type,
-        required: step.required,
       });
     }
     router.refresh();
@@ -279,7 +361,6 @@ function WorkflowBuilder({
         s.submittal_responses?.[0]?.responder_id ?? null;
       return {
         step_type: s.step_type,
-        required: s.required ?? true,
         user_id: assignedUserId,
       };
     });
@@ -326,7 +407,7 @@ function WorkflowBuilder({
           Add Workflow Step
         </p>
         <form onSubmit={handleAdd} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">User</Label>
               <Select value={userId} onValueChange={setUserId}>
@@ -356,19 +437,6 @@ function WorkflowBuilder({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex items-end gap-1.5 pb-0.5">
-              <Checkbox
-                id="workflow-required"
-                checked={required}
-                onCheckedChange={(v) => setRequired(Boolean(v))}
-              />
-              <Label
-                htmlFor="workflow-required"
-                className="text-xs cursor-pointer"
-              >
-                Required
-              </Label>
             </div>
           </div>
           <div className="flex gap-2">
@@ -432,65 +500,6 @@ function WorkflowBuilder({
   );
 }
 
-// ─── MetaField ────────────────────────────────────────────────────────────────
-
-function MetaField({ label, value }: { label: string; value?: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="mt-1 min-h-5 truncate text-sm text-foreground">
-        {value === null || value === undefined || value === "" ? (
-          <span className="text-muted-foreground/60">Not set</span>
-        ) : (
-          value
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── SidebarRow ───────────────────────────────────────────────────────────────
-
-function SidebarRow({
-  label,
-  value,
-  bold,
-  alert,
-}: {
-  label: string;
-  value?: string | null;
-  bold?: boolean;
-  alert?: boolean;
-}) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start justify-between gap-4 py-2.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-right text-xs", bold ? "font-semibold text-foreground" : "text-foreground", alert && "text-destructive")}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  action,
-}: {
-  title: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <SectionRuleHeading label={title} actions={action} className="mb-0 pb-0" />
-  );
-}
-
-function EmptySection({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="py-4 text-sm text-muted-foreground">{children}</p>
-  );
-}
-
 function getSubmittalTypeName(submittal: SubmittalDetail): string | null {
   if (typeof submittal.submittal_type === "object") {
     return submittal.submittal_type?.name ?? null;
@@ -510,6 +519,13 @@ function getPackageName(submittal: SubmittalDetail): string | null {
 interface SubmittalDetailClientProps {
   submittal: SubmittalDetail;
   projectId: number;
+  projectName: string | null;
+}
+
+interface DetailDrawingOption {
+  id: string;
+  drawing_number: string;
+  title: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -517,23 +533,157 @@ interface SubmittalDetailClientProps {
 export function SubmittalDetailClient({
   submittal,
   projectId,
+  projectName,
 }: SubmittalDetailClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const supabase = createClient();
   const { confirm, ConfirmDialog } = useConfirm();
+  const addLinkedDrawingMutation = useAddLinkedDrawing(projectId, submittal.id);
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
-  const [isEditing, setIsEditing] = React.useState(false);
+  const { profile: currentUserProfile } = useCurrentUserProfile();
 
   const { users, allUsers } = useAuthUsers(String(projectId));
+  const { companies } = useProjectCompanies(String(projectId), { per_page: 200 });
+  const { contacts: contractorContacts } = useCompanyContacts({
+    companyId: submittal.responsible_contractor_id ?? undefined,
+    enabled: Boolean(submittal.responsible_contractor_id),
+  });
+
+  // Company options for the Contractor select. companies dropdown returns
+  // companies.id which is exactly what responsible_contractor_id (FK → companies.id)
+  // expects — no resolution needed. Inject the saved contractor so it pre-fills
+  // even if it isn't in the project-companies page.
+  const companyOptions = React.useMemo(() => {
+    const opts = companies
+      .filter((c) => c.company_id)
+      .map((c) => ({ value: c.company_id, label: c.company?.name ?? c.company_id }));
+    const saved = submittal.responsible_contractor;
+    if (saved?.id && !opts.some((o) => o.value === saved.id)) {
+      opts.unshift({ value: saved.id, label: saved.name });
+    }
+    return [{ value: "", label: "None" }, ...opts];
+  }, [companies, submittal.responsible_contractor]);
+
+  // Contact options for the Submitted By select, scoped to the selected
+  // contractor. Inject the saved contact (received_from name) so it pre-fills.
+  const receivedFromOptions = React.useMemo(() => {
+    const opts = contractorContacts
+      .filter((c) => c.id)
+      .map((c) => ({
+        value: c.id,
+        label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || c.email || c.id,
+      }));
+    const savedId = submittal.received_from_id;
+    if (savedId && !opts.some((o) => o.value === savedId)) {
+      opts.unshift({ value: savedId, label: submittal.received_from ?? savedId });
+    }
+    return [{ value: "", label: "None" }, ...opts];
+  }, [contractorContacts, submittal.received_from_id, submittal.received_from]);
+  const { data: submittalTypes = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["submittal-types", projectId],
+    queryFn: ({ signal }) => apiFetch(`/api/projects/${projectId}/submittal-types`, { signal }),
+  });
+  const { data: submittalPackages = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["submittal-packages", projectId],
+    queryFn: () => apiFetch(`/api/projects/${projectId}/submittals/packages`),
+  });
+  const { data: linkedDrawings = [] } = useSubmittalLinkedDrawings(
+    projectId,
+    submittal.id,
+  );
+  const { data: drawingOptions = [], isLoading: isDrawingOptionsLoading } =
+    useQuery<DetailDrawingOption[]>({
+      queryKey: ["submittal-drawing-options", projectId],
+      queryFn: async () => {
+        const params = new URLSearchParams({ page_size: "100" });
+        const response = await apiFetch<{ drawings?: DetailDrawingOption[] }>(
+          `/api/projects/${projectId}/drawings?${params.toString()}`,
+        );
+        return response.drawings ?? [];
+      },
+      staleTime: 1000 * 60 * 5,
+    });
+
+  async function handleSaveField(field: string, value: string | number | boolean | null) {
+    await apiFetch(`/api/projects/${projectId}/submittals/${submittal.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value }),
+    });
+    await queryClient.invalidateQueries({
+      queryKey: submittalKeys.detail(projectId, submittal.id),
+    });
+    router.refresh();
+  }
+
+  const tabFromUrl = normalizeSubmittalDetailTab(
+    searchParams.get("tab") ?? searchParams.get("view"),
+  );
+  const [activeTab, setActiveTab] =
+    React.useState<SubmittalDetailTab>(tabFromUrl);
+  const [showAddStep, setShowAddStep] = React.useState(false);
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
   const history = submittal.submittal_history ?? [];
-  const linkedDrawings = submittal.submittal_linked_drawings ?? [];
   const linkedRfis = submittal.linked_rfis ?? [];
+  const linkedDrawingIds = new Set(
+    linkedDrawings.map((drawing) => drawing.drawingId),
+  );
+  const currentUser = allUsers.find((user) => user.id === currentUserId) ?? null;
+  const currentUserPersonId =
+    currentUser?.person_id ?? currentUserProfile?.personId ?? null;
+  const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
+    const isActive = getStepState(step) === "in-progress";
+    return (
+      isActive &&
+      currentUserId &&
+      step.submittal_responses?.some(
+        (response) =>
+          userMatchesResponder({
+            authUserId: currentUserId,
+            personId: currentUserPersonId,
+            responderId: response.responder_id,
+          }) &&
+          response.response_status === "Pending",
+      )
+    );
+  });
+
+  React.useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  function handleTabChange(tab: string) {
+    const nextTab = normalizeSubmittalDetailTab(tab);
+    setActiveTab(nextTab);
+
+    const nextParams = new URLSearchParams(
+      typeof window === "undefined"
+        ? searchParams.toString()
+        : window.location.search,
+    );
+    if (nextTab === "details") {
+      nextParams.delete("tab");
+      nextParams.delete("view");
+    } else {
+      nextParams.set("tab", nextTab);
+      nextParams.delete("view");
+    }
+
+    const query = nextParams.toString();
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
+  }
 
   React.useEffect(() => {
     let isMounted = true;
@@ -563,10 +713,47 @@ export function SubmittalDetailClient({
     router.push(`/${projectId}/submittals/${newRecord.id}`);
   }
 
+  async function handleLinkDrawing(drawing: DetailDrawingOption) {
+    try {
+      const result = await addLinkedDrawingMutation.mutateAsync({
+        drawingId: drawing.id,
+      });
+      if ("alreadyLinked" in result && result.alreadyLinked) {
+        toast.info(`${drawing.drawing_number} is already linked`);
+      } else {
+        toast.success(`${drawing.drawing_number} linked`);
+      }
+    } catch {
+      toast.error("Failed to link drawing");
+    }
+  }
+
   // Build unified comms feed
+  const responseHistorySources = new Map<string, WorkflowResponseSource>();
+  for (const item of history) {
+    if (item.action !== "workflow_response_recorded") continue;
+    const metadata = getHistoryRecordMetadata(item.metadata);
+    const responseId = metadata?.response_id;
+    const source = metadata?.source;
+    if (
+      typeof responseId === "string" &&
+      (source === "ai_review" || source === "workflow")
+    ) {
+      responseHistorySources.set(responseId, source);
+    }
+  }
+
   type CommEvent =
     | { kind: "rfi"; date: string; rfi: (typeof linkedRfis)[number] }
-    | { kind: "response"; date: string; stepType: string; responder: string; status: string; comment: string | null }
+    | {
+        kind: "response";
+        date: string;
+        stepType: string;
+        responder: string;
+        status: string;
+        comment: string | null;
+        source: WorkflowResponseSource | null;
+      }
     | { kind: "distribution"; date: string; fromId: string; recipientCount: number; message: string | null };
 
   const commEvents: CommEvent[] = [
@@ -585,6 +772,9 @@ export function SubmittalDetailClient({
           responder: r.responder_id,
           status: r.response_status,
           comment: r.comments,
+          source:
+            responseHistorySources.get(r.id) ??
+            (parseAIReviewResponseComment(r.comments) ? "ai_review" : null),
         })),
     ),
     ...distributions.map((d) => ({
@@ -598,14 +788,12 @@ export function SubmittalDetailClient({
     .filter((e) => !!e.date)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const eyebrow = [
-    submittal.submittal_number,
-    submittal.revision != null ? `Rev ${submittal.revision}` : null,
-    submittal.specification_section ? `Spec §${submittal.specification_section}` : null,
-    submittal.division ?? null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const eyebrow = projectName ?? undefined;
+
+  const numberPrefix = submittal.submittal_number
+    ? `${String(submittal.submittal_number).padStart(2, "0")}: `
+    : "";
+  const pageTitle = `${numberPrefix}${submittal.title}`;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -619,29 +807,20 @@ export function SubmittalDetailClient({
         onOpenChange={setDistributeOpen}
       />
       <PageShell
-        variant="detailXWide"
+        variant="detail"
         eyebrow={eyebrow}
-        title={submittal.title}
-        statusBadge={<StatusBadge status={submittal.status} />}
+        title={pageTitle}
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit submittal"
-              onClick={() => setIsEditing(true)}
-            >
-              <SquarePen className="h-4 w-4" />
-            </Button>
             {submittal.status !== "Closed" && !submittal.deleted_at && (
               <Button
-                variant="default"
-                size="sm"
+                variant="ghost"
+                size="icon"
+                aria-label="Email submittal"
                 onClick={() => setDistributeOpen(true)}
               >
-                <Mail className="mr-1.5 h-3.5 w-3.5" />
-                Email
+                <Mail className="h-4 w-4" />
               </Button>
             )}
             <DropdownMenu>
@@ -672,347 +851,493 @@ export function SubmittalDetailClient({
           </div>
         }
       >
-        {isEditing ? (
-          <SubmittalFormPage
-            projectId={projectId}
-            submittal={submittal}
-            mode="inline"
-            onCancel={() => setIsEditing(false)}
-            onSaved={() => {
-              setIsEditing(false);
-              router.refresh();
-            }}
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-x-14 gap-y-10 xl:grid-cols-[minmax(0,715px)_368px]">
-            <div className="min-w-0 space-y-10">
-              <section className="space-y-6">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
-                  <MetaField label="Spec Section" value={submittal.specification_section} />
-                  <MetaField label="Number" value={submittal.submittal_number} />
-                  <MetaField
-                    label="Revision Number"
-                    value={submittal.revision != null ? `Rev ${submittal.revision}` : null}
-                  />
-                  <MetaField label="Package" value={getPackageName(submittal)} />
-                </div>
+        <div>
+            <PageTabs
+              variant="inline"
+              tabs={[
+                { label: "Details", href: "details", isActive: activeTab === "details" },
+                { label: "AI Review", href: "ai-review", isActive: activeTab === "ai-review" },
+              ]}
+              onTabClick={handleTabChange}
+            />
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
-                  <MetaField label="Type" value={getSubmittalTypeName(submittal)} />
-                  <MetaField label="Division" value={submittal.division} />
-                  <MetaField
-                    label="Linked Drawings"
-                    value={linkedDrawings.length > 0 ? (
-                      <Link
-                        href={`/${projectId}/drawings`}
-                        className="text-primary underline-offset-2 hover:underline"
-                      >
-                        {linkedDrawings.length} drawing{linkedDrawings.length !== 1 ? "s" : ""}
-                      </Link>
-                    ) : null}
-                  />
-                  <MetaField label="Private Flag" value={submittal.is_private ? "Yes" : "No"} />
-                </div>
-              </section>
+            {activeTab === "details" && (
+          <ContentSectionStack className="pt-6">
+            <DetailLayout
+              sidebar={
+                <>
+                  {/* Ball in Court */}
+                  {submittal.ball_in_court && (
+                    <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
+                  )}
 
-              <section className="space-y-3">
-                <SectionHeader title="Description" />
-                {submittal.description ? (
-                  <div className="rounded-md bg-muted/40 px-4 py-3">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                      {submittal.description}
-                    </p>
-                  </div>
-                ) : (
-                  <EmptySection>No description has been added.</EmptySection>
-                )}
-              </section>
-
-              <section className="space-y-3">
-                <SectionHeader title="Attachments" />
-                <EntityAttachments
-                  entityType="submittal"
-                  entityId={String(submittal.id)}
-                  projectId={projectId}
-                />
-              </section>
-
-              <section className="space-y-4">
-                <SectionHeader title="Workflow" />
-
-                {workflowSteps.length > 0 && (
-                  <div className="overflow-x-auto rounded-md border border-border">
-                    <div style={{ minWidth: "715px" }}>
-                    <div className="grid grid-cols-[40px_208px_172px_192px_132px] bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      <span>#</span>
-                      <span>Step</span>
-                      <span>Role</span>
-                      <span>Assignee</span>
-                      <span>Status</span>
-                    </div>
-                    {workflowSteps.map((step, idx) => {
-                      const state = getStepState(step);
-                      const responder = step.submittal_responses?.[0]?.responder_id;
-                      const responderName = responder ? resolveUserName(allUsers, responder) : null;
-                      const responderInitials = responderName ? getInitials(responderName) : null;
-                      const isActive = state === "in-progress";
-                      const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                      const stepResponseEntry = step.submittal_responses?.find(r => r.responder_id === currentUserId && r.response_status === "Pending");
-                      return (
-                        <div key={step.id}>
-                          <div
-                            className={cn(
-                              "relative grid grid-cols-[40px_208px_172px_192px_132px] border-t border-border px-3 py-3 text-sm",
-                              isActive && "before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary"
-                            )}
-                          >
-                            <span className="text-muted-foreground">{idx + 1}</span>
-                            <span className="font-medium text-foreground">
-                              {step.step_type} Review
-                            </span>
-                            <span className="text-muted-foreground">{step.step_type}</span>
-                            <span className="flex items-center gap-2">
-                              {responderInitials && (
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
-                                  {responderInitials}
-                                </span>
-                              )}
-                              <span className="truncate text-foreground">{responderName ?? "—"}</span>
-                            </span>
-                            <span>
-                              <StatusBadge status={state === "done" ? "Completed" : state === "in-progress" ? "In Progress" : state === "rejected" ? "Rejected" : "Pending"} />
-                            </span>
-                          </div>
-                          {canRespond && stepResponseEntry && (
-                            <div className="py-3">
-                              <RespondForm
-                                projectId={projectId}
-                                submittalId={submittal.id}
-                                stepId={step.id}
-                                onDone={(didSubmit) => {
-                                  if (didSubmit) router.refresh();
-                                }}
+                  {/* Workflow progress */}
+                  {workflowSteps.length > 0 && (() => {
+                    const completed = workflowSteps.filter(s => getStepState(s) === "done").length;
+                    return (
+                      <SummaryPanel>
+                        <SectionRuleHeading label="Workflow Progress" />
+                        <div className="space-y-3 text-sm">
+                          {workflowSteps.map((step, i) => {
+                            const state = getStepState(step);
+                            return (
+                              <SummaryValueRow
+                                key={step.id}
+                                label={`${i + 1}. ${step.step_type} Review`}
+                                value={state === "done" ? "Done" : state === "in-progress" ? "Active" : state === "rejected" ? "Rejected" : "Waiting"}
                               />
-                            </div>
-                          )}
+                            );
+                          })}
+                          <SummaryValueRow
+                            label="Total"
+                            value={`${completed} of ${workflowSteps.length} complete`}
+                            bold
+                            border
+                          />
                         </div>
-                      );
-                    })}
+                      </SummaryPanel>
+                    );
+                  })()}
+
+                  {/* Parties and Responsibility */}
+                  <DetailPanel>
+                    <SectionRuleHeading label="Parties and Responsibility" />
+                    <div className="space-y-3 text-sm">
+                      <EditableDetailField
+                        label="Responsible Contractor"
+                        type="select"
+                        value={submittal.responsible_contractor_id ?? ""}
+                        display={submittal.responsible_contractor?.name ?? undefined}
+                        emptyPlaceholder="Select contractor"
+                        options={companyOptions}
+                        onSave={(v) => handleSaveField("responsible_contractor_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Submitted By"
+                        type="select"
+                        value={submittal.received_from_id ?? ""}
+                        display={
+                          submittal.received_from ??
+                          (submittal.received_from_id
+                            ? resolveUserName(allUsers, submittal.received_from_id)
+                            : undefined)
+                        }
+                        emptyPlaceholder={
+                          submittal.responsible_contractor_id
+                            ? "Select contact"
+                            : "Select contractor first"
+                        }
+                        options={receivedFromOptions}
+                        onSave={(v) => handleSaveField("received_from_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Manager"
+                        type="select"
+                        value={submittal.submittal_manager_id ?? ""}
+                        display={submittal.submittal_manager_id ? resolveUserName(allUsers, submittal.submittal_manager_id) ?? "" : ""}
+                        emptyPlaceholder="Assign manager"
+                        options={[
+                          { value: "", label: "None" },
+                          ...users.map((u) => ({
+                            value: u.id,
+                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
+                          })),
+                        ]}
+                        onSave={(v) => handleSaveField("submittal_manager_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Ball in Court"
+                        type="select"
+                        value={submittal.ball_in_court ?? ""}
+                        display={submittal.ball_in_court ? resolveUserName(allUsers, submittal.ball_in_court) ?? "" : ""}
+                        emptyPlaceholder="Assign person"
+                        options={[
+                          { value: "", label: "None" },
+                          ...users.map((u) => ({
+                            value: u.id,
+                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
+                          })),
+                        ]}
+                        onSave={(v) => handleSaveField("ball_in_court", v || null)}
+                      />
                     </div>
-                  </div>
-                )}
+                  </DetailPanel>
 
-                {workflowSteps.length === 0 && (
-                  <EmptySection>No workflow steps have been assigned.</EmptySection>
-                )}
-
-                <div id="workflow-builder">
-                  <WorkflowBuilder
-                    projectId={projectId}
-                    submittalId={submittal.id}
-                    users={users}
-                    currentSteps={workflowSteps}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <SectionHeader
-                  title="Activity"
-                  action={
-                    submittal.submittal_number ? (
-                    <span className="text-xs text-muted-foreground">
-                      Submittal #{submittal.submittal_number}
-                    </span>
-                    ) : null
-                  }
-                />
-                {commEvents.length > 0 ? (
-                  <ol className="space-y-0">
-                    {commEvents.map((event, i) => {
-                      const isLast = i === commEvents.length - 1;
-
-                      if (event.kind === "response") {
-                        const name = resolveUserName(allUsers, event.responder);
-                        const initials = getInitials(name);
-                        return (
-                          <li key={`resp-${i}`} className="relative flex gap-5">
-                            {/* Rail */}
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            {/* Content */}
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                                    {initials}
-                                  </span>
-                                  <div>
-                                    <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
-                                    <p className="text-xs text-muted-foreground">{event.stepType}</p>
-                                  </div>
-                                </div>
-                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                              </div>
-                              {event.comment ? (
-                                <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
-                                  <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
-                                  <p className="text-sm text-foreground leading-relaxed">{event.comment}</p>
-                                </div>
-                              ) : (
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                  responded <span className="font-medium text-foreground">{event.status}</span>
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      }
-
-                      if (event.kind === "distribution") {
-                        const name = resolveUserName(allUsers, event.fromId);
-                        const initials = getInitials(name);
-                        return (
-                          <li key={`dist-${i}`} className="relative flex gap-5">
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                                    {initials}
-                                  </span>
-                                  <p className="text-sm font-medium text-foreground">{name}</p>
-                                </div>
-                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                              </div>
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                distributed to{" "}
-                                <span className="font-medium text-foreground">
-                                  {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
-                                </span>
-                              </p>
-                              {event.message && (
-                                <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2">
-                                  <p className="text-sm text-muted-foreground italic">{event.message}</p>
-                                </div>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      }
-
-                      if (event.kind === "rfi") {
-                        const rfi = event.rfi;
-                        return (
-                          <li key={`rfi-${rfi.link_id}`} className="relative flex gap-5">
-                            <div className="relative flex w-6 shrink-0 flex-col items-center">
-                              <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
-                              {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
-                            </div>
-                            <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
-                              <div className="flex items-start justify-between gap-4">
-                                <p className="text-sm font-medium text-foreground">{rfi.subject}</p>
-                                <div className="flex shrink-0 items-center gap-2">
-                                  <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
-                                  <Link href={`/${projectId}/rfis/${rfi.id}`} className="text-xs text-muted-foreground hover:text-foreground">
-                                    <ExternalLink className="h-3 w-3" />
-                                  </Link>
-                                </div>
-                              </div>
-                              <p className="mt-1 text-xs text-muted-foreground">RFI #{rfi.number} · {rfi.status}</p>
-                            </div>
-                          </li>
-                        );
-                      }
-
-                      return null;
-                    })}
-                  </ol>
-                ) : (
-                  <EmptySection>No workflow responses, distributions, or linked RFIs have been recorded.</EmptySection>
-                )}
-              </section>
-
-              <section className="space-y-3">
-                <SectionHeader title="Related Items" />
-                <RelatedItemsPanel
-                  entityType="submittal"
-                  entityId={submittal.id}
-                  projectId={projectId}
-                />
-              </section>
-            </div>
-
-            <aside className="space-y-8 xl:pt-0">
-              {submittal.ball_in_court && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Ball In Court
-                  </p>
-                  <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
-                </div>
-              )}
-
-              {(submittal.sent_date || submittal.final_due_date || submittal.required_on_site_date || submittal.lead_time != null) && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Dates &amp; Timeline
-                  </p>
-                  <div className="divide-y divide-border">
-                    {submittal.sent_date && (
-                      <SidebarRow label="Submitted" value={formatDate(submittal.sent_date)} />
-                    )}
-                    {submittal.final_due_date && (
-                      <SidebarRow
+                  {/* Dates and Timeline */}
+                  <DetailPanel>
+                    <SectionRuleHeading label="Dates and Timeline" />
+                    <div className="space-y-3 text-sm">
+                      <EditableDetailField
+                        label="Issue Date"
+                        type="date"
+                        value={submittal.sent_date ?? ""}
+                        display={submittal.sent_date ? formatDate(submittal.sent_date) : undefined}
+                        emptyPlaceholder="Set date"
+                        onSave={(v) => handleSaveField("sent_date", v || null)}
+                      />
+                      <DetailField
+                        label="Receive Date"
+                        value={submittal.created_at ? formatDate(submittal.created_at) : ""}
+                        emptyPlaceholder="Unavailable"
+                      />
+                      <EditableDetailField
                         label="Final Due Date"
-                        value={formatDate(submittal.final_due_date)}
-                        alert={getDaysUntil(submittal.final_due_date) !== null && (getDaysUntil(submittal.final_due_date) ?? 0) < 0}
+                        type="date"
+                        value={submittal.final_due_date ?? ""}
+                        display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
+                        emptyPlaceholder="Set date"
+                        onSave={(v) => handleSaveField("final_due_date", v || null)}
                       />
-                    )}
-                    {submittal.required_on_site_date && (
-                      <SidebarRow label="Required On-Site" value={formatDate(submittal.required_on_site_date)} />
-                    )}
-                    {submittal.lead_time != null && (
-                      <SidebarRow label="Lead Time" value={`${submittal.lead_time} days`} />
-                    )}
+                      <EditableDetailField
+                        label="Lead Time"
+                        type="number"
+                        value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
+                        display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
+                        emptyPlaceholder="Set days"
+                        onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
+                      />
+                      <EditableDetailField
+                        label="Required on Site Date"
+                        type="date"
+                        value={submittal.required_on_site_date ?? ""}
+                        display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
+                        emptyPlaceholder="Set date"
+                        onSave={(v) => handleSaveField("required_on_site_date", v || null)}
+                      />
+                    </div>
+                  </DetailPanel>
+                </>
+              }
+              footer={
+                <DetailPanel>
+                  <SectionRuleHeading
+                    label="Workflow"
+                    actions={
+                      <SectionAction onClick={() => setShowAddStep(s => !s)}>
+                        {showAddStep ? "Cancel" : "+ Add Step"}
+                      </SectionAction>
+                    }
+                  />
+                  {workflowSteps.length > 0 ? (
+                    <div className="mt-1 overflow-hidden rounded-md border border-border">
+                      {workflowSteps.map((step, idx) => {
+                        const state = getStepState(step);
+                        const responder = step.submittal_responses?.[0]?.responder_id;
+                        const responderName = responder ? resolveUserName(allUsers, responder) : null;
+                        const isActive = state === "in-progress";
+                        const canRespond = isActive && currentUserId && step.submittal_responses?.some(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
+                        const stepResponseEntry = step.submittal_responses?.find(r => userMatchesResponder({
+                          authUserId: currentUserId,
+                          personId: currentUserPersonId,
+                          responderId: r.responder_id,
+                        }) && r.response_status === "Pending");
+                        return (
+                          <div key={step.id} className="border-b border-border last:border-b-0">
+                            <div className={cn(
+                              "flex items-center gap-4 px-4 py-3",
+                              isActive && "bg-muted/40",
+                            )}>
+                              <div className={cn(
+                                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                state === "done" ? "bg-primary text-primary-foreground" :
+                                state === "in-progress" ? "bg-primary/15 text-primary" :
+                                state === "rejected" ? "bg-destructive/15 text-destructive" :
+                                "bg-muted text-muted-foreground",
+                              )}>
+                                {state === "done" ? "✓" : idx + 1}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium">{step.step_type} Review</p>
+                                {responderName && (
+                                  <p className="text-xs text-muted-foreground">{responderName}</p>
+                                )}
+                              </div>
+                              <StatusBadge status={
+                                state === "done" ? "Completed" :
+                                state === "in-progress" ? "In Progress" :
+                                state === "rejected" ? "Rejected" : "Pending"
+                              } />
+                            </div>
+                            {canRespond && stepResponseEntry && (
+                              <div className="border-t border-border px-4 pb-4 pt-3">
+                                <RespondForm
+                                  projectId={projectId}
+                                  submittalId={submittal.id}
+                                  stepId={step.id}
+                                  onDone={(didSubmit) => {
+                                    if (didSubmit) router.refresh();
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    !showAddStep && (
+                      <EmptyState
+                        icon={<MoreHorizontal />}
+                        title="No workflow steps"
+                        description="Add steps to define the review process."
+                      />
+                    )
+                  )}
+                  {showAddStep && (
+                    <div className="mt-4" id="workflow-builder">
+                      <WorkflowBuilder
+                        projectId={projectId}
+                        submittalId={submittal.id}
+                        users={users}
+                        currentSteps={workflowSteps}
+                      />
+                    </div>
+                  )}
+                  <div className="mt-6 border-t border-border pt-6">
+                    <SectionRuleHeading label="Attachments" />
+                    <EntityAttachments
+                      entityType="submittal"
+                      entityId={String(submittal.id)}
+                      projectId={projectId}
+                      showLabel={false}
+                      displayMode="table"
+                    />
                   </div>
-                </div>
-              )}
+                </DetailPanel>
+              }
+            >
 
-              {(submittal.responsible_contractor || submittal.received_from || submittal.received_from_id || submittal.submittal_manager_id) && (
-                <div>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Parties &amp; Responsibility
-                  </p>
-                  <div className="divide-y divide-border">
-                    {submittal.responsible_contractor && (
-                      <SidebarRow label="Responsible Contractor" value={submittal.responsible_contractor.name} bold />
-                    )}
-                    {(submittal.received_from ?? submittal.received_from_id) && (
-                      <SidebarRow
-                        label="Received From"
-                        value={submittal.received_from ?? resolveUserName(allUsers, submittal.received_from_id!)}
-                        bold
+                  {/* General Information */}
+                  <DetailPanel>
+                    <SectionRuleHeading label="General Information" />
+                    <div className="space-y-6">
+                      <EditableDetailField
+                        label="Number"
+                        value={submittal.submittal_number ?? ""}
+                        onSave={(v) => handleSaveField("submittal_number", v)}
                       />
-                    )}
-                    {submittal.submittal_manager_id && (
-                      <SidebarRow
-                        label="Submittal Manager"
-                        value={resolveUserName(allUsers, submittal.submittal_manager_id)}
-                        bold
+                      <EditableDetailField
+                        label="Spec Section"
+                        value={submittal.specification_section ?? ""}
+                        emptyPlaceholder="e.g. 08-1113"
+                        onSave={(v) => handleSaveField("specification_section", v || null)}
                       />
-                    )}
-                  </div>
-                </div>
-              )}
-            </aside>
-          </div>
-        )}
+                      <EditableDetailField
+                        label="Package"
+                        type="select"
+                        value={submittal.submittal_package?.id ?? ""}
+                        display={getPackageName(submittal) ?? undefined}
+                        emptyPlaceholder="Select package"
+                        options={[
+                          { value: "", label: "None" },
+                          ...submittalPackages.map((p) => ({ value: p.id, label: p.name })),
+                        ]}
+                        onSave={(v) => handleSaveField("submittal_package_id", v || null)}
+                      />
+                      <EditableDetailField
+                        label="Revision"
+                        type="number"
+                        value={submittal.revision != null ? String(submittal.revision) : ""}
+                        display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
+                        onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
+                      />
+                      <DetailField label="Linked Drawings">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="link"
+                              className="h-auto px-0 text-sm text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
+                            >
+                              Drawing
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-80">
+                            {drawingOptions.length > 0 ? (
+                              drawingOptions.map((drawing) => {
+                                const isLinked = linkedDrawingIds.has(drawing.id);
+                                return (
+                                  <DropdownMenuItem
+                                    key={drawing.id}
+                                    disabled={
+                                      isLinked || addLinkedDrawingMutation.isPending
+                                    }
+                                    onClick={() => handleLinkDrawing(drawing)}
+                                    className="flex items-center justify-between gap-4"
+                                  >
+                                    <span className="truncate">
+                                      {drawing.drawing_number} - {drawing.title}
+                                    </span>
+                                    {isLinked ? (
+                                      <span className="shrink-0 text-xs text-muted-foreground">
+                                        Linked
+                                      </span>
+                                    ) : null}
+                                  </DropdownMenuItem>
+                                );
+                              })
+                            ) : (
+                              <DropdownMenuItem disabled>
+                                {isDrawingOptionsLoading
+                                  ? "Loading drawings..."
+                                  : "No drawings available"}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </DetailField>
+                      <EditableDetailField
+                        label="Description"
+                        type="textarea"
+                        value={submittal.description ?? ""}
+                        emptyPlaceholder="Add a description"
+                        onSave={(v) => handleSaveField("description", v || null)}
+                      />
+                    </div>
+                  </DetailPanel>
+
+                  {/* Activity */}
+                  <section>
+                    <SectionRuleHeading label="Activity" />
+                    <div className="mt-4">
+                      {commEvents.length > 0 ? (
+                        <ol className="space-y-0">
+                          {commEvents.map((event, i) => {
+                            const isLast = i === commEvents.length - 1;
+
+                            if (event.kind === "response") {
+                              const name = resolveUserName(allUsers, event.responder);
+                              const initials = getInitials(name);
+                              return (
+                                <li key={`resp-${i}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                                  </div>
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                          {initials}
+                                        </span>
+                                        <div>
+                                          <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {event.source === "ai_review"
+                                              ? `${event.stepType} via AI Review`
+                                              : event.stepType}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                    </div>
+                                    {event.comment ? (
+                                      <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+                                        <p className="mb-1 text-xs font-semibold text-muted-foreground">{event.status}</p>
+                                        <AIReviewResponseSummary comment={event.comment} />
+                                      </div>
+                                    ) : (
+                                      <p className="mt-2 text-sm text-muted-foreground">
+                                        responded <span className="font-medium text-foreground">{event.status}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            }
+
+                            if (event.kind === "distribution") {
+                              const name = resolveUserName(allUsers, event.fromId);
+                              const initials = getInitials(name);
+                              return (
+                                <li key={`dist-${i}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                                  </div>
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                          {initials}
+                                        </span>
+                                        <p className="text-sm font-medium text-foreground">{name}</p>
+                                      </div>
+                                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                      distributed to{" "}
+                                      <span className="font-medium text-foreground">
+                                        {event.recipientCount} recipient{event.recipientCount !== 1 ? "s" : ""}
+                                      </span>
+                                    </p>
+                                    {event.message && (
+                                      <div className="mt-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+                                        <p className="text-sm text-muted-foreground italic">{event.message}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            }
+
+                            if (event.kind === "rfi") {
+                              const rfi = event.rfi;
+                              return (
+                                <li key={`rfi-${rfi.link_id}`} className="relative flex gap-5">
+                                  <div className="relative flex w-6 shrink-0 flex-col items-center">
+                                    <span className="relative z-10 mt-1 flex h-2.5 w-2.5 rounded-full bg-border ring-2 ring-background" />
+                                    {!isLast && <span className="absolute top-3.5 bottom-0 w-px bg-border" />}
+                                  </div>
+                                  <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-6")}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <p className="text-sm font-medium text-foreground">{rfi.subject}</p>
+                                      <div className="flex shrink-0 items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                                        <Link href={`/${projectId}/rfis/${rfi.id}`} className="text-xs text-muted-foreground hover:text-foreground">
+                                          <ExternalLink className="h-3 w-3" />
+                                        </Link>
+                                      </div>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">RFI #{rfi.number} · {rfi.status}</p>
+                                  </div>
+                                </li>
+                              );
+                            }
+
+                            return null;
+                          })}
+                        </ol>
+                      ) : (
+                        <EmptyState title="No activity yet" description="No workflow responses, distributions, or linked RFIs have been recorded." />
+                      )}
+                    </div>
+                  </section>
+            </DetailLayout>
+          </ContentSectionStack>
+            )}
+
+            {activeTab === "ai-review" && (
+              <SubmittalAIReviewPanel
+                projectId={projectId}
+                submittalId={submittal.id}
+                workflowResponseStep={
+                  aiReviewWorkflowResponseStep
+                    ? {
+                        stepId: aiReviewWorkflowResponseStep.id,
+                        stepType: aiReviewWorkflowResponseStep.step_type,
+                      }
+                    : null
+                }
+                onOpenDetails={() => handleTabChange("details")}
+                onWorkflowResponseRecorded={() => router.refresh()}
+              />
+            )}
+        </div>
       </PageShell>
     </>
   );

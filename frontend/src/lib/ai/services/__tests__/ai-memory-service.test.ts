@@ -12,12 +12,38 @@ jest.mock("@/lib/ai/insight-cards", () => ({
   resolveTargetIdsForProjects: jest.fn(),
 }));
 
+jest.mock("@/lib/ai/notification-decision-ledger", () => ({
+  recordAiNotificationDecision: jest.fn(),
+}));
+
+jest.mock("openai", () =>
+  jest.fn().mockImplementation(() => ({
+    embeddings: {
+      create: jest.fn().mockResolvedValue({
+        data: [{ embedding: [0.1, 0.2, 0.3] }],
+      }),
+    },
+  })),
+);
+
+import {
+  createRagServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
+import { recordAiNotificationDecision } from "@/lib/ai/notification-decision-ledger";
 import {
   buildMemoryContextPayload,
   rankMemoriesForRecall,
   scoreMemoryForRecall,
   type AiMemory,
+  writeMemory,
 } from "../ai-memory-service";
+
+const mockedCreateServiceClient = jest.mocked(createServiceClient);
+const mockedCreateRagServiceClient = jest.mocked(createRagServiceClient);
+const mockedRecordAiNotificationDecision = jest.mocked(
+  recordAiNotificationDecision,
+);
 
 function memory(overrides: Partial<AiMemory>): AiMemory {
   return {
@@ -32,6 +58,73 @@ function memory(overrides: Partial<AiMemory>): AiMemory {
     visibility: overrides.visibility ?? "private",
     created_at: overrides.created_at ?? "2026-05-18T12:00:00.000Z",
     similarity: overrides.similarity,
+  };
+}
+
+function createMemoryWriteSupabaseMock({
+  duplicateRows = [],
+  insertedId = "memory-created",
+}: {
+  duplicateRows?: Array<{ id: string; importance: number }>;
+  insertedId?: string;
+} = {}) {
+  const duplicateLimit = jest.fn().mockResolvedValue({
+    data: duplicateRows,
+    error: null,
+  });
+  const duplicateContentEq = jest.fn(() => ({ limit: duplicateLimit }));
+  const duplicateTypeEq = jest.fn(() => ({ eq: duplicateContentEq }));
+  const duplicateUserEq = jest.fn(() => ({ eq: duplicateTypeEq }));
+  const duplicateSelect = jest.fn(() => ({ eq: duplicateUserEq }));
+
+  const updateEq = jest.fn().mockResolvedValue({ error: null });
+  const update = jest.fn(() => ({ eq: updateEq }));
+
+  const projectMaybeSingle = jest.fn().mockResolvedValue({
+    data: { id: 25125 },
+    error: null,
+  });
+  const projectEq = jest.fn(() => ({ maybeSingle: projectMaybeSingle }));
+  const projectSelect = jest.fn(() => ({ eq: projectEq }));
+
+  const insertSingle = jest.fn().mockResolvedValue({
+    data: { id: insertedId },
+    error: null,
+  });
+  const insertSelect = jest.fn(() => ({ single: insertSingle }));
+  const insert = jest.fn(() => ({ select: insertSelect }));
+
+  const aiMemoriesFrom = {
+    select: jest.fn((columns?: string) => {
+      if (columns === "id, importance") return { eq: duplicateUserEq };
+      if (columns === "id") return { eq: projectEq };
+      return duplicateSelect(columns);
+    }),
+    update,
+    insert,
+  };
+
+  const from = jest.fn((table: string) => {
+    if (table === "projects") {
+      return { select: projectSelect };
+    }
+    return aiMemoriesFrom;
+  });
+
+  mockedCreateServiceClient.mockReturnValue({ from } as never);
+
+  const upsert = jest.fn().mockResolvedValue({ error: null });
+  mockedCreateRagServiceClient.mockReturnValue({
+    from: jest.fn(() => ({ upsert })),
+  } as never);
+
+  return {
+    from,
+    update,
+    updateEq,
+    insert,
+    insertSingle,
+    upsert,
   };
 }
 
@@ -111,5 +204,123 @@ describe("AI memory recall ranking", () => {
       ranking_reason: expect.stringContaining("project=selected"),
     });
     expect(payload.selected[0].ranking_score).toBeGreaterThan(0);
+  });
+});
+
+describe("AI memory write notification decisions", () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-05-19T12:00:00.000Z"));
+    jest.clearAllMocks();
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "recorded",
+      decision: {
+        tier: "quiet",
+        channels: ["quiet_inbox"],
+        requiredAction: "Review in AI Profile or Memory Center if needed.",
+        reason: "Memory update is transparency context, not an interruption.",
+        failureLoudBehavior: "Keep memory source and edit/delete path visible.",
+        preferenceOverrideReason: null,
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("records a quiet notification decision when a memory is created", async () => {
+    createMemoryWriteSupabaseMock({ insertedId: "memory-created" });
+
+    await expect(
+      writeMemory({
+        userId: "user-1",
+        type: "preference",
+        content: "Prefers short summaries.",
+        projectId: 25125,
+        source: "manual",
+      }),
+    ).resolves.toMatchObject({
+      id: "memory-created",
+      action: "created",
+      notificationDecision: { status: "recorded" },
+    });
+
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: "user-1",
+        eventType: "ai_memory_updated",
+        severity: "low",
+        projectId: 25125,
+        entityType: "ai_memories",
+        entityId: "memory-created",
+        eventKey: "ai_memory:memory-created:created",
+        title: "AI memory saved",
+        body: "Prefers short summaries.",
+      }),
+    );
+  });
+
+  it("records a quiet notification decision when a duplicate memory is updated", async () => {
+    createMemoryWriteSupabaseMock({
+      duplicateRows: [{ id: "memory-existing", importance: 0.4 }],
+    });
+
+    await expect(
+      writeMemory({
+        userId: "user-1",
+        type: "preference",
+        content: "Prefers short summaries.",
+        projectId: 25125,
+        source: "manual",
+      }),
+    ).resolves.toMatchObject({
+      id: "memory-existing",
+      action: "updated",
+      notificationDecision: { status: "recorded" },
+    });
+
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityId: "memory-existing",
+        eventKey: "ai_memory:memory-existing:updated",
+        title: "AI memory updated",
+      }),
+    );
+  });
+
+  it("keeps memory writes successful when the notification ledger returns a typed failure", async () => {
+    createMemoryWriteSupabaseMock({ insertedId: "memory-created" });
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "failed",
+      decision: {
+        tier: "quiet",
+        channels: ["quiet_inbox"],
+        requiredAction: "Review in AI Profile or Memory Center if needed.",
+        reason: "Memory update is transparency context, not an interruption.",
+        failureLoudBehavior: "Keep memory source and edit/delete path visible.",
+        preferenceOverrideReason: null,
+      },
+      error: {
+        code: "insert_failed",
+        message: "Failed to record AI notification decision: insert denied",
+      },
+    });
+
+    await expect(
+      writeMemory({
+        userId: "user-1",
+        type: "preference",
+        content: "Prefers short summaries.",
+      }),
+    ).resolves.toMatchObject({
+      id: "memory-created",
+      action: "created",
+      notificationDecision: {
+        status: "failed",
+        error: {
+          code: "insert_failed",
+        },
+      },
+    });
   });
 });

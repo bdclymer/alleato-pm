@@ -47,6 +47,23 @@ describe("WelcomeOnboarding", () => {
     expect(await screen.findByText("Welcome to Alleato AI")).toBeInTheDocument();
   });
 
+  it("exposes route-backed AI actions during onboarding", async () => {
+    render(<WelcomeOnboarding forceOpen suppressAutoOpen />);
+
+    expect(await screen.findByText("Welcome to Alleato AI")).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "AI onboarding actions" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review my AI profile" })).toHaveAttribute(
+      "href",
+      "/ai/profile",
+    );
+    expect(screen.getByRole("link", { name: "Review AI approvals" })).toHaveAttribute(
+      "href",
+      "/ai/approvals",
+    );
+  });
+
   it("combines the welcome and feedback screens into a two-step flow", async () => {
     render(<WelcomeOnboarding forceOpen suppressAutoOpen />);
 

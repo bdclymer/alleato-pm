@@ -735,11 +735,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
   );
 
   const handleRowClick = (item: CommitmentListItem) => {
-    void openEdit(item);
+    router.push(`/${projectId}/commitments/${item.id}`);
   };
 
   const handleEdit = (item: CommitmentListItem) => {
-    void openEdit(item);
+    router.push(`/${projectId}/commitments/${item.id}`);
   };
 
   const handleDeleteIntent = (item: CommitmentListItem) => {

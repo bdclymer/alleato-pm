@@ -109,7 +109,7 @@ describe("latestReadableMessage", () => {
     const result = latestReadableMessage(raw);
 
     expect(result).toContain("Parker, Where do you have the storage for the dock equipment at?");
-    expect(result).toContain("Thank You Brandon Clymer");
+    expect(result).toContain("Thank You\nBrandon Clymer");
     expect(result).not.toContain("&nbsp;");
     expect(result).not.toContain("Sent: Wednesday, June 10, 2026 1:18 PM");
     expect(result).not.toMatch(/^Subject:/m);
@@ -146,6 +146,31 @@ describe("latestReadableMessage", () => {
     expect(result).toContain("\n250-05908-Exol, Morrisville, Phase 1, (Pit Locations and Details) Rev B");
     expect(result).not.toContain("Symbotic Confidential");
     expect(result).not.toContain("wblank@symbotic.com");
+  });
+
+  it("formats flattened request/list emails into readable sections", () => {
+    const raw =
+      "Hi Brandon, Good day! We would like to ask or request the following information in connection with preparing " +
+      "Brandon's 2025 Form 1040 Personal Return. Please provide or verify if the following information is still valid for " +
+      "2025. Client Information Address: 11012 N College Ave, Carmel, IN 46280-1068 Your Occupation: Date of Birth: " +
+      "Phone No: 317-760-0088 We would also like to ask if you have paid the following for 2025 . If yes, please upload " +
+      "the supporting documents to them to ShareFile. 2025 Estimated Tax Payment Federal Payment Indiana Payment " +
+      "Charitable Contribution Real Estate Taxes Home Mortgage Interest (Form 1098) If you have the following tax " +
+      "documents for 2025 , please upload them to ShareFile. Form W-2s WorkSmart Systems, Inc Alleato LLC " +
+      "No Boundaries Consulting LLC Form 1099-INT & DIV Pershing LLC Any other tax documents that may be required " +
+      "for your personal return. You can upload the documents under this directory in ShareFile: Brandon Clymer > 5 Tax " +
+      "Return Documents > 2025 Tax Documents For reference, here is the permalink to access the ShareFile: " +
+      "https://rottweilertax.sharefile.com/ If you have any questions or require further clarification, please feel free to " +
+      "reach out. Thank you for your time and cooperation.";
+
+    const result = latestReadableMessage(raw);
+
+    expect(result).toContain("\n\nPlease provide or verify");
+    expect(result).toContain("\nClient Information Address:");
+    expect(result).toContain("\nYour Occupation:");
+    expect(result).toContain("\nFederal Payment:");
+    expect(result).toContain("\nForm W-2s:");
+    expect(result).toContain("\n\nThank you for your time and cooperation.");
   });
 });
 

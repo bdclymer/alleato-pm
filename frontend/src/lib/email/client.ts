@@ -17,8 +17,21 @@ export function getResend(): Resend {
   return _resend;
 }
 
-export const EMAIL_FROM =
-  process.env.EMAIL_FROM_ADDRESS ?? "Alleato <notifications@alleato.app>";
+/**
+ * Sanitize the configured from-address. A stray newline or trailing whitespace
+ * in EMAIL_FROM_ADDRESS makes Resend reject EVERY send with a `validation_error`,
+ * which `sendEmail` swallows (logs to email_events, never throws) — so all
+ * transactional email silently dies. We strip control chars / collapse internal
+ * whitespace here so that class of bug cannot recur.
+ * See incident 2026-06-24: `Alleato <info@projects.alleatogroup.com>\n`.
+ */
+export function sanitizeFromAddress(raw: string): string {
+  return raw.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export const EMAIL_FROM = sanitizeFromAddress(
+  process.env.EMAIL_FROM_ADDRESS ?? "Alleato <notifications@alleato.app>",
+);
 
 export const DEFAULT_APP_BASE_URL = "https://projects.alleatogroup.com";
 

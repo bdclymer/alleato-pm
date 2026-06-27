@@ -194,6 +194,7 @@ export function buildPcoTableColumns(): TableColumn<CommitmentPco>[] {
     },
     {
       ...pcoColumns[5],
+      align: "right" as const,
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.total_amount)}</span>
       ),

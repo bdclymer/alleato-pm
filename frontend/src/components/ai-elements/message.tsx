@@ -23,6 +23,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   createContext,
   memo,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -30,6 +31,13 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
+import { appToast as toast } from "@/lib/toast/app-toast";
+import {
+  CodeBlock,
+  CodeBlockCopyButton,
+  CodeBlockDownloadButton,
+  resolveBundledLanguage,
+} from "./code-block";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -55,7 +63,6 @@ export const MessageContent = ({
   className,
   ...props
 }: MessageContentProps) => (
-  // eslint-disable-next-line design-system/require-info-alert -- chat message bubble, not an info callout
   <div
     className={cn(
       "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
@@ -327,8 +334,122 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 const streamdownPlugins = { cjk, code, math, mermaid };
 
+function extractLanguage(className?: string): string | undefined {
+  if (!className) {
+    return undefined;
+  }
+
+  const match = className.match(/language-([^\s]+)/);
+  return match?.[1];
+}
+
+function extractCode(children: ReactNode): string {
+  if (typeof children === "string") {
+    return children;
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(extractCode).join("");
+  }
+
+  return "";
+}
+
+function codeDownloadMetadata(rawLanguage?: string): {
+  fileName: string;
+  mimeType: string;
+} {
+  switch ((rawLanguage ?? "").toLowerCase()) {
+    case "csv":
+      return {
+        fileName: "assistant-artifact.csv",
+        mimeType: "text/csv;charset=utf-8",
+      };
+    case "json":
+      return {
+        fileName: "assistant-artifact.json",
+        mimeType: "application/json;charset=utf-8",
+      };
+    case "markdown":
+    case "md":
+      return {
+        fileName: "assistant-artifact.md",
+        mimeType: "text/markdown;charset=utf-8",
+      };
+    default:
+      return {
+        fileName: "assistant-artifact.txt",
+        mimeType: "text/plain;charset=utf-8",
+      };
+  }
+}
+
+type StreamdownCodeProps = ComponentProps<"code"> & {
+  node?: unknown;
+  "data-block"?: string;
+};
+
+function AssistantMessageCode({
+  children,
+  className,
+  ...props
+}: StreamdownCodeProps) {
+  const isBlock = props["data-block"] !== undefined;
+
+  if (!isBlock) {
+    return (
+      <code
+        className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-sm", className)}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  const rawLanguage = extractLanguage(className);
+  const language = resolveBundledLanguage(rawLanguage);
+  const blockCode = extractCode(children).replace(/\n+$/, "");
+  const downloadMeta = codeDownloadMetadata(rawLanguage);
+
+  return (
+    <CodeBlock code={blockCode} language={language} showLineNumbers>
+      <div className="pointer-events-none sticky top-2 z-10 -mt-10 flex h-8 items-center justify-end">
+        <div className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-md border border-sidebar bg-sidebar/80 px-1.5 py-1 supports-[backdrop-filter]:bg-sidebar/70 supports-[backdrop-filter]:backdrop-blur">
+          <CodeBlockDownloadButton
+            fileName={downloadMeta.fileName}
+            mimeType={downloadMeta.mimeType}
+            onDownload={() => {
+              toast.success("Downloaded file");
+            }}
+            onError={(error) => {
+              toast.error("Download failed", {
+                description: error.message,
+              });
+            }}
+          />
+          <CodeBlockCopyButton
+            onCopy={() => {
+              toast.success("Copied to clipboard");
+            }}
+            onError={(error) => {
+              toast.error("Copy failed", {
+                description: error.message,
+              });
+            }}
+          />
+        </div>
+      </div>
+    </CodeBlock>
+  );
+}
+
+const DEFAULT_MESSAGE_COMPONENTS = {
+  code: AssistantMessageCode,
+} satisfies NonNullable<MessageResponseProps["components"]>;
+
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
+  ({ className, components, ...props }: MessageResponseProps) => (
     <Streamdown
       className={cn(
         "chat-markdown size-full max-w-full min-w-0 break-words text-sm leading-6 [overflow-wrap:anywhere]",
@@ -341,6 +462,7 @@ export const MessageResponse = memo(
         "[&_p]:!my-2 [&_li]:!my-1 [&_li]:!pl-0",
         className
       )}
+      components={{ ...DEFAULT_MESSAGE_COMPONENTS, ...components }}
       plugins={streamdownPlugins}
       {...props}
     />

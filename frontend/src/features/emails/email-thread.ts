@@ -40,6 +40,15 @@ const LEADING_PSEUDO_HEADER_RE =
 
 export function stripLeadingPseudoHeader(value: string): string {
   const lines = value.split(/\r?\n/);
+  if (lines.length === 1) {
+    return value
+      .replace(
+        /^\s*Subject:\s.*?\sDate:\s.*?\sFrom:\s.*?\sTo:\s.*?(?=\s+(?:[A-Z][a-z]+,|Hello\b|Hi\b|Good\b|Yes\b|Please\b|Steve,|Parker,))/i,
+        "",
+      )
+      .trim();
+  }
+
   let start = 0;
   let sawHeader = false;
   while (start < lines.length) {
@@ -97,6 +106,14 @@ export function normalizeEmailText(value: string): string {
     .replace(/<[^>]+>/g, " ")
     .replace(/\u00a0/g, " ")
     .replace(/\s+(From|Sent|To|Cc|Bcc|Subject):\s/gi, "\n$1: ")
+    .replace(
+      /\s+(Client Information Address|Your Occupation|Date of Birth|Phone No|Federal Payment|Indiana Payment|Charitable Contribution|Real Estate Taxes|Home Mortgage Interest \(Form 1098\)|Form W-2s|Form 1099-INT & DIV|Any other tax documents)\s*:?/gi,
+      "\n$1: ",
+    )
+    .replace(
+      /\s+(Please provide or verify|We would also like to ask|If yes, please upload|If you have the following|You can upload the documents|For reference, here is the permalink|If you have any questions|Thank you for your time and cooperation\.|CONFIDENTIALITY NOTICE:)/gi,
+      "\n\n$1",
+    )
     .replace(/\s+(Caution:\s*EXTERNAL EMAIL)\s*/gi, "\n$1\n")
     .replace(/\s+(Best|Regards|Thank you),\s+/gi, "\n\n$1,\n")
     .replace(
@@ -116,6 +133,10 @@ export function normalizeEmailText(value: string): string {
       "$1\n\n$2",
     )
     .replace(
+      /\s+(\d{2,4}-\d{3,6}[-A-Za-z0-9(),.&/ ]{10,}?(?:Rev\s+[A-Z0-9]+)?)(?=\s+Rev\s+[A-Z0-9]+:|\s+\d{2,4}-\d{3,6}\b|\s+[A-Z][A-Z]+ [A-Z][A-Z]+\s+\|)/g,
+      "\n\n$1",
+    )
+    .replace(
       /\s+((?:\d{2,4}-\d{3,6}[-A-Za-z0-9(),.&/ ]{10,}?(?:Rev\s+[A-Z0-9]+)?))(?:\s+(?=\d{2,4}-\d{3,6}\b))/g,
       "\n$1\n",
     )
@@ -126,6 +147,10 @@ export function normalizeEmailText(value: string): string {
     .replace(/\s+\b(www\.[^\s]+)\b/gi, "\n$1\n")
     .replace(/\s+\b(SYMBOTIC\s+\d{2,6}\s+Research Drive.*?)\b(?=\s+\*\*Symbotic Confidential\*\*|\s+$)/i, "\n$1\n")
     .replace(/\s+\*\*Symbotic Confidential\*\*[\s\S]*$/i, "")
+    .replace(
+      /\n+[A-Z][A-Z]+ [A-Z][A-Z]+\n(?:senior project engineer\n)?e:\s*[^@\s]+@[^@\s]+\.[^\s]+\nwww\.symbotic\.com[\s\S]*$/i,
+      "",
+    )
     .replace(
       /\s+(Assistant Project Manager at Alleato Group|Mobile|Email|Web|Indianapolis\s+-|Tampa\/St Pete\s+-)\s*/g,
       "\n$1 ",

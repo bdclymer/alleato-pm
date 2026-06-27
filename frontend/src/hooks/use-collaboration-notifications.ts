@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { apiFetch } from "@/lib/api-client";
+import type { Json } from "@/types/database.types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface CollaborationNotification {
@@ -10,6 +11,7 @@ export interface CollaborationNotification {
   kind: string;
   title: string;
   body: string | null;
+  metadata: Json | null;
   createdAt: string;
   readAt: string | null;
   entityType: string | null;
@@ -23,22 +25,49 @@ interface NotificationsResponse {
   hasMore: boolean;
 }
 
+export type NotificationReviewPayload = {
+  checkedIds?: string[];
+  checkedLabels?: string[];
+};
+
 const PAGE_SIZE = 25;
 
-export function useCollaborationNotifications(options?: { enabled?: boolean }) {
+type UseCollaborationNotificationsOptions = {
+  enabled?: boolean;
+  kind?: string;
+  projectId?: number | null;
+  unreadOnly?: boolean;
+  limit?: number;
+};
+
+export function useCollaborationNotifications(
+  options?: UseCollaborationNotificationsOptions,
+) {
   const enabled = options?.enabled ?? true;
   const [notifications, setNotifications] = useState<CollaborationNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   const baseQuery = useMemo(() => {
-    const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+    const params = new URLSearchParams({
+      limit: String(options?.limit ?? PAGE_SIZE),
+    });
+    if (options?.kind) {
+      params.set("kind", options.kind);
+    }
+    if (options?.projectId) {
+      params.set("projectId", String(options.projectId));
+    }
+    if (options?.unreadOnly) {
+      params.set("unreadOnly", "true");
+    }
     return params;
-  }, []);
+  }, [options?.kind, options?.limit, options?.projectId, options?.unreadOnly]);
 
   const fetchPage = useCallback(
     async ({ append, cursorValue }: { append: boolean; cursorValue?: string | null }) => {
@@ -51,6 +80,7 @@ export function useCollaborationNotifications(options?: { enabled?: boolean }) {
         `/api/collaboration/notifications?${params.toString()}`,
         { cache: "no-store" },
       );
+      setError(null);
       setNotifications((prev) =>
         append ? [...prev, ...(data.notifications ?? [])] : data.notifications ?? [],
       );
@@ -81,6 +111,14 @@ export function useCollaborationNotifications(options?: { enabled?: boolean }) {
         }
 
         await fetchPage({ append: false, cursorValue: null });
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Failed to load collaboration notifications.";
+          setError(message);
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -131,28 +169,65 @@ export function useCollaborationNotifications(options?: { enabled?: boolean }) {
     }
   }, [hasMore, cursor, isFetchingMore, fetchPage]);
 
-  const mutate = useCallback(async (payload: Record<string, unknown>) => {
-    await apiFetch("/api/collaboration/notifications", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+  const mutate = useCallback(
+    async (payload: Record<string, unknown>) => {
+      try {
+        await apiFetch("/api/collaboration/notifications", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-    await fetchPage({ append: false, cursorValue: null });
-  }, [fetchPage]);
+        await fetchPage({ append: false, cursorValue: null });
+        setError(null);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to update collaboration notification.";
+        setError(message);
+        throw err;
+      }
+    },
+    [fetchPage],
+  );
+
+  const markAsRead = useCallback(
+    (id: string) => mutate({ action: "mark-read", id }),
+    [mutate],
+  );
+  const markReviewed = useCallback(
+    (id: string, review?: NotificationReviewPayload) =>
+      mutate({ action: "mark-reviewed", id, review }),
+    [mutate],
+  );
+  const markAllAsRead = useCallback(
+    () => mutate({ action: "mark-all-read" }),
+    [mutate],
+  );
+  const deleteNotification = useCallback(
+    (id: string) => mutate({ action: "delete", id }),
+    [mutate],
+  );
+  const deleteAll = useCallback(
+    () => mutate({ action: "delete-all" }),
+    [mutate],
+  );
 
   return {
     notifications,
     unreadCount,
     isLoading,
     isFetchingMore,
+    error,
     hasMore,
     fetchMore,
-    markAsRead: (id: string) => mutate({ action: "mark-read", id }),
-    markAllAsRead: () => mutate({ action: "mark-all-read" }),
-    deleteNotification: (id: string) => mutate({ action: "delete", id }),
-    deleteAll: () => mutate({ action: "delete-all" }),
+    markAsRead,
+    markReviewed,
+    markAllAsRead,
+    deleteNotification,
+    deleteAll,
   };
 }

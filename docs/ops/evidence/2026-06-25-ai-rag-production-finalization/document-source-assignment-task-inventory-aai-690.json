@@ -1,0 +1,1348 @@
+{
+  "generatedAt": "2026-06-26T05:11:03.169Z",
+  "note": "Read-only live inventory for AAI-690 remaining document-source assignment, manual review, document-derived tasks, and duplicate generated task coverage.",
+  "appDocumentFamilies": [
+    {
+      "family": "contract",
+      "total": 92,
+      "assigned": 87,
+      "unassigned": 5,
+      "oldest_created_at": "2026-03-10 05:37:49.256644",
+      "newest_created_at": "2026-06-25 15:23:35.385985",
+      "sample_unassigned": {
+        "id": "e9f94c79-3b8f-5080-b8b4-c95d4a52c791",
+        "type": "knowledge-base",
+        "title": "Alleato - Owner Contractor Agreement - Stipulated Sum 20240313",
+        "source": "microsoft_graph",
+        "status": "embedded",
+        "category": "knowledge",
+        "created_at": "2026-05-05T18:21:11.923848",
+        "project_id": null,
+        "document_type": "contract",
+        "source_system": "microsoft_graph"
+      },
+      "sample_assigned": {
+        "id": "outlook_attachment_cf467cee21d6b0510ba87908_217132c1bba2fa151310c414",
+        "title": "V.3 Goodwill Indianapolis Estimate 4-29-26.pdf",
+        "status": "embedded",
+        "created_at": "2026-06-25T15:23:35.385985",
+        "project_id": 877
+      }
+    },
+    {
+      "family": "drawing_upload",
+      "total": 90,
+      "assigned": 90,
+      "unassigned": 0,
+      "oldest_created_at": "2026-06-23 16:53:47.399837",
+      "newest_created_at": "2026-06-25 21:50:49.407073",
+      "sample_unassigned": null,
+      "sample_assigned": {
+        "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+        "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+        "status": "complete",
+        "created_at": "2026-06-25T21:50:49.407073",
+        "project_id": 25125
+      }
+    },
+    {
+      "family": "onedrive",
+      "total": 5110,
+      "assigned": 4749,
+      "unassigned": 361,
+      "oldest_created_at": "2026-03-10 05:34:45.191438",
+      "newest_created_at": "2026-06-17 04:59:52.361483",
+      "sample_unassigned": {
+        "id": "onedrive_012BEZDVXJUP2UNIWQLZEZ5HWGQBKGZZZG",
+        "type": "document",
+        "title": "Revised Proposal (Goodwill Store Remodel - Peoria, IL).PDF",
+        "source": "microsoft_graph",
+        "status": "embedded",
+        "category": "document",
+        "created_at": "2026-05-17T15:40:05.841848",
+        "project_id": null,
+        "document_type": "proposal",
+        "source_system": "onedrive"
+      },
+      "sample_assigned": {
+        "id": "onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37",
+        "title": "20250418 - Uniqlo - Permit & Bid Set - Structural Calculations.pdf",
+        "status": "embedded",
+        "created_at": "2026-06-17T04:59:52.361483",
+        "project_id": 31
+      }
+    },
+    {
+      "family": "pdf",
+      "total": 678,
+      "assigned": 507,
+      "unassigned": 171,
+      "oldest_created_at": "2026-03-10 05:34:39.700601",
+      "newest_created_at": "2026-06-25 21:22:17.141328",
+      "sample_unassigned": {
+        "id": "05bf48ba-97a1-5f3b-9f7e-f87162569d0c",
+        "type": "document",
+        "title": "FMDS0834",
+        "source": "local_filesystem",
+        "status": "raw_ingested",
+        "category": "document",
+        "created_at": "2026-05-18T21:25:02.27193",
+        "project_id": null,
+        "document_type": null,
+        "source_system": null
+      },
+      "sample_assigned": {
+        "id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+        "title": "170569002_GOODWILL_-_KOKOMO_2026-05.pdf",
+        "status": "embedded",
+        "created_at": "2026-06-25T21:22:17.141328",
+        "project_id": 1016
+      }
+    },
+    {
+      "family": "sharepoint",
+      "total": 201,
+      "assigned": 65,
+      "unassigned": 136,
+      "oldest_created_at": "2026-04-29 09:04:52.007495",
+      "newest_created_at": "2026-06-22 21:57:20.096323",
+      "sample_unassigned": {
+        "id": "sharepoint_01AFX6IXNRDYXX6JJJEVCYGG4Z3NSTAHAZ",
+        "type": "document",
+        "title": "Check 785_Legacy Fire Protection _$19,162.50.pdf",
+        "source": "microsoft_graph",
+        "status": "embedded",
+        "category": "document",
+        "created_at": "2026-06-22T21:57:20.096323",
+        "project_id": null,
+        "document_type": "other",
+        "source_system": "sharepoint"
+      },
+      "sample_assigned": {
+        "id": "sharepoint_01AFX6IXIHVY4IRPO3QZD2KKZUJPB7CJIM",
+        "title": "Check 782_Done Right Plumbing, Inc_$369.pdf",
+        "status": "embedded",
+        "created_at": "2026-06-22T21:57:14.631972",
+        "project_id": 807
+      }
+    },
+    {
+      "family": "submittal",
+      "total": 5,
+      "assigned": 5,
+      "unassigned": 0,
+      "oldest_created_at": "2026-05-15 17:40:54.191946",
+      "newest_created_at": "2026-06-26 04:17:03.870908",
+      "sample_unassigned": null,
+      "sample_assigned": {
+        "id": "synthetic-submittal:goodwill-storefront-product-data",
+        "title": "Synthetic Storefront Product Data - 08-43-13",
+        "status": "complete",
+        "created_at": "2026-06-26T04:17:03.870908",
+        "project_id": 25125
+      }
+    },
+    {
+      "family": "uploaded_document",
+      "total": 68,
+      "assigned": 67,
+      "unassigned": 1,
+      "oldest_created_at": "2026-03-09 23:12:35.916",
+      "newest_created_at": "2026-06-24 20:26:22.113464",
+      "sample_unassigned": {
+        "id": "874234c7-6583-4be8-9aaf-88ab58794c2d",
+        "type": "document",
+        "title": "SOP - How to Add a Vendor",
+        "source": "knowledge_upload",
+        "status": "complete",
+        "category": "knowledge",
+        "created_at": "2026-05-05T18:19:59.675757",
+        "project_id": null,
+        "document_type": "other",
+        "source_system": null
+      },
+      "sample_assigned": {
+        "id": "9cbc34c0-e4d9-4672-820d-e7a2028a9894",
+        "title": "ACORD Form 20260608-121830.pdf",
+        "status": "complete",
+        "created_at": "2026-06-24T20:26:22.113464",
+        "project_id": 876
+      }
+    }
+  ],
+  "ragCoverage": [
+    {
+      "family": "contract",
+      "rag_documents": 89,
+      "rag_project_assigned": 84,
+      "embedded_or_chunked": 89,
+      "chunks": 188,
+      "newest_rag_created_at": "2026-06-25 15:23:35.610326+00",
+      "sample": {
+        "id": "outlook_attachment_cf467cee21d6b0510ba87908_217132c1bba2fa151310c414",
+        "title": "V.3 Goodwill Indianapolis Estimate 4-29-26.pdf",
+        "project_id": 877,
+        "parsing_status": "metadata_only",
+        "app_document_id": "outlook_attachment_cf467cee21d6b0510ba87908_217132c1bba2fa151310c414",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "drawing_upload",
+      "rag_documents": 88,
+      "rag_project_assigned": 88,
+      "embedded_or_chunked": 88,
+      "chunks": 2175,
+      "newest_rag_created_at": "2026-06-25 22:47:20.750212+00",
+      "sample": {
+        "id": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+        "title": "[046] M001",
+        "project_id": 876,
+        "parsing_status": "embedded",
+        "app_document_id": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "onedrive",
+      "rag_documents": 4956,
+      "rag_project_assigned": 2353,
+      "embedded_or_chunked": 4935,
+      "chunks": 29905,
+      "newest_rag_created_at": "2026-06-25 23:55:05.9412+00",
+      "sample": {
+        "id": "onedrive_01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW",
+        "title": "Riser Clamps.pdf",
+        "project_id": 31,
+        "parsing_status": "embedded",
+        "app_document_id": "onedrive_01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "pdf",
+      "rag_documents": 503,
+      "rag_project_assigned": 418,
+      "embedded_or_chunked": 486,
+      "chunks": 2507,
+      "newest_rag_created_at": "2026-06-25 21:22:17.424137+00",
+      "sample": {
+        "id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+        "title": "170569002_GOODWILL_-_KOKOMO_2026-05.pdf",
+        "project_id": 1016,
+        "parsing_status": "metadata_only",
+        "app_document_id": "outlook_attachment_04143defe086997e08a671f1_f2e3adf54b164f4871fd8864",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "sharepoint",
+      "rag_documents": 201,
+      "rag_project_assigned": 21,
+      "embedded_or_chunked": 200,
+      "chunks": 301,
+      "newest_rag_created_at": "2026-06-22 22:14:00.276289+00",
+      "sample": {
+        "id": "sharepoint_01AFX6IXNRDYXX6JJJEVCYGG4Z3NSTAHAZ",
+        "title": "Check 785_Legacy Fire Protection _$19,162.50.pdf",
+        "project_id": null,
+        "parsing_status": "raw_ingested",
+        "app_document_id": "sharepoint_01AFX6IXNRDYXX6JJJEVCYGG4Z3NSTAHAZ",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "submittal",
+      "rag_documents": 3,
+      "rag_project_assigned": 3,
+      "embedded_or_chunked": 3,
+      "chunks": 3,
+      "newest_rag_created_at": "2026-05-15 17:41:07.870599+00",
+      "sample": {
+        "id": "outlook_attachment_2dedfec0a4e8af5fc6e7708d_ea055c9cc20bed8fdcd15cc6",
+        "title": "0004_SLC_ASRS_HYDRAULICS_AREA 1.pdf",
+        "project_id": 31,
+        "parsing_status": "metadata_only",
+        "app_document_id": "outlook_attachment_2dedfec0a4e8af5fc6e7708d_ea055c9cc20bed8fdcd15cc6",
+        "embedding_status": "embedded"
+      }
+    },
+    {
+      "family": "uploaded_document",
+      "rag_documents": 25,
+      "rag_project_assigned": 23,
+      "embedded_or_chunked": 25,
+      "chunks": 662,
+      "newest_rag_created_at": "2026-06-26 00:11:50.672493+00",
+      "sample": {
+        "id": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+        "title": "change-event-detail-upload-test.txt",
+        "project_id": 25125,
+        "parsing_status": "segmented",
+        "app_document_id": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+        "embedding_status": "embedded"
+      }
+    }
+  ],
+  "attributionCandidates": [
+    {
+      "status": "auto_assigned",
+      "total": 10254,
+      "with_candidate_project": 10254,
+      "avg_confidence": "0.9076",
+      "oldest_created_at": "2026-05-01 04:22:21.826+00",
+      "newest_created_at": "2026-06-26 00:11:59.29409+00",
+      "sample": {
+        "id": "d98be47c-5882-4edf-bb9c-5be0aa42fedb",
+        "confidence": 0.95,
+        "created_at": "2026-06-26T00:11:59.29409+00:00",
+        "attribution_method": "intelligence_compiler:title_correction",
+        "source_document_id": "e4270be8-f28c-440a-89d0-aa5848a26a4b",
+        "candidate_project_id": 1029
+      }
+    },
+    {
+      "status": "pending_review",
+      "total": 3,
+      "with_candidate_project": 0,
+      "avg_confidence": "0.0000",
+      "oldest_created_at": "2026-05-11 17:26:54.595+00",
+      "newest_created_at": "2026-05-11 17:33:32.101+00",
+      "sample": {
+        "id": "a7accf49-e4de-4669-8749-90a3fa7bd61f",
+        "confidence": 0,
+        "created_at": "2026-05-11T17:33:32.101+00:00",
+        "attribution_method": "intelligence_compiler:unassigned",
+        "source_document_id": "teamsdm_18ab9497f5af58ee_2026-05-06",
+        "candidate_project_id": null
+      }
+    },
+    {
+      "status": "rejected",
+      "total": 4178,
+      "with_candidate_project": 4178,
+      "avg_confidence": "0.5514",
+      "oldest_created_at": "2026-05-01 19:13:21.663+00",
+      "newest_created_at": "2026-05-03 13:25:47.108+00",
+      "sample": {
+        "id": "72ce5105-b258-46b1-b425-3594e5e203dd",
+        "confidence": 0.9,
+        "created_at": "2026-05-03T13:25:47.108+00:00",
+        "attribution_method": "title_override",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQWZUdlAAA=",
+        "candidate_project_id": 91
+      }
+    }
+  ],
+  "lifecycleReview": [
+    {
+      "source_system": "fireflies",
+      "status": "actions_routed",
+      "total": 5,
+      "with_project": 5,
+      "newest_updated_at": "2026-06-23 06:06:48.827463+00",
+      "sample": {
+        "project_id": 89,
+        "updated_at": "2026-06-23T06:06:48.827463+00:00",
+        "source_title": "Marketing Collaboration (weekly folder update)",
+        "source_item_id": "01KVB90K9WTZDM4S0KA497DZKZ",
+        "source_document_id": "01KVB90K9WTZDM4S0KA497DZKZ"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "status": "complete",
+      "total": 126,
+      "with_project": 110,
+      "newest_updated_at": "2026-06-25 23:35:47.460875+00",
+      "sample": {
+        "project_id": 1009,
+        "updated_at": "2026-06-25T23:35:47.460875+00:00",
+        "source_title": "Union Collective: OAC",
+        "source_item_id": "01KVD844DVA183X1JZPB97H670",
+        "source_document_id": "01KVD844DVA183X1JZPB97H670"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "status": "project_assigned",
+      "total": 2,
+      "with_project": 2,
+      "newest_updated_at": "2026-06-24 10:10:39.211738+00",
+      "sample": {
+        "project_id": 762,
+        "updated_at": "2026-06-24T10:10:39.211738+00:00",
+        "source_title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+        "source_item_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+        "source_document_id": "01KV8BCC0BP38QYC3A69TXJKF3"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "status": "project_assignment_review",
+      "total": 21,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "End of the year party-Folllow up",
+        "source_item_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+        "source_document_id": "01KVNXSD8TKFYNAR0SZ60NMJGS"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "status": "project_intelligence_updated",
+      "total": 119,
+      "with_project": 119,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": 60,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "Brandon Clymer and Ben Golden",
+        "source_item_id": "01KV8CKZZZE682V1PHGV8E93QA",
+        "source_document_id": "01KV8CKZZZE682V1PHGV8E93QA"
+      }
+    },
+    {
+      "source_system": "meeting",
+      "status": "project_intelligence_updated",
+      "total": 52,
+      "with_project": 52,
+      "newest_updated_at": "2026-06-24 17:33:11.649237+00",
+      "sample": {
+        "project_id": 47,
+        "updated_at": "2026-06-24T17:33:11.649237+00:00",
+        "source_title": "Goodwill Weekly OAC Meeting",
+        "source_item_id": "01KTNFDNB0FSP7TXHB8X6HTKNP",
+        "source_document_id": "01KTNFDNB0FSP7TXHB8X6HTKNP"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_onedrive",
+      "status": "project_assignment_review",
+      "total": 10,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-17 12:45:53.194796+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-17T12:45:53.194796+00:00",
+        "source_title": "4.13.26.pdf",
+        "source_item_id": "01AFX6IXP72UQKPKSTPZAJWJ4TG4SW6OQT",
+        "source_document_id": "sharepoint_01AFX6IXP72UQKPKSTPZAJWJ4TG4SW6OQT"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_onedrive",
+      "status": "project_intelligence_updated",
+      "total": 21,
+      "with_project": 21,
+      "newest_updated_at": "2026-06-17 12:45:53.194796+00",
+      "sample": {
+        "project_id": 31,
+        "updated_at": "2026-06-17T12:45:53.194796+00:00",
+        "source_title": "20250310 -ALLEATO - Uniqlo Budget Proposal R1_ HNY - AUE - EXOTEC & TPG reviewed.pdf",
+        "source_item_id": "01F674PXUOXKTZLLXJ65AKMUI7FXYUDV6J",
+        "source_document_id": "onedrive_01F674PXUOXKTZLLXJ65AKMUI7FXYUDV6J"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "project_assigned",
+      "total": 202,
+      "with_project": 202,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": 879,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+        "source_item_id": "AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADnjURiAAA=",
+        "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADnjURiAAA="
+      }
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "project_assignment_review",
+      "total": 594,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 20:57:23.002833+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T20:57:23.002833+00:00",
+        "source_title": "Email: Re: TAG 5/5/26 Ulta Beauty - Mod Fan Electrical Rework",
+        "source_item_id": "AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEJAAArbjWw6PNIQpcQAs78r3haAAFwkimvAAA=",
+        "source_document_id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEJAAArbjWw6PNIQpcQAs78r3haAAFwkimvAAA="
+      }
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "project_intelligence_updated",
+      "total": 326,
+      "with_project": 326,
+      "newest_updated_at": "2026-06-23 20:57:23.002833+00",
+      "sample": {
+        "project_id": 31,
+        "updated_at": "2026-06-23T20:57:23.002833+00:00",
+        "source_title": "Email: Re: Job Box In Utah",
+        "source_item_id": "AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEJAADEL6z4g2_XQZJZM15izKp5AAD6oh9yAAA=",
+        "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEJAADEL6z4g2_XQZJZM15izKp5AAD6oh9yAAA="
+      }
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_assignment_review",
+      "total": 136,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "Check # 578 Somerset Tech $3,192.00.pdf",
+        "source_item_id": "01AFX6IXJL2YIXOUBRNNALB5XEXSIG63XI",
+        "source_document_id": "sharepoint_01AFX6IXJL2YIXOUBRNNALB5XEXSIG63XI"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_intelligence_updated",
+      "total": 67,
+      "with_project": 67,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": 821,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "Check # 640 V&G $16,254.pdf",
+        "source_item_id": "01AFX6IXKWUQGCNZGYU5BLWQ4R3ZM2T6NX",
+        "source_document_id": "sharepoint_01AFX6IXKWUQGCNZGYU5BLWQ4R3ZM2T6NX"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "actions_routed",
+      "total": 2,
+      "with_project": 2,
+      "newest_updated_at": "2026-06-17 10:06:59.59492+00",
+      "sample": {
+        "project_id": 25125,
+        "updated_at": "2026-06-17T10:06:59.59492+00:00",
+        "source_title": "Teams DM Conversation: 19:55b5a581-",
+        "source_item_id": "teamsdm_7cd66da2e291489f_2026-06-10",
+        "source_document_id": "teamsdm_7cd66da2e291489f_2026-06-10"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "project_assignment_review",
+      "total": 214,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 20:57:22.644619+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T20:57:22.644619+00:00",
+        "source_title": "Teams DM Conversation: 19:5f9d3daf-",
+        "source_item_id": "teamsdm_d2753ebb51a3319a_2026-06-12",
+        "source_document_id": "teamsdm_d2753ebb51a3319a_2026-06-12"
+      }
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "project_intelligence_updated",
+      "total": 5,
+      "with_project": 5,
+      "newest_updated_at": "2026-06-23 11:21:32.331816+00",
+      "sample": {
+        "project_id": 1009,
+        "updated_at": "2026-06-23T11:21:32.331816+00:00",
+        "source_title": "Teams DM Conversation: 19:4c766a4f-",
+        "source_item_id": "teamsdm_c3e2df591742922c_2026-06-22",
+        "source_document_id": "teamsdm_c3e2df591742922c_2026-06-22"
+      }
+    },
+    {
+      "source_system": "onedrive",
+      "status": "complete",
+      "total": 38,
+      "with_project": 38,
+      "newest_updated_at": "2026-06-25 23:55:06.14889+00",
+      "sample": {
+        "project_id": 31,
+        "updated_at": "2026-06-25T23:55:06.14889+00:00",
+        "source_title": "Riser Clamps.pdf",
+        "source_item_id": "01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW",
+        "source_document_id": "onedrive_01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW"
+      }
+    },
+    {
+      "source_system": "onedrive",
+      "status": "project_assigned",
+      "total": 4,
+      "with_project": 4,
+      "newest_updated_at": "2026-06-20 15:24:55.056281+00",
+      "sample": {
+        "project_id": 31,
+        "updated_at": "2026-06-20T15:24:55.056281+00:00",
+        "source_title": "Owner Contract - BC Comment Responses.docx",
+        "source_item_id": "01F674PXSWPTUNIHMJWRF2LTBPBPJQ5PLA",
+        "source_document_id": "onedrive_01F674PXSWPTUNIHMJWRF2LTBPBPJQ5PLA"
+      }
+    },
+    {
+      "source_system": "outlook_attachment",
+      "status": "complete",
+      "total": 101,
+      "with_project": 101,
+      "newest_updated_at": "2026-06-26 00:09:02.957763+00",
+      "sample": {
+        "project_id": 24109,
+        "updated_at": "2026-06-26T00:09:02.957763+00:00",
+        "source_title": "INV-003913 (1).pdf",
+        "source_item_id": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414",
+        "source_document_id": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414"
+      }
+    },
+    {
+      "source_system": "outlook_attachment",
+      "status": "project_intelligence_updated",
+      "total": 26,
+      "with_project": 26,
+      "newest_updated_at": "2026-06-24 17:31:51.317788+00",
+      "sample": {
+        "project_id": 89,
+        "updated_at": "2026-06-24T17:31:51.317788+00:00",
+        "source_title": "Alleato Group Video Unboxed 2026 - For Alleato.docx",
+        "source_item_id": "outlook_attachment_7773d736b83d37d75645d3ac_187ee282b40c55f433af430b",
+        "source_document_id": "outlook_attachment_7773d736b83d37d75645d3ac_187ee282b40c55f433af430b"
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "status": "complete",
+      "total": 649,
+      "with_project": 241,
+      "newest_updated_at": "2026-06-25 23:35:23.778468+00",
+      "sample": {
+        "project_id": 879,
+        "updated_at": "2026-06-25T23:35:23.778468+00:00",
+        "source_title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+        "source_item_id": "AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADnjUSbAAA=",
+        "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADnjUSbAAA="
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "status": "project_assigned",
+      "total": 25,
+      "with_project": 25,
+      "newest_updated_at": "2026-06-23 03:31:08.057345+00",
+      "sample": {
+        "project_id": 761,
+        "updated_at": "2026-06-23T03:31:08.057345+00:00",
+        "source_title": "Email: Ulta Beauty Fresno - Weekly Progress Report",
+        "source_item_id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQ5I-ruAAA=",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQ5I-ruAAA="
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "status": "project_assignment_review",
+      "total": 13,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-20 15:54:56.865284+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-20T15:54:56.865284+00:00",
+        "source_title": "Email: Re: Draft Operating Agreement",
+        "source_item_id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQ4fEtYAAA=",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEJAAD__y9hPlJRRYxFT5QN_MgoAAQ4fEtYAAA="
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "status": "project_intelligence_updated",
+      "total": 191,
+      "with_project": 191,
+      "newest_updated_at": "2026-06-24 17:32:48.05801+00",
+      "sample": {
+        "project_id": 865,
+        "updated_at": "2026-06-24T17:32:48.05801+00:00",
+        "source_title": "Email: Goodwill IL Remodels - Weekly Report 6/12/26",
+        "source_item_id": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQ5I-sCAAA=",
+        "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQ5I-sCAAA="
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "status": "signals_extracted",
+      "total": 1,
+      "with_project": 1,
+      "newest_updated_at": "2026-06-26 03:40:55.931945+00",
+      "sample": {
+        "project_id": 67,
+        "updated_at": "2026-06-26T03:40:55.931945+00:00",
+        "source_title": "Email: Re: Project Name: 'Vermillion Rise TI' Number: '462305' confirmation.",
+        "source_item_id": "AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+        "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA="
+      }
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "complete",
+      "total": 168,
+      "with_project": 44,
+      "newest_updated_at": "2026-06-25 21:03:04.116924+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-25T21:03:04.116924+00:00",
+        "source_title": "Check # 570 Hoplite Lawn Care $500.00.pdf",
+        "source_item_id": "01AFX6IXON77NRDSOXKRCYXF2GKWEJ5523",
+        "source_document_id": "sharepoint_01AFX6IXON77NRDSOXKRCYXF2GKWEJ5523"
+      }
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "project_assigned",
+      "total": 6,
+      "with_project": 6,
+      "newest_updated_at": "2026-06-23 04:31:11.122001+00",
+      "sample": {
+        "project_id": 800,
+        "updated_at": "2026-06-23T04:31:11.122001+00:00",
+        "source_title": "Check # 644 Construction Waste $ 658.00.pdf",
+        "source_item_id": "01AFX6IXNKLXIQEC2LBJBJ4X6SUUMJR2BE",
+        "source_document_id": "sharepoint_01AFX6IXNKLXIQEC2LBJBJ4X6SUUMJR2BE"
+      }
+    },
+    {
+      "source_system": "sharepoint",
+      "status": "project_assignment_review",
+      "total": 7,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 04:31:10.605139+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T04:31:10.605139+00:00",
+        "source_title": "Huddle Agenda 4.29.26.docx",
+        "source_item_id": "01AFX6IXJVQLIUEHMRZRCZQ6CKTVYJEWVA",
+        "source_document_id": "sharepoint_01AFX6IXJVQLIUEHMRZRCZQ6CKTVYJEWVA"
+      }
+    },
+    {
+      "source_system": "teams",
+      "status": "project_intelligence_updated",
+      "total": 25,
+      "with_project": 25,
+      "newest_updated_at": "2026-06-24 17:31:51.435483+00",
+      "sample": {
+        "project_id": 89,
+        "updated_at": "2026-06-24T17:31:51.435483+00:00",
+        "source_title": "Teams DM Conversation: Alleato Marketing",
+        "source_item_id": "teamsdm_88eaa94af37cf3f5_2026-06-23",
+        "source_document_id": "teamsdm_88eaa94af37cf3f5_2026-06-23"
+      }
+    },
+    {
+      "source_system": "teams",
+      "status": "signals_extracted",
+      "total": 1,
+      "with_project": 1,
+      "newest_updated_at": "2026-06-26 03:48:35.985812+00",
+      "sample": {
+        "project_id": 1011,
+        "updated_at": "2026-06-26T03:48:35.985812+00:00",
+        "source_title": "Teams DM Conversation: 19:81e9018c-",
+        "source_item_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+        "source_document_id": "teamsdm_240a50c23fbd2bca_2026-06-18"
+      }
+    },
+    {
+      "source_system": "teams_message",
+      "status": "complete",
+      "total": 228,
+      "with_project": 21,
+      "newest_updated_at": "2026-06-25 23:35:26.875363+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-25T23:35:26.875363+00:00",
+        "source_title": "Teams DM Conversation: 19:12bce93d-",
+        "source_item_id": "teamsdm_f3eff8091791905c_2026-06-22",
+        "source_document_id": "teamsdm_f3eff8091791905c_2026-06-22"
+      }
+    },
+    {
+      "source_system": "teams_message",
+      "status": "project_assigned",
+      "total": 2,
+      "with_project": 2,
+      "newest_updated_at": "2026-06-20 13:39:51.508953+00",
+      "sample": {
+        "project_id": 1009,
+        "updated_at": "2026-06-20T13:39:51.508953+00:00",
+        "source_title": "Teams DM Conversation: 19:31fc2e2e2",
+        "source_item_id": "teamsdm_33fed32e02adebbb_2026-06-15",
+        "source_document_id": "teamsdm_33fed32e02adebbb_2026-06-15"
+      }
+    },
+    {
+      "source_system": "teams_message",
+      "status": "project_assignment_review",
+      "total": 17,
+      "with_project": 0,
+      "newest_updated_at": "2026-06-23 04:31:09.936508+00",
+      "sample": {
+        "project_id": null,
+        "updated_at": "2026-06-23T04:31:09.936508+00:00",
+        "source_title": "Teams DM Conversation: 19:81e9018c-",
+        "source_item_id": "teamsdm_240a50c23fbd2bca_2026-06-16",
+        "source_document_id": "teamsdm_240a50c23fbd2bca_2026-06-16"
+      }
+    }
+  ],
+  "taskCoverage": [
+    {
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "total": 45,
+      "with_project": 45,
+      "with_project_array": 45,
+      "with_owner": 45,
+      "oldest_created_at": "2026-06-14 16:44:43.071531+00",
+      "newest_created_at": "2026-06-26 03:40:55.479337+00",
+      "sample": {
+        "id": "c84cdd63-26a0-46fa-a303-8b350db6d137",
+        "title": "Confirm whether anything different is needed on this",
+        "created_at": "2026-06-26T03:40:55.479337+00:00",
+        "project_id": 67,
+        "metadata_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+        "project_ids": [
+          67
+        ],
+        "assignee_name": "Brandon Clymer",
+        "source_system": "email",
+        "assignee_email": "bclymer@alleatogroup.com",
+        "extraction_source": "deep_extractor"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "extraction_source": "deep_extractor",
+      "total": 376,
+      "with_project": 353,
+      "with_project_array": 353,
+      "with_owner": 376,
+      "oldest_created_at": "2026-06-10 18:29:29.289374+00",
+      "newest_created_at": "2026-06-11 01:34:02.082924+00",
+      "sample": {
+        "id": "90446b8d-3561-4144-9741-f29b977f578b",
+        "title": "Review the completed change request with Demitrace to confirm",
+        "created_at": "2026-06-11T01:34:02.082924+00:00",
+        "project_id": 67,
+        "metadata_id": "01KTS9XV7Z3ZBRQ08TQADWXJZA",
+        "project_ids": [
+          67
+        ],
+        "assignee_name": "Jesse Dawson",
+        "source_system": "fireflies",
+        "assignee_email": "jdawson@alleatogroup.com",
+        "extraction_source": "deep_extractor"
+      }
+    },
+    {
+      "source_system": "fireflies",
+      "extraction_source": "fireflies_rewriter",
+      "total": 766,
+      "with_project": 704,
+      "with_project_array": 704,
+      "with_owner": 766,
+      "oldest_created_at": "2026-06-10 18:29:36.807682+00",
+      "newest_created_at": "2026-06-25 19:42:13.164268+00",
+      "sample": {
+        "id": "7c56474c-cd06-4d23-b805-9b580de18b2e",
+        "title": "Verify right-of-way turn-lane feasibility",
+        "created_at": "2026-06-25T19:42:13.164268+00:00",
+        "project_id": 1009,
+        "metadata_id": "01KVD844DVA183X1JZPB97H670",
+        "project_ids": [
+          1009
+        ],
+        "assignee_name": "Douglas Franklin",
+        "source_system": "fireflies",
+        "assignee_email": "dfranklin@alleatogroup.com",
+        "extraction_source": "fireflies_rewriter"
+      }
+    },
+    {
+      "source_system": "meeting",
+      "extraction_source": "scheduled_task_extraction",
+      "total": 5,
+      "with_project": 4,
+      "with_project_array": 0,
+      "with_owner": 5,
+      "oldest_created_at": "2026-06-11 07:00:36.129552+00",
+      "newest_created_at": "2026-06-13 07:00:19.562754+00",
+      "sample": {
+        "id": "a08a3c03-7062-4308-bd0f-8ec3d19d756b",
+        "title": "Confirm Dustin VP travel requirements",
+        "created_at": "2026-06-13T07:00:19.562754+00:00",
+        "project_id": 90,
+        "metadata_id": "01KTSDHMWZK41424ATS0563A71",
+        "project_ids": [],
+        "assignee_name": "Jazmin Gaona",
+        "source_system": "meeting",
+        "assignee_email": "jgaona@alleatogroup.com",
+        "extraction_source": "scheduled_task_extraction"
+      }
+    },
+    {
+      "source_system": "outlook_email",
+      "extraction_source": "scheduled_task_extraction",
+      "total": 1,
+      "with_project": 1,
+      "with_project_array": 0,
+      "with_owner": 1,
+      "oldest_created_at": "2026-05-12 07:03:03.276994+00",
+      "newest_created_at": "2026-05-12 07:03:03.276994+00",
+      "sample": {
+        "id": "741181f5-e948-4ba4-a98e-9816fe2b9874",
+        "title": "Send payment information",
+        "created_at": "2026-05-12T07:03:03.276994+00:00",
+        "project_id": 88,
+        "metadata_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAAQk4VY_AAA=",
+        "project_ids": [],
+        "assignee_name": "Maria Calcetero",
+        "source_system": "outlook_email",
+        "assignee_email": "mcalcetero@alleatogroup.com",
+        "extraction_source": "scheduled_task_extraction"
+      }
+    },
+    {
+      "source_system": "teams",
+      "extraction_source": "deep_extractor",
+      "total": 4,
+      "with_project": 4,
+      "with_project_array": 4,
+      "with_owner": 4,
+      "oldest_created_at": "2026-06-26 03:48:34.125448+00",
+      "newest_created_at": "2026-06-26 03:48:35.677844+00",
+      "sample": {
+        "id": "e8c18405-12e2-438e-951d-1a5a563a58c1",
+        "title": "Provide contact name and email if needed for the outgoing",
+        "created_at": "2026-06-26T03:48:35.677844+00:00",
+        "project_id": 1011,
+        "metadata_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+        "project_ids": [
+          1011
+        ],
+        "assignee_name": "Andrew Cannon",
+        "source_system": "teams",
+        "assignee_email": "acannon@alleatogroup.com",
+        "extraction_source": "deep_extractor"
+      }
+    },
+    {
+      "source_system": "teams_dm_conversation",
+      "extraction_source": "scheduled_task_extraction",
+      "total": 9,
+      "with_project": 3,
+      "with_project_array": 0,
+      "with_owner": 9,
+      "oldest_created_at": "2026-05-07 16:10:17.375883+00",
+      "newest_created_at": "2026-06-13 07:01:51.674736+00",
+      "sample": {
+        "id": "297e8e52-0df8-4036-be55-9c4b9dc96719",
+        "title": "Request PMB roofing price breakout",
+        "created_at": "2026-06-13T07:01:51.674736+00:00",
+        "project_id": null,
+        "metadata_id": "teamsdm_692582d1506dcbc0_2026-06-11",
+        "project_ids": [],
+        "assignee_name": "Jake Richardson",
+        "source_system": "teams_dm_conversation",
+        "assignee_email": "jrichardson@alleatogroup.com",
+        "extraction_source": "scheduled_task_extraction"
+      }
+    }
+  ],
+  "duplicateTasks": {
+    "duplicate_groups": 1,
+    "duplicate_rows": 2,
+    "sample": {
+      "samples": [
+        {
+          "id": "313093a4-7ceb-4b8a-a335-c9c41fabf4a2",
+          "title": "Review CaptiveAire’s alternative for design validity, cost",
+          "created_at": "2026-06-14T17:07:20.996673+00:00",
+          "project_id": 1009,
+          "project_ids": [
+            1009
+          ],
+          "source_system": "email"
+        },
+        {
+          "id": "72c8b5b4-3a67-415a-8aa9-d4c511deb6c0",
+          "title": "Review CaptiveAire’s alternative for design validity, cost",
+          "created_at": "2026-06-14T16:44:43.594749+00:00",
+          "project_id": 1009,
+          "project_ids": [
+            1009
+          ],
+          "source_system": "email"
+        }
+      ],
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHjHxF3AAA=",
+      "duplicate_count": 2,
+      "normalized_title": "review captiveaire’s alternative for design validity, cost"
+    }
+  },
+  "recentDocumentTasks": [
+    {
+      "id": "c84cdd63-26a0-46fa-a303-8b350db6d137",
+      "metadata_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+      "title": "Confirm whether anything different is needed on this",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "67",
+      "project_ids": [
+        67
+      ],
+      "assignee_name": "Brandon Clymer",
+      "assignee_email": "bclymer@alleatogroup.com",
+      "created_at": "2026-06-26T03:40:55.479Z"
+    },
+    {
+      "id": "5e2e2ca8-2560-448c-9ba4-d450f24365c8",
+      "metadata_id": "outlook_attachment_dec0f859953cb5837a9002f1_11f706836d290348363b538c",
+      "title": "Review and process Contract Change Order PC-2403-0001 for the",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T22:00:50.200Z"
+    },
+    {
+      "id": "e0c7c3e0-14fa-4c38-8991-25703c20d77f",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_kAAA=",
+      "title": "Verify whether Diamond Glass completed the loose door-cylinder",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T20:05:15.205Z"
+    },
+    {
+      "id": "794521d7-292d-40ac-94c4-6e3bc934a29f",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_8AAA=",
+      "title": "Close the task to confirm Casework Concepts' install date",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T20:02:29.596Z"
+    },
+    {
+      "id": "b385048f-8726-428d-b755-507458d8b79e",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_8AAA=",
+      "title": "Verify whether Diamond Glass completed the loose door-cylinder",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T20:02:29.150Z"
+    },
+    {
+      "id": "bd8b28f4-3e22-4510-9731-f449c29b619c",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_8AAA=",
+      "title": "Ensure the plumbers stop by and work on the bourbon bar drain on",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T20:02:28.492Z"
+    },
+    {
+      "id": "12b565d0-5800-43e5-be71-a48d1f6df65e",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Coordinate DEEM's exterior walk-in cooler work for Friday or",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:33.505Z"
+    },
+    {
+      "id": "83b82ebd-2f27-459b-a01e-21b25b34b8c0",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Ensure the plumbers complete the bourbon bar drain work",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:32.297Z"
+    },
+    {
+      "id": "dd02277b-84b5-4cc2-9928-e230f9e95330",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Coordinate and verify Casework Concepts completes the Friday",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:31.788Z"
+    },
+    {
+      "id": "a9c4182f-c608-49fc-b7e6-3ffc157c03da",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Investigate the continuing back dining room leak onsite this",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Chad Tragesser",
+      "assignee_email": "ctragesser@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:30.969Z"
+    },
+    {
+      "id": "c8c4c803-7d57-4973-9fbc-21ee93917293",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Clean out the outside electrical and sprinkler/riser rooms of",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:30.476Z"
+    },
+    {
+      "id": "3057b0bf-768f-446d-a515-dc99f899b17d",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-GAAA=",
+      "title": "Ensure DEEM investigates the reported hot kitchen",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:06:29.549Z"
+    },
+    {
+      "id": "00d500fb-fb5e-4499-abec-9a738300e6bd",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-HAAA=",
+      "title": "Repair the bourbon bar drain and verify completion after the",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:04:24.805Z"
+    },
+    {
+      "id": "ff1d8b8e-cfe7-4e30-8236-7344c9d329ab",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-HAAA=",
+      "title": "Investigate the continuing back dining room leak and determine",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Chad Tragesser",
+      "assignee_email": "ctragesser@alleatogroup.com",
+      "created_at": "2026-06-14T18:04:23.985Z"
+    },
+    {
+      "id": "2c69be0d-d14e-4eae-802d-2b71c6e9540f",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-HAAA=",
+      "title": "Ensure Casework Concepts completes Friday installation of new",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:04:23.502Z"
+    },
+    {
+      "id": "a9e2a7a6-9af3-4d96-9d97-faafef373e5f",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-HAAA=",
+      "title": "Clean out the electrical and sprinkler rooms containing junk and",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:04:23.052Z"
+    },
+    {
+      "id": "f0d50eb3-2e72-4a6c-b3d1-7fe17c0606fe",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-HAAA=",
+      "title": "Have DEEM investigate the inspector-reported hot",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:04:22.189Z"
+    },
+    {
+      "id": "b4271d27-8060-4f6a-99da-5e7d1fd6dab3",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAHfkegcAAA=",
+      "title": "Share the TV layouts discussed last week in the email thread",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "34",
+      "project_ids": [
+        34
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:02:01.557Z"
+    },
+    {
+      "id": "bb2188ec-b4db-420b-8312-92e4260e0e2c",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_-AAA=",
+      "title": "Provide feedback on the TV layout so Tri-State AV can update the",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "34",
+      "project_ids": [
+        34
+      ],
+      "assignee_name": "Mike Ewers",
+      "assignee_email": "mewers@medellasprings.com",
+      "created_at": "2026-06-14T18:01:30.412Z"
+    },
+    {
+      "id": "3a2d53d3-7e57-4996-9892-d33a0a548c5d",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_5AAA=",
+      "title": "Share the discussed TV layouts in the email thread with Matt",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "34",
+      "project_ids": [
+        34
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T18:01:08.858Z"
+    },
+    {
+      "id": "f9e6bfae-c910-47ef-b3db-d1e78bd03dbb",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-AAAA=",
+      "title": "Resolve Ben’s missing Job Planner invoice-entry option by",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "60",
+      "project_ids": [
+        60
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T17:34:25.568Z"
+    },
+    {
+      "id": "f610dc53-3c7d-4e68-8d7a-10fc923d8c08",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_6AAA=",
+      "title": "Answer Benjamin Cottrell’s questions after he reviews the Job",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "60",
+      "project_ids": [
+        60
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T17:33:59.083Z"
+    },
+    {
+      "id": "bd29242f-7238-4cca-b35b-56a0cb604134",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke_7AAA=",
+      "title": "Track and obtain Boone County Water's written confirmation of",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "60",
+      "project_ids": [
+        60
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T17:33:40.036Z"
+    },
+    {
+      "id": "63bef344-e7bc-465e-870c-eee9991b4b98",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-KAAA=",
+      "title": "Confirm whether the located pull station will satisfy the Fire",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "53",
+      "project_ids": [
+        53
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T17:33:18.266Z"
+    },
+    {
+      "id": "f4e24819-f458-48ed-b8b4-ddaf789cab5c",
+      "metadata_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEJAAA2bV2EJf1iQqoGMNCZ1WvLAAHfke-bAAA=",
+      "title": "Check whether the upstairs wraparound patio and downstairs",
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "project_id": "43",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-14T17:32:12.635Z"
+    }
+  ]
+}

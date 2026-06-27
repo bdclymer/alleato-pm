@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-06-26T00:12:52.897643+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json",
+  "candidate_count": 66,
+  "active_missing_count": 0,
+  "covered_count": 66,
+  "summary": [
+    {
+      "key": "drawing_upload:covered",
+      "count": 3
+    },
+    {
+      "key": "manual_upload:covered",
+      "count": 5
+    },
+    {
+      "key": "onedrive:covered",
+      "count": 36
+    },
+    {
+      "key": "outlook_attachment:covered",
+      "count": 22
+    }
+  ],
+  "active_missing": []
+}

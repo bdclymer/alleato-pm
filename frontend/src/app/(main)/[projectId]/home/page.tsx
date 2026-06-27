@@ -3,6 +3,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { notFound, redirect } from "next/navigation";
 import { ProjectHomeCommandCenterV2 as ProjectHomeClient } from "./project-home-command-center-v2";
+import type { ProjectHomeLinkDocument } from "./project-home-links";
 import type { BudgetGrandTotals } from "@/types/budget";
 
 export const dynamic = "force-dynamic";
@@ -230,6 +231,9 @@ export default async function ProjectHomePage({
     commitmentCosWithoutChangeRequestCountResult,
     ownerInvoicesResult,
     pendingSsovRowsResult,
+    subcontractTotalsResult,
+    purchaseOrderTotalsResult,
+    linkDocumentsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -286,12 +290,10 @@ export default async function ProjectHomePage({
       .order("created_at", { ascending: false })
       .limit(5),
 
-    // Fetch commitments from unified view (combines subcontracts + purchase_orders)
+    // Fetch commitments from unified view (combines subcontracts + purchase_orders — metadata only)
     supabase
       .from("commitments_unified")
-      .select(
-        "id, project_id, number, contract_company_id, title, status, executed, type, contract_amount, retention_percentage, start_date, executed_date, description, created_at, updated_at, original_amount, revised_contract_amount",
-      )
+      .select("id, project_id, contract_number, contract_company_id, title, status, executed, description, created_at, updated_at, deleted_at")
       .eq("project_id", numericProjectId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
@@ -373,6 +375,30 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .eq("status", "under_review")
       .order("submitted_at", { ascending: true }),
+
+    // Fetch subcontract SOV totals (contract amounts live in SOV items, not on the commitment record)
+    supabase
+      .from("subcontracts_with_totals")
+      .select("id, total_sov_amount")
+      .eq("project_id", numericProjectId),
+
+    // Fetch purchase order SOV totals
+    supabase
+      .from("purchase_orders_with_totals")
+      .select("id, total_sov_amount")
+      .eq("project_id", numericProjectId),
+
+    // Fetch project-scoped external links and media references for the landing Links section.
+    supabase
+      .from("project_documents")
+      .select(
+        "id, title, file_name, category, created_at, description, document_type, content_type, file_url, source_system, source_web_url",
+      )
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
+      .or("source_web_url.ilike.http%,file_url.ilike.http%")
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -423,21 +449,14 @@ export default async function ProjectHomePage({
   const rawCommitments = ((commitmentsResult.data || []) as unknown) as Array<{
     id: string;
     project_id: number;
-    number: string;
+    contract_number: string | null;
     contract_company_id: string | null;
     title: string | null;
     status: string;
     executed: boolean;
-    type: "subcontract" | "purchase_order";
-    contract_amount?: number;
-    retention_percentage: number | null;
-    start_date: string | null;
-    executed_date: string | null;
     description: string | null;
     created_at: string;
     updated_at: string;
-    original_amount?: number;
-    revised_contract_amount?: number;
   }>;
   const seenCommitmentIds = new Set<string>();
   const commitments = rawCommitments.filter((c) => {
@@ -451,22 +470,24 @@ export default async function ProjectHomePage({
       const commitment = commitments.find((item) => item.id === row.commitment_id);
       return {
         commitmentId: row.commitment_id,
-        commitmentNumber: commitment?.number || "",
+        commitmentNumber: commitment?.contract_number || "",
         commitmentTitle: commitment?.title || "Commitment",
         submittedAt: row.submitted_at || null,
       };
     },
   );
 
-  const commitmentTotal = commitments.reduce((sum, commitment) => {
-    const resolvedAmount =
-      commitment.revised_contract_amount ??
-      commitment.contract_amount ??
-      commitment.original_amount ??
-      0;
-
-    return sum + resolvedAmount;
-  }, 0);
+  // Contract amounts live in SOV line items, not on the commitment record itself.
+  // Sum total_sov_amount from the *_with_totals views which aggregate them.
+  const subcontractTotal = (subcontractTotalsResult.data || []).reduce(
+    (sum, row) => sum + (Number(row.total_sov_amount) || 0),
+    0,
+  );
+  const purchaseOrderTotal = (purchaseOrderTotalsResult.data || []).reduce(
+    (sum, row) => sum + (Number(row.total_sov_amount) || 0),
+    0,
+  );
+  const commitmentTotal = subcontractTotal + purchaseOrderTotal;
 
   const contracts = contractsResult.data || [];
   const ownerInvoices = ownerInvoicesResult.data || [];
@@ -497,6 +518,12 @@ export default async function ProjectHomePage({
       teamDirectoryResult.error,
     );
   }
+  if (linkDocumentsResult.error) {
+    console.error(
+      `[project-home] project link documents query failed for project ${numericProjectId}:`,
+      linkDocumentsResult.error,
+    );
+  }
   const teamFromRpc = teamResult.data || [];
   const teamFromDirectory = mapDirectoryTeamMembers(teamDirectoryResult.data || []);
   const teamFromProject = mapProjectTeamMembers(project.team_members);
@@ -506,6 +533,9 @@ export default async function ProjectHomePage({
       : teamFromRpc.length > 0
       ? teamFromRpc
       : teamFromProject;
+  const linkDocuments: ProjectHomeLinkDocument[] = linkDocumentsResult.error
+    ? []
+    : linkDocumentsResult.data || [];
 
   return (
     <PageShell
@@ -529,6 +559,7 @@ export default async function ProjectHomePage({
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
+        linkDocuments={linkDocuments}
       />
     </PageShell>
   );

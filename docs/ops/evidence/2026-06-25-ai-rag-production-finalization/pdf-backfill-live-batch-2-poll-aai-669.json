@@ -1,0 +1,275 @@
+{
+  "generated_at": "2026-06-25T22:28:59.362Z",
+  "batchFile": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-2-aai-669.json",
+  "rows": [
+    {
+      "id": "26ceec3d-4a44-4169-be0e-38fe645bed5f",
+      "title": "[034] A601",
+      "status": "complete",
+      "content_length": 2366,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "26ceec3d-4a44-4169-be0e-38fe645bed5f",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "44968194-e480-46db-a0dc-63df99633c4a",
+      "title": "[047] M002",
+      "status": "complete",
+      "content_length": 25833,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "44968194-e480-46db-a0dc-63df99633c4a",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "5b515bd2-06ef-43db-807e-716848b26443",
+      "title": "[021] AD102",
+      "status": "complete",
+      "content_length": 3501,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "5b515bd2-06ef-43db-807e-716848b26443",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "7197d347-dd42-44ce-9aea-e427c7214e64",
+      "title": "[003] G002",
+      "status": "complete",
+      "content_length": 12215,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "7197d347-dd42-44ce-9aea-e427c7214e64",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "9a049661-421c-4d55-94ce-d889c20de128",
+      "title": "[059] E403",
+      "status": "complete",
+      "content_length": 3114,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "9a049661-421c-4d55-94ce-d889c20de128",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "9f6e08d0-5ea9-408a-928e-9d78d8051045",
+      "title": "[050] M411",
+      "status": "complete",
+      "content_length": 1056,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "9f6e08d0-5ea9-408a-928e-9d78d8051045",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "a88b247e-ca87-4f40-9837-6ca09fd62522",
+      "title": "[063] E802",
+      "status": "complete",
+      "content_length": 6620,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "a88b247e-ca87-4f40-9837-6ca09fd62522",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec",
+      "title": "[001] G000 - COVER PAGE.pdf",
+      "status": "complete",
+      "content_length": 863,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec",
+        "app_document_id": "drawing-revision:0360a3da-754f-4e14-b464-7c6512a174ec",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 863,
+        "chunk_count": 8,
+        "embedded_chunk_count": 8,
+        "document_chunk_count": 8,
+        "vision_chunk_count": 0
+      }
+    },
+    {
+      "id": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310",
+      "title": "[004] G003 - ACCESSIBILITY.pdf",
+      "status": "complete",
+      "content_length": 12062,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310",
+        "app_document_id": "drawing-revision:124fa2b9-3233-4892-af3c-04175b324310",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 12062,
+        "chunk_count": 64,
+        "embedded_chunk_count": 64,
+        "document_chunk_count": 64,
+        "vision_chunk_count": 0
+      }
+    },
+    {
+      "id": "drawing-revision:1a4dbe62-2b9d-4f4d-a0fe-204f22805101",
+      "title": "[021] M101 - FIRST FLOOR HVAC PLAN.pdf",
+      "status": "ocr_failed",
+      "content_length": 4104,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43",
+      "title": "[002] G001 - INDEX SHEET.pdf",
+      "status": "complete",
+      "content_length": 14914,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43",
+        "app_document_id": "drawing-revision:381623a9-19da-4688-8394-2683bb76db43",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 14914,
+        "chunk_count": 60,
+        "embedded_chunk_count": 60,
+        "document_chunk_count": 60,
+        "vision_chunk_count": 0
+      }
+    },
+    {
+      "id": "drawing-revision:3df6c2e1-cb4b-48a5-bafb-93f671c7199a",
+      "title": "[019] MD101 - FIRST FLOOR HVAC DEMOLITION PLAN.pdf",
+      "status": "raw_ingested",
+      "content_length": 3668,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:3e9b3a9c-e2e6-4b23-990e-2c7e04ce4e35",
+      "title": "[024] E001 - SYMBOLS, ABBREVIATIONS AND GENERAL SPECIFICATIONS.pdf",
+      "status": "raw_ingested",
+      "content_length": 18788,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:6c45a6c7-7d42-4d7a-abbb-61dc09a5db14",
+      "title": "[020] M001 - HVAC GENERAL NOTES.pdf",
+      "status": "raw_ingested",
+      "content_length": 22130,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:7a0a2772-031b-4715-8961-f12ce2c86519",
+      "title": "[025] E200 - OVERALL POWER.pdf",
+      "status": "raw_ingested",
+      "content_length": 6514,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665",
+      "title": "[027] E300 - OVERALL LIGHTING.pdf",
+      "status": "complete",
+      "content_length": 3596,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665",
+        "app_document_id": "drawing-revision:93269d48-e5c0-49ca-abdf-d0d947b24665",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 3596,
+        "chunk_count": 22,
+        "embedded_chunk_count": 22,
+        "document_chunk_count": 22,
+        "vision_chunk_count": 0
+      }
+    },
+    {
+      "id": "drawing-revision:947c46ce-9dc5-44bf-a420-337322d86d93",
+      "title": "[022] M601 - HVAC SCHEDULES & DETAILS.pdf",
+      "status": "raw_ingested",
+      "content_length": 10348,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:bca704c9-5240-4947-8d91-14af39c6d551",
+      "title": "[018] P901 - PLUMBING SPECIFICATIONS.pdf",
+      "status": "segmented",
+      "content_length": 29081,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:bca704c9-5240-4947-8d91-14af39c6d551",
+        "page_intelligence_count": 1
+      },
+      "rag": null
+    },
+    {
+      "id": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085",
+      "title": "[003] G002 - CODE SUMMARY + LIFE SAFETY.pdf",
+      "status": "complete",
+      "content_length": 5363,
+      "raw_text_length": 0,
+      "page_intelligence": {
+        "id": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085",
+        "app_document_id": "drawing-revision:cdd61555-6cda-411a-9dff-a50a24d24085",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 5363,
+        "chunk_count": 34,
+        "embedded_chunk_count": 34,
+        "document_chunk_count": 34,
+        "vision_chunk_count": 0
+      }
+    },
+    {
+      "id": "drawing-revision:fffc9503-e347-4a4b-a3a2-cb237bb0ebad",
+      "title": "[026] E201 - OVERALL MECHANICAL POWER.pdf",
+      "status": "raw_ingested",
+      "content_length": 3733,
+      "raw_text_length": 0,
+      "page_intelligence": null,
+      "rag": null
+    }
+  ]
+}

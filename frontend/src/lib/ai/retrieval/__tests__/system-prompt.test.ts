@@ -21,7 +21,9 @@ describe("assembleSystemPromptFromContext", () => {
     const plan: RetrievalPlan = {
       intent: "app_help",
       responseFormat: "app_help",
-      sources: { appExpert: { question: "Where do I manage permissions in the app?" } },
+      sources: {
+        appExpert: { question: "Where do I manage permissions in the app?" },
+      },
       reason: "app_help_intent",
     };
     const ctx: RetrievalContext = {
@@ -36,7 +38,8 @@ describe("assembleSystemPromptFromContext", () => {
           {
             title: "App permissions and visibility",
             sourceType: "help_article",
-            filePath: "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx",
+            filePath:
+              "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx",
             detail: "Published AI-visible help article.",
           },
         ],
@@ -81,6 +84,103 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).not.toContain("Vector Search Results");
   });
 
+  it("truncates an oversized top-priority block to the budget and flags it to the model", () => {
+    // Regression: an over-large injected context (intelligence packet + vector
+    // results) bloated the system prompt past the context hard limit, so even a
+    // one-line chat was rejected by the compaction guard. The injected context
+    // must be bounded so a short chat can never trip the limit.
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "spec evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [
+          {
+            content: "Z".repeat(1000),
+            sourceTable: "document_chunks",
+            recordId: 1,
+          },
+        ],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const onContextTrimmed = jest.fn();
+    const budget = 500;
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE", {
+      maxContextChars: budget,
+      onContextTrimmed,
+    });
+
+    expect(prompt).toContain("BASE");
+    expect(prompt).toContain("Context Truncated");
+    expect(onContextTrimmed).toHaveBeenCalledTimes(1);
+    expect(onContextTrimmed.mock.calls[0][0]).toMatchObject({
+      truncatedBlock: true,
+    });
+    // basePrompt is exempt; injected context respects the budget (+small notice).
+    expect(prompt.length).toBeLessThanOrEqual(budget + "BASE".length + 400);
+  });
+
+  it("drops lower-priority blocks that do not fit while keeping the ones that do", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [
+          {
+            content: "Z".repeat(1000),
+            sourceTable: "document_chunks",
+            recordId: 1,
+          },
+        ],
+      } as never,
+      executiveBriefingRetrieval: { summary: "B".repeat(1000) } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE", {
+      maxContextChars: 1400,
+    });
+
+    // Higher-priority vector block survives; lower-priority briefing is dropped.
+    expect(prompt).toContain("Vector Search Results");
+    expect(prompt).not.toContain("Recent Communication Signals");
+    expect(prompt).toContain("Context Truncated");
+  });
+
+  it("leaves a normal-sized injected context untouched (no truncation notice)", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "source_lookup",
+      sources: { semanticVectorSearch: { query: "evidence" } },
+      reason: "test",
+    };
+    const ctx: RetrievalContext = {
+      semanticVectorResults: {
+        results: [
+          {
+            content: "short passage",
+            sourceTable: "document_chunks",
+            recordId: 1,
+          },
+        ],
+      } as never,
+      warnings: [],
+      durationsMs: {},
+    };
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
+    expect(prompt).toContain("Vector Search Results");
+    expect(prompt).not.toContain("Context Truncated");
+  });
+
   it("frames preloaded packet and snapshot as project operating context with RAG as drilldown", () => {
     const plan: RetrievalPlan = {
       intent: "source_lookup",
@@ -94,9 +194,14 @@ describe("assembleSystemPromptFromContext", () => {
       reason: "project_context_source_lookup_intent",
     };
     const ctx: RetrievalContext = {
-      intelligencePacket: { id: "p1", executiveSummary: "baseline read" } as never,
+      intelligencePacket: {
+        id: "p1",
+        executiveSummary: "baseline read",
+      } as never,
       projectSnapshot: { projectName: "Vermillion Rise" },
-      semanticVectorResults: { results: [{ content: "spec passage", sourceTable: "document_chunks" }] } as never,
+      semanticVectorResults: {
+        results: [{ content: "spec passage", sourceTable: "document_chunks" }],
+      } as never,
       warnings: [],
       durationsMs: {},
     };
@@ -147,7 +252,12 @@ describe("assembleSystemPromptFromContext", () => {
     const ctx: RetrievalContext = {
       recentEmailInbox: {
         count: 1,
-        threads: [{ latestSubject: "Owner approval needed", latestPreview: "Please respond today." }],
+        threads: [
+          {
+            latestSubject: "Owner approval needed",
+            latestPreview: "Please respond today.",
+          },
+        ],
       },
       warnings: [],
       durationsMs: {},
@@ -214,7 +324,9 @@ describe("assembleSystemPromptFromContext", () => {
     const ctx: RetrievalContext = {
       intelligencePacket: { id: "p1" } as never,
       projectSnapshot: { sourceRef: "snap" } as never,
-      semanticVectorResults: { results: [{ content: "abc", sourceTable: "doc" }] } as never,
+      semanticVectorResults: {
+        results: [{ content: "abc", sourceTable: "doc" }],
+      } as never,
       warnings: [{ source: "meetings", message: "timeout" }],
       durationsMs: {},
     };
@@ -293,7 +405,10 @@ describe("assembleSystemPromptFromContext", () => {
     };
     const huge = "x".repeat(50_000);
     const ctx: RetrievalContext = {
-      intelligencePacket: { executiveSummary: huge, cards: [{ title: huge }] } as never,
+      intelligencePacket: {
+        executiveSummary: huge,
+        cards: [{ title: huge }],
+      } as never,
       projectSnapshot: { huge } as never,
       semanticVectorResults: {
         results: Array.from({ length: 12 }, () => ({
@@ -384,16 +499,27 @@ describe("assembleSystemPromptFromContext", () => {
     const ctx: RetrievalContext = {
       intelligencePacket: {
         id: "p1",
-        executiveSummary: "Union Collective is moving from concept to permit-ready design.",
-        currentStatus: "Design is active, but permit and budget decisions need attention.",
+        executiveSummary:
+          "Union Collective is moving from concept to permit-ready design.",
+        currentStatus:
+          "Design is active, but permit and budget decisions need attention.",
         recommendedNextMoves: ["Lock design decisions"],
         sourceCoverage: {
           linkedEvidenceCount: 90,
           categoryCoverage: [
-            { label: "Meetings", sourceCount: 32, availableCount: 32, latestAt: "2026-05-14T14:00:00Z" },
+            {
+              label: "Meetings",
+              sourceCount: 32,
+              availableCount: 32,
+              latestAt: "2026-05-14T14:00:00Z",
+            },
             { label: "Emails", sourceCount: 20, availableCount: 383 },
           ],
-          sourceQualityCounts: { clean_source: 63, metadata_only: 33, raw_dump: 0 },
+          sourceQualityCounts: {
+            clean_source: 63,
+            metadata_only: 33,
+            raw_dump: 0,
+          },
         },
         packetJson: {
           huge: "x".repeat(20_000),
@@ -401,7 +527,8 @@ describe("assembleSystemPromptFromContext", () => {
             risks: [
               {
                 title: "Permit schedule may slip",
-                recommendedAction: "Escalate unresolved permit-blocking decisions.",
+                recommendedAction:
+                  "Escalate unresolved permit-blocking decisions.",
                 severity: "high",
               },
             ],
@@ -428,7 +555,9 @@ describe("assembleSystemPromptFromContext", () => {
     expect(prompt).toContain("Meetings: 32 selected / 32 available");
     expect(prompt).toContain("do not claim no meeting transcripts surfaced");
     expect(prompt).toContain("Permit schedule may slip");
-    expect(prompt).toContain("Scope growth needs current estimate reconciliation");
+    expect(prompt).toContain(
+      "Scope growth needs current estimate reconciliation",
+    );
     expect(prompt).not.toContain("packetJson");
     expect(prompt).not.toContain("xxxxxxxxxx");
   });
@@ -450,21 +579,27 @@ describe("assembleSystemPromptFromContext", () => {
               {
                 category: "specification",
                 label: "Specifications",
-                latest: { title: "08 11 13 Hollow Metal Doors", sourceId: "specification:081113" },
-                projectImpact: "Specification context can affect required materials and inspections.",
+                latest: {
+                  title: "08 11 13 Hollow Metal Doors",
+                  sourceId: "specification:081113",
+                },
+                projectImpact:
+                  "Specification context can affect required materials and inspections.",
               },
             ],
             obligations: [
               {
                 title: "08 11 13 Hollow Metal Doors",
-                obligation: "Specification requires approved door hardware submittals before fabrication.",
+                obligation:
+                  "Specification requires approved door hardware submittals before fabrication.",
                 sourceIds: ["specification:081113"],
               },
             ],
             conflictSignals: [
               {
                 title: "A-201 Floor Plan",
-                conflictSignal: "Drawing was superseded by a revised owner plan.",
+                conflictSignal:
+                  "Drawing was superseded by a revised owner plan.",
                 sourceIds: ["drawing:A201-old"],
               },
             ],
@@ -480,8 +615,37 @@ describe("assembleSystemPromptFromContext", () => {
 
     expect(prompt).toContain("Document Intelligence");
     expect(prompt).toContain("08 11 13 Hollow Metal Doors");
-    expect(prompt).toContain("Specification requires approved door hardware submittals");
+    expect(prompt).toContain(
+      "Specification requires approved door hardware submittals",
+    );
     expect(prompt).toContain("A-201 Floor Plan");
     expect(prompt).toContain("Use this as the document baseline");
+  });
+
+  it("wraps source-specific RAG content as internal evidence, not final answer copy", () => {
+    const plan: RetrievalPlan = {
+      intent: "source_lookup",
+      responseFormat: "briefing_template",
+      sources: { sourceSpecificRag: { kind: "recent_teams_discussions" } },
+      reason: "source_specific_rag_recent_teams_discussions",
+    };
+    const ctx: RetrievalContext = {
+      sourceSpecificRagAnswer: {
+        content:
+          "## Teams Message Evidence For Synthesis\n\nFreshness: checked Teams.\n\n1. **Teams conversation** - Evidence: pricing follow-up.",
+        rows: [],
+      },
+      warnings: [],
+      durationsMs: {},
+    };
+
+    const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE");
+
+    expect(prompt).toContain("# Internal Source-Specific RAG Evidence");
+    expect(prompt).toContain("Do NOT copy this block");
+    expect(prompt).toContain("Final-answer contract");
+    expect(prompt).toContain("never begin the user-visible response");
+    expect(prompt).toContain("Teams Message Evidence For Synthesis");
+    expect(prompt).toContain("Do not output raw evidence rows");
   });
 });

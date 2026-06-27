@@ -8,11 +8,34 @@ import type {
   BrandonAssistantAction,
   BrandonAssistantPriority,
 } from "@/lib/email-assistant/brandon-triage";
+import { format } from "date-fns";
 import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
 import { EmailListPanel } from "./email-list-panel";
 import { EmailReadingPane } from "./email-reading-pane";
+import { cleanEmailBody } from "./email-body";
+import { DetailField } from "@/components/ds/DetailField";
 
-export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments";
+export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments" | "reviewed";
+
+export interface ReviewedEmail {
+  reviewId: string;
+  id: number;
+  subject: string;
+  fromName: string | null;
+  fromEmail: string | null;
+  receivedAt: string | null;
+  bodyHtml: string | null;
+  bodyText: string | null;
+  body: string | null;
+  webLink: string | null;
+  reviewOutcome: string;
+  reviewerNote: string | null;
+  assistantReason: string | null;
+  reviewedAt: string;
+  starred: boolean;
+  tags: string[];
+  project: { id: number; name: string | null; projectNumber: string | null } | null;
+}
 
 export interface InboxAttachment {
   id: number;
@@ -144,6 +167,126 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
   });
 }
 
+const OUTCOME_LABEL: Record<string, string> = {
+  draft_copied: "Draft copied",
+  draft_edited: "Draft edited & copied",
+  delegated: "Delegated",
+  watched: "Watching",
+  skipped: "Skipped",
+  marked_no_action: "No action",
+};
+
+const OUTCOME_CLASS: Record<string, string> = {
+  draft_copied: "bg-primary/10 text-primary",
+  draft_edited: "bg-primary/10 text-primary",
+  delegated: "bg-warning-subtle text-warning",
+  watched: "bg-info-subtle text-info",
+  skipped: "bg-muted text-muted-foreground",
+  marked_no_action: "bg-muted text-muted-foreground",
+};
+
+function ReviewedReadingPane({ reviewed }: { reviewed: ReviewedEmail | null }) {
+  if (!reviewed) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground/50">
+        <p className="text-sm">Select a reviewed email to see details</p>
+      </div>
+    );
+  }
+
+  const outcomeLabel = OUTCOME_LABEL[reviewed.reviewOutcome] ?? reviewed.reviewOutcome;
+  const outcomeClass = OUTCOME_CLASS[reviewed.reviewOutcome] ?? "bg-muted text-muted-foreground";
+  const reviewedDate = format(new Date(reviewed.reviewedAt), "MMM d, yyyy 'at' h:mm a");
+  const receivedDate = reviewed.receivedAt
+    ? format(new Date(reviewed.receivedAt), "MMM d, yyyy 'at' h:mm a")
+    : null;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-border/40 shrink-0">
+        <p className="text-base font-semibold text-foreground leading-snug mb-3">
+          {reviewed.subject}
+        </p>
+
+        <div className="flex flex-col gap-1 mb-3">
+          <DetailField label="From">
+            {reviewed.fromName && <span className="text-foreground">{reviewed.fromName} </span>}
+            {reviewed.fromEmail && <span className="text-muted-foreground">&lt;{reviewed.fromEmail}&gt;</span>}
+          </DetailField>
+          {receivedDate && (
+            <DetailField label="Received">{receivedDate}</DetailField>
+          )}
+          {reviewed.project && (
+            <DetailField label="Project">
+              <span className="text-primary">
+                {reviewed.project.projectNumber
+                  ? `${reviewed.project.projectNumber} — ${reviewed.project.name ?? ""}`
+                  : (reviewed.project.name ?? `Project ${reviewed.project.id}`)}
+              </span>
+            </DetailField>
+          )}
+        </div>
+
+        {/* Review outcome */}
+        <div className="pt-3 border-t border-border/30 space-y-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center text-[11px] px-2 py-1 rounded font-medium ${outcomeClass}`}
+            >
+              {outcomeLabel}
+            </span>
+            <span className="text-xs text-muted-foreground">{reviewedDate}</span>
+          </div>
+          {reviewed.reviewerNote && (
+            <p className="text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded">
+              {reviewed.reviewerNote}
+            </p>
+          )}
+          {reviewed.assistantReason && !reviewed.reviewerNote && (
+            <p className="text-xs text-muted-foreground">
+              AI suggested: {reviewed.assistantReason}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
+        {reviewed.bodyHtml ? (
+          <div
+            className="prose prose-sm max-w-none text-foreground [&_a]:text-primary"
+            dangerouslySetInnerHTML={{ __html: reviewed.bodyHtml }}
+          />
+        ) : reviewed.bodyText ? (
+          <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+            {cleanEmailBody(reviewed.bodyText)}
+          </pre>
+        ) : reviewed.body ? (
+          <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+            {cleanEmailBody(reviewed.body)}
+          </pre>
+        ) : (
+          <p className="text-sm text-muted-foreground">(No body content)</p>
+        )}
+      </div>
+
+      {reviewed.webLink && (
+        <div className="px-4 py-3 border-t border-border/40 shrink-0">
+          <a
+            href={reviewed.webLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Open in Outlook ↗
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function EmailInboxClient({
   initialTab = "brandon-queue",
 }: {
@@ -193,6 +336,12 @@ export function EmailInboxClient({
       return data.length;
     },
     refetchInterval: 60_000,
+  });
+
+  const { data: reviewedEmails = [], isLoading: reviewedLoading } = useQuery({
+    queryKey: ["email-inbox", "reviewed"],
+    queryFn: () => apiFetch<ReviewedEmail[]>("/api/email-inbox/reviewed"),
+    enabled: activeTab === "reviewed",
   });
 
   const selectedEmail = emails.find((e) => e.id === selectedId) ?? null;
@@ -317,6 +466,23 @@ export function EmailInboxClient({
           },
         }),
       }),
+    onSuccess: (_, { email }) => {
+      // Remove the reviewed email from the current list immediately
+      queryClient.setQueryData(queryKey, (old: unknown) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((e: unknown) => {
+          const row = e as Record<string, unknown>;
+          return row.id !== email.id;
+        });
+      });
+      // Advance selection to the next email in the list
+      const idx = emails.findIndex((e) => e.id === email.id);
+      const next = emails[idx + 1] ?? emails[idx - 1] ?? null;
+      setSelectedId(next?.id ?? null);
+      // Invalidate brandon-queue count badge and reviewed tab
+      void queryClient.invalidateQueries({ queryKey: ["email-inbox-count", "brandon-queue"] });
+      void queryClient.invalidateQueries({ queryKey: ["email-inbox", "reviewed"] });
+    },
   });
 
   function handleTabChange(tab: InboxTab) {
@@ -326,13 +492,19 @@ export function EmailInboxClient({
     setDraftReplyOpen(false);
   }
 
+  const isReviewedTab = activeTab === "reviewed";
+  const selectedReviewed = isReviewedTab
+    ? reviewedEmails.find((r) => r.id === selectedId) ?? null
+    : null;
+
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
       {/* Left panel — fixed width */}
       <div className="w-96 shrink-0 border-r border-border/50 flex flex-col overflow-hidden">
         <EmailListPanel
-          emails={emails}
-          isLoading={isLoading}
+          emails={isReviewedTab ? [] : emails}
+          reviewedEmails={isReviewedTab ? reviewedEmails : []}
+          isLoading={isReviewedTab ? reviewedLoading : isLoading}
           activeTab={activeTab}
           onTabChange={handleTabChange}
           selectedId={selectedId}
@@ -341,48 +513,53 @@ export function EmailInboxClient({
           onSearchChange={setSearch}
           needsAssignmentCount={needsCount}
           brandonQueueCount={brandonQueueCount}
+          reviewedCount={reviewedEmails.length}
         />
       </div>
 
       {/* Right panel — flexible */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <EmailReadingPane
-          email={selectedEmail}
-          draftReplyOpen={draftReplyOpen}
-          onDraftReplyOpen={() => setDraftReplyOpen(true)}
-          onDraftReplyClose={() => setDraftReplyOpen(false)}
-          onAssignProject={(projectId) => {
-            if (selectedEmail) {
-              assignMutation.mutate({
-                emailId: selectedEmail.id,
-                projectId,
+        {isReviewedTab ? (
+          <ReviewedReadingPane reviewed={selectedReviewed} />
+        ) : (
+          <EmailReadingPane
+            email={selectedEmail}
+            draftReplyOpen={draftReplyOpen}
+            onDraftReplyOpen={() => setDraftReplyOpen(true)}
+            onDraftReplyClose={() => setDraftReplyOpen(false)}
+            onAssignProject={(projectId) => {
+              if (selectedEmail) {
+                assignMutation.mutate({
+                  emailId: selectedEmail.id,
+                  projectId,
+                });
+              }
+            }}
+            onToggleStar={() => {
+              if (selectedEmail) {
+                starMutation.mutate({
+                  emailId: selectedEmail.id,
+                  starred: !selectedEmail.starred,
+                });
+              }
+            }}
+            onTagsChange={(tags) => {
+              if (selectedEmail) {
+                tagMutation.mutate({ emailId: selectedEmail.id, tags });
+              }
+            }}
+            reviewSaving={reviewMutation.isPending}
+            onRecordReview={async (reviewOutcome, draftBody, reviewerNote) => {
+              if (!selectedEmail) return;
+              await reviewMutation.mutateAsync({
+                email: selectedEmail,
+                reviewOutcome,
+                draftBody,
+                reviewerNote,
               });
-            }
-          }}
-          onToggleStar={() => {
-            if (selectedEmail) {
-              starMutation.mutate({
-                emailId: selectedEmail.id,
-                starred: !selectedEmail.starred,
-              });
-            }
-          }}
-          onTagsChange={(tags) => {
-            if (selectedEmail) {
-              tagMutation.mutate({ emailId: selectedEmail.id, tags });
-            }
-          }}
-          reviewSaving={reviewMutation.isPending}
-          onRecordReview={async (reviewOutcome, draftBody, reviewerNote) => {
-            if (!selectedEmail) return;
-            await reviewMutation.mutateAsync({
-              email: selectedEmail,
-              reviewOutcome,
-              draftBody,
-              reviewerNote,
-            });
-          }}
-        />
+            }}
+          />
+        )}
       </div>
     </div>
   );

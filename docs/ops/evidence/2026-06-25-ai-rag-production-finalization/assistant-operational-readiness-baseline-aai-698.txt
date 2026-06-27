@@ -1,0 +1,352 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-operational-readiness
+> node scripts/verify/verify_ai_assistant_operational_readiness.mjs
+
+{
+  "status": "pass",
+  "generatedAt": "2026-06-26T05:40:29.151Z",
+  "totals": {
+    "checks": 80,
+    "passed": 80,
+    "warnings": 0,
+    "failures": 0
+  },
+  "failures": [],
+  "warnings": [],
+  "evidence": [
+    {
+      "status": "pass",
+      "message": "assistant eval suite loaded from docs/ai-plan2/evals/assistant-eval-suite.json"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:assistant-routing"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:eval-suite"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:inbox-evals"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:source-sync-evals"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:task-action-evals"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:deep-agents-executive-evals"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:app-expert-evals"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:app-expert-smoke"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:project-intelligence-live-paths"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:chunk-integrity"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:repaired-meeting-retrieval"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:meetings"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:task-integrity"
+    },
+    {
+      "status": "pass",
+      "message": "package script exists: rag:verify:assistant-operational-readiness"
+    },
+    {
+      "status": "pass",
+      "message": "eval bundle exists: inbox-outlook-regression"
+    },
+    {
+      "status": "pass",
+      "message": "inbox-outlook-regression has a runnable filter"
+    },
+    {
+      "status": "pass",
+      "message": "inbox-outlook-regression has explicit agentic-eval criteria"
+    },
+    {
+      "status": "pass",
+      "message": "eval bundle exists: source-sync-teams-regression"
+    },
+    {
+      "status": "pass",
+      "message": "source-sync-teams-regression has a runnable filter"
+    },
+    {
+      "status": "pass",
+      "message": "source-sync-teams-regression has explicit agentic-eval criteria"
+    },
+    {
+      "status": "pass",
+      "message": "eval bundle exists: task-action-items-regression"
+    },
+    {
+      "status": "pass",
+      "message": "task-action-items-regression has a runnable filter"
+    },
+    {
+      "status": "pass",
+      "message": "task-action-items-regression has explicit agentic-eval criteria"
+    },
+    {
+      "status": "pass",
+      "message": "eval bundle exists: deep-agents-executive-regression"
+    },
+    {
+      "status": "pass",
+      "message": "deep-agents-executive-regression has a runnable filter"
+    },
+    {
+      "status": "pass",
+      "message": "deep-agents-executive-regression has explicit agentic-eval criteria"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: owner-strategy-ulta-action-plan"
+    },
+    {
+      "status": "pass",
+      "message": "owner-strategy-ulta-action-plan fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "owner-strategy-ulta-action-plan requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "owner-strategy-ulta-action-plan has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: action-task-preview-no-write"
+    },
+    {
+      "status": "pass",
+      "message": "action-task-preview-no-write fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "action-task-preview-no-write requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "action-task-preview-no-write has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: task-register-source-grounded"
+    },
+    {
+      "status": "pass",
+      "message": "task-register-source-grounded fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "task-register-source-grounded requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "task-register-source-grounded has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: tasks-list-of-action-items-canonical"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-list-of-action-items-canonical fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-list-of-action-items-canonical requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-list-of-action-items-canonical has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: tasks-whats-on-my-list"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-whats-on-my-list fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-whats-on-my-list requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "tasks-whats-on-my-list has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: realworld-most-important-tasks"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-most-important-tasks fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-most-important-tasks requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-most-important-tasks has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: source-freshness-rag-health"
+    },
+    {
+      "status": "pass",
+      "message": "source-freshness-rag-health fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "source-freshness-rag-health requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "source-freshness-rag-health has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: realworld-teams-source-freshness"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-source-freshness fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-source-freshness requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-source-freshness has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval case exists: realworld-teams-this-week-signal"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-this-week-signal fails bad answer patterns explicitly"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-this-week-signal requires persisted metadata evidence"
+    },
+    {
+      "status": "pass",
+      "message": "realworld-teams-this-week-signal has a tool or source expectation"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces expectedAllToolNames"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces forbiddenToolNames"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces requiredMetadataPaths"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces minResponseQualityScore"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces minSourceQuality"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces minConfidence"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces requiredRecentEmailSource"
+    },
+    {
+      "status": "pass",
+      "message": "eval runner enforces requiredRecentEmailMailbox"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend records intent planning before routing"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend persists response quality scoring"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend persists provider/model path"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend records normalized tool traces"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend attaches canonical backend Deep Agents executive trace"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend has source-backed task/tool routing"
+    },
+    {
+      "status": "pass",
+      "message": "chat backend exposes task action tooling"
+    },
+    {
+      "status": "pass",
+      "message": "source health checks sync, embedding, and compilation freshness"
+    },
+    {
+      "status": "pass",
+      "message": "integration health gate includes AI assistant source snapshots"
+    }
+  ],
+  "nextLiveChecks": [
+    "npm run rag:verify:assistant-routing",
+    "npm run rag:verify:inbox-evals:prod",
+    "npm run rag:verify:source-sync-evals:prod",
+    "npm run rag:verify:task-action-evals:prod",
+    "npm run rag:verify:deep-agents-executive-evals:prod",
+    "npm run rag:verify:app-expert-smoke:prod",
+    "npm run rag:verify:app-expert-evals:prod",
+    "npm run rag:verify:eval-suite -- --filter \"owner-strategy|action-task|task-register|source-freshness\"",
+    "python3 scripts/verify/verify_integration_health.py --skip-env",
+    "npm run rag:verify:project-intelligence-live-paths",
+    "npm run rag:verify:chunk-integrity -- --days=1",
+    "npm run rag:verify:repaired-meeting-retrieval"
+  ]
+}

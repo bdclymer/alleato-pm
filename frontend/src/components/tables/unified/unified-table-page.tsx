@@ -121,6 +121,9 @@ const DATE_LIKE_COLUMN_PATTERN =
 
 export const TABLE_HEADER_LABEL_CLASSNAME =
   "inline-block min-w-max shrink-0 whitespace-nowrap [word-break:keep-all]";
+export const TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME = "w-auto lg:hidden";
+export const TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME =
+  "hidden min-w-0 justify-end lg:flex";
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -1963,10 +1966,10 @@ export function UnifiedTablePage<T>({
         ) : headerActionsSlot ? (
           <div className="flex items-center gap-2">
             {headerActionsSlot}
-            {renderTableToolbar("sm:hidden")}
+            {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
           </div>
         ) : (
-          renderTableToolbar("sm:hidden")
+          renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)
         )
       }
     />
@@ -1999,7 +2002,7 @@ export function UnifiedTablePage<T>({
           {!toolbarInlineWithHeader ? (
             <div
               className={cn(
-                "hidden min-w-0 justify-end sm:flex",
+                TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
                 tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >
@@ -2225,8 +2228,10 @@ export function UnifiedTablePage<T>({
                                 : columnAlignment === "center"
                                   ? "text-center"
                                   : "text-left",
-                              isSortable &&
-                                "cursor-pointer select-none group/th",
+                              isSortable && "cursor-pointer",
+                              (isSortable ||
+                                resolvedFeatures.enableColumnReorder) &&
+                                "select-none group/th",
                             )}
                             ariaSort={
                               isSortable
@@ -2274,115 +2279,117 @@ export function UnifiedTablePage<T>({
                               return (
                                 <>
                                   {hasContextActions ? (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          className={cn(
-                                            "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
-                                            "text-xs",
-                                            "w-full",
-                                            "overflow-visible",
-                                            "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
-                                            columnAlignment === "right"
-                                              ? "justify-end"
-                                              : columnAlignment === "center"
-                                                ? "justify-center"
-                                                : "justify-start",
-                                          )}
-                                          onContextMenu={(event) => {
-                                            event.preventDefault();
-                                            event.currentTarget.click();
-                                          }}
-                                        >
-                                          <span
-                                            className={
-                                              TABLE_HEADER_LABEL_CLASSNAME
-                                            }
+                                    <div className="flex items-center w-full">
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className={cn(
+                                              "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
+                                              "text-xs",
+                                              "flex-1 min-w-0",
+                                              "overflow-visible",
+                                              "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
+                                              columnAlignment === "right"
+                                                ? "justify-end"
+                                                : columnAlignment === "center"
+                                                  ? "justify-center"
+                                                  : "justify-start",
+                                            )}
+                                            onContextMenu={(event) => {
+                                              event.preventDefault();
+                                              event.currentTarget.click();
+                                            }}
                                           >
-                                            {column.label}
-                                          </span>
-                                          {isSortable &&
-                                            renderSortIcon(column.id)}
-                                          {dragHandle}
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="start">
-                                        {isSortable && (
-                                          <>
-                                            <DropdownMenuItem
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                effectiveSorting?.onSortChange(
-                                                  column.id,
-                                                  "asc",
-                                                );
-                                              }}
+                                            <span
+                                              className={
+                                                TABLE_HEADER_LABEL_CLASSNAME
+                                              }
                                             >
-                                              <ArrowUp className="mr-2 h-3.5 w-3.5" />
-                                              Sort ascending
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                effectiveSorting?.onSortChange(
-                                                  column.id,
-                                                  "desc",
-                                                );
-                                              }}
-                                            >
-                                              <ArrowDown className="mr-2 h-3.5 w-3.5" />
-                                              Sort descending
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                        {resolvedFeatures.enableColumnPinning && (
-                                          <>
-                                            {isSortable && (
-                                              <DropdownMenuSeparator />
-                                            )}
-                                            <DropdownMenuItem
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                pinColumn(column.id);
-                                              }}
-                                            >
-                                              {columnPinning.left.includes(
-                                                column.id,
-                                              ) ? (
-                                                <>
-                                                  <PinOff className="mr-2 h-3.5 w-3.5" />
-                                                  Unpin column
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <Pin className="mr-2 h-3.5 w-3.5" />
-                                                  Pin column
-                                                </>
+                                              {column.label}
+                                            </span>
+                                            {isSortable &&
+                                              renderSortIcon(column.id)}
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                          {isSortable && (
+                                            <>
+                                              <DropdownMenuItem
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  effectiveSorting?.onSortChange(
+                                                    column.id,
+                                                    "asc",
+                                                  );
+                                                }}
+                                              >
+                                                <ArrowUp className="mr-2 h-3.5 w-3.5" />
+                                                Sort ascending
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  effectiveSorting?.onSortChange(
+                                                    column.id,
+                                                    "desc",
+                                                  );
+                                                }}
+                                              >
+                                                <ArrowDown className="mr-2 h-3.5 w-3.5" />
+                                                Sort descending
+                                              </DropdownMenuItem>
+                                            </>
+                                          )}
+                                          {resolvedFeatures.enableColumnPinning && (
+                                            <>
+                                              {isSortable && (
+                                                <DropdownMenuSeparator />
                                               )}
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                        {isHideable && (
-                                          <>
-                                            {(isSortable ||
-                                              resolvedFeatures.enableColumnPinning) && (
-                                              <DropdownMenuSeparator />
-                                            )}
-                                            <DropdownMenuItem
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                hideColumn(column.id);
-                                              }}
-                                            >
-                                              <EyeOff className="mr-2 h-3.5 w-3.5" />
-                                              Hide column
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
+                                              <DropdownMenuItem
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  pinColumn(column.id);
+                                                }}
+                                              >
+                                                {columnPinning.left.includes(
+                                                  column.id,
+                                                ) ? (
+                                                  <>
+                                                    <PinOff className="mr-2 h-3.5 w-3.5" />
+                                                    Unpin column
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <Pin className="mr-2 h-3.5 w-3.5" />
+                                                    Pin column
+                                                  </>
+                                                )}
+                                              </DropdownMenuItem>
+                                            </>
+                                          )}
+                                          {isHideable && (
+                                            <>
+                                              {(isSortable ||
+                                                resolvedFeatures.enableColumnPinning) && (
+                                                <DropdownMenuSeparator />
+                                              )}
+                                              <DropdownMenuItem
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  hideColumn(column.id);
+                                                }}
+                                              >
+                                                <EyeOff className="mr-2 h-3.5 w-3.5" />
+                                                Hide column
+                                              </DropdownMenuItem>
+                                            </>
+                                          )}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                      {dragHandle}
+                                    </div>
                                   ) : (
                                     <div
                                       className={cn(

@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-06-26T00:18:06.682Z",
+  "serviceId": "srv-d8271ohj2pic739klb7g",
+  "target_commit": "4cc73d447508d9c54bc667444dc9f379ee24d724",
+  "current": {
+    "id": "dep-d8us9surnols73bp5sj0",
+    "status": "live",
+    "commit": "4cc73d447508d9c54bc667444dc9f379ee24d724",
+    "createdAt": "2026-06-26T00:16:52.0064Z",
+    "finishedAt": "2026-06-26T00:17:57.259881Z"
+  },
+  "deploys": [
+    {
+      "id": "dep-d8us9surnols73bp5sj0",
+      "status": "live",
+      "commit": "4cc73d447508d9c54bc667444dc9f379ee24d724",
+      "createdAt": "2026-06-26T00:16:52.0064Z",
+      "finishedAt": "2026-06-26T00:17:57.259881Z"
+    },
+    {
+      "id": "dep-d8urk2l7vvec73eklqd0",
+      "status": "deactivated",
+      "commit": "238b56c8e0824e5ad5d258d3f8ddce3108fd1d9b",
+      "createdAt": "2026-06-25T23:30:19.002862Z",
+      "finishedAt": "2026-06-25T23:31:53.917558Z"
+    },
+    {
+      "id": "dep-d8urhq42m8qs73diqo8g",
+      "status": "deactivated",
+      "commit": "eb8b50ce9d06db67aa1b509d39269093920fcc1a",
+      "createdAt": "2026-06-25T23:25:28.592227Z",
+      "finishedAt": "2026-06-25T23:27:15.174285Z"
+    },
+    {
+      "id": "dep-d8uqhm3rjlhs73bkjld0",
+      "status": "deactivated",
+      "commit": "df7491e71627416a1d06a24a8a640adf4ede0c9f",
+      "createdAt": "2026-06-25T22:16:56.263333Z",
+      "finishedAt": "2026-06-25T22:18:00.535476Z"
+    },
+    {
+      "id": "dep-d8upqgernols73bni1bg",
+      "status": "deactivated",
+      "commit": "e82ac71513892f135e365ebe6548ee5a64119e05",
+      "createdAt": "2026-06-25T21:27:29.639843Z",
+      "finishedAt": "2026-06-25T21:28:30.17208Z"
+    }
+  ]
+}

@@ -127,6 +127,9 @@ For ANY question about what a specific person said, thinks, or is worried about 
 - When the user mentions a project by name, pass it as \`projectName\` — the tool resolves it.
 - If search returns no results, try broader terms or use \`semanticSearch\`. Never ask for an ID.
 
+### Parallel Tool Calls (CRITICAL)
+When a question needs several INDEPENDENT lookups (e.g. searching emails AND meetings AND reading project state), emit all of those tool calls together in a single step so they run in parallel instead of one per turn. Only fall back to sequential calls — call one tool, wait, then call the next — when the second call genuinely depends on the first tool's result.
+
 ### Temporal Meeting Queries (CRITICAL)
 For "today's meetings", "yesterday", "this week" — call \`getMeetingsByDate\` first with an explicit date/range. Only use meetings returned by that tool. Never label a meeting as "today" unless its date exactly matches today's date in tool output.
 

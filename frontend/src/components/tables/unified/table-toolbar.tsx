@@ -847,18 +847,18 @@ function DensityOptions({
   onDensityChange?: (density: TableDensity) => void;
 }): ReactElement {
   return (
-    <div className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1">
+    <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-1">
       {DENSITY_OPTIONS.map((option) => (
         <Button
           key={option.value}
           type="button"
-          variant={density === option.value ? "secondary" : "ghost"}
+          variant="ghost"
           size="sm"
           className={cn(
-            "h-8 px-2 text-xs font-medium shadow-none",
+            "h-7 rounded-md px-2 text-xs font-medium shadow-none",
             density === option.value
-              ? "bg-background text-foreground ring-1 ring-border"
-              : "text-muted-foreground hover:text-foreground",
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
           )}
           onClick={() => onDensityChange?.(option.value)}
           aria-pressed={density === option.value}
@@ -947,31 +947,32 @@ function SortableColumnToggleItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex min-h-9 items-center gap-2 px-2 py-1.5 text-sm",
-        isDragging && "relative z-10 rounded-md bg-background shadow-sm",
+        "group flex min-h-8 items-center gap-2 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-muted/45",
+        isDragging && "relative z-10 bg-background shadow-sm ring-1 ring-border",
       )}
     >
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground/70 hover:bg-transparent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         aria-label={`Drag ${column.label} column`}
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4" />
+        <GripVertical className="h-3.5 w-3.5" />
       </Button>
       <Checkbox
         id={`${idPrefix}-${column.id}`}
         checked={checked}
         disabled={column.alwaysVisible}
         onCheckedChange={(value) => onCheckedChange(value === true)}
+        className="size-4 rounded-[5px] border-muted-foreground/35 bg-transparent text-foreground shadow-none data-[state=checked]:border-muted-foreground/50 data-[state=checked]:bg-transparent data-[state=checked]:text-foreground dark:data-[state=checked]:bg-transparent"
       />
       <label
         htmlFor={`${idPrefix}-${column.id}`}
         className={cn(
-          "min-w-0 flex-1 truncate text-foreground",
+          "min-w-0 flex-1 truncate text-sm font-medium text-foreground",
           column.alwaysVisible && "text-muted-foreground",
         )}
       >
@@ -1196,13 +1197,16 @@ export function TableDisplaySettings({
           <TooltipContent>Table settings</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent align="end" className="w-80 p-0">
-        <div className="border-b px-3 py-2.5">
-          <p className="text-sm font-medium text-foreground">Table settings</p>
+      <PopoverContent
+        align="end"
+        className="w-80 overflow-hidden rounded-xl border-border/80 p-0 shadow-sm"
+      >
+        <div className="border-b border-border/70 px-3.5 py-3">
+          <p className="text-sm font-semibold text-foreground">Table settings</p>
         </div>
-        <div className="space-y-4 p-3">
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="space-y-4 p-3.5">
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Row density
             </p>
             <DensityOptions
@@ -1211,12 +1215,12 @@ export function TableDisplaySettings({
             />
           </div>
           {columns.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                   Columns
                 </p>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground/80">
                   Drag to reorder
                 </span>
               </div>
@@ -1227,14 +1231,14 @@ export function TableDisplaySettings({
                 columnOrder={columnOrder}
                 onColumnOrderChange={onColumnOrderChange}
                 idPrefix="table-settings-column"
-                className="max-h-80"
+                className="max-h-80 pr-1"
               />
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 pt-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-xs"
+                  className="h-7 px-2 text-xs font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   onClick={() => {
                     onColumnOrderChange?.(orderedIds);
                     onColumnVisibilityChange(orderedIds);
@@ -1246,7 +1250,7 @@ export function TableDisplaySettings({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-xs"
+                  className="h-7 px-2 text-xs font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   onClick={() => {
                     const resetOrder = columns.map((column) => column.id);
                     onColumnOrderChange?.(resetOrder);
@@ -1794,7 +1798,7 @@ export function TableToolbar({
   }
 
   return (
-    <div className={cn("py-2", className)}>
+    <div className={cn("py-0", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {leftContent ? (
           <div className="shrink-0 pr-2">{leftContent}</div>
@@ -1920,9 +1924,7 @@ export function TableToolbar({
         </div>
 
         <span className="ml-auto shrink-0 pl-3 text-xs tabular-nums text-muted-foreground">
-          {filteredItems === totalItems
-            ? `${totalItems} ${totalItems === 1 ? "row" : "rows"}`
-            : `${filteredItems} of ${totalItems} rows`}
+          {totalItems} {totalItems === 1 ? "row" : "rows"}
         </span>
       </div>
     </div>

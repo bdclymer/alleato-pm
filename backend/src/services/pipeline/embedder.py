@@ -36,6 +36,8 @@ SEGMENT_IDX_NOTES_TOPIC = -3
 
 # Stateless parser instance for content re-parsing.
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+LOW_CONTENT_STATUS = "skipped_low_content"
+MIN_SEARCHABLE_CHARS = 50
 
 
 def _hash_content(text: str) -> str:
@@ -51,6 +53,20 @@ def _build_summary_embedding_text(title: str, meeting_date: Optional[str], summa
     if summary:
         parts.append(summary)
     return "\n".join(parts).strip()
+
+
+def _is_low_content_placeholder(text: Optional[str]) -> bool:
+    value = str(text or "").strip()
+    return (
+        value.startswith("Minimal extract for ")
+        and "Parsed content was only" in value
+        and "may require OCR or a different source format" in value
+    )
+
+
+def _has_searchable_text(text: Optional[str]) -> bool:
+    value = str(text or "").strip()
+    return len(value) >= MIN_SEARCHABLE_CHARS and not _is_low_content_placeholder(value)
 
 
 def _is_interview_title(title: Optional[str]) -> bool:
@@ -242,7 +258,12 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     resp = (
         client.table("document_metadata")
-        .select("id,title,type,category,source,source_system,project_id,date,captured_at,created_at,summary,overview,status,fireflies_id,participants,participants_array,source_metadata")
+        .select(
+            "id,title,type,category,source,source_system,project_id,date,captured_at,"
+            "created_at,summary,overview,status,fireflies_id,participants,"
+            "participants_array,source_metadata,file_name,file_path,"
+            "storage_bucket,source_web_url,url,document_type"
+        )
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -258,7 +279,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         "id",
         metadata_id,
     )
-    content = rag_metadata.get("content") or rag_metadata.get("raw_text") or metadata.get("content") or metadata.get("raw_text")
+    content = rag_metadata.get("content") or rag_metadata.get("raw_text")
     meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")
@@ -318,7 +339,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     )
     segment_rows = seg_resp.data or []
     if not segment_rows:
-        raise ValueError(f"No segments found for metadata_id: {metadata_id}")
+        logger.warning(
+            "[Embedder] No parser segments found for %s; continuing only if direct text or vision chunks exist",
+            metadata_id,
+        )
 
     # 3. Convert rows to MeetingSegment objects
     segments: List[MeetingSegment] = [
@@ -378,7 +402,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         )
 
     # Add meeting-level summary chunk
-    if meeting_summary:
+    if _has_searchable_text(meeting_summary):
         all_chunks.append(
             DocumentChunk(
                 content=meeting_summary,
@@ -391,7 +415,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # Add segment summary chunks
     for seg in segments:
-        if seg.summary:
+        if _has_searchable_text(seg.summary):
             all_chunks.append(
                 DocumentChunk(
                     content=seg.summary,
@@ -413,6 +437,103 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             logger.warning("[Embedder] Failed to create section chunks: %s", exc)
 
     logger.info("[Embedder] Created %d chunks (transcript + sections)", len(all_chunks))
+
+    # 5b. Add vision page summaries (for PDF documents analyzed by vision_analyzer)
+    # These are clean GPT-4o prose summaries of each page — far more useful for
+    # semantic search than raw OCR text.
+    try:
+        vision_resp = (
+            client.table("document_page_intelligence")
+            .select("page_number, sheet_number, sheet_title, discipline, ai_summary, implied_submittals, notes_and_requirements")
+            .eq("document_metadata_id", metadata_id)
+            .order("page_number")
+            .execute()
+        )
+        vision_pages = vision_resp.data or []
+        for page in vision_pages:
+            summary = page.get("ai_summary") or ""
+            if not summary.strip():
+                continue
+            # Enrich with structured fields so embedding captures the metadata too
+            extras = []
+            if page.get("sheet_number"):
+                extras.append(f"Sheet: {page['sheet_number']}")
+            if page.get("sheet_title"):
+                extras.append(f"Title: {page['sheet_title']}")
+            if page.get("discipline"):
+                extras.append(f"Discipline: {page['discipline']}")
+            if page.get("implied_submittals"):
+                extras.append("Implied submittals: " + ", ".join(page["implied_submittals"]))
+            if page.get("notes_and_requirements"):
+                extras.append("Key notes: " + "; ".join(page["notes_and_requirements"][:5]))
+            enriched = "\n".join(extras + [summary]) if extras else summary
+            all_chunks.append(
+                DocumentChunk(
+                    content=enriched,
+                    chunk_index=page.get("page_number", 0),
+                    segment_index=-3,  # sentinel: vision page
+                    doc_type="vision_page_summary",
+                    content_hash=_hash_content(enriched),
+                )
+            )
+        if vision_pages:
+            logger.info("[Embedder] Added %d vision page chunks", len(vision_pages))
+    except Exception as exc:
+        logger.warning("[Embedder] Failed to load vision pages (non-fatal): %s", exc)
+
+    if not all_chunks:
+        logger.warning(
+            "[Embedder] No searchable text or vision chunks for %s; marking %s",
+            metadata_id,
+            LOW_CONTENT_STATUS,
+        )
+        rag_client.table("document_chunks").delete().eq("document_id", metadata_id).execute()
+        client.table("document_metadata").update(
+            {"status": LOW_CONTENT_STATUS}
+        ).eq("id", metadata_id).execute()
+        rag_client.table("rag_document_metadata").upsert(
+            {
+                "id": metadata_id,
+                "app_document_id": metadata_id,
+                "title": title,
+                "source": metadata.get("source"),
+                "source_system": metadata.get("source_system"),
+                "type": metadata.get("type"),
+                "category": metadata.get("category"),
+                "document_type": metadata.get("document_type"),
+                "project_id": project_id,
+                "storage_bucket": metadata.get("storage_bucket"),
+                "storage_path": metadata.get("file_path"),
+                "source_web_url": metadata.get("source_web_url"),
+                "url": metadata.get("url"),
+                "content": metadata.get("content"),
+                "raw_text": metadata.get("raw_text"),
+                "summary": metadata.get("summary"),
+                "overview": metadata.get("overview"),
+                "parsing_status": LOW_CONTENT_STATUS,
+                "embedding_status": LOW_CONTENT_STATUS,
+                "embedding_error": (
+                    f"{LOW_CONTENT_STATUS}: no searchable text or vision page summaries"
+                ),
+                "source_metadata": metadata.get("source_metadata"),
+            },
+            on_conflict="id",
+        ).execute()
+        update_ingestion_job_state(
+            metadata_id,
+            stage="done",
+            error_message=(
+                f"{LOW_CONTENT_STATUS}: no searchable text or vision page summaries"
+            ),
+            client=client,
+        )
+        return {
+            "metadataId": metadata_id,
+            "chunkCount": 0,
+            "segmentCount": len(segments),
+            "skipped": True,
+            "skipReason": LOW_CONTENT_STATUS,
+        }
 
     # 6. Mark job as chunked before expensive embedding calls
     update_ingestion_job_state(
@@ -470,12 +591,35 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # 12. Update metadata status
     client.table("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
-    rag_client.table("rag_document_metadata").update(
-        {
-            "embedding_status": "embedded",
-            **({"summary_embedding": summary_embedding} if summary_embedding is not None else {}),
-        }
-    ).eq("id", metadata_id).execute()
+    rag_metadata_update = {
+        "id": metadata_id,
+        "app_document_id": metadata_id,
+        "title": title,
+        "source": metadata.get("source"),
+        "source_system": metadata.get("source_system"),
+        "type": metadata.get("type"),
+        "category": metadata.get("category"),
+        "document_type": metadata.get("document_type"),
+        "project_id": project_id,
+        "storage_bucket": metadata.get("storage_bucket"),
+        "storage_path": metadata.get("file_path"),
+        "source_web_url": metadata.get("source_web_url"),
+        "url": metadata.get("url"),
+        "content": metadata.get("content"),
+        "raw_text": metadata.get("raw_text"),
+        "summary": metadata.get("summary"),
+        "overview": metadata.get("overview"),
+        "parsing_status": metadata.get("status"),
+        "embedding_status": "embedded",
+        "source_metadata": metadata.get("source_metadata"),
+    }
+    if summary_embedding is not None:
+        rag_metadata_update["summary_embedding"] = summary_embedding
+
+    rag_client.table("rag_document_metadata").upsert(
+        rag_metadata_update,
+        on_conflict="id",
+    ).execute()
 
     # 13. Advance job stage
     update_ingestion_job_state(
@@ -499,6 +643,7 @@ def _doc_type_to_source_type(doc_type: str) -> str:
         "meeting_summary": "meeting_summary",
         "segment_summary": "meeting_segment_summary",
         "notes_topic": "meeting_notes",
+        "vision_page_summary": "vision_page_summary",
     }
     if doc_type in mapping:
         return mapping[doc_type]

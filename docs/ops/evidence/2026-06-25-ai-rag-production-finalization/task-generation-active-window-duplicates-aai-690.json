@@ -1,0 +1,76 @@
+{
+  "coverage": [
+    {
+      "total": 45,
+      "source_system": "email",
+      "active_with_owner": 1,
+      "extraction_source": "deep_extractor",
+      "active_with_project": 1,
+      "in_operational_window": 1,
+      "active_with_project_array": 1
+    },
+    {
+      "total": 376,
+      "source_system": "fireflies",
+      "active_with_owner": 376,
+      "extraction_source": "deep_extractor",
+      "active_with_project": 353,
+      "in_operational_window": 376,
+      "active_with_project_array": 353
+    },
+    {
+      "total": 766,
+      "source_system": "fireflies",
+      "active_with_owner": 766,
+      "extraction_source": "fireflies_rewriter",
+      "active_with_project": 704,
+      "in_operational_window": 766,
+      "active_with_project_array": 704
+    },
+    {
+      "total": 5,
+      "source_system": "meeting",
+      "active_with_owner": 5,
+      "extraction_source": "scheduled_task_extraction",
+      "active_with_project": 4,
+      "in_operational_window": 5,
+      "active_with_project_array": 0
+    },
+    {
+      "total": 1,
+      "source_system": "outlook_email",
+      "active_with_owner": 0,
+      "extraction_source": "scheduled_task_extraction",
+      "active_with_project": 0,
+      "in_operational_window": 0,
+      "active_with_project_array": 0
+    },
+    {
+      "total": 4,
+      "source_system": "teams",
+      "active_with_owner": 4,
+      "extraction_source": "deep_extractor",
+      "active_with_project": 4,
+      "in_operational_window": 4,
+      "active_with_project_array": 4
+    },
+    {
+      "total": 9,
+      "source_system": "teams_dm_conversation",
+      "active_with_owner": 0,
+      "extraction_source": "scheduled_task_extraction",
+      "active_with_project": 0,
+      "in_operational_window": 0,
+      "active_with_project_array": 0
+    }
+  ],
+  "generatedAt": "2026-06-26T05:11:43.500149+00:00",
+  "duplicateRows": 0,
+  "duplicateGroups": 0,
+  "duplicateSample": null,
+  "freshnessPolicy": {
+    "outlookTeams": "7 days",
+    "firefliesMeetings": "2 months",
+    "otherDocumentTasks": "all rows"
+  }
+}

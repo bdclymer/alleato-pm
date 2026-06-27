@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-26T05:18:18.392254+00:00",
+  "results": [
+    {
+      "metadata_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "ok": false,
+      "error": "Error P0001:\nMessage: tasks.extraction_prompt_version is required for AI source_system=fireflies, description=Check headphone and sound settings before the next call.\nHint: Run the task through fireflies_task_rewriter, task_extraction, or teams_compiler \u2014 never insert raw action-item text."
+    },
+    {
+      "metadata_id": "01KVDGP7KYSBHEZCA89CJYN3RN",
+      "ok": true,
+      "result": {
+        "metadataId": "01KVDGP7KYSBHEZCA89CJYN3RN",
+        "parser": {
+          "metadataId": "01KVDGP7KYSBHEZCA89CJYN3RN",
+          "segmentCount": 8,
+          "meetingSummaryLength": 4067
+        },
+        "embedder": {
+          "metadataId": "01KVDGP7KYSBHEZCA89CJYN3RN",
+          "chunkCount": 34,
+          "segmentCount": 10
+        },
+        "extractor": {
+          "metadataId": "01KVDGP7KYSBHEZCA89CJYN3RN",
+          "insights": 0,
+          "decisions": 0,
+          "risks": 0,
+          "opportunities": 0,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      }
+    }
+  ]
+}

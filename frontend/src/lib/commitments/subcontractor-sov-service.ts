@@ -307,7 +307,7 @@ export async function sendSsovInviteEmail(args: {
         // Generate a Supabase magic invite link for account creation.
         // After OTP verification, the user lands on /auth/update-password?next=<sovTabPath>
         // where they set their password and are then redirected to the SOV tab.
-        const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent(sovTabPath)}`;
+        const passwordSetupUrl = `/auth/update-password?email=${encodeURIComponent(recipient.email)}&next=${encodeURIComponent(sovTabPath)}`;
         const confirmBaseUrl = `${appUrl}/auth/confirm`;
 
         const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({

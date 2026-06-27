@@ -8,6 +8,7 @@ import SubmittalDistributedNotification from "@/emails/submittals/SubmittalDistr
 import { apiErrorResponse } from "@/lib/api-error";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { sendEmail } from "@/lib/email/send";
+import { shouldSendSubmittalDistributionEmail } from "@/lib/submittals/distribution-email-settings";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -50,6 +51,7 @@ export const POST = withApiGuardrails(
       { data: project },
       { data: senderProfile },
       { data: recipients, error: recipientsError },
+      { data: emailSettings, error: emailSettingsError },
     ] = await Promise.all([
       serviceClient
         .from("submittals")
@@ -71,6 +73,11 @@ export const POST = withApiGuardrails(
         .from("user_profiles")
         .select("id, full_name, email")
         .in("id", recipient_ids),
+      serviceClient
+        .from("submittal_project_settings")
+        .select("email_notify_submittal_distributed")
+        .eq("project_id", numericProjectId)
+        .maybeSingle(),
     ]);
 
     if (submittalError || !submittal) {
@@ -84,11 +91,18 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(recipientsError);
     }
 
+    if (emailSettingsError) {
+      return apiErrorResponse(emailSettingsError);
+    }
+
+    const shouldSendEmail =
+      shouldSendSubmittalDistributionEmail(emailSettings);
+
     const recipientList = (recipients ?? []).filter((recipient) =>
       recipient.email?.trim(),
     );
 
-    if (recipientList.length === 0) {
+    if (shouldSendEmail && recipientList.length === 0) {
       return NextResponse.json(
         { error: "No valid recipient email addresses were found." },
         { status: 422 },
@@ -149,33 +163,35 @@ export const POST = withApiGuardrails(
     const viewUrl = `${APP_BASE_URL}/${numericProjectId}/submittals/${submittalId}`;
     const subject = `${submittal.submittal_number} distributed - ${submittal.title}`;
 
-    const emailResults = await Promise.all(
-      recipientList.map((recipient) =>
-        sendEmail({
-          template: "submittal-notification",
-          to: recipient.email,
-          subject,
-          react: SubmittalDistributedNotification({
-            recipientName: recipient.full_name ?? recipient.email,
-            projectName,
-            submittalNumber: submittal.submittal_number,
-            submittalTitle: submittal.title,
-            distributedBy,
-            message,
-            viewUrl,
-          }),
-          entity: { type: "submittal", id: submittalId },
-          userId: recipient.id,
-          idempotencyKey: `submittal-distributed/${distribution.id}/${recipient.id}`,
-          metadata: {
-            project_id: numericProjectId,
-            distribution_id: distribution.id,
-            submittal_id: submittalId,
-            recipient_id: recipient.id,
-          },
-        }),
-      ),
-    );
+    const emailResults = shouldSendEmail
+      ? await Promise.all(
+          recipientList.map((recipient) =>
+            sendEmail({
+              template: "submittal-notification",
+              to: recipient.email,
+              subject,
+              react: SubmittalDistributedNotification({
+                recipientName: recipient.full_name ?? recipient.email,
+                projectName,
+                submittalNumber: submittal.submittal_number,
+                submittalTitle: submittal.title,
+                distributedBy,
+                message,
+                viewUrl,
+              }),
+              entity: { type: "submittal", id: submittalId },
+              userId: recipient.id,
+              idempotencyKey: `submittal-distributed/${distribution.id}/${recipient.id}`,
+              metadata: {
+                project_id: numericProjectId,
+                distribution_id: distribution.id,
+                submittal_id: submittalId,
+                recipient_id: recipient.id,
+              },
+            }),
+          ),
+        )
+      : [];
 
     const failedEmail = emailResults.find((result) => result.error);
     if (failedEmail?.error) {
@@ -189,6 +205,9 @@ export const POST = withApiGuardrails(
       {
         ...distribution,
         email_count: emailResults.length,
+        email_skipped_reason: shouldSendEmail
+          ? null
+          : "project_email_disabled",
       },
       { status: 201 },
     );

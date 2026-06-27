@@ -37,7 +37,7 @@ from ..supabase_helpers import (
     get_rag_write_client,
     get_supabase_client,
 )
-from ..ops.db_pressure_guard import enforce_no_pm_app_high_churn_writes
+from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 from ..pipeline import llm
 from ..pipeline.extractor import _fetch_project_state, _upsert_task
 from ..pipeline.source_processing import SourceProcessingContext, record_source_processing_status
@@ -50,13 +50,13 @@ from .compiler import (
 logger = logging.getLogger(__name__)
 
 COMMS_COMPILER_VERSION = "project_synthesizer_v1"
-HIGH_CHURN_PM_APP_TABLES = [
-    "source_signal_candidates",
+PM_PROJECTION_TABLES = (
     "insight_cards",
+    "insight_card_targets",
     "insight_card_evidence",
     "intelligence_packets",
     "tasks",
-]
+)
 
 # How far back to look when no explicit `since` is given. Kept simple and
 # deterministic — a 30-day window of recent communications.
@@ -80,6 +80,61 @@ _RISK_CATEGORY_SIGNAL_TYPE = {
 _MEETING_TOKENS = ("fireflies", "meeting", "transcript")
 _TEAMS_TOKENS = ("teams", "chat")
 _EMAIL_TOKENS = ("outlook", "email", "mail")
+
+
+def _positive_projection_counts(counts: Dict[str, int]) -> Dict[str, int]:
+    return {
+        table: max(0, int(count or 0))
+        for table, count in counts.items()
+        if table in PM_PROJECTION_TABLES and int(count or 0) > 0
+    }
+
+
+def _merge_projection_counts(
+    current: Dict[str, int],
+    additional: Dict[str, int],
+) -> Dict[str, int]:
+    merged = {table: int(current.get(table) or 0) for table in PM_PROJECTION_TABLES}
+    for table, count in _positive_projection_counts(additional).items():
+        merged[table] = int(merged.get(table) or 0) + int(count or 0)
+    return _positive_projection_counts(merged)
+
+
+def _reserve_pm_projection_budget(
+    job_name: str,
+    current: Dict[str, int],
+    additional: Dict[str, int],
+) -> Dict[str, int]:
+    """Reserve cumulative PM projection rows for one synthesizer run.
+
+    Candidate staging stays in the AI/RAG database. Only final app-facing rows
+    are counted here, and the count is cumulative so a sync cannot evade the PM
+    projection budget by writing many small batches.
+    """
+
+    if not _positive_projection_counts(additional):
+        return current
+    projected = _merge_projection_counts(current, additional)
+    enforce_pm_app_final_projection_guard(job_name, row_counts=projected)
+    current.clear()
+    current.update(projected)
+    return current
+
+
+def _projection_counts_for_doc(payloads: List[Dict[str, Any]], task_count: int) -> Dict[str, int]:
+    promotable = sum(
+        1
+        for payload in payloads
+        if float(payload.get("confidence_score") or 0) >= 0.85
+    )
+    return _positive_projection_counts(
+        {
+            "insight_cards": promotable,
+            "insight_card_targets": promotable,
+            "insight_card_evidence": promotable,
+            "tasks": task_count,
+        }
+    )
 
 
 def _classify_comm_type(doc: Dict[str, Any]) -> Optional[str]:
@@ -298,6 +353,8 @@ def synthesize_project_intelligence(
     max_extractions: Optional[int] = None,
     skip_synthesized: bool = True,
     dry_run: bool = False,
+    projection_budget_counts: Optional[Dict[str, int]] = None,
+    projection_budget_job_name: str = "project_synthesizer_projection",
 ) -> dict:
     """Run deep communication-intelligence extraction over a project's recent
     emails + Teams conversations and write evidence-backed insight cards + tasks.
@@ -313,6 +370,7 @@ def synthesize_project_intelligence(
     client = get_supabase_client()
     rag_read = get_rag_read_client()
     rag_write = get_rag_write_client()
+    projection_counts = projection_budget_counts if projection_budget_counts is not None else {}
 
     target = ensure_client_project_target(
         client, int(project_id), compiler_version=COMMS_COMPILER_VERSION
@@ -330,6 +388,8 @@ def synthesize_project_intelligence(
         "skipped": 0,
         "cards_written": 0,
         "tasks_written": 0,
+        "extractions_attempted": 0,
+        "pm_projection_rows": dict(projection_counts),
         "dry_run": dry_run,
         "errors": [],
     }
@@ -400,7 +460,7 @@ def synthesize_project_intelligence(
         # Cap the number of (slow) LLM extractions per call. Deep extraction takes
         # seconds per doc, so a large synchronous batch can exceed the request
         # timeout. max_extractions bounds the actual extractions (not docs scanned).
-        if max_extractions is not None and (result["emails"] + result["teams"]) >= max_extractions:
+        if max_extractions is not None and result["extractions_attempted"] >= max_extractions:
             result["capped_at_max_extractions"] = max_extractions
             break
 
@@ -471,6 +531,7 @@ def synthesize_project_intelligence(
                 continue
 
             # (d) Deep extraction.
+            result["extractions_attempted"] += 1
             structured = llm.extract_deep_communication_intelligence(
                 comm_type=comm_type,
                 title=doc.get("title") or "Untitled",
@@ -524,6 +585,13 @@ def synthesize_project_intelligence(
                 })
                 continue
 
+            _reserve_pm_projection_budget(
+                projection_budget_job_name,
+                projection_counts,
+                _projection_counts_for_doc(payloads, len(structured.tasks)),
+            )
+            result["pm_projection_rows"] = dict(projection_counts)
+
             # (f) Signals -> candidates -> promotion.
             cards_before = result["cards_written"]
             tasks_before = result["tasks_written"]
@@ -539,9 +607,26 @@ def synthesize_project_intelligence(
                 )
                 result["cards_written"] += 1
                 if candidate.get("status") == "candidate":
-                    promote_signal_candidate(
-                        client, candidate["id"], compiler_version=COMMS_COMPILER_VERSION
-                    )
+                    try:
+                        promote_signal_candidate(
+                            client, candidate["id"], compiler_version=COMMS_COMPILER_VERSION
+                        )
+                    except Exception as promote_exc:  # noqa: BLE001
+                        logger.error(
+                            "[ProjectSynthesizer] signal promotion failed for doc %s candidate %s: %s",
+                            doc_id,
+                            candidate.get("id"),
+                            promote_exc,
+                            exc_info=True,
+                        )
+                        result["errors"].append(
+                            {
+                                "doc_id": doc_id,
+                                "candidate_id": candidate.get("id"),
+                                "stage": "signal_promotion",
+                                "error": str(promote_exc),
+                            }
+                        )
 
             # (g) Tasks — tagged with the real source system (email/teams), not fireflies.
             for task in structured.tasks:
@@ -752,11 +837,8 @@ def synthesize_new_comms_since(
     means L2 only pays for projects that actually changed. Bounded so one sync can
     never blow its time/cost budget; the daily backstop sweep catches any overflow.
     """
-    enforce_no_pm_app_high_churn_writes(
-        "project_synthesizer_event_driven",
-        tables=HIGH_CHURN_PM_APP_TABLES,
-    )
     client = get_supabase_client()
+    projection_counts: Dict[str, int] = {}
     try:
         rows = (
             client.table("document_metadata")
@@ -775,7 +857,8 @@ def synthesize_new_comms_since(
     project_ids = sorted({int(r["project_id"]) for r in rows if r.get("project_id")})[:max_projects]
     summary: Dict[str, Any] = {
         "since": since, "projects": len(project_ids), "emails": 0, "teams": 0,
-        "cards_written": 0, "synthesis_packets_written": 0, "errors": [],
+        "cards_written": 0, "tasks_written": 0, "synthesis_packets_written": 0,
+        "pm_projection_rows": {}, "errors": [],
     }
     for pid in project_ids:
         try:
@@ -785,10 +868,14 @@ def synthesize_new_comms_since(
                 max_docs=400,
                 max_extractions=max_extractions_per_project,
                 skip_synthesized=True,
+                projection_budget_counts=projection_counts,
+                projection_budget_job_name="project_synthesizer_event_driven_projection",
             )
             summary["emails"] += r.get("emails", 0)
             summary["teams"] += r.get("teams", 0)
             summary["cards_written"] += r.get("cards_written", 0)
+            summary["tasks_written"] += r.get("tasks_written", 0)
+            summary["pm_projection_rows"] = dict(projection_counts)
         except Exception as exc:  # noqa: BLE001 — one project must not abort the rest
             logger.error("[ProjectSynthesizer] event-driven extraction failed for %s: %s", pid, exc, exc_info=True)
             summary["errors"].append({"project_id": pid, "stage": "extract", "error": str(exc)})
@@ -797,6 +884,12 @@ def synthesize_new_comms_since(
             try:
                 from .project_intelligence import refresh_project_intelligence
 
+                _reserve_pm_projection_budget(
+                    "project_synthesizer_event_driven_projection",
+                    projection_counts,
+                    {"intelligence_packets": 1},
+                )
+                summary["pm_projection_rows"] = dict(projection_counts)
                 sres = refresh_project_intelligence(pid)
                 if sres.get("packet_id") and not sres.get("skipped_no_new_docs"):
                     summary["synthesis_packets_written"] += 1
@@ -833,11 +926,8 @@ def run_synthesis_sweep(
     the synthesis packet is the product the page reads. Bounded: one LLM call per
     swept project.
     """
-    enforce_no_pm_app_high_churn_writes(
-        "project_synthesizer_sweep",
-        tables=HIGH_CHURN_PM_APP_TABLES,
-    )
     client = get_supabase_client()
+    projection_counts: Dict[str, int] = {}
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
 
     if project_ids is None:
@@ -861,6 +951,7 @@ def run_synthesis_sweep(
         "teams": 0,
         "cards_written": 0,
         "tasks_written": 0,
+        "pm_projection_rows": {},
         "errors": [],
         "per_project": [],
     }
@@ -872,11 +963,14 @@ def run_synthesis_sweep(
                 max_docs=200,
                 max_extractions=max_extractions_per_project,
                 skip_synthesized=True,
+                projection_budget_counts=projection_counts,
+                projection_budget_job_name="project_synthesizer_sweep_projection",
             )
             summary["emails"] += r.get("emails", 0)
             summary["teams"] += r.get("teams", 0)
             summary["cards_written"] += r.get("cards_written", 0)
             summary["tasks_written"] += r.get("tasks_written", 0)
+            summary["pm_projection_rows"] = dict(projection_counts)
             # Flag -> outcome calibration for this project (cheap: only open flags).
             flag_res = {}
             try:
@@ -894,6 +988,12 @@ def run_synthesis_sweep(
                 try:
                     from .project_intelligence import refresh_project_intelligence
 
+                    _reserve_pm_projection_budget(
+                        "project_synthesizer_sweep_projection",
+                        projection_counts,
+                        {"intelligence_packets": 1},
+                    )
+                    summary["pm_projection_rows"] = dict(projection_counts)
                     synthesis_res = refresh_project_intelligence(pid)
                     summary["synthesis_packets_written"] = (
                         summary.get("synthesis_packets_written", 0)

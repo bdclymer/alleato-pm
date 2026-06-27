@@ -43,23 +43,39 @@ import {
   buildSkillInjectionContext,
   recordSelectedSkillUsage,
 } from "@/lib/ai/services/skill-injection-service";
-import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
+import {
+  isExecutiveBriefingMetadataQuestion,
+  isPersonalTaskRegisterRequest,
+} from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
+import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
-import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
+import type {
+  OutlookInboxSummaryWidgetPayload,
+  TaskSummaryWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
+  CHARS_PER_TOKEN,
   ContextCompactionError,
   maybeCompactModelMessages,
+  resolveContextLimits,
   type ContextCompactionMetadata,
 } from "@/lib/ai/stream/compaction";
 import {
+  buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentResearchEvidenceWidget,
+  fetchDeepAgentExecutiveBriefing,
   fetchDeepAgentResearch,
+  formatDeepAgentExecutiveBriefingContext,
+  formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentResearchContext,
   formatDeepAgentResearchDirectResponse,
+  shouldUseDeepAgentExecutiveBridge,
+  shouldUseDeepAgentExecutiveDirectResponse,
   shouldUseDeepAgentResearchBridge,
   shouldUseDeepAgentResearchDirectResponse,
 } from "@/lib/ai/deep-agent-bridge";
@@ -101,11 +117,15 @@ const AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE =
   process.env.AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE === "true";
 const AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED =
   process.env.AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED === "true";
+// NOTE: do NOT coerce an unset var to "" — Number("") is 0 (a finite value),
+// which would pass `0` through as the limit instead of letting compaction.ts
+// fall back to its real defaults. Number(undefined) is NaN, so the
+// Number.isFinite guard at the call site correctly yields `undefined`.
 const AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS = Number(
-  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS ?? "",
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
 );
 const AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS = Number(
-  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS ?? "",
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
 );
 
 function microsoftAssistantBackendUrl(): string {
@@ -630,6 +650,110 @@ function buildDocumentIntelligenceEvalContent(params: {
   ].join("\n");
 }
 
+function formatBriefingMoney(value: unknown): string {
+  const amount = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatBriefingList(values: string[], fallback: string): string[] {
+  return values.length > 0 ? values.slice(0, 4).map((value) => `- ${value}`) : [`- ${fallback}`];
+}
+
+function namedProjectFromSnapshot(snapshot: Record<string, unknown>): string {
+  const project = asRecord(snapshot.project);
+  return (
+    asString(project.name) ??
+    asString(snapshot.projectName) ??
+    asString(snapshot.name) ??
+    "Selected project"
+  );
+}
+
+function shouldUseDirectProjectBriefing(params: {
+  plan: ReturnType<typeof planRetrieval>;
+  retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+}): boolean {
+  return (
+    params.plan.responseFormat === "briefing_template" &&
+    params.plan.intent !== "source_health" &&
+    Boolean(params.retrievalCtx.projectSnapshot)
+  );
+}
+
+function buildDirectProjectBriefingContent(params: {
+  ctx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  message: string;
+}): string {
+  const snapshot = asRecord(params.ctx.projectSnapshot);
+  const project = asRecord(snapshot.project);
+  const hardFacts = asRecord(snapshot.hardFacts);
+  const budget = asRecord(hardFacts.budget);
+  const contract = asRecord(hardFacts.contract);
+  const changeOrders = asRecord(hardFacts.changeOrders);
+  const rfis = asRecord(hardFacts.rfis);
+  const submittals = asRecord(hardFacts.submittals);
+  const schedule = asRecord(hardFacts.schedule);
+  const recentMovement = Array.isArray(snapshot.recentMovement)
+    ? snapshot.recentMovement.map((item) => asRecord(item))
+    : [];
+  const riskSignals = Array.isArray(snapshot.riskSignals)
+    ? snapshot.riskSignals.filter((item): item is string => typeof item === "string")
+    : [];
+  const recommendedQuestions = Array.isArray(snapshot.recommendedQuestions)
+    ? snapshot.recommendedQuestions.filter((item): item is string => typeof item === "string")
+    : [];
+  const dataGaps = Array.isArray(snapshot.dataGaps)
+    ? snapshot.dataGaps.filter((item): item is string => typeof item === "string")
+    : [];
+  const projectName = namedProjectFromSnapshot(snapshot);
+  const semanticCount = summarizeEvalCount(params.ctx.semanticVectorResults) ?? 0;
+  const movementLines = recentMovement.slice(0, 3).map((item) => {
+    const title = asString(item.title) ?? "Untitled source";
+    const source = asString(item.sourceType) ?? "source";
+    const date = asString(item.date) ?? "unknown date";
+    const summary = asString(item.summary) ?? asString(item.notes) ?? "No summary captured.";
+    return `- ${title} (${source}, ${date}): ${summary.slice(0, 220)}`;
+  });
+
+  return [
+    `# ${projectName}`,
+    "",
+    "**Hard Facts**",
+    `- Phase/status: ${asString(project.phase) ?? asString(project.healthStatus) ?? "not recorded"}`,
+    `- Budget: original ${formatBriefingMoney(budget.originalBudget)}, revised ${formatBriefingMoney(budget.revisedBudget)}, forecast status ${asString(budget.status) ?? "unknown"}`,
+    `- Prime contract: original ${formatBriefingMoney(contract.originalContractValue)}, revised ${formatBriefingMoney(contract.revisedContractValue)}, pending changes ${formatBriefingMoney(contract.pendingContractChanges)}`,
+    `- Change orders: ${Number(changeOrders.pendingCount ?? 0)} pending, ${Number(changeOrders.approvedCount ?? 0)} approved`,
+    `- RFIs: ${Number(rfis.openCount ?? 0)} open, ${Number(rfis.overdueCount ?? 0)} overdue, ${Number(rfis.scheduleSensitiveCount ?? 0)} schedule-sensitive`,
+    `- Submittals: ${Number(submittals.openCount ?? 0)} open, ${Number(submittals.overdueCount ?? 0)} overdue, ${Number(submittals.longLeadOpenCount ?? 0)} long-lead`,
+    `- Schedule: ${Number(schedule.incompleteCount ?? 0)} incomplete tasks, ${Number(schedule.overdueCount ?? 0)} overdue tasks, ${Number(schedule.upcomingMilestoneCount ?? 0)} upcoming milestones`,
+    "",
+    "**What Changed**",
+    ...formatBriefingList(
+      movementLines,
+      `No recent movement rows were available in the project snapshot; semantic search returned ${semanticCount} supporting result(s).`,
+    ),
+    "",
+    "**Open Risks**",
+    ...formatBriefingList(riskSignals, "No active risk signals were returned by the structured snapshot."),
+    "",
+    "**Recommended Next Actions**",
+    ...formatBriefingList(
+      recommendedQuestions,
+      "Review open RFIs, submittals, changes, and schedule items with the PM before the next owner update.",
+    ),
+    "",
+    "**Confidence and Data Gaps**",
+    `- Source-grounded from getProjectBriefingSnapshot plus semanticSearch (${semanticCount} vector result(s)).`,
+    ...formatBriefingList(dataGaps, "No major data gaps were reported by the project snapshot."),
+    "",
+    "Next step: use this as the current operating read, then drill into the listed source records before assigning work or making an owner-facing commitment.",
+  ].join("\n");
+}
+
 function buildLiveToolTrace(
   trace: Record<string, unknown>,
   message: string,
@@ -729,6 +853,110 @@ async function fetchMicrosoftExecutiveAssistant(params: {
     throw new Error(detail);
   }
   return body as Record<string, unknown>;
+}
+
+// Builds the outlook_inbox_summary card payload from the Microsoft specialist's
+// structured `emails` array. Reads fields tolerantly (camelCase from by_alias
+// serialization, snake_case fallback) and fills frontend-only fields with safe
+// defaults. Returns null when there are no usable emails so the caller falls
+// back to the plain text answer.
+function buildMicrosoftInboxWidget(
+  emails: unknown,
+  mailbox: string | null,
+): OutlookInboxSummaryWidgetPayload | null {
+  if (!Array.isArray(emails) || emails.length === 0) return null;
+
+  const pick = (row: Record<string, unknown>, camel: string, snake: string): string | null => {
+    const value = row[camel] ?? row[snake];
+    return typeof value === "string" && value.trim().length > 0 ? value : null;
+  };
+
+  const items = emails
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === "object")
+    .map((row, index) => {
+      const subject = pick(row, "subject", "subject") ?? "(no subject)";
+      const fromName = pick(row, "fromName", "from_name");
+      const fromEmail = pick(row, "fromEmail", "from_email");
+      const recommendedAction = pick(row, "recommendedAction", "recommended_action") ?? "Review message.";
+      return {
+        id: pick(row, "id", "id") ?? `inbox-${index}`,
+        graphMessageId: pick(row, "graphMessageId", "graph_message_id"),
+        conversationId: pick(row, "conversationId", "conversation_id"),
+        subject,
+        fromName,
+        fromEmail,
+        senders: fromEmail ? [fromEmail] : [],
+        recipients: [],
+        receivedAt: pick(row, "receivedAt", "received_at"),
+        messageCount: 1,
+        hasAttachments: (row.hasAttachments ?? row.has_attachments) === true,
+        attentionScore: 0,
+        preview: pick(row, "preview", "preview"),
+        bodyText: pick(row, "bodyText", "body_text"),
+        webLink: pick(row, "webLink", "web_link"),
+        projectIds: [],
+        recommendedAction,
+        replyPrompt:
+          pick(row, "replyPrompt", "reply_prompt") ?? `Draft a reply to the email "${subject}".`,
+        draftPrompt:
+          pick(row, "draftPrompt", "draft_prompt") ?? `Draft a follow-up email regarding "${subject}".`,
+        draftReady: (row.draftReady ?? row.draft_ready) === true,
+        draftPreview: pick(row, "draftPreview", "draft_preview"),
+      };
+    });
+
+  if (items.length === 0) return null;
+
+  const draftCount = items.filter((item) => item.draftReady).length;
+  const summary =
+    `You have ${items.length} email${items.length === 1 ? "" : "s"} requiring attention today.` +
+    (draftCount > 0
+      ? ` A draft reply has been prepared for ${draftCount} of them.`
+      : "");
+
+  return {
+    type: "outlook_inbox_summary",
+    id: "microsoft-inbox-summary",
+    title: "Inbox summary",
+    subtitle: mailbox ?? "Your Outlook inbox",
+    dateLabel: new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
+    summary,
+    mailbox,
+    totalCount: items.length,
+    actionSummary: `${items.length} email${items.length === 1 ? "" : "s"} shown`,
+    items,
+    emptyState: "No emails found for this date range.",
+  };
+}
+
+// Maps a raw downstream failure detail to a clean, honest, user-facing message.
+// The full engineering diagnostic (detection gap / prevention step / raw detail)
+// is persisted to chat_history.metadata + logs — it must never be shown to the user.
+function describeMicrosoftAssistantFailure(detail: string): string {
+  const normalized = detail.toLowerCase();
+  if (normalized.includes("disabled")) {
+    return "I couldn't reach the Microsoft inbox assistant — it's currently turned off on the backend. This has been logged for the team; please try again shortly.";
+  }
+  if (
+    normalized.includes("did not complete within retry policy") ||
+    normalized.includes("timeout") ||
+    normalized.includes("timed out") ||
+    normalized.includes("etimedout")
+  ) {
+    return "I couldn't reach the Microsoft inbox assistant in time — the backend didn't respond. Please try again in a moment.";
+  }
+  if (
+    normalized.includes("insufficient_funds") ||
+    normalized.includes("credit balance") ||
+    normalized.includes("402")
+  ) {
+    return "I couldn't reach the Microsoft inbox assistant — the AI provider account needs attention. This has been logged for the team.";
+  }
+  return "I couldn't complete the live Microsoft inbox check right now — the backend assistant returned an error. Please try again, and if it keeps happening it's been logged for the team to investigate.";
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -1140,6 +1368,10 @@ async function loadPersonalTaskRegisterAnswer(params: {
   const contentLines = [
     `I checked the Tasks page source of truth: \`public.tasks\` filtered to Brandon Clymer's open task owner identity.`,
     "",
+    "Sources Checked",
+    "- tasks.assignee_person_id / tasks.assignee_name / tasks.assignee_email",
+    "- public.tasks open-status rows",
+    "",
     count === 0
       ? "No open task rows are currently assigned to Brandon Clymer."
       : `Found ${count} open Brandon task${count === 1 ? "" : "s"} in the Tasks table.`,
@@ -1304,6 +1536,228 @@ function writeTextResponse(
   writer.write({ type: "text-start", id });
   writer.write({ type: "text-delta", id, delta: content });
   writer.write({ type: "text-end", id });
+}
+
+function shouldUseRfiPreviewRouter(message: string): boolean {
+  const text = message.toLowerCase();
+  return (
+    /\b(create|draft|log|prepare)\b/.test(text) &&
+    /\brfi\b/.test(text)
+  );
+}
+
+function titleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0]?.toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function extractRfiTopic(message: string): string {
+  const aboutMatch = message.match(/\babout\s+(.+?)(?:[.?]|$)/i);
+  const topic = aboutMatch?.[1]?.trim() || "the field question";
+  return topic.replace(/^the\s+/i, "").trim();
+}
+
+async function resolveRfiPreviewProject(params: {
+  supabase: SupabaseClient<Database>;
+  selectedProjectId?: number;
+  message: string;
+}): Promise<{ id: number; name: string } | null> {
+  if (typeof params.selectedProjectId === "number") {
+    const { data } = await params.supabase
+      .from("projects")
+      .select("id,name")
+      .eq("id", params.selectedProjectId)
+      .maybeSingle();
+    if (data?.id && data?.name) return { id: data.id, name: data.name };
+  }
+
+  const projectNameHint = params.message.match(/\bfor\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:\s+about\b|[.?]|$)/i)?.[1]?.trim();
+  if (!projectNameHint) return null;
+
+  const { data } = await params.supabase
+    .from("projects")
+    .select("id,name")
+    .ilike("name", `%${projectNameHint}%`)
+    .order("id", { ascending: true })
+    .limit(1);
+  const project = data?.[0];
+  return project?.id && project?.name ? { id: project.id, name: project.name } : null;
+}
+
+function buildRfiPreviewContent(params: {
+  project: { id: number; name: string };
+  subject: string;
+  question: string;
+}): string {
+  return [
+    "Preview Only - No RFI Was Created",
+    "",
+    `Project: ${params.project.name} (#${params.project.id})`,
+    `Subject: ${params.subject}`,
+    "",
+    "Draft question:",
+    params.question,
+    "",
+    "Reply **confirm** only after reviewing the fields. Until then this stays a preview and no RFI row is written.",
+  ].join("\n");
+}
+
+type DirectSemanticResult = {
+  content?: string;
+  sourceTable?: string;
+  createdAt?: string | null;
+  finalScore?: number;
+  similarity?: number;
+  metadata?: Record<string, unknown>;
+};
+
+function buildDirectSourceLookupAnswer(params: {
+  message: string;
+  semanticVectorResults: unknown;
+}): string | null {
+  const wrapper = asRecord(params.semanticVectorResults);
+  const rawResults = Array.isArray(wrapper.results)
+    ? (wrapper.results as DirectSemanticResult[])
+    : [];
+  const results = rawResults
+    .map((result) => {
+      const content =
+        typeof result.content === "string" ? result.content.trim() : "";
+      return content ? { ...result, content } : null;
+    })
+    .filter((result): result is DirectSemanticResult & { content: string } =>
+      Boolean(result),
+    )
+    .slice(0, 6);
+  if (results.length === 0) return null;
+
+  const lines = [
+    "I treated this as a source lookup, not a project status report.",
+    "",
+    "Here is the strongest source context I found:",
+    "",
+  ];
+
+  for (const [index, result] of results.entries()) {
+    const title =
+      (typeof result.metadata?.title === "string" && result.metadata.title) ||
+      (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
+      (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
+      result.sourceTable ||
+      `Source ${index + 1}`;
+    const date = result.createdAt
+      ? new Date(result.createdAt).toISOString().slice(0, 10)
+      : "unknown date";
+    const score =
+      typeof result.finalScore === "number"
+        ? result.finalScore
+        : typeof result.similarity === "number"
+          ? result.similarity
+          : null;
+    const sourceLabel = String(title).includes("Teams")
+      ? String(title)
+      : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
+    const content = result.content.replace(/\s+/g, " ").slice(0, 700);
+    lines.push(
+      `${index + 1}. ${sourceLabel} (${date}${score != null ? `, score ${score.toFixed(2)}` : ""})`,
+      `   ${content}`,
+      "",
+    );
+  }
+
+  lines.push(
+    "If you need a wider pull, ask for the exact mailbox, Teams channel, person, and time window and I will keep it source-scoped.",
+  );
+  return lines.join("\n").trim();
+}
+
+type ExecutiveBriefingMetadataRow = Pick<
+  Database["public"]["Tables"]["daily_recaps"]["Row"],
+  | "id"
+  | "recap_date"
+  | "recap_kind"
+  | "created_at"
+  | "approved_at"
+  | "sent_at"
+  | "workflow_status"
+  | "meeting_count"
+  | "project_count"
+  | "ai_work_run_id"
+>;
+
+async function loadLatestExecutiveBriefingMetadata(
+  supabase: SupabaseClient<Database>,
+): Promise<{
+  row: ExecutiveBriefingMetadataRow | null;
+  errorMessage: string | null;
+}> {
+  const { data, error } = await supabase
+    .from("daily_recaps")
+    .select(
+      "id,recap_date,recap_kind,created_at,approved_at,sent_at,workflow_status,meeting_count,project_count,ai_work_run_id",
+    )
+    .eq("recap_kind", "executive_briefing")
+    .order("created_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { row: null, errorMessage: error.message };
+  }
+
+  return { row: data ?? null, errorMessage: null };
+}
+
+function formatBriefingTimestamp(value: string | null): string {
+  if (!value) return "not recorded";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
+}
+
+function buildExecutiveBriefingMetadataContent(params: {
+  row: ExecutiveBriefingMetadataRow | null;
+  errorMessage: string | null;
+}): string {
+  if (params.errorMessage) {
+    return [
+      "I checked the daily operating brief metadata, but the lookup failed.",
+      "",
+      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      `Failure: ${params.errorMessage}`,
+      "",
+      "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
+    ].join("\n");
+  }
+
+  if (!params.row) {
+    return [
+      "I checked the daily operating brief metadata and did not find an executive briefing row yet.",
+      "",
+      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "",
+      "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
+    ].join("\n");
+  }
+
+  const regeneratedAt =
+    params.row.created_at ?? params.row.approved_at ?? params.row.sent_at;
+  return [
+    `The daily operating brief was last regenerated at ${formatBriefingTimestamp(regeneratedAt)}.`,
+    "",
+    "Source checked: daily_recaps.recap_kind=executive_briefing",
+    `Recap date: ${params.row.recap_date}`,
+    `Workflow status: ${params.row.workflow_status}`,
+    `Approved at: ${formatBriefingTimestamp(params.row.approved_at)}`,
+    `Sent at: ${formatBriefingTimestamp(params.row.sent_at)}`,
+    `Coverage: ${params.row.project_count ?? 0} projects, ${params.row.meeting_count ?? 0} meetings`,
+    params.row.ai_work_run_id ? `AI work run: ${params.row.ai_work_run_id}` : null,
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
 }
 
 // Why: deep-agent and Microsoft-specialist fetches can take 40–60s. Without
@@ -1697,6 +2151,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
   const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
+  let mcpToolBundle: Awaited<ReturnType<typeof createAiAssistantMcpTools>> | null =
+    null;
   let latestRetrievalCtx: Awaited<
     ReturnType<typeof executeRetrievalPlan>
   > | null = null;
@@ -1739,6 +2195,315 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           timestamp: new Date().toISOString(),
         },
       } as never);
+
+      if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "executive-briefing-metadata",
+            message: "Checking daily operating brief metadata",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        const metadataLookup = await loadLatestExecutiveBriefingMetadata(
+          args.supabase,
+        );
+        const content = buildExecutiveBriefingMetadataContent(metadataLookup);
+        const toolTrace = [
+          {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "executive_briefing_metadata",
+              responseMode: "metadata_lookup",
+              rationale:
+                "Timing/regeneration follow-up refers to the global executive briefing row, not a project-specific status report.",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "executiveBriefingMetadataLookup",
+            toolName: "executiveBriefingMetadataLookup",
+            agent: "retrieval-planner-v2",
+            status: metadataLookup.errorMessage ? "failed" : "success",
+            input: {
+              table: "daily_recaps",
+              filter: "daily_recaps.recap_kind=executive_briefing",
+              order: "created_at desc",
+            },
+            output: {
+              found: Boolean(metadataLookup.row),
+              row: metadataLookup.row,
+              error: metadataLookup.errorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-executive-briefing-metadata",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "daily_recaps",
+              status: metadataLookup.row ? "loaded" : "missing",
+              notes:
+                metadataLookup.errorMessage ??
+                "daily_recaps.recap_kind=executive_briefing",
+            },
+          ],
+          evidenceCount: metadataLookup.row ? 1 : 0,
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "executive-briefing-metadata",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: "executive_briefing_metadata",
+            modelId: "retrieval-planner-v2-executive-briefing-metadata",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-executive-briefing-metadata",
+              model: null,
+            },
+            provider_path: "deterministic-executive-briefing-metadata",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: "executive_briefing_metadata",
+              reason: plan.reason,
+              responseFormat: "metadata_lookup",
+              sources: ["daily_recaps"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-executive-briefing-metadata", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Daily operating brief metadata returned",
+            status: metadataLookup.errorMessage ? "warning" : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      if (shouldUseRfiPreviewRouter(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "action-preview",
+            message: "Preparing an RFI preview without writing a record",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        const project = await resolveRfiPreviewProject({
+          supabase: args.supabase,
+          selectedProjectId: args.selectedProjectId,
+          message: lastUserContent,
+        });
+        const plannerTrace = {
+          tool: "intentPlanner",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            intent: "change_management_review",
+            responseMode: "draft_safe_action",
+            rationale:
+              "Explicit RFI creation/drafting request requires preview-only action tooling.",
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        if (!project) {
+          const content =
+            "I can draft that as a preview, but I could not resolve the project from the request. Send the project name or open the project first, and I will produce a preview without creating the RFI.";
+          const toolTrace = [
+            plannerTrace,
+            {
+              tool: "rfiActionIntentRouter",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: args.selectedProjectId ?? null,
+              },
+              output: {
+                status: "blocked",
+                reason: "project_not_resolved",
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          writeTextResponse(writer, "strategist-rfi-preview-router-blocked", content);
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-rfi-preview-router",
+                model: null,
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+            }) as Json,
+          });
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "action-preview",
+              message: "RFI preview blocked until a project is selected",
+              status: "error",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
+        const topic = extractRfiTopic(lastUserContent);
+        const subject = `RFI - ${titleCase(topic)}`;
+        const question = `Please clarify ${topic}.`;
+        const rfiToolTrace: Record<string, unknown>[] = [];
+        const previewOutput = await previewCreateRFI(
+          args.user.id,
+          {
+            pinnedProjectId: args.selectedProjectId,
+            onTrace: (trace) => {
+              rfiToolTrace.push({
+                ...trace,
+                toolName: trace.tool,
+              });
+            },
+          },
+          {
+            projectId: project.id,
+            subject,
+            question,
+            scheduleImpact: "tbd",
+            costImpact: "tbd",
+          },
+        );
+        const content = buildRfiPreviewContent({ project, subject, question });
+        const toolTrace = [
+          plannerTrace,
+          {
+            tool: "rfiActionIntentRouter",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              status: "preview_routed",
+              projectId: project.id,
+              projectName: project.name,
+              tool: "createRFI",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          ...rfiToolTrace,
+        ];
+
+        writeTextResponse(writer, "strategist-rfi-preview-router", content);
+        await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-rfi-preview-router",
+                model: null,
+              },
+              retrieval_plan: {
+                intent: "change_management_review",
+                reason: "rfi_preview_router",
+              responseFormat: "action_preview",
+              sources: ["public.projects", "action_tools.createRFI"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            action_preview: previewOutput,
+          }) as Json,
+        });
+        await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        responseAlreadyPersisted = true;
+
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "RFI preview prepared",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
 
       if (isGeneratedTasksTodayRequest(lastUserContent)) {
         writer.write({
@@ -2296,17 +3061,44 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             toolTrace,
           });
 
-          writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+          // When the specialist returns structured inbox emails, render the
+          // outlook_inbox_summary card (links + local time + draft signal)
+          // instead of the plain text blob. Falls back to text otherwise.
+          const inboxWidget = buildMicrosoftInboxWidget(
+            response.emails,
+            defaultMicrosoftMailbox() ?? null,
+          );
+          const inboxWidgetDataPart = inboxWidget
+            ? {
+                type: "data-assistant-widget",
+                id: "assistant-widget-microsoft-inbox-summary",
+                data: { widget: inboxWidget },
+              }
+            : null;
+
+          if (inboxWidgetDataPart) {
+            writer.write(inboxWidgetDataPart as never);
+            writeTextResponse(
+              writer,
+              "strategist-microsoft-executive-assistant",
+              inboxWidget!.summary,
+            );
+          } else {
+            writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+          }
 
           await args.supabase.from("chat_history").insert({
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "assistant",
-            content,
+            content: inboxWidget ? inboxWidget.summary : content,
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",
               tool_trace: toolTrace,
+              ...(inboxWidgetDataPart
+                ? { data_parts: [inboxWidgetDataPart], answer_full: content }
+                : {}),
               response_quality: buildResponseQualityMetadata({
                 toolTrace,
                 content,
@@ -2340,13 +3132,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
-          const content = [
-            "I could not complete the live Microsoft inbox check.",
-            `Failed capability: consultMicrosoftExecutiveAssistant.`,
+          // Loud, diagnosable record for logs + metadata — never shown to the user.
+          const failureDiagnostic = [
+            "Failed capability: consultMicrosoftExecutiveAssistant.",
             `Cause: ${detail}`,
             "Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence.",
             "Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
           ].join(" ");
+          // Clean, honest message for the chat bubble.
+          const content = describeMicrosoftAssistantFailure(detail);
           const toolTrace = [
             {
               tool: "consultMicrosoftExecutiveAssistant",
@@ -2395,6 +3189,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",
+              failure_diagnostic: failureDiagnostic,
+              error_detail: detail,
               tool_trace: toolTrace,
               response_quality: buildResponseQualityMetadata({
                 toolTrace,
@@ -2419,6 +3215,204 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           responseAlreadyPersisted = true;
         }
         return;
+      }
+
+      if (
+        !AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS &&
+        (shouldUseDeepAgentExecutiveBridge({
+          intent: plan.intent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        }) ||
+          (selectedDeepAgentsStrategist &&
+            plan.reason === "executive_deep_agent_broad_operator_question"))
+      ) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "backend-deep-agents",
+            message: "Checking Render Deep Agents executive briefing",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        try {
+          const executiveBridgeStarted = Date.now();
+          const packet = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "backend-deep-agents",
+              message: "Still working with Render Deep Agents executive briefing…",
+            },
+            () =>
+              fetchDeepAgentExecutiveBriefing({
+                userId: args.user.id,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+              }),
+          );
+          const executiveBridgeDurationMs =
+            Date.now() - executiveBridgeStarted;
+
+          if (shouldUseDeepAgentExecutiveDirectResponse(packet)) {
+            const content = formatDeepAgentExecutiveDirectResponse(packet);
+            const widget = buildDeepAgentExecutiveEvidenceWidget(packet);
+            const dataParts = widget
+              ? [
+                  {
+                    type: "data-assistant-widget",
+                    id: "assistant-widget-deep-agent-executive-briefing",
+                    data: { widget },
+                  },
+                ]
+              : [];
+            const toolTrace = [
+              createBackendBridgeTrace({
+                tool: "backendDeepAgentExecutiveBriefing",
+                status: "success",
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+                durationMs: executiveBridgeDurationMs,
+              }),
+              ...mapBackendPacketTrace(packet.toolTrace, {
+                message: lastUserContent,
+                selectedProjectId: args.selectedProjectId ?? null,
+              }),
+            ];
+            const sourceCoverage = packet.sources.map((source) => ({
+              sourceType: source.sourceType,
+              title: source.title,
+              url: source.url ?? null,
+            }));
+            const sourceDebug = buildAnswerDebugMetadata({
+              orchestrator: "backend-deep-agent-executive-briefing",
+              plan,
+              toolTrace,
+              sourceCoverage,
+              evidenceCount: packet.sources.length,
+            });
+
+            await persistDirectDeepAgentResponse({
+              supabase: args.supabase,
+              sessionId: args.sessionId,
+              userId: args.user.id,
+              content,
+              responseLabel: "executive-briefing",
+              sourceDebug,
+              trace: {
+                input: lastUserContent,
+                intent: plan.intent,
+                modelId:
+                  process.env.DEEP_AGENTS_RESEARCH_MODEL ??
+                  "render-backend-deep-agents",
+                selectedProjectId: args.selectedProjectId ?? null,
+                toolTrace,
+              },
+              metadata: {
+                architecture: "render-backend-deep-agents-v1",
+                model: process.env.DEEP_AGENTS_RESEARCH_MODEL ?? null,
+                provider_path: "render-backend-ai-gateway",
+                backend_deep_agent: {
+                  endpoint: "executive-briefing",
+                  backing_endpoint: "research",
+                  mode: packet.mode,
+                  orchestrator: packet.orchestrator,
+                  source_count: packet.sources.length,
+                  skills_loaded: packet.skillsLoaded,
+                },
+                retrieval_plan: {
+                  intent: plan.intent,
+                  reason: plan.reason,
+                  responseFormat: plan.responseFormat,
+                  sources: Object.keys(plan.sources),
+                },
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                source_debug: sourceDebug,
+                data_parts: dataParts,
+              } as Json,
+            });
+
+            responseAlreadyPersisted = true;
+            dataParts.forEach((dataPart) => writer.write(dataPart as never));
+            writeTextResponse(
+              writer,
+              "strategist-deep-agent-executive-briefing",
+              content,
+            );
+            writer.write({
+              type: "data-status",
+              id: "strategist-status",
+              data: {
+                stage: "complete",
+                message: "Render Deep Agents executive answer returned",
+                status: "success",
+                timestamp: new Date().toISOString(),
+              },
+            } as never);
+            return;
+          }
+
+          backendDeepAgentContextBlocks.push(
+            formatDeepAgentExecutiveBriefingContext(packet),
+          );
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "success",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              durationMs: executiveBridgeDurationMs,
+              detail:
+                "Backend executive packet returned context for local synthesis.",
+            }),
+            ...mapBackendPacketTrace(packet.toolTrace, {
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+            }),
+          );
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message:
+                "Render Deep Agents returned executive context but not a direct answer; using local synthesis",
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          bridgeToolTrace.push(
+            createBackendBridgeTrace({
+              tool: "backendDeepAgentExecutiveBriefing",
+              status: "failed",
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+              detail,
+            }),
+          );
+          console.error("[handler-v2] Deep Agents executive bridge failed", {
+            message: detail,
+            intent: plan.intent,
+          });
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "backend-deep-agents",
+              message: `Render Deep Agents executive bridge failed; falling back to local retrieval: ${detail}`,
+              status: "warning",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        }
       }
 
       if (
@@ -2850,10 +3844,240 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
+      if (shouldUseDirectProjectBriefing({ plan, retrievalCtx })) {
+        const content = buildDirectProjectBriefingContent({
+          ctx: retrievalCtx,
+          message: lastUserContent,
+        });
+        const plannerTrace = {
+          tool: "intentPlanner",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            intent: plan.intent,
+            responseMode: plan.responseFormat,
+            rationale:
+              "Packet-first project briefing resolved structured project context before synthesis.",
+          },
+          timestamp: new Date().toISOString(),
+        };
+        const preflightTrace = {
+          tool: "serverBusinessContextPreflight",
+          toolName: "serverBusinessContextPreflight",
+          agent: "retrieval-planner-v2",
+          status: "success",
+          input: {
+            message: lastUserContent.slice(0, 240),
+            selectedProjectId: args.selectedProjectId ?? null,
+          },
+          output: {
+            projectName: namedProjectFromSnapshot(asRecord(retrievalCtx.projectSnapshot)),
+            projectSnapshotLoaded: Boolean(retrievalCtx.projectSnapshot),
+            semanticResultCount: summarizeEvalCount(retrievalCtx.semanticVectorResults),
+          },
+          timestamp: new Date().toISOString(),
+        };
+        const toolTrace = [
+          ...bridgeToolTrace,
+          plannerTrace,
+          preflightTrace,
+          ...buildPrefetchRetrievalTraces({
+            ctx: retrievalCtx,
+            plan,
+            message: lastUserContent,
+            selectedProjectId: args.selectedProjectId ?? null,
+          }),
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-direct-project-briefing",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "project_snapshot",
+              status: "loaded",
+              notes: "getProjectBriefingSnapshot",
+            },
+            {
+              sourceType: "semantic_vector_search",
+              status: retrievalCtx.semanticVectorResults ? "loaded" : "missing",
+              notes: `${summarizeEvalCount(retrievalCtx.semanticVectorResults) ?? 0} result(s)`,
+            },
+          ],
+          evidenceCount: 1 + (summarizeEvalCount(retrievalCtx.semanticVectorResults) ?? 0),
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "direct-project-briefing",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: plan.intent,
+            modelId: "retrieval-planner-v2-direct-project-briefing",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "direct-project-briefing-rag",
+              model: null,
+            },
+            provider_path: "direct-project-briefing-rag",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: plan.intent,
+              reason: plan.reason,
+              responseFormat: plan.responseFormat,
+              sources: Object.keys(plan.sources),
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-direct-project-briefing", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Project briefing returned from loaded source context",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      if (plan.intent === "source_lookup" && retrievalCtx.semanticVectorResults) {
+        const content = buildDirectSourceLookupAnswer({
+          message: lastUserContent,
+          semanticVectorResults: retrievalCtx.semanticVectorResults,
+        });
+        if (content) {
+          const plannerTrace = {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "source_lookup",
+              responseMode: "source_lookup",
+              rationale:
+                "User requested exact internal source context rather than a project status report.",
+            },
+            timestamp: new Date().toISOString(),
+          };
+          const sourceLookupTrace = {
+            tool: "sourceLookupIntentRouter",
+            toolName: "sourceLookupIntentRouter",
+            agent: "retrieval-planner-v2",
+            status: "success",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: plan.intent,
+              responseFormat: plan.responseFormat,
+              route: "direct_semantic_source_lookup",
+            },
+            timestamp: new Date().toISOString(),
+          };
+          const toolTrace = [
+            ...bridgeToolTrace,
+            plannerTrace,
+            sourceLookupTrace,
+            ...buildPrefetchRetrievalTraces({
+              ctx: retrievalCtx,
+              plan,
+              message: lastUserContent,
+              selectedProjectId: args.selectedProjectId ?? null,
+            }),
+          ];
+          const sourceDebug = buildAnswerDebugMetadata({
+            orchestrator: "retrieval-planner-v2-direct-source-lookup",
+            plan,
+            toolTrace,
+            memoryUsage,
+          });
+
+          await persistDirectDeepAgentResponse({
+            supabase: args.supabase,
+            sessionId: args.sessionId,
+            userId: args.user.id,
+            content,
+            responseLabel: "source-lookup-direct-semantic",
+            sourceDebug,
+            trace: {
+              input: lastUserContent,
+              intent: plan.intent,
+              modelId: "retrieval-planner-v2-direct-source-lookup",
+              selectedProjectId: args.selectedProjectId ?? null,
+              toolTrace,
+            },
+            metadata: {
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "direct-source-lookup-semantic-rag",
+                model: null,
+              },
+              provider_path: "direct-source-lookup-semantic-rag",
+              model: args.activeModel,
+              synthesis_model: synthesisModel,
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: plan.reason,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: sourceDebug,
+            } as Json,
+          });
+
+          responseAlreadyPersisted = true;
+          writeTextResponse(writer, "strategist-direct-source-lookup", content);
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Source lookup returned",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+      }
+
       if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx })) {
-        const content = sanitizeDirectSourceSpecificAnswer(
+        const sourceAnswer = sanitizeDirectSourceSpecificAnswer(
           retrievalCtx.sourceSpecificRagAnswer?.content ?? "",
         );
+        const content = sourceAnswer.includes("I treated this as a source lookup")
+          ? sourceAnswer
+          : `I treated this as a source lookup, not a project status report.\n\n${sourceAnswer}`;
         const toolTrace = [
           ...bridgeToolTrace,
           ...buildPrefetchRetrievalTraces({
@@ -2923,10 +4147,23 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
+      // Bound the injected retrieval/context so the system prompt can never
+      // exceed the context hard limit on its own. The budget is derived from the
+      // SAME resolved hard limit the compaction guard enforces (~60% of it), so a
+      // one-line chat can never be rejected as "over the limit" because of an
+      // over-large packet. See compaction.ts buildOverLimitError.
+      const { hardLimitTokens: resolvedHardLimitTokens } = resolveContextLimits({
+        thresholdTokens: AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
+        hardLimitTokens: AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
+      });
+      const systemPromptMaxChars = Math.floor(
+        resolvedHardLimitTokens * CHARS_PER_TOKEN * 0.6,
+      );
       const assembledSystemPrompt = assembleSystemPromptFromContext(
         plan,
         retrievalCtx,
         baseSystemPrompt,
+        { maxContextChars: systemPromptMaxChars },
       );
       // When the user attached a file the text model can't read (xlsx/pdf/etc.),
       // tell the model to ask for a readable export rather than fabricate or
@@ -2961,6 +4198,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           if (normalizedTrace) liveToolTrace.push(normalizedTrace);
         },
       });
+      mcpToolBundle = await createAiAssistantMcpTools();
+      Object.assign(tools, mcpToolBundle.tools);
       if (process.env.NODE_ENV !== "production") {
         console.log("[handler-v2] streamText input", {
           plan_reason: plan.reason,
@@ -3029,7 +4268,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             bulkyToolResultsPruned: 0,
             binaryReferencesReplaced: 0,
             droppedMessages: 0,
-            failureReason: error.message,
+            failureReason: `[${error.reason}] ${error.message}`,
           };
           writer.write({
             type: "data-status",
@@ -3041,11 +4280,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               timestamp: new Date().toISOString(),
             },
           } as never);
-          writeTextResponse(
-            writer,
-            "context-compaction-failed",
-            "I could not safely compact this long chat, and the conversation is over the hard context limit. Start a fresh chat or ask me to continue from a shorter summary of the current thread.",
-          );
+          // Pick honest copy from the actual cause. A huge injected packet is
+          // NOT a long conversation — telling the user to start a fresh chat
+          // would be wrong (the fresh chat re-injects the same giant context).
+          // The full diagnostic is preserved in metadata.context_compaction.
+          const userFacingMessage =
+            error.reason === "system_prompt_over_limit"
+              ? "I pulled in more background context for this question than I can fit in one request, so I held off rather than send a broken request. Try narrowing the question (e.g. ask about one project, source, or time window) and I'll answer."
+              : "This conversation has grown past what I can fit in one request and I couldn't safely shorten it. Start a fresh chat, or ask me to continue from a short summary of this thread.";
+          writeTextResponse(writer, "context-compaction-failed", userFacingMessage);
           return;
         }
         throw error;
@@ -3121,6 +4364,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                         ? error.stack?.split("\n").slice(0, 5).join("\n")
                         : undefined,
                   });
+                  if (mcpToolBundle) {
+                    waitUntil(mcpToolBundle.close());
+                  }
                 },
                 onFinish: ({
                   finishReason,
@@ -3154,6 +4400,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                     tool_calls: toolCallNames,
                     step_count: steps?.length ?? 0,
                   });
+                  if (mcpToolBundle) {
+                    waitUntil(mcpToolBundle.close());
+                  }
                   setActiveTraceIO({ input: inputText, output: text ?? "" });
                   rootSpan.update({ output: text ?? "" });
                   rootSpan.end();
@@ -3224,6 +4473,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         ...liveToolTrace,
         ...streamToolTrace,
       ];
+      if (mcpToolBundle) {
+        toolTrace.push(...mcpToolBundle.trace);
+      }
 
       const metadata: Record<string, unknown> = {
         architecture: "retrieval-planner-v2",

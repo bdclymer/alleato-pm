@@ -52,9 +52,10 @@ class EntitySyncResult:
     skipped: int = 0
     errors: int = 0
     cursor: Optional[str] = None
+    warnings: Optional[List[str]] = None
 
     def as_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "entity": self.entity,
             "fetched": self.fetched,
             "upserted": self.upserted,
@@ -63,6 +64,9 @@ class EntitySyncResult:
             "errors": self.errors,
             "cursor": self.cursor,
         }
+        if self.warnings:
+            payload["warnings"] = list(self.warnings)
+        return payload
 
 
 def _chunked(values: Sequence[Dict[str, Any]], size: int = 200) -> Iterable[Sequence[Dict[str, Any]]]:
@@ -244,6 +248,7 @@ class AcumaticaSession:
         expand: Optional[str] = None,
         select: Optional[str] = None,
         modified_after: Optional[str] = None,
+        timeout: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
         records: List[Dict[str, Any]] = []
         skip = 0
@@ -264,6 +269,7 @@ class AcumaticaSession:
                 f"{self.entity_base}/{entity_name}",
                 params=params,
                 headers={"Accept": "application/json"},
+                timeout=timeout,
             )
             if not response.is_success:
                 raise RuntimeError(
@@ -350,6 +356,7 @@ class AcumaticaFinancialSyncService:
 
         results: List[Dict[str, Any]] = []
         errors: List[str] = []
+        warnings: List[str] = []
 
         for entity, handler in (
             ("projects", self._sync_projects),
@@ -373,6 +380,8 @@ class AcumaticaFinancialSyncService:
             try:
                 result = self._run_entity_sync(entity, handler)
                 results.append(result.as_dict())
+                if result.warnings:
+                    warnings.extend(f"{entity}: {warning}" for warning in result.warnings)
             except Exception as exc:
                 logger.exception("[AcumaticaSync] %s failed", entity)
                 started_at = _now_iso()
@@ -391,13 +400,22 @@ class AcumaticaFinancialSyncService:
                 )
                 errors.append(f"{entity}: {exc}")
 
-        status = "success" if not errors else "partial_failure"
-        return {
+        if errors:
+            status = "partial_failure"
+        elif warnings:
+            status = "success_with_warnings"
+        else:
+            status = "success"
+
+        payload = {
             "status": status,
             "ran_at": _now_iso(),
             "results": results,
             "errors": errors,
         }
+        if warnings:
+            payload["warnings"] = warnings
+        return payload
 
     def _run_entity_sync(self, entity_name: str, handler) -> EntitySyncResult:
         state = self._get_sync_state(entity_name)
@@ -406,19 +424,21 @@ class AcumaticaFinancialSyncService:
 
         result: EntitySyncResult = handler(state.get("last_cursor"))
         result.cursor = result.cursor or state.get("last_cursor") or started_at
+        result_status = "warning" if result.warnings else "success"
+        warning_text = "; ".join(result.warnings) if result.warnings else None
 
         self._update_sync_state(
             entity_name,
-            status="success",
+            status=result_status,
             last_started_at=started_at,
             last_success_at=_now_iso(),
             last_cursor=result.cursor,
-            last_error=None,
+            last_error=warning_text,
             last_stats=result.as_dict(),
         )
         self._record_sync_run(
             entity_name=entity_name,
-            status="success",
+            status=result_status,
             started_at=started_at,
             finished_at=_now_iso(),
             result=result,
@@ -437,6 +457,84 @@ class AcumaticaFinancialSyncService:
         )
         rows = response.data or []
         return rows[0] if rows else {}
+
+    def _fetch_entity_with_optional_fields(
+        self,
+        entity_name: str,
+        *,
+        required_fields: Sequence[str],
+        optional_fields: Sequence[str],
+        top: int,
+        expand: Optional[str] = None,
+        modified_after: Optional[str] = None,
+    ) -> tuple[List[Dict[str, Any]], List[str], List[str]]:
+        attempted_fields = list(dict.fromkeys([*required_fields, *optional_fields]))
+        try:
+            records = self.session.fetch_entity(
+                entity_name,
+                top=top,
+                expand=expand,
+                select=",".join(attempted_fields),
+                modified_after=modified_after,
+            )
+            return records, attempted_fields, []
+        except Exception as exc:
+            logger.warning(
+                "[AcumaticaSync] %s full select failed; probing optional fields individually: %s",
+                entity_name,
+                exc,
+            )
+
+        safe_optional_fields: List[str] = []
+        dropped_fields: List[str] = []
+        for field in optional_fields:
+            probe_fields = list(dict.fromkeys([*required_fields, field]))
+            try:
+                self.session.fetch_entity(
+                    entity_name,
+                    top=1,
+                    expand=expand,
+                    select=",".join(probe_fields),
+                    modified_after=modified_after,
+                    timeout=5.0,
+                )
+                safe_optional_fields.append(field)
+            except Exception as exc:
+                logger.warning(
+                    "[AcumaticaSync] %s dropping optional field %s after probe failure: %s",
+                    entity_name,
+                    field,
+                    exc,
+                )
+                dropped_fields.append(field)
+
+        final_fields = list(dict.fromkeys([*required_fields, *safe_optional_fields]))
+        try:
+            records = self.session.fetch_entity(
+                entity_name,
+                top=top,
+                expand=expand,
+                select=",".join(final_fields),
+                modified_after=modified_after,
+                timeout=20.0,
+            )
+        except Exception as exc:
+            logger.warning(
+                "[AcumaticaSync] %s safe optional field set still failed; retrying required-only fields: %s",
+                entity_name,
+                exc,
+            )
+            final_fields = list(dict.fromkeys(required_fields))
+            dropped_fields = list(dict.fromkeys([*dropped_fields, *safe_optional_fields]))
+            records = self.session.fetch_entity(
+                entity_name,
+                top=top,
+                expand=expand,
+                select=",".join(final_fields),
+                modified_after=modified_after,
+                timeout=20.0,
+            )
+        return records, final_fields, dropped_fields
 
     def _update_sync_state(
         self,
@@ -1381,16 +1479,26 @@ class AcumaticaFinancialSyncService:
 
             self.supabase.table("owner_invoice_line_items").delete().eq("invoice_id", owner_invoice_id).execute()
             raw_lines = raw_lines_by_invoice_id.get(int(invoice["id"]), [])
-            owner_line_rows = [
-                {
+            owner_line_rows = []
+            for line in raw_lines:
+                approved_amount = _num(line.get("amount")) or _num(line.get("extended_price")) or 0
+                owner_line_rows.append({
                     "invoice_id": owner_invoice_id,
                     "acumatica_line_nbr": line.get("line_nbr"),
                     "description": line.get("transaction_description") or line.get("account"),
-                    "approved_amount": _num(line.get("amount")) or _num(line.get("extended_price")) or 0,
+                    "approved_amount": approved_amount,
                     "category": line.get("account"),
-                }
-                for line in raw_lines
-            ]
+                    "scheduled_value": approved_amount,
+                    "work_completed_previous": 0,
+                    "work_completed_period": approved_amount,
+                    "materials_stored": 0,
+                    "total_completed_stored": approved_amount,
+                    "work_completed_pct": 100 if approved_amount > 0 else 0,
+                    "retainage_amount": 0,
+                    "retainage_released": 0,
+                    "net_amount_this_period": approved_amount,
+                    "balance_to_finish": 0,
+                })
             if owner_line_rows:
                 for chunk in _chunked(owner_line_rows):
                     self.supabase.table("owner_invoice_line_items").insert(list(chunk)).execute()
@@ -2590,14 +2698,21 @@ class AcumaticaFinancialSyncService:
     def _sync_customers(self, last_cursor: Optional[str]) -> EntitySyncResult:
         """Sync AR customers into acumatica_customers."""
         result = EntitySyncResult(entity="customers")
-        records = self.session.fetch_entity(
+        records, selected_fields, dropped_fields = self._fetch_entity_with_optional_fields(
             "Customer",
+            required_fields=("CustomerID", "CustomerName"),
+            optional_fields=("LastModifiedDateTime", "Status", "CurrencyID", "Terms", "TaxZone", "Email", "Phone1"),
             top=200,
-            select="CustomerID,CustomerName,Status,CurrencyID,Terms,TaxZone,Email,Phone1,LastModifiedDateTime",
             modified_after=last_cursor,
         )
         result.fetched = len(records)
         result.cursor = self._max_cursor(records) or _now_iso()
+        if dropped_fields:
+            result.warnings = [
+                "Customer sync dropped unsupported/select-timeout fields: "
+                + ", ".join(dropped_fields)
+                + f". Active field set: {', '.join(selected_fields)}"
+            ]
 
         if not records:
             return result
@@ -3018,6 +3133,125 @@ class AcumaticaFinancialSyncService:
 
         return len(rows)
 
+    def _project_prime_contract_payments_from_payments(self) -> int:
+        payments = (
+            self.supabase.table("acumatica_payments")
+            .select(
+                "reference_nbr, document_type, customer_id, payment_method, payment_ref, "
+                "application_date, description, payment_amount"
+            )
+            .execute()
+        ).data or []
+        if not payments:
+            return 0
+
+        invoice_rows = (
+            self.supabase.table("acumatica_ar_invoices")
+            .select("customer, project")
+            .execute()
+        ).data or []
+        customer_to_projects: Dict[str, set[str]] = {}
+        for invoice in invoice_rows:
+            customer = invoice.get("customer")
+            project = invoice.get("project")
+            if not customer or not project:
+                continue
+            customer_to_projects.setdefault(customer, set()).add(project)
+
+        projects = (
+            self.supabase.table("projects")
+            .select("id, acumatica_project_id")
+            .not_.is_("acumatica_project_id", "null")
+            .execute()
+        ).data or []
+        project_by_alias: Dict[str, int] = {}
+        for project in projects:
+            project_id = project.get("id")
+            if project_id is None:
+                continue
+            for alias in _project_code_aliases(project.get("acumatica_project_id")):
+                project_by_alias[alias] = project_id
+
+        prime_contracts = (
+            self.supabase.table("prime_contracts")
+            .select("id, project_id")
+            .execute()
+        ).data or []
+        contract_by_project_id: Dict[int, str] = {}
+        for contract in prime_contracts:
+            project_id = contract.get("project_id")
+            if project_id is not None and project_id not in contract_by_project_id:
+                contract_by_project_id[project_id] = contract["id"]
+
+        now = _now_iso()
+        rows_by_ref: Dict[str, Dict[str, Any]] = {}
+        for payment in payments:
+            payment_ref = payment.get("reference_nbr")
+            payment_type = payment.get("document_type") or "Payment"
+            customer_id = payment.get("customer_id")
+            amount = _num(payment.get("payment_amount"))
+            if not payment_ref or not customer_id or amount is None:
+                continue
+
+            project_codes = customer_to_projects.get(customer_id) or set()
+            if len(project_codes) != 1:
+                continue
+
+            project_code = next(iter(project_codes))
+            project_id = next(
+                (project_by_alias[alias] for alias in _project_code_aliases(project_code) if alias in project_by_alias),
+                None,
+            )
+            if project_id is None:
+                continue
+
+            contract_id = contract_by_project_id.get(project_id)
+            if not contract_id:
+                continue
+
+            rows_by_ref[payment_ref] = {
+                "contract_id": contract_id,
+                "project_id": project_id,
+                "payment_number": payment_ref,
+                "amount": amount,
+                "payment_date": payment.get("application_date") or now.split("T")[0],
+                "method": self._normalize_prime_payment_method(payment.get("payment_method")),
+                "reference_number": payment.get("payment_ref"),
+                "notes": payment.get("description")
+                or (
+                    "Imported from Acumatica payments using unique customer-to-project mapping "
+                    "because historical payment applications are not exposed by the current Acumatica endpoint."
+                ),
+                "updated_at": now,
+                "acumatica_ref_nbr": payment_ref,
+                "acumatica_doc_type": payment_type,
+                "acumatica_sync_at": now,
+            }
+
+        rows = list(rows_by_ref.values())
+        if not rows:
+            return 0
+
+        existing = (
+            self.supabase.table("prime_contract_payments")
+            .select("id, acumatica_ref_nbr, acumatica_doc_type")
+            .execute()
+        ).data or []
+        existing_by_ref = {
+            row.get("acumatica_ref_nbr"): row.get("id")
+            for row in existing
+            if row.get("acumatica_ref_nbr")
+        }
+
+        for row in rows:
+            existing_id = existing_by_ref.get(row["acumatica_ref_nbr"])
+            if existing_id:
+                self.supabase.table("prime_contract_payments").update(row).eq("id", existing_id).execute()
+            else:
+                self.supabase.table("prime_contract_payments").insert(row).execute()
+
+        return len(rows)
+
     def _sync_payment_applications(self, last_cursor: Optional[str]) -> EntitySyncResult:
         """Sync AR payment application lines into acumatica_payment_applications.
 
@@ -3037,11 +3271,28 @@ class AcumaticaFinancialSyncService:
         try:
             records = self._fetch_payment_application_records(last_cursor)
         except RuntimeError as exc:
-            raise RuntimeError(f"{self._available_ar_payment_application_entity_message()} REST fallback error: {exc}") from exc
+            projected = self._project_prime_contract_payments_from_payments()
+            result.projected = projected
+            result.warnings = [
+                f"{self._available_ar_payment_application_entity_message()} REST fallback error: {exc}",
+                (
+                    "Projected prime contract payments directly from acumatica_payments using unique "
+                    "customer-to-project mapping because historical payment applications are not exposed."
+                ),
+            ]
+            result.cursor = last_cursor or _now_iso()
+            return result
         result.fetched = len(records)
         result.cursor = self._max_cursor(records) or _now_iso()
 
         if not records:
+            result.projected = self._project_prime_contract_payments_from_payments()
+            if result.projected:
+                result.warnings = [
+                    "No historical AR payment application lines were returned from Acumatica. "
+                    "Projected prime contract payments directly from acumatica_payments using unique "
+                    "customer-to-project mapping."
+                ]
             return result
 
         rows: List[Dict[str, Any]] = []
@@ -3105,6 +3356,13 @@ class AcumaticaFinancialSyncService:
                 )
 
         if not rows:
+            result.projected = self._project_prime_contract_payments_from_payments()
+            if result.projected:
+                result.warnings = [
+                    "AR payments sync returned records, but none exposed historical application lines. "
+                    "Projected prime contract payments directly from acumatica_payments using unique "
+                    "customer-to-project mapping."
+                ]
             return result
 
         # Upsert on composite unique constraint

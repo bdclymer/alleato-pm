@@ -15,9 +15,13 @@ const C = {
   fg: "#0f172a",
   mutedFg: "#475569",
   mutedFgSoft: "#94a3b8",
-  primary: "#0f172a",
+  // Alleato brand orange — hsl(29 71% 52%) / hsl(28 69% 45%) from globals.css
+  brand: "#dc822e",
+  brandDark: "#c26d24",
   primaryFg: "#ffffff",
 };
+
+const LOGO_URL = `${APP_BASE_URL}/Alleato-Group-Logo_Dark.png`;
 
 export interface EmailShellProps {
   previewText: string;
@@ -81,17 +85,26 @@ export function EmailShell({
                 >
                   <tbody>
                     <tr>
-                      <td style={{ background: C.primary, padding: "20px 32px" }}>
-                        <span
+                      <td
+                        style={{
+                          background: C.surface,
+                          padding: "24px 32px 20px",
+                          borderBottom: `1px solid ${C.border}`,
+                        }}
+                      >
+                        <img
+                          src={LOGO_URL}
+                          alt="Alleato"
+                          height={26}
                           style={{
-                            color: C.primaryFg,
-                            fontSize: 18,
-                            fontWeight: 700,
-                            letterSpacing: "-0.3px",
+                            height: "26px",
+                            width: "auto",
+                            display: "block",
+                            border: 0,
+                            outline: "none",
+                            textDecoration: "none",
                           }}
-                        >
-                          Alleato
-                        </span>
+                        />
                       </td>
                     </tr>
 
@@ -105,7 +118,7 @@ export function EmailShell({
                               fontWeight: 600,
                               textTransform: "uppercase",
                               letterSpacing: "0.06em",
-                              color: C.mutedFg,
+                              color: C.brand,
                             }}
                           >
                             {eyebrow}
@@ -152,7 +165,7 @@ export function EmailShell({
                             href={ctaUrl}
                             style={{
                               display: "inline-block",
-                              background: C.primary,
+                              background: C.brand,
                               color: C.primaryFg,
                               textDecoration: "none",
                               fontSize: 14,

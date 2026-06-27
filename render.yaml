@@ -1,3 +1,4 @@
+# NOTE: not blueprint-linked; live config is managed via Render API
 # Render deployment configuration for Alleato-Procore
 # This file should be in the repository root for Render to auto-detect
 services:
@@ -6,7 +7,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 */2 * * *"
+    schedule: "0 0,12 * * *"
     dockerCommand: >-
       python3 scripts/run_acumatica_financial_sync.py
     envVars:
@@ -16,6 +17,10 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "50"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -38,15 +43,7 @@ services:
     dockerContext: ./backend
     schedule: "*/30 * * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_source_sync_health_recompute;
-      result = _run_source_sync_health_recompute();
-      print(json.dumps(result, indent=2));
-      health = result.get('health', {});
-      sys.exit(1 if health.get('status') == 'critical' else 0)
-      "
+      python3 -c "import asyncio; from src.services.health.source_sync_health import _run_source_sync_health_recompute; asyncio.run(_run_source_sync_health_recompute())"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -301,6 +298,8 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
@@ -346,6 +345,8 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: DATABASE_URL
+        sync: false
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
@@ -427,22 +428,20 @@ services:
       - key: RAG_SUPABASE_SERVICE_ROLE_KEY
         sync: false
 
-  # Generates AI daily project recap (saved to daily_recaps table) from
-  # meeting transcripts of the prior 24 hours. Runs daily at 09:30 UTC
-  # (~5:30 AM ET) so a fresh recap is ready before the executive daily brief
-  # cron fires at 11/12 UTC (~7 AM ET). Without this cron, the CEO Daily Brief
-  # reads stale recaps.
+  # Reads the shared RFI reply mailbox every 15 minutes and writes
+  # rfi_responses rows for any subcontractor email replies (email channel).
+  # Idempotent: keyed on Graph message id so re-reads never double-insert.
   - type: cron
-    name: alleato-daily-recap
+    name: alleato-rfi-email-ingest
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "30 9 * * *"
+    schedule: "*/15 * * * *"
     dockerCommand: >-
-      python3 /app/scripts/generate_daily_recap.py --days 1 --verbose
+      timeout 5m python3 -m src.services.rfis.email_ingestion
     envVars:
       - key: PYTHONPATH
-        value: /app:/app/src:/app/src/services:/app/src/workers
+        value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
@@ -453,11 +452,13 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
+      - key: MICROSOFT_CLIENT_ID
         sync: false
-      - key: AI_GATEWAY_API_KEY
+      - key: MICROSOFT_CLIENT_SECRET
         sync: false
-      - key: OPENAI_API_KEY
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: RFI_REPLY_MAILBOX
         sync: false
 
   # Runs RAG meeting vectorization health check daily at noon UTC.
@@ -543,7 +544,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "5 */4 * * *"
+    schedule: "*/5 * * * *"
     dockerCommand: python3 -m src.services.health.source_rag_health
     envVars:
       - key: PYTHONPATH
@@ -575,6 +576,47 @@ services:
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_URL
         sync: false
       - key: RAG_HEALTH_REMEDIATION_WEBHOOK_TOKEN
+        sync: false
+
+  # Outcome-based pipeline alerting. Reads the source_sync_runs ledger every 15
+  # minutes and DMs the owner on Teams the moment any source goes dark (>=2
+  # failed runs with no success in the window). This is the alert that did NOT
+  # exist during the 2026-06-23 incident, when graph embedding failed 25/25
+  # every run for 36h+ with zero notification. Throttled to re-nag at most every
+  # 6h while a source stays down; resolves silently on recovery.
+  - type: cron
+    name: alleato-pipeline-alert
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/15 * * * *"
+    dockerCommand: python3 -m src.services.health.pipeline_alert_notifier
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: AI_HEALTH_ALERT_TEAMS_USER_ID
         sync: false
 
   # Domain (company_process) packet compiler — synthesizes cross-project

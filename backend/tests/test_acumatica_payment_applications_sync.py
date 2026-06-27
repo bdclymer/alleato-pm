@@ -1,17 +1,111 @@
 from services.acumatica_sync import AcumaticaFinancialSyncService
 
 
+class _Result:
+    def __init__(self, data):
+        self.data = data
+
+
+class _TableQuery:
+    def __init__(self, db, table_name):
+        self.db = db
+        self.table_name = table_name
+        self.rows = list(db.tables.setdefault(table_name, []))
+        self.action = "select"
+        self.payload = None
+
+    def select(self, *_args):
+        self.action = "select"
+        return self
+
+    def update(self, payload):
+        self.action = "update"
+        self.payload = payload
+        return self
+
+    def insert(self, payload):
+        self.action = "insert"
+        self.payload = payload
+        return self
+
+    def upsert(self, payload, **_kwargs):
+        self.action = "upsert"
+        self.payload = payload
+        return self
+
+    def eq(self, key, value):
+        self.rows = [row for row in self.rows if row.get(key) == value]
+        return self
+
+    def __getattr__(self, name):
+        if name == "not_":
+            return self
+        raise AttributeError(name)
+
+    def is_(self, *_args):
+        return self
+
+    def execute(self):
+        table = self.db.tables.setdefault(self.table_name, [])
+        if self.action == "insert":
+            row = dict(self.payload)
+            table.append(row)
+            return _Result([row])
+        if self.action == "upsert":
+            rows = self.payload if isinstance(self.payload, list) else [self.payload]
+            for row in rows:
+                table.append(dict(row))
+            return _Result(rows)
+        if self.action == "update":
+            updated = []
+            for row in table:
+                if row in self.rows:
+                    row.update(self.payload)
+                    updated.append(dict(row))
+            return _Result(updated)
+        return _Result([dict(row) for row in self.rows])
+
+
+class _FakeSupabase:
+    def __init__(self, tables=None):
+        self.tables = tables or {}
+
+    def table(self, table_name):
+        return _TableQuery(self, table_name)
+
+
 class _Session:
-    def __init__(self, entity_sets):
+    def __init__(self, entity_sets, entity_responses=None):
         self.entity_sets = entity_sets
+        self.entity_responses = entity_responses or {}
+        self.calls = []
 
     def fetch_odata_entity_sets(self):
         return self.entity_sets
 
+    def fetch_entity(self, entity_name, *, top, expand=None, select=None, modified_after=None, timeout=None):
+        self.calls.append(
+            {
+                "entity_name": entity_name,
+                "top": top,
+                "expand": expand,
+                "select": select,
+                "modified_after": modified_after,
+                "timeout": timeout,
+            }
+        )
+        response = self.entity_responses.get(select)
+        if isinstance(response, Exception):
+            raise response
+        if callable(response):
+            return response(top=top, expand=expand, select=select, modified_after=modified_after)
+        return response or []
 
-def _service_with_entity_sets(entity_sets):
+
+def _service_with_entity_sets(entity_sets, entity_responses=None, tables=None):
     service = object.__new__(AcumaticaFinancialSyncService)
-    service.session = _Session(entity_sets)
+    service.session = _Session(entity_sets, entity_responses)
+    service.supabase = _FakeSupabase(tables)
     return service
 
 
@@ -53,3 +147,68 @@ def test_ar_payment_application_row_from_odata_requires_payment_and_invoice_refs
     service = _service_with_entity_sets([])
 
     assert service._ar_payment_application_row_from_odata({"AdjgRefNbr": "000235"}) is None
+
+
+def test_fetch_entity_with_optional_fields_drops_only_the_failing_optional_field():
+    failing_select = "CustomerID,CustomerName,LastModifiedDateTime,Status,CurrencyID,Terms,TaxZone,Email,Phone1"
+    service = _service_with_entity_sets(
+        [],
+        entity_responses={
+            failing_select: RuntimeError("CurrencyID broke the Acumatica select"),
+            "CustomerID,CustomerName,LastModifiedDateTime": [{}],
+            "CustomerID,CustomerName,Status": [{}],
+            "CustomerID,CustomerName,CurrencyID": RuntimeError("CurrencyID broke the Acumatica select"),
+            "CustomerID,CustomerName,Terms": [{}],
+            "CustomerID,CustomerName,TaxZone": [{}],
+            "CustomerID,CustomerName,Email": [{}],
+            "CustomerID,CustomerName,Phone1": [{}],
+            "CustomerID,CustomerName,LastModifiedDateTime,Status,Terms,TaxZone,Email,Phone1": [
+                {"CustomerID": "OWNER", "CustomerName": "Owner", "LastModifiedDateTime": "2026-06-24T00:00:00Z"}
+            ],
+        },
+    )
+
+    records, selected_fields, dropped_fields = service._fetch_entity_with_optional_fields(
+        "Customer",
+        required_fields=("CustomerID", "CustomerName"),
+        optional_fields=("LastModifiedDateTime", "Status", "CurrencyID", "Terms", "TaxZone", "Email", "Phone1"),
+        top=200,
+    )
+
+    assert len(records) == 1
+    assert selected_fields == ["CustomerID", "CustomerName", "LastModifiedDateTime", "Status", "Terms", "TaxZone", "Email", "Phone1"]
+    assert dropped_fields == ["CurrencyID"]
+
+
+def test_sync_payment_applications_warns_and_projects_from_payments_when_source_unavailable():
+    service = _service_with_entity_sets(
+        [],
+        tables={
+            "acumatica_payments": [
+                {
+                    "reference_nbr": "PAY-001",
+                    "document_type": "Payment",
+                    "customer_id": "OWNER",
+                    "payment_method": "Check",
+                    "payment_ref": "CHK-1",
+                    "application_date": "2026-06-24",
+                    "description": "Owner payment",
+                    "payment_amount": 1500,
+                }
+            ],
+            "acumatica_ar_invoices": [{"customer": "OWNER", "project": "25-125"}],
+            "projects": [{"id": 43, "acumatica_project_id": "25-125"}],
+            "prime_contracts": [{"id": "pc-1", "project_id": 43}],
+            "prime_contract_payments": [],
+        },
+    )
+
+    service._fetch_payment_application_records = lambda _cursor: (_ for _ in ()).throw(RuntimeError("no historical lines"))
+
+    result = service._sync_payment_applications(None)
+
+    assert result.projected == 1
+    assert result.upserted == 0
+    assert result.warnings
+    assert "no historical lines" in result.warnings[0]
+    assert len(service.supabase.tables["prime_contract_payments"]) == 1

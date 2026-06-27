@@ -23,10 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EmptyState, SectionHeader } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
 import { Text } from "@/components/ds/text";
 import { Spinner } from "@/components/ui/spinner";
 import { Stack } from "@/components/layout/stack";
+import { SectionAction, SectionRuleHeading } from "@/components/layout";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { apiFetch } from "@/lib/api-client";
@@ -210,14 +211,13 @@ export function RelatedItemsTab({
 
   return (
     <Stack gap="md">
-      <SectionHeader
-        title="Related Items"
-        count={items.length}
-        action={
-          <Button size="sm" variant="outline" onClick={() => setShowDialog(true)}>
-            <Link2 className="mr-1.5 h-4 w-4" />
+      <SectionRuleHeading
+        label="Related Items"
+        actions={
+          <SectionAction onClick={() => setShowDialog(true)}>
+            <Link2 className="h-4 w-4" />
             Link Item
-          </Button>
+          </SectionAction>
         }
       />
 

@@ -208,6 +208,7 @@ export function buildInvoiceTableColumns(
       id: "gross_amount",
       label: "Gross Amount",
       defaultVisible: true,
+      align: "right" as const,
       render: (invoice) => (
         <span className="font-medium tabular-nums">
           {formatCurrency(invoice.gross_amount ?? invoice.total_amount)}
@@ -220,6 +221,7 @@ export function buildInvoiceTableColumns(
       id: "net_amount",
       label: "Net Amount",
       defaultVisible: true,
+      align: "right" as const,
       render: (invoice) => (
         <span className="tabular-nums">
           {formatCurrency(invoice.net_amount)}
@@ -278,6 +280,7 @@ export function buildInvoiceTableColumns(
       id: "paid_amount",
       label: "Paid Amount",
       defaultVisible: true,
+      align: "right" as const,
       render: (invoice) => (
         <span className="tabular-nums">
           {formatCurrency(invoice.paid_amount)}
@@ -323,6 +326,7 @@ export function buildInvoiceTableColumns(
       id: "total_contract_amount",
       label: "Total Contract Amount",
       defaultVisible: false,
+      align: "right" as const,
       render: (invoice) => (
         <span className="tabular-nums">
           {formatCurrency(invoice.total_contract_amount)}

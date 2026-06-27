@@ -1,0 +1,12 @@
+Retrieving project…
+Fetching cron jobs for meganharrisons-projects/alleato-hub
+> 7 cron jobs found for meganharrisons-projects/alleato-hub (disabled) [169ms]
+
+  Path                               Schedule
+  /api/cron/acumatica-sync           0 12 * * *
+  /api/cron/attribution-rules        0 8 * * 1
+  /api/cron/daily-flags              0 6 * * *
+  /api/cron/decay-memories           0 4 * * 0
+  /api/cron/graph-embed              0 7 * * *
+  /api/cron/graph-sync               0 6 * * *
+  /api/cron/progress-reports         0 8 * * *

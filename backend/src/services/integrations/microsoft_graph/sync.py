@@ -877,8 +877,11 @@ def run_graph_sync(
     # the newly-ingested docs (candidate-based skip dedupes), per affected project,
     # then refreshes each project's L2 synthesis (empty-delta guard keeps quiet
     # projects free). Bounded + non-fatal; the daily backstop sweep catches any
-    # overflow. Skipped when embedding is off (no new embedded docs to extract).
-    if run_embedding:
+    # overflow. This must not be gated only on inline embedding: Teams-only
+    # scheduled phases intentionally skip embedding, while the daily sweep is a
+    # safety net, not the primary trigger.
+    communications_synced = summary["outlook"] + summary["teams"] + summary["teams_dm"]
+    if communications_synced > 0:
         try:
             from src.services.intelligence.project_synthesizer import synthesize_new_comms_since
 
@@ -895,6 +898,11 @@ def run_graph_sync(
             logger.error("[GraphSync] Event-driven extraction failed (non-fatal): %s", e)
             summary["errors"].append(f"Intelligence extraction failed: {e}")
             summary["intelligence_extraction"] = {"error": str(e)}
+    else:
+        summary["intelligence_extraction"] = {
+            "status": "skipped",
+            "reason": "no_new_outlook_or_teams_communications",
+        }
 
     # Report status accurately — "complete" only if no errors
     status = "complete" if not summary["errors"] else "complete_with_errors"

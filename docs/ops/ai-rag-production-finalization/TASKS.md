@@ -1,0 +1,1060 @@
+# AI/RAG Production Finalization Tasks
+
+Date created: 2026-06-25
+Owner: Alleato AI
+Linear parent: AAI-636
+Status: In Progress
+
+This is the canonical step-by-step task list and progress ledger for the AI data pipeline and RAG production-finalization program. Update this file whenever a phase, implementation slice, provider change, data repair, deletion, or verification milestone completes.
+
+Target architecture:
+
+- [AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md](../../architecture/AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md)
+
+Active handoff:
+
+- [2026-06-25-S91-ai-rag-production-finalization-audit.md](../handoffs/2026-06-25-S91-ai-rag-production-finalization-audit.md)
+
+Active project/task generation slice:
+
+- [2026-06-25-project-assignment-task-generation-e2e.md](../tasks/2026-06-25-project-assignment-task-generation-e2e.md)
+
+Active Acumatica readiness slice:
+
+- [2026-06-26-acumatica-sync-production-readiness.md](../tasks/2026-06-26-acumatica-sync-production-readiness.md)
+
+Active AI assistant architecture slice:
+
+- [2026-06-26-ai-assistant-final-architecture-verification.md](../tasks/2026-06-26-ai-assistant-final-architecture-verification.md)
+
+Active event-driven intelligence/task write slice:
+
+- [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
+
+Active cleanup/deletion proof slice:
+
+- [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
+
+Active Outlook project Emails repair:
+
+- [2026-06-26-outlook-project-emails-intake.md](../tasks/2026-06-26-outlook-project-emails-intake.md)
+
+Active env/database cleanup proof slice:
+
+- [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
+
+Completed legacy Fireflies file-ingest removal slice:
+
+- [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
+
+Completed legacy daily digest removal slice:
+
+- [2026-06-26-remove-legacy-daily-digest-backend-path.md](../tasks/2026-06-26-remove-legacy-daily-digest-backend-path.md)
+
+Evidence directory:
+
+- [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
+
+## Master Checklist
+
+### Phase 1: Architecture And Source Of Truth
+
+- [x] Create authoritative target architecture document before implementation or deletion.
+- [x] Record that the architecture document is the target state, not proof of production parity.
+- [x] Create parent Linear issue and follow-on sub-issues.
+- [x] Create local task and handoff evidence ledgers.
+- [x] Inventory active production source paths and provider schedules.
+- [x] Keep this `TASKS.md` updated after each phase or major implementation task.
+
+### Phase 2: Current-State Verification
+
+- [x] Run AI chat architecture verifier.
+- [x] Run Microsoft Graph embedding contract verifier.
+- [x] Run source-specific RAG verifier.
+- [x] Run source lifecycle verifier.
+- [x] Run meeting vectorization verifier.
+- [x] Run Acumatica sync health verifier.
+- [x] Run Microsoft assistant health verifier.
+- [x] Run Render AI provider health verifier.
+- [ ] Run final all-pipeline verification bundle after implementation cleanup.
+
+### Phase 3: Fireflies Meeting Transcript Pipeline
+
+- [x] Recover recent eligible meeting vectorization after PM projection guard failure.
+- [x] Reprocess known recent missing Fireflies meetings through canonical `run_full_pipeline`.
+- [x] Drain or classify Fireflies ingestion errors inside the two-month operational concern window; older errors are historical and not active blockers unless needed for a historical reconstruction request.
+- [x] Fix provider JSON-mode/non-JSON extraction noise or classify it with a fail-loud follow-up.
+- [ ] Verify meeting transcripts sync automatically, save, embed, assign projects, create tasks where appropriate, and retrieve through RAG.
+
+### Phase 4: Outlook Email Pipeline
+
+- [x] Confirm Graph webhook plus scheduled reconciliation is the target trigger model.
+- [x] Confirm Graph subscription reconciliation cron exists and is active in Render.
+- [x] Repair stale cached Outlook intake for Microsoft Executive Assistant health.
+- [x] Verify Outlook messages from the one-week operational concern window sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
+- [ ] Verify Outlook data is available to every relevant AI assistant through the finalized RAG/tool path.
+
+### Phase 5: Microsoft Teams Pipeline
+
+- [x] Confirm Teams channel and DM Render cron jobs are active.
+- [x] Confirm source-specific Teams RAG checks live Microsoft Graph and indexed Supabase fallback with explicit observability.
+- [x] Verify Teams message sync, embedding, project assignment, task generation, and RAG retrieval end to end for the one-week operational concern window.
+
+### Phase 6: SharePoint Pipeline
+
+- [x] Confirm Graph sync target includes SharePoint reconciliation.
+- [x] Verify SharePoint documents sync/download/OCR/image extraction/embedding/project assignment end to end.
+- [x] Verify SharePoint documents are retrievable through RAG with citations.
+
+### Phase 7: Uploaded PDF And Document Processing
+
+- [x] Verify upload event creates canonical `document_metadata` row.
+- [x] Verify OCR runs automatically for eligible uploads.
+- [x] Verify image extraction and AI vision/page intelligence for drawings, plans, specs, RFIs, submittals, invoices, contracts, and manuals.
+- [x] Verify clean searchable text, extracted metadata, chunks, embeddings, and AI retrieval for tracked eligible uploads after deploy/backfill.
+
+### Phase 8: Embeddings, Vector Search, And RAG
+
+- [x] Recover source lifecycle/project assignment verifier gate.
+- [x] Recover source-specific RAG observability verifier gate.
+- [x] Validate finalized chunking strategy and duplicate chunk elimination.
+- [x] Verify metadata filters, project filters, permissions, citations/reference links, and retrieval quality.
+- [x] Remove or migrate legacy retrieval paths after import/route/provider/database-write proof.
+- [x] Verify every AI assistant uses the finalized RAG pipeline.
+
+### Phase 9: Project Assignment And Task Generation
+
+- [x] Repair deterministic generated-task project links from linked source documents.
+- [x] Preserve manual review routing for ambiguous project assignment.
+- [x] Verify project assignment for emails, meetings, Teams, SharePoint, uploads, PDFs, drawings, submittals, RFIs, contracts.
+- [x] Verify unmatched items route to manual review with confidence scoring.
+- [x] Verify task generation from meetings, emails, Teams, document analysis, and AI extraction.
+- [x] Verify duplicate task prevention and accurate owner/project association.
+
+### Phase 10: Acumatica Sync
+
+- [x] Align repo and verifier contract to the final twice-daily Acumatica schedule.
+- [x] Update live Render Acumatica cron schedule to twice daily.
+- [x] Resume live Render Acumatica cron.
+- [x] Trigger an immediate Acumatica run.
+- [x] Verify Acumatica sync entities are fresh and successful after the triggered or next scheduled run.
+- [x] Verify retries, logging, statistics, and duplicate-import prevention.
+
+### Phase 11: AI Assistants And Tool Architecture
+
+- [x] Record AI SDK MCP architecture gap.
+- [x] Resolve AAI-641 by fully implementing AI SDK MCP discovery, merge, trace, and close in the live `/api/ai-assistant/chat` stream path.
+- [x] Verify every assistant uses finalized prompt, tool calling, and RAG architecture.
+- [x] Verify assistants retrieve expected context end to end.
+
+### Phase 12: Cleanup And Deletion
+
+- [x] For each deletion candidate in AAI-703, prove inactive status through imports, route references, provider schedules, database writes, and verifier output.
+- [x] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
+- [x] Remove AAI-703-proven obsolete manual Graph/email eval implementations.
+- [x] Repair AAI-705 database inventory drift so active AI/RAG/workflow tables are documented instead of false orphan candidates.
+- [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
+- [ ] Remove unused environment variables and orphaned database code where safe.
+- [ ] Confirm the codebase has one production implementation for every major workflow.
+
+### Phase 13: Final Production Readiness
+
+- [ ] Every ingestion pipeline executes successfully.
+- [ ] Every supported document reaches the vector database.
+- [ ] Every supported document is retrievable through RAG.
+- [ ] OCR output is validated.
+- [ ] AI vision processing is validated.
+- [ ] Project assignment is validated.
+- [ ] Task generation is validated.
+- [ ] Error handling and retry logic are exercised.
+- [ ] Logging and monitoring are operational.
+- [ ] Final deliverables are produced.
+
+## Progress Notes
+
+### 2026-06-25: Target Architecture Created
+
+- Created the authoritative target architecture document before implementation or deletion.
+- Evidence: [AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md](../../architecture/AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md)
+- Linear: AAI-637 under AAI-636.
+
+### 2026-06-25: Initial Verifier Results Recorded
+
+- Passed: chat architecture with warning, Graph embedding contract.
+- Failed initially: source-specific RAG, source lifecycle, meeting vectorization.
+- Evidence:
+  - [chat-architecture.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture.txt)
+  - [graph-embedding.txt](../evidence/2026-06-25-ai-rag-production-finalization/graph-embedding.txt)
+  - [source-specific.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific.txt)
+  - [source-lifecycle.json](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle.json)
+  - [meetings.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings.txt)
+
+### 2026-06-25: AAI-640 Recent Fireflies Meeting Vectorization Recovered
+
+- Fixed canonical pipeline handling so PM final projection guard failures stay loud but do not fail terminal ingestion/vectorization.
+- Reprocessed recent eligible missing meetings through the canonical pipeline.
+- Verification passed at that point with 75/75 recent eligible meetings embedded.
+- Remaining: historical Fireflies error backlog and provider JSON-mode noise.
+- Evidence:
+  - [meetings-after-fireflies-final-fix.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-fireflies-final-fix.txt)
+  - [fireflies-reprocess-final-missing.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-reprocess-final-missing.json)
+
+### 2026-06-25: AAI-639 Source Lifecycle And Project Assignment Gate Recovered
+
+- Updated source lifecycle verifier semantics to measure project disposition instead of only direct assignment.
+- Repaired 162 deterministic task/source-document project links.
+- Verification passed: source lifecycle and Fireflies task integrity.
+- Evidence:
+  - [source-lifecycle-after-project-assignment-fix.json](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-project-assignment-fix.json)
+  - [fireflies-task-integrity-after-project-assignment-fix.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-integrity-after-project-assignment-fix.json)
+- Commit: `914b2b56dea0e6a8f07428a968eee5dde5de9207`
+
+### 2026-06-25: AAI-638 Source-Specific RAG Observability Gate Recovered
+
+- Added explicit Teams row-count and indexed fallback observability to the canonical source-specific Teams evidence block.
+- Added focused Jest regression assertions.
+- Verification passed: focused Jest test and `npm run rag:verify:source-specific`.
+- Evidence:
+  - [source-specific-rag-unit-after-observability-fix.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-rag-unit-after-observability-fix.txt)
+  - [source-specific-after-observability-fix.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-after-observability-fix.txt)
+- Commit: `8719f2a0d4ce6f7466c6b9d69c151f6990340e9b`
+
+### 2026-06-25: AAI-653 Provider Schedule Reconciliation Started
+
+- Created provider schedule reconciliation task and Linear issue AAI-653.
+- Refreshed Render and Vercel provider state.
+- Confirmed Render owns active Graph, Teams, Fireflies, and source health schedules.
+- Confirmed disabled Vercel crons still exist for Graph sync, Graph embed, and Acumatica and remain deletion candidates after proof.
+- Evidence:
+  - [render-services-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/render-services-aai-653.json)
+  - [vercel-crons-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/vercel-crons-aai-653.txt)
+
+### 2026-06-25: Acumatica Schedule Restored To Target Cadence
+
+- Updated Acumatica schedule contract to twice daily (`0 0,12 * * *`) in repo config and verifier.
+- Patched live Render Acumatica cron schedule through the Render API.
+- Resumed live Render Acumatica cron.
+- Triggered immediate Acumatica run `crn-d827cfm7r5hc73e7lp20-1782421595`.
+- The Render-triggered run did not update health within the short poll window, so the guarded canonical Acumatica entrypoint was run directly and health passed afterward.
+- Evidence:
+  - [acumatica-render-schedule-patch-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-schedule-patch-aai-653.json)
+  - [acumatica-render-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-resume-aai-653.json)
+  - [acumatica-render-trigger-run-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-render-trigger-run-aai-653.json)
+  - [acumatica-sync-health-after-trigger-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-trigger-aai-653.txt)
+
+### 2026-06-26: AAI-697 Acumatica Production Readiness Verified
+
+- Fixed the Acumatica health verifier's stale threshold so it matches the final twice-daily Render cron cadence plus scheduler/provider jitter.
+- Verified live Render cron state: `alleato-acumatica-financial-sync` is active on `0 0,12 * * *`.
+- Verified required Acumatica entities have current successful sync state and stats.
+- Verified warning/fallback behavior is logged instead of silently failing:
+  - unsupported customer fields are dropped with persisted warnings;
+  - missing historical payment-application endpoint is logged with fallback projection from `acumatica_payments` where customer-to-project mapping is unique.
+- Verified duplicate prevention:
+  - upsert/conflict-key code guardrails exist;
+  - live unique indexes exist for Acumatica raw/projection keys;
+  - 18 duplicate probes returned zero duplicate groups.
+- Verification passed:
+  - `npm run verify:acumatica-sync-health`
+  - delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+- Evidence:
+  - [acumatica-sync-health-baseline-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-baseline-aai-697.txt)
+  - [acumatica-sync-health-after-stale-threshold-fix-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-stale-threshold-fix-aai-697.txt)
+  - [acumatica-run-state-duplicate-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-run-state-duplicate-inventory-aai-697.json)
+  - [acumatica-code-guardrail-inventory-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-code-guardrail-inventory-aai-697.json)
+  - [acumatica-logging-stats-duplicate-proof-aai-697.json](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-logging-stats-duplicate-proof-aai-697.json)
+  - [frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-acumatica-verifier-threshold-aai-697.txt)
+
+### 2026-06-26: AAI-699 Event-Driven Outlook/Teams Intelligence Guard Patched
+
+- Replaced the obsolete whole-entrypoint PM high-churn block in the Outlook/Teams project synthesizer with a cumulative bounded PM final-projection budget.
+- Event-driven and daily sweep summaries now report `pm_projection_rows` for task/card/packet projection evidence.
+- Added missing Graph cron projection env in `render.yaml` so Graph-triggered intelligence can use the bounded projection path.
+- Patched live Render `alleato-graph-sync` with the same projection env through the single-key env-var API and verified by read-back.
+- Active-window redrives passed:
+  - Outlook-only: `total_synced=2`, `embed.embedded=1`, no intelligence extraction errors.
+  - Teams-only: `total_synced=1`, `teams_dm=1`, no intelligence extraction errors.
+- Verification passed: compileall, `22 passed` across task-writer/DB-pressure/Graph-sync tests, `7 passed` Render blueprint tests, source lifecycle, project attribution, Microsoft assistant health, project-intelligence live paths, source-specific RAG, and chat architecture.
+- Evidence:
+  - [event-driven-intelligence-write-guard-aai-699.md](../evidence/2026-06-25-ai-rag-production-finalization/event-driven-intelligence-write-guard-aai-699.md)
+- Task:
+  - [2026-06-26-event-driven-intelligence-task-write-guard.md](../tasks/2026-06-26-event-driven-intelligence-task-write-guard.md)
+
+### 2026-06-26: AAI-703 Legacy Cleanup Proof And First Deletions
+
+- Completed the first deletion/import proof slice for remaining legacy AI/RAG implementations.
+- Deleted two proven-inactive manual eval/bootstrap scripts:
+  - `backend/src/scripts/eval_graph_sync.py`
+  - `backend/src/scripts/eval_mine_emails.py`
+- Removed stale README advertising and generated DB-inventory references for those scripts.
+- Added a guardrail to `npm run rag:verify:chat-architecture` so those removed paths cannot silently reappear.
+- Kept active or not-yet-replaced paths with explicit classification:
+  - local admin RAG eval scripts remain `active-keep`;
+  - contextual embedding backfill remains `migrate-first`;
+  - Outlook RAG-to-app metadata bridge remains `manual/dev-only`.
+- Evidence:
+  - [2026-06-26-ai-rag-legacy-cleanup-proof.md](../tasks/2026-06-26-ai-rag-legacy-cleanup-proof.md)
+  - [legacy-cleanup-candidate-inventory-aai-703.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-cleanup-candidate-inventory-aai-703.md)
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - `backend/.venv/bin/python -m compileall -q backend/src/scripts backend/src/services/pipeline/contextualize.py`;
+  - `npm run rag:verify:chat-architecture`;
+  - `npm run rag:verify:source-specific`;
+  - `npm run rag:verify:retrieval-contract`;
+  - `npm run rag:verify:client-boundary`;
+  - `npm run rag:verify:backend-client-boundary`;
+  - `npm run rag:verify:metadata-boundary`.
+- Known unrelated blocker:
+  - `npm run db:inventory` could not fully regenerate because `docs/architecture/tables.yaml` is missing live MAIN tables: `document_page_intelligence`, `idea_items`, `rfi_response_tokens`, `rfi_responses`, `spec_drawing_links`, `submittal_ai_review_checks`, `submittal_ai_review_runs`, and `submittal_project_settings`.
+
+### 2026-06-26: AAI-705 Env/Database Cleanup Proof And Inventory Drift Repaired
+
+- Proved the eight DB inventory drift tables from AAI-703 are active, not orphaned:
+  - `document_page_intelligence`
+  - `spec_drawing_links`
+  - `rfi_responses`
+  - `rfi_response_tokens`
+  - `submittal_project_settings`
+  - `submittal_ai_review_runs`
+  - `submittal_ai_review_checks`
+  - `idea_items`
+- Documented those tables in `docs/architecture/tables.yaml` and regenerated:
+  - `frontend/src/components/dev-tools/db-inventory.generated.ts`
+  - `frontend/src/components/dev-tools/db-inventory.generated.json`
+  - `docs/architecture/TABLE-LIST.md`
+- `npm run db:inventory` now passes schema drift and generated a 458-table inventory.
+- `npm run db:inventory -- --check-only` passes.
+- First env cleanup candidates were classified:
+  - `LEGACY_DAILY_DIGEST_ENABLED` moved to AAI-708 and is being removed with the legacy backend daily digest route/job path.
+  - `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` moved to AAI-706 and is being removed with the legacy file-ingest route.
+  - `GRAPH_API_INGESTION_ENABLED` is an active provider/web-service pressure guard.
+  - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` are migrate-first Outlook compatibility gates.
+- Evidence:
+  - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
+  - [env-db-cleanup-candidate-inventory-aai-705.md](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-candidate-inventory-aai-705.md)
+
+### 2026-06-26: AAI-706 Legacy Fireflies File-Ingest Removal Complete
+
+- Removed the disabled legacy `POST /api/ingest/fireflies` route,
+  `IngestRequest` model, `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` escape hatch,
+  and unused `FirefliesIngestionPipeline.ingest_file(...)` method.
+- Updated backend tests to assert the legacy file route is 404 and the canonical
+  `/api/ingest/fireflies/recent` route invokes
+  `sync_recent_transcripts(...)`.
+- Removed stale legacy route/env references from current API docs, migrated API
+  route docs, and public OpenAPI JSON/YAML.
+- Proof shows the active production Fireflies path is
+  `POST /api/ingest/fireflies/recent` plus Render cron
+  `alleato-fireflies-sync`, both using
+  `FirefliesIngestionPipeline.sync_recent_transcripts(...)`.
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - backend compileall for changed backend files;
+  - `backend/.venv/bin/python -m pytest backend/tests/test_api_routes.py backend/tests/test_ingestion.py -q`;
+  - OpenAPI JSON parse check;
+  - live reference scan excluding task evidence;
+  - `npm run rag:verify:meetings`;
+  - `npm run rag:verify:chat-architecture`.
+- Evidence:
+  - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
+  - [legacy-fireflies-file-ingest-removal-aai-706.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-fireflies-file-ingest-removal-aai-706.md)
+
+### 2026-06-26: AAI-708 Legacy Daily Digest Backend Removal Complete
+
+- Removed the disabled backend legacy daily digest generation route
+  `POST /api/digests/daily/generate`, `LEGACY_DAILY_DIGEST_ENABLED` runtime
+  gate, `backend/src/services/daily_digest.py`, disabled standalone
+  `backend/scripts/generate_daily_recap.py`, and the APScheduler
+  `daily_digest` registration/job/wrapper/email helper.
+- Proof shows the canonical executive daily brief owner is the frontend
+  AI Ops runner `frontend/scripts/run-executive-daily-brief.ts` plus the
+  executive daily brief workflow/ledger, not the backend legacy daily digest.
+- Retained `GET /api/digests/daily/{date}` as read-only historical
+  `daily_recaps` access.
+- Verification passed:
+  - delegated `cd frontend && npm run typecheck:changed`;
+  - backend compileall for changed backend files;
+  - `backend/.venv/bin/python -m pytest backend/tests/test_scheduler_graph_jobs.py backend/tests/test_api_routes.py -q`;
+  - live reference scan for deleted env/route/service/script;
+  - `npm run rag:verify:metadata-boundary`;
+  - `npm run rag:verify:executive-daily-brief-gateway`;
+  - `npm run rag:verify:chat-architecture`.
+- Evidence:
+  - [2026-06-26-remove-legacy-daily-digest-backend-path.md](../tasks/2026-06-26-remove-legacy-daily-digest-backend-path.md)
+  - [legacy-daily-digest-removal-aai-708.md](../evidence/2026-06-25-ai-rag-production-finalization/legacy-daily-digest-removal-aai-708.md)
+
+### 2026-06-26: AAI-698 AI Assistant Routing And RAG Architecture Verified
+
+- Repaired live `/api/ai-assistant/chat` deterministic routing gaps that forced source-backed assistant workflows into slow model/tool loops or ambiguous follow-up handling.
+- Added preview-only RFI routing for explicit RFI create/draft/log prompts; no RFI row is written until confirmed.
+- Added direct semantic source lookup for Teams/source questions with persisted `intentPlanner`, `sourceLookupIntentRouter`, and `semanticSearch` traces.
+- Added executive briefing metadata lookup for follow-ups like "When was this regenerated?" against `daily_recaps.recap_kind=executive_briefing`, without asking for a project.
+- Added explicit personal-task source markers/citations for task table answers: `tasks.assignee_person_id / tasks.assignee_name / tasks.assignee_email`.
+- Added a permission-scoped `projects.name` fallback resolver for packet-first project briefings when intelligence-target resolution misses named projects like Westfield.
+- Added direct project briefing synthesis from loaded `getProjectBriefingSnapshot` plus `semanticSearch`, preventing the 120s Westfield model/tool-loop timeout and preserving `serverBusinessContextPreflight`, `getProjectBriefingSnapshot`, and `semanticSearch` traces.
+- Verification passed:
+  - `npm run rag:verify:assistant-routing` passed 6/6.
+  - `npm run rag:verify:chat-architecture` passed.
+  - `npm run rag:verify:assistant-operational-readiness` passed.
+  - `npm run rag:verify:source-specific` passed.
+  - `npm run verify:microsoft-assistant-health -- --json` passed.
+  - `npm run rag:verify:source-lifecycle -- --days 7` passed.
+  - `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution` passed.
+  - Delegated `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck` passed.
+- Residual risk: the Outlook redrive completed source sync and embedding, but the intelligence extraction phase reported the existing high-churn AI/intelligence write guard for source-signal, insight-card, packet, and task writes. Track that as the next event-driven intelligence/task-write cleanup slice before final platform readiness.
+- Evidence:
+  - [assistant-routing-after-direct-project-planner-trace-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-routing-after-direct-project-planner-trace-aai-698.txt)
+  - [chat-architecture-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-final-aai-698.txt)
+  - [assistant-operational-readiness-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-698.txt)
+  - [source-specific-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-698.txt)
+  - [microsoft-assistant-health-final-aai-698.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-aai-698.json)
+  - [source-lifecycle-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-final-aai-698.txt)
+  - [project-attribution-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/project-attribution-final-aai-698.txt)
+  - [frontend-typecheck-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-final-aai-698.txt)
+
+### 2026-06-25: Health And Assistant Crons Restored
+
+- Resumed live Render crons:
+  - `alleato-rag-health`
+  - `alleato-ai-provider-health`
+  - `alleato-microsoft-executive-assistant-check`
+- Triggered immediate runs for all three restored crons.
+- Render AI Gateway health passes.
+- Resumed checks surfaced stale Outlook cache and two newly missing Fireflies embeddings; both were repaired in the follow-up provider reconciliation steps below.
+- Evidence:
+  - [render-health-cron-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/render-health-cron-resume-aai-653.json)
+  - [render-health-cron-trigger-runs-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/render-health-cron-trigger-runs-aai-653.json)
+  - [render-ai-health-after-resume-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/render-ai-health-after-resume-aai-653.txt)
+  - [microsoft-assistant-health-after-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-after-resume-aai-653.json)
+  - [meetings-after-health-cron-resume-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-health-cron-resume-aai-653.txt)
+
+### 2026-06-25: AAI-653 Provider Schedule Reconciliation Completed
+
+- Re-drove two newly missing Fireflies meetings through canonical `run_full_pipeline`:
+  - `01KVD86PYMPG69CHFZ9CPZRQRC` - Ulta Beauty Fresno Weekly Meeting
+  - `01KVV1ZXBWSG077B23VWVA0F7V` - Quarterly Meeting Brainstorm
+- Both completed successfully.
+- `npm run rag:verify:meetings` passed after re-drive with 75/75 recent meetings covered.
+- `npm run rag:verify:source-lifecycle` passed after re-drive.
+- Evidence:
+  - [fireflies-redrive-missing-after-health-resume-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-redrive-missing-after-health-resume-aai-653.json)
+  - [meetings-after-redrive-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-redrive-aai-653.txt)
+  - [source-lifecycle-after-provider-reconcile-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-provider-reconcile-aai-653.txt)
+
+### 2026-06-25: AAI-641 AI SDK MCP Tool Architecture Recovered
+
+- Wired the existing `createAiAssistantMcpTools()` helper into the live `/api/ai-assistant/chat` `handler-v2.ts` stream path.
+- Discovered safe MCP tools are now merged into the Strategist `streamText` toolset.
+- MCP discovery success/failure trace is persisted in chat metadata with the rest of the tool trace.
+- MCP clients are closed on stream finish and stream error.
+- Verification passed: focused MCP policy unit test and chat architecture verifier.
+- Remaining warning: archived audit doc does not identify the current live AI SDK MCP implementation; this is documentation cleanup, not a live route failure.
+- Evidence:
+  - [chat-architecture-after-mcp-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-mcp-wire-aai-641.txt)
+  - [mcp-tools-unit-after-chat-wire-aai-641.txt](../evidence/2026-06-25-ai-rag-production-finalization/mcp-tools-unit-after-chat-wire-aai-641.txt)
+
+### 2026-06-25: AAI-682 Retrieval Boundary Verifiers Recovered
+
+- Cleared the RAG/app database ownership boundary failures for the retrieval finalization slice.
+- App metadata reads in parser/embedder and document-intelligence fallbacks no longer pull heavy `document_metadata.content/raw_text` in AI/RAG paths.
+- Admin AI work-runs now reads RAG-owned `source_sync_runs` through `createRagServiceClient()`.
+- Outlook digest and Microsoft Executive Assistant triage now use Outlook intake AI DB resolver helpers for `outlook_email_intake` tables.
+- Verification passed:
+  - `npm run rag:verify:metadata-boundary`
+  - `npm run rag:verify:client-boundary`
+  - `npm run rag:verify:backend-client-boundary`
+  - delegated sub-agent typecheck: `npm --prefix frontend run typecheck`
+  - focused frontend lint for touched TypeScript files
+  - Python compile for touched backend files
+- Evidence:
+  - [metadata-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-boundary-fix-aai-682.txt)
+  - [client-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-boundary-fix-aai-682.txt)
+  - [backend-client-boundary-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-boundary-fix-aai-682.txt)
+  - [frontend-typecheck-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-boundary-fix-aai-682.txt)
+  - [focused-compile-lint-after-boundary-fix-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/focused-compile-lint-after-boundary-fix-aai-682.txt)
+- Remaining AAI-682 closure gates: live permission behavior, citation/reference-link proof, and deletion/migration proof for any legacy retrieval candidates.
+
+### 2026-06-26: AAI-690 Document Assignment And Task Evidence Extended
+
+- Verified live assignment/task state for SharePoint, OneDrive, uploaded documents, PDFs, drawings, submittals, contracts, manual-review candidates, and document-derived tasks.
+- Applied 7 deterministic OneDrive/SharePoint project assignments from source-path project numbers.
+- Left SharePoint AP checks in review instead of forcing assignment: 81 parsed check documents had 0 safe exact accounting/project matches.
+- Fixed Fireflies legacy action-item task writes by recording an explicit prompt version required by the task-quality trigger.
+- Verified active-window duplicate task prevention: 0 duplicate groups under the user freshness policy.
+- Re-ran canonical source lifecycle verification after Fireflies redrive; it passes.
+- Repaired stale legacy SharePoint lifecycle rows so unassigned SharePoint records route to project-assignment review instead of terminal complete.
+- Repaired generated task scalar/array project mismatches; final active-window task coverage has 0 duplicate groups and 0 scalar/array mismatches.
+- Evidence:
+  - [document-source-assignment-task-inventory-after-source-path-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-source-assignment-task-inventory-after-source-path-repair-aai-690.json)
+  - [document-analysis-task-generation-inventory-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/document-analysis-task-generation-inventory-aai-690.json)
+  - [task-generation-active-window-duplicates-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-active-window-duplicates-aai-690.json)
+  - [source-lifecycle-after-aai-690-fireflies-redrive.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-aai-690-fireflies-redrive.txt)
+  - [sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-legacy-lifecycle-review-repair-applied-aai-690.json)
+  - [task-generation-final-coverage-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-final-coverage-aai-690.json)
+
+### 2026-06-25: AAI-682 Retrieval Contract Verifier Added
+
+- Added `npm run rag:verify:retrieval-contract`.
+- The verifier embeds a live query, runs `search_document_chunks`, and asserts:
+  - project filtering holds for returned rows
+  - source-type filtering holds
+  - duplicate chunk ids are not returned in top results
+  - returned documents have citation/reference metadata in `rag_document_metadata`
+  - semantic/source-specific retrieval code keeps permission guard hooks for service-role access
+- Verification passed against live RAG data for project `24109`, with 8 project-filtered rows, 5 source-filtered rows, and 5 metadata references found.
+- Delegated typecheck passed after each tiny verifier edit.
+- Evidence:
+  - [retrieval-contract-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-aai-682.txt)
+- Legacy retrieval inventory found no duplicate production implementation safe to delete in this slice. Active paths are recorded separately from manual/dev-only cleanup candidates.
+
+### 2026-06-25: AAI-682 Legacy Retrieval Inventory Completed
+
+- Classified live retrieval paths, active backend agent paths, active admin eval harness paths, and manual/dev-only cleanup candidates.
+- No production retrieval code was deleted because import/route proof showed the old-looking paths are still active or locally reachable.
+- Evidence:
+  - [retrieval-legacy-candidate-inventory-aai-682.md](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-legacy-candidate-inventory-aai-682.md)
+- AAI-682 retrieval slice is now ready for final closeout verification/publish status, but broad AI/RAG production readiness still requires the remaining pipeline-finalization phases.
+
+### 2026-06-25: AAI-682 Retrieval Slice Closed
+
+- Final closeout verifier bundle passed:
+  - `npm run rag:verify:chunk-integrity -- --days=2`
+  - `npm run rag:verify:hybrid-ranking`
+  - `npm run rag:verify:source-specific`
+  - `npm run rag:verify:retrieval-contract`
+  - `npm run rag:verify:response-contract`
+  - `npm run rag:verify:assistant-operational-readiness`
+  - `npm run rag:verify:metadata-boundary`
+  - `npm run rag:verify:client-boundary`
+  - `npm run rag:verify:backend-client-boundary`
+- Evidence:
+  - [chunk-integrity-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-final-aai-682.txt)
+  - [hybrid-ranking-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-final-aai-682.txt)
+  - [source-specific-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-682.txt)
+  - [retrieval-contract-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/retrieval-contract-final-aai-682.txt)
+  - [response-contract-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/response-contract-final-aai-682.txt)
+  - [assistant-operational-readiness-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-682.txt)
+  - [metadata-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-final-aai-682.txt)
+  - [client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-final-aai-682.txt)
+  - [backend-client-boundary-final-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-final-aai-682.txt)
+- AAI-682 is closed as a retrieval-slice deliverable. The overall production-finalization program remains open for the other pipeline and final all-system gates.
+
+### 2026-06-25: AAI-690 Project Assignment And Task Generation Slice Started
+
+- Created Linear issue AAI-690 for end-to-end project assignment and automatic task generation verification/repair.
+- Created active task ledger before implementation changes.
+- Embedded the operational freshness windows:
+  - Fireflies backlog errors older than two months are historical unless needed for historical reconstruction.
+  - Outlook and Teams backlog errors older than one week are historical unless needed for historical reconstruction.
+- Embedded the typecheck delegation rule: every TS/JS implementation change must be followed by delegated sub-agent typecheck.
+- Evidence:
+  - [2026-06-25-project-assignment-task-generation-e2e.md](../tasks/2026-06-25-project-assignment-task-generation-e2e.md)
+
+### 2026-06-25: AAI-690 Fireflies Task Link Repair Completed
+
+- Inventoried active project-assignment and generated-task code paths.
+- Baseline checks:
+  - `npm run rag:verify:source-lifecycle -- --days 7` passed.
+  - `PROJECT_ATTRIBUTION_AUDIT_DAYS=7 npm run verify:project-attribution` passed.
+  - Fireflies task integrity initially failed over the two-month operational concern window because stale tasks had empty/mismatched task project arrays.
+- Added scoped repair controls to `backfill_project_assignments_from_compiler_jobs.mjs`:
+  - `--source-system fireflies`
+  - `--tasks-only`
+- Applied Fireflies task-only deterministic repair:
+  - 76 Fireflies task links updated.
+  - 0 document assignment rows updated.
+- Added Python guardrail coverage proving new Fireflies task upserts persist task project arrays.
+- Post-repair checks passed:
+  - Fireflies task integrity over 60 days.
+  - Fireflies task-only backfill postcheck reports 0 eligible stale links.
+  - Source lifecycle still passes over the 7-day Outlook/Teams concern window.
+- Follow-up duplicate/link check found no duplicate generated-task groups, but found 48 Fireflies task-level attribution rows where the scalar project was set and the project array was empty.
+- Repaired task attribution scripts so the project array is updated alongside future scalar project assignment.
+- Applied Fireflies-only task-attribution sync:
+  - 5 Fireflies tasks assigned from deterministic task text.
+  - 48 existing Fireflies task project arrays synced from scalar project values.
+- Final Fireflies checks now show:
+  - 0 duplicate generated-task groups.
+  - 0 Fireflies scalar/array task project mismatches over 60 days.
+  - Fireflies task integrity passed.
+  - Source lifecycle still passed over 7 days.
+- Delegated bounded typecheck was run after each JS edit and timed out or was externally terminated without TypeScript diagnostics; the delegated no-timeout retry passed.
+- Evidence:
+  - [project-assignment-task-generation-inventory-aai-690.md](../evidence/2026-06-25-ai-rag-production-finalization/project-assignment-task-generation-inventory-aai-690.md)
+  - [fireflies-task-integrity-after-link-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-integrity-after-link-repair-aai-690.json)
+  - [project-assignment-backfill-fireflies-tasks-only-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-assignment-backfill-fireflies-tasks-only-applied-aai-690.json)
+  - [fireflies-task-link-guardrail-tests-aai-690.txt](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-task-link-guardrail-tests-aai-690.txt)
+  - [task-project-rules-fireflies-sync-applied-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-project-rules-fireflies-sync-applied-aai-690.json)
+  - [generated-task-duplicate-after-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/generated-task-duplicate-after-repair-aai-690.json)
+
+### 2026-06-25: AAI-690 Outlook And Teams Communication Task Generation Restored
+
+- Live coverage found recent Outlook/Teams communications were synced but not being synthesized into tasks:
+  - 454 Outlook email docs in the 7-day window, 369 project-assigned, 0 task rows before repair.
+  - 341 Teams message docs in the 7-day window, 24 project-assigned, 0 task rows before repair.
+  - 0 project synthesizer processing markers.
+- Root causes:
+  - Graph sync only invoked communication intelligence extraction when inline embedding was enabled; Teams-only scheduled phases intentionally run fetch-only.
+  - Project synthesizer let signal-promotion failures abort a document before task writes.
+  - Shared task writer populated scalar project ID but not the task project array when called with only scalar project ID.
+  - A stale unit test referenced deleted email/Teams compiler modules instead of the production `project_synthesizer` path.
+- Repairs:
+  - Event-driven communication extraction now runs after any Outlook, Teams channel, or Teams DM sync that returns new items, regardless of inline embedding.
+  - Signal-promotion failures are logged/recorded but no longer block task writes for the same communication.
+  - Shared task writer now mirrors scalar project ID into the task project array.
+  - Replaced dead compiler tests with active project synthesizer task-writer coverage.
+  - Ran one bounded production Outlook redrive for project 67; it created 1 task with project, project array, owner, and no duplicate group.
+  - Ran one bounded production Teams redrive for project 1011; it created 4 tasks with project, project arrays, owners, and no duplicate group.
+- Remaining AAI-690 work:
+  - Closed in the 2026-06-26 progress note. Continue with the next production-finalization phase.
+- Evidence:
+  - [project-synthesizer-status-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-status-aai-690.json)
+  - [project-synthesizer-dry-run-project-67-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-dry-run-project-67-aai-690.json)
+  - [project-synthesizer-applied-project-67-after-patch-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-applied-project-67-after-patch-aai-690.json)
+  - [project-synthesizer-created-task-project-array-repair-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/project-synthesizer-created-task-project-array-repair-aai-690.json)
+  - [task-generation-live-coverage-after-synthesis-fix-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-synthesis-fix-aai-690.json)
+  - [communications-task-generation-tests-aai-690.txt](../evidence/2026-06-25-ai-rag-production-finalization/communications-task-generation-tests-aai-690.txt)
+  - [teams-synthesizer-dry-run-project-1011-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-dry-run-project-1011-aai-690.json)
+  - [teams-synthesizer-applied-project-1011-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-synthesizer-applied-project-1011-aai-690.json)
+  - [teams-task-generation-live-proof-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/teams-task-generation-live-proof-aai-690.json)
+  - [task-generation-live-coverage-after-teams-proof-aai-690.json](../evidence/2026-06-25-ai-rag-production-finalization/task-generation-live-coverage-after-teams-proof-aai-690.json)
+
+### 2026-06-25: Microsoft Executive Assistant Outlook Cache Recovered
+
+- Ran a bounded canonical Outlook delta redrive for `bclymer@alleatogroup.com`.
+- Result: 24 messages synced, 24 persisted, delta token saved.
+- `npm run verify:microsoft-assistant-health -- --json` passed afterward.
+- Evidence:
+  - [outlook-bclymer-delta-redrive-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-bclymer-delta-redrive-aai-653.json)
+  - [microsoft-assistant-health-after-outlook-redrive-aai-653.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-after-outlook-redrive-aai-653.json)
+
+### 2026-06-25: Acumatica Sync Health Recovered
+
+- Ran the guarded Acumatica financial sync entrypoint directly after the Render-triggered run did not update health within the short poll window.
+- Sync completed with no errors and known warnings about Acumatica payment-application endpoint exposure.
+
+- `npm run verify:acumatica-sync-health` passed afterward.
+- Evidence:
+  - [acumatica-manual-sync-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-manual-sync-aai-653.txt)
+  - [acumatica-sync-health-after-manual-sync-aai-653.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-manual-sync-aai-653.txt)
+
+### 2026-06-25: AAI-660 Disabled Vercel Cron Leftovers Deleted
+
+- Proved `/api/cron/graph-sync`, `/api/cron/graph-embed`, and `/api/cron/acumatica-sync` were disabled Vercel cron leftovers with no source callers outside `frontend/vercel.json` and their own route files.
+- Proved replacement ownership:
+  - Render `alleato-graph-sync` owns Graph sync and embedding with `run_embedding=True`.
+  - Render `alleato-acumatica-financial-sync` owns Acumatica on the twice-daily schedule.
+- Deleted:
+  - `frontend/src/app/api/cron/graph-sync/route.ts`
+  - `frontend/src/app/api/cron/graph-embed/route.ts`
+  - `frontend/src/app/api/cron/acumatica-sync/route.ts`
+  - the three matching entries in `frontend/vercel.json`
+- Kept admin/manual source-sync routes intact.
+- Verification passed after deletion: no source references remain, `frontend/vercel.json` parses, `npm run check:routes`, `npm run rag:verify:graph-embedding`, `npm run verify:acumatica-sync-health`, `npm run rag:verify:source-lifecycle`, and `npm run rag:verify:meetings`.
+- Evidence:
+  - [vercel-crons-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/vercel-crons-aai-660.txt)
+  - [vercel-cron-deletion-proof-aai-660.md](../evidence/2026-06-25-ai-rag-production-finalization/vercel-cron-deletion-proof-aai-660.md)
+  - [vercel-cron-reference-check-after-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/vercel-cron-reference-check-after-delete-aai-660.txt)
+  - [route-check-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/route-check-after-vercel-cron-delete-aai-660.txt)
+  - [graph-embedding-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/graph-embedding-after-vercel-cron-delete-aai-660.txt)
+  - [acumatica-sync-health-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/acumatica-sync-health-after-vercel-cron-delete-aai-660.txt)
+  - [source-lifecycle-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-after-vercel-cron-delete-aai-660.txt)
+  - [meetings-after-vercel-cron-delete-aai-660.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-vercel-cron-delete-aai-660.txt)
+
+### 2026-06-25: AAI-662 Chat Architecture Source Of Truth Recovered
+
+- Documented the live AI SDK MCP implementation in the authoritative production architecture document.
+- Updated `npm run rag:verify:chat-architecture` to check that architecture document instead of a missing archived audit doc.
+- Verification now passes with no failures and no warnings.
+- Evidence:
+  - [chat-architecture-after-source-of-truth-aai-662.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-after-source-of-truth-aai-662.txt)
+
+### 2026-06-25: AAI-663 Source Freshness Windows Applied
+
+- Applied the operational backlog policy:
+  - Fireflies backlog errors older than two months are historical, not active production-readiness blockers.
+  - Outlook email and Teams message backlog errors older than one week are historical, not active production-readiness blockers unless needed for a historical reconstruction request.
+- Updated the meeting vectorization verifier to report Fireflies backlog concern using a 60-day job creation window while preserving the 14-day recent meeting coverage gate.
+- `npm run rag:verify:meetings` passed with 75/75 recent meetings embedded after applying the policy window.
+- Evidence:
+  - [meetings-after-freshness-window-aai-663.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-freshness-window-aai-663.txt)
+- Commit: `ffeeede2bf`
+
+### 2026-06-25: AAI-665 Fireflies 60-Day Queue Drain Completed
+
+- Grouped the initial 1,600 active-window shared queue errors and found the count was not Fireflies-specific:
+  - Most rows belonged to Teams/email/knowledge rows in the shared `fireflies_ingestion_jobs` queue table.
+  - Only 14 active-window rows were actual Fireflies meeting rows in error state.
+- Repaired 14 Fireflies meeting error jobs that were already embedded and had searchable chunks by marking the stale queue state `done` in both app and RAG databases.
+- Repaired 1 Fireflies meeting `raw_ingested` job that was already embedded with 27 searchable chunks by marking the stale queue state `done` in both app and RAG databases.
+- Updated `npm run rag:verify:meetings` so Fireflies backlog warnings join `rag_document_metadata` and only count Fireflies/meeting records.
+- Final Fireflies-scoped 60-day state:
+  - `done`: 146
+  - `embedded`: 3
+  - `error`: 0
+  - `raw_ingested`: 0
+- `npm run rag:verify:meetings` passed with no warnings, 75/75 recent meetings covered, and both AI Gateway and direct OpenAI embedding probes healthy.
+- Evidence:
+  - [fireflies-60-day-error-groups-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-60-day-error-groups-aai-665.json)
+  - [fireflies-embedded-error-state-repair-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-embedded-error-state-repair-aai-665.json)
+  - [fireflies-raw-ingested-state-repair-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-raw-ingested-state-repair-aai-665.json)
+  - [fireflies-60-day-error-groups-final-aai-665.json](../evidence/2026-06-25-ai-rag-production-finalization/fireflies-60-day-error-groups-final-aai-665.json)
+  - [meetings-after-fireflies-60-day-final-drain-aai-665.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-after-fireflies-60-day-final-drain-aai-665.txt)
+
+### 2026-06-25: AAI-668 Outlook And Teams One-Week Queue Verified
+
+- Grouped the shared queue inside the one-week Outlook/Teams operational concern window.
+- Result: no active Outlook/Teams/Graph shared queue rows exist in the one-week window.
+- `npm run rag:verify:source-specific` passed.
+- `npm run rag:verify:source-lifecycle` passed.
+- Lifecycle evidence shows current Outlook and Teams source health:
+  - Outlook: 516 recent sources, 448 embedding-required, embedded ratio 1.0, lifecycle ratio 1.0, project disposition ratio 1.0.
+  - Teams: 293 recent sources, 187 embedding-required, embedded ratio 1.0, lifecycle ratio 1.0, project disposition ratio 1.0.
+- Recent Outlook/Teams lifecycle failures are terminal `skipped_low_content` rows, not retryable backlog.
+- Evidence:
+  - [graph-teams-outlook-one-week-queue-aai-668.json](../evidence/2026-06-25-ai-rag-production-finalization/graph-teams-outlook-one-week-queue-aai-668.json)
+  - [source-specific-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-one-week-graph-aai-668.txt)
+  - [source-lifecycle-one-week-graph-aai-668.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-lifecycle-one-week-graph-aai-668.txt)
+
+### 2026-06-25: AAI-669 SharePoint/PDF OCR Vision Root Cause Fixed
+
+- Verified recent SharePoint documents:
+  - 191 recent SharePoint records.
+  - 191 have locators.
+  - 190 are embedded and 1 is intentionally excluded.
+  - SharePoint source-specific retrieval returned the probe document with similarity 1 and citation metadata.
+- Verified uploaded/manual/drawing/OneDrive/outlook-attachment PDF coverage and found active blockers:
+  - Drawing uploads: 90 recent records, all with project/locator/OCR text, but 27 were `raw_ingested` and 2 were `ocr_failed` before recovery.
+  - Manual uploads: 32 recent records, 22 still `uploaded`.
+  - OneDrive: 45 recent records, 7 `ocr_failed`.
+  - Outlook attachments: 159 recent records, 54 `metadata_only`.
+- Bounded backend requeue accepted 10 drawing uploads and proved parser/vision progressed, but exposed a root-cause bug: app status could advance while RAG metadata was missing.
+- Fixed `backend/src/services/pipeline/embedder.py` so document embedding:
+  - reads app `content`/`raw_text` when no RAG metadata exists yet.
+  - upserts `rag_document_metadata` instead of update-only metadata writes.
+  - writes source/project/storage/text/status metadata needed for citations.
+- Local patched pipeline proof succeeded for two drawing PDFs:
+  - `[012] A410 - INTERIOR ELEVATIONS.pdf`: 38 embedded chunks, 18 document chunks, 1 vision chunk, RAG metadata content length 5173.
+  - `[015] PD101 - FIRST FLOOR PLUMBING.pdf`: 12 embedded chunks, 5 document chunks, 1 vision chunk, RAG metadata content length 3498.
+- Evidence:
+  - [sharepoint-pdf-ocr-vision-inventory-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-ocr-vision-inventory-aai-669.json)
+  - [sharepoint-pdf-family-coverage-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-family-coverage-aai-669.json)
+  - [sharepoint-pdf-requeue-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-batch-aai-669.json)
+  - [sharepoint-pdf-requeue-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-poll-aai-669.json)
+  - [sharepoint-pdf-requeue-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-requeue-second-poll-aai-669.json)
+  - [sharepoint-pdf-local-pipeline-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-proof-aai-669.json)
+  - [sharepoint-pdf-local-pipeline-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/sharepoint-pdf-local-pipeline-postcheck-aai-669.json)
+
+### 2026-06-25: AAI-669 SharePoint/PDF Backfill And Guardrail Checkpoint
+
+- Deployed the embedder fix to live Render backend:
+  - Service: `alleato-backend`
+  - Deploy: `dep-d8uqhm3rjlhs73bkjld0`
+  - Commit: `df7491e71627416a1d06a24a8a640adf4ede0c9f`
+- Live backend batch 1 repaired 10/10 drawing uploads through `/api/pipeline/process`; all reached `complete`, embedded chunks, and vision chunks.
+- Live backend batch 2 queued 20 additional rows; the poll showed 11/20 embedded, and pending trace isolated a citation-metadata orphan class.
+- Added a shared RAG chunk-integrity guardrail for document-like chunks without `rag_document_metadata`.
+- Repaired 34/34 recent orphan metadata rows with the canonical embedder.
+- `node scripts/verify/verify_rag_chunk_integrity.mjs --days=2` now passes.
+- Direct canonical batch 3 repaired 20/20 additional embedding gaps.
+- Manual upload batch 4 processed 19/19 PDF uploads with no row failures.
+- Current recent PDF/document inventory after batch 4:
+  - 66 active gaps remain, down from 156 after the deploy inventory.
+  - 12 embedding gaps remain: 5 `.txt` test uploads and 7 OneDrive `ocr_failed` rows.
+  - 54 vision gaps remain: 29 OneDrive embedded drawings, 22 Outlook attachments, and 3 drawing uploads.
+- Evidence:
+  - [render-backend-deploy-live-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-aai-669.json)
+  - [pdf-backfill-live-batch-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-second-poll-aai-669.json)
+  - [pdf-backfill-live-batch-2-second-poll-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-2-second-poll-aai-669.json)
+  - [pdf-backfill-live-batch-2-pending-trace-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-live-batch-2-pending-trace-aai-669.json)
+  - [pdf-backfill-direct-canonical-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-direct-canonical-batch-3-aai-669.json)
+  - [pdf-backfill-orphan-metadata-repair-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-orphan-metadata-repair-aai-669.json)
+  - [rag-chunk-integrity-after-orphan-repair-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-after-orphan-repair-aai-669.txt)
+  - [pdf-backfill-manual-upload-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-manual-upload-batch-4-aai-669.json)
+  - [pdf-backfill-candidates-after-manual-batch-4-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json)
+
+### 2026-06-25: AAI-669 Graph Vision Path Recovered
+
+- Fixed the production vision analyzer to fall back to Microsoft Graph source downloads for OneDrive/SharePoint rows that have `source_drive_id` and `source_item_id` but only store OCR text locally.
+- Fixed Graph document embedding so it runs vision for PDF-like Graph rows when page intelligence is absent, then embeds `document_page_intelligence` summaries as `vision_page_summary` chunks with `metadata.chunk_type='vision_page'`.
+- OneDrive proof succeeded for `onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF`:
+  - 25 pages analyzed from the Graph-downloaded source PDF.
+  - Graph embedder wrote 47 total chunks: 22 OneDrive text chunks and 25 vision page summary chunks.
+- Automatic Graph embed proof succeeded for `onedrive_01F674PXTBGWMDGWLXOJBZKUU35DJK3P37`:
+  - `embed_graph_document` ran vision internally.
+  - Graph embedder wrote 39 total chunks with page intelligence.
+- Evidence:
+  - [pdf-vision-graph-download-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-download-proof-aai-669.json)
+  - [pdf-vision-graph-embed-auto-proof-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-graph-embed-auto-proof-aai-669.json)
+
+### 2026-06-25: AAI-669 PDF/Document Backfill Completed For Tracked Recent Candidates
+
+- Render deployed the automatic Graph vision path for OneDrive/SharePoint PDFs:
+  - Deploy: `dep-d8urk2l7vvec73eklqd0`
+  - Commit: `238b56c8e0824e5ad5d258d3f8ddce3108fd1d9b`
+- Repaired remaining OneDrive vision gaps:
+  - Batch 1 corrected postcheck covered 5/5 rows after the two proof rows.
+  - Batch 2 covered 10/10 rows.
+  - Batch 3 covered 12/12 rows.
+- Repaired 3/3 remaining drawing-upload vision gaps through `run_vision_analyzer` plus the canonical embedder.
+- Fixed Graph embedding to support vision-only PDF vector records when OCR/text extraction fails.
+- Recovered 7/7 OneDrive rows that were previously `ocr_failed` by embedding available OCR text where present and vision-page chunks where text extraction was insufficient.
+- Fixed successful Graph embedding to upsert `rag_document_metadata`, preventing vision-only chunks from becoming orphaned from citation/status metadata.
+- Fixed Outlook attachment vision for metadata-only promoted PDF attachments:
+  - Stored Outlook ids were not valid for direct Graph attachment detail fetch.
+  - The production fallback now resolves current messages by intake email `internet_message_id`, matches attachments by filename, and downloads bytes through Microsoft Graph `$value`.
+  - Proof batch covered 3/3 attachments.
+  - Remaining batch covered 18/18 attachments.
+- Confirmed 5/5 small manual `.txt` uploads had real storage content and processed them through the canonical document parser/embedder.
+- Final tracked inventory is clean:
+  - 66/66 recent PDF/document gaps covered.
+  - 0 active missing.
+  - Final family coverage: Outlook attachments 22/22, drawing uploads 3/3, manual uploads 5/5, OneDrive 36/36.
+- Verification passed:
+  - `python3 -m py_compile backend/src/services/integrations/microsoft_graph/embed.py backend/src/services/pipeline/vision_analyzer.py backend/tests/test_graph_embed.py`
+  - `PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests/test_graph_embed.py -q`
+  - `node scripts/verify/verify_rag_chunk_integrity.mjs --days=2`
+- Render deployed the final Outlook attachment and vision-only metadata fix live:
+  - Deploy: `dep-d8us9surnols73bp5sj0`
+  - Commit: `4cc73d447508d9c54bc667444dc9f379ee24d724`
+- Evidence:
+  - [render-backend-deploy-live-graph-auto-vision-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-graph-auto-vision-aai-669.json)
+  - [render-backend-deploy-live-outlook-vision-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/render-backend-deploy-live-outlook-vision-aai-669.json)
+  - [pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-1-corrected-postcheck-aai-669.json)
+  - [pdf-vision-onedrive-batch-2-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-2-aai-669.json)
+  - [pdf-vision-onedrive-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-onedrive-batch-3-aai-669.json)
+  - [pdf-vision-drawing-upload-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-drawing-upload-batch-aai-669.json)
+  - [pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-ocr-failed-batch-aai-669.json)
+  - [pdf-vision-only-onedrive-failed-row-repair-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-only-onedrive-failed-row-repair-aai-669.json)
+  - [pdf-vision-outlook-attachment-proof-batch-3-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-proof-batch-3-aai-669.json)
+  - [pdf-vision-outlook-attachment-remaining-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-vision-outlook-attachment-remaining-batch-aai-669.json)
+  - [manual-text-upload-storage-check-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-storage-check-aai-669.json)
+  - [manual-text-upload-pipeline-batch-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/manual-text-upload-pipeline-batch-aai-669.json)
+  - [pdf-backfill-candidates-final-aai-669.json](../evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-final-aai-669.json)
+  - [rag-chunk-integrity-final-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/rag-chunk-integrity-final-aai-669.txt)
+  - [test-graph-embed-after-outlook-vision-fix-aai-669.txt](../evidence/2026-06-25-ai-rag-production-finalization/test-graph-embed-after-outlook-vision-fix-aai-669.txt)
+
+### 2026-06-25: AAI-682 Vector Retrieval Validation Started
+
+- Created the dedicated task ledger for the retrieval filters, citations, duplicate handling, and assistant-usage slice.
+- Confirmed `docs/ops/tasks/TASK-TEMPLATE.md` is missing; this task mirrors the established production-finalization task format and records the missing template as a process gap instead of blocking.
+- Next action: inventory active retrieval paths and run current retrieval guardrails before implementation or deletion.
+- Task: [2026-06-25-vector-retrieval-filters-citations-validation.md](../tasks/2026-06-25-vector-retrieval-filters-citations-validation.md)
+- Linear: AAI-682.
+
+### 2026-06-25: AAI-682 Low-Content Placeholder Chunks Removed
+
+- Found and repaired embedded placeholder chunks generated from documents with no extractable text.
+- Changed the document parser/embedder so low-content documents no longer create fake searchable summaries; vision-only documents can still embed real page summaries, and true low-content documents become explicit `skipped_low_content` terminal rows.
+- Deleted 67 live RAG placeholder chunks, marked 16 placeholder-only RAG metadata rows as `skipped_low_content`, and mirrored that status to 16 app `document_metadata` rows.
+- Added a chunk-integrity fatal guardrail for low-content placeholder chunks.
+- Hybrid ranking passed after cleanup (`hybridHits=28`, `vectorHits=26`).
+- Assistant readiness blocker found: `npm run rag:verify:assistant-operational-readiness` loaded the active eval suite but failed because `backendDeepAgentExecutiveBriefing` was still required by architecture/evals and was not attached by the current handler.
+- Boundary verifiers also remain red for RAG/app ownership:
+  - Heavy app `document_metadata.content/raw_text` reads still exist in parser/embedder and document-intelligence paths.
+  - The admin AI work-runs route still reads RAG-owned `source_sync_runs` without `createRagServiceClient()`.
+  - Outlook intake reads in email digest and Microsoft executive assistant paths still need the AI DB resolver.
+- Evidence:
+  - [vector-retrieval-path-inventory-aai-682.md](../evidence/2026-06-25-ai-rag-production-finalization/vector-retrieval-path-inventory-aai-682.md)
+  - [minimal-extract-repair-applied-aai-682.json](../evidence/2026-06-25-ai-rag-production-finalization/minimal-extract-repair-applied-aai-682.json)
+  - [chunk-integrity-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/chunk-integrity-after-minimal-repair-aai-682.txt)
+  - [hybrid-ranking-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/hybrid-ranking-after-minimal-repair-aai-682.txt)
+  - [test-document-low-content-and-graph-embed-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/test-document-low-content-and-graph-embed-aai-682.txt)
+  - [assistant-operational-readiness-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-minimal-repair-aai-682.txt)
+  - [metadata-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/metadata-boundary-after-minimal-repair-aai-682.txt)
+  - [client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/client-boundary-after-minimal-repair-aai-682.txt)
+  - [backend-client-boundary-after-minimal-repair-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/backend-client-boundary-after-minimal-repair-aai-682.txt)
+
+### 2026-06-25: AAI-682 Executive Deep Agents Bridge Restored
+
+- Restored the live assistant handler path that attaches the canonical `backendDeepAgentExecutiveBriefing` trace for broad no-project executive/operator prompts.
+- The restored frontend bridge uses the active Render Deep Agents research endpoint with an executive-specific prompt contract instead of resurrecting the removed backend contract-spike service.
+- Direct executive backend answers now persist `render-backend-deep-agents-v1` metadata, response quality, source debug, source evidence widgets, and the canonical executive bridge tool trace.
+- Fallback synthesis now receives a `Backend Deep Agents Executive Briefing Packet` context block and still records the canonical trace.
+- `npm run rag:verify:assistant-operational-readiness` now passes: 80/80 checks.
+- `npm run typecheck` still reports unrelated untracked-file type debt in `frontend/src/lib/ai/workflow-registry.ts`; it is not part of this AAI-682 slice.
+- Evidence:
+  - [assistant-operational-readiness-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-after-executive-bridge-aai-682.txt)
+  - [frontend-typecheck-after-executive-bridge-aai-682.txt](../evidence/2026-06-25-ai-rag-production-finalization/frontend-typecheck-after-executive-bridge-aai-682.txt)
+
+## Remaining Blockers
+
+- No active Fireflies meeting error backlog remains inside the two-month operational concern window.
+- No active Outlook/Teams shared queue backlog remains inside the one-week operational concern window.
+- SharePoint source sync/retrieval is healthy.
+- PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
+- AAI-682 boundary blockers: metadata/client/backend-client boundary verifiers still fail on RAG/app ownership seams and need cleanup before this slice can claim production readiness.
+- Unrelated typecheck blocker: untracked `frontend/src/lib/ai/workflow-registry.ts` currently fails frontend typecheck outside this AAI-682 slice.
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Blocker Opened
+
+- Production-readiness blocker found before continuing Outlook legacy deletion:
+  - scheduled Outlook sync and cached intake can pass while Outlook webhook subscriptions are not active.
+- Live evidence at `2026-06-26T12:11Z`:
+  - `npm run verify:microsoft-assistant-health -- --json`: pass for `bclymer@alleatogroup.com`;
+  - direct RAG DB subscription read: `subscriptionCount=1`, `activeSubscriptionCount=0`, `syncStateCount=12`, `erroredSyncStateCount=0`;
+  - only Outlook subscription row was expired/stale: `mharrison@alleatogroup.com`, status `renewal_due`, `reauthorizationRequired`.
+- AAI-709 Outlook legacy mirroring deletion is paused until webhook readiness is restored or explicitly blocked.
+- Subagents started:
+  - backend subscription reconcile investigation/fix;
+  - assistant operations status guardrail investigation/fix.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-webhook-subscription-readiness.md)
+  - [Linear AAI-715](https://linear.app/megankharrison/issue/AAI-715/restore-active-outlook-graph-webhook-subscriptions)
+
+### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
+
+- Patched Graph subscription reconciliation so expired, `renewal_due`, failed/removed/missed, or `reauthorizationRequired` rows create a fresh Graph subscription instead of trying to patch stale subscription ids first.
+- Stale Graph delete is now best-effort; a missing old subscription no longer blocks fresh subscription creation.
+- Manually triggered Render cron `alleato-graph-subscription-reconcile`.
+- Live verifier now proves all configured Outlook webhook targets are active:
+  - `expectedTargetCount=10`
+  - `activeSubscriptionCount=10`
+  - `missingActiveTargets=[]`
+  - `erroredSyncStateCount=0`
+- Added `npm run verify:graph-subscriptions` as a hard guardrail so zero or incomplete Outlook webhook subscription coverage fails loudly.
+- Updated the assistant-facing Outlook operations tool so zero active subscriptions or all-zero operational rows return `status: "degraded"` plus explicit warnings.
+- Verification passed:
+  - delegated changed-file typecheck after verifier/package edits;
+  - delegated changed-file typecheck after assistant-status TS edits;
+  - backend subscription pytest and py_compile;
+  - focused assistant operations Jest and ESLint;
+  - live graph subscription verifier.
+- Evidence:
+  - [outlook-graph-subscriptions-live-aai-715.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-graph-subscriptions-live-aai-715.json)
+- Published:
+  - `4ba56cec55cb4017729a3a38e5dd290eb83f9f31`
+  - Linear AAI-715 marked Done.
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Started
+
+- Opened urgent follow-up because stale Outlook subscription rows should not remain visible indefinitely.
+- Clarified that `MICROSOFT_SYNC_USERS` is the configured mailbox set for Graph sync/subscription jobs; if `mharrison@alleatogroup.com` should be monitored, excluding it was a config bug.
+- Scope:
+  - mark out-of-config Outlook subscription rows removed during reconciliation;
+  - add `mharrison@alleatogroup.com` to Graph-related Render `MICROSOFT_SYNC_USERS`;
+  - rerun live reconcile/read-back;
+  - keep `verify:graph-subscriptions` proving full configured coverage.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-stale-subscription-prevention.md)
+  - [Linear AAI-718](https://linear.app/megankharrison/issue/AAI-718/prevent-stale-outlook-graph-subscriptions-and-include-megan-mailbox)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Ready For Publish
+
+- Prevented recurrence:
+  - Graph subscription reconcile now marks out-of-config subscription rows `removed` so stale lifecycle rows cannot remain active renewal debt.
+  - Source health now reports `unconfigured_graph_subscription` separately from generic renewal/expiration warnings.
+  - `verify:graph-subscriptions` now fails on stale non-active rows and unconfigured non-removed rows.
+- Live config aligned:
+  - `alleato-graph-subscription-reconcile`, `alleato-graph-sync`, `alleato-teams-dm-sync`, `alleato-teams-channel-sync`, and `alleato-source-sync-health` all read back with the 11-user Microsoft sync target set including `mharrison@alleatogroup.com`.
+- Live proof:
+  - Strict subscription verifier passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
+  - Megan mailbox scoped sync succeeded and read back as `sync_status=success` with `last_sync_at=2026-06-26T12:57:54.566226+00:00`.
+  - Full Graph sync was blocked by the DB pressure guard at `total_connections=42>35`; scoped mailbox delta sync was used instead.
+- Verification:
+  - Delegated focused tests passed: `29 passed`.
+  - Delegated Python compile passed.
+  - Delegated `node --check scripts/verify/verify_graph_subscriptions.mjs` passed.
+- Evidence:
+  - [AAI-718 evidence](../evidence/2026-06-25-ai-rag-production-finalization/outlook-stale-subscription-prevention-aai-718.md)
+
+### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
+
+- Published to `origin/main`:
+  - `76c1e1cb684251963fc09083466ffedc4bb67dfe`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-718 marked Done.
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Started
+
+- Opened follow-up after Graph sync was blocked by raw `total_connections=42>35`.
+- Live inspection showed the current pressure problem is mostly low headroom from Supabase platform/PostgREST idle baseline, not an active app query pileup.
+- Scope:
+  - classify DB connections by owner bucket;
+  - keep fail-closed checks for real app/client pressure;
+  - add a bucketed verifier/report;
+  - prove with focused tests and live evidence.
+- Links:
+  - [Task](../tasks/2026-06-26-db-pressure-guard-buckets.md)
+  - [Linear AAI-720](https://linear.app/megankharrison/issue/AAI-720/refine-app-db-pressure-guard-with-bucketed-connection-diagnostics)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Implemented
+
+- Updated the app DB pressure guard to classify `pg_stat_activity` into owner buckets:
+  - `app_or_external`
+  - `supabase_postgrest_pool`
+  - `supabase_realtime`
+  - `supabase_storage`
+  - `supabase_supavisor`
+  - `supabase_platform_other`
+  - `postgres_internal`
+- Raw `total_connections` remains diagnostic by default; it blocks only when `APP_DB_PRESSURE_BLOCK_ON_RAW_TOTAL=true`.
+- Guard still blocks for real app pressure:
+  - `app_client_connections`
+  - overall active connections
+  - app idle-in-transaction connections
+  - app long-running active connections
+- Added `npm run verify:app-db-pressure` for read-only live diagnostics.
+- Live verifier output:
+  - `total_connections=35`
+  - `platform_connections=32`
+  - `app_client_connections=3`
+  - `app_active_connections=0`
+  - `app_idle_in_transaction_connections=0`
+  - `app_long_running_active_connections=0`
+- Focused test pass:
+  - `14 passed`.
+- Evidence:
+  - [AAI-720 evidence](../evidence/2026-06-25-ai-rag-production-finalization/db-pressure-guard-buckets-aai-720.md)
+
+### 2026-06-26: AAI-720 DB Pressure Guard Buckets Published
+
+- Published to `origin/main`:
+  - `1cfb8ca7a`
+  - `3ca917e73`
+- Verified after push:
+  - local `HEAD` equals `origin/main`.
+  - Linear AAI-720 marked Done.
+
+### 2026-06-26: AAI-721 Project Emails Live Outlook Intake Repair Started
+
+- Opened urgent follow-up after the project Emails page rendered an empty inbox while Outlook sync data existed.
+- Confirmed first root cause:
+  - `outlook_email_intake` had 545 rows in the last seven days;
+  - `project_emails` had 0 rows created in the same window;
+  - `/{projectId}/emails` calls `/api/projects/{projectId}/emails`, and that route still read only `project_emails`.
+- Patched the project GET route so:
+  - default `source=all` returns app-composed rows plus live Outlook intake rows;
+  - `source=outlook` bypasses stale `project_emails`;
+  - `source=app` preserves the app-authored draft path.
+- Guarded mixed-source UI actions:
+  - Outlook intake rows are read-only for old `project_emails` edit/delete/summarize/task endpoints;
+  - bulk delete excludes Outlook intake rows;
+  - old project-email attachment queries are disabled for Outlook intake rows until attachment rendering is migrated to `outlook_email_intake_attachments`.
+- Focused guardrails:
+  - route unit tests passed for project and global email routes;
+  - focused ESLint passed with existing warnings only;
+  - delegated changed-file typecheck passed.
+- Production browser/API proof then failed before the env repair:
+  - authenticated admin session on `https://projects.alleatogroup.com/876/emails` showed the empty inbox;
+  - authenticated `/api/projects/876/emails?source=outlook` returned `[]`;
+  - RAG DB readback showed project `876` rows existed, including `Re: Exol Morrisville PA`.
+- Confirmed second root cause:
+  - Vercel production runtime env pull showed no active `RAG_SUPABASE_URL`, no `RAG_SUPABASE_SERVICE_ROLE_KEY`, and no `RAG_DATABASE_READS_ENABLED`;
+  - production therefore fell back to the PM App Supabase project, whose `outlook_email_intake` had 0 rows in the one-week operational window.
+- Applied provider/config repair:
+  - overwrote Vercel production `RAG_SUPABASE_URL`, `RAG_SUPABASE_SERVICE_ROLE_KEY`, and `RAG_DATABASE_READS_ENABLED` from the existing local secure env source without printing secrets;
+  - changed `createOutlookIntakeServiceClient()` so Outlook intake can only use the AI/RAG Supabase client and fails loudly if RAG env is missing;
+  - added `scripts/validate-runtime-config.mjs` production checks for the same RAG env vars.
+- Added fail-loud guardrail test:
+  - `src/lib/supabase/__tests__/service.test.ts` proves Outlook intake uses the RAG host and missing RAG env throws instead of falling back to PM App.
+- Production proof after env repair:
+  - Vercel redeploy `dpl_7f5gZeBdGQDphgiUJyK4myqS7MJJ` reached READY;
+  - authenticated `/api/emails` returned 1000 live Outlook rows;
+  - authenticated `/api/projects/876/emails?source=outlook` returned 28 rows with `Re: Exol Morrisville PA` first;
+  - browser body text for `/876/emails` contains `Steve Fischer` and `Re: Exol Morrisville PA` and no longer contains the empty-state strings.
+- Publish scope:
+  - this AAI-721 closeout publishes the fail-loud guardrail code so future production deployments cannot silently fall back to the PM App database.
+- Links:
+  - [Task](../tasks/2026-06-26-outlook-project-emails-intake.md)
+  - [Linear AAI-721](https://linear.app/megankharrison/issue/AAI-721/repair-project-emails-route-to-read-live-outlook-intake)

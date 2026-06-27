@@ -1,0 +1,130 @@
+{
+  "generated_at": "2026-06-25T23:37:54.652008+00:00",
+  "rows": [
+    {
+      "metadata": {
+        "id": "onedrive_01F674PXVQ6G7ZOOJT6FCLPWYK2QQKGK53",
+        "title": "0002 Uniqlo Loose.PDF",
+        "source_system": "onedrive",
+        "source_drive_id": "b!lLeBKdp2yEWKS_wj_28IkgtTwZZ52rNAgn6g0TSvF_swoyUPHqQZRb1nNiAlyT4r",
+        "source_item_id": "01F674PXVQ6G7ZOOJT6FCLPWYK2QQKGK53",
+        "source_site_id": null,
+        "source_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Fabrication/0002 Uniqlo Loose.PDF",
+        "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20Loose.PDF",
+        "file_path": "onedrive/acannon@alleatogroup.com/01F674PXVQ6G7ZOOJT6FCLPWYK2QQKGK53.pdf.txt",
+        "storage_bucket": "documents",
+        "url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20Loose.PDF",
+        "status": "embedded"
+      },
+      "rag_metadata": {
+        "id": "onedrive_01F674PXVQ6G7ZOOJT6FCLPWYK2QQKGK53",
+        "embedding_status": "embedded",
+        "parsing_status": "raw_ingested",
+        "content": 36863
+      },
+      "page_intelligence_count": 25,
+      "rag_chunk_count": 40,
+      "vision_chunk_count": 25
+    },
+    {
+      "metadata": {
+        "id": "onedrive_01F674PXTM3X4Y4QP3DZGJ42HM266XSIZ2",
+        "title": "0002 Uniqlo FP 2.1 - Rack Fab Review.pdf",
+        "source_system": "onedrive",
+        "source_drive_id": "b!lLeBKdp2yEWKS_wj_28IkgtTwZZ52rNAgn6g0TSvF_swoyUPHqQZRb1nNiAlyT4r",
+        "source_item_id": "01F674PXTM3X4Y4QP3DZGJ42HM266XSIZ2",
+        "source_site_id": null,
+        "source_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Fabrication/0002 Uniqlo FP 2.1 - Rack Fab Review.pdf",
+        "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20FP%202.1%20-%20Rack%20Fab%20Review.pdf",
+        "file_path": "onedrive/acannon@alleatogroup.com/01F674PXTM3X4Y4QP3DZGJ42HM266XSIZ2.pdf.txt",
+        "storage_bucket": "documents",
+        "url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20FP%202.1%20-%20Rack%20Fab%20Review.pdf",
+        "status": "embedded"
+      },
+      "rag_metadata": {
+        "id": "onedrive_01F674PXTM3X4Y4QP3DZGJ42HM266XSIZ2",
+        "embedding_status": "embedded",
+        "parsing_status": "raw_ingested",
+        "content": 1309
+      },
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1
+    },
+    {
+      "metadata": {
+        "id": "onedrive_01F674PXVPFX7VWEVNABDZ3NL2LXVJHSSR",
+        "title": "0002 Uniqlo Fab.PDF",
+        "source_system": "onedrive",
+        "source_drive_id": "b!lLeBKdp2yEWKS_wj_28IkgtTwZZ52rNAgn6g0TSvF_swoyUPHqQZRb1nNiAlyT4r",
+        "source_item_id": "01F674PXVPFX7VWEVNABDZ3NL2LXVJHSSR",
+        "source_site_id": null,
+        "source_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Fabrication/0002 Uniqlo Fab.PDF",
+        "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20Fab.PDF",
+        "file_path": "onedrive/acannon@alleatogroup.com/01F674PXVPFX7VWEVNABDZ3NL2LXVJHSSR.pdf.txt",
+        "storage_bucket": "documents",
+        "url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Fabrication/0002%20Uniqlo%20Fab.PDF",
+        "status": "embedded"
+      },
+      "rag_metadata": {
+        "id": "onedrive_01F674PXVPFX7VWEVNABDZ3NL2LXVJHSSR",
+        "embedding_status": "embedded",
+        "parsing_status": "raw_ingested",
+        "content": 40241
+      },
+      "page_intelligence_count": 25,
+      "rag_chunk_count": 41,
+      "vision_chunk_count": 25
+    },
+    {
+      "metadata": {
+        "id": "onedrive_01F674PXVCUTD22WTAWRBIZ6R6ZFEPSPAM",
+        "title": "UNIQLO - Warehouse - Existing Conditions survey.pdf",
+        "source_system": "onedrive",
+        "source_drive_id": "b!lLeBKdp2yEWKS_wj_28IkgtTwZZ52rNAgn6g0TSvF_swoyUPHqQZRb1nNiAlyT4r",
+        "source_item_id": "01F674PXVCUTD22WTAWRBIZ6R6ZFEPSPAM",
+        "source_site_id": null,
+        "source_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Exotec Drawings/UNIQLO - Warehouse - Existing Conditions survey.pdf",
+        "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Exotec%20Drawings/UNIQLO%20-%20Warehouse%20-%20Existing%20Conditions%20survey.pdf",
+        "file_path": "onedrive/acannon@alleatogroup.com/01F674PXVCUTD22WTAWRBIZ6R6ZFEPSPAM.pdf.txt",
+        "storage_bucket": "documents",
+        "url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Exotec%20Drawings/UNIQLO%20-%20Warehouse%20-%20Existing%20Conditions%20survey.pdf",
+        "status": "embedded"
+      },
+      "rag_metadata": {
+        "id": "onedrive_01F674PXVCUTD22WTAWRBIZ6R6ZFEPSPAM",
+        "embedding_status": "embedded",
+        "parsing_status": "raw_ingested",
+        "content": 8121
+      },
+      "page_intelligence_count": 2,
+      "rag_chunk_count": 5,
+      "vision_chunk_count": 2
+    },
+    {
+      "metadata": {
+        "id": "onedrive_01F674PXTKNIVK5KVS3NEKHGXF5PGOJBN2",
+        "title": "EXOTEC - RACKS REQUIREMENTS - Phillipsburg meeting - Presentation.pdf",
+        "source_system": "onedrive",
+        "source_drive_id": "b!lLeBKdp2yEWKS_wj_28IkgtTwZZ52rNAgn6g0TSvF_swoyUPHqQZRb1nNiAlyT4r",
+        "source_item_id": "01F674PXTKNIVK5KVS3NEKHGXF5PGOJBN2",
+        "source_site_id": null,
+        "source_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Exotec Drawings/EXOTEC - RACKS REQUIREMENTS - Phillipsburg meeting - Presentation.pdf",
+        "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Exotec%20Drawings/EXOTEC%20-%20RACKS%20REQUIREMENTS%20-%20Phillipsburg%20meeting%20-%20Presentation.pdf",
+        "file_path": "onedrive/acannon@alleatogroup.com/01F674PXTKNIVK5KVS3NEKHGXF5PGOJBN2.pdf.txt",
+        "storage_bucket": "documents",
+        "url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Exotec%20Drawings/EXOTEC%20-%20RACKS%20REQUIREMENTS%20-%20Phillipsburg%20meeting%20-%20Presentation.pdf",
+        "status": "embedded"
+      },
+      "rag_metadata": {
+        "id": "onedrive_01F674PXTKNIVK5KVS3NEKHGXF5PGOJBN2",
+        "embedding_status": "embedded",
+        "parsing_status": "raw_ingested",
+        "content": 1430
+      },
+      "page_intelligence_count": 25,
+      "rag_chunk_count": 26,
+      "vision_chunk_count": 25
+    }
+  ]
+}

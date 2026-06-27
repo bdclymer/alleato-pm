@@ -7,9 +7,49 @@
 
 ## Current focus
 
-**Status:** RAG pipeline fully repaired — all typed content at 0 pending. 30,150 total embedded. 0 stuck intelligence jobs. Four root-cause fixes deployed.
-**Last updated:** 2026-06-10
-**Last worked on by:** Claude Code (RAG pipeline audit — full backlog cleared)
+**Status:** RFI subcontractor response system fully deployed. DB migrated. Fresh CRON_SECRET set. Awaiting first cron fire confirmation.
+**Last updated:** 2026-06-24
+**Last worked on by:** Claude Code (RFI email response system + cron auth fix)
+
+## RFI Subcontractor Response System (2026-06-24)
+
+### What was built (commits f6bd774dd → 12427a0d8)
+
+Full no-login RFI response loop for subcontractors:
+
+1. **DB tables** (`supabase/migrations/20260624160000_add_rfi_responses_and_tokens.sql`) — applied to production:
+   - `rfi_responses` — stores all responses (web, email, app); RLS read for authenticated users, write via service role only
+   - `rfi_response_tokens` — magic-link tokens (1 per recipient per RFI); no RLS (service role only)
+
+2. **Token generation** (`frontend/src/lib/rfi/response-tokens.ts`) — creates token (24h default TTL), returns full magic-link URL
+
+3. **Public response page** (`frontend/src/app/respond/rfi/[token]/`) — no login; resolves token → shows RFI question + prior responses → submit form
+
+4. **Token-gated POST** (`frontend/src/app/api/respond/rfi/[token]/route.ts`) — validates token, writes `rfi_responses`, marks token used
+
+5. **Email ingestion cron** (`frontend/src/app/api/cron/rfi-email-replies/route.ts`) — `*/15 * * * *`; reads `rfi@alleatogroup.com` via Graph; matches subject-line tokens (`RFI-<token>`); upserts `rfi_responses` with `source='email'`
+
+6. **RFI notify integration** (`frontend/src/lib/rfi/rfi-notify.ts`) — generates tokens, embeds magic-link + reply-to in outbound emails
+
+7. **Formal responses tab** (`frontend/src/components/rfis/rfi-formal-responses.tsx`) — shows `rfi_responses` on RFI detail page
+
+8. **Response-received email** (`frontend/src/emails/rfi/RFIResponseReceivedNotification.tsx`) — notifies RFI manager on response
+
+9. **Middleware bypass** — `/respond/` and `/api/respond/` skip auth so subcontractors use magic links without accounts
+
+### CRON_SECRET — critical rule
+
+Vercel crons require a non-empty `CRON_SECRET` env var. Vercel reads it and sends `Authorization: Bearer <value>` when calling cron endpoints. Our `isAuthorized()` checks `process.env.CRON_SECRET` against that — they must match.
+
+**NEVER delete `CRON_SECRET` from Vercel.** There is no auto-generated fallback — deleting it makes `process.env.CRON_SECRET` undefined and `isAuthorized()` always returns false.
+
+Current state: fresh value set 2026-06-24 via `npx vercel env add CRON_SECRET production`. Redeploy at commit `12427a0d8`.
+
+### Verification still pending
+
+Watch for `POST /api/cron/rfi-email-replies 200` in Vercel runtime logs after the next `:00` or `:15` UTC tick. If you see AUTH_EXPIRED on other crons (executive-daily-brief, daily-flags), that's a separate issue in `withApiGuardrails` — not CRON_SECRET.
+
+---
 
 ## RAG pipeline audit + email embed backlog fix (2026-06-10)
 

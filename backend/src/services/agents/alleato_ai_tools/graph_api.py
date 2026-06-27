@@ -9,7 +9,12 @@ Live Graph calls (send email, post Teams message) go through actions.py.
 
 from langchain_core.tools import tool
 
-from .rag import _format_results, retrieve
+from .rag import CorpusSearchDegradedError, _format_results, retrieve
+
+# Distinct, machine-detectable marker so a degraded search backend can never be
+# narrated as a clean "no matching passages". Callers/agents must surface this as a
+# capability failure, not a content negative.
+_SEARCH_DEGRADED_MARKER = "SEARCH_BACKEND_DEGRADED"
 
 _TEAMS_SOURCE_TYPES = ["teams_dm", "teams_channel", "teams_message"]
 _EMAIL_SOURCE_TYPES = ["email", "email_attachment"]
@@ -42,6 +47,8 @@ def search_teams_messages(
             date_from=date_from,
             max_results=max_results,
         )
+    except CorpusSearchDegradedError as exc:
+        return f"{_SEARCH_DEGRADED_MARKER}: Teams search unavailable — {exc}"
     except ValueError as exc:
         return f"Error: {exc}."
     except Exception as exc:  # noqa: BLE001
@@ -76,6 +83,8 @@ def search_emails(
             date_from=date_from,
             max_results=max_results,
         )
+    except CorpusSearchDegradedError as exc:
+        return f"{_SEARCH_DEGRADED_MARKER}: email search unavailable — {exc}"
     except ValueError as exc:
         return f"Error: {exc}."
     except Exception as exc:  # noqa: BLE001

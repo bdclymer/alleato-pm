@@ -10,9 +10,9 @@ import { z } from "zod";
 import { createHash, randomUUID } from "crypto";
 import type { CommitmentDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
 import type { Database, Json } from "@/types/database.types";
-import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { type ToolTracePayload, withWriteTrace } from "./tool-utils";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { wrapToolSetWithOutboundActionPolicy } from "./outbound-action-policy";
 import {
   RISK_CARD_TYPES,
@@ -38,10 +38,29 @@ import {
   createOutlookMailDraft,
   resolveOutlookMailboxUserId,
 } from "@/lib/microsoft-graph/mail";
+import {
+  buildChangeRequestReviewCard,
+  renderChangeRequestToolDescription,
+} from "@/lib/ai/change-request-field-guide";
+import {
+  buildChangeRequestPreviewFields,
+  normalizeChangeRequestDraft,
+} from "@/lib/ai/workflow-registry";
+import {
+  notifyChangeRequestReviewNeeded,
+  notifyRfiReviewNeeded,
+} from "@/services/notificationService";
+import {
+  recordAiNotificationDecision,
+  type AiNotificationDecisionLedgerResult,
+} from "@/lib/ai/notification-decision-ledger";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  generatedTaskWriteMode?: "preview" | "direct";
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 export type CreateRFIPreviewInput = {
@@ -290,6 +309,77 @@ export function buildCommitmentDraftWidget(
   };
 }
 
+function resolvePreviewEventKey(
+  toolName: string,
+  input: Record<string, unknown>,
+): string {
+  return createHash("sha256")
+    .update(`${toolName}:preview:${JSON.stringify(input)}`)
+    .digest("hex");
+}
+
+async function recordChangeEventPreviewNotificationDecision({
+  userId,
+  projectId,
+  title,
+  eventKey,
+  preview,
+}: {
+  userId: string;
+  projectId: number;
+  title: string;
+  eventKey: string;
+  preview: unknown;
+}): Promise<AiNotificationDecisionLedgerResult> {
+  return recordAiNotificationDecision({
+    recipientUserId: userId,
+    eventType: "ai_change_event_awaiting_approval",
+    severity: "normal",
+    projectId,
+    entityType: "change_events",
+    eventKey,
+    title: "AI change event draft ready",
+    body: `Review, edit, or confirm the AI-created change event draft: ${title}`,
+    preferenceHints: {
+      suppressTeams: true,
+    },
+    isUserOnRelatedPage: true,
+    preview,
+  });
+}
+
+async function recordCommitmentPreviewNotificationDecision({
+  userId,
+  projectId,
+  title,
+  type,
+  eventKey,
+  preview,
+}: {
+  userId: string;
+  projectId: number;
+  title: string;
+  type: "subcontract" | "purchase_order";
+  eventKey: string;
+  preview: unknown;
+}): Promise<AiNotificationDecisionLedgerResult> {
+  return recordAiNotificationDecision({
+    recipientUserId: userId,
+    eventType: "ai_commitment_awaiting_approval",
+    severity: "normal",
+    projectId,
+    entityType: type === "subcontract" ? "subcontracts" : "purchase_orders",
+    eventKey,
+    title: "AI commitment draft ready",
+    body: `Confirm vendor, dates, and line items before creating the AI-drafted commitment: ${title}`,
+    preferenceHints: {
+      suppressTeams: true,
+    },
+    isUserOnRelatedPage: true,
+    preview,
+  });
+}
+
 export async function previewCreateRFI(
   userId: string,
   options: ActionToolsOptions,
@@ -315,22 +405,35 @@ export async function previewCreateRFI(
     return output;
   }
 
+  const fields = {
+    project_id: input.projectId,
+    subject: input.subject,
+    question: input.question,
+    ball_in_court: input.ballInCourt,
+    due_date: input.dueDate,
+    cost_impact: input.costImpact ?? "tbd",
+    schedule_impact: input.scheduleImpact ?? "tbd",
+    status: "open",
+    is_private: false,
+  };
+
+  await notifyRfiReviewNeeded(userId, {
+    projectId: input.projectId,
+    subject: input.subject,
+    question: input.question,
+    ballInCourt: input.ballInCourt,
+    dueDate: input.dueDate,
+    costImpact: input.costImpact ?? "tbd",
+    scheduleImpact: input.scheduleImpact ?? "tbd",
+    eventKey: resolvePreviewEventKey("createRFI", fields),
+  });
+
   const output = {
     action: "preview",
     message: "Here's the RFI I'll create. Reply **confirm** to proceed.",
     preview: {
       table: "rfis",
-      fields: {
-        project_id: input.projectId,
-        subject: input.subject,
-        question: input.question,
-        ball_in_court: input.ballInCourt,
-        due_date: input.dueDate,
-        cost_impact: input.costImpact ?? "tbd",
-        schedule_impact: input.scheduleImpact ?? "tbd",
-        status: "open",
-        is_private: false,
-      },
+      fields,
     },
   };
 
@@ -420,16 +523,15 @@ export function createActionTools(
   userId: string,
   options: ActionToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
   const writeAuditTable = "ai_tool_write_audits";
   const runtimeAuditClient = supabase as unknown as RuntimeAuditClient;
   const runtimeCommitmentReadClient =
     supabase as unknown as RuntimeCommitmentReadClient;
   const runtimeCommitmentWriteClient =
     supabase as unknown as RuntimeCommitmentWriteClient;
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const guardrails = ctx.guardrails;
 
   function resolveIdempotencyKey(
     toolName: string,
@@ -724,7 +826,12 @@ export function createActionTools(
         "confirmation before writing. If projectId is unknown, call getPortfolioOverview first.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID — required"),
-        contractId: z.number().optional().describe("Prime contract ID if known"),
+        contractId: z
+          .string()
+          .optional()
+          .describe(
+            "Prime contract ID (uuid) if known — prime_contract_change_orders.contract_id is a uuid FK, never a number",
+          ),
         title: z.string().describe("Change order title"),
         totalAmount: z.number().optional().describe("Dollar amount — can be 0 if TBD"),
         status: z
@@ -774,7 +881,7 @@ export function createActionTools(
           .from("prime_contract_change_orders")
           .insert({
             project_id: projectId,
-            contract_id: contractId != null ? String(contractId) : null,
+            contract_id: contractId ?? null,
             title,
             total_amount: totalAmount ?? 0,
             status,
@@ -818,20 +925,33 @@ export function createActionTools(
     }),
 
     createChangeEvent: tool({
-      description:
-        "Log a new change event — a potential scope change that may or may not " +
-        "become a change order. Use when the user says 'log a change event', " +
-        "'something came up on [project]', or describes an unexpected field condition. " +
-        "Always preview before writing.",
+      description: renderChangeRequestToolDescription(),
       inputSchema: z.object({
         projectId: z.number().describe("Project ID — required"),
-        title: z.string().describe("Short descriptive title"),
+        title: z.string().min(1).describe("Short descriptive title"),
         description: z.string().optional().describe("Detailed description"),
         scope: z
-          .enum(["owner_change", "unforeseen_condition", "design_error", "other"])
-          .default("other"),
-        type: z.enum(["potential_change", "trend", "rfi_answer_required"]).default("potential_change"),
-        status: z.enum(["open", "in_review", "approved", "rejected", "void"]).default("open"),
+          .string()
+          .optional()
+          .describe("Native scope such as TBD, In Scope, Out of Scope, or legacy owner_change/design_error aliases."),
+        type: z
+          .string()
+          .optional()
+          .describe("Native type such as Owner Change, Design Change, Allowance, Scope Gap, or supported legacy aliases."),
+        status: z
+          .string()
+          .optional()
+          .describe("Native status such as Open, Pending Approval, Approved, Rejected, Closed, or Converted."),
+        reason: z.string().optional().describe("Optional native reason."),
+        origin: z.string().optional().describe("Optional native origin."),
+        expectingRevenue: z
+          .boolean()
+          .optional()
+          .describe("Whether revenue is expected. Defaults to true."),
+        lineItemRevenueSource: z
+          .string()
+          .optional()
+          .describe("Optional line item revenue calculation mode."),
         confirmed: z.boolean().default(false),
         idempotencyKey: z
           .string()
@@ -840,18 +960,53 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createChangeEvent", options, async (input) => {
-        const { projectId, title, description, scope, type, status, confirmed } = input;
-        const access = await enforceProjectWriteAccess(projectId);
+        const normalized = normalizeChangeRequestDraft(input);
+        if (!normalized.ok) {
+          return {
+            success: false,
+            error: normalized.error,
+            missingFields: normalized.missingFields ?? [],
+          };
+        }
+
+        const { draft } = normalized;
+        const { confirmed } = input;
+        const access = await enforceProjectWriteAccess(draft.projectId);
         if (!access.ok) return { success: false, error: access.error };
+        const fields = buildChangeRequestPreviewFields(draft);
 
         if (!confirmed) {
+          const eventKey = resolvePreviewEventKey("createChangeEvent", fields);
+          const preview = {
+            toolName: "createChangeEvent",
+            table: "change_events",
+            fields,
+            reviewCard: buildChangeRequestReviewCard(fields),
+          };
+          await notifyChangeRequestReviewNeeded(userId, {
+            projectId: draft.projectId,
+            title: draft.title,
+            description: draft.description ?? undefined,
+            scope: draft.scope,
+            type: draft.type,
+            status: draft.status,
+            eventKey,
+          });
+
+          const notificationDecision =
+            await recordChangeEventPreviewNotificationDecision({
+              userId,
+              projectId: draft.projectId,
+              title: draft.title,
+              eventKey,
+              preview,
+            });
+
           return {
             action: "preview",
-            message: "Here's the change event I'll create. Reply **confirm** to proceed.",
-            preview: {
-              table: "change_events",
-              fields: { project_id: projectId, title, description, scope, type, status },
-            },
+            message: "Here's the change request I'll create. Reply **confirm** to proceed.",
+            preview,
+            notificationDecision,
           };
         }
 
@@ -859,28 +1014,48 @@ export function createActionTools(
         const replay = await getReplayResponse("createChangeEvent", idempotencyKey);
         if (replay) return replay;
 
-        // change_events requires number and updated_at — generate them
-        const { data: existing } = await supabase
+        const { data: existing, error: numberError } = await supabase
           .from("change_events")
           .select("number")
-          .eq("project_id", projectId)
-          .order("created_at", { ascending: false })
-          .limit(1);
+          .eq("project_id", draft.projectId);
 
-        const lastNumber = existing?.[0]?.number ?? "CE-000";
-        const nextNum = String(parseInt(lastNumber.replace(/\D/g, "") || "0") + 1).padStart(3, "0");
+        if (numberError) {
+          const failure = {
+            success: false,
+            error: `Unable to generate the next change request number: ${numberError.message}`,
+          };
+          await recordWriteAudit({
+            toolName: "createChangeEvent",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const maxNumber = (existing ?? []).reduce((max, row) => {
+          const value = typeof row.number === "string" ? row.number : "";
+          const parsed = Number.parseInt(value.replace(/\D/g, ""), 10);
+          return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
+        }, 0);
+        const nextNumber = String(maxNumber + 1).padStart(3, "0");
 
         const { data, error } = await supabase
           .from("change_events")
           .insert({
-            project_id: projectId,
-            title,
-            description: description ?? null,
-            scope: scope,
-            type,
-            status,
-            number: `CE-${nextNum}`,
-            expecting_revenue: false,
+            project_id: draft.projectId,
+            title: draft.title,
+            description: draft.description,
+            scope: draft.scope,
+            type: draft.type,
+            status: draft.status,
+            reason: draft.reason,
+            origin: draft.origin,
+            number: nextNumber,
+            expecting_revenue: draft.expectingRevenue,
+            line_item_revenue_source: draft.lineItemRevenueSource,
             updated_at: new Date().toISOString(),
           })
           .select("id, title, number, status")
@@ -901,7 +1076,7 @@ export function createActionTools(
 
         const response = {
           success: true,
-          message: `Change event **${data.number} — "${title}"** logged.`,
+          message: `Change request **${data.number} — "${draft.title}"** logged.`,
           record: data,
         };
         await recordWriteAudit({
@@ -948,8 +1123,24 @@ export function createActionTools(
           return { error: "Provide at least one of healthStatus or phase to update." };
         }
 
+        // The tool's enum (on_track/at_risk/...) must be mapped to the values
+        // projects.health_status actually allows (projects_health_status_check:
+        // Healthy | At Risk | Needs Attention | Critical). Writing the raw enum
+        // silently fails the check constraint on every call. Guarded by the AI
+        // tool contract harness (write-tools.contract.test.ts).
+        const HEALTH_STATUS_DB_VALUE: Record<string, string> = {
+          on_track: "Healthy",
+          at_risk: "At Risk",
+          critical: "Critical",
+          on_hold: "Needs Attention",
+          complete: "Healthy",
+        };
+
         const updates: Record<string, string> = {};
-        if (healthStatus) updates.health_status = healthStatus;
+        if (healthStatus) {
+          updates.health_status =
+            HEALTH_STATUS_DB_VALUE[healthStatus] ?? healthStatus;
+        }
         if (phase) updates.phase = phase;
 
         if (!confirmed) {
@@ -1234,7 +1425,17 @@ export function createActionTools(
       }),
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createGeneratedTask", options, async (input) => {
-        const { projectId, scheduleTaskId, title, description, assignee, dueDate, priority, status, confirmed } = input;
+        const {
+          projectId,
+          scheduleTaskId,
+          title,
+          description,
+          assignee,
+          dueDate,
+          priority,
+          status,
+          confirmed,
+        } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
         const effectiveProjectId = access.projectId;
@@ -1242,8 +1443,10 @@ export function createActionTools(
         const taskDescription = description?.trim() || title;
         const normalizedPriority = normalizeGeneratedTaskPriority(priority);
         const normalizedStatus = normalizeGeneratedTaskStatus(status);
+        const shouldWriteTask =
+          confirmed || options.generatedTaskWriteMode === "direct";
 
-        if (!confirmed) {
+        if (!shouldWriteTask) {
           return {
             action: "preview",
             message:
@@ -1267,7 +1470,18 @@ export function createActionTools(
           };
         }
 
-        const idempotencyKey = resolveIdempotencyKey("createGeneratedTask", input);
+        const auditInput =
+          shouldWriteTask && !confirmed
+            ? {
+                ...input,
+                confirmed: true,
+                autoConfirmedBy: "teams_task_write_direct",
+              }
+            : input;
+        const idempotencyKey = resolveIdempotencyKey(
+          "createGeneratedTask",
+          auditInput,
+        );
         const replay = await getReplayResponse("createGeneratedTask", idempotencyKey);
         if (replay) return replay;
 
@@ -1298,7 +1512,7 @@ export function createActionTools(
             toolName: "createGeneratedTask",
             idempotencyKey,
             projectId: effectiveProjectId,
-            input,
+            input: auditInput,
             status: "error",
             response: failure,
           });
@@ -1313,14 +1527,14 @@ export function createActionTools(
             tasksPage: effectiveProjectId ? `/${effectiveProjectId}/tasks?task=${data.id}` : `/tasks?task=${data.id}`,
           },
         };
-        await recordWriteAudit({
-          toolName: "createGeneratedTask",
-          idempotencyKey,
-          projectId: effectiveProjectId,
-          input,
-          status: "success",
-          response,
-        });
+	        await recordWriteAudit({
+	          toolName: "createGeneratedTask",
+	          idempotencyKey,
+	          projectId: effectiveProjectId,
+	          input: auditInput,
+	          status: "success",
+	          response,
+	        });
         return response;
       }),
     }),
@@ -1635,7 +1849,7 @@ export function createActionTools(
                 .update({
                   status: "active",
                   role: normalized.role ?? existingMembership.role,
-                  user_type: existingMembership.user_type || "contact",
+                  user_type: existingMembership.user_type || "client",
                   invite_status: "accepted",
                 })
                 .eq("id", existingMembership.id)
@@ -1656,7 +1870,12 @@ export function createActionTools(
                 person_id: person.id,
                 role: normalized.role,
                 status: "active",
-                user_type: "contact",
+                // 'contact' is not an allowed user_type
+                // (project_directory_memberships_user_type_check: employee |
+                // client | subcontractor | developer). AI-added project contacts
+                // default to the least-privileged external type. Guarded by the
+                // AI tool contract harness.
+                user_type: "client",
                 invite_status: "accepted",
               })
               .select("id,project_id,person_id,role,status,user_type,invite_status")
@@ -2837,7 +3056,7 @@ export function createActionTools(
         };
 
         // Synthesize with LLM
-        const openai = getOpenAI();
+        const openai = ctx.openai;
         const completion = await openai.chat.completions.create({
           model: "gpt-5.4-mini",
           temperature: 0.3,
@@ -3174,6 +3393,19 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         }
 
         if (!confirmed) {
+          const previewFields = {
+            project_id: projectId,
+            contract_number: finalContractNumber,
+            title,
+            status,
+            contract_company_id: contractCompanyId,
+            vendor_name_resolved: contractCompanyId ? vendorName : vendorName ? `${vendorName} (not found in project directory — will need to be linked manually)` : null,
+            description: description ?? null,
+            start_date: startDate ?? null,
+            estimated_completion_date: estimatedCompletionDate ?? null,
+            default_retainage_percent: defaultRetainagePercent ?? null,
+            line_items: lineItems ?? [],
+          };
           const widget = buildCommitmentDraftWidget({
             projectId,
             type,
@@ -3188,27 +3420,31 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             defaultRetainagePercent: defaultRetainagePercent ?? null,
             lineItems,
           });
+          const notificationDecision =
+            await recordCommitmentPreviewNotificationDecision({
+              userId,
+              projectId,
+              title,
+              type,
+              eventKey: resolvePreviewEventKey("createCommitment", previewFields),
+              preview: {
+                toolName: "createCommitment",
+                table,
+                fields: previewFields,
+                widget,
+              },
+            });
+
           return {
             action: "preview",
             message:
               `Here's the ${type === "subcontract" ? "subcontract" : "purchase order"} I'll create. ` +
               "Reply **confirm** to proceed or tell me what to change.",
+            notificationDecision,
             widget,
             preview: {
               table,
-              fields: {
-                project_id: projectId,
-                contract_number: finalContractNumber,
-                title,
-                status,
-                contract_company_id: contractCompanyId,
-                vendor_name_resolved: contractCompanyId ? vendorName : vendorName ? `${vendorName} (not found in project directory — will need to be linked manually)` : null,
-                description: description ?? null,
-                start_date: startDate ?? null,
-                estimated_completion_date: estimatedCompletionDate ?? null,
-                default_retainage_percent: defaultRetainagePercent ?? null,
-                line_items: lineItems ?? [],
-              },
+              fields: previewFields,
             },
           };
         }
@@ -3444,7 +3680,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("submitFeedback", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const feedbackId = crypto.randomUUID();
 
         const { error: insertError } = await supabaseLocal
@@ -3599,12 +3835,15 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
       inputSchema: z.object({
         title: z.string().describe("Short, clear title for the board card"),
         description: z.string().describe("Full description — context, goals, acceptance criteria"),
+        // Values must match admin_feedback_items_board_status_check
+        // (submitted | planned | in_progress | shipped). 'in_review' was in this
+        // enum but the DB CHECK rejects it — picking it failed the write.
         board_status: z
-          .enum(["submitted", "in_review", "planned", "in_progress", "shipped"])
+          .enum(["submitted", "planned", "in_progress", "shipped"])
           .default("submitted")
           .describe(
             "Which column to place the card in: " +
-            "'submitted' = new idea, 'in_review' = being evaluated, " +
+            "'submitted' = new idea, " +
             "'planned' = confirmed for roadmap, 'in_progress' = actively being built, " +
             "'shipped' = done"
           ),
@@ -3637,7 +3876,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const replay = await getReplayResponse("addBoardItem", idempotencyKey);
         if (replay) return replay;
 
-        const supabaseLocal = createServiceClient();
+        const supabaseLocal = supabase;
         const itemId = crypto.randomUUID();
 
         const { error } = await supabaseLocal.from("admin_feedback_items").insert({

@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-tool-registry
+> node scripts/verify/verify_ai_assistant_tool_registry.mjs
+
+AI assistant tool registry guardrail passed.

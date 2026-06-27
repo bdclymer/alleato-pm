@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-06-26T03:35:13.266Z",
+  "lookbackDays": 7,
+  "sourceSummary": [
+    {
+      "source_bucket": "outlook_email",
+      "documents": 454,
+      "project_assigned": 369,
+      "with_tasks": 0,
+      "task_rows": 0
+    },
+    {
+      "source_bucket": "teams_message",
+      "documents": 341,
+      "project_assigned": 24,
+      "with_tasks": 0,
+      "task_rows": 0
+    },
+    {
+      "source_bucket": "outlook_attachment",
+      "documents": 91,
+      "project_assigned": 91,
+      "with_tasks": 0,
+      "task_rows": 0
+    }
+  ],
+  "taskSummary": [],
+  "duplicateGroups": [],
+  "manualReview": []
+}

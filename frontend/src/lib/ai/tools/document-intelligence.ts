@@ -1,21 +1,21 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import {
   EMBEDDING,
   generateEmbedding,
-  getOpenAI,
   resolveProject,
   type ToolTracePayload,
   withTrace as _withTrace,
 } from "./tool-utils";
-import { createToolGuardrails } from "./guardrails";
+import { createToolContext, type ToolContext } from "./tool-context";
 
 type AnyRow = Record<string, unknown>;
 
 type CreateDocumentIntelligenceToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  // Injected data seam; defaults to building a real context when omitted.
+  ctx?: ToolContext;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -45,6 +45,179 @@ const REQUIREMENT_TYPES = [
   "warranty",
 ] as const;
 
+type StoredSpecDocumentRow = {
+  id: string;
+  title: string | null;
+  content: string | null;
+  raw_text: string | null;
+  summary: string | null;
+  overview: string | null;
+  source: string | null;
+  source_system: string | null;
+  document_type: string | null;
+  category: string | null;
+};
+
+type SpecSourceResult = {
+  documentId: string;
+  title: string;
+  excerptCount: number;
+  excerpts: string[];
+};
+
+const SPEC_TITLE_KEYWORDS = [
+  "spec",
+  "specification",
+  "division",
+  "section",
+  "csi",
+  "requirements",
+];
+
+function tokenizeSpecQuery(query: string): string[] {
+  return Array.from(
+    new Set(
+      query
+        .toLowerCase()
+        .split(/[^a-z0-9.-]+/i)
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3),
+    ),
+  );
+}
+
+function extractSpecSectionHints(query: string): string[] {
+  return Array.from(
+    new Set(
+      query.match(/\b\d{2}(?:[-.\s]?\d{2,4}){1,3}\b/g)?.map((match) =>
+        match.replace(/\s+/g, "-"),
+      ) ?? [],
+    ),
+  );
+}
+
+function compactWhitespace(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function buildSpecExcerpt(text: string, queryTokens: string[]): string {
+  const normalized = compactWhitespace(text);
+  if (!normalized) return "";
+
+  const lower = normalized.toLowerCase();
+  const firstHit = queryTokens
+    .map((token) => lower.indexOf(token))
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b)[0];
+
+  if (firstHit === undefined) {
+    return normalized.slice(0, 500);
+  }
+
+  const start = Math.max(0, firstHit - 140);
+  const end = Math.min(normalized.length, firstHit + 360);
+  return normalized.slice(start, end).trim();
+}
+
+function scoreStoredSpecDocument(
+  row: StoredSpecDocumentRow,
+  queryTokens: string[],
+  specSectionHints: string[],
+): number {
+  const title = compactWhitespace(row.title).toLowerCase();
+  const text = compactWhitespace(
+    row.content ?? row.raw_text ?? row.summary ?? row.overview,
+  ).toLowerCase();
+
+  let score = 0;
+
+  if (
+    SPEC_TITLE_KEYWORDS.some((keyword) => title.includes(keyword)) ||
+    row.category === "specification"
+  ) {
+    score += 6;
+  }
+
+  if (
+    row.document_type?.toLowerCase().includes("spec") ||
+    row.source_system?.toLowerCase().includes("spec")
+  ) {
+    score += 4;
+  }
+
+  for (const hint of specSectionHints) {
+    const normalizedHint = hint.toLowerCase();
+    if (title.includes(normalizedHint)) score += 7;
+    if (text.includes(normalizedHint)) score += 5;
+  }
+
+  for (const token of queryTokens) {
+    if (title.includes(token)) score += 3;
+    if (text.includes(token)) score += 1;
+  }
+
+  return score;
+}
+
+function hasStoredSpecSignal(
+  row: StoredSpecDocumentRow,
+  specSectionHints: string[],
+): boolean {
+  const title = compactWhitespace(row.title).toLowerCase();
+  const text = compactWhitespace(
+    row.content ?? row.raw_text ?? row.summary ?? row.overview,
+  ).toLowerCase();
+
+  if (
+    row.category === "specification" ||
+    row.document_type?.toLowerCase().includes("spec") ||
+    row.source_system?.toLowerCase().includes("spec") ||
+    SPEC_TITLE_KEYWORDS.some((keyword) => title.includes(keyword))
+  ) {
+    return true;
+  }
+
+  return specSectionHints.some((hint) => {
+    const normalizedHint = hint.toLowerCase();
+    return title.includes(normalizedHint) || text.includes(normalizedHint);
+  });
+}
+
+export function findStoredSpecDocumentMatches(
+  rows: StoredSpecDocumentRow[],
+  query: string,
+  maxSources = 4,
+): SpecSourceResult[] {
+  const queryTokens = tokenizeSpecQuery(query);
+  const specSectionHints = extractSpecSectionHints(query);
+
+  return rows
+    .map((row) => {
+      const fullText = compactWhitespace(
+        row.content ?? row.raw_text ?? row.summary ?? row.overview,
+      );
+      const score = scoreStoredSpecDocument(row, queryTokens, specSectionHints);
+      return {
+        row,
+        score,
+        hasSpecSignal: hasStoredSpecSignal(row, specSectionHints),
+        excerpt: buildSpecExcerpt(fullText, queryTokens),
+      };
+    })
+    .filter(
+      ({ score, excerpt, hasSpecSignal }) =>
+        hasSpecSignal && score > 0 && excerpt.length > 0,
+    )
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxSources)
+    .map(({ row, excerpt }) => ({
+      documentId: row.id,
+      title: compactWhitespace(row.title) || row.id,
+      excerptCount: 1,
+      excerpts: [excerpt],
+    }));
+}
+
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
@@ -53,11 +226,155 @@ export function createDocumentIntelligenceTools(
   userId: string,
   options: CreateDocumentIntelligenceToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const ragSupabase = createRagServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx = options.ctx ?? createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const ragSupabase = ctx.rag;
+  const guardrails = ctx.guardrails;
+
+  async function resolveSpecificationSources(
+    query: string,
+    resolvedProjectId?: number,
+    topK = 12,
+  ): Promise<{
+    sources: SpecSourceResult[];
+    combinedText: string;
+    note?: string;
+  }> {
+    const specSectionHints = extractSpecSectionHints(query);
+    const canonicalSpecSources: SpecSourceResult[] = [];
+
+    if (resolvedProjectId && specSectionHints.length > 0) {
+      const [canonicalResp, legacyResp] = await Promise.all([
+        supabase
+          .from("specification_sections")
+          .select("id, section_number, title, description, status")
+          .eq("project_id", resolvedProjectId)
+          .ilike("section_number", `%${specSectionHints[0]}%`)
+          .limit(4),
+        supabase
+          .from("specifications")
+          .select(
+            "id, section_number, section_title, division, content, ai_summary, status",
+          )
+          .eq("project_id", resolvedProjectId)
+          .ilike("section_number", `%${specSectionHints[0]}%`)
+          .limit(4),
+      ]);
+
+      if (canonicalResp.error) {
+        throw new Error(
+          `Specification section lookup failed: ${canonicalResp.error.message}`,
+        );
+      }
+      if (legacyResp.error) {
+        throw new Error(
+          `Legacy specification lookup failed: ${legacyResp.error.message}`,
+        );
+      }
+
+      canonicalSpecSources.push(
+        ...((canonicalResp.data ?? []) as Array<{
+          id: number;
+          section_number: string;
+          title: string;
+          description: string | null;
+        }>).map((row) => ({
+          documentId: `specification_section:${row.id}`,
+          title: `${row.section_number} - ${row.title}`,
+          excerptCount: 1,
+          excerpts: [
+            compactWhitespace(row.description) ||
+              `Specification section ${row.section_number} is available on this project, but no extracted narrative is stored yet.`,
+          ],
+        })),
+        ...((legacyResp.data ?? []) as Array<{
+          id: string;
+          section_number: string;
+          section_title: string;
+          division: string | null;
+          content: string | null;
+          ai_summary: string | null;
+        }>).map((row) => ({
+          documentId: `specification:${row.id}`,
+          title: `${row.section_number} - ${row.section_title}`,
+          excerptCount: 1,
+          excerpts: [
+            buildSpecExcerpt(
+              compactWhitespace(row.content ?? row.ai_summary),
+              tokenizeSpecQuery(query),
+            ) ||
+              compactWhitespace(row.ai_summary) ||
+              `Specification ${row.section_number}${row.division ? ` (${row.division})` : ""} is present, but no extracted body text is stored yet.`,
+          ],
+        })),
+      );
+    }
+
+    if (canonicalSpecSources.length > 0) {
+      const combinedText = canonicalSpecSources
+        .flatMap((source) => source.excerpts)
+        .join("\n\n")
+        .slice(0, 6000);
+
+      return { sources: canonicalSpecSources.slice(0, topK), combinedText };
+    }
+
+    if (!resolvedProjectId) {
+      return {
+        sources: [],
+        combinedText: "",
+        note:
+          "No project scope was provided for specification lookup. Provide a project so the search can use project spec sources instead of a broad global search.",
+      };
+    }
+
+    const { data: candidateRows, error: candidateError } = await ragSupabase
+      .from("rag_document_metadata")
+      .select(
+        "id, title, content, raw_text, summary, overview, source, source_system, document_type, category",
+      )
+      .eq("project_id", resolvedProjectId)
+      .or(
+        [
+          "category.eq.specification",
+          "document_type.ilike.%spec%",
+          "title.ilike.%spec%",
+          "title.ilike.%specification%",
+          "title.ilike.%section%",
+          "title.ilike.%division%",
+        ].join(","),
+      )
+      .limit(Math.max(topK * 3, 18));
+
+    if (candidateError) {
+      throw new Error(
+        `Specification document lookup failed: ${candidateError.message}`,
+      );
+    }
+
+    const matchedSources = findStoredSpecDocumentMatches(
+      ((candidateRows ?? []) as StoredSpecDocumentRow[]),
+      query,
+      Math.min(topK, 6),
+    );
+
+    if (matchedSources.length === 0) {
+      return {
+        sources: [],
+        combinedText: "",
+        note:
+          "No project specification sources matched this query. Check the Specifications page or document ingestion status before relying on spec-backed review.",
+      };
+    }
+
+    return {
+      sources: matchedSources,
+      combinedText: matchedSources
+        .flatMap((source) => source.excerpts)
+        .join("\n\n")
+        .slice(0, 6000),
+    };
+  }
 
   return {
     // -----------------------------------------------------------------------
@@ -218,85 +535,22 @@ export function createDocumentIntelligenceTools(
               resolvedProjectId = resolved.id;
             }
           }
-
-          const openai = getOpenAI();
-          const embedding = await generateEmbedding(
-            openai,
+          const result = await resolveSpecificationSources(
             query,
-            EMBEDDING.LARGE,
+            resolvedProjectId,
+            topK ?? 12,
           );
-
-          // Search document_chunks — OneDrive docs are where specs live.
-          // Use search_document_chunks RPC which handles halfvec(3072).
-          const { data: chunks, error } = await ragSupabase.rpc(
-            "search_document_chunks",
-            {
-              query_embedding: embedding,
-              filter_source_types: ["onedrive_document"],
-              filter_project_id: resolvedProjectId,
-              match_count: topK ?? 12,
-              match_threshold: 0.3,
-            },
-          );
-
-          if (error) return { error: `Spec search failed: ${error.message}` };
-
-          const results = (chunks ?? []) as AnyRow[];
-
-          // Filter to docs that look like specs by title pattern
-          const specKeywords = [
-            "spec",
-            "specification",
-            "division",
-            "section",
-            "csi",
-          ];
-          const specResults = results.filter((r) => {
-            const meta = (r.doc_metadata ?? r.metadata) as AnyRow | null;
-            const title = ((meta?.title as string) ?? "").toLowerCase();
-            return specKeywords.some((kw) => title.includes(kw));
-          });
-
-          // If filtering reduces to nothing, fall back to all results
-          const finalResults = specResults.length > 0 ? specResults : results;
-
-          // Group chunks by source document
-          const byDoc = new Map<string, { title: string; chunks: string[] }>();
-          for (const r of finalResults) {
-            const meta = (r.doc_metadata ?? r.metadata) as AnyRow | null;
-            const docId = (r.document_id as string) ?? "unknown";
-            const title =
-              (r.doc_title as string | null) ??
-              (meta?.title as string) ??
-              docId;
-            if (!byDoc.has(docId)) {
-              byDoc.set(docId, { title, chunks: [] });
-            }
-            byDoc.get(docId)?.chunks.push((r.chunk_text ?? r.text) as string);
-          }
-
-          const sources = Array.from(byDoc.entries()).map(([docId, doc]) => ({
-            documentId: docId,
-            title: doc.title,
-            excerptCount: doc.chunks.length,
-            excerpts: doc.chunks.slice(0, 3), // top 3 excerpts per doc
-          }));
-
-          const allText = finalResults
-            .map((r) => (r.chunk_text ?? r.text) as string)
-            .join("\n\n");
 
           return {
             query,
             projectId: resolvedProjectId,
-            totalChunks: finalResults.length,
-            sources,
-            combinedText: allText.substring(0, 6000),
-            note:
-              finalResults.length === 0
-                ? "No spec content found. Spec documents may not be chunked yet — " +
-                  "check the Documents page to verify OneDrive spec PDFs are ingested."
-                : undefined,
+            totalChunks: result.sources.reduce(
+              (count, source) => count + source.excerptCount,
+              0,
+            ),
+            sources: result.sources,
+            combinedText: result.combinedText,
+            note: result.note,
           };
         },
       ),
@@ -487,7 +741,7 @@ export function createDocumentIntelligenceTools(
           const submittalResp = await supabase
             .from("submittals")
             .select(
-              "id, title, submittal_number, status, description, submittal_type_id, specification_id, submission_date, required_approval_date, priority",
+              "id, title, submittal_number, status, description, submittal_type_id, specification_id, submission_date, required_approval_date, priority, specification_section, submittal_type",
             )
             .eq("id", resolvedSubmittalId)
             .single();
@@ -496,13 +750,92 @@ export function createDocumentIntelligenceTools(
             return { error: `Submittal ${resolvedSubmittalId} not found.` };
           }
 
-          // ── 4. Fetch submittal documents (uploaded files with extracted text) ─
-          const submittalDocsResp = await supabase
-            .from("submittal_documents")
-            .select("id, document_name, document_type, extracted_text, ai_analysis, page_count")
-            .eq("submittal_id", resolvedSubmittalId)
-            .not("extracted_text", "is", null);
-          const submittalDocs = submittalDocsResp.data ?? [];
+          // ── 4. Fetch submittal documents (extracted text from uploaded files) ─
+          // Primary: submittal_doc_links → document_metadata.content (EntityAttachments uploads)
+          // Fallback: submittal_documents.extracted_text (legacy Procore import path)
+          const docLinksResp = await supabase
+            .from("submittal_doc_links")
+            .select("document_metadata_id")
+            .eq("submittal_id", resolvedSubmittalId);
+          const docLinkMetaIds = (docLinksResp.data ?? []).map(
+            (r) => (r as unknown as { document_metadata_id: string }).document_metadata_id,
+          );
+
+          let submittalDocs: Array<{
+            document_name: string;
+            extracted_text: string | null;
+            document_type?: string | null;
+            page_count?: number | null;
+          }> = [];
+
+          if (docLinkMetaIds.length > 0) {
+            for (const metaId of docLinkMetaIds) {
+              // Primary: vision page summaries (GPT-4o extracted clean prose)
+              const visionResp = await supabase
+                .from("document_page_intelligence")
+                .select("page_number, sheet_number, sheet_title, ai_summary, implied_submittals, notes_and_requirements")
+                .eq("document_metadata_id", metaId)
+                .order("page_number", { ascending: true });
+              const visionPages = visionResp.data ?? [];
+              if (visionPages.length > 0) {
+                const combined = visionPages
+                  .filter((p) => p.ai_summary)
+                  .map((p) => {
+                    const header = [p.sheet_number, p.sheet_title].filter(Boolean).join(" — ");
+                    return header ? `[${header}]\n${p.ai_summary}` : String(p.ai_summary);
+                  })
+                  .join("\n\n");
+                if (combined.trim()) {
+                  submittalDocs.push({ document_name: "Submittal Attachment", extracted_text: combined });
+                  continue;
+                }
+              }
+
+              // Fallback 1: RAG chunks (vision embeddings or OCR chunks)
+              const chunksResp = await ragSupabase
+                .from("document_chunks")
+                .select("text, chunk_index")
+                .eq("document_id", metaId)
+                .order("chunk_index", { ascending: true })
+                .limit(10);
+              if ((chunksResp.data ?? []).length > 0) {
+                const combined = (chunksResp.data ?? [])
+                  .map((c) => (c.text as string).substring(0, 600))
+                  .join("\n\n");
+                submittalDocs.push({ document_name: "Submittal Attachment", extracted_text: combined });
+                continue;
+              }
+
+              // Fallback 2: OCR text from RAG metadata.
+              const metaResp = await ragSupabase
+                .from("rag_document_metadata")
+                .select("title, content")
+                .eq("id", metaId)
+                .maybeSingle();
+              const text = (metaResp.data?.content as string | null)?.trim();
+              if (text) {
+                submittalDocs.push({
+                  document_name: (metaResp.data?.title as string) ?? "Attachment",
+                  extracted_text: text,
+                });
+              }
+            }
+          }
+
+          // Fallback: legacy submittal_documents table
+          if (submittalDocs.length === 0) {
+            const submittalDocsResp = await supabase
+              .from("submittal_documents")
+              .select("id, document_name, document_type, extracted_text, ai_analysis, page_count")
+              .eq("submittal_id", resolvedSubmittalId)
+              .not("extracted_text", "is", null);
+            submittalDocs = (submittalDocsResp.data ?? []).map((d) => ({
+              document_name: d.document_name as string,
+              extracted_text: d.extracted_text as string | null,
+              document_type: d.document_type as string | null,
+              page_count: d.page_count as number | null,
+            }));
+          }
 
           // ── 5. Fetch linked drawings via submittal_linked_drawings ──────────
           const linkedDrawingsResp = await supabase
@@ -512,9 +845,91 @@ export function createDocumentIntelligenceTools(
               "discipline, document_metadata_id)",
             )
             .eq("submittal_id", resolvedSubmittalId);
-          const linkedDrawings = (linkedDrawingsResp.data ?? []).map(
+          let linkedDrawings = (linkedDrawingsResp.data ?? []).map(
             (r) => (r as unknown as { drawing_id: string; drawings: AnyRow }).drawings,
           );
+          let drawingsWereAutoMatched = false;
+
+          // ── 5b. Auto-match drawings when none are manually linked ─────────
+          // Infer relevant drawings from the submittal's spec section, division,
+          // submittal type, and title keywords — so the review works without any
+          // manual setup.
+          if (linkedDrawings.length === 0 && resolvedProjectId) {
+            const specSection = (submittal.specification_section as string | null)?.trim() ?? "";
+
+            // Map CSI division prefix → drawing discipline keyword
+            const DIVISION_TO_DISCIPLINE: Record<string, string> = {
+              "01": "general",
+              "02": "civil",
+              "03": "structural",
+              "04": "structural",
+              "05": "structural",
+              "06": "architectural",
+              "07": "architectural",
+              "08": "architectural",
+              "09": "architectural",
+              "10": "architectural",
+              "21": "fire",
+              "22": "plumbing",
+              "23": "mechanical",
+              "25": "electrical",
+              "26": "electrical",
+              "27": "electrical",
+              "28": "electrical",
+              "31": "civil",
+              "32": "civil",
+              "33": "civil",
+            };
+
+            // CSI spec section format: "03 30 00" → division prefix "03"
+            const divPrefix = specSection.replace(/\s/g, "").slice(0, 2);
+            const inferredDiscipline = DIVISION_TO_DISCIPLINE[divPrefix] ?? null;
+
+            // Pull project drawings — prefer those with OCR text, filter by discipline
+            let drawingsQuery = supabase
+              .from("drawings")
+              .select("id, title, drawing_number, drawing_type, discipline, document_metadata_id")
+              .eq("project_id", resolvedProjectId)
+              .eq("is_obsolete", false)
+              .not("document_metadata_id", "is", null);
+
+            if (inferredDiscipline) {
+              drawingsQuery = drawingsQuery.ilike("discipline", `%${inferredDiscipline}%`);
+            }
+
+            const { data: candidateDrawings } = await drawingsQuery.limit(30);
+            let candidates = candidateDrawings ?? [];
+
+            // If discipline filter returned nothing, fall back to all drawings with OCR text
+            if (candidates.length === 0) {
+              const { data: fallback } = await supabase
+                .from("drawings")
+                .select("id, title, drawing_number, drawing_type, discipline, document_metadata_id")
+                .eq("project_id", resolvedProjectId)
+                .eq("is_obsolete", false)
+                .not("document_metadata_id", "is", null)
+                .limit(30);
+              candidates = fallback ?? [];
+            }
+
+            // Score by keyword overlap between submittal title/description and drawing titles
+            const submittalWords = new Set(
+              `${submittal.title ?? ""} ${submittal.description ?? ""} ${submittal.submittal_type ?? ""}`
+                .toLowerCase()
+                .split(/\W+/)
+                .filter((w) => w.length > 3),
+            );
+
+            const scored = candidates.map((d) => {
+              const drawingWords = (d.title as string ?? "").toLowerCase().split(/\W+/);
+              const overlap = drawingWords.filter((w) => submittalWords.has(w)).length;
+              return { drawing: d, score: overlap };
+            });
+
+            scored.sort((a, b) => b.score - a.score);
+            linkedDrawings = scored.slice(0, 8).map((s) => s.drawing as AnyRow);
+            drawingsWereAutoMatched = linkedDrawings.length > 0;
+          }
 
           // ── 6. Pull vectorized content for each linked drawing ──────────────
           const drawingContents: Array<{
@@ -528,16 +943,59 @@ export function createDocumentIntelligenceTools(
             const metaId = drawing.document_metadata_id as string | null;
             if (!metaId) continue;
 
-            const chunksResp = await ragSupabase
-              .from("document_chunks")
-              .select("text, chunk_index")
-              .eq("document_id", metaId)
-              .order("chunk_index", { ascending: true })
-              .limit(8);
+            const excerpts: string[] = [];
 
-            const excerpts = (chunksResp.data ?? []).map((c) =>
-              (c.text as string).substring(0, 600),
-            );
+            // Primary: vision page summaries (GPT-4o extracted, spatially aware)
+            const drawVisionResp = await supabase
+              .from("document_page_intelligence")
+              .select("page_number, sheet_number, sheet_title, ai_summary, implied_submittals, notes_and_requirements")
+              .eq("document_metadata_id", metaId)
+              .order("page_number", { ascending: true });
+            for (const p of drawVisionResp.data ?? []) {
+              if (!p.ai_summary) continue;
+              const header = [p.sheet_number, p.sheet_title].filter(Boolean).join(" — ");
+              const extra = [
+                ...(p.implied_submittals as string[] ?? []).map((s: string) => `Required submittal: ${s}`),
+                ...(p.notes_and_requirements as string[] ?? []).slice(0, 3),
+              ].join("; ");
+              excerpts.push(
+                [header ? `[${header}]` : null, p.ai_summary, extra || null]
+                  .filter(Boolean)
+                  .join("\n") as string
+              );
+            }
+
+            // Fallback 1: RAG DB chunks (post-embedding)
+            if (excerpts.length === 0) {
+              const chunksResp = await ragSupabase
+                .from("document_chunks")
+                .select("text, chunk_index")
+                .eq("document_id", metaId)
+                .order("chunk_index", { ascending: true })
+                .limit(8);
+              excerpts.push(
+                ...(chunksResp.data ?? []).map((c) => (c.text as string).substring(0, 600))
+              );
+            }
+
+            // Fallback 2: OCR text from RAG metadata.
+            if (excerpts.length === 0) {
+              const dmResp = await ragSupabase
+                .from("rag_document_metadata")
+                .select("content, embedding_status")
+                .eq("id", metaId)
+                .in("embedding_status", ["embedded", "skipped_low_content"])
+                .maybeSingle();
+              const rawText = (dmResp.data?.content as string | null) ?? "";
+              if (rawText.trim()) {
+                const CHUNK = 600;
+                const cap = Math.min(rawText.length, CHUNK * 8);
+                for (let i = 0; i < cap; i += CHUNK) {
+                  excerpts.push(rawText.substring(i, i + CHUNK));
+                }
+              }
+            }
+
             if (excerpts.length > 0) {
               drawingContents.push({
                 drawingNumber: drawing.drawing_number as string,
@@ -560,7 +1018,7 @@ export function createDocumentIntelligenceTools(
           const additionalChunks: Array<{ title: string; excerpt: string }> = [];
           if (searchQuery.trim()) {
             try {
-              const openai = getOpenAI();
+              const openai = ctx.openai;
               const queryEmbedding = await generateEmbedding(
                 openai,
                 searchQuery,
@@ -586,8 +1044,12 @@ export function createDocumentIntelligenceTools(
                   });
                 }
               }
-            } catch {
-              // Vector search is best-effort — continue with what we have
+            } catch (error) {
+              console.error("[document-intelligence] drawing vector search failed", {
+                projectId: resolvedProjectId,
+                tool: "reviewSubmittalAgainstDrawings",
+                error: error instanceof Error ? error.message : String(error),
+              });
             }
           }
 
@@ -624,6 +1086,7 @@ export function createDocumentIntelligenceTools(
               hasVectorizedContent:
                 drawingContents.some((c) => c.drawingNumber === (d.drawing_number as string)),
             })),
+            drawingsWereAutoMatched,
             submittalDocuments: submittalDocs.map((d) => ({
               name: d.document_name,
               type: d.document_type,
@@ -648,10 +1111,9 @@ export function createDocumentIntelligenceTools(
                 : null,
               missingDrawingText: !hasDrawingText
                 ? linkedDrawings.length === 0
-                  ? "No drawings are linked to this submittal. Link drawings via the " +
-                    "submittal detail page before running a review."
-                  : "Linked drawings exist but have no vectorized content. Drawings may be " +
-                    "scanned PDFs — OCR runs automatically on the next sync cycle (every 30 min)."
+                  ? "No drawings with OCR text found for this project. Upload drawings to the " +
+                    "project first — OCR runs automatically within 30 minutes of upload."
+                  : "Matched drawings have no OCR text yet. OCR runs automatically within 30 minutes of upload."
                 : null,
             },
             nextStep: hasSubmittalText && hasDrawingText
@@ -1219,43 +1681,11 @@ export function createDocumentIntelligenceTools(
               ? `${submittalInfo.title} ${submittalInfo.specification_section ?? ""}`
               : (specSections?.join(" ") ?? "submittal requirements"));
 
-          const openai = getOpenAI();
-          const embedding = await generateEmbedding(
-            openai,
+          const specResult = await resolveSpecificationSources(
             specQuery,
-            EMBEDDING.LARGE,
+            resolvedId,
+            8,
           );
-
-          const { data: specChunks } = await ragSupabase.rpc(
-            "search_document_chunks",
-            {
-              query_embedding: embedding,
-              filter_source_types: ["onedrive_document"],
-              filter_project_id: resolvedId,
-              match_count: 8,
-              match_threshold: 0.3,
-            },
-          );
-
-          const chunks = (specChunks ?? []) as AnyRow[];
-          const specKeywords = [
-            "spec",
-            "specification",
-            "division",
-            "section",
-            "require",
-          ];
-          const relevantChunks = chunks.filter((c) => {
-            const meta = (c.doc_metadata ?? c.metadata) as AnyRow | null;
-            const title = ((meta?.title as string) ?? "").toLowerCase();
-            const text = (
-              ((c.chunk_text ?? c.text) as string) ?? ""
-            ).toLowerCase();
-            return (
-              specKeywords.some((kw) => title.includes(kw)) ||
-              specKeywords.some((kw) => text.includes(kw))
-            );
-          });
 
           return {
             status: "phase_1_stub",
@@ -1270,22 +1700,22 @@ export function createDocumentIntelligenceTools(
                   currentStatus: submittalInfo.status,
                 }
               : null,
-            specContentAvailable: relevantChunks.length > 0,
-            specChunksFound: relevantChunks.length,
-            specExcerpts: relevantChunks.slice(0, 3).map((c) => ({
-              source:
-                (c.doc_title as string | null) ??
-                (((c.doc_metadata ?? c.metadata) as AnyRow | null)
-                  ?.title as string) ??
-                "Unknown document",
-              text: ((c.chunk_text ?? c.text) as string).substring(0, 400),
-            })),
+            specContentAvailable: specResult.sources.length > 0,
+            specChunksFound: specResult.sources.reduce(
+              (count, source) => count + source.excerptCount,
+              0,
+            ),
+            specExcerpts: specResult.sources.slice(0, 3).flatMap((source) =>
+              source.excerpts.slice(0, 1).map((excerpt) => ({
+                source: source.title,
+                text: excerpt.substring(0, 400),
+              })),
+            ),
+            note: specResult.note,
             nextStep:
-              relevantChunks.length > 0
-                ? "Use getSpecRequirements to pull the full spec content for this " +
-                  "section, then ask me to compare it against the submittal details."
-                : "No spec content found for this topic. Verify spec documents are " +
-                  "uploaded and chunked in the Documents page.",
+              specResult.sources.length > 0
+                ? "Use the excerpts above as a starting point for a deeper submittal-to-spec review."
+                : "No matching specification sources are currently available for this project-scoped review. Verify spec ingestion or link the canonical project specification section.",
           };
         },
       ),

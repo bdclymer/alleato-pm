@@ -12,10 +12,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExpandingSearch } from "@/components/ds";
-import type { InboxEmail, InboxTab } from "./email-inbox-client";
+import type { InboxEmail, InboxTab, ReviewedEmail } from "./email-inbox-client";
 
 interface EmailListPanelProps {
   emails: InboxEmail[];
+  reviewedEmails: ReviewedEmail[];
   isLoading: boolean;
   activeTab: InboxTab;
   onTabChange: (tab: InboxTab) => void;
@@ -25,6 +26,7 @@ interface EmailListPanelProps {
   onSearchChange: (v: string) => void;
   needsAssignmentCount: number;
   brandonQueueCount: number;
+  reviewedCount: number;
 }
 
 const TABS: { id: InboxTab; label: string }[] = [
@@ -32,6 +34,7 @@ const TABS: { id: InboxTab; label: string }[] = [
   { id: "needs-assignment", label: "Needs Assignment" },
   { id: "all", label: "All" },
   { id: "has-attachments", label: "Attachments" },
+  { id: "reviewed", label: "Reviewed" },
 ];
 
 function formatEmailDate(value: string | null): string {
@@ -189,8 +192,79 @@ function EmailRow({
   );
 }
 
+const REVIEWED_OUTCOME_LABEL: Record<string, string> = {
+  draft_copied: "Draft copied",
+  draft_edited: "Draft edited",
+  delegated: "Delegated",
+  watched: "Watching",
+  skipped: "Skipped",
+  marked_no_action: "No action",
+};
+
+const REVIEWED_OUTCOME_CLASS: Record<string, string> = {
+  draft_copied: "bg-primary/10 text-primary",
+  draft_edited: "bg-primary/10 text-primary",
+  delegated: "bg-warning-subtle text-warning",
+  watched: "bg-info-subtle text-info",
+  skipped: "bg-muted text-muted-foreground",
+  marked_no_action: "bg-muted text-muted-foreground",
+};
+
+function ReviewedRow({
+  reviewed,
+  isSelected,
+  onSelect,
+}: {
+  reviewed: ReviewedEmail;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const sender = reviewed.fromName ?? reviewed.fromEmail ?? "Unknown";
+  const date = formatEmailDate(reviewed.reviewedAt);
+  const outcomeLabel = REVIEWED_OUTCOME_LABEL[reviewed.reviewOutcome] ?? reviewed.reviewOutcome;
+  const outcomeClass = REVIEWED_OUTCOME_CLASS[reviewed.reviewOutcome] ?? "bg-muted text-muted-foreground";
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={onSelect}
+      className={cn(
+        "w-full h-auto text-left px-3 py-2.5 rounded-none justify-start",
+        "hover:bg-accent/60 focus-visible:ring-1 focus-visible:ring-primary/30",
+        isSelected && "bg-accent hover:bg-accent",
+      )}
+    >
+      <div className="flex items-start gap-2.5 w-full">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2 mb-0.5">
+            <span className="text-sm font-medium text-muted-foreground truncate">{sender}</span>
+            <span className="text-xs text-muted-foreground shrink-0 tabular-nums">{date}</span>
+          </div>
+          <p className="text-xs text-muted-foreground truncate mb-1">{reviewed.subject}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span
+              className={cn(
+                "inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-medium leading-none",
+                outcomeClass,
+              )}
+            >
+              {outcomeLabel}
+            </span>
+            {reviewed.reviewerNote && (
+              <span className="text-[10px] text-muted-foreground truncate max-w-36">
+                {reviewed.reviewerNote}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Button>
+  );
+}
+
 export function EmailListPanel({
   emails,
+  reviewedEmails,
   isLoading,
   activeTab,
   onTabChange,
@@ -200,6 +274,7 @@ export function EmailListPanel({
   onSearchChange,
   needsAssignmentCount,
   brandonQueueCount,
+  reviewedCount,
 }: EmailListPanelProps) {
   const groups = groupEmails(emails);
 
@@ -237,6 +312,14 @@ export function EmailListPanel({
                 {needsAssignmentCount}
               </Badge>
             )}
+            {tab.id === "reviewed" && reviewedCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 text-[10px] bg-muted text-muted-foreground border-0 font-semibold"
+              >
+                {reviewedCount}
+              </Badge>
+            )}
           </Button>
         ))}
       </div>
@@ -264,6 +347,24 @@ export function EmailListPanel({
               </div>
             ))}
           </div>
+        ) : activeTab === "reviewed" ? (
+          reviewedEmails.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6 py-12">
+              <Inbox className="size-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">No reviewed emails yet.</p>
+            </div>
+          ) : (
+            <div className="pb-4 divide-y divide-border/30">
+              {reviewedEmails.map((r) => (
+                <ReviewedRow
+                  key={r.reviewId}
+                  reviewed={r}
+                  isSelected={r.id === selectedId}
+                  onSelect={() => onSelect(r.id)}
+                />
+              ))}
+            </div>
+          )
         ) : emails.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6 py-12">
             {activeTab === "brandon-queue" ? (

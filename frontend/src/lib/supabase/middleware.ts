@@ -76,6 +76,7 @@ export function shouldBypassSessionMiddleware(pathname: string): boolean {
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
     pathname.startsWith("/fm-global/form") ||
+    pathname.startsWith("/respond/") ||
     /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml)$/i.test(pathname)
   );
 }

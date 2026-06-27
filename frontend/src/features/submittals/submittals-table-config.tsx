@@ -7,7 +7,6 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ds";
 
 export interface SubmittalTableRow {
@@ -40,26 +39,6 @@ function getDaysUntil(dateStr: string | null): number | null {
     (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   );
 }
-
-// ─── Status / Response badge maps ────────────────────────────────────────────
-
-const statusVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline" | "success"
-> = {
-  Draft: "secondary",
-  Open: "default",
-  Distributed: "outline",
-  Closed: "success",
-  approved: "success",
-  "approved as noted": "success",
-  requires_revision: "destructive",
-  revise_and_resubmit: "destructive",
-  rejected: "destructive",
-  under_review: "default",
-  submitted: "secondary",
-  pending: "outline",
-};
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -189,9 +168,7 @@ export function buildSubmittalTableColumns(
     {
       ...submittalColumns[5],
       render: (item) => (
-        <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-          {item.status || "-"}
-        </Badge>
+        <StatusBadge status={item.status || "-"} />
       ),
       sortValue: (item) => item.status,
       editable: Boolean(inlineEdit),
@@ -307,9 +284,7 @@ export function renderSubmittalCard(
           {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title || "Untitled"}</h3>
         </div>
-        <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-          {item.status}
-        </Badge>
+        <StatusBadge status={item.status} />
       </div>
       <p className="text-sm text-muted-foreground">
         {item.specification_section || item.submittal_type_name || "-"}
@@ -348,9 +323,7 @@ export function renderSubmittalList(
           {item.ball_in_court && ` · ${item.ball_in_court}`}
         </p>
       </div>
-      <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-        {item.status}
-      </Badge>
+      <StatusBadge status={item.status} />
     </div>
   );
 }

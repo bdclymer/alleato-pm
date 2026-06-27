@@ -4,7 +4,30 @@ jest.mock("../guardrails", () => ({
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
+  createRagServiceClient: jest.fn(),
 }));
+
+// Mock createToolContext so action-tools tests don't need a real OpenAI key or
+// RAG client. The ctx.db, ctx.rag, and ctx.guardrails slots are wired to the
+// same jest.fn() stubs already mocked above so existing test expectations hold.
+jest.mock("../tool-context", () => {
+  const { createServiceClient, createRagServiceClient } = jest.requireMock("@/lib/supabase/service") as {
+    createServiceClient: jest.MockedFunction<() => unknown>;
+    createRagServiceClient: jest.MockedFunction<() => unknown>;
+  };
+  const { createToolGuardrails } = jest.requireMock("../guardrails") as {
+    createToolGuardrails: jest.MockedFunction<(...args: unknown[]) => unknown>;
+  };
+  return {
+    createToolContext: jest.fn((input: { userId: string; pinnedProjectId?: number }) => ({
+      db: createServiceClient(),
+      rag: createRagServiceClient(),
+      openai: {},
+      guardrails: createToolGuardrails(input.userId, { pinnedProjectId: input.pinnedProjectId }),
+    })),
+    createFakeToolContext: jest.fn(),
+  };
+});
 
 jest.mock("@/lib/microsoft-graph/calendar-invites", () => ({
   buildCalendarInviteAdaptiveCard: jest.fn(),
@@ -18,7 +41,21 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
   resolveOutlookMailboxUserId: jest.fn(),
 }));
 
+jest.mock("@/services/notificationService", () => ({
+  notifyChangeRequestReviewNeeded: jest.fn(),
+  notifyRfiReviewNeeded: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/notification-decision-ledger", () => ({
+  recordAiNotificationDecision: jest.fn(),
+}));
+
 import { createServiceClient } from "@/lib/supabase/service";
+import { recordAiNotificationDecision } from "@/lib/ai/notification-decision-ledger";
+import {
+  notifyChangeRequestReviewNeeded,
+  notifyRfiReviewNeeded,
+} from "@/services/notificationService";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
@@ -32,10 +69,25 @@ import {
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
 const mockedCreateServiceClient = jest.mocked(createServiceClient);
+const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
+  notifyChangeRequestReviewNeeded,
+);
+const mockedNotifyRfiReviewNeeded = jest.mocked(notifyRfiReviewNeeded);
+const mockedRecordAiNotificationDecision = jest.mocked(
+  recordAiNotificationDecision,
+);
 
 describe("previewCreateRFI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedNotifyChangeRequestReviewNeeded.mockResolvedValue({
+      created: 1,
+      skipped: 0,
+    });
+    mockedNotifyRfiReviewNeeded.mockResolvedValue({
+      created: 1,
+      skipped: 0,
+    });
   });
 
   it("returns a traced preview without writing an RFI", async () => {
@@ -74,6 +126,17 @@ describe("previewCreateRFI", () => {
         },
       },
     });
+    expect(mockedNotifyRfiReviewNeeded).toHaveBeenCalledWith(
+      "user-1",
+      expect.objectContaining({
+        projectId: 43,
+        subject: "RFI - Delayed Electrical Rough-in",
+        question: "Please clarify delayed electrical rough-in.",
+        costImpact: "tbd",
+        scheduleImpact: "tbd",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createRFI",
@@ -114,6 +177,7 @@ describe("previewCreateRFI", () => {
       success: false,
       error: "You do not have access to that project.",
     });
+    expect(mockedNotifyRfiReviewNeeded).not.toHaveBeenCalled();
     expect(onTrace).toHaveBeenCalledWith(
       expect.objectContaining({
         tool: "createRFI",
@@ -124,6 +188,375 @@ describe("previewCreateRFI", () => {
         output: output,
       }),
     );
+  });
+});
+
+describe("createChangeEvent", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "recorded",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "assistant_widget"],
+        requiredAction: "Approve, edit, or discard the AI-created change event draft.",
+        reason: "AI-created draft needs human decision before it becomes record truth.",
+        failureLoudBehavior: "Keep draft visible with source and owner.",
+        preferenceOverrideReason:
+          "Teams delivery suppressed by preference; in-app visibility retained.",
+      },
+    });
+  });
+
+  it("previews change request creation before writing", async () => {
+    const onTrace = jest.fn();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { onTrace },
+    );
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      scope: "owner_change",
+      type: "potential_change",
+      status: "open",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      notificationDecision: {
+        status: "recorded",
+        decision: {
+          channels: ["in_app", "assistant_widget"],
+        },
+      },
+      preview: {
+        table: "change_events",
+        fields: {
+          project_id: 43,
+          title: "Owner-requested lobby finish change",
+          description: "Owner asked to upgrade the lobby finish package.",
+          type: "Owner Change",
+          scope: "TBD",
+          status: "Open",
+          reason: null,
+          origin: "Internal",
+          expecting_revenue: true,
+          line_item_revenue_source: null,
+        },
+        reviewCard: {
+          title: "Review change request",
+          recordType: "change_event",
+          groups: expect.arrayContaining([
+            expect.objectContaining({
+              title: "Required",
+              fields: expect.arrayContaining([
+                expect.objectContaining({
+                  key: "project_id",
+                  label: "Project",
+                  required: true,
+                  value: "43",
+                }),
+              ]),
+            }),
+            expect.objectContaining({
+              title: "Generated by Alleato",
+              fields: expect.arrayContaining([
+                expect.objectContaining({
+                  key: "number",
+                  generated: true,
+                  value: "Generated after confirmation",
+                }),
+              ]),
+            }),
+          ]),
+        },
+      },
+    });
+    expect(mockedNotifyChangeRequestReviewNeeded).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001",
+      expect.objectContaining({
+        projectId: 43,
+        title: "Owner-requested lobby finish change",
+        description: "Owner asked to upgrade the lobby finish package.",
+        scope: "TBD",
+        type: "Owner Change",
+        status: "Open",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+    );
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: "00000000-0000-0000-0000-000000000001",
+        eventType: "ai_change_event_awaiting_approval",
+        severity: "normal",
+        projectId: 43,
+        entityType: "change_events",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+        title: "AI change event draft ready",
+        body:
+          "Review, edit, or confirm the AI-created change event draft: Owner-requested lobby finish change",
+        preferenceHints: {
+          suppressTeams: true,
+        },
+        isUserOnRelatedPage: true,
+        preview: expect.objectContaining({
+          toolName: "createChangeEvent",
+          table: "change_events",
+          fields: expect.objectContaining({
+            project_id: 43,
+            title: "Owner-requested lobby finish change",
+          }),
+          reviewCard: expect.objectContaining({
+            title: "Review change request",
+          }),
+        }),
+      }),
+    );
+    expect(onTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "createChangeEvent",
+        input: expect.objectContaining({
+          projectId: 43,
+          confirmed: false,
+        }),
+        output: expect.objectContaining({
+          action: "preview",
+        }),
+      }),
+    );
+  });
+
+  it("keeps the change request preview visible when notification decision recording fails", async () => {
+    const onTrace = jest.fn();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+    mockedRecordAiNotificationDecision.mockResolvedValueOnce({
+      status: "failed",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "assistant_widget"],
+        requiredAction: "Approve, edit, or discard the AI-created change event draft.",
+        reason: "AI-created draft needs human decision before it becomes record truth.",
+        failureLoudBehavior: "Keep draft visible with source and owner.",
+        preferenceOverrideReason: null,
+      },
+      error: {
+        code: "insert_failed",
+        message:
+          "Failed to record AI notification decision (ai_change_event_awaiting_approval): insert denied",
+      },
+    });
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { onTrace },
+    );
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        table: "change_events",
+      },
+      notificationDecision: {
+        status: "failed",
+        error: {
+          code: "insert_failed",
+          message: expect.stringContaining(
+            "Failed to record AI notification decision",
+          ),
+        },
+      },
+    });
+    expect(onTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "createChangeEvent",
+        output: expect.objectContaining({
+          action: "preview",
+          notificationDecision: expect.objectContaining({
+            status: "failed",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("rejects invalid native values before preview or write", async () => {
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn(),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from: jest.fn() } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Invalid status",
+      status: "void",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      success: false,
+      error: expect.stringContaining('Invalid change request status "void"'),
+    });
+    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+    expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
+  });
+
+  it("writes a confirmed change request with the canonical DB payload", async () => {
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const changeEventInsert = jest.fn((payload) => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "ce-1",
+            title: payload.title,
+            number: payload.number,
+            status: payload.status,
+          },
+          error: null,
+        }),
+      })),
+    }));
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest
+                          .fn()
+                          .mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      if (tableName === "change_events") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn().mockResolvedValue({
+              data: [
+                { number: "001" },
+                { number: "CE-009" },
+                { number: "not-a-number" },
+              ],
+              error: null,
+            }),
+          })),
+          insert: changeEventInsert,
+        };
+      }
+      throw new Error(`Unexpected table in change request test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({
+        ok: true,
+        projectId: 43,
+      }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createChangeEvent.execute;
+    if (!execute) throw new Error("createChangeEvent execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      title: "Owner-requested lobby finish change",
+      description: "Owner asked to upgrade the lobby finish package.",
+      scope: "owner_change",
+      type: "potential_change",
+      status: "open",
+      reason: "Back Charge",
+      origin: "Internal",
+      expectingRevenue: true,
+      confirmed: true,
+      idempotencyKey: "change-request-key-1",
+    });
+
+    expect(changeEventInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_id: 43,
+        title: "Owner-requested lobby finish change",
+        description: "Owner asked to upgrade the lobby finish package.",
+        type: "Owner Change",
+        scope: "TBD",
+        status: "Open",
+        reason: "Back Charge",
+        origin: "Internal",
+        number: "010",
+        expecting_revenue: true,
+        line_item_revenue_source: null,
+      }),
+    );
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success" }),
+    );
+    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
+    expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
+    expect(output).toMatchObject({
+      success: true,
+      message:
+        'Change request **010 — "Owner-requested lobby finish change"** logged.',
+      record: {
+        id: "ce-1",
+        number: "010",
+        status: "Open",
+      },
+    });
   });
 });
 
@@ -247,6 +680,123 @@ describe("generated task DB contract normalization", () => {
         id: "task-1",
         status: "done",
         priority: "urgent",
+      },
+    });
+  });
+
+  it("direct-writes generated tasks for Teams task-create mode without a preview round trip", async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: {
+        id: "task-2",
+        title: "Confirm utility transfer impact",
+        description:
+          "Confirm the Solar Array temp-power transfer back to utility power will not impact electricity.",
+        status: "open",
+        priority: "high",
+        due_date: "2026-06-26",
+        project_id: null,
+        assignee_name: "Candon Rusin",
+        assignee_email: "candon@example.com",
+        created_at: "2026-06-26T13:45:00Z",
+      },
+      error: null,
+    });
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "people") {
+        return {
+          select: jest.fn(() => ({
+            limit: jest.fn().mockResolvedValue({
+              data: [
+                {
+                  id: "person-1",
+                  first_name: "Candon",
+                  last_name: "Rusin",
+                  email: "candon@example.com",
+                },
+              ],
+              error: null,
+            }),
+          })),
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table write in generated task test: ${tableName}`);
+    });
+
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn().mockResolvedValue(null),
+    });
+    mockedCreateServiceClient.mockReturnValue({ from, rpc } as never);
+
+    const tools = createActionTools(
+      "00000000-0000-0000-0000-000000000001",
+      { generatedTaskWriteMode: "direct" },
+    );
+    const execute = tools.createGeneratedTask.execute;
+    if (!execute) throw new Error("createGeneratedTask execute was not registered");
+
+    const output = await execute({
+      title: "Confirm utility transfer impact",
+      description:
+        "Confirm the Solar Array temp-power transfer back to utility power will not impact electricity.",
+      assignee: "Candon Rusin",
+      dueDate: "2026-06-26",
+      priority: "high",
+      status: "open",
+      confirmed: false,
+      idempotencyKey: "teams-task-key-1",
+    });
+
+    expect(rpc).toHaveBeenCalledWith(
+      "create_ai_generated_task",
+      expect.objectContaining({
+        p_title: "Confirm utility transfer impact",
+        p_status: "open",
+        p_priority: "high",
+        p_assignee_name: "Candon Rusin",
+        p_assignee_email: "candon@example.com",
+        p_assignee_person_id: "person-1",
+        p_idempotency_key: "teams-task-key-1",
+      }),
+    );
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        request_payload: expect.objectContaining({
+          confirmed: true,
+          autoConfirmedBy: "teams_task_write_direct",
+        }),
+      }),
+    );
+    expect(output).toMatchObject({
+      success: true,
+      message:
+        'Task **"Confirm utility transfer impact"** was added to the Tasks page.',
+      links: {
+        tasksPage: "/tasks?task=task-2",
       },
     });
   });
@@ -679,6 +1229,184 @@ describe("project directory action tools", () => {
           person_type: "contact",
           status: "active",
           make_primary_company_contact: true,
+        },
+      },
+    });
+  });
+});
+
+describe("createCommitment previews", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true, projectId: 43 }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+    mockedRecordAiNotificationDecision.mockResolvedValue({
+      status: "recorded",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "teams"],
+        requiredAction: "Confirm vendor, dates, line items, and total before commit.",
+        reason: "Commitment or SOV draft is a high-risk financial write.",
+        failureLoudBehavior: "Keep Commit disabled until required confirmations complete.",
+        preferenceOverrideReason:
+          "Teams delivery suppressed by preference; in-app visibility retained.",
+      },
+    });
+  });
+
+  function setupCommitmentPreviewClient() {
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "subcontracts") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+        };
+      }
+      if (tableName === "companies") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              ilike: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({
+                  data: [{ id: "company-1", name: "Acme Electric" }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        };
+      }
+      throw new Error(`Unexpected table in commitment preview test: ${tableName}`);
+    });
+
+    mockedCreateServiceClient.mockReturnValue({ from, rpc: jest.fn() } as never);
+  }
+
+  it("records a notification decision when previewing a commitment", async () => {
+    setupCommitmentPreviewClient();
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      lineItems: [
+        {
+          budgetCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      notificationDecision: {
+        status: "recorded",
+        decision: {
+          channels: ["in_app", "teams"],
+        },
+      },
+      preview: {
+        table: "subcontracts",
+        fields: {
+          project_id: 43,
+          contract_number: "SC-001",
+          title: "Electrical rough-in",
+          contract_company_id: "company-1",
+        },
+      },
+    });
+    expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: "00000000-0000-0000-0000-000000000001",
+        eventType: "ai_commitment_awaiting_approval",
+        severity: "normal",
+        projectId: 43,
+        entityType: "subcontracts",
+        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+        title: "AI commitment draft ready",
+        body:
+          "Confirm vendor, dates, and line items before creating the AI-drafted commitment: Electrical rough-in",
+        preferenceHints: {
+          suppressTeams: true,
+        },
+        isUserOnRelatedPage: true,
+        preview: expect.objectContaining({
+          toolName: "createCommitment",
+          table: "subcontracts",
+          fields: expect.objectContaining({
+            project_id: 43,
+            contract_number: "SC-001",
+            title: "Electrical rough-in",
+          }),
+          widget: expect.objectContaining({
+            type: "commitment_draft",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("keeps the commitment preview visible when notification decision recording fails", async () => {
+    setupCommitmentPreviewClient();
+    mockedRecordAiNotificationDecision.mockResolvedValueOnce({
+      status: "failed",
+      decision: {
+        tier: "interrupt",
+        channels: ["in_app", "teams"],
+        requiredAction: "Confirm vendor, dates, line items, and total before commit.",
+        reason: "Commitment or SOV draft is a high-risk financial write.",
+        failureLoudBehavior: "Keep Commit disabled until required confirmations complete.",
+        preferenceOverrideReason: null,
+      },
+      error: {
+        code: "insert_failed",
+        message:
+          "Failed to record AI notification decision (ai_commitment_awaiting_approval): insert denied",
+      },
+    });
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      confirmed: false,
+    });
+
+    expect(output).toMatchObject({
+      action: "preview",
+      preview: {
+        table: "subcontracts",
+      },
+      notificationDecision: {
+        status: "failed",
+        error: {
+          code: "insert_failed",
+          message: expect.stringContaining(
+            "Failed to record AI notification decision",
+          ),
         },
       },
     });

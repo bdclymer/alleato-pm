@@ -259,6 +259,85 @@ def _send_teams_dm(message: str) -> dict[str, Any]:
         return {"sent": False, "error": str(exc)}
 
 
+def _claim_teams_alert_delivery(graph_message_id: str) -> dict[str, Any]:
+    """Atomically claim Teams alert delivery for one synced Outlook email."""
+    message_id = _clean_text(graph_message_id)
+    if not message_id:
+        return {
+            "claimed": False,
+            "reason": "missing_graph_message_id",
+            "detail": "Urgent Teams auto-alerts require graph_message_id so delivery can be deduped.",
+        }
+
+    client = _supabase_client()
+    if not client:
+        return {
+            "claimed": False,
+            "reason": "supabase_not_configured",
+            "detail": "Urgent Teams auto-alert blocked because the outlook_email_intake dedupe ledger is unavailable.",
+        }
+
+    claimed_at = datetime.now(timezone.utc).isoformat()
+    try:
+        response = (
+            client.table("outlook_email_intake")
+            .update({"teams_alert_sent_at": claimed_at})
+            .eq("graph_message_id", message_id)
+            .is_("teams_alert_sent_at", "null")
+            .execute()
+        )
+        matched = len(response.data or [])
+        if matched > 0:
+            return {"claimed": True, "graphMessageId": message_id, "claimedAt": claimed_at, "matchedRows": matched}
+
+        existing = (
+            client.table("outlook_email_intake")
+            .select("graph_message_id,teams_alert_sent_at")
+            .eq("graph_message_id", message_id)
+            .limit(1)
+            .execute()
+        )
+        rows = existing.data or []
+        if rows and rows[0].get("teams_alert_sent_at"):
+            return {
+                "claimed": False,
+                "reason": "duplicate",
+                "graphMessageId": message_id,
+                "teamsAlertSentAt": rows[0].get("teams_alert_sent_at"),
+            }
+
+        return {
+            "claimed": False,
+            "reason": "no_matching_row",
+            "graphMessageId": message_id,
+            "detail": (
+                "Urgent Teams auto-alert blocked because no outlook_email_intake row matched "
+                "graph_message_id. Run Outlook intake sync before alert delivery."
+            ),
+        }
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Teams alert dedupe claim failed: %s", exc)
+        return {"claimed": False, "reason": "dedupe_claim_failed", "graphMessageId": message_id, "error": str(exc)}
+
+
+def _release_teams_alert_delivery_claim(graph_message_id: str) -> None:
+    """Clear a claimed Teams alert timestamp when the downstream Teams send fails."""
+    message_id = _clean_text(graph_message_id)
+    if not message_id:
+        return
+    try:
+        client = _supabase_client()
+        if client:
+            (
+                client.table("outlook_email_intake")
+                .update({"teams_alert_sent_at": None})
+                .eq("graph_message_id", message_id)
+                .execute()
+            )
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Teams alert dedupe claim release failed: %s", exc)
+
+
 def _create_graph_draft(
     *,
     mailbox: str,
@@ -369,12 +448,18 @@ def draft_outlook_email_for_review(
 
 
 @tool
-def draft_teams_message_for_review(recipient: str, message: str, urgency: str = "normal") -> str:
+def draft_teams_message_for_review(
+    recipient: str,
+    message: str,
+    urgency: str = "normal",
+    graph_message_id: Optional[str] = None,
+) -> str:
     """Send or prepare a Teams DM for Brandon's awareness.
 
     When urgency is "urgent" and MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT is true
-    (default), the message is sent immediately via the Archon bot. For non-urgent items,
-    a preview payload is returned for human review.
+    (default), graph_message_id is required and the outlook_email_intake row is claimed
+    before posting to Teams. For non-urgent items, a preview payload is returned for
+    human review.
     """
     if not _clean_text(recipient):
         return "TEAMS_DRAFT_BLOCKED: recipient must not be blank."
@@ -382,7 +467,14 @@ def draft_teams_message_for_review(recipient: str, message: str, urgency: str = 
     teams_result: dict[str, Any] = {"sent": False, "reason": "non_urgent_or_disabled"}
     is_urgent = urgency.lower() in {"urgent", "high"}
     if is_urgent and _auto_teams_alert_enabled():
-        teams_result = _send_teams_dm(message)
+        dedupe_result = _claim_teams_alert_delivery(graph_message_id or "")
+        if dedupe_result.get("claimed"):
+            teams_result = _send_teams_dm(message)
+            teams_result["dedupe"] = dedupe_result
+            if not teams_result.get("sent"):
+                _release_teams_alert_delivery_claim(graph_message_id or "")
+        else:
+            teams_result = {"sent": False, **dedupe_result}
 
     payload = {
         "action": "sent" if teams_result.get("sent") else "preview",
@@ -393,6 +485,7 @@ def draft_teams_message_for_review(recipient: str, message: str, urgency: str = 
             "recipient": recipient,
             "message": message,
             "urgency": urgency,
+            "graphMessageId": graph_message_id,
         },
     }
     return _json(payload)
@@ -401,9 +494,9 @@ def draft_teams_message_for_review(recipient: str, message: str, urgency: str = 
 def _supabase_client():
     """Lazy Supabase client for triage write-back. Returns None if unconfigured."""
     try:
-        from src.services.supabase_helpers import get_pm_write_client
+        from src.services.supabase_helpers import get_outlook_intake_write_client
 
-        return get_pm_write_client()
+        return get_outlook_intake_write_client()
     except Exception:
         try:
             import os

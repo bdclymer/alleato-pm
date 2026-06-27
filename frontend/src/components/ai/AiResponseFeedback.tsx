@@ -82,6 +82,8 @@ export function AiResponseFeedback({
         method: "POST",
         body: JSON.stringify({
           sessionId: subject.sessionId ?? null,
+          messageId: subject.messageId ?? subject.subjectId ?? null,
+          traceId: subject.traceId ?? null,
           feedback: submittedSignal,
           surface: subject.surface,
           subjectType: subject.subjectType,
@@ -129,8 +131,7 @@ export function AiResponseFeedback({
   }
 
   const iconClass = size === "compact" ? "h-4 w-4" : "h-3.5 w-3.5";
-  const buttonClass =
-    size === "compact" ? "h-7 gap-1.5 text-xs" : "h-6 w-6";
+  const buttonClass = size === "compact" ? "h-7 gap-1.5 text-xs" : "h-6 w-6";
 
   const handleBadConfirm = async () => {
     if (!badReasonCategory) {

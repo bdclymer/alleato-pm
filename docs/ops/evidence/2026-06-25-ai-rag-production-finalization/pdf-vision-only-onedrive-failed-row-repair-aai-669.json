@@ -1,0 +1,18 @@
+{
+  "id": "onedrive_01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW",
+  "started_at": "2026-06-25T23:55:02.635378+00:00",
+  "ok": true,
+  "chunks_written": 1,
+  "page_intelligence_count": 1,
+  "rag_chunk_count": 1,
+  "vision_chunk_count": 1,
+  "rag_metadata": {
+    "id": "onedrive_01F674PXVSWG7AB4EBOBD2WO4DQBGWP4PW",
+    "embedding_status": "embedded",
+    "parsing_status": "embedded",
+    "content_length": 0,
+    "source_web_url": "https://alleato-my.sharepoint.com/personal/acannon_alleatogroup_com/Documents/2025%20Jobs/25-%20109%20Uniqlo%20(Phillipsburg,%20NJ)/01%20-%20Drawings/Bid%20Set/Riser%20Clamps.pdf",
+    "storage_path": "2025 Jobs/25- 109 Uniqlo (Phillipsburg, NJ)/01 - Drawings/Bid Set/Riser Clamps.pdf"
+  },
+  "finished_at": "2026-06-25T23:55:07.068796+00:00"
+}

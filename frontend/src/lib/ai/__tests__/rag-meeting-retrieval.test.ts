@@ -11,6 +11,7 @@
  */
 
 import {
+  detectCrossSourceInvestigationRequest,
   detectRecentEmailInboxRequest,
   detectSourceLookupRecentTeamsRequest,
   detectSourceSpecificRagRequest,
@@ -51,7 +52,9 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
   });
 
   it("routes last week meeting summaries to the prior seven-day window", () => {
-    const result = detectSourceSpecificRagRequest("meeting summaries from last week");
+    const result = detectSourceSpecificRagRequest(
+      "meeting summaries from last week",
+    );
 
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
@@ -60,50 +63,64 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
   });
 
   it('returns recent_meetings kind for "tell me about our recent meetings"', () => {
-    const result = detectSourceSpecificRagRequest("tell me about our recent meetings");
+    const result = detectSourceSpecificRagRequest(
+      "tell me about our recent meetings",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
   });
 
   it('returns recent_meetings kind for "what meetings did we have this month"', () => {
-    const result = detectSourceSpecificRagRequest("what meetings did we have this month");
+    const result = detectSourceSpecificRagRequest(
+      "what meetings did we have this month",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
   });
 
   it('returns recent_meetings kind for "can you show me our meeting notes"', () => {
-    const result = detectSourceSpecificRagRequest("can you show me our meeting notes");
+    const result = detectSourceSpecificRagRequest(
+      "can you show me our meeting notes",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
   });
 
   it('returns recent_meetings kind for "meeting summaries from last week"', () => {
-    const result = detectSourceSpecificRagRequest("meeting summaries from last week");
+    const result = detectSourceSpecificRagRequest(
+      "meeting summaries from last week",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_meetings");
   });
 
-  it('returns recent_meetings with correct label and limit', () => {
+  it("returns recent_meetings with correct label and limit", () => {
     const result = detectSourceSpecificRagRequest("review recent meetings");
     expect(result?.label).toBe("Recent meeting transcripts");
     expect(result?.limit).toBe(10);
   });
 
   it('returns meetings_on_date for "meetings completed today"', () => {
-    const result = detectSourceSpecificRagRequest("Tell me about the meetings that were completed today");
+    const result = detectSourceSpecificRagRequest(
+      "Tell me about the meetings that were completed today",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("meetings_on_date");
     expect(result?.date).toMatch(/^20\d{2}-\d{2}-\d{2}$/);
   });
 
-  it('returns meetings_on_date for critical-risk meeting questions today', () => {
-    const result = detectSourceSpecificRagRequest("Were there any critical risks identified in the meetings today?");
+  it("returns meetings_on_date for critical-risk meeting questions today", () => {
+    const result = detectSourceSpecificRagRequest(
+      "Were there any critical risks identified in the meetings today?",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("meetings_on_date");
   });
 
-  it('still returns meetings_on_date for explicit Friday query', () => {
-    const result = detectSourceSpecificRagRequest("what meetings were conducted on friday");
+  it("still returns meetings_on_date for explicit Friday query", () => {
+    const result = detectSourceSpecificRagRequest(
+      "what meetings were conducted on friday",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("meetings_on_date");
   });
@@ -113,14 +130,18 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
     // date-specific block running first, this routes to recent_meetings (60-day)
     // instead of meetings_on_date (Friday-specific). Fix: asksForMeetingsOnFriday
     // must be evaluated before generalMeetingPhrases.
-    const result = detectSourceSpecificRagRequest("what meetings were held on friday");
+    const result = detectSourceSpecificRagRequest(
+      "what meetings were held on friday",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("meetings_on_date");
   });
 
   it('returns meetings_on_date for "tell me about meetings on friday" (detection-order regression)', () => {
     // "tell me about meetings" is in generalMeetingPhrases — must not swallow date-qualified queries.
-    const result = detectSourceSpecificRagRequest("tell me about meetings on friday");
+    const result = detectSourceSpecificRagRequest(
+      "tell me about meetings on friday",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("meetings_on_date");
   });
@@ -132,55 +153,81 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
     expect(result?.kind).toBe("meetings_on_date");
   });
 
-  it('returns null for non-meeting queries', () => {
-    const result = detectSourceSpecificRagRequest("what is the current budget for the project");
+  it("returns null for non-meeting queries", () => {
+    const result = detectSourceSpecificRagRequest(
+      "what is the current budget for the project",
+    );
     expect(result).toBeNull();
   });
 
-  it('returns null for queries with meeting only in unrelated context', () => {
+  it("returns null for queries with meeting only in unrelated context", () => {
     // "meeting" appears but no intent phrase matches
-    const result = detectSourceSpecificRagRequest("we are meeting the deadline tomorrow");
+    const result = detectSourceSpecificRagRequest(
+      "we are meeting the deadline tomorrow",
+    );
     expect(result).toBeNull();
   });
 });
 
 describe("detectSourceSpecificRagRequest — existing patterns not regressed", () => {
-  it('returns recent_onedrive_documents for OneDrive queries', () => {
-    const result = detectSourceSpecificRagRequest("show me the most recent onedrive documents");
+  it("returns recent_onedrive_documents for OneDrive queries", () => {
+    const result = detectSourceSpecificRagRequest(
+      "show me the most recent onedrive documents",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_onedrive_documents");
   });
 
-  it('does not route recent email queries to source-specific RAG', () => {
-    const result = detectSourceSpecificRagRequest("show me the last five emails");
+  it("does not route recent email queries to source-specific RAG", () => {
+    const result = detectSourceSpecificRagRequest(
+      "show me the last five emails",
+    );
     expect(result).toBeNull();
   });
 
-  it('does not route natural last-five-email wording to source-specific RAG', () => {
-    const result = detectSourceSpecificRagRequest("Can you tell me my last five emails?");
+  it("does not route natural last-five-email wording to source-specific RAG", () => {
+    const result = detectSourceSpecificRagRequest(
+      "Can you tell me my last five emails?",
+    );
     expect(result).toBeNull();
   });
 
-  it('does not route urgent inbox triage wording to source-specific RAG', () => {
-    const result = detectSourceSpecificRagRequest("Is there anything urgent in my inbox?");
+  it("does not route urgent inbox triage wording to source-specific RAG", () => {
+    const result = detectSourceSpecificRagRequest(
+      "Is there anything urgent in my inbox?",
+    );
     expect(result).toBeNull();
   });
 
-  it('does not route important same-day email triage to source-specific RAG', () => {
+  it("does not route important same-day email triage to source-specific RAG", () => {
     const result = detectSourceSpecificRagRequest(
       "what important emails have I received this morning?",
     );
     expect(result).toBeNull();
   });
 
-  it('returns recent_teams_discussions for Teams queries', () => {
-    const result = detectSourceSpecificRagRequest("show me recent teams discussions with Brandon");
+  it("returns recent_teams_discussions for Teams queries", () => {
+    const result = detectSourceSpecificRagRequest(
+      "show me recent teams discussions with Brandon",
+    );
     expect(result).not.toBeNull();
     expect(result?.kind).toBe("recent_teams_discussions");
     expect(result?.query).toBe("show me recent teams discussions with Brandon");
   });
 
-  it('returns null for general project queries that should use other paths', () => {
+  it("routes same-day Teams message insight prompts to Teams-specific retrieval", () => {
+    const result = detectSourceSpecificRagRequest(
+      "what insights can be found in the teams messages today?",
+    );
+
+    expect(result).toMatchObject({
+      kind: "recent_teams_discussions",
+      label: "Teams messages",
+      query: "what insights can be found in the teams messages today?",
+    });
+  });
+
+  it("returns null for general project queries that should use other paths", () => {
     const result = detectSourceSpecificRagRequest("what is the project status");
     expect(result).toBeNull();
   });
@@ -206,10 +253,45 @@ describe("detectRecentEmailInboxRequest — Outlook inbox routing", () => {
   });
 
   it("does not treat Teams messages as Outlook inbox mail", () => {
-    const result = detectRecentEmailInboxRequest("What Teams messages came in today?");
+    const result = detectRecentEmailInboxRequest(
+      "What Teams messages came in today?",
+    );
 
     expect(result).toBeNull();
   });
+});
+
+describe("detectCrossSourceInvestigationRequest — multi-source investigation routing", () => {
+  it.each([
+    // The incident: a sudden-resignation question spanning teams + emails + meetings.
+    "We had an employee quit this week suddenly saying he didn't feel like he fit in and put his resignation in effective immediately — can you research through the teams messages, emails, and meetings and see where this might have initiated?",
+    "Dig through the emails and Teams to trace where this dispute started.",
+    "Investigate the meetings and emails and figure out how this issue came about.",
+    // Two corpora named at once, even without an explicit investigative verb.
+    "Pull together what the emails and meetings say about the budget overrun.",
+  ])(
+    "routes investigative cross-source wording to semantic vector search: %s",
+    (message) => {
+      expect(detectCrossSourceInvestigationRequest(message)).toEqual({
+        reason: "cross_source_investigation",
+      });
+    },
+  );
+
+  it.each([
+    // Single-source triage must keep its tuned fast-path — not hijacked here.
+    "What important emails have I received this morning?",
+    "Is there anything urgent in my inbox?",
+    "Review recent meetings.",
+    "What Teams messages came in today?",
+    // Diagnosis phrasing that the Teams-recency path owns ("where do you think").
+    "Based on all the employees' messages and teams, where do you think is the biggest source of confusion?",
+  ])(
+    "leaves single-source / non-investigative wording alone: %s",
+    (message) => {
+      expect(detectCrossSourceInvestigationRequest(message)).toBeNull();
+    },
+  );
 });
 
 describe("detectSourceLookupRecentTeamsRequest — communication diagnosis recency guard", () => {

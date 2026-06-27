@@ -1,0 +1,166 @@
+- document:
+  - link "Alleato" [ref=e1]:
+    - /url: /
+    - img "Alleato"
+  - button "Project" [ref=e2]
+  - text: Project
+  - link "Alleato AI" [ref=e3]:
+    - /url: /ai
+  - link "Company Directory" [ref=e4]:
+    - /url: /directory/companies
+  - button "View Company Tools" [ref=e5]
+  - text: Company-wide tools
+  - link "Alleato AI" [ref=e6] [nth=1]:
+    - /url: /ai
+  - link "Projects" [ref=e7]:
+    - /url: /
+  - link "Company Directory" [ref=e8] [nth=1]:
+    - /url: /directory/companies
+  - link "Meetings" [ref=e9]:
+    - /url: /meetings
+  - link "Tasks" [ref=e10]:
+    - /url: /tasks
+  - link "Manpower" [ref=e11]:
+    - /url: /manpower
+  - link "Knowledge Base" [ref=e12]:
+    - /url: /knowledge
+  - link "Documentation" [ref=e13]:
+    - /url: https://alleato-os-docs.vercel.app/
+  - link "Documents" [ref=e14]:
+    - /url: /files
+  - link "Teams Conversations" [ref=e15]:
+    - /url: /teams-conversations
+  - link "Assignment Inbox" [ref=e16]:
+    - /url: /assignment-inbox
+  - link "Estimates" [ref=e17]:
+    - /url: /estimates
+  - link "Prime Contracts" [ref=e18]:
+    - /url: /prime-contracts
+  - link "Change Events" [ref=e19]:
+    - /url: /change-events
+  - link "Admin Dashboard" [ref=e20]:
+    - /url: /admin
+  - button "Toggle Sidebar" [ref=e21]
+  - main:
+    - button "Expand sidebar" [ref=e22]
+    - link "Projects" [ref=e23] [nth=1]:
+      - /url: /
+    - text: Ideas
+    - combobox [ref=e24]: Select Project
+    - button "Select Tool" [ref=e25]
+    - link "AI" [ref=e26]:
+      - /url: /ai
+    - button "Share feedback" [ref=e27]
+    - button "Comments" [ref=e28]
+    - button "Notifications" [ref=e29]
+    - button "Open user menu" [ref=e30]:
+      - img "User avatar"
+    - main:
+      - heading "Ideas" [ref=e31] [level=1]
+      - text: A quick editable table for ideas, routing status, and next actions.
+      - textbox "Dump an idea..." [ref=e32]
+      - textbox "Source or context" [ref=e33]
+      - combobox [ref=e34] [nth=1]: manual
+      - button "Add idea" [ref=e35]
+      - table:
+        - rowgroup:
+          - row "Idea Status Priority Route Target / next action Source Updated":
+            - columnheader "Idea" [ref=e36]
+            - columnheader "Status" [ref=e37]
+            - columnheader "Priority" [ref=e38]
+            - columnheader "Route" [ref=e39]
+            - columnheader "Target / next action" [ref=e40]
+            - columnheader "Source" [ref=e41]
+            - columnheader "Updated" [ref=e42]
+        - rowgroup:
+          - row "When transactional emails include actions like View RFI, make the link a secure auto-login/deep link so subcontractors do not have to remember a password before responding. Brandon forwarded the RFI response email screenshot and asked, \"Did you mean to send this to my Gmail?\", which surfaced the friction around external recipients and email routing. Review the RFI notification/link flow and decide whether secure magic-link tokens should be attached to action URLs for external recipients. teams Jun 25, 3:47 PM":
+            - cell "When transactional emails include actions like View RFI, make the link a secure auto-login/deep link so subcontractors do not have to remember a password before responding. Brandon forwarded the RFI response email screenshot and asked, \" [ref=e43]Did you mean to send this to my Gmail?\", which surfaced the friction around external recipients and email routing.":
+              - textbox [ref=e44]: When transactional emails include actions like View RFI, make the link a secure auto-login/deep link so subcontractors do not have to remember a password before responding. Brandon forwarded the RFI response email screenshot and asked, "Did you mean to send this to my Gmail?", which surfaced the friction around external recipients and email routing.
+            - cell:
+              - combobox [ref=e45] [nth=2]: captured
+            - cell:
+              - combobox [ref=e46] [nth=3]: high
+            - cell:
+              - combobox [ref=e47] [nth=4]: project
+            - cell "Review the RFI notification/link flow and decide whether secure magic-link tokens should be attached to action URLs for external recipients." [ref=e48]:
+              - textbox "Next action" [ref=e49]: Review the RFI notification/link flow and decide whether secure magic-link tokens should be attached to action URLs for external recipients.
+            - cell "teams" [ref=e50]
+            - cell "Jun 25, 3:47 PM" [ref=e51]
+      - navigation:
+        - button "Admin" [ref=e52]
+      - paragraph: © 2026 Alleato Group. All rights reserved.
+  - alert
+  - region "Notifications alt+T" [ref=e53]
+  - dialog
+  - button "Feedback mode" [ref=e54]
+  - button "Open AI assistant" [ref=e55]
+  - application "Text comment adder":
+    - button "Add text comment" [ref=e56]
+  - region "Recording controls for floating recording" [ref=e57]:
+    - dialog "Recording control panel"
+  - button "MCP Connected v3.0.2 Output Detail Standard React Components Hide Until Restart Marker Color Clear on copy/send Block page interactions Manage MCP & Webhooks Manage MCP & Webhooks MCP Connection Connected MCP connection allows agents to receive and act on annotations. Learn more Webhooks Auto-Send The webhook URL will receive live annotation changes and annotation data." [ref=e58]:
+    - img
+    - button [ref=e59]:
+      - img
+    - button [ref=e60] [nth=1]:
+      - img
+    - button [ref=e61] [nth=2] [disabled]:
+      - img
+    - button [ref=e62] [nth=3] [disabled]:
+      - img
+    - button [ref=e63] [nth=4] [disabled]:
+      - img
+    - button [ref=e64] [nth=5] [disabled]:
+      - img
+    - button [ref=e65] [nth=6]:
+      - img
+    - button [ref=e66] [nth=7]:
+      - img
+    - link [ref=e67]:
+      - /url: https://agentation.com
+      - img
+    - paragraph: v3.0.2
+    - button "Switch to dark mode" [ref=e68]:
+      - img
+    - text: Output Detail
+    - img
+    - button "Standard" [ref=e69]
+    - text: React Components
+    - img
+    - checkbox [ref=e70] [checked]
+    - text: Hide Until Restart
+    - img
+    - checkbox [ref=e71] [nth=1]
+    - text: Marker Color
+    - button "Indigo" [ref=e72]
+    - button "Blue" [ref=e73]
+    - button "Cyan" [ref=e74]
+    - button "Green" [ref=e75]
+    - button "Yellow" [ref=e76]
+    - button "Orange" [ref=e77]
+    - button "Red" [ref=e78]
+    - checkbox "Clear on copy/send" [ref=e79]
+    - img
+    - text: Clear on copy/send
+    - img
+    - checkbox "Block page interactions" [ref=e80]
+    - img
+    - text: Block page interactions
+    - button "Manage MCP & Webhooks" [ref=e81]:
+      - text: Manage MCP & Webhooks
+      - img
+    - button "Manage MCP & Webhooks" [ref=e82] [nth=1]:
+      - img
+      - text: Manage MCP & Webhooks
+    - text: MCP Connection
+    - img
+    - paragraph:
+      - text: MCP connection allows agents to receive and act on annotations.
+      - link "Learn more" [ref=e83]:
+        - /url: https://agentation.dev/mcp
+    - text: Webhooks
+    - img
+    - text: Auto-Send
+    - checkbox "Auto-Send" [ref=e84] [checked] [disabled]
+    - paragraph: The webhook URL will receive live annotation changes and annotation data.
+    - textbox "Webhook URL" [ref=e85]

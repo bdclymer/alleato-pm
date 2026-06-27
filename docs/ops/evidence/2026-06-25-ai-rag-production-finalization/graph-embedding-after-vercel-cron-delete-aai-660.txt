@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:graph-embedding
+> node scripts/verify/verify_graph_embedding_contract.mjs
+
+Graph embedding contract: PASS

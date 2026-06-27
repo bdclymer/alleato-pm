@@ -22,7 +22,7 @@ export interface SubmittalSummary {
   is_private: boolean;
   final_due_date: string | null;
   sent_date: string | null;
-  received_from?: string | null;  // resolved display name (not UUID)
+  received_from?: string | null; // resolved display name (not UUID)
   deleted_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -72,6 +72,7 @@ export interface SubmittalDetail extends SubmittalSummary {
     actor_id: string | null;
     new_status: string | null;
     changes: unknown;
+    metadata: unknown;
     occurred_at: string | null;
   }>;
   linked_rfis: Array<{
@@ -95,15 +96,107 @@ export interface SubmittalDetail extends SubmittalSummary {
 }
 
 export type SubmittalAttachment = {
-    id: string;
-    file_name: string;
-    file_url: string;
-    file_size: number | null;
-    content_type: string | null;
-    is_current: boolean | null;
-    uploaded_by: string | null;
-    created_at: string | null;
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_size: number | null;
+  content_type: string | null;
+  is_current: boolean | null;
+  uploaded_by: string | null;
+  created_at: string | null;
 };
+
+export interface LinkedDrawing {
+  id: string;
+  submittalId: string;
+  drawingId: string;
+  drawingNumber: string;
+  title: string;
+  discipline: string | null;
+  revision: string | null;
+  readiness: {
+    state: "ready" | "partial" | "not_ready" | "failed";
+    reasons: string[];
+    ocrTextReady: boolean;
+    visionReady: boolean;
+    embeddedReady: boolean;
+  };
+}
+
+export interface AIReviewResult {
+  runId: string;
+  projectId: number;
+  submittalId: string;
+  status: "queued" | "running" | "ready" | "partial" | "not_ready" | "failed";
+  focusArea: string | null;
+  summary: string | null;
+  recommendation: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  readiness: {
+    state: "ready" | "partial" | "not_ready" | "failed";
+    summary: string;
+    layers: Array<{
+      key: string;
+      label: string;
+      state: "ready" | "partial" | "not_ready" | "failed";
+      reasons: string[];
+      availableCount: number | null;
+      totalCount: number | null;
+    }>;
+  };
+  sourceCoverage: {
+    submittalDocumentCount: number;
+    linkedDrawingCount: number;
+    ragChunkCount: number;
+    specSourceCount: number;
+  };
+  linkedDrawings: LinkedDrawing[];
+  checks: Array<{
+    id?: string;
+    checkType: string;
+    status:
+      | "pass"
+      | "fail"
+      | "warning"
+      | "missing_information"
+      | "unable_to_determine"
+      | "needs_human_review";
+    severity: "critical" | "high" | "medium" | "low" | "informational";
+    title: string;
+    finding: string;
+    expectedValue: string | null;
+    submittedValue: string | null;
+    recommendation: string | null;
+    sourceReferences: Array<{
+      sourceKey: string;
+      sourceType: string;
+      sourceId: string;
+      documentMetadataId: string | null;
+      drawingId: string | null;
+      drawingNumber: string | null;
+      pageNumber: number | null;
+      chunkIndex: number | null;
+      label: string;
+      excerpt: string | null;
+      confidence: number | null;
+    }>;
+    confidence: number | null;
+    missingData: string[];
+    reviewerDisposition: "pending" | "accepted" | "dismissed" | "edited";
+    reviewerNotes: string | null;
+  }>;
+  error: { code: string; message: string } | null;
+}
+
+export type AIReviewDisposition = AIReviewResult["checks"][number]["reviewerDisposition"];
+
+export type SubmittalWorkflowResponseStatus =
+  | "Approved"
+  | "Approved as Noted"
+  | "Revise and Resubmit"
+  | "Rejected"
+  | "Reviewed - No Exception";
 
 export async function uploadSubmittalAttachments(
   projectId: number,
@@ -157,7 +250,6 @@ export interface CreateSubmittalInput {
   initial_workflow_steps?: Array<{
     user_id: string;
     step_type: string;
-    required?: boolean;
   }>;
 }
 
@@ -171,6 +263,11 @@ export const submittalKeys = {
     ["submittals", projectId, "list", tab] as const,
   detail: (projectId: number, submittalId: string) =>
     ["submittals", projectId, "detail", submittalId] as const,
+  linkedDrawings: (projectId: number, submittalId: string) =>
+    [
+      ...submittalKeys.detail(projectId, submittalId),
+      "linked-drawings",
+    ] as const,
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -245,10 +342,9 @@ export function useDeleteSubmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (submittalId: string): Promise<unknown> =>
-      apiFetch(
-        `/api/projects/${projectId}/submittals/${submittalId}`,
-        { method: "DELETE" },
-      ),
+      apiFetch(`/api/projects/${projectId}/submittals/${submittalId}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal moved to Recycle Bin");
@@ -290,7 +386,9 @@ export function useDuplicateSubmittal(projectId: number) {
       toast.success("Submittal duplicated");
     },
     onError: (err: Error) => {
-      toast.error("Could not duplicate submittal", { description: err.message });
+      toast.error("Could not duplicate submittal", {
+        description: err.message,
+      });
     },
   });
 }
@@ -298,7 +396,10 @@ export function useDuplicateSubmittal(projectId: number) {
 /**
  * Uploads a file and creates a submittal attachment record.
  */
-export function useUploadSubmittalAttachment(projectId: number, submittalId: string) {
+export function useUploadSubmittalAttachment(
+  projectId: number,
+  submittalId: string,
+) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (file: File): Promise<SubmittalAttachment> => {
@@ -313,7 +414,9 @@ export function useUploadSubmittalAttachment(projectId: number, submittalId: str
       );
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      qc.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
       toast.success("Attachment uploaded");
     },
     onError: (err: Error) => {
@@ -328,7 +431,6 @@ export function useAddWorkflowStep(projectId: number, submittalId: string) {
     mutationFn: (input: {
       user_id: string;
       step_type: string;
-      required?: boolean;
     }): Promise<{ id: string; step_order: number; step_type: string }> =>
       apiFetch<{ id: string; step_order: number; step_type: string }>(
         `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps`,
@@ -339,7 +441,9 @@ export function useAddWorkflowStep(projectId: number, submittalId: string) {
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
-      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      qc.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
       toast.success("Workflow step added");
     },
     onError: (err: Error) => {
@@ -368,7 +472,9 @@ export function useRespondToWorkflowStep(
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
-      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      qc.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
       toast.success("Response recorded");
     },
     onError: (err: Error) => {
@@ -389,7 +495,9 @@ export function usePackages(projectId: number) {
   return useQuery({
     queryKey: ["submittals", projectId, "packages"] as const,
     queryFn: ({ signal }): Promise<PackageRow[]> =>
-      apiFetch<PackageRow[]>(`/api/projects/${projectId}/submittals/packages`, { signal }),
+      apiFetch<PackageRow[]>(`/api/projects/${projectId}/submittals/packages`, {
+        signal,
+      }),
     enabled: Boolean(projectId),
   });
 }
@@ -397,7 +505,10 @@ export function usePackages(projectId: number) {
 export function useCreatePackage(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; description?: string | null }): Promise<PackageRow> =>
+    mutationFn: (input: {
+      name: string;
+      description?: string | null;
+    }): Promise<PackageRow> =>
       apiFetch<PackageRow>(`/api/projects/${projectId}/submittals/packages`, {
         method: "POST",
         body: JSON.stringify(input),
@@ -424,10 +535,13 @@ export function useUpdatePackage(projectId: number) {
       name?: string;
       description?: string | null;
     }): Promise<PackageRow> =>
-      apiFetch<PackageRow>(`/api/projects/${projectId}/submittals/packages/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(input),
-      }),
+      apiFetch<PackageRow>(
+        `/api/projects/${projectId}/submittals/packages/${id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       qc.invalidateQueries({ queryKey: ["submittals", projectId, "packages"] });
@@ -461,7 +575,7 @@ export function useDeletePackage(projectId: number) {
 
 export interface WorkflowTemplateStep {
   step_type: string;
-  required: boolean;
+  required?: boolean;
   user_id?: string | null;
 }
 
@@ -500,7 +614,9 @@ export function useCreateWorkflowTemplate(projectId: number) {
         { method: "POST", body: JSON.stringify(input) },
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      qc.invalidateQueries({
+        queryKey: ["submittals", projectId, "workflow-templates"],
+      });
       toast.success("Template saved");
     },
     onError: (err: Error) => {
@@ -526,7 +642,9 @@ export function useUpdateWorkflowTemplate(projectId: number) {
         { method: "PUT", body: JSON.stringify(input) },
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      qc.invalidateQueries({
+        queryKey: ["submittals", projectId, "workflow-templates"],
+      });
       toast.success("Template updated");
     },
     onError: (err: Error) => {
@@ -544,7 +662,9 @@ export function useDeleteWorkflowTemplate(projectId: number) {
         { method: "DELETE" },
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      qc.invalidateQueries({
+        queryKey: ["submittals", projectId, "workflow-templates"],
+      });
       toast.success("Template deleted");
     },
     onError: (err: Error) => {
@@ -570,12 +690,237 @@ export function useDistributeSubmittal(projectId: number, submittalId: string) {
         },
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      qc.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal distributed");
     },
     onError: (err: Error) => {
-      toast.error("Could not distribute submittal", { description: err.message });
+      toast.error("Could not distribute submittal", {
+        description: err.message,
+      });
     },
+  });
+}
+
+// ─── Linked Drawings & AI Review hooks ───────────────────────────────────────
+
+export function useSubmittalLinkedDrawings(
+  projectId: number,
+  submittalId: string,
+) {
+  return useQuery({
+    queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
+    queryFn: async (): Promise<LinkedDrawing[]> => {
+      const res = await apiFetch<{ linkedDrawings: LinkedDrawing[] }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings`,
+      );
+      return res.linkedDrawings;
+    },
+    enabled: !!submittalId,
+  });
+}
+
+export function useAddLinkedDrawing(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId }: { drawingId: string }) => {
+      return apiFetch<
+        { linkedDrawing: LinkedDrawing } | { alreadyLinked: true }
+      >(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drawingId }),
+        },
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
+      });
+    },
+  });
+}
+
+export function useRemoveLinkedDrawing(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId }: { drawingId: string }) => {
+      return apiFetch<{ success: true }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/linked-drawings/${drawingId}`,
+        { method: "DELETE" },
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
+      });
+    },
+  });
+}
+
+/** Auto-fetches the last saved AI review result from the database. */
+export function useSubmittalAIReview(projectId: number, submittalId: string) {
+  return useQuery({
+    queryKey: ["submittal-ai-review", projectId, submittalId],
+    queryFn: () =>
+      apiFetch<AIReviewResult | null>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
+      ),
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    retry: false,
+  });
+}
+
+/** Runs a new AI review, saves it to DB, and updates the cached result. */
+export function useRunSubmittalAIReview(
+  projectId: number,
+  submittalId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<AIReviewResult>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        ["submittal-ai-review", projectId, submittalId],
+        data,
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["submittal-ai-review", projectId, submittalId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: submittalKeys.linkedDrawings(projectId, submittalId),
+      });
+    },
+  });
+}
+
+/** Persists a reviewer disposition for one normalized AI review check. */
+export function useUpdateSubmittalAIReviewCheck(
+  projectId: number,
+  submittalId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      checkId,
+      reviewerDisposition,
+      reviewerNotes,
+    }: {
+      checkId: string;
+      reviewerDisposition: AIReviewDisposition;
+      reviewerNotes?: string | null;
+    }) =>
+      apiFetch<AIReviewResult>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review/checks/${checkId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reviewerDisposition,
+            reviewerNotes: reviewerNotes ?? null,
+          }),
+        },
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        ["submittal-ai-review", projectId, submittalId],
+        data,
+      );
+    },
+    onError: (err: Error) => {
+      toast.error("Could not update AI review finding", {
+        description: err.message,
+      });
+    },
+  });
+}
+
+/** Records a workflow response using the AI Review result as the decision context. */
+export function useRecordSubmittalAIReviewWorkflowResponse(
+  projectId: number,
+  submittalId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      stepId,
+      responseStatus,
+      comments,
+    }: {
+      stepId: string;
+      responseStatus: SubmittalWorkflowResponseStatus;
+      comments?: string | null;
+    }) =>
+      apiFetch<{ id: string; response_status: string }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/ai-review/workflow-response`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stepId,
+            responseStatus,
+            comments: comments ?? null,
+          }),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      queryClient.invalidateQueries({
+        queryKey: submittalKeys.detail(projectId, submittalId),
+      });
+      toast.success("Workflow response recorded");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not record workflow response", {
+        description: err.message,
+      });
+    },
+  });
+}
+
+// ─── Required Submittals (from drawing vision analysis) ────────────────────────
+
+export interface RequiredSubmittalItem {
+  drawingId: string;
+  drawingNumber: string;
+  drawingTitle: string;
+  discipline: string | null;
+  impliedSubmittal: string;
+  existingSubmittal: {
+    id: string;
+    number: string;
+    title: string;
+    status: string | null;
+  } | null;
+}
+
+export interface RequiredSubmittalsResponse {
+  items: RequiredSubmittalItem[];
+  summary: { totalImplied: number; covered: number; missing: number };
+}
+
+/** Fetches submittals implied by drawing vision analysis, cross-referenced against existing submittals. */
+export function useRequiredSubmittals(projectId: number) {
+  return useQuery({
+    queryKey: ["required-submittals", projectId],
+    queryFn: () =>
+      apiFetch<RequiredSubmittalsResponse>(
+        `/api/projects/${projectId}/submittals/required`,
+      ),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
   });
 }

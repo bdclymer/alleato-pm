@@ -90,6 +90,15 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
     query = query.eq("mailbox_user_id", user.email);
   } else if (isAdmin && tab === "brandon-queue") {
     query = query.eq("mailbox_user_id", BRANDON_MAILBOX);
+
+    // Exclude emails that have already been reviewed
+    const { data: reviews } = await appService
+      .from("outlook_email_assistant_reviews")
+      .select("intake_email_id");
+    const reviewedIds = (reviews ?? []).map((r) => r.intake_email_id);
+    if (reviewedIds.length > 0) {
+      query = query.not("id", "in", `(${reviewedIds.join(",")})`);
+    }
   }
 
   if (tab === "needs-assignment") {

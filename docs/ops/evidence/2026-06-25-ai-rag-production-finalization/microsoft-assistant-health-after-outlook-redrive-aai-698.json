@@ -1,0 +1,57 @@
+
+> alleato-procore@0.1.0 verify:microsoft-assistant-health
+> node scripts/verify/verify_microsoft_assistant_health.mjs --json
+
+{
+  "ok": true,
+  "mailbox": "bclymer@alleatogroup.com",
+  "checkedAt": "2026-06-26T05:42:52.510Z",
+  "summary": {
+    "ok": true,
+    "failures": 0,
+    "warnings": 0
+  },
+  "checks": [
+    {
+      "stage": "render_cron",
+      "ok": true,
+      "message": "Render cron exists, config matches, and recent run state is acceptable.",
+      "serviceId": "crn-d8orvmmrnols73etajrg",
+      "schedule": "*/15 * * * *",
+      "rootDir": "backend",
+      "dockerCommand": "timeout 10m python3 src/scripts/run_microsoft_executive_assistant_check.py",
+      "lastSuccessfulRunAt": "2026-06-26T05:02:52Z",
+      "runAgeMinutes": 40,
+      "warning": false
+    },
+    {
+      "stage": "graph_inbox",
+      "ok": true,
+      "message": "Live Graph inbox read succeeded for latest actionable message.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "latestMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARDPl31AAA=",
+      "latestReceivedAt": "2026-06-26T05:17:14Z",
+      "latestSubject": "Re: Exol Morrisville PA",
+      "skippedNoiseCount": 0
+    },
+    {
+      "stage": "cached_intake",
+      "ok": true,
+      "message": "Cached Outlook intake is fresh.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "latestReceivedAt": "2026-06-26T05:17:14+00:00",
+      "cacheAgeMinutes": 26,
+      "recentCount": 1,
+      "assignmentMethod": "attribution_rule:title_keyword"
+    },
+    {
+      "stage": "sync_ledger",
+      "ok": true,
+      "message": "Outlook sync ledger is successful.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "lastSyncAt": "2026-06-26T05:41:54.640353+00:00",
+      "updatedAt": "2026-05-18T17:24:36.767+00:00",
+      "syncStatus": "success"
+    }
+  ]
+}

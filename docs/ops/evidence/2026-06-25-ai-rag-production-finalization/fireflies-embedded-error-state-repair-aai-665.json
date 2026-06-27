@@ -1,0 +1,321 @@
+{
+  "checked_at": "2026-06-25T21:52:25.617Z",
+  "policy": "Repair only Fireflies/meeting rows created in the active 60-day window that already have embedded chunks.",
+  "candidate_count": 14,
+  "rag_updated_count": 14,
+  "app_updated_count": 14,
+  "candidates": [
+    {
+      "metadata_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "fireflies_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "title": "Goodwill Weekly OAC Meeting",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 5,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "fireflies_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "title": "Sprinkler Division Morning Huddle",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 7,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "fireflies_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "title": "Goodwill IL // Alleato Weekly Huddle: Every Tuesday 9:30am to 10am",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 9,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "fireflies_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "title": "Weekly design coordination Exol PA",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 27,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "fireflies_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "title": "Brandon Clymer and Ben Golden",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 61,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "fireflies_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "title": "Accounting Review meeting",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 98,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "fireflies_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "title": "Union Collective: Design Meeting",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 7,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "fireflies_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "title": "End of the year party-Folllow up",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 19,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "fireflies_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "title": "Vermillion Plumbing drawings review",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 52,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "fireflies_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "title": "Ace Pricing Review",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 70,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "fireflies_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "title": "Timeco reports",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 17,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "fireflies_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "title": "Union Site Review",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 7,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "fireflies_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "title": "Union Invoices",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 4,
+      "previous_error": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}"
+    },
+    {
+      "metadata_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "fireflies_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "title": "Union Collective - DGI & DKGR",
+      "embedding_status": "embedded",
+      "embedded_chunk_count": 130,
+      "previous_error": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+    }
+  ],
+  "rag_updated": [
+    {
+      "fireflies_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "metadata_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "metadata_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "metadata_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "metadata_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "metadata_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "metadata_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "metadata_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "metadata_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "metadata_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "metadata_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "metadata_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    },
+    {
+      "fireflies_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "metadata_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:23.603Z"
+    }
+  ],
+  "app_updated": [
+    {
+      "fireflies_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "metadata_id": "01KV8BCC0CCKQNGENB3YP8Y535",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "metadata_id": "01KVQP3E6AGV75ZHETYPY56DZT",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "metadata_id": "01KVQK1DZX98GZVYGF83GQNSWW",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "metadata_id": "01KVQRBZRJFGCHT4XYXHWA1YWT",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "metadata_id": "01KVT7AZHZJS7HJFRFQ1T5QA83",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "metadata_id": "01KV757XCHKF1TFGGEGAM33CK1",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "metadata_id": "01KV757XCNQN0TK8MWR90XAN4F",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "metadata_id": "01KV8BCC0BP38QYC3A69TXJKF3",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "metadata_id": "01KVNFA50Y9PY4SK48WVYSZG29",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "metadata_id": "01KVNXSD8TKFYNAR0SZ60NMJGS",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "metadata_id": "01KVTVW5CFFVVH4B3H6RKAN0JC",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    },
+    {
+      "fireflies_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "metadata_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "stage": "done",
+      "error_message": null,
+      "updated_at": "2026-06-25T21:52:24.875Z"
+    }
+  ]
+}

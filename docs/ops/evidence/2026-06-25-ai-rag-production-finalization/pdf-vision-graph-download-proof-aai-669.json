@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-06-25T23:24:31.423411+00:00",
+  "started_at": "2026-06-25T23:23:04.366526+00:00",
+  "metadata_id": "onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF",
+  "vision": {
+    "pages_analyzed": 25,
+    "total_pages": 25
+  },
+  "graph_embed_chunk_count": 47,
+  "page_intelligence_sample": [
+    {
+      "document_metadata_id": "onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF",
+      "page_number": 1,
+      "sheet_number": null,
+      "sheet_title": null,
+      "discipline": "Fire Protection",
+      "ai_summary": "This document contains hydraulic calculations for the fire sprinkler system at the UNIQLO Warehouse in Phillipsburg, NJ. It is prepared by HNY Consulting Engineers and is relevant to the fire protection discipline. The document is essential for ensuring the fire sprinkler system meets the necessary safety and performance standards."
+    },
+    {
+      "document_metadata_id": "onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF",
+      "page_number": 2,
+      "sheet_number": null,
+      "sheet_title": null,
+      "discipline": "Fire Protection",
+      "ai_summary": "This document appears to be related to a fire protection system for a project named '2450004166_UNIQLO-Phillipsburg-NJ_FIRE_V22'. It is likely a report or specification from Henderson Engineers, Inc., detailing aspects of the fire protection system. The document would be referenced by fire protection engineers and contractors involved in the installation and verification of the system."
+    },
+    {
+      "document_metadata_id": "onedrive_01F674PXSIV6J6OA5TSFBYSDO6AXFJZJOF",
+      "page_number": 3,
+      "sheet_number": null,
+      "sheet_title": "Water Supply Curve",
+      "discipline": "Fire Protection",
+      "ai_summary": "This page contains a water supply curve for a fire protection system, detailing static and residual pressures, flow rates, and system demands. It is essential for ensuring that the fire protection system meets the required pressures and flows. Fire protection engineers and contractors would reference this document to verify system performance and safety margins."
+    }
+  ]
+}

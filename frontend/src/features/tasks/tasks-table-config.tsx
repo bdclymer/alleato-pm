@@ -271,7 +271,7 @@ export function buildTasksTableColumns(
             return (
               <a
                 href={target.href}
-                className="block max-w-72 truncate text-xs text-foreground underline-offset-2 hover:text-primary hover:underline"
+                className="block max-w-72 truncate text-xs text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
                 onClick={(event) => event.stopPropagation()}
                 rel={target.external ? "noreferrer" : undefined}
                 target={target.external ? "_blank" : undefined}

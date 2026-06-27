@@ -411,6 +411,125 @@ export async function listOutlookInboxMessages(
   };
 }
 
+export type OutlookReplyMessage = {
+  id: string;
+  internetMessageId: string | null;
+  fromEmail: string | null;
+  fromName: string | null;
+  toList: string[];
+  ccList: string[];
+  subject: string;
+  bodyText: string;
+  receivedAt: string;
+};
+
+export type ListOutlookReplyMessagesResult =
+  | { ok: true; mailboxUserId: string; messages: OutlookReplyMessage[]; truncated: boolean }
+  | { ok: false; mailboxUserId?: string; error: string };
+
+type GraphRecipient = { emailAddress?: { name?: string | null; address?: string | null } };
+
+function recipientAddresses(recipients: GraphRecipient[] | undefined): string[] {
+  return (recipients ?? [])
+    .map((r) => r.emailAddress?.address?.trim())
+    .filter((a): a is string => Boolean(a));
+}
+
+/**
+ * Read inbox messages from the RFI reply mailbox with the FULL body and
+ * recipient lists — needed to extract the tokenized reply address and the
+ * subcontractor's typed answer. Distinct from `listOutlookInboxMessages`, which
+ * only returns `bodyPreview`.
+ */
+export async function listOutlookReplyMessages(
+  input: ListOutlookMessagesInput,
+): Promise<ListOutlookReplyMessagesResult> {
+  let mailboxUserId: string;
+  try {
+    mailboxUserId = resolveOutlookMailboxUserId(input.mailboxUserId);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+
+  let token: string;
+  try {
+    token = await getGraphToken();
+    assertGraphMailReadPermission(token);
+  } catch (error) {
+    return {
+      ok: false,
+      mailboxUserId,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const limit = Math.min(Math.max(input.limit ?? 50, 1), 100);
+  const params = new URLSearchParams({
+    $select:
+      "id,internetMessageId,subject,from,toRecipients,ccRecipients,receivedDateTime,body",
+    $orderby: "receivedDateTime desc",
+    $top: String(limit),
+  });
+  if (input.sinceIso) {
+    params.set("$filter", `receivedDateTime ge ${input.sinceIso}`);
+  }
+
+  const response = await fetch(
+    `${GRAPH_BASE}/users/${encodeURIComponent(mailboxUserId)}/mailFolders/inbox/messages?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${token}`,
+        Prefer: 'outlook.body-content-type="text"',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    return {
+      ok: false,
+      mailboxUserId,
+      error: `Microsoft Graph reply-mailbox read failed: ${response.status} ${response.statusText}${responseBody ? `: ${responseBody.slice(0, 500)}` : ""}`,
+    };
+  }
+
+  const data = (await response.json()) as {
+    value?: Array<{
+      id?: string;
+      internetMessageId?: string | null;
+      subject?: string | null;
+      from?: GraphRecipient;
+      toRecipients?: GraphRecipient[];
+      ccRecipients?: GraphRecipient[];
+      receivedDateTime?: string | null;
+      body?: { content?: string | null } | null;
+    }>;
+    "@odata.nextLink"?: string;
+  };
+
+  const messages: OutlookReplyMessage[] = (data.value ?? [])
+    .filter((m): m is { id: string } & typeof m => Boolean(m.id))
+    .map((m) => ({
+      id: m.id as string,
+      internetMessageId: m.internetMessageId ?? null,
+      fromEmail: m.from?.emailAddress?.address ?? null,
+      fromName: m.from?.emailAddress?.name ?? null,
+      toList: recipientAddresses(m.toRecipients),
+      ccList: recipientAddresses(m.ccRecipients),
+      subject: m.subject ?? "",
+      bodyText: m.body?.content ?? "",
+      receivedAt: m.receivedDateTime ?? "",
+    }));
+
+  return {
+    ok: true,
+    mailboxUserId,
+    messages,
+    truncated: Boolean(data["@odata.nextLink"]),
+  };
+}
+
 export function buildOutlookMailDraftAdaptiveCard(params: {
   title: string;
   mailboxUserId: string;

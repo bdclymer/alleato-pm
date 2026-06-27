@@ -30,6 +30,8 @@ const noRawSearchInput = require('./rules/no-raw-search-input');
 const requireEditableStatusColumn = require('./rules/require-editable-status-column');
 const noEditableTitleColumn = require('./rules/no-editable-title-column');
 const noRawDateInput = require('./rules/no-raw-date-input');
+const noRawDetailField = require('./rules/no-raw-detail-field');
+const noRawDetailGrid = require('./rules/no-raw-detail-grid');
 
 module.exports = {
   rules: {
@@ -58,6 +60,8 @@ module.exports = {
     'no-external-fetch-in-api-routes': noExternalFetchInApiRoutes,
     'no-raw-error-message-toast': noRawErrorMessageToast,
     'no-raw-search-input': noRawSearchInput,
+    'no-raw-detail-field': noRawDetailField,
+    'no-raw-detail-grid': noRawDetailGrid,
   },
   configs: {
     recommended: {

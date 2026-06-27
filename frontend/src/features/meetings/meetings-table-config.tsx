@@ -953,7 +953,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             />
             <a
               href={`/meetings/${item.id}`}
-              className="font-medium truncate hover:underline underline-offset-2"
+              className="font-medium truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
               onClick={(event) => event.stopPropagation()}
             >
               {titleText}

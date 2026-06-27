@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { BudgetCodeCreateDialog } from "@/components/budget/budget-code-create-dialog";
 import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import {
   budgetCodeTextValue,
@@ -65,6 +66,11 @@ interface ScheduleOfValuesTabProps {
   accountingMethod?: "amount" | "unit" | "percent";
   summary?: CommitmentSovSummary;
   showHeader?: boolean;
+  /**
+   * Commitment status. Procore rule: SOV line items are editable at any time
+   * UNLESS the commitment is Approved. When Approved the SOV is read-only.
+   */
+  status?: string | null;
   onImportComplete?: () => void | Promise<void>;
   onLineItemsChange?: (items: LineItem[]) => void;
   isLoading?: boolean;
@@ -87,6 +93,7 @@ export function ScheduleOfValuesTab({
   accountingMethod = "amount",
   summary,
   showHeader = true,
+  status,
   onImportComplete,
   onLineItemsChange,
   isLoading = false,
@@ -98,6 +105,12 @@ export function ScheduleOfValuesTab({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
+  const [showCreateBudgetCode, setShowCreateBudgetCode] = useState(false);
+  const [activeBudgetCodeRowId, setActiveBudgetCodeRowId] = useState<string | null>(null);
+
+  // Procore: SOV is editable unless the commitment is Approved.
+  const isApproved = (status ?? "").trim().toLowerCase() === "approved";
+  const canEdit = !isApproved;
 
   const fetchBudgetCodes = useCallback(async () => {
     setBudgetCodesLoading(true);
@@ -172,7 +185,28 @@ export function ScheduleOfValuesTab({
     [amountRemaining, summary, totals.amount, totals.billed],
   );
 
+  const handleBudgetCodeCreated = useCallback(
+    (created: { id: string; code: string; costType: string | null; costTypeId?: string | null; description: string; fullLabel: string }) => {
+      const normalized = normalizeBudgetCodesForSelector([created])[0];
+      setBudgetCodes((prev) => [...prev, normalized]);
+      const targetId = activeBudgetCodeRowId;
+      if (targetId) {
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === targetId
+              ? { ...item, budget_code: budgetCodeTextValue(normalized), isDirty: true }
+              : item,
+          ),
+        );
+        setHasUnsavedChanges(true);
+      }
+      setActiveBudgetCodeRowId(null);
+    },
+    [activeBudgetCodeRowId],
+  );
+
   const handleAdd = () => {
+    if (!canEdit) return;
     const nextLineNumber = (items[items.length - 1]?.line_number || items.length) + 1;
     setItems([
       ...items,
@@ -197,6 +231,7 @@ export function ScheduleOfValuesTab({
     field: "budget_code" | "description" | "amount" | "quantity" | "uom" | "unit_cost",
     value: string | number | undefined,
   ) => {
+    if (!canEdit) return;
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -225,6 +260,7 @@ export function ScheduleOfValuesTab({
   };
 
   const handleDelete = (id: string) => {
+    if (!canEdit) return;
     setItems((prev) => {
       const target = prev.find((item) => item.id === id);
       if (target && isLocked(target)) {
@@ -327,6 +363,7 @@ export function ScheduleOfValuesTab({
   }, [commitmentId, onImportComplete, projectId]);
 
   const moveItem = (id: string, direction: "up" | "down") => {
+    if (!canEdit) return;
     setItems((prev) => {
       const index = prev.findIndex((item) => item.id === id);
       if (index === -1) return prev;
@@ -371,24 +408,32 @@ export function ScheduleOfValuesTab({
         {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
         <EmptyState
           title="No SOV line items for this commitment"
-          description="Add line items manually or import them from the budget."
+          description={
+            canEdit
+              ? "Add line items manually or import them from the budget."
+              : "This commitment is Approved — its schedule of values is locked."
+          }
           action={
-            <Button size="xs" onClick={handleAdd}>
-              <Plus />
-              Add Line Item
-            </Button>
+            canEdit ? (
+              <Button size="xs" onClick={handleAdd}>
+                <Plus />
+                Add Line Item
+              </Button>
+            ) : undefined
           }
         />
-        <div className="flex justify-center -mt-4">
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={handleImport}
-            disabled={isImporting}
-          >
-            {isImporting ? "Importing..." : "Import from Budget"}
-          </Button>
-        </div>
+        {canEdit ? (
+          <div className="flex justify-center -mt-4">
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleImport}
+              disabled={isImporting}
+            >
+              {isImporting ? "Importing..." : "Import from Budget"}
+            </Button>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -446,9 +491,17 @@ export function ScheduleOfValuesTab({
                     onValueChange={(_value, code) =>
                       updateItem(item.id, "budget_code", budgetCodeTextValue(code))
                     }
+                    onCreateNew={
+                      canEdit && !locked
+                        ? () => {
+                            setActiveBudgetCodeRowId(item.id);
+                            setShowCreateBudgetCode(true);
+                          }
+                        : undefined
+                    }
                     budgetCodes={budgetCodes}
                     loading={budgetCodesLoading}
-                    disabled={budgetCodesLoading}
+                    disabled={budgetCodesLoading || !canEdit || locked}
                     placeholder={
                       budgetCodeResolution.isMapped
                         ? "Select budget code..."
@@ -463,6 +516,7 @@ export function ScheduleOfValuesTab({
                     aria-label={`Description ${index + 1}`}
                     value={item.description ?? ""}
                     onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                    disabled={!canEdit || locked}
                   />
                 </InlineTableCell>
                 {accountingMethod === "unit" ? (
@@ -476,7 +530,7 @@ export function ScheduleOfValuesTab({
                         aria-label={`Quantity ${index + 1}`}
                         value={item.quantity ?? ""}
                         onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                        disabled={locked}
+                        disabled={!canEdit || locked}
                       />
                     </InlineTableCell>
                     <InlineTableCell>
@@ -484,7 +538,7 @@ export function ScheduleOfValuesTab({
                         aria-label={`UOM ${index + 1}`}
                         value={item.uom ?? ""}
                         onChange={(e) => updateItem(item.id, "uom", e.target.value)}
-                        disabled={locked}
+                        disabled={!canEdit || locked}
                       />
                     </InlineTableCell>
                     <InlineTableCell align="right">
@@ -494,7 +548,7 @@ export function ScheduleOfValuesTab({
                         showCurrency={false}
                         value={item.unit_cost ?? undefined}
                         onChange={(value) => updateItem(item.id, "unit_cost", value)}
-                        disabled={locked}
+                        disabled={!canEdit || locked}
                       />
                     </InlineTableCell>
                   </>
@@ -511,7 +565,7 @@ export function ScheduleOfValuesTab({
                       showCurrency={false}
                       value={item.amount ?? undefined}
                       onChange={(value) => updateItem(item.id, "amount", value)}
-                      disabled={locked}
+                      disabled={!canEdit || locked}
                     />
                   )}
                 </InlineTableCell>
@@ -527,7 +581,7 @@ export function ScheduleOfValuesTab({
                       variant="ghost"
                       size="icon-xs"
                       aria-label={`Move line ${index + 1} up`}
-                      disabled={index === 0}
+                      disabled={index === 0 || !canEdit}
                       onClick={() => moveItem(item.id, "up")}
                     >
                       <ArrowUp />
@@ -536,7 +590,7 @@ export function ScheduleOfValuesTab({
                       variant="ghost"
                       size="icon-xs"
                       aria-label={`Move line ${index + 1} down`}
-                      disabled={index === items.length - 1}
+                      disabled={index === items.length - 1 || !canEdit}
                       onClick={() => moveItem(item.id, "down")}
                     >
                       <ArrowDown />
@@ -546,7 +600,7 @@ export function ScheduleOfValuesTab({
                       size="icon-xs"
                       aria-label={`Delete line ${index + 1}`}
                       onClick={() => handleDelete(item.id)}
-                      disabled={locked}
+                      disabled={!canEdit || locked}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 />
@@ -588,35 +642,47 @@ export function ScheduleOfValuesTab({
       </InlineTable>
 
       {/* Actions below table, left-aligned */}
-      <div className="mt-3 flex items-center gap-3">
-        <Button
-          size="xs"
-          onClick={handleAdd}
-          disabled={isSaving}
-        >
-          <Plus />
-          Add Line Item
-        </Button>
-        <Button
-          size="xs"
-          variant="link"
-          onClick={handleImport}
-          disabled={isImporting || isSaving}
-          className="px-0"
-        >
-          {isImporting ? "Importing..." : "Import from Budget"}
-        </Button>
-        {hasUnsavedChanges && (
+      {canEdit ? (
+        <div className="mt-3 flex items-center gap-3">
           <Button
             size="xs"
-            onClick={handleSave}
+            onClick={handleAdd}
             disabled={isSaving}
           >
-            <Save />
-            {isSaving ? "Saving..." : "Save Changes"}
+            <Plus />
+            Add Line Item
           </Button>
-        )}
-      </div>
+          <Button
+            size="xs"
+            variant="link"
+            onClick={handleImport}
+            disabled={isImporting || isSaving}
+            className="px-0"
+          >
+            {isImporting ? "Importing..." : "Import from Budget"}
+          </Button>
+          {hasUnsavedChanges && (
+            <Button
+              size="xs"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              <Save />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
+        </div>
+      ) : null}
+
+      <BudgetCodeCreateDialog
+        open={showCreateBudgetCode}
+        onOpenChange={(next) => {
+          setShowCreateBudgetCode(next);
+          if (!next) setActiveBudgetCodeRowId(null);
+        }}
+        projectId={projectId}
+        onCreated={handleBudgetCodeCreated}
+      />
     </div>
   );
 }

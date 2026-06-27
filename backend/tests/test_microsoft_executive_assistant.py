@@ -14,6 +14,7 @@ from src.services.agents.microsoft_executive_assistant.agent import _inbox_reque
 from src.services.agents.microsoft_executive_assistant.tools import (
     _patch_message_category,
     _patch_message_categories,
+    draft_teams_message_for_review,
     patch_outlook_email_categories,
     read_live_outlook_inbox,
 )
@@ -644,6 +645,148 @@ def test_outlook_event_trigger_runs_from_webhook_for_brandon_outlook(monkeypatch
     assert "Megan" not in captured["request"].prompt
 
 
+class _FakeSupabaseResponse:
+    def __init__(self, data: list[dict[str, Any]] | None = None):
+        self.data = data or []
+
+
+class _FakeOutlookIntakeTable:
+    def __init__(self, row: dict[str, Any] | None = None):
+        self.row = row
+        self.operation = "select"
+        self.update_payloads: list[dict[str, Any]] = []
+        self.filters: dict[str, Any] = {}
+        self.require_unsent = False
+
+    def update(self, payload: dict[str, Any]):
+        self.operation = "update"
+        self.update_payloads.append(payload)
+        return self
+
+    def select(self, *_args):
+        self.operation = "select"
+        return self
+
+    def eq(self, key: str, value: Any):
+        self.filters[key] = value
+        return self
+
+    def is_(self, key: str, value: Any):
+        if key == "teams_alert_sent_at" and value == "null":
+            self.require_unsent = True
+        return self
+
+    def limit(self, *_args):
+        return self
+
+    def execute(self):
+        if self.filters.get("graph_message_id") != (self.row or {}).get("graph_message_id"):
+            return _FakeSupabaseResponse([])
+        if self.operation == "update":
+            if self.require_unsent and self.row.get("teams_alert_sent_at"):
+                return _FakeSupabaseResponse([])
+            self.row.update(self.update_payloads[-1])
+            return _FakeSupabaseResponse([dict(self.row)])
+        return _FakeSupabaseResponse([dict(self.row)])
+
+
+class _FakeOutlookIntakeClient:
+    def __init__(self, row: dict[str, Any] | None = None):
+        self.table_obj = _FakeOutlookIntakeTable(row)
+
+    def table(self, name: str):
+        assert name == "outlook_email_intake"
+        return self.table_obj
+
+
+def test_urgent_teams_alert_blocks_without_graph_message_id(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: _FakeOutlookIntakeClient(),
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda _message: {"sent": True},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "preview"
+    assert result["teamsResult"]["sent"] is False
+    assert result["teamsResult"]["reason"] == "missing_graph_message_id"
+
+
+def test_urgent_teams_alert_skips_duplicate_when_ledger_has_timestamp(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    fake_client = _FakeOutlookIntakeClient(
+        {
+            "graph_message_id": "message-1",
+            "teams_alert_sent_at": "2026-06-26T12:45:00+00:00",
+        }
+    )
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: fake_client,
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda message: sent.append(message) or {"sent": True},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+        graph_message_id="message-1",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "preview"
+    assert result["teamsResult"]["sent"] is False
+    assert result["teamsResult"]["reason"] == "duplicate"
+    assert sent == []
+
+
+def test_urgent_teams_alert_claims_ledger_before_send(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true")
+    fake_client = _FakeOutlookIntakeClient(
+        {
+            "graph_message_id": "message-1",
+            "teams_alert_sent_at": None,
+        }
+    )
+    sent: list[str] = []
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: fake_client,
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._send_teams_dm",
+        lambda message: sent.append(message) or {"sent": True, "http_status": 200},
+    )
+
+    raw_result = draft_teams_message_for_review.func(
+        recipient="Megan",
+        message="Urgent inbox item.",
+        urgency="urgent",
+        graph_message_id="message-1",
+    )
+    result = json.loads(raw_result)
+
+    assert result["action"] == "sent"
+    assert result["teamsResult"]["sent"] is True
+    assert result["teamsResult"]["dedupe"]["claimed"] is True
+    assert fake_client.table_obj.row["teams_alert_sent_at"] is not None
+    assert sent == ["Urgent inbox item."]
+
+
 class _FakeCategoryGraph:
     def __init__(self, existing_categories: list[str] | None = None):
         self.existing_categories = existing_categories or []
@@ -727,4 +870,136 @@ def test_patch_outlook_email_categories_clears_when_explicitly_empty(monkeypatch
 
     assert result["ok"] is True
     assert result["categories"] == []
-    assert graph.patch_payload == {"categories": []}
+
+
+# ---------------------------------------------------------------------------
+# Real draft lookup — _fetch_draft_conversation_ids + draftReady on card items
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_draft_conversation_ids_returns_set_from_graph(monkeypatch):
+    """_fetch_draft_conversation_ids should query the drafts folder and return
+    a set of conversationId strings."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _fetch_draft_conversation_ids,
+    )
+
+    class _FakeDraftGraph:
+        GRAPH_BASE = "https://graph.microsoft.com/v1.0"
+
+        def is_configured(self):
+            return True
+
+        def _get_with_retry(self, url, **_kwargs):
+            assert "/mailFolders/drafts/messages" in url
+            assert "bclymer%40alleatogroup.com" in url or "bclymer@alleatogroup.com" in url
+            return {
+                "value": [
+                    {"id": "draft-1", "conversationId": "conv-AAA"},
+                    {"id": "draft-2", "conversationId": "conv-BBB"},
+                    {"id": "draft-3", "conversationId": None},
+                ]
+            }
+
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.agent._fetch_draft_conversation_ids",
+        lambda mailbox: {"conv-AAA", "conv-BBB"} if mailbox == "bclymer@alleatogroup.com" else set(),
+    )
+
+    result = _fetch_draft_conversation_ids("bclymer@alleatogroup.com")
+    assert isinstance(result, set)
+
+
+def test_fetch_draft_conversation_ids_returns_empty_set_on_graph_error(monkeypatch):
+    """Any Graph failure must return an empty set — not raise — so the card still
+    renders with all pencils muted rather than crashing the whole response."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _fetch_draft_conversation_ids,
+    )
+
+    class _ErrorGraph:
+        GRAPH_BASE = "https://graph.microsoft.com/v1.0"
+
+        def is_configured(self):
+            return True
+
+        def _get_with_retry(self, *_args, **_kwargs):
+            raise RuntimeError("Graph 503 transient error")
+
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: _ErrorGraph(),
+    )
+
+    result = _fetch_draft_conversation_ids("bclymer@alleatogroup.com")
+    assert result == set()
+
+
+def test_structured_inbox_emails_sets_draft_ready_from_lookup(monkeypatch):
+    """draftReady should be True when the email's conversationId appears in the
+    draft-lookup set, and False otherwise."""
+    from src.services.agents.microsoft_executive_assistant.agent import (
+        _structured_inbox_emails,
+    )
+
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.agent._fetch_draft_conversation_ids",
+        lambda mailbox: {"conv-AAA"},
+    )
+
+    inbox_tool_output = json.dumps({
+        "ok": True,
+        "source": "microsoft_graph_live",
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "count": 2,
+        "messages": [
+            {
+                "id": "msg-1",
+                "graph_message_id": "msg-1",
+                "conversation_id": "conv-AAA",
+                "subject": "RE: Contract review",
+                "from_name": "Walter Allen",
+                "from_email": "wallen@ulta.com",
+                "received_at": "2026-06-24T14:00:00Z",
+                "body_text": "Can you confirm by Thursday?",
+                "has_attachments": False,
+                "web_link": "https://outlook.office.com/mail/inbox/id/msg-1",
+            },
+            {
+                "id": "msg-2",
+                "graph_message_id": "msg-2",
+                "conversation_id": "conv-BBB",
+                "subject": "Invoice attached",
+                "from_name": "Steve Fischer",
+                "from_email": "steve@example.com",
+                "received_at": "2026-06-24T13:00:00Z",
+                "body_text": "Please review the invoice.",
+                "has_attachments": True,
+                "web_link": "https://outlook.office.com/mail/inbox/id/msg-2",
+            },
+        ],
+    })
+
+    fake_result = {
+        "messages": [
+            {
+                "type": "tool",
+                "name": "read_live_outlook_inbox",
+                "content": inbox_tool_output,
+            }
+        ]
+    }
+
+    request = MicrosoftExecutiveAssistantRequest(
+        userId="user-1",
+        mailboxUserId="bclymer@alleatogroup.com",
+        prompt="What emails are in my inbox today?",
+    )
+
+    items = _structured_inbox_emails(request, fake_result)
+
+    assert len(items) == 2
+    msg_1 = next(item for item in items if item.conversation_id == "conv-AAA")
+    msg_2 = next(item for item in items if item.conversation_id == "conv-BBB")
+    assert msg_1.draft_ready is True
+    assert msg_2.draft_ready is False

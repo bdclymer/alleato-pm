@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-06-26T03:48:53.661Z",
+  "metadataId": "teamsdm_240a50c23fbd2bca_2026-06-18",
+  "rows": [
+    {
+      "id": "e8c18405-12e2-438e-951d-1a5a563a58c1",
+      "metadata_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "title": "Provide contact name and email if needed for the outgoing",
+      "description": "Provide contact name and email if needed for the outgoing invoice.",
+      "source_system": "teams",
+      "project_id": "1011",
+      "project_ids": [
+        1011
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-26T03:48:35.677Z"
+    },
+    {
+      "id": "56e0d1ee-9ff2-462e-bc28-4c8ce552633d",
+      "metadata_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "title": "Send the invoice to the client, using the 6/30 due date and",
+      "description": "Send the invoice to the client, using the 6/30 due date and including Brandon and Andrew on CC.",
+      "source_system": "teams",
+      "project_id": "1011",
+      "project_ids": [
+        1011
+      ],
+      "assignee_name": "Misty Rogers",
+      "assignee_email": "mrogers@alleatogroup.com",
+      "created_at": "2026-06-26T03:48:35.169Z"
+    },
+    {
+      "id": "bfcbf736-d067-46fa-bf08-5373cd3c5f7a",
+      "metadata_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "title": "Prepare and process the Vargo invoice after the meeting",
+      "description": "Prepare and process the Vargo invoice after the meeting.",
+      "source_system": "teams",
+      "project_id": "1011",
+      "project_ids": [
+        1011
+      ],
+      "assignee_name": "Misty Rogers",
+      "assignee_email": "mrogers@alleatogroup.com",
+      "created_at": "2026-06-26T03:48:34.820Z"
+    },
+    {
+      "id": "b5352c2d-049c-42b2-8b4b-b9737169ff50",
+      "metadata_id": "teamsdm_240a50c23fbd2bca_2026-06-18",
+      "title": "Confirm whether payment has been received and how it was",
+      "description": "Confirm whether payment has been received and how it was applied, then notify the client.",
+      "source_system": "teams",
+      "project_id": "1011",
+      "project_ids": [
+        1011
+      ],
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "created_at": "2026-06-26T03:48:34.125Z"
+    }
+  ],
+  "duplicateGroups": []
+}

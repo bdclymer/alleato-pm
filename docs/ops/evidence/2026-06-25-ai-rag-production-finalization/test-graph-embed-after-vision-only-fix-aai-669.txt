@@ -1,0 +1,48 @@
+/Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+...                                                                      [100%]
+=============================== warnings summary ===============================
+backend/src/api/main.py:1762
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1762: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event("startup")
+
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598
+  /Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py:4598: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend/src/api/main.py:1776
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1776: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event("startup")
+
+backend/src/api/main.py:1813
+  /Users/meganharrison/Documents/alleato-pm/backend/src/api/main.py:1813: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event("shutdown")
+
+tests/test_graph_embed.py::test_graph_embed_success_upserts_missing_rag_metadata
+  /Users/meganharrison/Documents/alleato-pm/backend/src/services/integrations/microsoft_graph/embed.py:229: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "last_content_loaded_at": datetime.utcnow().isoformat(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 7 warnings in 0.01s

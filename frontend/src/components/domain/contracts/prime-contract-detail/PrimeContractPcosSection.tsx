@@ -112,7 +112,7 @@ export function PrimeContractPcosSection({
               navigateToPco(pco.id);
             }}
           >
-            {pco.pco_number ?? "—"}
+            {pco.pco_number ?? null}
           </a>
         ),
       },
@@ -121,7 +121,7 @@ export function PrimeContractPcosSection({
         label: "Revision",
         render: (pco) => (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.revision != null ? pco.revision : "—"}
+            {pco.revision ?? null}
           </span>
         ),
       },
@@ -161,7 +161,7 @@ export function PrimeContractPcosSection({
         label: "Schedule Impact",
         render: (pco) => (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : "—"}
+            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : null}
           </span>
         ),
       },
@@ -176,7 +176,7 @@ export function PrimeContractPcosSection({
         id: "change_reason",
         label: "Change Reason",
         render: (pco) => (
-          <span className="text-sm text-muted-foreground">{pco.change_reason || "—"}</span>
+          <span className="text-sm text-muted-foreground">{pco.change_reason || null}</span>
         ),
       },
       {
@@ -184,7 +184,7 @@ export function PrimeContractPcosSection({
         label: "PCCO",
         render: (pco) => (
           <span className="text-sm text-muted-foreground">
-            {pco.promoted_co_number ?? "—"}
+            {pco.promoted_co_number ?? null}
           </span>
         ),
       },

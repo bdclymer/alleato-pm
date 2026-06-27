@@ -62,6 +62,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { copyTextWithFallback } from "@/lib/browser/clipboard";
 import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
@@ -175,8 +176,17 @@ function WidgetMeta({ children, tone = "muted" }: { children: ReactNode; tone?: 
 }
 
 async function copyToClipboard(text: string) {
-  await navigator.clipboard.writeText(text);
-  toast.success("Copied");
+  try {
+    await copyTextWithFallback(text);
+    toast.success("Copied");
+  } catch (error) {
+    toast.error("Copy failed", {
+      description:
+        error instanceof Error
+          ? error.message
+          : "The browser denied clipboard access. Select the content manually and copy it.",
+    });
+  }
 }
 
 function DraftEmailWidget({
@@ -1511,17 +1521,6 @@ function EmailCardActions({
           </div>
         </PopoverContent>
       </Popover>
-
-      <div className="ml-auto">
-        {item.webLink ? (
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground" asChild>
-            <Link href={item.webLink} target="_blank" rel="noreferrer">
-              <ExternalLinkIcon className="h-3.5 w-3.5" />
-              Outlook
-            </Link>
-          </Button>
-        ) : null}
-      </div>
     </div>
   );
 }
@@ -1545,103 +1544,173 @@ function OutlookInboxSummaryWidget({
     );
   }
 
+  const headline = widget.summary || widget.actionSummary;
+
   return (
-    <section className="mt-3 grid gap-2" aria-label={widget.title}>
-      {widget.items.map((item) => {
-        const isOpen = openId === item.id;
-        const initials = getInitials(item.fromName, item.fromEmail);
-        const senderName = item.fromName || item.fromEmail || item.senders[0] || "Unknown";
-        const timeLabel = formatTimeLabel(item.receivedAt);
-        const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
+    <section
+      className="mt-3 overflow-hidden rounded-xl bg-muted/30"
+      aria-label={widget.title}
+    >
+      {/* Header — eyebrow, title, executive overview */}
+      <div className="px-4 pb-3 pt-4">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-primary">
+          AI email assistant
+        </p>
+        <p className="mt-1.5 text-lg font-semibold text-foreground">
+          {widget.title}
+        </p>
+        {headline ? (
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            {headline}
+          </p>
+        ) : null}
+      </div>
 
-        return (
-          <div
-            key={item.id}
-            className={cn(
-              "rounded-xl bg-background/60 transition-colors",
-              isOpen ? "" : "hover:bg-background",
-            )}
-          >
-            {/* Header row — always visible */}
+      <div className="border-t border-border/60">
+        {widget.items.map((item) => {
+          const isOpen = openId === item.id;
+          const initials = getInitials(item.fromName, item.fromEmail);
+          const senderName = item.fromName || item.fromEmail || item.senders[0] || "Unknown";
+          const timeLabel = formatTimeLabel(item.receivedAt);
+          const bodyParagraphs = cleanEmailBodyPreview(item.bodyText ?? item.preview);
+
+          return (
             <div
-              className="flex cursor-pointer items-start gap-3 px-3 py-3"
-              onClick={() => setOpenId(isOpen ? null : item.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(isOpen ? null : item.id); }}
-              aria-expanded={isOpen}
+              key={item.id}
+              className="border-b border-border/60 transition-colors last:border-b-0"
             >
-              {/* Avatar */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                {initials}
-              </div>
+              {/* Header row — always visible */}
+              <div
+                className="flex cursor-pointer items-start gap-3 px-4 py-3.5"
+                onClick={() => setOpenId(isOpen ? null : item.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpenId(isOpen ? null : item.id); }}
+                aria-expanded={isOpen}
+              >
+                {/* Avatar */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {initials}
+                </div>
 
-              {/* Main content */}
-              <div className="min-w-0 flex-1">
-                {/* Sender + time row */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-xs font-medium text-muted-foreground">
+                {/* Main content */}
+                <div className="min-w-0 flex-1">
+                  {/* Subject + attachment */}
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {item.subject}
+                    </p>
+                    {item.hasAttachments ? (
+                      <PaperclipIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" aria-label="Has attachments" />
+                    ) : null}
+                  </div>
+
+                  {/* Sender · time */}
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {senderName}
                     {item.messageCount > 1 ? (
-                      <span className="ml-1.5 text-muted-foreground/60">·&nbsp;{item.messageCount}</span>
+                      <span className="text-muted-foreground/60">&nbsp;·&nbsp;{item.messageCount}</span>
                     ) : null}
-                    {item.hasAttachments ? (
-                      <PaperclipIcon className="ml-1.5 inline h-3 w-3 text-muted-foreground/60" />
-                    ) : null}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    {timeLabel ? (
-                      <span className="text-xs text-muted-foreground">{timeLabel}</span>
-                    ) : null}
+                    {timeLabel ? <span>&nbsp;·&nbsp;{timeLabel}</span> : null}
+                  </p>
+
+                  {/* Preview — collapsed only */}
+                  {!isOpen ? (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {item.preview ?? item.recommendedAction}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Right affordances — draft signal + open */}
+                <div
+                  className="flex shrink-0 items-center gap-1 pt-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={item.draftReady ? "Review prepared draft reply" : "Draft a reply with AI"}
+                    onClick={() => {
+                      setOpenId(item.id);
+                      if (!item.draftReady) onSubmit(item.draftPrompt);
+                    }}
+                    className={cn(
+                      "h-7 w-7",
+                      item.draftReady
+                        ? "text-primary hover:text-primary"
+                        : "text-muted-foreground/40 hover:text-muted-foreground",
+                    )}
+                  >
+                    <SquarePenIcon className="h-4 w-4" />
+                  </Button>
+                  {item.webLink ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Open email in Outlook"
+                      className="h-7 w-7 text-muted-foreground/60 hover:text-foreground"
+                      asChild
+                    >
+                      <Link href={item.webLink} target="_blank" rel="noreferrer">
+                        <ExternalLinkIcon className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Expanded body */}
+              {isOpen ? (
+                <div className="px-4 pb-3.5">
+                  {/* Prepared draft — only when a real draft exists */}
+                  {item.draftReady && item.draftPreview ? (
+                    <div className="ml-12 mb-2.5 rounded-md bg-primary/5 px-3 py-2.5">
+                      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-primary">
+                        <SquarePenIcon className="h-3.5 w-3.5" />
+                        Drafted reply, ready to send
+                      </p>
+                      <p className="rounded-md bg-background/80 px-3 py-2 text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">
+                        {item.draftPreview}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {/* Email body */}
+                  <div className="ml-12 space-y-2 rounded-md bg-muted/40 px-3 py-2.5 text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">
+                    {bodyParagraphs.length > 0 ? (
+                      bodyParagraphs.map((p, i) => (
+                        <p key={i} className="whitespace-pre-wrap break-words">
+                          {p}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">No preview available.</p>
+                    )}
+                  </div>
+
+                  {/* Action toolbar + relevance feedback */}
+                  <div className="ml-12 mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <EmailCardActions item={item} onSubmit={onSubmit} />
                     <EmailCardFeedback itemId={item.id} subject={item.subject} />
-                    <ChevronDownIcon
-                      className={cn(
-                        "ml-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                        isOpen && "rotate-180",
-                      )}
-                    />
                   </div>
                 </div>
-
-                {/* Subject */}
-                <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
-                  {item.subject}
-                </p>
-
-                {/* Preview — collapsed only */}
-                {!isOpen ? (
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {item.preview ?? item.recommendedAction}
-                  </p>
-                ) : null}
-              </div>
+              ) : null}
             </div>
+          );
+        })}
+      </div>
 
-            {/* Expanded body */}
-            {isOpen ? (
-              <div className="px-3 pb-3">
-                {/* Email body */}
-                <div className="ml-11 space-y-2 rounded-md bg-muted/30 px-3 py-2.5 text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">
-                  {bodyParagraphs.length > 0 ? (
-                    bodyParagraphs.map((p, i) => (
-                      <p key={i} className="whitespace-pre-wrap break-words">
-                        {p}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">No preview available.</p>
-                  )}
-                </div>
-
-                {/* Action toolbar */}
-                <div className="ml-11 mt-2.5">
-                  <EmailCardActions item={item} onSubmit={onSubmit} />
-                </div>
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      {/* Footer — into the full synced inbox */}
+      <div className="border-t border-border/60 px-4 py-3 text-center">
+        <Link
+          href="/emails"
+          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+        >
+          View all emails
+        </Link>
+      </div>
     </section>
   );
 }

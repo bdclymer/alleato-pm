@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:response-contract
+> node scripts/verify/verify_ai_assistant_response_contract.mjs
+
+AI assistant response contract verification passed.

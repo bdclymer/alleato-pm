@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-06-25T23:27:29.204Z",
+  "serviceId": "srv-d8271ohj2pic739klb7g",
+  "latest": {
+    "id": "dep-d8urhq42m8qs73diqo8g",
+    "commit": {
+      "id": "eb8b50ce9d06db67aa1b509d39269093920fcc1a",
+      "message": "Recover Graph PDF vision embedding",
+      "createdAt": "2026-06-25T23:25:22Z"
+    },
+    "status": "live",
+    "trigger": "new_commit",
+    "createdAt": "2026-06-25T23:25:28.592227Z",
+    "updatedAt": "2026-06-25T23:27:15.174591Z",
+    "startedAt": "2026-06-25T23:25:28.528227Z",
+    "finishedAt": "2026-06-25T23:27:15.174285Z"
+  },
+  "deploys": [
+    {
+      "deploy": {
+        "id": "dep-d8urhq42m8qs73diqo8g",
+        "commit": {
+          "id": "eb8b50ce9d06db67aa1b509d39269093920fcc1a",
+          "message": "Recover Graph PDF vision embedding",
+          "createdAt": "2026-06-25T23:25:22Z"
+        },
+        "status": "live",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T23:25:28.592227Z",
+        "updatedAt": "2026-06-25T23:27:15.174591Z",
+        "startedAt": "2026-06-25T23:25:28.528227Z",
+        "finishedAt": "2026-06-25T23:27:15.174285Z"
+      },
+      "cursor": "3GX04pr6QlFocTQybThxczczZGlxbzhn"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8uqhm3rjlhs73bkjld0",
+        "commit": {
+          "id": "df7491e71627416a1d06a24a8a640adf4ede0c9f",
+          "message": "Fix PDF embedding metadata upsert",
+          "createdAt": "2026-06-25T22:16:42Z"
+        },
+        "status": "deactivated",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T22:16:56.263333Z",
+        "updatedAt": "2026-06-25T23:27:15.173114Z",
+        "startedAt": "2026-06-25T22:16:56.19226Z",
+        "finishedAt": "2026-06-25T22:18:00.535476Z"
+      },
+      "cursor": "_m9Mbi2T04lobTNyamxoczczYmtqbGQw"
+    },
+    {
+      "deploy": {
+        "id": "dep-d8upqgernols73bni1bg",
+        "commit": {
+          "id": "e82ac71513892f135e365ebe6548ee5a64119e05",
+          "message": "Add user type column to user management",
+          "createdAt": "2026-06-25T21:27:16Z"
+        },
+        "status": "deactivated",
+        "trigger": "new_commit",
+        "createdAt": "2026-06-25T21:27:29.639843Z",
+        "updatedAt": "2026-06-25T22:18:00.534432Z",
+        "startedAt": "2026-06-25T21:27:29.575559Z",
+        "finishedAt": "2026-06-25T21:28:30.17208Z"
+      },
+      "cursor": "WF5DRsJtZPlxZ2Vybm9sczczYm5pMWJn"
+    }
+  ]
+}

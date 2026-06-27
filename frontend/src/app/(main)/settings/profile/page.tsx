@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { ProfileImageUpload } from "@/components/misc/profile-image-upload";
+import { ChangePasswordForm } from "@/components/misc/change-password-form";
 import { DetailField, DetailFieldGrid } from "@/components/ds/DetailField";
 import { ErrorState } from "@/components/ds/error-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -89,6 +90,12 @@ export default function ProfilePage() {
           <DetailField label="Region" value={profile?.region} />
           <DetailField label="Role" value={profile?.role} />
         </DetailFieldGrid>
+      </section>
+
+      {/* Password */}
+      <section className="space-y-4">
+        <SectionRuleHeading label="Password" />
+        <ChangePasswordForm />
       </section>
 
       {/* Integrations */}

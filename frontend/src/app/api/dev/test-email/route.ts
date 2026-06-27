@@ -17,6 +17,9 @@ import InviteUser from "@/emails/auth/InviteUser";
 import ForgotPassword from "@/emails/auth/ForgotPassword";
 import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
+import { createServiceClient } from "@/lib/supabase/service";
+import { APP_BASE_URL } from "@/lib/email/client";
+import { buildPasswordResetUrl } from "@/lib/email/invite-links";
 
 const SAMPLE_BASE = "https://app.alleato.com";
 
@@ -80,6 +83,11 @@ export const POST = withApiGuardrails(
   const body = await request.json().catch(() => ({}));
   const template = body.template as string;
   const to = (body.to as string) || "delivered@resend.dev";
+  // realInvite => generate a working set-password link for an existing account
+  // (recovery link → /auth/confirm → /auth/update-password) and send the real
+  // invite from the production sender. This is exactly what the employee rollout
+  // sends, since every employee account already exists.
+  const realInvite = body.realInvite === true && template === "user-invite";
 
   if (!template || !TEMPLATES[template]) {
     return NextResponse.json(
@@ -91,14 +99,38 @@ export const POST = withApiGuardrails(
     );
   }
 
-  const { subject, react } = TEMPLATES[template];
+  let { subject, react } = TEMPLATES[template];
+  let from = "Alleato Test <onboarding@resend.dev>";
+
+  if (realInvite) {
+    const serviceClient = createServiceClient();
+    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
+      type: "recovery",
+      email: to,
+      options: { redirectTo: `${APP_BASE_URL}/auth/callback` },
+    });
+    if (linkError || !linkData.properties?.action_link) {
+      return NextResponse.json(
+        { error: linkError?.message ?? "Could not create invite link" },
+        { status: 500 },
+      );
+    }
+    subject = "You're invited to Alleato Project Management Platform";
+    react = InviteUser({
+      inviterName: "Alleato Group",
+      email: to,
+      acceptUrl: buildPasswordResetUrl(linkData.properties.action_link, to),
+      expiresInHours: 24,
+    });
+    from = process.env.EMAIL_FROM_ADDRESS || "Alleato <info@alleatogroup.com>";
+  }
 
   const result = await sendEmail({
     template: template as Parameters<typeof sendEmail>[0]["template"],
     to,
     subject,
     react,
-    from: "Alleato Test <onboarding@resend.dev>",
+    from,
     entity: { type: "test", id: "test-" + Date.now() },
     idempotencyKey: `test/${template}/${Date.now()}`,
     metadata: { source: "dev-test-endpoint" },

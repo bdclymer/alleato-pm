@@ -1,0 +1,6 @@
+Pass
+
+- Command: `TYPECHECK_NO_TIMEOUT=1 npm --prefix frontend run typecheck`
+- Error lines: none
+- Likely owner files: none
+- Relation to `scripts/verify/verify-acumatica-sync-health.mjs`: no failure; verification passed after Acumatica verifier threshold change.

@@ -90,6 +90,8 @@
     --popover-foreground: var(--neutral-900);
     --surface-alt: var(--neutral-50);
     --surface-soft: var(--neutral-100);
+    /* Very light gray for summary/sidebar panels (#FBFBFB). Use via <SummaryPanel>. */
+    --surface-summary: 0 0% 98.4%;
     --right-sidebar-bg: 0 0% 100%;
 
     /* Primary Accent — Alleato brand orange */
@@ -272,6 +274,7 @@
     --popover: 240 5% 18%;
     --popover-foreground: 0 0% 92%;
     --surface-soft: 240 5% 18%;
+    --surface-summary: 240 5% 16%;
     --right-sidebar-bg: 240 6% 9%;
     --primary: 29 90% 61%;
     --primary-foreground: 0 0% 100%;
@@ -334,6 +337,15 @@
   --color-surface-alt: hsl(var(--surface-alt));
   --color-light: hsl(var(--light));
   --color-heading-label: hsl(var(--heading-label));
+  --animate-orbit: orbit calc(var(--duration)*1s) linear infinite;
+  @keyframes orbit {
+  0% {
+    transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+    }
+  100% {
+    transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+    }
+  }
 }
 
 /* ============================================================================
@@ -1796,6 +1808,74 @@
   opacity: 0;
 }
 
+/* ----------------------------------------------------------------------------
+   Velt collaborative comments — themed to the Alleato design system.
+
+   Velt ships its own look: purple accent (#625DF5), gray #EBEBEB borders, a
+   16px base with generous padding, and a sans-serif fallback font. We render
+   Velt with shadowDom={false}, so we remap its design tokens to ours and strip
+   vendor chrome here. Velt resolves --velt-accent from --velt-light-mode-accent
+   / --velt-dark-mode-accent and scales all sizing from --velt-base-rem-unit, so
+   overriding those few tokens re-skins the whole comment surface in one place.
+
+   !important is required: Velt injects its stylesheet at runtime (after this
+   file) at equal specificity, so an un-flagged override loses the cascade.
+   ------------------------------------------------------------------------- */
+:root {
+  /* Scale Velt's entire sizing system down ~12.5%: 16px body text → 14px, with
+     padding and radii shrinking proportionally. Fixes the oversized text and
+     the excess padding in one lever. */
+  --velt-base-rem-unit: 0.875 !important;
+
+  /* Typeface → app font (Inter). */
+  --velt-default-font-family: var(--font-sans) !important;
+
+  /* Accent → brand primary (orange), not Velt purple. Drives the status pill,
+     send button, links, mentions, and the "all comments" affordance. */
+  --velt-light-mode-accent: hsl(var(--primary)) !important;
+  --velt-light-mode-accent-text: hsl(var(--primary)) !important;
+  --velt-light-mode-accent-hover: hsl(var(--primary)) !important;
+  --velt-light-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
+  --velt-light-mode-accent-light: hsl(var(--primary) / 0.1) !important;
+  --velt-light-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
+  --velt-dark-mode-accent: hsl(var(--primary)) !important;
+  --velt-dark-mode-accent-text: hsl(var(--primary)) !important;
+  --velt-dark-mode-accent-hover: hsl(var(--primary)) !important;
+  --velt-dark-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
+  --velt-dark-mode-accent-light: hsl(var(--primary) / 0.1) !important;
+  --velt-dark-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
+
+  /* Neutral/border gray → app border token (was #EBEBEB). */
+  --velt-light-mode-gray: hsl(var(--border)) !important;
+  --velt-dark-mode-gray: hsl(var(--border)) !important;
+}
+
+/* The floating dialog is a popover: it already has a drop shadow, so the 1px
+   vendor border is redundant chrome (noise-gate rule #8 — no boxes, spacing +
+   shadow only). Strip it; keep the shadow. */
+velt-comment-dialog-internal .velt-comment-dialog {
+  border-color: transparent !important;
+}
+
+/* Velt hardcodes #EBEBEB on the composer input box and divider lines (it ignores
+   the gray token), so retheme those borders to the app's subtle --border token
+   directly. Keeps the input's hit-target boundary but on-brand and quiet. */
+velt-comment-dialog-internal .velt-composer--input-text-wrap,
+velt-comment-dialog-internal .velt-composer--line-div,
+velt-comment-dialog-internal .velt-comment-dialog--line-div {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* The "All comments" footer band is removed at the source by dropping
+   enableSidebarButtonOnCommentDialog() in VeltGlobalLayer (it duplicated the
+   global Comments-button access and ate ~half the dialog height — noise-gate
+   rule #8). This is a defensive CSS backstop in case the SDK still renders an
+   in-dialog sidebar button; it targets only confirmed Velt classes, so it is a
+   safe no-op if absent. */
+velt-comment-dialog-internal velt-sidebar-button {
+  display: none !important;
+}
+
 @layer components {
   .feedback-launcher-position {
     position: fixed;
@@ -1820,10 +1900,16 @@
     left: 12px;
     right: 12px;
     bottom: 88px;
-    height: min(680px, calc(100dvh - 112px));
-    min-height: 420px;
+    height: min(640px, calc(100dvh - 112px));
+    min-height: 460px;
     z-index: 2147483003;
-    box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.1);
+  }
+
+  .global-ai-widget-panel-compact {
+    height: auto;
+    min-height: 0;
+    max-height: min(420px, calc(100dvh - 112px));
   }
 
   .compact-ai-message-bubble {
@@ -1846,7 +1932,7 @@
       right: 20px;
       bottom: 100px;
       width: 376px;
-      height: calc(100dvh - 120px);
+      height: min(640px, calc(100dvh - 120px));
       max-height: 704px;
     }
 

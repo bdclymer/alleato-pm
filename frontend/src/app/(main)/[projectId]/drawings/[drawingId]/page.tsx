@@ -29,19 +29,15 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { PageShell, PageTabs } from "@/components/layout";
-import { StatusBadge } from "@/components/ds";
+import { PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";
+import { DetailField, StatusBadge } from "@/components/ds";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   InlineTable,
   InlineTableBody,
@@ -83,16 +79,14 @@ import { DrawingDistributeDialog } from "@/components/drawings/DrawingDistribute
 
 import {
   useDrawing,
+  useDrawingIntelligence,
   useUpdateDrawing,
   useDeleteDrawing,
   usePublishDrawing,
   useObsoleteDrawing,
 } from "@/hooks/use-drawings";
 import { useDrawingRevisions } from "@/hooks/use-drawing-revisions";
-import {
-  DRAWING_DISCIPLINES,
-  DRAWING_TYPES,
-} from "@/types/drawings.types";
+import { DRAWING_DISCIPLINES, DRAWING_TYPES } from "@/types/drawings.types";
 import type { DrawingRevision } from "@/types/drawings.types";
 
 // ---------------------------------------------------------------------------
@@ -154,14 +148,30 @@ interface EditFormState {
 function RevisionRowSkeleton() {
   return (
     <InlineTableRow>
-      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-16" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-24" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-20" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-20" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-5 w-20 rounded-full" /></InlineTableCell>
-      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-4" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-4" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-16" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-24" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-20" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-20" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-5 w-20 rounded-full" />
+      </InlineTableCell>
+      <InlineTableCell>
+        <Skeleton className="h-4 w-4" />
+      </InlineTableCell>
     </InlineTableRow>
   );
 }
@@ -177,7 +187,12 @@ interface RevisionRowProps {
   onDownload: (revision: DrawingRevision) => void;
 }
 
-function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRowProps) {
+function RevisionRow({
+  revision,
+  projectId,
+  drawingId,
+  onDownload,
+}: RevisionRowProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editingRevNum, setEditingRevNum] = useState(false);
@@ -208,7 +223,9 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
   };
 
   return (
-    <InlineTableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
+    <InlineTableRow
+      className={revision.is_current_revision ? "bg-muted/30" : undefined}
+    >
       <InlineTableCell>
         <Button
           variant="ghost"
@@ -269,7 +286,9 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
           <>
             {revision.revision_number}
             {revision.is_current_revision && (
-              <span className="ml-1.5 text-xs text-muted-foreground">(current)</span>
+              <span className="ml-1.5 text-xs text-muted-foreground">
+                (current)
+              </span>
             )}
           </>
         )}
@@ -302,6 +321,282 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
         </DropdownMenu>
       </InlineTableCell>
     </InlineTableRow>
+  );
+}
+
+function readableState(state: string) {
+  if (state === "ready") return "Ready";
+  if (state === "partial") return "Partial";
+  if (state === "failed") return "Failed";
+  return "Not ready";
+}
+
+function stateBadgeVariant(
+  state: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  if (state === "ready") return "default";
+  if (state === "failed") return "destructive";
+  if (state === "partial") return "secondary";
+  return "outline";
+}
+
+function DrawingAIExtractionPanel({
+  projectId,
+  drawingId,
+}: {
+  projectId: string;
+  drawingId: string;
+}) {
+  const { data, isLoading, error } = useDrawingIntelligence(
+    projectId,
+    drawingId,
+  );
+
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <InfoAlert variant="error">
+        {error instanceof Error
+          ? error.message
+          : "Could not load drawing AI extraction evidence."}
+      </InfoAlert>
+    );
+  }
+
+  if (!data) {
+    return (
+      <EmptyState
+        icon={<FileText className="h-6 w-6 text-muted-foreground" />}
+        title="No extraction evidence"
+        description="The drawing intelligence endpoint did not return extraction data."
+      />
+    );
+  }
+
+  return (
+    <div className="max-w-5xl space-y-8">
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionRuleHeading label="AI Extraction" />
+          <Badge variant={stateBadgeVariant(data.readiness.state)}>
+            {readableState(data.readiness.state)}
+          </Badge>
+        </div>
+
+        <div className="grid gap-4">
+          <DetailField
+            label="Document record"
+            value={data.documentMetadata?.title ?? "No document metadata"}
+          >
+            <div>
+              <div>
+                {data.documentMetadata?.title ?? "No document metadata"}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {data.documentMetadata
+                  ? `Status: ${data.documentMetadata.status ?? "unknown"} · Source: ${data.documentMetadata.sourceSystem ?? "unknown"}`
+                  : "The OCR and visual AI pipeline has no source record for this drawing."}
+              </p>
+            </div>
+          </DetailField>
+          <DetailField
+            label="OCR text"
+            value={
+              data.ocr.ready
+                ? `${data.ocr.textLength.toLocaleString()} characters extracted`
+                : "No extracted text"
+            }
+          >
+            <div>
+              <div>
+                {data.ocr.ready
+                  ? `${data.ocr.textLength.toLocaleString()} characters extracted`
+                  : "No extracted text"}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {data.revision
+                  ? `Revision ${data.revision.revision_number} · Confidence: ${data.revision.ocr_confidence_label} (${data.revision.ocr_confidence_source})`
+                  : "No drawing revision is linked to extraction metadata."}
+              </p>
+            </div>
+          </DetailField>
+          <DetailField
+            label="Visual AI"
+            value={
+              data.vision.ready
+                ? `${data.vision.pageCount} page${data.vision.pageCount === 1 ? "" : "s"} analyzed`
+                : "No page summaries"
+            }
+          >
+            <div>
+              <div>
+                {data.vision.ready
+                  ? `${data.vision.pageCount} page${data.vision.pageCount === 1 ? "" : "s"} analyzed`
+                  : "No page summaries"}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {data.vision.pages[0]?.processedAt
+                  ? `Last processed ${formatDateSafe(data.vision.pages[0].processedAt)} · ${data.vision.pages[0].visionModel ?? "model unknown"}`
+                  : "Visual page extraction writes to document_page_intelligence."}
+              </p>
+            </div>
+          </DetailField>
+          <DetailField
+            label="Retrieval"
+            value={
+              data.retrieval.ready
+                ? `${data.retrieval.chunkCount} chunk${data.retrieval.chunkCount === 1 ? "" : "s"} available`
+                : "No chunks"
+            }
+          >
+            <div>
+              <div>
+                {data.retrieval.ready
+                  ? `${data.retrieval.chunkCount} chunk${data.retrieval.chunkCount === 1 ? "" : "s"} available`
+                  : "No chunks"}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Chunks are used by retrieval-backed AI review and search.
+              </p>
+            </div>
+          </DetailField>
+        </div>
+
+        {data.readiness.reasons.length > 0 && (
+          <div className="space-y-2">
+            <SectionRuleHeading label="Readiness reasons" />
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              {data.readiness.reasons.map((reason) => (
+                <li key={reason} className="flex gap-2">
+                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <SectionRuleHeading label="Extracted Text" />
+        {data.ocr.textPreview ? (
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-4 text-xs leading-5 text-foreground">
+            {data.ocr.textPreview}
+          </pre>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No OCR/raw text is available for this drawing yet.
+          </p>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <SectionRuleHeading label="Visual AI Pages" />
+        {data.vision.pages.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No page-level visual AI extraction rows are available.
+          </p>
+        ) : (
+          <div className="divide-y divide-border">
+            {data.vision.pages.map((page) => (
+              <article key={page.pageNumber} className="space-y-2 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">
+                    Page {page.pageNumber}
+                  </span>
+                  {(page.sheetNumber || page.sheetTitle) && (
+                    <span className="text-sm text-muted-foreground">
+                      {[page.sheetNumber, page.sheetTitle]
+                        .filter(Boolean)
+                        .join(" — ")}
+                    </span>
+                  )}
+                </div>
+                {page.aiSummary ? (
+                  <p className="text-sm leading-6 text-foreground">
+                    {page.aiSummary}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No visual AI summary for this page.
+                  </p>
+                )}
+                {(page.impliedSubmittals.length > 0 ||
+                  page.notesAndRequirements.length > 0) && (
+                  <div className="grid gap-3 text-sm sm:grid-cols-2">
+                    {page.impliedSubmittals.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Implied submittals
+                        </p>
+                        <ul className="mt-1 space-y-1 text-muted-foreground">
+                          {page.impliedSubmittals.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {page.notesAndRequirements.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Notes and requirements
+                        </p>
+                        <ul className="mt-1 space-y-1 text-muted-foreground">
+                          {page.notesAndRequirements.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {page.rawExtraction ? (
+                  <details className="text-xs text-muted-foreground">
+                    <summary className="cursor-pointer">
+                      Raw visual extraction
+                    </summary>
+                    <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-foreground">
+                      {JSON.stringify(page.rawExtraction, null, 2)}
+                    </pre>
+                  </details>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {data.retrieval.chunks.length > 0 && (
+        <section className="space-y-3">
+          <SectionRuleHeading label="Retrieval Excerpts" />
+          <div className="divide-y divide-border">
+            {data.retrieval.chunks.map((chunk) => (
+              <div
+                key={`${chunk.chunkIndex}-${chunk.textPreview?.slice(0, 12)}`}
+                className="py-3"
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Chunk {chunk.chunkIndex ?? "unknown"} ·{" "}
+                  {chunk.docType ?? "document"}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground">
+                  {chunk.textPreview}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -399,7 +694,8 @@ export default function DrawingDetailPage() {
       if (data.downloadUrl) {
         const a = document.createElement("a");
         a.href = data.downloadUrl;
-        a.download = data.fileName ?? `${drawing.drawing_number ?? drawing.title}.pdf`;
+        a.download =
+          data.fileName ?? `${drawing.drawing_number ?? drawing.title}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -420,13 +716,15 @@ export default function DrawingDetailPage() {
   const handleDownloadRevision = useCallback(
     async (revision: DrawingRevision) => {
       try {
-        const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
-          `/api/projects/${projectId}/drawings/${drawingId}/download`,
-        );
+        const data = await apiFetch<{
+          downloadUrl?: string;
+          fileName?: string;
+        }>(`/api/projects/${projectId}/drawings/${drawingId}/download`);
         if (data.downloadUrl) {
           const a = document.createElement("a");
           a.href = data.downloadUrl;
-          a.download = revision.file_name ?? `revision-${revision.revision_number}.pdf`;
+          a.download =
+            revision.file_name ?? `revision-${revision.revision_number}.pdf`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -496,7 +794,9 @@ export default function DrawingDetailPage() {
             Drawing Not Found
           </h1>
           <p className="text-muted-foreground mb-6">
-            {error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
+            {error instanceof Error
+              ? error.message
+              : "An unexpected error occurred — please try again"}
           </p>
           <Button onClick={() => router.push(`/${projectId}/drawings`)}>
             <ArrowLeft />
@@ -599,7 +899,9 @@ export default function DrawingDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => publishDrawing.mutate({ drawingId, publish: false })}
+              onClick={() =>
+                publishDrawing.mutate({ drawingId, publish: false })
+              }
               disabled={publishDrawing.isPending}
             >
               <EyeOff className="h-4 w-4 mr-1.5" />
@@ -608,7 +910,9 @@ export default function DrawingDetailPage() {
           ) : (
             <Button
               size="sm"
-              onClick={() => publishDrawing.mutate({ drawingId, publish: true })}
+              onClick={() =>
+                publishDrawing.mutate({ drawingId, publish: true })
+              }
               disabled={publishDrawing.isPending}
             >
               <Eye className="h-4 w-4 mr-1.5" />
@@ -624,9 +928,7 @@ export default function DrawingDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setShowDistributeDialog(true)}
-              >
+              <DropdownMenuItem onClick={() => setShowDistributeDialog(true)}>
                 <Mail className="h-4 w-4 mr-2" />
                 Email
               </DropdownMenuItem>
@@ -661,22 +963,60 @@ export default function DrawingDetailPage() {
         </>
       }
     >
-        <><PageTabs
+      <>
+        <PageTabs
           variant="inline"
           tabs={[
-            { label: "General", href: "general", isActive: activeTab === "general" },
-            { label: "Sketches", href: "sketches", isActive: activeTab === "sketches" },
-            { label: "Download Log", href: "download-log", isActive: activeTab === "download-log" },
-            { label: "Revision Related Items", href: "revision-related", isActive: activeTab === "revision-related" },
-            { label: "Drawing Related Items", href: "drawing-related", isActive: activeTab === "drawing-related" },
-            { label: "Emails", href: "emails", isActive: activeTab === "emails" },
-            { label: "Change History", href: "change-history", isActive: activeTab === "change-history" },
-            { label: "Comments", href: "comments", isActive: activeTab === "comments" },
+            {
+              label: "General",
+              href: "general",
+              isActive: activeTab === "general",
+            },
+            {
+              label: "AI Extraction",
+              href: "ai-extraction",
+              isActive: activeTab === "ai-extraction",
+            },
+            {
+              label: "Sketches",
+              href: "sketches",
+              isActive: activeTab === "sketches",
+            },
+            {
+              label: "Download Log",
+              href: "download-log",
+              isActive: activeTab === "download-log",
+            },
+            {
+              label: "Revision Related Items",
+              href: "revision-related",
+              isActive: activeTab === "revision-related",
+            },
+            {
+              label: "Drawing Related Items",
+              href: "drawing-related",
+              isActive: activeTab === "drawing-related",
+            },
+            {
+              label: "Emails",
+              href: "emails",
+              isActive: activeTab === "emails",
+            },
+            {
+              label: "Change History",
+              href: "change-history",
+              isActive: activeTab === "change-history",
+            },
+            {
+              label: "Comments",
+              href: "comments",
+              isActive: activeTab === "comments",
+            },
           ]}
           onTabClick={(href) => setActiveTab(href)}
         />
         <div className="mt-6">
-                    {/* ---------------------------------------------------------------- */}
+          {/* ---------------------------------------------------------------- */}
           {/* GENERAL TAB                                                       */}
           {/* ---------------------------------------------------------------- */}
           {activeTab === "general" && (
@@ -733,10 +1073,7 @@ export default function DrawingDetailPage() {
                           label="Discipline"
                           value={drawing.discipline}
                         />
-                        <FieldRow
-                          label="Type"
-                          value={drawing.drawing_type}
-                        />
+                        <FieldRow label="Type" value={drawing.drawing_type} />
                         <FieldRow
                           label="Obsolete"
                           value={drawing.is_obsolete ? "Yes" : "No"}
@@ -832,10 +1169,16 @@ export default function DrawingDetailPage() {
                         <InlineTableRow>
                           <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
                           <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
-                          <InlineTableHeaderCell>Revision</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>
+                            Revision
+                          </InlineTableHeaderCell>
                           <InlineTableHeaderCell>Set</InlineTableHeaderCell>
-                          <InlineTableHeaderCell>Drawing Date</InlineTableHeaderCell>
-                          <InlineTableHeaderCell>Received Date</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>
+                            Drawing Date
+                          </InlineTableHeaderCell>
+                          <InlineTableHeaderCell>
+                            Received Date
+                          </InlineTableHeaderCell>
                           <InlineTableHeaderCell>Status</InlineTableHeaderCell>
                           <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
                         </InlineTableRow>
@@ -882,7 +1225,10 @@ export default function DrawingDetailPage() {
                     {currentRevision?.file_url ? (
                       <div className="space-y-3">
                         {previewLoading ? (
-                          <div className="w-full rounded-md border border-border bg-muted flex items-center justify-center" style={{ height: 340 }}>
+                          <div
+                            className="w-full rounded-md border border-border bg-muted flex items-center justify-center"
+                            style={{ height: 340 }}
+                          >
                             <Skeleton className="h-full w-full rounded-md" />
                           </div>
                         ) : isPdf && previewUrl ? (
@@ -943,10 +1289,20 @@ export default function DrawingDetailPage() {
           )}
 
           {/* ---------------------------------------------------------------- */}
+          {/* AI EXTRACTION TAB                                                 */}
+          {/* ---------------------------------------------------------------- */}
+          {activeTab === "ai-extraction" && (
+            <DrawingAIExtractionPanel
+              projectId={projectId}
+              drawingId={drawingId}
+            />
+          )}
+
+          {/* ---------------------------------------------------------------- */}
           {/* SKETCHES TAB                                                      */}
           {/* ---------------------------------------------------------------- */}
-          {activeTab === "sketches" && (
-            currentRevision ? (
+          {activeTab === "sketches" &&
+            (currentRevision ? (
               <DrawingSketchPanel
                 projectId={projectId}
                 drawingId={drawingId}
@@ -958,8 +1314,7 @@ export default function DrawingDetailPage() {
                 title="No revision yet"
                 description="Upload a drawing revision first to add sketches."
               />
-            )
-          )}
+            ))}
 
           {/* ---------------------------------------------------------------- */}
           {/* DOWNLOAD LOG TAB                                                  */}
@@ -998,10 +1353,7 @@ export default function DrawingDetailPage() {
           {activeTab === "emails" && (
             <>
               <div className="mb-4 flex justify-end">
-                <Button
-                  size="sm"
-                  onClick={() => setShowDistributeDialog(true)}
-                >
+                <Button size="sm" onClick={() => setShowDistributeDialog(true)}>
                   <Mail />
                   Compose Email
                 </Button>
@@ -1026,10 +1378,14 @@ export default function DrawingDetailPage() {
           {/* ---------------------------------------------------------------- */}
           {activeTab === "comments" && (
             <div className="max-w-2xl">
-              <DrawingComments drawingId={drawingId} projectId={Number(projectId)} />
+              <DrawingComments
+                drawingId={drawingId}
+                projectId={Number(projectId)}
+              />
             </div>
           )}
-        </div></>
+        </div>
+      </>
 
       <DrawingDistributeDialog
         projectId={projectId}
@@ -1044,8 +1400,9 @@ export default function DrawingDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete drawing?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &ldquo;{drawing.title || drawing.drawing_number}&rdquo;
-              and all associated revisions. This action cannot be undone.
+              This will permanently delete &ldquo;
+              {drawing.title || drawing.drawing_number}&rdquo; and all
+              associated revisions. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -430,7 +430,7 @@ export function CellLink({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={cn("hover:text-primary hover:underline transition-colors", className)}
+        className={cn("text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors", className)}
         onClick={(e) => e.stopPropagation()}
       >
         {display}
@@ -441,7 +441,7 @@ export function CellLink({
   return (
     <Link
       href={href}
-      className={cn("hover:text-primary hover:underline transition-colors", className)}
+      className={cn("text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors", className)}
       onClick={(e) => e.stopPropagation()}
     >
       {display}

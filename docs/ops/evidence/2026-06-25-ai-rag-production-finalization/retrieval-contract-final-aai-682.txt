@@ -1,0 +1,18 @@
+
+> alleato-procore@0.1.0 rag:verify:retrieval-contract
+> node scripts/verify/verify_rag_retrieval_contract.mjs
+
+{
+  "status": "pass",
+  "live": {
+    "projectId": 24109,
+    "queryText": "This document invoice from InterCo Division Ohio Alleato Group. lists items such hand dryers fire extinguisher brackets with quantities amounts. invoice includes subtotal total",
+    "resultCount": 8,
+    "sourceFilteredCount": 5,
+    "topChunkId": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414__vision_page_1",
+    "topDocumentId": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414",
+    "topSourceType": "vision_page_summary",
+    "metadataReferenceCount": 5
+  },
+  "permissionModel": "service-role retrieval is constrained by ToolScope allowedProjectIds plus RPC project filters and post-filter guards"
+}

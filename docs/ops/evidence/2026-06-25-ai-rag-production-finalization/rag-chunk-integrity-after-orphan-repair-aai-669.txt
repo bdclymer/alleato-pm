@@ -1,0 +1,25 @@
+# RAG Chunk Integrity (2d)
+
+| Source | Docs | Chunks | Embedded | Missing Embeddings | Short Chunks |
+| --- | --- | --- | --- | --- | --- |
+| agent_learning | 6 | 6 | 6 | 0 | 0 |
+| ai_memory | 557 | 557 | 557 | 0 | 16 |
+| document | 99 | 1,277 | 1,277 | 0 | 32 |
+| email | 448 | 770 | 770 | 0 | 0 |
+| meeting_segment_summary | 99 | 1,228 | 1,228 | 0 | 1 |
+| meeting_summary | 98 | 98 | 98 | 0 | 0 |
+| meeting_transcript | 11 | 571 | 571 | 0 | 0 |
+| microsoft_graph | 47 | 47 | 47 | 0 | 0 |
+| sharepoint_document | 25 | 57 | 57 | 0 | 0 |
+| teams_dm | 201 | 218 | 218 | 0 | 0 |
+| vision_page_summary | 95 | 178 | 178 | 0 | 0 |
+| workspace_artifact | 1 | 1 | 1 | 0 | 0 |
+
+Non-sequential documents, warning only:
+| Source | Docs |
+| --- | --- |
+| vision_page_summary | 95 |
+| document | 94 |
+| meeting_segment_summary | 94 |
+
+RAG chunk integrity: PASS

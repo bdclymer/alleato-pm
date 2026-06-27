@@ -29,10 +29,10 @@ export default function NotFound() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(hsl(29 71% 52% / 0.07) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(29 71% 52% / 0.07) 1px, transparent 1px),
-            linear-gradient(hsl(29 71% 52% / 0.035) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(29 71% 52% / 0.035) 1px, transparent 1px);
+            linear-gradient(hsl(29 71% 52% / 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(29 71% 52% / 0.03) 1px, transparent 1px),
+            linear-gradient(hsl(29 71% 52% / 0.015) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(29 71% 52% / 0.015) 1px, transparent 1px);
           background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
           pointer-events: none;
         }
@@ -111,7 +111,7 @@ export default function NotFound() {
 
         .nf-desc {
           font-size: 0.9375rem;
-          color: hsl(240 4% 54%);
+          color: hsl(0 0% 98%);
           line-height: 1.6;
           margin-bottom: 2.5rem;
           max-width: 380px;
@@ -221,7 +221,6 @@ export default function NotFound() {
           </div>
         </div>
 
-        <div className="nf-divider">Alleato AI · Project Management</div>
       </div>
     </>
   );

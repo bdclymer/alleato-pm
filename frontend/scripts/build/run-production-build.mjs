@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repoRoot = path.resolve(frontendRoot, "..");
 const disableScript = path.join(frontendRoot, "scripts/build/disable-nonprod-routes.mjs");
 const restoreScript = path.join(frontendRoot, "scripts/build/restore-nonprod-routes.mjs");
 const statePath = path.join(frontendRoot, ".next-nonprod-routes/disabled-routes.json");
@@ -25,6 +26,8 @@ const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true";
 const buildEngine = (process.env.NEXT_PRODUCTION_BUILD_ENGINE ?? "turbopack")
   .trim()
   .toLowerCase();
+const nextBuildNodeOptions =
+  process.env.NEXT_PRODUCTION_BUILD_NODE_OPTIONS?.trim() || "--max-old-space-size=7168";
 
 let activeChild = null;
 let cleanedUp = false;
@@ -48,10 +51,10 @@ async function timedStep(label, step) {
   }
 }
 
-function runNodeScript(scriptPath) {
+function runNodeScript(scriptPath, { cwd = frontendRoot } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
-      cwd: frontendRoot,
+      cwd,
       env: process.env,
       stdio: "inherit",
     });
@@ -118,11 +121,12 @@ async function runNextBuildAttempt({ attempt, args, label }) {
   let buildOutput = "";
   const exitCode = await new Promise((resolve, reject) => {
     console.log(`[build] Starting ${label} production build attempt ${attempt}`);
+    console.log(`[build] ${label} production build NODE_OPTIONS=${nextBuildNodeOptions}`);
     activeChild = spawn("pnpm", args, {
       cwd: frontendRoot,
       env: {
         ...process.env,
-        NODE_OPTIONS: "--max-old-space-size=7168",
+        NODE_OPTIONS: nextBuildNodeOptions,
       },
       stdio: ["inherit", "pipe", "pipe"],
     });
@@ -171,6 +175,10 @@ async function main() {
   }
 
   await timedStep("Disable non-production routes", () => runNodeScript(disableScript));
+
+  await timedStep("Generate route inventory CSV", () =>
+    runNodeScript(path.join(repoRoot, "scripts/verify/route-audit.mjs"), { cwd: repoRoot }),
+  );
 
   const exitCode = await timedStep("Next production build", () => {
     if (buildEngine === "webpack") {

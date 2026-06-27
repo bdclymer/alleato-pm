@@ -215,7 +215,7 @@ function evidenceRefsFromSourceSummary(
         sourceFamily: "intelligence_packet",
         sourceId: project.packetId,
         sourceTitle: project.projectName,
-        occurredAt: project.packetGeneratedAt,
+        occurredAt: toIsoOrNull(project.packetGeneratedAt),
         excerpt: project.packetIsStale
           ? "Packet was stale when selected for the owner briefing."
           : "Packet was current when selected for the owner briefing.",
@@ -237,7 +237,7 @@ function evidenceRefsFromSourceSummary(
         sourceFamily: "insight_card",
         sourceId: item.cardId,
         sourceTitle: item.title,
-        occurredAt: item.lastSeenAt ?? item.firstSeenAt,
+        occurredAt: toIsoOrNull(item.lastSeenAt ?? item.firstSeenAt),
         excerpt:
           item.summary ?? item.whyItMatters ?? item.nextAction ?? item.title,
         confidence: confidence(item.confidence),
@@ -548,7 +548,7 @@ export async function recordDeliveryEvidence(
             : null,
         failureMessage:
           !recipient.sent && recipient.reason !== "dry_run"
-            ? recipient.reason ?? "Teams send failed for recipient."
+            ? (recipient.reason ?? "Teams send failed for recipient.")
             : null,
         retryable: !recipient.sent && recipient.reason !== "dry_run",
         attemptedAt: result.sentAt,
@@ -704,8 +704,8 @@ export async function recordDeliveryAttempt(
             ? "build-email-daily-brief-payload"
             : "build-teams-daily-brief-payload"
           : input.channel === "email"
-          ? "send-email-daily-brief"
-          : "send-teams-daily-brief",
+            ? "send-email-daily-brief"
+            : "send-teams-daily-brief",
       channel: input.channel,
       status: input.status,
       artifactId: input.artifactId ?? null,

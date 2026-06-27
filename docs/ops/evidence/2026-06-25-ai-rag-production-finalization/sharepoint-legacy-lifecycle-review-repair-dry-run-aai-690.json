@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-06-26T05:27:09.872Z",
+  "dryRun": true,
+  "rowsToRepair": 124,
+  "samples": [
+    {
+      "id": "b7826f05-d3a1-4bba-8c5b-0bc4cb408aae",
+      "source_document_id": "sharepoint_01AFX6IXON77NRDSOXKRCYXF2GKWEJ5523",
+      "source_title": "Check # 570 Hoplite Lawn Care $500.00.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 21:03:04.116924+00"
+    },
+    {
+      "id": "95e90f58-a0d8-4ff3-ba66-6a7bb4c579b2",
+      "source_document_id": "sharepoint_01AFX6IXMJKHC5CPEX2RALMRD7R4TUT6KJ",
+      "source_title": "Check # 682 Advanced Doc Sol $210.66.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 19:33:09.112716+00"
+    },
+    {
+      "id": "71f23cca-e56c-42f3-b1f8-6ee989fba594",
+      "source_document_id": "sharepoint_01AFX6IXOQJRDLOK3LPFEKV4P3IPBXX6FY",
+      "source_title": "Check 783_Trane U.S Inc_$2,299.40.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 19:02:59.889885+00"
+    },
+    {
+      "id": "00b6bef6-7836-4969-a2d7-c4a956208d90",
+      "source_document_id": "sharepoint_01AFX6IXOXYWQBY77ST5A2JGIIWIXIJIJD",
+      "source_title": "Check # 587 Coots Henke & Wheeler PC $2,277.31.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 16:03:02.568132+00"
+    },
+    {
+      "id": "7a104bda-724b-4449-b8aa-65581e77e5fe",
+      "source_document_id": "sharepoint_01AFX6IXKRNMH2HWCT5VGJZERARP4VSWT2",
+      "source_title": "Check # 618 S&S Electric $2,106.46.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 15:33:09.80861+00"
+    },
+    {
+      "id": "2dd0db06-76c8-4e0e-ba91-ca5ba9cc5eba",
+      "source_document_id": "sharepoint_01AFX6IXJXMFQHNVLU3ZEZQSNQ7BQ43NKM",
+      "source_title": "Check # 567 Brantley $99.00.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 14:18:06.848519+00"
+    },
+    {
+      "id": "8597efdc-6b8b-4c2f-9dec-e7241e567453",
+      "source_document_id": "sharepoint_01AFX6IXKJH2DAQ7ENXBHJDYAV6ZO7GJRI",
+      "source_title": "QBO Vendor Payment Check Guide.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 13:32:59.319796+00"
+    },
+    {
+      "id": "aef62ae6-1fdf-4c57-a6f7-1c2e6ccd881e",
+      "source_document_id": "sharepoint_01AFX6IXKJ4LC5VXSUKRF26CQUQQEDK7AC",
+      "source_title": "Check # 617 TECO $90.10.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 12:32:56.309401+00"
+    },
+    {
+      "id": "70eda713-bb94-41eb-949a-052100d097fc",
+      "source_document_id": "sharepoint_01AFX6IXLAR6MUVUE2YFBY2CRRYRNM4DKL",
+      "source_title": "Training-12-18-2025.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 09:03:02.869466+00"
+    },
+    {
+      "id": "e2f2d5b5-551a-47ac-99f5-fca93a42a325",
+      "source_document_id": "sharepoint_01AFX6IXLPXAWRQX34KVHYAW25PUNN5N3Q",
+      "source_title": "Overall In Rack Sprinkler SOP.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 08:03:19.794274+00"
+    },
+    {
+      "id": "afe33e1f-a6bb-42c8-9fe7-6c891b74e701",
+      "source_document_id": "sharepoint_01AFX6IXIBRG33ZYWIXFGJ45CQVMPU532J",
+      "source_title": "Vargo LLC Check # 26398.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 07:32:58.938723+00"
+    },
+    {
+      "id": "6e3bd874-8ede-4678-b55b-892f36631f70",
+      "source_document_id": "sharepoint_01AFX6IXLUK4RKOAWVURDKD6ZSWLFLE3K7",
+      "source_title": "#005 Alleato Company Estimating Policy and Procedure.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 06:33:04.398362+00"
+    },
+    {
+      "id": "f370c3b3-9109-40bc-80cb-cf4a23ebde09",
+      "source_document_id": "sharepoint_01AFX6IXNSXGM272NXFVC2OCPFW345SC4X",
+      "source_title": "General Onboarding Check list - Copy.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 04:47:58.276855+00"
+    },
+    {
+      "id": "44c8b084-5c04-4dcd-92a1-1e325dfc17d0",
+      "source_document_id": "sharepoint_01AFX6IXKFZ2D3TXPFDRH3DEICAEYEL5HH",
+      "source_title": "Check # 680 Outreach $25,000.00.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 03:18:05.992749+00"
+    },
+    {
+      "id": "5af525ad-4fff-4e38-9200-5673fe7b3615",
+      "source_document_id": "sharepoint_01AFX6IXLVNJV4E2HHDVBJOQSU2O6GMFWZ",
+      "source_title": "SOP Notion Timesheet instructions.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 03:18:03.30685+00"
+    },
+    {
+      "id": "30cc94f9-f861-48f6-8859-b73a3b6c69ff",
+      "source_document_id": "sharepoint_01AFX6IXOBHGBTKZ7VXFFZBRJR4LMXQOVB",
+      "source_title": "Check # 681 Somerset Tech $3,192.00.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-25 02:48:01.841805+00"
+    },
+    {
+      "id": "ec66ca46-a84e-4a8c-a4a5-3f9e7b39abd0",
+      "source_document_id": "sharepoint_01AFX6IXOBREE37OCTYZD2OT75VOLIO6OH",
+      "source_title": "Alleato - Owner Contractor Agreement - Cost Plus Fee 20240313.docx",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-24 23:24:50.671921+00"
+    },
+    {
+      "id": "7a3e2d58-2ce1-498e-a99a-7bf5a5855f60",
+      "source_document_id": "sharepoint_01AFX6IXKFOBUN4G3XOBCYFWKSKSLTCWLA",
+      "source_title": "Check # 593 Graybar Electric Comp $5,425.97 - voided check.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-24 23:24:47.065326+00"
+    },
+    {
+      "id": "de651a43-db03-4715-86f6-09e6f09a29f6",
+      "source_document_id": "sharepoint_01AFX6IXL4I2OSLA76YVF25PKVYL4A2FHQ",
+      "source_title": "Check # 600 VA Prof $586.92.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-24 23:24:44.618924+00"
+    },
+    {
+      "id": "68abe50b-2c8e-4660-a0a8-fed72fbd2e25",
+      "source_document_id": "sharepoint_01AFX6IXLASR6RBX3P2JCZQNM6OSB3HS3N",
+      "source_title": "Pre-Install Material List.pdf",
+      "status": "complete",
+      "project_id": null,
+      "updated_at": "2026-06-24 23:24:42.004215+00"
+    }
+  ]
+}

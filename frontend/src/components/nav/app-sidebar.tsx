@@ -18,7 +18,6 @@ import {
   List,
   MessageSquare,
   Phone,
-  SlidersHorizontal,
   Users,
 } from "lucide-react"
 
@@ -189,7 +188,6 @@ function CollapsedGroupIcon({
     operations: List,
     documents: FolderOpen,
     development: FlaskConical,
-    admin: SlidersHorizontal,
   }
   const Icon = minimalIconByGroup[group.id] ?? List
 
@@ -333,18 +331,10 @@ function ExpandedCompanyWideTools({
   projectSelector?: React.ReactNode
 }) {
   const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
-  const sections = React.useMemo(() => {
-    const sectionToolNames = new Set(
-      companyWideToolSections.flatMap((section) => section.toolNames)
-    )
-    const extraToolNames = tools
-      .filter((tool) => !sectionToolNames.has(tool.name))
-      .map((tool) => tool.name)
-
-    return extraToolNames.length > 0
-      ? [...companyWideToolSections, { label: "Admin", toolNames: extraToolNames }]
-      : companyWideToolSections
-  }, [tools])
+  // Only the named Company-wide sections render. The single Admin Dashboard
+  // link lives at the end of the "Company" section; other internal admin tools
+  // are reachable from the Admin Dashboard page itself.
+  const sections = companyWideToolSections
 
   return (
     <div className="flex flex-col">
@@ -608,26 +598,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }))
       .filter((group) => group.tools.length > 0)
 
-    if (!isDeveloper) return projectGroups
-
-    const adminGroupTools = filterTools(developerCompanyAdminTools)
-    if (adminGroupTools.length === 0) return projectGroups
-
-    return [
-      ...projectGroups,
-      {
-        id: "admin",
-        label: "Admin",
-        icon: SlidersHorizontal,
-        tools: adminGroupTools,
-      },
-    ]
-  }, [filterTools, isDeveloper, isSubcontractor, projectId])
+    return projectGroups
+  }, [filterTools, isSubcontractor, projectId])
 
   const companyWideTools = React.useMemo<NavigationTool[]>(
     () => [
       ...companyWideHeaderTools,
-      ...(isDeveloper ? developerCompanyAdminTools : []),
+      // Only surface the single Admin Dashboard link (last item of the Company
+      // section). Other internal admin tools are reachable from that page.
+      ...(isDeveloper
+        ? developerCompanyAdminTools.filter((tool) => tool.name === "Admin Dashboard")
+        : []),
     ],
     [isDeveloper]
   )

@@ -392,7 +392,15 @@ class SupabaseRagStore:
 
     def _app_document_catalog_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         catalog = dict(metadata)
-        for field in ("content", "raw_text", "summary_embedding", "embedding_status", "processing_metadata"):
+        for field in (
+            "app_document_id",
+            "content",
+            "raw_text",
+            "summary_embedding",
+            "parsing_status",
+            "embedding_status",
+            "processing_metadata",
+        ):
             catalog.pop(field, None)
         return catalog
 
@@ -454,24 +462,23 @@ class SupabaseRagStore:
         return {key: value for key, value in payload.items() if value is not None}
 
     def fetch_rag_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
-        response = (
-            self._rag_read_client.table("rag_document_metadata")
-            .select("*")
-            .eq("id", document_id)
-            .single()
-            .execute()
+        data = fetch_optional_row(
+            self._rag_read_client,
+            "rag_document_metadata",
+            "*",
+            "id",
+            document_id,
         )
-        return response.data
+        return data or None
 
     def fetch_rag_document_content(self, document_id: str) -> Optional[str]:
-        response = (
-            self._rag_read_client.table("rag_document_metadata")
-            .select("content,raw_text")
-            .eq("id", document_id)
-            .single()
-            .execute()
+        data = fetch_optional_row(
+            self._rag_read_client,
+            "rag_document_metadata",
+            "content,raw_text",
+            "id",
+            document_id,
         )
-        data = response.data or {}
         return data.get("content") or data.get("raw_text")
 
     def upload_public_text(

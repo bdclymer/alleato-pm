@@ -60,6 +60,11 @@ const SECTION_MARKERS: Array<{ id: string; label: string; pattern: RegExp }> = [
     pattern: /## Runtime Date Context\b/,
   },
   {
+    id: "tool_routing_policy",
+    label: "Tool routing policy",
+    pattern: /## Tool Routing Policy\b/,
+  },
+  {
     id: "recent_conversations",
     label: "Recent conversation summaries",
     pattern: /## Recent Conversation/i,
@@ -67,7 +72,8 @@ const SECTION_MARKERS: Array<{ id: string; label: string; pattern: RegExp }> = [
   {
     id: "memory",
     label: "Durable memory context",
-    pattern: /## What I Know About You And Your Projects|## Relevant Memories|## Memory/i,
+    pattern:
+      /## What I Know About You And Your Projects|## Relevant Memories|## Memory/i,
   },
   {
     id: "agent_learnings",
@@ -102,12 +108,14 @@ const SECTION_MARKERS: Array<{ id: string; label: string; pattern: RegExp }> = [
   {
     id: "intelligence_packet",
     label: "Project intelligence packet context",
-    pattern: /# Current Project Intelligence Packet|# Project Intelligence Packet/,
+    pattern:
+      /# Current Project Intelligence Packet|# Project Intelligence Packet/,
   },
   {
     id: "retrieval_context",
     label: "Retrieval planner context",
-    pattern: /# Vector Search Results|# Project Briefing Snapshot|# Source-Specific RAG Result/,
+    pattern:
+      /# Vector Search Results|# Project Briefing Snapshot|# Source-Specific RAG Result/,
   },
 ];
 
@@ -148,7 +156,9 @@ export function redactSystemPrompt(prompt: string): string {
     .replace(/\b[A-Za-z0-9+/]{32,}={0,2}\b/g, "[redacted-token]");
 }
 
-export function summarizeSystemPrompt(prompt: string): SystemPromptSectionSummary[] {
+export function summarizeSystemPrompt(
+  prompt: string,
+): SystemPromptSectionSummary[] {
   return SECTION_MARKERS.map((section) => ({
     id: section.id,
     label: section.label,

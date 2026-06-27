@@ -32,6 +32,7 @@ MAX_RECOMPUTE_SNAPSHOT_WRITES = 25
 MAX_RECOMPUTE_ALERT_WRITES = 25
 ALERT_TEXT_LIMIT = 1200
 ALERT_RESOURCE_ID_LIMIT = 500
+FRESHNESS_RUN_LIMIT = 500
 
 GRAPH_SOURCE_LABELS = {
     "outlook_email": "Outlook email",
@@ -40,6 +41,15 @@ GRAPH_SOURCE_LABELS = {
     "onedrive_file": "OneDrive documents",
     "sharepoint_file": "SharePoint documents",
 }
+
+# Graph sub-sources synced by the main Microsoft Graph sync cycle. Their own
+# `source_sync_runs` rows are only written when items actually flow, so on a quiet
+# overnight a healthy mailbox/folder looks hours stale. The parent `microsoft_graph`
+# run is written every cycle and is the honest "we checked this source" signal, so
+# these inherit its freshness. (teams_chat_export/onedrive run on separate crons and
+# are intentionally excluded — they keep their own run cadence.)
+GRAPH_PARENT_RUN_SOURCE = "microsoft_graph"
+GRAPH_PARENT_SYNC_SUBSOURCES = {"outlook_email", "sharepoint_file", "teams_message"}
 
 LEGACY_GRAPH_STATE_SOURCES = {
     # Historical per-chat rows predate the current aggregate Teams DM exporter.
@@ -66,6 +76,34 @@ GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
 }
 
 GRAPH_PROJECT_DOCUMENT_SOURCES = {"sharepoint"}
+
+
+def _configured_graph_subscription_keys() -> set[Tuple[str, str]]:
+    try:
+        from src.services.integrations.microsoft_graph.subscriptions import configured_subscription_targets
+    except Exception:
+        return set()
+    return {
+        (str(target.source), str(target.resource_id).lower())
+        for target in configured_subscription_targets()
+        if target.source and target.resource_id
+    }
+
+
+def _unconfigured_graph_subscriptions(subscriptions: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    configured_keys = _configured_graph_subscription_keys()
+    if not configured_keys:
+        return []
+    return [
+        row
+        for row in subscriptions
+        if str(row.get("status") or "") != "removed"
+        and (
+            str(row.get("source") or ""),
+            str(row.get("resource_id") or "").lower(),
+        )
+        not in configured_keys
+    ]
 
 
 def _active_sharepoint_resource_ids() -> set[str]:
@@ -633,6 +671,16 @@ def update_source_health_snapshot(
     return dict(rows[0]) if rows else payload
 
 
+def _source_stale_threshold(source_key: str) -> int:
+    if source_key == "fireflies":
+        return STALE_FIREFLIES_MINUTES
+    if source_key == "task_extraction":
+        return STALE_EXTRACTION_MINUTES
+    if source_key == "acumatica_financial_sync":
+        return STALE_ACUMATICA_SYNC_MINUTES
+    return STALE_SYNC_MINUTES
+
+
 def detect_source_sync_alerts(
     sources: Sequence[Dict[str, Any]],
     pipeline: Dict[str, Dict[str, int]],
@@ -642,19 +690,28 @@ def detect_source_sync_alerts(
     for source in sources:
         if source["status"] in {"critical", "warning", "unknown"}:
             severity = "critical" if source["status"] == "critical" else "warning"
-            reason = source.get("lastErrorMessage")
-            if not reason and source.get("staleMinutes") is not None:
-                reason = f"Last sync is {source['staleMinutes']} minutes old."
-            if not reason:
-                reason = "No successful sync timestamp is available."
+            stale_minutes = source.get("staleMinutes")
+            threshold = _source_stale_threshold(str(source["source"]))
+            is_genuinely_stale = stale_minutes is not None and stale_minutes > threshold
             if source.get("lastErrorMessage"):
                 code = "source_sync_error"
-            elif source.get("staleMinutes") is not None:
-                code = "source_sync_stale"
-            elif source["source"] == "task_extraction":
-                code = "task_extraction_stale"
-            else:
+                reason = source["lastErrorMessage"]
+            elif is_genuinely_stale:
+                code = (
+                    "task_extraction_stale"
+                    if source["source"] == "task_extraction"
+                    else "source_sync_stale"
+                )
+                reason = f"Last sync is {stale_minutes} minutes old."
+            elif stale_minutes is None:
                 code = f"source_sync_{source['status']}"
+                reason = "No successful sync timestamp is available."
+            else:
+                # Warning/critical driven by an embedding/compile backlog, NOT by
+                # staleness or an error. A fresh source (e.g. synced 4 min ago)
+                # must never emit a "Last sync is N minutes old" alert. The aggregate
+                # embedding_backlog / compiler_backlog alerts below already cover this.
+                continue
             alerts.append(
                 {
                     "severity": severity,
@@ -710,6 +767,18 @@ def detect_source_sync_alerts(
         )
 
     graph_subscription_statuses = pipeline.get("graphSubscriptionsByStatus", {})
+    unconfigured_subscriptions = pipeline.get("unconfiguredGraphSubscriptions", 0)
+    if unconfigured_subscriptions:
+        alerts.append(
+            {
+                "severity": "critical",
+                "code": "unconfigured_graph_subscription",
+                "source": "microsoft_graph",
+                "resourceId": "graph_subscriptions",
+                "message": f"{unconfigured_subscriptions} Graph subscription row(s) are not in the configured sync target set.",
+                "detectedAt": _iso(now),
+            }
+        )
     removed_subscriptions = graph_subscription_statuses.get("removed", 0) + graph_subscription_statuses.get("missed", 0)
     if removed_subscriptions:
         alerts.append(
@@ -767,6 +836,26 @@ def _alert_severity(alert: Dict[str, Any]) -> str:
     return severity if severity in {"info", "warning", "critical"} else "warning"
 
 
+def _as_actionable_alert_write_error(exc: Exception) -> Exception:
+    """Turn an opaque RLS failure into a self-diagnosing env-drift error.
+
+    A non-service_role RAG key makes every ``system_alerts`` write fail with
+    PostgREST 42501 ("new row violates row-level security policy"). That crashed
+    the source-rag-health resolver cron on every run — silently leaving stale
+    alerts active because nothing resolved them. Surface the real cause loudly so
+    the next operator fixes the env instead of re-deriving it from a traceback.
+    """
+    text = str(exc)
+    if "row-level security" in text or "42501" in text:
+        return RuntimeError(
+            "Writing system_alerts hit row-level security (42501). The RAG write "
+            "client is not authenticated as service_role — RAG_SUPABASE_SERVICE_ROLE_KEY "
+            "on this service has drifted to a non-service_role (anon) value. Set the "
+            "RAG project's service_role key and redeploy. Original error: " + text
+        )
+    return exc
+
+
 def persist_source_sync_alerts(
     supabase: Any,
     alerts: Sequence[Dict[str, Any]],
@@ -807,7 +896,10 @@ def persist_source_sync_alerts(
             payload["first_seen_at"] = existing["first_seen_at"]
         else:
             payload["first_seen_at"] = now
-        rag_client.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
+        try:
+            rag_client.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
+        except Exception as exc:  # noqa: BLE001 - re-raised with actionable context below
+            raise _as_actionable_alert_write_error(exc) from exc
         upserted += 1
 
     if resolve_missing:
@@ -980,6 +1072,68 @@ def _stuck_item_rows(
     return stuck[:25]
 
 
+def _build_run_freshness_by_source(
+    sync_runs: Sequence[Dict[str, Any]],
+) -> Dict[str, datetime]:
+    """Return the most-recent non-error run start time per source from the run ledger.
+
+    The run ledger (source_sync_runs) is written on every sync cycle, so it
+    reflects true recency even when graph_sync_state.last_sync_at or
+    document_metadata timestamps are stale. We ignore error/failed runs so a
+    broken source doesn't appear fresh.
+    """
+    freshness: Dict[str, datetime] = {}
+    for run in sync_runs:
+        if str(run.get("status") or "") in {"error", "failed"}:
+            continue
+        source = str(run.get("source") or "")
+        if not source:
+            continue
+        ts = _parse_datetime(run.get("started_at"))
+        if ts and (source not in freshness or ts > freshness[source]):
+            freshness[source] = ts
+    return freshness
+
+
+def _apply_run_ledger_freshness(
+    sources: List[Dict[str, Any]],
+    run_freshness_by_source: Dict[str, datetime],
+    now: datetime,
+) -> None:
+    """Override staleness for any source where the run ledger is more recent.
+
+    Mutates each source dict in-place. This is the canonical fix for false
+    'source stale' alerts caused by snapshot fields (graph_sync_state.last_sync_at,
+    document_metadata timestamps) that lag behind the actual sync cadence.
+    """
+    for source in sources:
+        source_key = str(source.get("source") or "")
+        run_fresh = run_freshness_by_source.get(source_key)
+        if source_key in GRAPH_PARENT_SYNC_SUBSOURCES:
+            parent_fresh = run_freshness_by_source.get(GRAPH_PARENT_RUN_SOURCE)
+            if parent_fresh and (run_fresh is None or parent_fresh > run_fresh):
+                run_fresh = parent_fresh
+        if not run_fresh:
+            continue
+        current_sync = _parse_datetime(source.get("lastSyncAt"))
+        if current_sync and run_fresh <= current_sync:
+            continue
+        # Run ledger is more recent — override the staleness fields
+        stale_threshold = STALE_FIREFLIES_MINUTES if source_key == "fireflies" else STALE_SYNC_MINUTES
+        stale = _age_minutes(run_fresh, now)
+        source["lastSyncAt"] = _iso(run_fresh)
+        if not source.get("lastErrorMessage"):
+            source["lastSuccessAt"] = _iso(run_fresh)
+        source["staleMinutes"] = stale
+        source["status"] = _health_status(
+            stale_minutes=stale,
+            stale_threshold=stale_threshold,
+            last_error=source.get("lastErrorMessage"),
+            unembedded=source.get("unembeddedCount", 0),
+            uncompiled=source.get("uncompiledCount", 0),
+        )
+
+
 def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     now = _utcnow()
 
@@ -995,6 +1149,12 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "document_metadata",
         "id,title,url,source,source_system,source_item_id,category,type,status,captured_at,date,created_at,source_last_modified_at,fireflies_id,project_id,source_metadata,tags",
         limit=DOCUMENT_HEALTH_SAMPLE_LIMIT,
+        # MUST order by ingestion recency. Without this the sample is the OLDEST
+        # ~2.5k rows of a 40k+ table, so per-source freshness AND unembedded/
+        # uncompiled backlog counts reflect months-old documents — which made
+        # healthy sources report 40+ days stale and emit phantom backlog warnings.
+        order_by="created_at",
+        desc=True,
     )
     project_documents = _table_rows(
         supabase,
@@ -1048,6 +1208,15 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "source_sync_runs",
         "id,source,resource_id,resource_name,stage,status,started_at,finished_at,items_seen,items_synced,items_failed,error_code,error_message,metadata",
         limit=50,
+        order_by="started_at",
+        desc=True,
+    )
+    # Broader fetch for freshness derivation — used to override stale snapshot fields
+    sync_runs_freshness = _table_rows(
+        get_rag_read_client(),
+        "source_sync_runs",
+        "source,resource_id,started_at,status",
+        limit=FRESHNESS_RUN_LIMIT,
         order_by="started_at",
         desc=True,
     )
@@ -1217,6 +1386,12 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
             )
         )
 
+    # Override staleness for any source where source_sync_runs is more recent
+    # than the snapshot field. This prevents false 'stale' alerts when
+    # graph_sync_state.last_sync_at or document timestamps lag the real cadence.
+    run_freshness_by_source = _build_run_freshness_by_source(sync_runs_freshness)
+    _apply_run_ledger_freshness(sources, run_freshness_by_source, now)
+
     pipeline = {
         "documentMetadataBySource": _counter(documents, "source_system"),
         "documentMetadataByCategory": _counter(documents, "category"),
@@ -1236,6 +1411,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "packetJobsByStatus": _counter(packet_jobs, "status"),
         "tasksBySourceSystem": _counter(tasks, "source_system"),
         "graphSubscriptionsByStatus": _counter(subscriptions, "status"),
+        "unconfiguredGraphSubscriptions": len(_unconfigured_graph_subscriptions(subscriptions)),
         "graphProjectDocumentPromotion": _graph_project_document_promotion_counts(
             documents,
             project_documents,

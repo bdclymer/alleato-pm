@@ -21,10 +21,15 @@ import {
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageSquareIcon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { PanelLeftOpenIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
+import { shouldSyncInitialMessages } from "./chat-message-sync";
 import type { MemoryUsage } from "./memory-usage-disclosure";
 import type { SkillUsage } from "./skill-usage-disclosure";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
@@ -66,6 +71,7 @@ export function ChatWithSession({
   skillUsageByMessageId,
   responseQualityByMessageId,
   traceDiagnosticsByMessageId,
+  langfuseTraceIdByMessageId,
   isLoadingMessages,
   loadMessagesError,
   pendingFirstMessage,
@@ -83,13 +89,11 @@ export function ChatWithSession({
   initialMessages: UIMessage[];
   toolTracesByMessageId: Record<string, ToolTraceItem[]>;
   sourcesByMessageId: Record<string, unknown[]>;
-  memoryUsageByMessageId: Record<
-    string,
-    MemoryUsage
-  >;
+  memoryUsageByMessageId: Record<string, MemoryUsage>;
   skillUsageByMessageId: Record<string, SkillUsage>;
   responseQualityByMessageId: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId: Record<string, AssistantTraceDiagnostics>;
+  langfuseTraceIdByMessageId: Record<string, string>;
   isLoadingMessages: boolean;
   loadMessagesError: string | null;
   pendingFirstMessage: string | null;
@@ -104,7 +108,9 @@ export function ChatWithSession({
   welcomeHideOrb?: boolean;
 }) {
   const [input, setInput] = useState("");
-  const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(null);
+  const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(
+    null,
+  );
   const councilModeRef = useRef(councilMode);
   councilModeRef.current = councilMode;
 
@@ -174,16 +180,30 @@ export function ChatWithSession({
     }
   }, [pendingFirstFiles, pendingFirstMessage, sendMessage]);
 
+  // Track the live message list so the sync effect can tell whether it is about
+  // to clobber an in-flight conversation (see guard below). A ref avoids adding
+  // `messages` to the effect deps, which would re-run the sync on every token.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   // Sync initial messages when they change (conversation switch).
   // Skip when skipNextMessagesSync is set — see ref declaration above.
   const prevInitialRef = useRef(initialMessages);
   useEffect(() => {
-    if (prevInitialRef.current !== initialMessages) {
-      prevInitialRef.current = initialMessages;
-      if (!skipNextMessagesSync.current) {
-        setMessages(initialMessages);
-      }
-      skipNextMessagesSync.current = false;
+    if (prevInitialRef.current === initialMessages) return;
+    prevInitialRef.current = initialMessages;
+
+    const wasPostFinishReload = skipNextMessagesSync.current;
+    skipNextMessagesSync.current = false;
+
+    if (
+      shouldSyncInitialMessages({
+        skipPostFinishReload: wasPostFinishReload,
+        initialCount: initialMessages.length,
+        liveCount: messagesRef.current.length,
+      })
+    ) {
+      setMessages(initialMessages);
     }
   }, [initialMessages, setMessages]);
 
@@ -194,11 +214,13 @@ export function ChatWithSession({
   // Prevents the welcome screen from flashing during new-session creation.
   const displayMessages = useMemo<UIMessage[]>(() => {
     if (pendingFirstMessage && messages.length === 0) {
-      return [{
-        id: "pending-first-message",
-        role: "user" as const,
-        parts: [{ type: "text" as const, text: pendingFirstMessage }],
-      }];
+      return [
+        {
+          id: "pending-first-message",
+          role: "user" as const,
+          parts: [{ type: "text" as const, text: pendingFirstMessage }],
+        },
+      ];
     }
     return messages;
   }, [pendingFirstMessage, messages]);
@@ -221,6 +243,7 @@ export function ChatWithSession({
       skillUsageByMessageId={skillUsageByMessageId}
       responseQualityByMessageId={responseQualityByMessageId}
       traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
+      langfuseTraceIdByMessageId={langfuseTraceIdByMessageId}
       liveStatus={liveStatus}
       chatError={error ? formatChatError(error) : loadMessagesError}
       isLoadingMessages={isLoadingMessages}
@@ -254,7 +277,9 @@ export function RagChatPage() {
   const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(
     null,
   );
-  const [pendingFirstFiles, setPendingFirstFiles] = useState<FileUIPart[] | undefined>();
+  const [pendingFirstFiles, setPendingFirstFiles] = useState<
+    FileUIPart[] | undefined
+  >();
   const {
     initialMessages,
     toolTracesByMessageId,
@@ -263,6 +288,7 @@ export function RagChatPage() {
     skillUsageByMessageId,
     responseQualityByMessageId,
     traceDiagnosticsByMessageId,
+    langfuseTraceIdByMessageId,
     isLoadingMessages,
     loadMessagesError,
     loadSessionMessages,
@@ -270,7 +296,9 @@ export function RagChatPage() {
   } = useChatSessionMessages();
   const [noSessionInput, setNoSessionInput] = useState("");
   // Optimistic user message shown while a new conversation is being created
-  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
+  const [optimisticUserMessage, setOptimisticUserMessage] = useState<
+    string | null
+  >(null);
   // Tracks the last effective session id so we only clear the optimistic message once per session transition
   const prevEffectiveSessionIdRef = useRef<string | null>(null);
   const [councilMode, setCouncilMode] = useState(false);
@@ -313,18 +341,24 @@ export function RagChatPage() {
 
   // Clear optimistic message once ChatWithSession takes over so it doesn't double-render
   useEffect(() => {
-    if (effectiveSessionId && effectiveSessionId !== prevEffectiveSessionIdRef.current) {
+    if (
+      effectiveSessionId &&
+      effectiveSessionId !== prevEffectiveSessionIdRef.current
+    ) {
       prevEffectiveSessionIdRef.current = effectiveSessionId;
       setOptimisticUserMessage(null);
     }
   }, [effectiveSessionId]);
-  const handleFinishMessage = useCallback((sessionId: string) => {
-    queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
-    setPendingSessionId(null);
-    setPendingFirstMessage(null);
-    setPendingFirstFiles(undefined);
-    void loadSessionMessages(sessionId);
-  }, [queryClient, loadSessionMessages]);
+  const handleFinishMessage = useCallback(
+    (sessionId: string) => {
+      queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
+      setPendingSessionId(null);
+      setPendingFirstMessage(null);
+      setPendingFirstFiles(undefined);
+      void loadSessionMessages(sessionId);
+    },
+    [queryClient, loadSessionMessages],
+  );
 
   const setActiveSession = useCallback(
     (sessionId: string | null) => {
@@ -416,18 +450,18 @@ export function RagChatPage() {
         onRename={handleRename}
         onDelete={handleDelete}
       />
-      <div className="fixed right-4 top-14 z-30 sm:right-10 sm:top-20">
+      <div className="fixed left-4 top-20 z-30 md:left-20">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-muted/50 text-foreground shadow-none hover:bg-muted"
+              aria-label="Open chat history"
+              className="h-9 rounded-full bg-background/90 px-3 text-xs font-medium text-muted-foreground shadow-none ring-1 ring-border/50 hover:bg-muted hover:text-foreground"
               onClick={() => setHistoryOpen(true)}
             >
-              <MessageSquareIcon className="h-4 w-4" />
-              <span className="sr-only">Chat history</span>
+              <PanelLeftOpenIcon className="mr-2 h-3.5 w-3.5" />
+              Chat history
             </Button>
           </TooltipTrigger>
           <TooltipContent sideOffset={6}>Chat history</TooltipContent>
@@ -445,6 +479,7 @@ export function RagChatPage() {
             skillUsageByMessageId={skillUsageByMessageId}
             responseQualityByMessageId={responseQualityByMessageId}
             traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
+            langfuseTraceIdByMessageId={langfuseTraceIdByMessageId}
             isLoadingMessages={isLoadingMessages}
             loadMessagesError={loadMessagesError}
             pendingFirstMessage={pendingFirstMessage}
@@ -465,7 +500,9 @@ export function RagChatPage() {
                     {
                       id: "optimistic-user",
                       role: "user" as const,
-                      parts: [{ type: "text" as const, text: optimisticUserMessage }],
+                      parts: [
+                        { type: "text" as const, text: optimisticUserMessage },
+                      ],
                     },
                   ]
                 : []

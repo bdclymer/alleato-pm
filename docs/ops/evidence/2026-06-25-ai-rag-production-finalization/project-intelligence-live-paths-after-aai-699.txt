@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:project-intelligence-live-paths
+> node scripts/verify/verify_project_intelligence_live_paths.mjs
+
+[PASS] Project Intelligence live-path guard passed.

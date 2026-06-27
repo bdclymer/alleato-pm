@@ -22,6 +22,7 @@ import {
 } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
+import { RfiFormalResponses } from "@/components/rfis/rfi-formal-responses";
 import { RfiFormFields } from "@/components/rfis/rfi-form-fields";
 import { useUpdateRfi } from "@/hooks/use-rfis";
 import {
@@ -330,6 +331,10 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             />
           </DetailField>
         </DetailFieldGrid>
+      </DetailPanel>
+
+      <DetailPanel>
+        <RfiFormalResponses projectId={projectId} rfiId={rfi.id} />
       </DetailPanel>
 
       <DetailPanel>

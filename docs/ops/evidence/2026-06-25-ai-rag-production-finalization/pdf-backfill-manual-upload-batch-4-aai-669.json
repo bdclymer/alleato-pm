@@ -1,0 +1,874 @@
+{
+  "generated_at": "2026-06-25T23:14:45.895051+00:00",
+  "source_file": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-orphan-repair-aai-669.json",
+  "batch_count": 19,
+  "ok_count": 19,
+  "failed_count": 0,
+  "results": [
+    {
+      "id": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+      "title": "[043] P601",
+      "family": "drawing_upload",
+      "status_before": "raw_ingested",
+      "mode": "run_embedder",
+      "segment_count_before": 1,
+      "ok": true,
+      "result": {
+        "metadataId": "5d57c258-7de6-44ec-a85e-30969ffd3f46",
+        "chunkCount": 2,
+        "segmentCount": 1
+      },
+      "started_at": "2026-06-25T22:47:06.935567+00:00",
+      "finished_at": "2026-06-25T22:47:11.894618+00:00"
+    },
+    {
+      "id": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+      "title": "[046] M001",
+      "family": "drawing_upload",
+      "status_before": "segmented",
+      "mode": "run_embedder",
+      "segment_count_before": 15,
+      "ok": true,
+      "result": {
+        "metadataId": "9edd86ae-7ac3-41b5-a2d0-760d70aa45bc",
+        "chunkCount": 32,
+        "segmentCount": 15
+      },
+      "started_at": "2026-06-25T22:47:11.894632+00:00",
+      "finished_at": "2026-06-25T22:47:21.483500+00:00"
+    },
+    {
+      "id": "eccf836c-61b7-4290-8ba5-bb388c4bbcdc",
+      "title": "CSC Detex Alarm Pricing.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "eccf836c-61b7-4290-8ba5-bb388c4bbcdc",
+        "parser": {
+          "metadataId": "eccf836c-61b7-4290-8ba5-bb388c4bbcdc",
+          "segmentCount": 6,
+          "summaryLength": 1816,
+          "extractedChars": 10296
+        },
+        "vision": {
+          "pages_analyzed": 4,
+          "total_pages": 4
+        },
+        "embedder": {
+          "metadataId": "eccf836c-61b7-4290-8ba5-bb388c4bbcdc",
+          "chunkCount": 18,
+          "segmentCount": 6
+        },
+        "extractor": {
+          "metadataId": "eccf836c-61b7-4290-8ba5-bb388c4bbcdc",
+          "insights": 13,
+          "decisions": 4,
+          "risks": 6,
+          "opportunities": 3,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:47:21.483509+00:00",
+      "finished_at": "2026-06-25T22:48:20.625091+00:00"
+    },
+    {
+      "id": "0d81985a-7b65-49ef-9538-34847803e4a1",
+      "title": "Electrical Room Door & Exterior Door Markup.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "0d81985a-7b65-49ef-9538-34847803e4a1",
+        "parser": {
+          "metadataId": "0d81985a-7b65-49ef-9538-34847803e4a1",
+          "segmentCount": 1,
+          "summaryLength": 157,
+          "extractedChars": 110
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "0d81985a-7b65-49ef-9538-34847803e4a1",
+          "chunkCount": 4,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "0d81985a-7b65-49ef-9538-34847803e4a1",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:48:20.625105+00:00",
+      "finished_at": "2026-06-25T22:48:42.205704+00:00"
+    },
+    {
+      "id": "9f49ed61-a7da-4776-b7cd-93b5ba0c5897",
+      "title": "Goodwill CO4 Superior.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "9f49ed61-a7da-4776-b7cd-93b5ba0c5897",
+        "parser": {
+          "metadataId": "9f49ed61-a7da-4776-b7cd-93b5ba0c5897",
+          "segmentCount": 3,
+          "summaryLength": 1246,
+          "extractedChars": 864
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "9f49ed61-a7da-4776-b7cd-93b5ba0c5897",
+          "chunkCount": 8,
+          "segmentCount": 3
+        },
+        "extractor": {
+          "metadataId": "9f49ed61-a7da-4776-b7cd-93b5ba0c5897",
+          "insights": 4,
+          "decisions": 2,
+          "risks": 0,
+          "opportunities": 2,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:48:42.205729+00:00",
+      "finished_at": "2026-06-25T22:49:12.042602+00:00"
+    },
+    {
+      "id": "741f3769-8d09-4a4b-92b4-a374639728a5",
+      "title": "Right Image Signed Subcontract.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "741f3769-8d09-4a4b-92b4-a374639728a5",
+        "parser": {
+          "metadataId": "741f3769-8d09-4a4b-92b4-a374639728a5",
+          "segmentCount": 1,
+          "summaryLength": 144,
+          "extractedChars": 97
+        },
+        "vision": {
+          "pages_analyzed": 17,
+          "total_pages": 17
+        },
+        "embedder": {
+          "metadataId": "741f3769-8d09-4a4b-92b4-a374639728a5",
+          "chunkCount": 20,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "741f3769-8d09-4a4b-92b4-a374639728a5",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:49:12.042615+00:00",
+      "finished_at": "2026-06-25T22:50:33.993841+00:00"
+    },
+    {
+      "id": "d24f76e9-b532-42db-8fb8-f7a3bf20938d",
+      "title": "Apex Glass Subcontract Executed.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "d24f76e9-b532-42db-8fb8-f7a3bf20938d",
+        "parser": {
+          "metadataId": "d24f76e9-b532-42db-8fb8-f7a3bf20938d",
+          "segmentCount": 16,
+          "summaryLength": 2671,
+          "extractedChars": 44037
+        },
+        "vision": {
+          "pages_analyzed": 17,
+          "total_pages": 17
+        },
+        "embedder": {
+          "metadataId": "d24f76e9-b532-42db-8fb8-f7a3bf20938d",
+          "chunkCount": 61,
+          "segmentCount": 16
+        },
+        "extractor": {
+          "metadataId": "d24f76e9-b532-42db-8fb8-f7a3bf20938d",
+          "insights": 24,
+          "decisions": 10,
+          "risks": 9,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:50:33.993853+00:00",
+      "finished_at": "2026-06-25T22:53:01.365084+00:00"
+    },
+    {
+      "id": "1f8a2f31-25c6-45ae-b3c5-9181345ee3a9",
+      "title": "Glenmark Subcontract Executed.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "1f8a2f31-25c6-45ae-b3c5-9181345ee3a9",
+        "parser": {
+          "metadataId": "1f8a2f31-25c6-45ae-b3c5-9181345ee3a9",
+          "segmentCount": 21,
+          "summaryLength": 3181,
+          "extractedChars": 50705
+        },
+        "vision": {
+          "pages_analyzed": 18,
+          "total_pages": 18
+        },
+        "embedder": {
+          "metadataId": "1f8a2f31-25c6-45ae-b3c5-9181345ee3a9",
+          "chunkCount": 75,
+          "segmentCount": 21
+        },
+        "extractor": {
+          "metadataId": "1f8a2f31-25c6-45ae-b3c5-9181345ee3a9",
+          "insights": 19,
+          "decisions": 5,
+          "risks": 9,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:53:01.365094+00:00",
+      "finished_at": "2026-06-25T22:55:43.440703+00:00"
+    },
+    {
+      "id": "b56a6b20-c582-4697-a4d1-eb7bb173c6c6",
+      "title": "Glenmark Updated COI.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "b56a6b20-c582-4697-a4d1-eb7bb173c6c6",
+        "parser": {
+          "metadataId": "b56a6b20-c582-4697-a4d1-eb7bb173c6c6",
+          "segmentCount": 15,
+          "summaryLength": 3243,
+          "extractedChars": 68080
+        },
+        "vision": {
+          "pages_analyzed": 23,
+          "total_pages": 23
+        },
+        "embedder": {
+          "metadataId": "b56a6b20-c582-4697-a4d1-eb7bb173c6c6",
+          "chunkCount": 69,
+          "segmentCount": 15
+        },
+        "extractor": {
+          "metadataId": "b56a6b20-c582-4697-a4d1-eb7bb173c6c6",
+          "insights": 25,
+          "decisions": 10,
+          "risks": 10,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:55:43.440714+00:00",
+      "finished_at": "2026-06-25T22:58:21.286878+00:00"
+    },
+    {
+      "id": "33a7929d-fa63-40b5-a827-e01cbb2b4f8f",
+      "title": "Superior Contractors Subcontract Executed.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "33a7929d-fa63-40b5-a827-e01cbb2b4f8f",
+        "parser": {
+          "metadataId": "33a7929d-fa63-40b5-a827-e01cbb2b4f8f",
+          "segmentCount": 20,
+          "summaryLength": 2620,
+          "extractedChars": 49625
+        },
+        "vision": {
+          "pages_analyzed": 19,
+          "total_pages": 19
+        },
+        "embedder": {
+          "metadataId": "33a7929d-fa63-40b5-a827-e01cbb2b4f8f",
+          "chunkCount": 72,
+          "segmentCount": 20
+        },
+        "extractor": {
+          "metadataId": "33a7929d-fa63-40b5-a827-e01cbb2b4f8f",
+          "insights": 30,
+          "decisions": 13,
+          "risks": 12,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T22:58:21.286891+00:00",
+      "finished_at": "2026-06-25T23:01:13.411263+00:00"
+    },
+    {
+      "id": "02dcb66e-01b9-4170-b837-32f3634c4442",
+      "title": "Superior COI.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "02dcb66e-01b9-4170-b837-32f3634c4442",
+        "parser": {
+          "metadataId": "02dcb66e-01b9-4170-b837-32f3634c4442",
+          "segmentCount": 35,
+          "summaryLength": 2651,
+          "extractedChars": 42691
+        },
+        "vision": {
+          "pages_analyzed": 23,
+          "total_pages": 23
+        },
+        "embedder": {
+          "metadataId": "02dcb66e-01b9-4170-b837-32f3634c4442",
+          "chunkCount": 100,
+          "segmentCount": 35
+        },
+        "extractor": {
+          "metadataId": "02dcb66e-01b9-4170-b837-32f3634c4442",
+          "insights": 19,
+          "decisions": 6,
+          "risks": 9,
+          "opportunities": 4,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:01:13.411271+00:00",
+      "finished_at": "2026-06-25T23:04:16.183800+00:00"
+    },
+    {
+      "id": "c7900f79-6718-4ed2-8f42-f61b0032334e",
+      "title": "Bul Tec Roofing COI.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "c7900f79-6718-4ed2-8f42-f61b0032334e",
+        "parser": {
+          "metadataId": "c7900f79-6718-4ed2-8f42-f61b0032334e",
+          "segmentCount": 5,
+          "summaryLength": 2229,
+          "extractedChars": 4505
+        },
+        "vision": {
+          "pages_analyzed": 2,
+          "total_pages": 2
+        },
+        "embedder": {
+          "metadataId": "c7900f79-6718-4ed2-8f42-f61b0032334e",
+          "chunkCount": 14,
+          "segmentCount": 5
+        },
+        "extractor": {
+          "metadataId": "c7900f79-6718-4ed2-8f42-f61b0032334e",
+          "insights": 11,
+          "decisions": 3,
+          "risks": 5,
+          "opportunities": 3,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:04:16.183814+00:00",
+      "finished_at": "2026-06-25T23:05:03.132810+00:00"
+    },
+    {
+      "id": "26dae15b-ae05-46d3-8408-dbb5492af406",
+      "title": "Bul-Tec Roofing Subcontract Executed (1).pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "26dae15b-ae05-46d3-8408-dbb5492af406",
+        "parser": {
+          "metadataId": "26dae15b-ae05-46d3-8408-dbb5492af406",
+          "segmentCount": 23,
+          "summaryLength": 2481,
+          "extractedChars": 50011
+        },
+        "vision": {
+          "pages_analyzed": 19,
+          "total_pages": 19
+        },
+        "embedder": {
+          "metadataId": "26dae15b-ae05-46d3-8408-dbb5492af406",
+          "chunkCount": 78,
+          "segmentCount": 23
+        },
+        "extractor": {
+          "metadataId": "26dae15b-ae05-46d3-8408-dbb5492af406",
+          "insights": 24,
+          "decisions": 9,
+          "risks": 10,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:05:03.132819+00:00",
+      "finished_at": "2026-06-25T23:08:02.785199+00:00"
+    },
+    {
+      "id": "7a6371f4-1c28-4750-91b8-f5069be6c132",
+      "title": "W9- Bul-Tec 2026.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "7a6371f4-1c28-4750-91b8-f5069be6c132",
+        "parser": {
+          "metadataId": "7a6371f4-1c28-4750-91b8-f5069be6c132",
+          "segmentCount": 7,
+          "summaryLength": 2449,
+          "extractedChars": 5749
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "7a6371f4-1c28-4750-91b8-f5069be6c132",
+          "chunkCount": 15,
+          "segmentCount": 7
+        },
+        "extractor": {
+          "metadataId": "7a6371f4-1c28-4750-91b8-f5069be6c132",
+          "insights": 21,
+          "decisions": 8,
+          "risks": 9,
+          "opportunities": 4,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:08:02.785211+00:00",
+      "finished_at": "2026-06-25T23:08:48.582558+00:00"
+    },
+    {
+      "id": "758213ee-5832-4ca7-b1f7-26bc43f39254",
+      "title": "Goodwill Noblesville Apex Glass Subcontract Executed.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "758213ee-5832-4ca7-b1f7-26bc43f39254",
+        "parser": {
+          "metadataId": "758213ee-5832-4ca7-b1f7-26bc43f39254",
+          "segmentCount": 22,
+          "summaryLength": 2596,
+          "extractedChars": 52622
+        },
+        "vision": {
+          "pages_analyzed": 20,
+          "total_pages": 20
+        },
+        "embedder": {
+          "metadataId": "758213ee-5832-4ca7-b1f7-26bc43f39254",
+          "chunkCount": 78,
+          "segmentCount": 22
+        },
+        "extractor": {
+          "metadataId": "758213ee-5832-4ca7-b1f7-26bc43f39254",
+          "insights": 30,
+          "decisions": 14,
+          "risks": 11,
+          "opportunities": 5,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:08:48.582569+00:00",
+      "finished_at": "2026-06-25T23:11:26.536694+00:00"
+    },
+    {
+      "id": "ffd2d0c4-2e16-4126-b1c1-0597c9a8015c",
+      "title": "Apex Glass COI.PDF",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "ffd2d0c4-2e16-4126-b1c1-0597c9a8015c",
+        "parser": {
+          "metadataId": "ffd2d0c4-2e16-4126-b1c1-0597c9a8015c",
+          "segmentCount": 3,
+          "summaryLength": 1925,
+          "extractedChars": 3494
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "ffd2d0c4-2e16-4126-b1c1-0597c9a8015c",
+          "chunkCount": 8,
+          "segmentCount": 3
+        },
+        "extractor": {
+          "metadataId": "ffd2d0c4-2e16-4126-b1c1-0597c9a8015c",
+          "insights": 0,
+          "decisions": 0,
+          "risks": 0,
+          "opportunities": 0,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:11:26.536707+00:00",
+      "finished_at": "2026-06-25T23:11:54.510226+00:00"
+    },
+    {
+      "id": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+      "title": "Integrity Executed Subcontract.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+        "parser": {
+          "metadataId": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+          "segmentCount": 1,
+          "summaryLength": 144,
+          "extractedChars": 97
+        },
+        "vision": {
+          "pages_analyzed": 17,
+          "total_pages": 17
+        },
+        "embedder": {
+          "metadataId": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+          "chunkCount": 20,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "3d6251ab-7b33-4fb7-b2bc-0457d9d20462",
+          "insights": 3,
+          "decisions": 0,
+          "risks": 2,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:11:54.510240+00:00",
+      "finished_at": "2026-06-25T23:13:17.850153+00:00"
+    },
+    {
+      "id": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+      "title": "Integrity W-9.pdf",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+        "parser": {
+          "metadataId": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+          "segmentCount": 1,
+          "summaryLength": 127,
+          "extractedChars": 80
+        },
+        "vision": {
+          "pages_analyzed": 1,
+          "total_pages": 1
+        },
+        "embedder": {
+          "metadataId": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+          "chunkCount": 4,
+          "segmentCount": 1
+        },
+        "extractor": {
+          "metadataId": "e10483d7-79b8-44c6-b491-61e1076eb54e",
+          "insights": 2,
+          "decisions": 0,
+          "risks": 1,
+          "opportunities": 1,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:13:17.850173+00:00",
+      "finished_at": "2026-06-25T23:13:48.889799+00:00"
+    },
+    {
+      "id": "9d01a80e-f550-44ea-a4cf-003988cc2064",
+      "title": "Integrity COI (1).PDF",
+      "family": "manual_upload",
+      "status_before": "uploaded",
+      "mode": "run_full_pipeline",
+      "segment_count_before": 0,
+      "ok": true,
+      "result": {
+        "metadataId": "9d01a80e-f550-44ea-a4cf-003988cc2064",
+        "parser": {
+          "metadataId": "9d01a80e-f550-44ea-a4cf-003988cc2064",
+          "segmentCount": 6,
+          "summaryLength": 2923,
+          "extractedChars": 6204
+        },
+        "vision": {
+          "pages_analyzed": 2,
+          "total_pages": 2
+        },
+        "embedder": {
+          "metadataId": "9d01a80e-f550-44ea-a4cf-003988cc2064",
+          "chunkCount": 15,
+          "segmentCount": 6
+        },
+        "extractor": {
+          "metadataId": "9d01a80e-f550-44ea-a4cf-003988cc2064",
+          "insights": 6,
+          "decisions": 1,
+          "risks": 3,
+          "opportunities": 2,
+          "tasks": 0,
+          "tasksAttempted": 0,
+          "tasksSkipped": 0,
+          "signalsWritten": 0,
+          "signalsPromoted": 0,
+          "signalProjectionStatus": null,
+          "signalProjectionError": null
+        },
+        "intelligence_compiler": {
+          "status": "projection_blocked",
+          "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+          "non_blocking": true
+        },
+        "status": "done"
+      },
+      "started_at": "2026-06-25T23:13:48.889808+00:00",
+      "finished_at": "2026-06-25T23:14:45.895042+00:00"
+    }
+  ]
+}

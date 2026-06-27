@@ -4,12 +4,11 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isPast } from "date-fns";
-import { ArrowRight, FileText, Pencil, Sparkles, Users } from "lucide-react";
+import { ArrowRight, ExternalLink, FileText, Link2, Pencil, Sparkles, Users, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ds";
-import { EmptyState } from "@/components/ds/empty-state";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
   buildBudgetDivisionSummaries,
@@ -17,11 +16,22 @@ import {
   ReadinessIndicator,
   SidebarTeamSection,
 } from "./project-command-center";
+import {
+  getProjectHomeLinkHref,
+  getProjectHomeLinkKind,
+  getProjectHomeLinks,
+  type ProjectHomeLinkDocument,
+} from "./project-home-links";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
 const EditProjectSidebar = dynamic(
   () => import("@/components/project/edit-project-sidebar").then((mod) => mod.EditProjectSidebar),
+  { ssr: false },
+);
+
+const ProjectInfoPanel = dynamic(
+  () => import("@/components/project/project-info-panel").then((mod) => mod.ProjectInfoPanel),
   { ssr: false },
 );
 
@@ -43,10 +53,7 @@ type DailyLog = Pick<
   Database["public"]["Tables"]["daily_logs"]["Row"],
   "id" | "log_date" | "general_notes" | "status" | "weather_conditions"
 >;
-type ProjectDocument = Pick<
-  Database["public"]["Tables"]["project_documents"]["Row"],
-  "id" | "title" | "file_name" | "category" | "created_at"
->;
+type ProjectDocument = ProjectHomeLinkDocument;
 
 interface ChangeOrder {
   id: string | number;
@@ -84,7 +91,7 @@ export interface ProjectHomeV2Props {
   tasks: Task[];
   changeOrders: ChangeOrder[];
   rfis: RFI[];
-  commitments: Array<{ contract_amount?: number; revised_contract_amount?: number; original_amount?: number }>;
+  commitments: Array<{ id: string; title?: string | null; status?: string; contract_number?: string | null }>;
   commitmentTotal?: number;
   contracts: Contract[];
   contractLineItems?: Array<
@@ -100,6 +107,7 @@ export interface ProjectHomeV2Props {
   };
   pendingSsovReviews?: Array<{ commitmentId: string; commitmentNumber: string; commitmentTitle: string; submittedAt: string | null }>;
   ownerInvoices?: OwnerInvoice[];
+  linkDocuments?: ProjectDocument[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -245,6 +253,7 @@ export function ProjectHomeCommandCenterV2({
   homeAlerts,
   pendingSsovReviews = [],
   ownerInvoices = [],
+  linkDocuments = [],
 }: ProjectHomeV2Props) {
   const projectId = String(project.id);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -301,16 +310,10 @@ export function ProjectHomeCommandCenterV2({
   const meta = project as unknown as Record<string, unknown>;
   const startDate = (meta["start date"] as string) ?? (meta["start_date"] as string) ?? null;
   const completionDate = (meta["est completion"] as string) ?? (meta["completion_date"] as string) ?? null;
-  const summaryMeta = (project.summary_metadata as Record<string, unknown> | null) ?? null;
-  const substantialCompletion =
-    typeof summaryMeta?.substantial_completion === "string" ? summaryMeta.substantial_completion : null;
   const completionPct = Math.max(0, Math.min(100, Number(project.completion_percentage) || 0));
   const healthScore = project.health_score != null ? Number(project.health_score) : null;
   const phase = project.phase || project.stage || null;
   const jobNumber = (meta["job number"] as string) ?? project.project_number ?? null;
-  const address = [project.address, summaryMeta?.city as string | undefined, project.state]
-    .filter(Boolean)
-    .join(", ");
 
   const pm = React.useMemo(() => {
     const members = team ?? [];
@@ -442,6 +445,9 @@ export function ProjectHomeCommandCenterV2({
   const hasSchedule = (schedule ?? []).length > 0;
   const setupCompleted = [hasTeam, hasBudget, hasContracts, hasSchedule].filter(Boolean).length;
 
+  const hasNeedsAttentionTasks = overdueTasks.length > 0 || openTasks.length > 0;
+  const hasPendingInvoices = pendingInvoices.length > 0;
+
   const recentMeetings = React.useMemo(
     () => [...meetings].sort((a, b) => getDateMs(b.date ?? b.created_at) - getDateMs(a.date ?? a.created_at)).slice(0, 3),
     [meetings],
@@ -453,6 +459,10 @@ export function ProjectHomeCommandCenterV2({
   const recentDocuments = React.useMemo(
     () => [...documents].sort((a, b) => getDateMs(b.created_at) - getDateMs(a.created_at)).slice(0, 6),
     [documents],
+  );
+  const projectLinks = React.useMemo(
+    () => getProjectHomeLinks(linkDocuments.length > 0 ? linkDocuments : documents).slice(0, 5),
+    [documents, linkDocuments],
   );
 
   return (
@@ -487,64 +497,6 @@ export function ProjectHomeCommandCenterV2({
       {/* ── BODY: main + rail ────────────────────────────── */}
       <div className="flex flex-col gap-8 xl:flex-row">
         <div className="min-w-0 flex-1 space-y-9">
-          {/* AI / status brief */}
-          <div className="rounded-xl border border-primary/15 bg-primary/[0.04] p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <Sparkles className="h-3 w-3" />
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-primary">
-                {summaryText ? "AI Project Brief" : "At a Glance"}
-              </span>
-              {summaryText && project.summary_updated_at && (
-                <span className="ml-auto text-[10px] text-muted-foreground">
-                  Updated {formatShortDate(project.summary_updated_at)}
-                </span>
-              )}
-            </div>
-            <p className="text-[13px] leading-relaxed text-foreground/80">{summaryText || computedBrief}</p>
-          </div>
-
-          {/* Schedule timeline */}
-          {timeline && (
-            <section>
-              <SectionHeading title="Schedule" action={<ViewAllLink href={`/${projectId}/schedule`} label="View schedule" />} />
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="mb-2 flex justify-between text-[11px] text-muted-foreground">
-                  <span>{formatShortDate(startDate)}</span>
-                  <span>{formatShortDate(completionDate)}</span>
-                </div>
-                <div className="relative mt-5 h-7 overflow-visible rounded-md bg-muted">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-l-md bg-primary transition-[width] duration-1000"
-                    style={{ width: `${timeline.elapsedPct}%` }}
-                  />
-                  <div className="absolute inset-y-0 z-[2] w-1 rounded bg-foreground" style={{ left: `${timeline.elapsedPct}%` }}>
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-foreground">Today</div>
-                  </div>
-                </div>
-                <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                  <span>Day {timeline.elapsedDays} of {timeline.totalDays}</span>
-                  <span>{timeline.elapsedPct}% timeline · {completionPct}% work</span>
-                </div>
-                {Math.abs(timeline.elapsedPct - completionPct) > 3 && (
-                  <div
-                    className={cn(
-                      "mt-3 rounded-md border px-3 py-2 text-[11px]",
-                      timeline.elapsedPct > completionPct
-                        ? "border-warning/20 bg-warning/10 text-warning"
-                        : "border-success/20 bg-success/10 text-success",
-                    )}
-                  >
-                    {timeline.elapsedPct > completionPct
-                      ? `Work (${completionPct}%) is trailing the timeline (${timeline.elapsedPct}%) — may need acceleration.`
-                      : `Work (${completionPct}%) is outpacing the timeline (${timeline.elapsedPct}%).`}
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
           {/* Financials */}
           {revisedBudget > 0 && (
             <section>
@@ -603,44 +555,114 @@ export function ProjectHomeCommandCenterV2({
             </section>
           )}
 
-          {/* Needs attention */}
-          {attentionItems.length > 0 && (
+          {/* Schedule timeline */}
+          {timeline && (
+            <section>
+              <SectionHeading title="Schedule" action={<ViewAllLink href={`/${projectId}/schedule`} label="View schedule" />} />
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <div className="mb-2 flex justify-between text-[11px] text-muted-foreground">
+                  <span>{formatShortDate(startDate)}</span>
+                  <span>{formatShortDate(completionDate)}</span>
+                </div>
+                <div className="relative mt-5 h-7 overflow-visible rounded-md bg-muted">
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-l-md bg-primary transition-[width] duration-1000"
+                    style={{ width: `${timeline.elapsedPct}%` }}
+                  />
+                  <div className="absolute inset-y-0 z-[2] w-1 rounded bg-foreground" style={{ left: `${timeline.elapsedPct}%` }}>
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-foreground">Today</div>
+                  </div>
+                </div>
+                <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                  <span>Day {timeline.elapsedDays} of {timeline.totalDays}</span>
+                  <span>{timeline.elapsedPct}% timeline · {completionPct}% work</span>
+                </div>
+                {Math.abs(timeline.elapsedPct - completionPct) > 3 && (
+                  <div
+                    className={cn(
+                      "mt-3 rounded-md border px-3 py-2 text-[11px]",
+                      timeline.elapsedPct > completionPct
+                        ? "border-warning/20 bg-warning/10 text-warning"
+                        : "border-success/20 bg-success/10 text-success",
+                    )}
+                  >
+                    {timeline.elapsedPct > completionPct
+                      ? `Work (${completionPct}%) is trailing the timeline (${timeline.elapsedPct}%) — may need acceleration.`
+                      : `Work (${completionPct}%) is outpacing the timeline (${timeline.elapsedPct}%).`}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Tasks + Invoices */}
+          {(hasNeedsAttentionTasks || hasPendingInvoices) && (
             <section>
               <SectionHeading title="Needs Attention" />
-              <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2">
-                {attentionItems.map((it) => (
-                  <Link
-                    key={it.label}
-                    href={it.href}
-                    prefetch={false}
-                    className="flex items-center justify-between gap-3 bg-card px-4 py-3 transition-colors hover:bg-muted/40"
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
-                          it.severity === "error" ? "bg-destructive" : it.severity === "warning" ? "bg-warning" : "bg-muted-foreground/50",
-                        )}
-                      />
-                      <span className="truncate text-[13px] text-foreground/80">{it.label}</span>
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border",
+                  hasNeedsAttentionTasks && hasPendingInvoices && "sm:grid-cols-2",
+                )}
+              >
+                {/* Tasks column */}
+                {hasNeedsAttentionTasks && (
+                  <div className="bg-card">
+                    <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+                      <span className={EYE}>Tasks</span>
+                      <Link href={`/${projectId}/tasks`} prefetch={false} className="text-[11px] text-muted-foreground transition-colors hover:text-primary">
+                        View all <ArrowRight className="inline h-3 w-3" />
+                      </Link>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {it.meta && <span className="text-xs text-muted-foreground">{it.meta}</span>}
-                      <span
-                        className={cn(
-                          "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold",
-                          it.severity === "error"
-                            ? "bg-destructive/10 text-destructive"
-                            : it.severity === "warning"
-                              ? "bg-warning/10 text-warning"
-                              : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {it.count}
-                      </span>
+                    <div className="divide-y divide-border/60">
+                      {(overdueTasks.length > 0 ? overdueTasks : openTasks).slice(0, 6).map((t) => {
+                        const isOverdue = overdueTasks.includes(t);
+                        return (
+                          <Link
+                            key={t.id}
+                            href={`/${projectId}/tasks`}
+                            prefetch={false}
+                            className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
+                          >
+                            <span className="min-w-0 truncate text-[12px] text-foreground/80">{t.title ?? "Untitled"}</span>
+                            {t.due_date && (
+                              <span className={cn("shrink-0 text-[11px]", isOverdue ? "text-destructive" : "text-muted-foreground")}>
+                                {formatMonthDay(t.due_date)}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
                     </div>
-                  </Link>
-                ))}
+                  </div>
+                )}
+
+                {/* Invoices column */}
+                {hasPendingInvoices && (
+                  <div className="bg-card">
+                    <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+                      <span className={EYE}>Invoices Pending Approval</span>
+                      <Link href={`/${projectId}/invoicing`} prefetch={false} className="text-[11px] text-muted-foreground transition-colors hover:text-primary">
+                        View all <ArrowRight className="inline h-3 w-3" />
+                      </Link>
+                    </div>
+                    <div className="divide-y divide-border/60">
+                      {pendingInvoices.slice(0, 6).map((inv) => (
+                        <Link
+                          key={inv.id}
+                          href={`/${projectId}/invoicing`}
+                          prefetch={false}
+                          className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
+                        >
+                          <span className="min-w-0 truncate text-[12px] text-foreground/80">
+                            {inv.invoice_number ? `Invoice #${inv.invoice_number}` : "Invoice"}
+                          </span>
+                          <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">{fmtCompact(inv.gross_amount)}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -704,18 +726,17 @@ export function ProjectHomeCommandCenterV2({
           )}
 
           {/* Meetings */}
-          <section>
-            <SectionHeading
-              title="Recent Meetings"
-              count={meetings.length || undefined}
-              action={<ViewAllLink href={`/${projectId}/meetings`} />}
-            />
-            {commsLoading ? (
-              <div className="py-4 text-sm text-muted-foreground">Loading meetings…</div>
-            ) : recentMeetings.length === 0 ? (
-              <EmptyState title="No meetings yet" description="Synced meeting recaps and decisions will appear here." />
-            ) : (
-              <div className="divide-y divide-border/60">
+          {(commsLoading || recentMeetings.length > 0) && (
+            <section>
+              <SectionHeading
+                title="Recent Meetings"
+                count={meetings.length || undefined}
+                action={<ViewAllLink href={`/${projectId}/meetings`} />}
+              />
+              {commsLoading ? (
+                <div className="py-4 text-sm text-muted-foreground">Loading meetings…</div>
+              ) : (
+                <div className="divide-y divide-border/60">
                 {recentMeetings.map((m) => {
                   const title = m.title || m.file_name || "Untitled meeting";
                   return (
@@ -737,9 +758,10 @@ export function ProjectHomeCommandCenterV2({
                     </Link>
                   );
                 })}
-              </div>
-            )}
-          </section>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Daily log */}
           {(commsLoading || recentDailyLogs.length > 0) && (
@@ -773,18 +795,17 @@ export function ProjectHomeCommandCenterV2({
           )}
 
           {/* Documents */}
-          <section>
-            <SectionHeading
-              title="Documents"
-              count={documents.length || undefined}
-              action={<ViewAllLink href={`/${projectId}/documents`} />}
-            />
-            {commsLoading ? (
-              <div className="py-4 text-sm text-muted-foreground">Loading documents…</div>
-            ) : recentDocuments.length === 0 ? (
-              <EmptyState title="No documents yet" description="Uploaded project documents will appear here." />
-            ) : (
-              <div className="divide-y divide-border/60">
+          {(commsLoading || recentDocuments.length > 0) && (
+            <section>
+              <SectionHeading
+                title="Documents"
+                count={documents.length || undefined}
+                action={<ViewAllLink href={`/${projectId}/documents`} />}
+              />
+              {commsLoading ? (
+                <div className="py-4 text-sm text-muted-foreground">Loading documents…</div>
+              ) : (
+                <div className="divide-y divide-border/60">
                 {recentDocuments.map((doc) => {
                   const title = doc.title || doc.file_name || "Untitled document";
                   return (
@@ -804,9 +825,54 @@ export function ProjectHomeCommandCenterV2({
                     </Link>
                   );
                 })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Links */}
+          {projectLinks.length > 0 && (
+            <section>
+              <SectionHeading
+                title="Links"
+                count={projectLinks.length}
+                action={<ViewAllLink href={`/${projectId}/documents`} label="Manage links" />}
+              />
+              <div className="divide-y divide-border/60">
+                {projectLinks.map((doc) => {
+                  const title = doc.title || doc.file_name || "Untitled link";
+                  const href = getProjectHomeLinkHref(doc);
+                  const kind = getProjectHomeLinkKind(doc);
+                  const Icon = kind === "video" ? Video : Link2;
+
+                  return (
+                    <a
+                      key={doc.id}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group grid gap-2 py-3.5 transition-colors sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                            {title}
+                          </p>
+                          {doc.description ? (
+                            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{doc.description}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary sm:justify-self-end">
+                        Open <ExternalLink className="h-3 w-3" />
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
           {/* Snapshot */}
           <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border md:grid-cols-4 md:divide-y-0">
@@ -853,32 +919,24 @@ export function ProjectHomeCommandCenterV2({
         </div>
 
         {/* ── RIGHT RAIL ──────────────────────────────────── */}
-        <aside className="w-full shrink-0 space-y-6 xl:w-64">
-          <div className="rounded-lg border border-border bg-muted/20 p-4">
-            <div className={cn(EYE, "mb-2")}>Project Info</div>
-            <div className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
-              {address && <div className="text-foreground/80">{address}</div>}
-              {jobNumber && (
-                <div>
-                  <span className="text-muted-foreground/60">Job #:</span> {jobNumber}
-                </div>
-              )}
-              {startDate && (
-                <div>
-                  <span className="text-muted-foreground/60">Start:</span> {formatShortDate(startDate)}
-                </div>
-              )}
-              {substantialCompletion && (
-                <div>
-                  <span className="text-muted-foreground/60">Substantial:</span> {formatShortDate(substantialCompletion)}
-                </div>
-              )}
-              {project.delivery_method && (
-                <div>
-                  <span className="text-muted-foreground/60">Delivery:</span> {project.delivery_method}
-                </div>
+        <aside className="w-full shrink-0 space-y-6 xl:w-96">
+          {/* AI brief */}
+          <div>
+            <div className={cn(EYE, "mb-2 flex items-center gap-1.5")}>
+              <Sparkles className="h-3 w-3" />
+              {summaryText ? "AI Brief" : "At a Glance"}
+              {summaryText && project.summary_updated_at && (
+                <span className="ml-auto text-[10px] font-normal normal-case tracking-normal text-muted-foreground/60">
+                  {formatShortDate(project.summary_updated_at)}
+                </span>
               )}
             </div>
+            <p className="text-[12px] leading-relaxed text-muted-foreground">{summaryText || computedBrief}</p>
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <div className={cn(EYE, "mb-3")}>Project Info</div>
+            <ProjectInfoPanel project={project} />
           </div>
 
           <div className="rounded-lg border border-border bg-muted/20 p-4">

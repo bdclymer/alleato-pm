@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, Loader2, Wand2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { FormProvider } from "react-hook-form";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -43,7 +43,6 @@ export function CreateSubcontractForm({
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [errorDetails, setErrorDetails] = React.useState<unknown>(null);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
-  const [isAutoFilling, setIsAutoFilling] = React.useState(false);
 
   const {
     methods,
@@ -69,8 +68,7 @@ export function CreateSubcontractForm({
     handleFilesSelected,
   } = useSubcontractFormState({ projectId, initialData, mode: mode ?? "create" });
 
-  const { handleSubmit, setValue } = methods;
-  const showAutoFill = process.env.NODE_ENV === "development";
+  const { handleSubmit } = methods;
 
   const handleFormSubmit = async (data: CreateSubcontractInput) => {
     setIsSubmitting(true);
@@ -86,21 +84,6 @@ export function CreateSubcontractForm({
       setErrorDetails(err);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDevAutoFill = () => {
-    setIsAutoFilling(true);
-    try {
-      const now = Date.now();
-      const defaultCompanyId = vendorOptions[0]?.value || "";
-      setValue("title", `Autofilled subcontract ${now}`, { shouldValidate: true });
-      setValue("contractNumber", `SC-${now}`, { shouldValidate: true });
-      setValue("status", "Draft", { shouldValidate: true });
-      setValue("description", "Autofilled subcontract for form verification.", { shouldValidate: true });
-      if (defaultCompanyId) setValue("contractCompanyId", defaultCompanyId, { shouldValidate: true });
-    } finally {
-      setIsAutoFilling(false);
     }
   };
 
@@ -138,13 +121,11 @@ export function CreateSubcontractForm({
               vendorOptions={vendorOptions}
               isLoadingVendors={isLoadingVendors}
             />
-
+            <InclusionsExclusionsSection isSubmitting={isSubmitting} />
+            <ContractDatesSection isSubmitting={isSubmitting} />
             <section className="space-y-4">
               <div className="space-y-1">
                 <SectionRuleHeading label="Attachments" />
-                <p className="text-sm text-muted-foreground">
-                  Attach contract documents, plans, or other relevant files
-                </p>
               </div>
               <FileUploadField
                 value={attachments}
@@ -157,7 +138,6 @@ export function CreateSubcontractForm({
                 disabled={isSubmitting}
               />
             </section>
-
             <SovSection
               sovLines={sovLines}
               onSovLinesChange={setSovLines}
@@ -168,24 +148,15 @@ export function CreateSubcontractForm({
               onCreateBudgetCode={() => setShowCreateBudgetCodeModal(true)}
               isSubmitting={isSubmitting}
             />
-
-            <InclusionsExclusionsSection isSubmitting={isSubmitting} />
-            <ContractDatesSection isSubmitting={isSubmitting} />
             <PrivacySection isSubmitting={isSubmitting} userOptions={userOptions} isLoadingUsers={isLoadingUsers} />
             <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} vendorId={vendorId} vendorCompanyId={vendorCompanyId} refetchContacts={refetchContacts} />
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-10 flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               <span className="text-destructive">*</span> Required fields
             </p>
             <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-              {showAutoFill && (
-                <Button type="button" variant="outline" onClick={handleDevAutoFill} disabled={isSubmitting || isAutoFilling}>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  {isAutoFilling ? "Filling..." : "Auto-fill"}
-                </Button>
-              )}
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 Cancel
               </Button>

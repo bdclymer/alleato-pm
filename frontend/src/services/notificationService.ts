@@ -1,7 +1,11 @@
-import { nanoid } from "nanoid";
+import { randomUUID } from "crypto";
 
 import { sendProactiveTeamsDM } from "@/lib/bot/teams-proactive";
 import { createServiceClient } from "@/lib/supabase/service";
+import type {
+  AiWidgetNotificationKind,
+  AiWidgetNotificationMetadata,
+} from "@/lib/collaboration/ai-widget-notifications";
 
 type UserTarget = string | string[];
 
@@ -45,6 +49,36 @@ export type ApprovalRequestData = BasePayload & {
 
 export type BallInCourtData = BasePayload & {
   rfiNumber?: string;
+};
+
+export type AiWidgetNotificationData = BasePayload & {
+  kind: AiWidgetNotificationKind;
+  title: string;
+  body?: string | null;
+  prompt: string;
+  actionLabel?: string | null;
+  source?: string | null;
+  actorId?: string | null;
+  eventKey?: string | null;
+};
+
+export type ChangeRequestReviewNeededData = BasePayload & {
+  title: string;
+  description?: string | null;
+  scope?: string | null;
+  type?: string | null;
+  status?: string | null;
+  eventKey?: string | null;
+};
+
+export type RfiReviewNeededData = BasePayload & {
+  subject: string;
+  question: string;
+  ballInCourt?: string | null;
+  dueDate?: string | null;
+  costImpact?: string | null;
+  scheduleImpact?: string | null;
+  eventKey?: string | null;
 };
 
 export type NotificationKind =
@@ -94,6 +128,172 @@ function describeKind(kind: NotificationKind): { title: string; body: string } {
   }
 }
 
+function cleanOptionalText(value?: string | null): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+export function buildAiWidgetNotificationMetadata(
+  data: AiWidgetNotificationData,
+): AiWidgetNotificationMetadata & {
+  eventKey?: string;
+  projectId?: number;
+  entityType?: string;
+  entityId?: string;
+} {
+  const prompt = cleanOptionalText(data.prompt);
+  if (!prompt) {
+    throw new Error("AI widget notifications require a non-empty metadata.prompt.");
+  }
+
+  return {
+    prompt,
+    actionLabel: cleanOptionalText(data.actionLabel),
+    source: cleanOptionalText(data.source) ?? "collaboration_notifications",
+    eventKey: cleanOptionalText(data.eventKey),
+    projectId: data.projectId,
+    entityType: cleanOptionalText(data.entityType),
+    entityId: cleanOptionalText(data.entityId),
+  };
+}
+
+export function buildChangeRequestReviewPrompt(
+  data: ChangeRequestReviewNeededData,
+): string {
+  const lines = [
+    "Review this change request draft and help me revise it or confirm it before creating it.",
+    "",
+    `Project ID: ${data.projectId ?? "not selected"}`,
+    `Title: ${data.title}`,
+    `Description: ${data.description?.trim() || "Not provided"}`,
+    `Scope: ${data.scope?.trim() || "other"}`,
+    `Type: ${data.type?.trim() || "potential_change"}`,
+    `Status: ${data.status?.trim() || "open"}`,
+    "",
+    "If anything is missing, ask for it. If it is ready, show the preview and wait for my explicit confirmation before creating it.",
+  ];
+
+  return lines.join("\n");
+}
+
+export function buildRfiReviewPrompt(data: RfiReviewNeededData): string {
+  const lines = [
+    "Review this RFI draft and help me revise it or confirm it before creating it.",
+    "",
+    `Project ID: ${data.projectId ?? "not selected"}`,
+    `Subject: ${data.subject}`,
+    `Question: ${data.question}`,
+    `Ball in court: ${data.ballInCourt?.trim() || "Not provided"}`,
+    `Due date: ${data.dueDate?.trim() || "Not provided"}`,
+    `Cost impact: ${data.costImpact?.trim() || "tbd"}`,
+    `Schedule impact: ${data.scheduleImpact?.trim() || "tbd"}`,
+    "",
+    "If anything is missing, ask for it. If it is ready, show the preview and wait for my explicit confirmation before creating it.",
+  ];
+
+  return lines.join("\n");
+}
+
+export async function notifyAiWidgetNotification(
+  userId: UserTarget,
+  data: AiWidgetNotificationData,
+): Promise<{ created: number; skipped: number }> {
+  const title = cleanOptionalText(data.title);
+  if (!title) {
+    throw new Error("AI widget notifications require a non-empty title.");
+  }
+
+  const metadata = buildAiWidgetNotificationMetadata(data);
+  const serviceClient = createServiceClient();
+  const users = toArray(userId);
+  let created = 0;
+  let skipped = 0;
+
+  for (const uid of users) {
+    if (metadata.eventKey) {
+      const { data: existing, error: existingError } = await serviceClient
+        .from("collaboration_notifications")
+        .select("id")
+        .eq("user_id", uid)
+        .eq("kind", data.kind)
+        .eq("metadata->>eventKey", metadata.eventKey)
+        .is("read_at", null)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new Error(
+          `Failed to check existing AI widget notification (${data.kind}): ${existingError.message}`,
+        );
+      }
+
+      if (existing) {
+        skipped += 1;
+        continue;
+      }
+    }
+
+    const { error } = await serviceClient
+      .from("collaboration_notifications")
+      .insert({
+        user_id: uid,
+        actor_id: data.actorId ?? null,
+        project_id: data.projectId ?? null,
+        entity_type: data.entityType ?? null,
+        entity_id: data.entityId ?? null,
+        kind: data.kind,
+        title,
+        body: cleanOptionalText(data.body) ?? null,
+        metadata,
+      });
+
+    if (error) {
+      throw new Error(
+        `Failed to create AI widget notification (${data.kind}): ${error.message}`,
+      );
+    }
+
+    created += 1;
+  }
+
+  return { created, skipped };
+}
+
+export async function notifyChangeRequestReviewNeeded(
+  userId: UserTarget,
+  data: ChangeRequestReviewNeededData,
+): Promise<{ created: number; skipped: number }> {
+  return notifyAiWidgetNotification(userId, {
+    kind: "change_request_review_needed",
+    title: "Change request ready for review",
+    body: data.title,
+    projectId: data.projectId,
+    entityType: "change_events",
+    prompt: buildChangeRequestReviewPrompt(data),
+    actionLabel: "Review change request",
+    source: "createChangeEvent.preview",
+    eventKey: data.eventKey,
+  });
+}
+
+export async function notifyRfiReviewNeeded(
+  userId: UserTarget,
+  data: RfiReviewNeededData,
+): Promise<{ created: number; skipped: number }> {
+  return notifyAiWidgetNotification(userId, {
+    kind: "rfi_attention",
+    title: "RFI ready for review",
+    body: data.subject,
+    projectId: data.projectId,
+    entityType: "rfis",
+    prompt: buildRfiReviewPrompt(data),
+    actionLabel: "Review RFI",
+    source: "createRFI.preview",
+    eventKey: data.eventKey,
+  });
+}
+
 async function notifyUsers(
   userId: UserTarget,
   kind: NotificationKind,
@@ -114,7 +314,7 @@ async function notifyUsers(
       body: descriptor.body,
       metadata: {
         ...data,
-        eventKey: nanoid(),
+        eventKey: randomUUID(),
       },
     })),
   );

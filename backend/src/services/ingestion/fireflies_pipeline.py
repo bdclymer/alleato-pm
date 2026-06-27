@@ -247,14 +247,6 @@ class FirefliesIngestionPipeline:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def ingest_file(self, path: str | Path, project_id: Optional[int] = None, dry_run: bool = False) -> IngestionResult:
-        file_path = Path(path)
-        if not file_path.exists():
-            raise FileNotFoundError(f"Transcript file not found: {file_path}")
-
-        content = file_path.read_text(encoding="utf-8")
-        return self.ingest_markdown_text(content, project_id=project_id, dry_run=dry_run)
-
     def ingest_markdown_text(
         self,
         content: str,

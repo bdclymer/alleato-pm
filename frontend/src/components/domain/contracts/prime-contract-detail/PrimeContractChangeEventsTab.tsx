@@ -42,7 +42,7 @@ export function PrimeContractChangeEventsTab({
         // this the "#" label triggers auto right-alignment in resolveColumnAlignment.
         align: "left",
         render: (ce) => (
-          <span className="font-medium text-foreground">{ce.number ?? "—"}</span>
+          <span className="font-medium text-foreground">{ce.number ?? null}</span>
         ),
       },
       {
@@ -61,7 +61,7 @@ export function PrimeContractChangeEventsTab({
         id: "type",
         label: "Type",
         render: (ce) => (
-          <span className="text-muted-foreground text-sm">{ce.type || "—"}</span>
+          <span className="text-muted-foreground text-sm">{ce.type || null}</span>
         ),
       },
       {
@@ -73,7 +73,7 @@ export function PrimeContractChangeEventsTab({
         id: "scope",
         label: "Scope",
         render: (ce) => (
-          <span className="text-muted-foreground text-sm">{ce.scope || "—"}</span>
+          <span className="text-muted-foreground text-sm">{ce.scope || null}</span>
         ),
       },
       {
@@ -81,7 +81,7 @@ export function PrimeContractChangeEventsTab({
         label: "Cost ROM",
         render: (ce) => (
           <span className="tabular-nums text-right block">
-            {ce.cost_rom != null ? formatCurrency(Number(ce.cost_rom)) : "—"}
+            {ce.cost_rom != null ? formatCurrency(Number(ce.cost_rom)) : null}
           </span>
         ),
       },
@@ -90,7 +90,7 @@ export function PrimeContractChangeEventsTab({
         label: "Potential PCO",
         render: (ce) => (
           <span className="text-sm text-muted-foreground">
-            {ce.prime_pco || "—"}
+            {ce.prime_pco || null}
           </span>
         ),
       },

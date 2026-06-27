@@ -1,0 +1,1 @@
+PASS: python3 -m py_compile backend/src/services/pipeline/extractor.py backend/tests/test_meeting_signal_promotion.py

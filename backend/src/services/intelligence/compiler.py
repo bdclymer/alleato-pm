@@ -10,6 +10,8 @@ inventing another queue contract.
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import os
 import re
 import time
@@ -18,6 +20,8 @@ from typing import Any, Dict, List, Optional
 
 from src.services.ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
+
+logger = logging.getLogger(__name__)
 
 COMPILER_VERSION = "ai_intelligence_compiler_v0_1"
 ACTIVE_JOB_STATUSES = ("queued", "running", "succeeded")
@@ -126,6 +130,71 @@ def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
 
 def _clean_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+# --- Raw-source guardrails -------------------------------------------------
+# Project Intelligence "read" fields (current_summary, financial_read,
+# schedule_read, field_read) and report suggestion payloads must contain
+# synthesized prose or be left null. They must NEVER contain a raw source
+# document (an email with headers, un-decoded HTML entities, signatures, etc.).
+# This mirrors `looksLikeRawSource()` in the intelligence page so the data
+# layer enforces the same contract the render layer already defends.
+
+_RAW_SOURCE_SUBJECT_RE = re.compile(r"^\s*subject:\s", re.IGNORECASE)
+_RAW_SOURCE_FROM_RE = re.compile(r"\bfrom:\s*[^\s@]+@", re.IGNORECASE)
+_RAW_SOURCE_TO_RE = re.compile(r"\bto:\s*[^\s@]+@", re.IGNORECASE)
+_RAW_SOURCE_NBSP_RE = re.compile(r"&nbsp;", re.IGNORECASE)
+
+
+def _looks_like_raw_source(value: Any) -> bool:
+    """True when the text is an un-synthesized source dump that must never be
+    written into a Project Intelligence read field. Mirror of the frontend
+    `looksLikeRawSource` guard in the intelligence page."""
+    text = _clean_text(value)
+    if not text:
+        return False
+    if _RAW_SOURCE_SUBJECT_RE.search(text):
+        return True
+    if _RAW_SOURCE_FROM_RE.search(text) and _RAW_SOURCE_TO_RE.search(text):
+        return True
+    # Multiple raw &nbsp; entities = un-processed source HTML, never a summary.
+    if len(_RAW_SOURCE_NBSP_RE.findall(text)) >= 2:
+        return True
+    return False
+
+
+def _strip_source_artifacts(value: Any) -> str:
+    """Decode the common HTML entities that leak from email/source HTML and
+    collapse whitespace. Does NOT attempt to recover prose from a raw email —
+    a stripped-but-still-raw email is rejected by `_safe_summary`."""
+    text = str(value or "")
+    text = _RAW_SOURCE_NBSP_RE.sub(" ", text)
+    text = re.sub(r"&amp;", "&", text, flags=re.IGNORECASE)
+    text = re.sub(r"&lt;", "<", text, flags=re.IGNORECASE)
+    text = re.sub(r"&gt;", ">", text, flags=re.IGNORECASE)
+    text = re.sub(r"&#\d+;", " ", text)
+    return _clean_text(text)
+
+
+def _safe_summary(value: Any) -> Optional[str]:
+    """Return cleaned synthesized prose, or None. Never returns a raw source
+    document. This is the hard write-boundary guard for Project Intelligence
+    read fields."""
+    text = _strip_source_artifacts(value)
+    if not text or _looks_like_raw_source(text):
+        return None
+    return text
+
+
+def _safe_suggestion_payload(payload: Any) -> Any:
+    """Sanitize a report-suggestion payload so its `summary` can never be a raw
+    source document. Leaves the rest of the structured payload intact."""
+    if not isinstance(payload, dict):
+        return payload
+    cleaned = dict(payload)
+    if "summary" in cleaned:
+        cleaned["summary"] = _safe_summary(cleaned.get("summary"))
+    return cleaned
 
 
 def _source_category(value: Any) -> str:
@@ -1144,13 +1213,20 @@ def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
         # summary. Avoid projecting that header as the Project Intelligence read.
         excerpt = re.sub(r"^# .+?(?=(summary|overview|discussion|transcript)\b)", "", excerpt, flags=re.IGNORECASE).strip() or excerpt
     excerpt = excerpt.encode("ascii", "ignore").decode("ascii").strip() or title
+    excerpt = _strip_source_artifacts(excerpt) or title
     normalized_key_source = f"{signal_type}:{title}:{excerpt[:160]}".lower()
     normalized_signal_key = re.sub(r"[^a-z0-9]+", "-", normalized_key_source).strip("-")[:180]
+
+    # The deterministic excerpt is not a synthesis. If it still reads as a raw
+    # source dump (email headers / un-decoded HTML), it must never become the
+    # summary that downstream projects into Project Intelligence read fields —
+    # fall back to the clean title until a model enrichment pass fills it in.
+    summary = excerpt if not _looks_like_raw_source(excerpt) else title
 
     return {
         "signal_type": signal_type,
         "title": title[:180],
-        "summary": (excerpt or title)[:800],
+        "summary": (summary or title)[:800],
         "why_it_matters": "This source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet.",
         "next_action": "Review the source attribution and extracted signal, then promote or reject it.",
         "excerpt": excerpt,
@@ -1476,6 +1552,142 @@ def write_project_operating_snapshot(
     return _single_row(supabase.table("project_operating_snapshots").insert(payload).execute()) or payload
 
 
+# --- LLM operating-read synthesis ------------------------------------------
+# The deterministic delta gives us structure (which sources, which signal types)
+# but NOT prose — the read fields it produced were excerpts of source text, which
+# is how raw emails leaked into project_current_state. This step turns the day's
+# sources into real synthesized prose for the Project Intelligence read fields.
+# It is feature-flagged and fail-open: any failure or a disabled flag falls back
+# to the deterministic path (which now safely yields NULL rather than raw text).
+
+INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED = os.getenv(
+    "INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED", "true"
+).strip().lower() in {"1", "true", "yes", "on"}
+
+OPERATING_SYNTHESIS_MODEL_TAG = "llm_operating_synthesis_v1"
+
+_OPERATING_READ_FIELDS = ("current_summary", "financial_read", "schedule_read", "field_read")
+
+_OPERATING_SYNTHESIS_SYSTEM_PROMPT = (
+    "You are a senior construction project controls analyst. You receive the source "
+    "updates (emails, meeting notes, Teams messages, documents) captured for ONE "
+    "project on ONE day. Write a tight, factual rolling-state read for the project "
+    "manager.\n\n"
+    "HARD RULES:\n"
+    "- Output ONLY your own synthesized prose. NEVER copy raw email headers, "
+    "signatures, greetings, disclaimers, or HTML. NEVER include 'Subject:', 'From:', "
+    "'To:', 'Sent:', quoted reply chains, or raw email addresses.\n"
+    "- Be specific and concrete: names, dollar amounts, dates, decisions, risks. No "
+    "filler, no hedging, no meta-commentary, and do not restate these instructions.\n"
+    "- If a category has no material signal, return null for it — never invent one.\n"
+    "- current_summary: 2-4 sentences on where the project stands and what just "
+    "changed. financial_read / schedule_read / field_read: 1-2 sentences each, or "
+    "null.\n\n"
+    'Return STRICT JSON with exactly these keys: {"current_summary": string|null, '
+    '"financial_read": string|null, "schedule_read": string|null, '
+    '"field_read": string|null}'
+)
+
+
+def _operating_synthesis_inputs(syntheses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Compact, model-facing view of the day's sources. Excerpts are fed as raw
+    material for the model to synthesize FROM — the output is still guarded."""
+    items: List[Dict[str, Any]] = []
+    for row in syntheses:
+        quotes = row.get("source_quotes") if isinstance(row.get("source_quotes"), list) else []
+        excerpts = [
+            _strip_source_artifacts(quote.get("excerpt"))
+            for quote in quotes
+            if isinstance(quote, dict) and quote.get("excerpt")
+        ]
+        items.append(
+            {
+                "source": row.get("source_family") or "unknown",
+                "title": _clean_text(row.get("source_title"))[:200],
+                "occurred_at": row.get("source_occurred_at"),
+                "executive_summary": _clean_text(row.get("executive_summary"))[:600],
+                "excerpt": " ".join(part for part in excerpts if part)[:1200],
+            }
+        )
+    return items
+
+
+def _operating_inputs_hash(inputs: List[Dict[str, Any]]) -> str:
+    blob = json.dumps(inputs, sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def synthesize_operating_read(
+    *,
+    project_id: int,
+    project_label: Optional[str],
+    inputs: List[Dict[str, Any]],
+) -> Optional[Dict[str, Optional[str]]]:
+    """LLM synthesis of the day's sources into the Project Intelligence read
+    fields. Returns {current_summary, financial_read, schedule_read, field_read}
+    (each synthesized prose or None), or None when disabled / no inputs / the
+    model call fails. Every field is run through `_safe_summary`, so even a model
+    that echoes a raw source can never corrupt the read."""
+    if not INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED or not inputs:
+        return None
+    try:
+        from .client import COMPILER_MODEL, extract_with_retry
+        from ..pipeline.model_usage import ModelUsageContext
+    except Exception as exc:  # noqa: BLE001 — never let wiring break ingestion
+        logger.warning("[Compiler] operating synthesis unavailable: %s", exc)
+        return None
+
+    user_payload = {
+        "project": project_label or f"project {project_id}",
+        "source_count": len(inputs),
+        "sources": inputs,
+    }
+    messages = [
+        {"role": "system", "content": _OPERATING_SYNTHESIS_SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": "Synthesize the rolling-state read from these sources as JSON:\n"
+            + json.dumps(user_payload, default=str),
+        },
+    ]
+    data = extract_with_retry(
+        messages,
+        model=COMPILER_MODEL,
+        timeout=90,
+        usage_context=ModelUsageContext(
+            stage="project_current_state",
+            operation="synthesize_operating_read",
+            project_id=int(project_id),
+        ),
+    )
+    if not isinstance(data, dict) or data.get("_extraction_failed"):
+        return None
+    read = {field: _safe_summary(data.get(field)) for field in _OPERATING_READ_FIELDS}
+    if not any(read.values()):  # model returned nothing usable -> let caller fall back
+        return None
+    return read
+
+
+def _project_label(supabase: Any, project_id: int) -> Optional[str]:
+    try:
+        project = _single_row(
+            supabase.table("projects")
+            .select("name,project_number")
+            .eq("id", int(project_id))
+            .limit(1)
+            .execute()
+        )
+    except Exception:  # noqa: BLE001 — label is best-effort context only
+        return None
+    if not project:
+        return None
+    name = _clean_text(project.get("name"))
+    number = _clean_text(project.get("project_number"))
+    if name and number:
+        return f"{name} ({number})"
+    return name or number or None
+
+
 def compile_project_daily_delta(
     supabase: Any,
     *,
@@ -1494,7 +1706,7 @@ def compile_project_daily_delta(
         .select(
             "id,source_family,source_document_id,source_title,source_occurred_at,executive_summary,"
             "what_changed,decisions,risks,tasks,financial_signals,schedule_signals,change_event_signals,"
-            "daily_log_signals,progress_report_signals,confidence"
+            "daily_log_signals,progress_report_signals,confidence,source_quotes"
         )
         .eq("project_id", int(project_id))
         .gte("source_occurred_at", start_at)
@@ -1519,12 +1731,56 @@ def compile_project_daily_delta(
         family = str(row.get("source_family") or "unknown")
         families[family] = families.get(family, 0) + 1
 
-    headline = None
+    # Look up any existing delta first so we can reuse a prior LLM synthesis when
+    # the day's source set has not changed (bounds model cost on re-processing /
+    # packet refreshes — the per-document pipeline recompiles this delta often).
+    existing = _single_row(
+        _rag_read()
+        .table("project_daily_deltas")
+        .select("*")
+        .eq("project_id", int(project_id))
+        .eq("business_date", business_date.isoformat())
+        .neq("status", "superseded")
+        .limit(1)
+        .execute()
+    )
+
+    deterministic_headline = None
     for row in syntheses:
-        if row.get("executive_summary"):
-            headline = str(row["executive_summary"])[:500]
+        safe_exec = _safe_summary(row.get("executive_summary"))
+        if safe_exec:
+            deterministic_headline = safe_exec[:500]
             break
-    headline = headline or f"{len(syntheses)} source update(s) processed for project {project_id}."
+    deterministic_headline = (
+        deterministic_headline
+        or f"{len(syntheses)} source update(s) processed for project {project_id}."
+    )
+
+    # Real prose synthesis for the app-facing read fields. Reuse the prior result
+    # when the input set is unchanged; otherwise call the model. Always fail-open.
+    synthesis_inputs = _operating_synthesis_inputs(syntheses)
+    inputs_hash = _operating_inputs_hash(synthesis_inputs)
+    existing_meta = existing.get("metadata") if isinstance(existing, dict) else None
+    existing_meta = existing_meta if isinstance(existing_meta, dict) else {}
+    operating_read: Optional[Dict[str, Optional[str]]] = None
+    synthesis_model = "deterministic_project_daily_delta_v0_1"
+    if (
+        existing_meta.get("operating_inputs_hash") == inputs_hash
+        and isinstance(existing_meta.get("operating_read"), dict)
+    ):
+        operating_read = existing_meta["operating_read"]
+        synthesis_model = str(existing_meta.get("synthesis_model") or synthesis_model)
+    elif syntheses:
+        operating_read = synthesize_operating_read(
+            project_id=int(project_id),
+            project_label=_project_label(supabase, int(project_id)),
+            inputs=synthesis_inputs,
+        )
+        if operating_read:
+            synthesis_model = OPERATING_SYNTHESIS_MODEL_TAG
+
+    synthesized_summary = (operating_read or {}).get("current_summary")
+    headline = synthesized_summary or deterministic_headline
 
     payload = {
         "project_id": int(project_id),
@@ -1561,26 +1817,25 @@ def compile_project_daily_delta(
             "latest_source_synthesis_id": source_id,
         },
         "confidence": _best_confidence(syntheses) if syntheses else "low",
-        "confidence_notes": "Deterministic daily delta from source_syntheses; model enrichment can update this row.",
-        "model": "deterministic_project_daily_delta_v0_1",
+        "confidence_notes": (
+            "LLM-synthesized rolling-state read over the day's sources."
+            if operating_read
+            else "Deterministic daily delta from source_syntheses; model enrichment can update this row."
+        ),
+        "model": synthesis_model,
         "token_usage": {},
         "error_code": None,
         "error_message": None,
-        "metadata": {"compiler_version": compiler_version},
+        "metadata": {
+            "compiler_version": compiler_version,
+            "synthesis_model": synthesis_model,
+            "operating_inputs_hash": inputs_hash,
+            "operating_read": operating_read,
+        },
         "completed_at": _utc_now(),
         "updated_at": _utc_now(),
     }
 
-    existing = _single_row(
-        _rag_read()
-        .table("project_daily_deltas")
-        .select("*")
-        .eq("project_id", int(project_id))
-        .eq("business_date", business_date.isoformat())
-        .neq("status", "superseded")
-        .limit(1)
-        .execute()
-    )
     if existing:
         return _single_row(
             _rag_write()
@@ -1793,14 +2048,14 @@ def _upsert_project_report_suggestions(
             "business_date": business_date.isoformat(),
             "week_start_date": None,
             "title": f"Daily report draft for {business_date.isoformat()}",
-            "suggestion_payload": daily_delta.get("daily_report_draft") or {},
+            "suggestion_payload": _safe_suggestion_payload(daily_delta.get("daily_report_draft") or {}),
         },
         {
             "report_type": "weekly_progress_report",
             "business_date": None,
             "week_start_date": week_start.isoformat(),
             "title": f"Weekly progress report updates for week of {week_start.isoformat()}",
-            "suggestion_payload": daily_delta.get("progress_report_updates") or {},
+            "suggestion_payload": _safe_suggestion_payload(daily_delta.get("progress_report_updates") or {}),
         },
     ]
     written: List[Dict[str, Any]] = []
@@ -1887,21 +2142,36 @@ def apply_source_operating_record_projection(
         document=document,
     )
 
+    # Prefer the LLM-synthesized rolling-state read produced by
+    # compile_project_daily_delta (stored on the delta's metadata). Each field
+    # falls back to the deterministic signal text, and EVERY path is guarded by
+    # _safe_summary so a raw source can never reach project_current_state.
+    delta_meta = daily_delta.get("metadata") if isinstance(daily_delta.get("metadata"), dict) else {}
+    operating_read = delta_meta.get("operating_read") if isinstance(delta_meta.get("operating_read"), dict) else {}
+
     current_state_payload = {
         "project_id": int(project_id),
-        "current_summary": daily_delta.get("headline") or source_synthesis.get("executive_summary"),
+        "current_summary": _safe_summary(operating_read.get("current_summary"))
+        or _safe_summary(daily_delta.get("headline") or source_synthesis.get("executive_summary")),
         "health_status": "watch" if daily_delta.get("risks") or daily_delta.get("issues") else "unknown",
         "what_changed_since_last_update": daily_delta.get("what_changed") or [],
         "needs_attention": (daily_delta.get("risks") or []) + (daily_delta.get("change_event_candidates") or []),
         "open_decisions": daily_delta.get("decisions") or [],
         "active_risks": daily_delta.get("risks") or [],
-        "financial_read": _clean_text((daily_delta.get("financial_changes") or [{}])[0].get("summary"))
-        if daily_delta.get("financial_changes")
-        else None,
-        "schedule_read": _clean_text((daily_delta.get("schedule_changes") or [{}])[0].get("summary"))
-        if daily_delta.get("schedule_changes")
-        else None,
-        "field_read": _clean_text((daily_delta.get("daily_report_draft") or {}).get("summary")),
+        "financial_read": _safe_summary(operating_read.get("financial_read"))
+        or (
+            _safe_summary((daily_delta.get("financial_changes") or [{}])[0].get("summary"))
+            if daily_delta.get("financial_changes")
+            else None
+        ),
+        "schedule_read": _safe_summary(operating_read.get("schedule_read"))
+        or (
+            _safe_summary((daily_delta.get("schedule_changes") or [{}])[0].get("summary"))
+            if daily_delta.get("schedule_changes")
+            else None
+        ),
+        "field_read": _safe_summary(operating_read.get("field_read"))
+        or _safe_summary((daily_delta.get("daily_report_draft") or {}).get("summary")),
         "source_confidence": {
             "confidence": daily_delta.get("confidence"),
             "source_coverage": daily_delta.get("source_coverage"),

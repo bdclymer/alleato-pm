@@ -1,0 +1,118 @@
+{
+  "passed": false,
+  "message": "Fireflies task integrity verification failed",
+  "details": {
+    "window_hours": 1440,
+    "checked": 1000,
+    "meeting_rows": 1000,
+    "non_meeting_violations": 0,
+    "link_violations": 50,
+    "quality": {
+      "meeting_task_count": 1000,
+      "missing_assignee": 0,
+      "missing_due_date": 757,
+      "generic_prefix_descriptions": 0,
+      "missing_assignee_pct": 0.0,
+      "missing_due_date_pct": 75.7,
+      "generic_prefix_pct": 0.0
+    },
+    "quality_thresholds": {
+      "max_missing_assignee_pct": 75.0,
+      "max_generic_prefix_pct": 20.0
+    },
+    "quality_violations": [],
+    "non_meeting_examples": [],
+    "link_examples": [
+      {
+        "task_id": "497658ed-5a70-4099-abc7-2abbeb7a9fa7",
+        "created_at": "2026-06-11T08:37:46.864437+00:00",
+        "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+        "task_project_id": 1009,
+        "task_project_ids": [],
+        "doc_project_id": 1009,
+        "doc_title": "Union Site Meeting Prep"
+      },
+      {
+        "task_id": "07d88fbc-82c7-451a-9bef-086f5ec0af39",
+        "created_at": "2026-06-11T08:37:46.697748+00:00",
+        "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+        "task_project_id": 1009,
+        "task_project_ids": [],
+        "doc_project_id": 1009,
+        "doc_title": "Union Site Meeting Prep"
+      },
+      {
+        "task_id": "3914ee6b-6fd4-46dd-89e9-ceb08a0a1bac",
+        "created_at": "2026-06-11T08:37:46.515401+00:00",
+        "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+        "task_project_id": 1009,
+        "task_project_ids": [],
+        "doc_project_id": 1009,
+        "doc_title": "Union Site Meeting Prep"
+      },
+      {
+        "task_id": "60da72b2-239a-41d2-b9bc-302b8db9fdbc",
+        "created_at": "2026-06-11T08:37:46.18712+00:00",
+        "metadata_id": "01KTRMD5M1M3ZJV7TXN58SWXHR",
+        "task_project_id": 1009,
+        "task_project_ids": [],
+        "doc_project_id": 1009,
+        "doc_title": "Union Site Meeting Prep"
+      },
+      {
+        "task_id": "8020ac17-555b-4fb3-ba17-5813cda9d688",
+        "created_at": "2026-06-11T01:41:11.969943+00:00",
+        "metadata_id": "01KSJ5F75YK7YTX47N89ECVVD8",
+        "task_project_id": 876,
+        "task_project_ids": [],
+        "doc_project_id": 876,
+        "doc_title": "Weekly design coordination Exol PA"
+      },
+      {
+        "task_id": "17c0be47-d14f-46dd-91e1-9a7a7d845aae",
+        "created_at": "2026-06-11T01:41:11.865819+00:00",
+        "metadata_id": "01KSJ5F75YK7YTX47N89ECVVD8",
+        "task_project_id": 876,
+        "task_project_ids": [],
+        "doc_project_id": 876,
+        "doc_title": "Weekly design coordination Exol PA"
+      },
+      {
+        "task_id": "4af3338d-0085-4ea5-ba49-91d2db1119fe",
+        "created_at": "2026-06-11T01:41:11.75414+00:00",
+        "metadata_id": "01KSJ5F75YK7YTX47N89ECVVD8",
+        "task_project_id": 876,
+        "task_project_ids": [],
+        "doc_project_id": 876,
+        "doc_title": "Weekly design coordination Exol PA"
+      },
+      {
+        "task_id": "fbd4d46b-3244-4408-aa5d-4347a2caaa4b",
+        "created_at": "2026-06-11T01:41:11.658232+00:00",
+        "metadata_id": "01KSJ5F75YK7YTX47N89ECVVD8",
+        "task_project_id": 876,
+        "task_project_ids": [],
+        "doc_project_id": 876,
+        "doc_title": "Weekly design coordination Exol PA"
+      },
+      {
+        "task_id": "d920cbcb-9e65-4d61-8a74-dc9e92eea081",
+        "created_at": "2026-06-11T01:41:11.539638+00:00",
+        "metadata_id": "01KSJ5F75YK7YTX47N89ECVVD8",
+        "task_project_id": 760,
+        "task_project_ids": [],
+        "doc_project_id": 876,
+        "doc_title": "Weekly design coordination Exol PA"
+      },
+      {
+        "task_id": "90446b8d-3561-4144-9741-f29b977f578b",
+        "created_at": "2026-06-11T01:34:02.082924+00:00",
+        "metadata_id": "01KTS9XV7Z3ZBRQ08TQADWXJZA",
+        "task_project_id": 67,
+        "task_project_ids": [],
+        "doc_project_id": 67,
+        "doc_title": "Job Planner for Vermilllion"
+      }
+    ]
+  }
+}

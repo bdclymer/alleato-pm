@@ -154,7 +154,6 @@ const submittalFormSchema = z.object({
     z.object({
       user_id: z.string().min(1, "Reviewer is required"),
       step_type: z.string().min(1, "Role is required"),
-      required: z.boolean(),
     }),
   ),
 });
@@ -414,7 +413,6 @@ export function SubmittalFormPage({
       (template?.steps ?? []).map((step) => ({
         user_id: step.user_id ?? "",
         step_type: normalizeSubmittalWorkflowRole(step.step_type),
-        required: step.required ?? true,
       })),
     );
   }
@@ -423,7 +421,6 @@ export function SubmittalFormPage({
     workflowFieldArray.append({
       user_id: "",
       step_type: "Approver",
-      required: true,
     });
   }
 
@@ -477,13 +474,10 @@ export function SubmittalFormPage({
       received_from_id: values.received_from_id || null,
       submittal_manager_id: values.submittal_manager_id || null,
       submittal_package_id: values.submittal_package_id || null,
-      initial_workflow_steps: isEditing
-        ? undefined
-        : values.initial_workflow_steps.map((step) => ({
-            user_id: step.user_id,
-            step_type: step.step_type,
-            required: step.required,
-          })),
+      initial_workflow_steps: values.initial_workflow_steps.map((step) => ({
+        user_id: step.user_id,
+        step_type: step.step_type,
+      })),
     };
 
     if (isEditing && submittal) {
@@ -815,8 +809,7 @@ export function SubmittalFormPage({
           )}
         </section>
 
-        {!isEditing ? (
-          <section className="space-y-4">
+        <section className="space-y-4">
             <SectionRuleHeading label="Submittal Workflow" />
 
             {(workflowTemplates?.length ?? 0) > 0 ? (
@@ -940,7 +933,6 @@ export function SubmittalFormPage({
               </Button>
             </div>
           </section>
-        ) : null}
 
         {/* ── Content ── */}
         <section className="space-y-4">

@@ -1,7 +1,6 @@
 export interface InitialSubmittalWorkflowStep {
   user_id: string;
   step_type: string;
-  required?: boolean;
 }
 
 export interface InsertedSubmittalWorkflowStep {

@@ -1,24 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ArrowRight,
+  ArrowUp,
+  Bug,
+  Camera,
+  CircleHelp,
   CircleStop,
-  ListFilter,
-  Minimize2,
-  RefreshCw,
-  Sparkles,
+  Crosshair,
+  Lightbulb,
   Trash2,
   Upload,
   Video,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  ADMIN_FEEDBACK_SHEET_OFFSET_CSS_VAR,
+  ADMIN_FEEDBACK_SHEET_OPEN_ATTRIBUTE,
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
-  FEEDBACK_LAUNCHER_POSITION_CLASS,
   OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
   type AdminFeedbackRequestType,
-  feedbackTargetProps,
 } from "@/lib/admin-feedback/constants";
 import {
   buildFeedbackTargetSnapshot,
@@ -44,34 +49,29 @@ import { getErrorDetail } from "@/lib/format-error";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Modal as Dialog,
-  ModalContent as DialogContent,
-  ModalDescription as DialogDescription,
-  ModalFooter as DialogFooter,
-  ModalHeader as DialogHeader,
-  ModalTitle as DialogTitle,
-} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import { Textarea } from "@/components/ui/textarea";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { ScreenshotAnnotator } from "@/components/admin-feedback/ScreenshotAnnotator";
 
-type FeedbackType = "Issue" | "Wishlist" | "General thought";
+type FeedbackType = "Bug" | "Idea" | "Question";
 type PriorityLevel = "high" | "medium" | "low";
 
 type SubmissionState = {
@@ -89,31 +89,12 @@ type RectState = {
   height: number;
 };
 
-const FEEDBACK_TYPES = ["Issue", "Wishlist", "General thought"] as const;
-const PRIORITY_LEVELS: { value: PriorityLevel; label: string }[] = [
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
+const FEEDBACK_TYPES: { value: FeedbackType; icon: typeof Bug }[] = [
+  { value: "Bug", icon: Bug },
+  { value: "Idea", icon: Lightbulb },
+  { value: "Question", icon: CircleHelp },
 ];
-
-const TOOL_LIST = [
-  "Budget",
-  "Change Events",
-  "Change Management",
-  "Commitments",
-  "Direct Costs",
-  "Drawings",
-  "Estimates",
-  "Invoicing",
-  "Prime Contracts",
-  "RFIs",
-  "Submittals",
-  "Directory",
-  "Schedule",
-  "AI Assistant",
-  "Portfolio",
-  "Other",
-] as const;
+const ADMIN_FEEDBACK_DESKTOP_OFFSET = "34rem";
 
 const TOOL_PATH_MAP: [string, string][] = [
   ["/budget", "Budget"],
@@ -145,7 +126,7 @@ function getDefaultForm(pathname: string): SubmissionState {
   return {
     title: "",
     comment: "",
-    feedbackType: "Issue",
+    feedbackType: "Bug",
     priority: "medium",
     affectedTool: inferToolFromPath(pathname),
   };
@@ -154,15 +135,21 @@ function getDefaultForm(pathname: string): SubmissionState {
 function mapFeedbackTypeToRequestType(
   feedbackType: FeedbackType,
 ): AdminFeedbackRequestType {
-  if (feedbackType === "Issue") {
+  if (feedbackType === "Bug") {
     return "bug";
   }
 
-  if (feedbackType === "Wishlist") {
+  if (feedbackType === "Idea") {
     return "feature_request";
   }
 
   return "question";
+}
+
+function getSubmissionSuccessLabel(feedbackType: FeedbackType) {
+  if (feedbackType === "Idea") return "Idea submitted.";
+  if (feedbackType === "Question") return "Question submitted.";
+  return "Feedback submitted.";
 }
 
 function getRectState(target: FeedbackTargetSnapshot | null): RectState | null {
@@ -217,7 +204,40 @@ function waitForComposerToLeaveViewport() {
   });
 }
 
-export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: boolean }) {
+function FeedbackToolButton({
+  label,
+  onClick,
+  disabled,
+  className,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          className={cn("text-muted-foreground hover:text-foreground", className)}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function AdminFeedbackWidget() {
   const pathname = usePathname()!;
   const isMobile = useIsMobile();
   const pagePath = pathname ?? "/";
@@ -235,6 +255,13 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
     null,
   );
+  // Flattened base + annotations, produced by ScreenshotAnnotator. Kept separate
+  // from `screenshotDataUrl` (the immutable base) so the annotator never feeds
+  // its output back into the <img> it draws over — that loop blanked the
+  // screenshot the moment you drew on it.
+  const [annotatedScreenshotDataUrl, setAnnotatedScreenshotDataUrl] = useState<
+    string | null
+  >(null);
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
@@ -251,11 +278,21 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
   const recordingTimerRef = useRef<number | null>(null);
   const recordingSupported = isScreenRecordingSupported();
   const shouldLoadProfile = dialogOpen || isSubmitting;
-  const { profile, isLoading } = useCurrentUserProfile({
+  // Loaded in the background purely for submit-time attribution (submitterName /
+  // submitterEmail). It must NEVER gate the composer's render — doing so unmounts
+  // the open panel until the profile fetch resolves, which is what made the form
+  // "take a minute to load" and blink out on open.
+  const { profile } = useCurrentUserProfile({
     enabled: shouldLoadProfile,
   });
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Any new base screenshot (capture / upload / re-pick / clear) discards the
+  // prior annotation so a stale overlay can never be submitted with a new image.
+  useEffect(() => {
+    setAnnotatedScreenshotDataUrl(null);
+  }, [screenshotDataUrl]);
 
   const handleFileUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -477,6 +514,25 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     form.comment.trim().length > 0;
 
   useEffect(() => {
+    const root = document.documentElement;
+    const shouldShiftLayout = dialogOpen && !isMobile;
+
+    root.setAttribute(
+      ADMIN_FEEDBACK_SHEET_OPEN_ATTRIBUTE,
+      shouldShiftLayout ? "true" : "false",
+    );
+    root.style.setProperty(
+      ADMIN_FEEDBACK_SHEET_OFFSET_CSS_VAR,
+      shouldShiftLayout ? ADMIN_FEEDBACK_DESKTOP_OFFSET : "0px",
+    );
+
+    return () => {
+      root.setAttribute(ADMIN_FEEDBACK_SHEET_OPEN_ATTRIBUTE, "false");
+      root.style.setProperty(ADMIN_FEEDBACK_SHEET_OFFSET_CSS_VAR, "0px");
+    };
+  }, [dialogOpen, isMobile]);
+
+  useEffect(() => {
     if (!isSelecting || dialogOpen) {
       return;
     }
@@ -621,7 +677,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     };
   }, [isSelecting]);
 
-  if ((shouldLoadProfile && isLoading) || isImmersiveChatRoute) {
+  if (isImmersiveChatRoute) {
     return null;
   }
 
@@ -679,13 +735,14 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     }
   };
 
-  const toggleSelectMode = () => {
+  const startSelectMode = () => {
     setDialogOpen(false);
     setSelectedElement(null);
     setSelectedTarget(null);
-    setDraftActive(false);
+    setHoveredTarget(null);
+    setDraftActive(true);
     setScreenshotDataUrl(null);
-    setIsSelecting((current) => !current);
+    setIsSelecting(true);
   };
 
   const handleSubmit = () => {
@@ -704,7 +761,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       // Guarantee the screenshot fits within the 4.5MB serverless body limit.
       // An oversized screenshot must never block the whole submission — drop it
       // with a warning rather than failing the feedback entirely.
-      let screenshotForUpload = screenshotDataUrl;
+      // Prefer the annotated flatten when the user drew on the capture; fall
+      // back to the untouched base screenshot otherwise.
+      let screenshotForUpload = annotatedScreenshotDataUrl ?? screenshotDataUrl;
       if (screenshotForUpload) {
         try {
           screenshotForUpload = await compressImageDataUrl(screenshotForUpload);
@@ -731,7 +790,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
             requestType: mapFeedbackTypeToRequestType(form.feedbackType),
-            severity: form.feedbackType === "Issue" ? form.priority : "medium",
+            severity: form.feedbackType === "Bug" ? form.priority : "medium",
             pageUrl: window.location.href,
             pagePath,
             pageTitle: document.title || null,
@@ -753,7 +812,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             metadata: {
               pathname: pagePath,
               feedbackType: form.feedbackType,
-              priority: form.feedbackType === "Issue" ? form.priority : undefined,
+              intakeKind: "product_feedback",
+              intakeSource: "admin-feedback-widget",
+              canonicalWorkflow: "feedback-inbox",
+              priority: form.feedbackType === "Bug" ? form.priority : undefined,
               affectedTool: form.affectedTool || undefined,
               submitterName: profile?.fullName,
               submitterEmail: profile?.email,
@@ -778,7 +840,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             "Feedback saved, but GitHub issue creation needs configuration.",
           );
         } else {
-          toast.success("Feedback submitted.");
+          toast.success(getSubmissionSuccessLabel(form.feedbackType));
         }
 
         // The recording is now referenced by the saved feedback record — clear
@@ -797,7 +859,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             selectedTargetId: selectedTarget.targetId,
             feedbackType: form.feedbackType,
             priority:
-              form.feedbackType === "Issue" ? form.priority : undefined,
+              form.feedbackType === "Bug" ? form.priority : undefined,
           },
         });
         toast.error("Could not submit feedback", { description });
@@ -820,402 +882,270 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           }}
         />
       )}
-
-      {showLauncher && !isMobile && (
+      {isSelecting && (
         <div
-          {...feedbackTargetProps("admin.feedback-widget")}
+          className="fixed left-4 bottom-4 z-[9999] rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm"
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-          className={cn(
-            FEEDBACK_LAUNCHER_POSITION_CLASS,
-            "flex items-center gap-2 z-[9999]",
-          )}
         >
-          {isSelecting && (
-            <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
-              Click an element · Esc to cancel
-            </div>
-          )}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={
-              isRecording
-                ? stopRecording
-                : hasRecoverableDraft && !dialogOpen
-                  ? () => setDialogOpen(true)
-                  : toggleSelectMode
-            }
-            className={cn(
-              "h-12 w-12 rounded-full shadow-sm",
-              isRecording
-                ? "bg-destructive text-destructive-foreground border-destructive animate-pulse hover:bg-destructive/90"
-                : isSelecting
-                  ? "bg-foreground text-background hover:bg-foreground/90 border-foreground"
-                  : "bg-background text-foreground",
-            )}
-            aria-label={
-              isRecording
-                ? "Stop recording"
-                : hasRecoverableDraft && !dialogOpen
-                  ? "Resume feedback"
-                  : isSelecting
-                    ? "Cancel feedback"
-                    : "Feedback mode"
-            }
-          >
-            {isRecording ? (
-              <CircleStop className="h-5 w-5" />
-            ) : isSelecting ? (
-              <Sparkles className="h-5 w-5" />
-            ) : (
-              <ListFilter className="h-5 w-5" />
-            )}
-          </Button>
+          Click an element, then keep writing in the sheet.
         </div>
       )}
 
-      <Dialog
+      <SidePanel
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             minimizeComposer();
-            return;
           }
-          setDialogOpen(open);
         }}
+        modal={false}
       >
-        <DialogContent
-          size="form"
-          className="max-h-[calc(100svh-2rem)] overflow-y-auto p-8"
+        <SidePanelContent
+          size="md"
+          showOverlay={false}
+          showCloseButton={false}
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
         >
-          <DialogHeader className="pb-4">
-            <div className="flex items-start justify-between gap-4 pr-8">
-              <div className="space-y-2">
-                <DialogTitle>Submit Admin Feedback</DialogTitle>
-                <DialogDescription>
-                  Describe what should change. The app will attach the page context
-                  and selected element automatically.
-                </DialogDescription>
-              </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={minimizeComposer}
-                    aria-label="Minimize feedback form"
-                  >
-                    <Minimize2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Minimize feedback form</TooltipContent>
-              </Tooltip>
+          <SidePanelHeader className="flex-row items-center justify-between gap-4 space-y-0">
+            <SidePanelTitle className="min-w-0 truncate tracking-tight">
+              Share Feedback or Idea
+            </SidePanelTitle>
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="ghost" size="sm" asChild>
+                <Link href="/feedback-inbox" className="gap-1.5">
+                  View feedback
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={minimizeComposer}
+                aria-label="Close feedback sheet"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          </DialogHeader>
+          </SidePanelHeader>
 
-          {selectedTarget && (
-            <div className="space-y-8">
-              <div className="flex gap-3">
-                <div className="flex-1 space-y-3">
-                  <Label>Type</Label>
-                  <Select
-                    value={form.feedbackType}
-                    onValueChange={(feedbackType) =>
-                      setForm((current) => ({
-                        ...current,
-                        feedbackType: feedbackType as FeedbackType,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FEEDBACK_TYPES.map((feedbackType) => (
-                        <SelectItem key={feedbackType} value={feedbackType}>
-                          {feedbackType}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {form.feedbackType === "Issue" && (
-                  <div className="flex-1 space-y-3">
-                    <Label>Priority</Label>
-                    <Select
-                      value={form.priority}
-                      onValueChange={(value) =>
-                        setForm((current) => ({
-                          ...current,
-                          priority: value as PriorityLevel,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIORITY_LEVELS.map(({ value, label }) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="flex-1 space-y-3">
-                  <Label htmlFor="feedback-tool">Tool</Label>
-                  <Select
-                    value={form.affectedTool}
-                    onValueChange={(value) =>
-                      setForm((current) => ({
-                        ...current,
-                        affectedTool: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger id="feedback-tool">
-                      <SelectValue placeholder="Optional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TOOL_LIST.map((tool) => (
-                        <SelectItem key={tool} value={tool}>
-                          {tool}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <SidePanelBody>
+            {selectedTarget ? (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <div className="flex flex-wrap gap-2">
+                  {FEEDBACK_TYPES.map(({ value, icon: Icon }) => {
+                    const active = form.feedbackType === value;
+                    return (
+                      <Button
+                        key={value}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-pressed={active}
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            feedbackType: value,
+                          }))
+                        }
+                        className={cn(
+                          "h-8 gap-1.5 rounded-md border border-border px-3 text-sm font-medium",
+                          active
+                            ? "bg-primary/10 text-foreground hover:bg-primary/10"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {value}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="feedback-title">Title</Label>
+              <div className="space-y-2">
+                <Label htmlFor="feedback-comment">Enter feedback</Label>
                 <Input
-                  id="feedback-title"
-                  placeholder="Optional"
-                  value={form.title}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
                 />
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="feedback-comment">Description</Label>
-                <Textarea
-                  id="feedback-comment"
-                  rows={7}
-                  placeholder="Describe what should change."
-                  value={form.comment}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      comment: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <Label>Screenshot</Label>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => fileInputRef.current?.click()}
-                          aria-label="Upload screenshot"
-                        >
-                          <Upload className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Upload screenshot</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => void refreshScreenshot()}
-                          disabled={isCapturingScreenshot}
-                          aria-label={isCapturingScreenshot ? "Capturing" : screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
-                        >
-                          <RefreshCw className={`h-3.5 w-3.5 ${isCapturingScreenshot ? "animate-spin" : ""}`} />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {isCapturingScreenshot ? "Capturing…" : screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
-                      </TooltipContent>
-                    </Tooltip>
-                    {screenshotDataUrl && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => setScreenshotDataUrl(null)}
-                            aria-label="Remove screenshot"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Remove screenshot</TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                </div>
-
-                {screenshotDataUrl && (
-                  <ScreenshotAnnotator
-                    dataUrl={screenshotDataUrl}
-                    onChange={setScreenshotDataUrl}
+                <InputGroup className="rounded-2xl border-border/70 focus-within:border-border">
+                  <InputGroupTextarea
+                    id="feedback-comment"
+                    rows={5}
+                    placeholder="Describe the issue, idea, or question."
+                    value={form.comment}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        comment: event.target.value,
+                      }))
+                    }
                   />
-                )}
-              </div>
-
-              {recordingSupported && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <Label>Screen recording</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Record up to 2 minutes of your screen to show the issue.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!isRecording && !videoPreviewUrl && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={startRecording}
-                              aria-label="Record screen"
-                            >
-                              <Video className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Record screen</TooltipContent>
-                        </Tooltip>
+                  <InputGroupAddon
+                    align="block-end"
+                    className="justify-between gap-1"
+                  >
+                    <div className="flex items-center gap-0.5">
+                      <FeedbackToolButton
+                        label={
+                          screenshotDataUrl
+                            ? "Retake screenshot"
+                            : "Capture screenshot"
+                        }
+                        onClick={() => void refreshScreenshot()}
+                        disabled={isCapturingScreenshot}
+                      >
+                        <Camera
+                          className={cn(
+                            "h-4 w-4",
+                            isCapturingScreenshot && "animate-pulse",
+                          )}
+                        />
+                      </FeedbackToolButton>
+                      <FeedbackToolButton
+                        label="Point to an area"
+                        onClick={startSelectMode}
+                      >
+                        <Crosshair className="h-4 w-4" />
+                      </FeedbackToolButton>
+                      <FeedbackToolButton
+                        label="Upload image"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4" />
+                      </FeedbackToolButton>
+                      {recordingSupported && !isRecording && !videoPreviewUrl && (
+                        <FeedbackToolButton
+                          label="Record screen"
+                          onClick={startRecording}
+                        >
+                          <Video className="h-4 w-4" />
+                        </FeedbackToolButton>
                       )}
                       {isRecording && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={stopRecording}
-                              aria-label="Stop recording"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <CircleStop className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Stop recording</TooltipContent>
-                        </Tooltip>
-                      )}
-                      {(videoPreviewUrl || isUploadingVideo) && !isRecording && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={discardRecording}
-                              aria-label="Remove recording"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              disabled={isUploadingVideo}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Remove recording</TooltipContent>
-                        </Tooltip>
+                        <FeedbackToolButton
+                          label="Stop recording"
+                          onClick={stopRecording}
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <CircleStop className="h-4 w-4" />
+                        </FeedbackToolButton>
                       )}
                     </div>
-                  </div>
-
-                  {isRecording && (
-                    <InfoAlert
-                      variant="error"
-                      role="status"
-                      icon={
-                        <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSubmit}
+                      disabled={
+                        isSubmitting ||
+                        isRecording ||
+                        isUploadingVideo ||
+                        form.comment.trim().length === 0
                       }
+                      className="gap-1.5 rounded-full"
                     >
-                      Recording — {Math.floor(recordingElapsedMs / 1000)}s / {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s · Use the floating red feedback button to stop.
-                    </InfoAlert>
-                  )}
+                      {isSubmitting
+                        ? "Sending..."
+                        : isUploadingVideo
+                          ? "Uploading..."
+                          : "Send"}
+                      {!isSubmitting && !isUploadingVideo && (
+                        <ArrowUp className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
 
-                  {videoPreviewUrl && !isRecording && (
-                    <div className="w-full max-w-sm overflow-hidden rounded shadow-sm">
-                      { }
-                      <video
-                        src={videoPreviewUrl}
-                        controls
-                        className="aspect-video w-full bg-foreground"
-                      />
-                      {isUploadingVideo ? (
-                        <p className="px-1 pt-1 text-xs text-muted-foreground">
-                          Uploading recording…
-                        </p>
-                      ) : videoRecordingUrl ? (
-                        <p className="px-1 pt-1 text-xs text-muted-foreground">
-                          Recording saved.
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
+              {screenshotDataUrl && (
+                <ScreenshotAnnotator
+                  dataUrl={screenshotDataUrl}
+                  onChange={setAnnotatedScreenshotDataUrl}
+                />
+              )}
+
+              {isRecording && (
+                <InfoAlert
+                  variant="error"
+                  role="status"
+                  icon={
+                    <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
+                  }
+                >
+                  Recording {Math.floor(recordingElapsedMs / 1000)}s /
+                  {" "}
+                  {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s. Stop when
+                  you are done, then send the feedback.
+                </InfoAlert>
+              )}
+
+              {videoPreviewUrl && !isRecording && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label>Screen recording</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={discardRecording}
+                      aria-label="Remove recording"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      disabled={isUploadingVideo}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="overflow-hidden rounded-lg bg-muted/30">
+                    <video
+                      src={videoPreviewUrl}
+                      controls
+                      className="aspect-video w-full bg-foreground"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {isUploadingVideo
+                      ? "Uploading recording..."
+                      : videoRecordingUrl
+                        ? "Recording attached."
+                        : "Recording ready to attach."}
+                  </p>
+                </div>
+              )}
+
+              {hasRecoverableDraft && (
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={resetComposer}
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear draft
+                  </Button>
                 </div>
               )}
             </div>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="max-w-xs text-center text-sm text-muted-foreground">
+                Select a page area or reopen the sheet from the header to keep
+                writing.
+              </p>
+            </div>
           )}
-
-          <DialogFooter>
-            <Button type="button" variant="link" onClick={resetComposer}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting || isRecording || isUploadingVideo}
-            >
-              {isSubmitting
-                ? "Submitting..."
-                : isUploadingVideo
-                  ? "Uploading video..."
-                  : isRecording
-                    ? "Stop recording first"
-                    : "Submit feedback"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SidePanelBody>
+        </SidePanelContent>
+      </SidePanel>
     </>
   );
 }

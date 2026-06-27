@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -84,6 +84,7 @@ import type {
 } from "@/lib/permissions-shared";
 import { UserAvatar } from "./_components/user-access-panel";
 import {
+  buildUserSlugMaps,
   fetchTemplates,
   fetchUsers,
   formatProjectCount,
@@ -167,6 +168,10 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
       return user.primaryTemplateName;
     case "email":
       return user.email;
+    case "personType":
+      return user.personType;
+    case "teams":
+      return user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "";
     case "projects":
       return user.projectCount;
     case "exceptions":
@@ -218,7 +223,7 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "email", "role", "projects", "exceptions"],
+      visibleColumns: ["name", "email", "personType", "role", "teams", "projects", "exceptions"],
       filters: {},
     },
   });
@@ -268,6 +273,29 @@ export default function PermissionsAdminPage() {
     () => (activeUsersQuery.data?.data ?? []).map(toAccessSummary),
     [activeUsersQuery.data?.data],
   );
+  // Build the slug map from the full combined universe (app + project users)
+  // rather than the current tab's filtered subset. The detail page resolves
+  // slugs against all users, so both sides must agree on who is "john-smith"
+  // vs "john-smith-2" regardless of which tab the link came from.
+  const allUsersForSlugs = useMemo(() => {
+    const seen = new Set<string>();
+    return [
+      ...(appUsersQuery.data?.data ?? []),
+      ...(projectAccessUsersQuery.data?.data ?? []),
+    ]
+      .filter((u) => {
+        if (seen.has(u.personId)) return false;
+        seen.add(u.personId);
+        return true;
+      })
+      .map(toAccessSummary);
+  }, [appUsersQuery.data?.data, projectAccessUsersQuery.data?.data]);
+  const { slugByPersonId } = useMemo(() => buildUserSlugMaps(allUsersForSlugs), [allUsersForSlugs]);
+  const userHref = useCallback(
+    (user: UserAccessSummary) =>
+      `/user-management/users/${slugByPersonId.get(user.personId) ?? user.personId}`,
+    [slugByPersonId],
+  );
   const appUserCount = appUsersQuery.data?.data.length ?? 0;
   const projectAccessUserCount = projectAccessUsersQuery.data?.data.length ?? 0;
   const usersDescription =
@@ -294,14 +322,14 @@ export default function PermissionsAdminPage() {
     activeTab === "project-access" ? "Add Project Access" : "Grant App Access";
   const usersTotalCount =
     activeTab === "project-access" ? projectAccessUserCount : appUserCount;
-  const canInviteFromActiveTab = activeTab !== "project-access";
   const canManageUserRows = activeTab === "app-users";
+  const accessDialogMode: "app" | "project" =
+    activeTab === "project-access" ? "project" : "app";
 
   const usersTopContent =
     activeTab === "project-access" ? (
       <p className="mt-0 max-w-3xl pb-4 text-sm leading-6 text-muted-foreground">
-        Users who have been granted access to individual projects. Users can be added or removed
-        from the project directory inside each project.
+        Add Project Access assigns an employee to selected projects with a project permission template.
       </p>
     ) : null;
 
@@ -317,6 +345,9 @@ export default function PermissionsAdminPage() {
       return [
         user.fullName,
         user.email,
+        user.personType,
+        user.teamsAccount?.displayName,
+        user.teamsAccount?.platformUserId,
         user.primaryTemplateName,
         projectNames,
       ]
@@ -377,6 +408,18 @@ export default function PermissionsAdminPage() {
         ),
       },
       {
+        id: "personType",
+        label: "User Type",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => user.personType,
+        render: (user) => (
+          <span className="block truncate text-sm text-foreground">
+            {user.personType || "Unknown"}
+          </span>
+        ),
+      },
+      {
         id: "role",
         label: "Permission Template",
         defaultVisible: true,
@@ -392,6 +435,27 @@ export default function PermissionsAdminPage() {
             )}
           </div>
         ),
+      },
+      {
+        id: "teams",
+        label: "Teams Account",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) =>
+          user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "",
+        render: (user) => {
+          if (!user.teamsAccount) {
+            return <span className="text-sm text-muted-foreground">Not linked</span>;
+          }
+
+          return (
+            <div className="min-w-0">
+              <span className="block truncate text-sm text-foreground">
+                {user.teamsAccount.displayName || "Linked"}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: "projects",
@@ -533,7 +597,7 @@ export default function PermissionsAdminPage() {
       });
     },
     onSuccess: () => {
-      toast.success("User invited and access assigned");
+      toast.success("Access assigned");
       setShowInvite(false);
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
@@ -714,12 +778,12 @@ export default function PermissionsAdminPage() {
           header={{
             title: "Manage Users",
             description: usersDescription,
-            actions: canInviteFromActiveTab ? (
+            actions: (
                 <Button size="sm" onClick={() => setShowInvite(true)}>
                   <UserPlus className="h-4 w-4" />
                   {usersAddLabel}
                 </Button>
-              ) : null,
+              ),
           }}
           tabs={tabs}
           toolbar={{
@@ -760,7 +824,7 @@ export default function PermissionsAdminPage() {
           table={{
             columns: userColumns,
             getRowId: (user) => user.id,
-            onRowClick: (user) => router.push(`/user-management/users/${user.personId}`),
+            onRowClick: (user) => router.push(userHref(user)),
             rowActions: canManageUserRows
               ? (user) => (
                   <DropdownMenu>
@@ -776,15 +840,13 @@ export default function PermissionsAdminPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => router.push(`/user-management/users/${user.personId}`)}
+                        onClick={() => router.push(userHref(user))}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          router.push(`/user-management/users/${user.personId}?mode=edit`)
-                        }
+                        onClick={() => router.push(`${userHref(user)}?mode=edit`)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
@@ -817,12 +879,12 @@ export default function PermissionsAdminPage() {
             description: usersEmptyDescription,
             filteredDescription: usersFilteredDescription,
             isFiltered: Boolean(tableState.debouncedSearch),
-            action: canInviteFromActiveTab ? (
+            action: (
               <Button size="sm" onClick={() => setShowInvite(true)}>
                 <UserPlus className="h-4 w-4" />
                 {usersAddLabel}
               </Button>
-            ) : undefined,
+            ),
           }}
           pagination={{
             page: tableState.page,
@@ -973,6 +1035,7 @@ export default function PermissionsAdminPage() {
       <InviteUserDialog
         open={showInvite}
         onOpenChange={setShowInvite}
+        mode={accessDialogMode}
         projectTemplates={projectTemplatesQuery.data ?? []}
         companyTemplates={companyTemplatesQuery.data ?? []}
         employees={employeeOptionsQuery.data ?? []}
@@ -1125,6 +1188,7 @@ export default function PermissionsAdminPage() {
 function InviteUserDialog({
   open,
   onOpenChange,
+  mode,
   projectTemplates,
   companyTemplates,
   employees,
@@ -1135,6 +1199,7 @@ function InviteUserDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode: "app" | "project";
   projectTemplates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
   employees: EmployeeOption[];
@@ -1151,12 +1216,14 @@ function InviteUserDialog({
     project_ids: number[];
   }) => Promise<void>;
 }) {
+  const initialAccessScope: AccessScope =
+    mode === "project" ? "selected_projects" : "all_projects";
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
-  const [accessScope, setAccessScope] = useState<AccessScope>("all_projects");
+  const [accessScope, setAccessScope] = useState<AccessScope>(initialAccessScope);
   const [projectTemplateId, setProjectTemplateId] = useState("");
   const [companyTemplateId, setCompanyTemplateId] = useState("");
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
@@ -1169,7 +1236,7 @@ function InviteUserDialog({
       setLastName("");
       setEmail("");
       setJobTitle("");
-      setAccessScope("all_projects");
+      setAccessScope(initialAccessScope);
       setProjectTemplateId("");
       setCompanyTemplateId("");
       setSelectedProjectIds(new Set());
@@ -1185,7 +1252,8 @@ function InviteUserDialog({
         companyTemplates[0]?.id ||
         "",
     );
-  }, [open, projectTemplates, companyTemplates]);
+    setAccessScope(initialAccessScope);
+  }, [open, projectTemplates, companyTemplates, initialAccessScope]);
 
   const selectedEmployee =
     employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
@@ -1224,7 +1292,7 @@ function InviteUserDialog({
     setError(null);
 
     if (!canSubmit) {
-      setError("Add the user details, permission template, and project access before sending the invite.");
+      setError("Add the user details, permission template, and project access before saving.");
       return;
     }
 
@@ -1247,10 +1315,7 @@ function InviteUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Grant app access</DialogTitle>
-          <DialogDescription>
-            Start from an existing employee in People when possible, then choose their permission template and project access.
-          </DialogDescription>
+          <DialogTitle>{mode === "project" ? "Add project access" : "Grant app access"}</DialogTitle>
         </DialogHeader>
 
         <form className="space-y-6" onSubmit={submit}>
@@ -1264,9 +1329,6 @@ function InviteUserDialog({
               disabled={isLoading}
               onSelect={selectEmployee}
             />
-            <p className="text-xs text-muted-foreground">
-              Start from People when the employee already exists, or leave this empty to create a new employee and invite them.
-            </p>
             {selectedEmployee ? (
               <Button
                 type="button"
@@ -1328,53 +1390,55 @@ function InviteUserDialog({
             </div>
           </div>
 
-          <div className="space-y-3">
-            <SectionRuleHeading label="Access" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setAccessScope("all_projects");
-                  setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
-                }}
-                className={cn(
-                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
-                  accessScope === "all_projects"
-                    ? "border-primary bg-primary/5 hover:bg-primary/5"
-                    : "hover:bg-muted/50",
-                )}
-              >
-                <span className="block min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">All projects</span>
-                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Default for employees who should see every current and future project.
+          {mode === "app" ? (
+            <div className="space-y-3">
+              <SectionRuleHeading label="Access" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAccessScope("all_projects");
+                    setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+                  }}
+                  className={cn(
+                    "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                    accessScope === "all_projects"
+                      ? "border-primary bg-primary/5 hover:bg-primary/5"
+                      : "hover:bg-muted/50",
+                  )}
+                >
+                  <span className="block min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">All projects</span>
+                    <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                      Access across every current and future project.
+                    </span>
                   </span>
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setAccessScope("selected_projects");
-                  setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
-                }}
-                className={cn(
-                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
-                  accessScope === "selected_projects"
-                    ? "border-primary bg-primary/5 hover:bg-primary/5"
-                    : "hover:bg-muted/50",
-                )}
-              >
-                <span className="block min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">Specific projects</span>
-                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Downgrade path for limited project access.
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setAccessScope("selected_projects");
+                    setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
+                  }}
+                  className={cn(
+                    "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                    accessScope === "selected_projects"
+                      ? "border-primary bg-primary/5 hover:bg-primary/5"
+                      : "hover:bg-muted/50",
+                  )}
+                >
+                  <span className="block min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">Specific projects</span>
+                    <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                      Access only to selected projects.
+                    </span>
                   </span>
-                </span>
-              </Button>
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="space-y-1.5">
@@ -1458,7 +1522,7 @@ function InviteUserDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving || !canSubmit}>
-              {isSaving ? "Sending..." : "Send Invite"}
+              {isSaving ? "Saving..." : mode === "project" ? "Add Project Access" : "Grant Access"}
             </Button>
           </div>
         </form>

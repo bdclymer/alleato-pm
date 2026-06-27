@@ -64,23 +64,25 @@ export function SovSummaryFooterRows({
     { key: "approved-changes", label: "Approved Changes", value: summary.approvedChanges },
     { key: "contract-total", label: "Contract Total", value: summary.contractTotal, bold: true },
     { key: "billed-to-date", label: "Billed to Date", value: summary.billedToDate },
-    { key: "amount-remaining", label: "Amount Remaining", value: summary.amountRemaining },
+    { key: "amount-remaining", label: "Amount Remaining", value: summary.amountRemaining, bold: true, large: true },
   ];
 
   return (
     <>
-      {rows.map((row) => {
+      {rows.map((row, index) => {
+        const isLarge = "large" in row && row.large;
+        const isFirst = index === 0;
         const content = (
           <>
             <td
               colSpan={labelColSpan}
-              className={`border-r border-border/70 px-3 py-2 text-right text-xs ${row.bold ? "font-semibold" : "font-medium"} text-foreground`}
+              className={`border-r border-border/70 px-1 py-2 text-right ${isLarge ? "text-sm" : "text-xs"} ${row.bold ? "font-semibold" : "font-medium"} text-foreground`}
             >
               {row.label}:
             </td>
             <td
               colSpan={valueColSpan}
-              className={`px-3 py-2 text-center text-xs ${row.bold ? "font-semibold" : "font-normal"} tabular-nums ${row.key === "approved-changes" || row.key === "billed-to-date" ? "text-primary" : "text-foreground"}`}
+              className={`px-1 py-2 text-right ${isLarge ? "text-sm" : "text-xs"} ${row.bold ? "font-semibold" : "font-normal"} tabular-nums ${row.key === "approved-changes" || row.key === "billed-to-date" ? "text-primary" : "text-foreground"}`}
             >
               {formatCurrency(row.value)}
             </td>
@@ -97,7 +99,7 @@ export function SovSummaryFooterRows({
         return (
           <InlineTableRow
             key={`sov-summary-${row.key}`}
-            className="border-b border-border/70 bg-background hover:bg-background"
+            className={`bg-background hover:bg-background${isFirst ? " border-t border-border/50" : ""}`}
           >
             {content}
           </InlineTableRow>

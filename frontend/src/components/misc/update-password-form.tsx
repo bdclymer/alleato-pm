@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createAuthClient } from "@/lib/supabase/client-auth";
+import { evaluatePasswordUpdateGuard } from "@/lib/auth/password-update-guard";
 import { getPasswordChecks, isPasswordValid } from "@/lib/validation/password";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +30,23 @@ export function UpdatePasswordForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [mismatch, setMismatch] = useState(false);
+
+  const handleSignOut = async () => {
+    const supabase = createAuthClient();
+    setIsLoading(true);
+    await supabase.auth.signOut();
+    // Send them back to log in cleanly; they re-open the email link to set the
+    // intended account's password against a fresh, correct session.
+    window.location.href = "/auth/login";
+  };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createAuthClient();
     setIsLoading(true);
     setError(null);
+    setMismatch(false);
 
     try {
       if (!isPasswordValid(password)) {
@@ -42,6 +54,23 @@ export function UpdatePasswordForm({
         setIsLoading(false);
         return;
       }
+
+      // updateUser() targets whatever session is active in this browser. Confirm
+      // that session is the account this link was issued for before changing any
+      // password — otherwise a stray invite/recovery link opened while signed in
+      // as someone else would silently overwrite the signed-in user's password.
+      const { data: userData } = await supabase.auth.getUser();
+      const guard = evaluatePasswordUpdateGuard({
+        sessionEmail: userData.user?.email ?? null,
+        intendedEmail: email ?? null,
+      });
+      if (!guard.allowed) {
+        setError(guard.message);
+        setMismatch(guard.kind === "email-mismatch");
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       window.location.href = next && next.startsWith("/") ? next : "/";
@@ -99,9 +128,21 @@ export function UpdatePasswordForm({
                 )}
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save new password"}
-              </Button>
+              {mismatch ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                  onClick={handleSignOut}
+                >
+                  {isLoading ? "Signing out..." : "Sign out and try again"}
+                </Button>
+              ) : (
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Saving..." : "Save new password"}
+                </Button>
+              )}
             </div>
           </form>
         </CardContent>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +11,7 @@ import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
+import { getPreviewReviewGroups } from "./preview-review-card";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -115,14 +117,18 @@ import {
   truncateInlineText,
 } from "@/lib/chat/attachment-text";
 import { appToast as toast } from "@/lib/toast/app-toast";
+import { copyTextWithFallback } from "@/lib/browser/clipboard";
 import { WelcomeScreen } from "./welcome-screen";
 import {
-  TracePanel,
   type AssistantTraceDiagnostics,
   type ToolTraceItem,
 } from "./trace-panel";
+import { TraceMenu } from "./trace-menu";
 import { CrossSourceTimeline } from "./cross-source-timeline";
-import { formatStructuredMeetingList, stripMarkdownForSpeech } from "./chat-formatting";
+import {
+  formatStructuredMeetingList,
+  stripMarkdownForSpeech,
+} from "./chat-formatting";
 import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
@@ -140,17 +146,18 @@ import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
 } from "@/lib/ai/score-response-quality";
-import { ASSISTANT_ACTION_CAPABILITIES } from "@/lib/ai/action-capabilities";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { AiResponseFeedback } from "@/components/ai/AiResponseFeedback";
 import {
   AssistantMemoryTrace,
   type MemoryUsage,
 } from "./memory-usage-disclosure";
+import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
+import { AssistantSuggestionList } from "./assistant-suggestion-list";
 import {
-  AssistantSkillTrace,
-  type SkillUsage,
-} from "./skill-usage-disclosure";
+  resolveAssistantSuggestions,
+  type AssistantSuggestion,
+} from "@/lib/ai/assistant-suggestion-resolver";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -260,7 +267,10 @@ type SpeechRecognitionLike = {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
-export type ResponseQuality = Omit<ScoredResponseQuality, "hasMetaCommentary"> & {
+export type ResponseQuality = Omit<
+  ScoredResponseQuality,
+  "hasMetaCommentary"
+> & {
   hasMetaCommentary?: boolean;
 };
 
@@ -326,15 +336,18 @@ function getArtifactParts(msg: UIMessage): ToolPart[] {
 function getBrandonDailyUpdateWidgetParts(
   msg: UIMessage,
 ): Array<{ packet: BrandonDailyUpdatePacket }> {
-  return msg.parts.reduce<Array<{ packet: BrandonDailyUpdatePacket }>>((widgets, part) => {
-    if (part.type !== "data-brandon-daily-update-widget") return widgets;
-    const data = (part as { data?: unknown }).data;
-    if (!data || typeof data !== "object") return widgets;
-    const packet = (data as { packet?: BrandonDailyUpdatePacket }).packet;
-    if (!packet || typeof packet !== "object") return widgets;
-    widgets.push({ packet });
-    return widgets;
-  }, []);
+  return msg.parts.reduce<Array<{ packet: BrandonDailyUpdatePacket }>>(
+    (widgets, part) => {
+      if (part.type !== "data-brandon-daily-update-widget") return widgets;
+      const data = (part as { data?: unknown }).data;
+      if (!data || typeof data !== "object") return widgets;
+      const packet = (data as { packet?: BrandonDailyUpdatePacket }).packet;
+      if (!packet || typeof packet !== "object") return widgets;
+      widgets.push({ packet });
+      return widgets;
+    },
+    [],
+  );
 }
 
 function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
@@ -362,7 +375,8 @@ function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
     const data = (part as { data?: unknown }).data;
     if (!data || typeof data !== "object") continue;
     const record = data as Record<string, unknown>;
-    if (typeof record.message !== "string" || typeof record.stage !== "string") continue;
+    if (typeof record.message !== "string" || typeof record.stage !== "string")
+      continue;
     return {
       stage: record.stage,
       message: record.message,
@@ -372,7 +386,8 @@ function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
         record.status === "error"
           ? record.status
           : "loading",
-      timestamp: typeof record.timestamp === "string" ? record.timestamp : undefined,
+      timestamp:
+        typeof record.timestamp === "string" ? record.timestamp : undefined,
     };
   }
 
@@ -433,7 +448,10 @@ function formatSourceLabel(raw: string): string {
  * Extract all [Source: ...] patterns from text, returning the cleaned text
  * (with citations removed) and a deduplicated array of formatted source labels.
  */
-function extractSources(text: string): { cleanText: string; sources: string[] } {
+function extractSources(text: string): {
+  cleanText: string;
+  sources: string[];
+} {
   const seen = new Set<string>();
   const sources: string[] = [];
   const cleanText = text.replace(/\[Source:\s*([^\]]+)\]/g, (_, content) => {
@@ -467,6 +485,35 @@ function getToolPreview(part: ToolPart): Record<string, unknown> | null {
   return Object.keys(preview).length > 0 ? preview : null;
 }
 
+const CHANGE_EVENT_PREVIEW_FIELD_LABELS: Record<string, string> = {
+  project_id: "Project",
+  title: "Title",
+  description: "Description",
+  scope: "Scope",
+  type: "Type",
+  status: "Status",
+};
+
+function getPreviewHeading(previewTable: string | null): string {
+  if (previewTable === "change_events") return "Change request preview";
+  return "Pending write";
+}
+
+function getPreviewFieldLabel(previewTable: string | null, key: string): string {
+  if (previewTable === "change_events") {
+    return CHANGE_EVENT_PREVIEW_FIELD_LABELS[key] ?? key;
+  }
+  return key;
+}
+
+function formatPreviewValueForDisplay(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value == null) return "Not set";
+  return JSON.stringify(value);
+}
+
 function getToolOutputRecord(part: ToolPart): Record<string, unknown> | null {
   const output = asObject(part.output);
   const record = asObject(output.record);
@@ -488,7 +535,9 @@ function toStringValue(value: unknown): string | null {
   return null;
 }
 
-function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string }> {
+function getRecordDeepLinks(
+  part: ToolPart,
+): Array<{ label: string; href: string }> {
   const input = asObject(part.input);
   const record = getToolOutputRecord(part);
   const output = asObject(part.output);
@@ -536,12 +585,18 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
   }
 
   if (
-    ["createGeneratedTask", "updateGeneratedTask", "deleteGeneratedTask"].includes(toolName) &&
+    [
+      "createGeneratedTask",
+      "updateGeneratedTask",
+      "deleteGeneratedTask",
+    ].includes(toolName) &&
     recordId
   ) {
     links.push({
       label: "Open Task",
-      href: projectId ? `/${projectId}/tasks?task=${recordId}` : `/tasks?task=${recordId}`,
+      href: projectId
+        ? `/${projectId}/tasks?task=${recordId}`
+        : `/tasks?task=${recordId}`,
     });
   }
 
@@ -603,7 +658,9 @@ async function bytesFromFileUIPart(file: FileUIPart): Promise<Uint8Array> {
       return bytes;
     }
     const commaIndex = url.indexOf(",");
-    return new TextEncoder().encode(decodeURIComponent(url.slice(commaIndex + 1)));
+    return new TextEncoder().encode(
+      decodeURIComponent(url.slice(commaIndex + 1)),
+    );
   }
   const response = await fetch(url);
   return new Uint8Array(await response.arrayBuffer());
@@ -706,7 +763,10 @@ function AttachmentPreviews() {
               unoptimized
             />
           ) : (
-            <FileTextIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            <FileTextIcon
+              className="h-5 w-5 text-muted-foreground"
+              aria-hidden="true"
+            />
           )}
           <Button
             type="button"
@@ -753,38 +813,6 @@ function AssistantPromptSubmit({
   );
 }
 
-function AssistantActionList() {
-  return (
-    <section aria-label="Assistant actions" className="border-y border-border/70 py-5 text-left">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <SectionRuleHeading label="Actions wired up" className="mb-0" />
-          <p className="mt-1 text-xs text-muted-foreground">
-            These make changes in Alleato after approval.
-          </p>
-        </div>
-      </div>
-      <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-        {ASSISTANT_ACTION_CAPABILITIES.map((group) => (
-          <div key={group.title} className="min-w-0">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {group.title}
-            </div>
-            <ul className="space-y-1.5">
-              {group.actions.map((action) => (
-                <li key={action} className="flex min-w-0 items-start gap-2 text-sm text-foreground">
-                  <CheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span className="min-w-0">{action}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 // ─── Tool call display ─────────────────────────────────────────────
 
 function ToolCallItem({
@@ -807,13 +835,17 @@ function ToolCallItem({
   const preview = getToolPreview(part);
   const previewFields = asObject(preview?.fields);
   const previewEntries = Object.entries(previewFields);
+  const previewReviewGroups = getPreviewReviewGroups(preview);
   const links = getRecordDeepLinks(part);
   const approvalId = part.approval?.id;
 
   const toolName = getToolNameFromType(part.type);
-  const isCreateTask = toolName === "createTask" || toolName === "createGeneratedTask";
+  const isCreateTask =
+    toolName === "createTask" || toolName === "createGeneratedTask";
   const previewTable = toStringValue(preview?.table);
-  const isTaskPreview = isCreateTask && (previewTable === "schedule_tasks" || previewTable === "tasks");
+  const isTaskPreview =
+    isCreateTask &&
+    (previewTable === "schedule_tasks" || previewTable === "tasks");
 
   const output = asObject(part.output);
   const isConfirmedTask =
@@ -898,27 +930,64 @@ function ToolCallItem({
             <ConfirmationTitle>Approved. Running the action.</ConfirmationTitle>
           </ConfirmationAccepted>
           <ConfirmationRejected>
-            <ConfirmationTitle>Denied. The action was not run.</ConfirmationTitle>
+            <ConfirmationTitle>
+              Denied. The action was not run.
+            </ConfirmationTitle>
           </ConfirmationRejected>
         </Confirmation>
         {preview && (
           <div className="space-y-2 rounded-xl bg-muted/40 p-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-              Pending write
+              {getPreviewHeading(previewTable)}
             </p>
             {previewEntries.length > 0 && (
-              <div className="space-y-1">
-                {previewEntries.slice(0, 8).map(([key, value]) => (
-                  <div key={key} className="flex items-start justify-between gap-3 text-xs">
-                    <span className="text-muted-foreground">{key}</span>
-                    <span className="w-2/3 break-words text-right text-foreground">
-                      {typeof value === "string"
-                        ? value
-                        : JSON.stringify(value)}
-                    </span>
+              <>
+                {previewReviewGroups.length > 0 ? (
+                  <div className="space-y-3">
+                    {previewReviewGroups.map((group) => (
+                      <div key={group.title} className="space-y-1.5">
+                        <p className="text-[11px] font-medium text-muted-foreground">
+                          {group.title}
+                        </p>
+                        <div className="space-y-1">
+                          {group.fields.map((field) => (
+                            <div
+                              key={`${group.title}-${field.key}`}
+                              className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] gap-3 text-xs"
+                            >
+                              <span className="min-w-0 text-muted-foreground">
+                                {field.label}
+                                {field.required ? (
+                                  <span className="ml-1 text-foreground">*</span>
+                                ) : null}
+                              </span>
+                              <span className="min-w-0 break-words text-right text-foreground">
+                                {field.value ?? "Not set"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="space-y-1">
+                    {previewEntries.slice(0, 8).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex items-start justify-between gap-3 text-xs"
+                      >
+                        <span className="text-muted-foreground">
+                          {getPreviewFieldLabel(previewTable, key)}
+                        </span>
+                        <span className="w-2/3 break-words text-right text-foreground">
+                          {formatPreviewValueForDisplay(value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
@@ -948,25 +1017,29 @@ function ToolCallItem({
                 Run
               </Button>
             </div>
-            {isTaskPreview && taskProjectId != null && part.state !== "output-available" && (
-              <div className="mt-2 flex items-center justify-end">
-                <TaskFeedbackButtons
-                  projectId={taskProjectId}
-                  taskSnapshot={{
-                    name: taskName,
-                    assignee: taskAssignee,
-                    dueDate: taskDueDate,
-                    priority: toStringValue(previewFields.priority) ?? "normal",
-                    notes: null,
-                    projectId: taskProjectId,
-                  }}
-                  sessionId={sessionId ?? null}
-                />
-              </div>
-            )}
+            {isTaskPreview &&
+              taskProjectId != null &&
+              part.state !== "output-available" && (
+                <div className="mt-2 flex items-center justify-end">
+                  <TaskFeedbackButtons
+                    projectId={taskProjectId}
+                    taskSnapshot={{
+                      name: taskName,
+                      assignee: taskAssignee,
+                      dueDate: taskDueDate,
+                      priority:
+                        toStringValue(previewFields.priority) ?? "normal",
+                      notes: null,
+                      projectId: taskProjectId,
+                    }}
+                    sessionId={sessionId ?? null}
+                  />
+                </div>
+              )}
           </div>
         )}
-        {(part.state === "output-available" || part.state === "output-error") && (
+        {(part.state === "output-available" ||
+          part.state === "output-error") && (
           <ToolOutput output={part.output} errorText={part.errorText} />
         )}
         {isConfirmedTask && taskProjectId != null && (
@@ -1008,8 +1081,10 @@ function ToolCallItem({
 // ─── Tool step status helper ──────────────────────────────────────
 
 function getToolStepStatus(state: string): "complete" | "active" | "pending" {
-  if (state === "output-available" || state === "output-error") return "complete";
-  if (state === "input-available" || state === "input-streaming") return "active";
+  if (state === "output-available" || state === "output-error")
+    return "complete";
+  if (state === "input-available" || state === "input-streaming")
+    return "active";
   return "pending";
 }
 
@@ -1058,9 +1133,18 @@ function StreamingIndicator({
               </>
             ) : (
               <div className="flex items-center gap-1.5">
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "0ms" }} />
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "150ms" }} />
-                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "300ms" }} />
+                <span
+                  className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <span
+                  className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60"
+                  style={{ animationDelay: "300ms" }}
+                />
               </div>
             )}
           </div>
@@ -1123,10 +1207,7 @@ function deriveDisplayResponseQuality(params: {
     ...params.stored,
     sourceQuality,
     reasons: Array.from(
-      new Set([
-        ...(params.stored.reasons ?? []),
-        ...(rescored?.reasons ?? []),
-      ]),
+      new Set([...(params.stored.reasons ?? []), ...(rescored?.reasons ?? [])]),
     ),
   };
 }
@@ -1141,6 +1222,7 @@ interface ChatAreaProps {
   skillUsageByMessageId?: Record<string, SkillUsage>;
   responseQualityByMessageId?: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId?: Record<string, AssistantTraceDiagnostics>;
+  langfuseTraceIdByMessageId?: Record<string, string>;
   liveStatus?: StrategistLiveStatus | null;
   chatError?: string | null;
   isLoadingMessages: boolean;
@@ -1159,6 +1241,8 @@ interface ChatAreaProps {
   onStop: () => void;
   /** Omit the decorative orb on the welcome screen (compact floating widget). */
   welcomeHideOrb?: boolean;
+  showWidgetWelcomePrompt?: boolean;
+  onWidgetWelcomeDismiss?: () => void;
 }
 
 export function ChatArea({
@@ -1169,6 +1253,7 @@ export function ChatArea({
   skillUsageByMessageId = {},
   responseQualityByMessageId = {},
   traceDiagnosticsByMessageId = {},
+  langfuseTraceIdByMessageId = {},
   liveStatus,
   chatError,
   isLoadingMessages,
@@ -1186,7 +1271,10 @@ export function ChatArea({
   onToolApprovalResponse,
   onStop,
   welcomeHideOrb = false,
+  showWidgetWelcomePrompt = false,
+  onWidgetWelcomeDismiss,
 }: ChatAreaProps) {
+  const pathname = usePathname();
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
 
@@ -1201,14 +1289,19 @@ export function ChatArea({
   const audioUrlRef = useRef<string | null>(null);
   const baseTextRef = useRef("");
   const finalTranscriptsRef = useRef("");
-  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(
+    null,
+  );
+  const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<
+    string | null
+  >(null);
   // Load the full active project list (≈112) so the composer's project picker
   // can reach and filter every project. With limit:50 the cmdk search only ran
   // over the first 50 alphabetical projects, so most projects (e.g. "Union
   // Collective") returned "No projects found".
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 500 });
-  const selectedProject = projects.find((p) => p.id === selectedProjectIdProp) ?? null;
+  const selectedProject =
+    projects.find((p) => p.id === selectedProjectIdProp) ?? null;
   const selectedModelOption =
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
     AI_ASSISTANT_MODELS[0];
@@ -1230,7 +1323,11 @@ export function ChatArea({
     recognition.onresult = (event) => {
       let newFinalText = "";
 
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index += 1
+      ) {
         const result = event.results[index];
         if (result.isFinal) {
           newFinalText += `${result[0].transcript} `;
@@ -1309,25 +1406,28 @@ export function ChatArea({
     setCouncilModeInternal(next);
     onCouncilModeChange?.(next);
   }, [councilMode, onCouncilModeChange]);
-  const handleSubmit = useCallback(async (message: PromptInputMessage) => {
-    const trimmed = message.text.trim();
-    if ((!trimmed && !message.files.length) || isStreaming) return;
-    try {
-      const prepared = await prepareMessageWithFileUIParts(
-        trimmed || "Review these attachments",
-        message.files,
-      );
-      onSubmit(prepared.message, prepared.files);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? `Attachment read failed: ${error.message}`
-          : "Attachment read failed.",
-      );
-      return;
-    }
-    onInputChange("");
-  }, [isStreaming, onInputChange, onSubmit]);
+  const handleSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      const trimmed = message.text.trim();
+      if ((!trimmed && !message.files.length) || isStreaming) return;
+      try {
+        const prepared = await prepareMessageWithFileUIParts(
+          trimmed || "Review these attachments",
+          message.files,
+        );
+        onSubmit(prepared.message, prepared.files);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? `Attachment read failed: ${error.message}`
+            : "Attachment read failed.",
+        );
+        return;
+      }
+      onInputChange("");
+    },
+    [isStreaming, onInputChange, onSubmit],
+  );
 
   const toggleRecording = useCallback(() => {
     if (!recognitionRef.current) {
@@ -1344,7 +1444,9 @@ export function ChatArea({
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("Voice input is not available because this browser does not expose microphone permissions to the app.");
+      toast.error(
+        "Voice input is not available because this browser does not expose microphone permissions to the app.",
+      );
       return;
     }
 
@@ -1391,38 +1493,18 @@ export function ChatArea({
 
   const handleCopy = useCallback(async (content: string) => {
     try {
-      await navigator.clipboard.writeText(content);
+      await copyTextWithFallback(content);
       toast.success("Copied to clipboard");
       return;
     } catch (error) {
-      console.warn("Clipboard write failed, falling back to selection copy", error);
+      console.warn("Clipboard copy failed", error);
+      toast.error("Copy failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "The browser denied clipboard access. Select the response text manually and copy it.",
+      });
     }
-
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = content;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      textarea.style.top = "0";
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      const copied = document.execCommand("copy");
-      document.body.removeChild(textarea);
-
-      if (copied) {
-        toast.success("Copied to clipboard");
-        return;
-      }
-    } catch (fallbackError) {
-      console.warn("Fallback clipboard copy failed", fallbackError);
-    }
-
-    toast.error("Copy failed", {
-      description:
-        "The browser denied clipboard access. Select the response text manually and copy it.",
-    });
   }, []);
 
   const handlePasteFromClipboard = useCallback(async () => {
@@ -1468,7 +1550,8 @@ export function ChatArea({
         setLoadingSpeechMessageId(null);
         return;
       }
-      const speechText = stripped.length > 4000 ? stripped.slice(0, 4000) : stripped;
+      const speechText =
+        stripped.length > 4000 ? stripped.slice(0, 4000) : stripped;
 
       try {
         const audioBlob = await apiFetchBlob("/api/ai-assistant/speech", {
@@ -1482,14 +1565,18 @@ export function ChatArea({
         audio.onended = stopSpeech;
         audio.onerror = () => {
           stopSpeech();
-          toast.error("Voice playback failed. Check your browser audio settings.");
+          toast.error(
+            "Voice playback failed. Check your browser audio settings.",
+          );
         };
         await audio.play();
         setSpeakingMessageId(messageId);
       } catch (error) {
         stopSpeech();
         if (error instanceof DOMException && error.name === "NotAllowedError") {
-          toast.error("Browser blocked audio playback. Click the page first, then try again.");
+          toast.error(
+            "Browser blocked audio playback. Click the page first, then try again.",
+          );
         } else {
           toast.error(
             error instanceof Error && error.message
@@ -1510,7 +1597,9 @@ export function ChatArea({
   const handleToolApprove = useCallback(
     (part: ToolPart) => {
       const toolName = formatToolName(getToolNameFromType(part.type));
-      onSubmit(`I approve this ${toolName} preview. Run it now exactly as shown.`);
+      onSubmit(
+        `I approve this ${toolName} preview. Run it now exactly as shown.`,
+      );
     },
     [onSubmit],
   );
@@ -1537,13 +1626,41 @@ export function ChatArea({
     [onSubmit],
   );
 
+  const handleWidgetWelcomeAction = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      onWidgetWelcomeDismiss?.();
+      onInputChange(prompt);
+    },
+    [isStreaming, onInputChange, onWidgetWelcomeDismiss],
+  );
+
+  const handleCatalogAction = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      onInputChange(prompt);
+    },
+    [isStreaming, onInputChange],
+  );
+
+  const assistantSuggestions = useMemo(
+    () =>
+      resolveAssistantSuggestions({
+        pathname,
+        surface: welcomeHideOrb ? "widget" : "command_center",
+      }),
+    [pathname, welcomeHideOrb],
+  );
+
   const hasMessages = messages.length > 0;
   const showWelcome = !hasMessages && !isLoadingMessages;
 
   // Determine streaming indicator visibility
   const lastMessage = messages[messages.length - 1];
   const lastMessageText = lastMessage ? getMessageText(lastMessage) : "";
-  const lastMessageStatus = lastMessage ? getLatestStatusPart(lastMessage) : null;
+  const lastMessageStatus = lastMessage
+    ? getLatestStatusPart(lastMessage)
+    : null;
   const lastIsAssistantWithToolCalls =
     lastMessage?.role === "assistant" && hasToolInvocations(lastMessage);
   const showStreamingIndicator =
@@ -1561,28 +1678,54 @@ export function ChatArea({
     <PromptInput
       multiple
       onSubmit={handleSubmit}
+      data-1p-ignore="true"
+      data-dev-autofill-disabled="true"
+      data-form-type="other"
+      data-lpignore="true"
       className={cn(
-        "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-border",
-        hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
+        "overflow-hidden rounded-2xl border-0 transition-all",
+        welcomeHideOrb
+          ? "bg-background shadow-none ring-1 ring-border/35 focus-within:ring-border/60"
+          : "bg-transparent shadow-[0_8px_24px_-22px_rgb(15_23_42/0.25)] ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-border",
+        welcomeHideOrb
+          ? hasMessages
+            ? "px-3 py-2"
+            : "px-4 pb-2.5 pt-3"
+          : hasMessages
+            ? "px-3 py-2 sm:px-4"
+            : "px-4 pb-2 pt-4 sm:px-5",
       )}
     >
       <AttachmentPreviews />
       <PromptInputTextarea
         value={input}
         onChange={(event) => onInputChange(event.currentTarget.value)}
+        autoComplete="off"
+        data-1p-ignore="true"
+        data-form-type="other"
+        data-lpignore="true"
         placeholder={
           isRecording
             ? "Listening..."
             : councilMode
-            ? "Ask the council…"
-            : "Ask anything…"
+              ? "Ask the council…"
+              : "Ask anything…"
         }
         className={cn(
-          "px-2 text-base leading-6 placeholder:text-muted-foreground/40 sm:text-lg",
-          hasMessages ? "min-h-8 pb-2 pt-0.5" : "min-h-12 pb-3 pt-1",
+          "px-2 placeholder:text-muted-foreground/40",
+          welcomeHideOrb
+            ? "text-sm leading-5"
+            : "text-base leading-6 sm:text-lg",
+          welcomeHideOrb
+            ? hasMessages
+              ? "min-h-8 pb-1.5 pt-0.5"
+              : "min-h-8 pb-1 pt-0"
+            : hasMessages
+              ? "min-h-8 pb-2 pt-0.5"
+              : "min-h-12 pb-3 pt-1",
         )}
       />
-      <PromptInputFooter className="flex items-center justify-between gap-2 px-0 pb-1.5">
+      <PromptInputFooter className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <PromptInputActionMenu>
             <PromptInputActionMenuTrigger
@@ -1651,7 +1794,10 @@ export function ChatArea({
                 </TooltipTrigger>
                 <PopoverContent className="w-64 p-0" align="start" side="top">
                   <Command>
-                    <CommandInput placeholder="Search projects…" className="h-9" />
+                    <CommandInput
+                      placeholder="Search projects…"
+                      className="h-9"
+                    />
                     <CommandList>
                       <CommandEmpty>
                         {projectsLoading ? "Loading…" : "No projects found"}
@@ -1676,11 +1822,17 @@ export function ChatArea({
                             key={project.id}
                             value={`${project.name ?? ""} ${project.project_number ?? ""}`}
                             onSelect={() => {
-                              onProjectChange?.(project.id === selectedProjectIdProp ? null : project.id);
+                              onProjectChange?.(
+                                project.id === selectedProjectIdProp
+                                  ? null
+                                  : project.id,
+                              );
                               setProjectOpen(false);
                             }}
                           >
-                            <span className="flex-1 truncate">{project.name}</span>
+                            <span className="flex-1 truncate">
+                              {project.name}
+                            </span>
                             {project.project_number && (
                               <span className="ml-2 shrink-0 text-xs text-muted-foreground">
                                 #{project.project_number}
@@ -1713,7 +1865,9 @@ export function ChatArea({
               composerIconButtonClass,
               councilMode && "text-primary hover:text-primary",
             )}
-            aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
+            aria-label={
+              councilMode ? "Turn off council mode" : "Turn on council mode"
+            }
           >
             <UsersRoundIcon className="h-3.5 w-3.5" />
           </PromptInputAction>
@@ -1747,7 +1901,9 @@ export function ChatArea({
                             }}
                           >
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate font-medium">{model.label}</span>
+                              <span className="block truncate font-medium">
+                                {model.label}
+                              </span>
                               <span className="block truncate text-xs text-muted-foreground">
                                 {model.description}
                               </span>
@@ -1787,10 +1943,37 @@ export function ChatArea({
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {showWelcome ? (
-        <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
+        <div
+          className={cn(
+            "flex min-h-0 flex-1",
+            welcomeHideOrb ? "pb-0" : "pb-6 md:pb-8",
+          )}
+        >
           <WelcomeScreen
             hideOrb={welcomeHideOrb}
+            variant={welcomeHideOrb ? "widget" : "full"}
             composer={promptInputEl}
+            beforeComposer={
+              welcomeHideOrb ? (
+                <WidgetWelcomePrompt
+                  disabled={isStreaming}
+                  suggestions={assistantSuggestions}
+                  onAction={handleWidgetWelcomeAction}
+                  onDismiss={
+                    showWidgetWelcomePrompt ? onWidgetWelcomeDismiss : undefined
+                  }
+                />
+              ) : null
+            }
+            afterComposer={
+              !welcomeHideOrb ? (
+                <AssistantSuggestionList
+                  disabled={isStreaming}
+                  suggestions={assistantSuggestions}
+                  onSelectPrompt={handleCatalogAction}
+                />
+              ) : null
+            }
             error={
               chatError ? (
                 <InfoAlert variant="error" className="py-2">
@@ -1808,19 +1991,18 @@ export function ChatArea({
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
                 const imageParts = isAssistant ? [] : getImageParts(msg);
-                const { cleanText: textWithoutSources, sources: inlineSources } = isAssistant
+                const {
+                  cleanText: textWithoutSources,
+                  sources: inlineSources,
+                } = isAssistant
                   ? extractSources(text)
                   : { cleanText: text, sources: [] };
                 const formattedAssistantText = isAssistant
                   ? formatStructuredMeetingList(textWithoutSources)
                   : text;
                 const reasoningText = isAssistant ? getReasoningText(msg) : "";
-                const allToolParts = isAssistant
-                  ? getToolParts(msg)
-                  : [];
-                const artifactParts = isAssistant
-                  ? getArtifactParts(msg)
-                  : [];
+                const allToolParts = isAssistant ? getToolParts(msg) : [];
+                const artifactParts = isAssistant ? getArtifactParts(msg) : [];
                 // saveWorkspaceArtifact is rendered as a dedicated artifact card,
                 // so exclude it from the generic tool display.
                 const toolParts = allToolParts.filter(
@@ -1840,9 +2022,8 @@ export function ChatArea({
                 const widgetSuppressesText = leadingAssistantWidgetParts.some(
                   (w) => textSuppressingTypes.has(w.type),
                 );
-                const trailingAssistantWidgetParts = assistantWidgetParts.filter(
-                  isOutlookInboxSummaryWidget,
-                );
+                const trailingAssistantWidgetParts =
+                  assistantWidgetParts.filter(isOutlookInboxSummaryWidget);
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
@@ -1854,6 +2035,7 @@ export function ChatArea({
                   content: text,
                 });
                 const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
+                const langfuseTraceId = langfuseTraceIdByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
 
                 // Show tool-only assistant messages with live tool call display.
@@ -1867,67 +2049,77 @@ export function ChatArea({
                           <MessageContent>
                             {toolParts.length > 1 ? (
                               <>
-                              <ChainOfThought defaultOpen>
-                                <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
-                                <ChainOfThoughtContent>
-                                  {toolParts.map((part) => (
-                                    <ChainOfThoughtStep
-                                      key={part.toolCallId}
-                                      label={formatToolName(getToolNameFromType(part.type))}
-                                      status={getToolStepStatus(part.state)}
-                                    />
-                                  ))}
-                                </ChainOfThoughtContent>
-                              </ChainOfThought>
-                              {toolParts.some((part) => part.approval) && (
-                                <div className="mt-2 space-y-2">
-                                  {toolParts
-                                    .filter((part) => part.approval)
-                                    .map((part) => (
-                                      <ToolCallItem
+                                <ChainOfThought defaultOpen>
+                                  <ChainOfThoughtHeader>
+                                    Analysis Steps
+                                  </ChainOfThoughtHeader>
+                                  <ChainOfThoughtContent>
+                                    {toolParts.map((part) => (
+                                      <ChainOfThoughtStep
                                         key={part.toolCallId}
-                                        part={part}
-                                        onApprove={handleToolApprove}
-                                        onEdit={handleToolEdit}
-                                        onRun={handleToolRun}
-                                        onApprovalResponse={onToolApprovalResponse}
-                                        sessionId={sessionId}
-                                        selectedProjectId={selectedProjectIdProp}
+                                        label={formatToolName(
+                                          getToolNameFromType(part.type),
+                                        )}
+                                        status={getToolStepStatus(part.state)}
                                       />
                                     ))}
-                                </div>
-                              )}
-                              {toolParts
-                                .filter((part) => hasAssistantDynamicToolComponent(part))
-                                .map((part) => (
-                                  <AssistantDynamicToolRenderer
-                                    key={`${part.toolCallId}-dynamic`}
-                                    part={part}
-                                    selectedProjectId={selectedProjectIdProp}
-                                    onSubmit={onSubmit}
-                                    onEditDraft={onInputChange}
-                                  />
-                                ))}
+                                  </ChainOfThoughtContent>
+                                </ChainOfThought>
+                                {toolParts.some((part) => part.approval) && (
+                                  <div className="mt-2 space-y-2">
+                                    {toolParts
+                                      .filter((part) => part.approval)
+                                      .map((part) => (
+                                        <ToolCallItem
+                                          key={part.toolCallId}
+                                          part={part}
+                                          onApprove={handleToolApprove}
+                                          onEdit={handleToolEdit}
+                                          onRun={handleToolRun}
+                                          onApprovalResponse={
+                                            onToolApprovalResponse
+                                          }
+                                          sessionId={sessionId}
+                                          selectedProjectId={
+                                            selectedProjectIdProp
+                                          }
+                                        />
+                                      ))}
+                                  </div>
+                                )}
+                                {toolParts
+                                  .filter((part) =>
+                                    hasAssistantDynamicToolComponent(part),
+                                  )
+                                  .map((part) => (
+                                    <AssistantDynamicToolRenderer
+                                      key={`${part.toolCallId}-dynamic`}
+                                      part={part}
+                                      selectedProjectId={selectedProjectIdProp}
+                                      onSubmit={onSubmit}
+                                      onEditDraft={onInputChange}
+                                    />
+                                  ))}
                               </>
+                            ) : hasAssistantDynamicToolComponent(
+                                toolParts[0],
+                              ) ? (
+                              <AssistantDynamicToolRenderer
+                                part={toolParts[0]}
+                                selectedProjectId={selectedProjectIdProp}
+                                onSubmit={onSubmit}
+                                onEditDraft={onInputChange}
+                              />
                             ) : (
-                              hasAssistantDynamicToolComponent(toolParts[0]) ? (
-                                <AssistantDynamicToolRenderer
-                                  part={toolParts[0]}
-                                  selectedProjectId={selectedProjectIdProp}
-                                  onSubmit={onSubmit}
-                                  onEditDraft={onInputChange}
-                                />
-                              ) : (
-                                <ToolCallItem
-                                  part={toolParts[0]}
-                                  onApprove={handleToolApprove}
-                                  onEdit={handleToolEdit}
-                                  onRun={handleToolRun}
-                                  onApprovalResponse={onToolApprovalResponse}
-                                  sessionId={sessionId}
-                                  selectedProjectId={selectedProjectIdProp}
-                                />
-                              )
+                              <ToolCallItem
+                                part={toolParts[0]}
+                                onApprove={handleToolApprove}
+                                onEdit={handleToolEdit}
+                                onRun={handleToolRun}
+                                onApprovalResponse={onToolApprovalResponse}
+                                sessionId={sessionId}
+                                selectedProjectId={selectedProjectIdProp}
+                              />
                             )}
                           </MessageContent>
                         </Message>
@@ -1951,10 +2143,7 @@ export function ChatArea({
                 // User messages — right-aligned bubble
                 if (!isAssistant) {
                   return (
-                    <Message
-                      key={msg.id}
-                      from="user"
-                    >
+                    <Message key={msg.id} from="user">
                       <MessageContent className="user-message-enter rounded-full bg-muted px-3 py-1 text-foreground">
                         {imageParts.length > 0 && (
                           <div className="mb-2 flex flex-wrap gap-2">
@@ -2030,13 +2219,19 @@ export function ChatArea({
                           {/* Live tool call display (during streaming) */}
                           {toolParts.length > 1 ? (
                             <div className="mb-3">
-                              <ChainOfThought defaultOpen={isStreaming && isLastMessage}>
-                                <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
+                              <ChainOfThought
+                                defaultOpen={isStreaming && isLastMessage}
+                              >
+                                <ChainOfThoughtHeader>
+                                  Analysis Steps
+                                </ChainOfThoughtHeader>
                                 <ChainOfThoughtContent>
                                   {toolParts.map((part) => (
                                     <ChainOfThoughtStep
                                       key={part.toolCallId}
-                                      label={formatToolName(getToolNameFromType(part.type))}
+                                      label={formatToolName(
+                                        getToolNameFromType(part.type),
+                                      )}
                                       status={getToolStepStatus(part.state)}
                                     />
                                   ))}
@@ -2053,15 +2248,21 @@ export function ChatArea({
                                         onApprove={handleToolApprove}
                                         onEdit={handleToolEdit}
                                         onRun={handleToolRun}
-                                        onApprovalResponse={onToolApprovalResponse}
+                                        onApprovalResponse={
+                                          onToolApprovalResponse
+                                        }
                                         sessionId={sessionId}
-                                        selectedProjectId={selectedProjectIdProp}
+                                        selectedProjectId={
+                                          selectedProjectIdProp
+                                        }
                                       />
                                     ))}
                                 </div>
                               )}
                               {toolParts
-                                .filter((part) => hasAssistantDynamicToolComponent(part))
+                                .filter((part) =>
+                                  hasAssistantDynamicToolComponent(part),
+                                )
                                 .map((part) => (
                                   <AssistantDynamicToolRenderer
                                     key={`${part.toolCallId}-dynamic`}
@@ -2074,7 +2275,9 @@ export function ChatArea({
                             </div>
                           ) : toolParts.length === 1 ? (
                             <div className="mb-3">
-                              {hasAssistantDynamicToolComponent(toolParts[0]) ? (
+                              {hasAssistantDynamicToolComponent(
+                                toolParts[0],
+                              ) ? (
                                 <AssistantDynamicToolRenderer
                                   part={toolParts[0]}
                                   selectedProjectId={selectedProjectIdProp}
@@ -2114,13 +2317,17 @@ export function ChatArea({
 
                           {/* Main text response — hidden when a widget fully replaces it */}
                           {!widgetSuppressesText && (
-                          <MessageResponse
-                            className="text-sm leading-6"
-                            isAnimating={isStreaming && isLastMessage}
-                            caret={isStreaming && isLastMessage ? "block" : undefined}
-                          >
-                            {formattedAssistantText}
-                          </MessageResponse>
+                            <MessageResponse
+                              className="text-sm leading-6"
+                              isAnimating={isStreaming && isLastMessage}
+                              caret={
+                                isStreaming && isLastMessage
+                                  ? "block"
+                                  : undefined
+                              }
+                            >
+                              {formattedAssistantText}
+                            </MessageResponse>
                           )}
 
                           {trailingAssistantWidgetParts.map((widget) => (
@@ -2159,28 +2366,26 @@ export function ChatArea({
                             </div>
                           )}
 
-                          {/* Persisted tool traces (historical messages) */}
-                          {toolParts.length === 0 && (
-                            <TracePanel
-                              traces={persistedTraces}
-                              diagnostics={traceDiagnostics}
-                            />
-                          )}
+                          {/* Execution trace is no longer dumped inline — it is
+                              tucked behind the Trace icon in the message actions
+                              row below (see TraceMenu). */}
 
                           {/* Source citations — disabled in chat UI per 2026-05-19. */}
                           {false && persistedSources.length > 0 && (
-                            <AssistantSourceEvidenceWidget sources={persistedSources} />
+                            <AssistantSourceEvidenceWidget
+                              sources={persistedSources}
+                            />
                           )}
 
                           <AssistantMemoryTrace
-                              usage={memoryUsage}
-                              messageId={msg.id}
-                              sessionId={sessionId}
+                            usage={memoryUsage}
+                            messageId={msg.id}
+                            sessionId={sessionId}
                           />
                           <AssistantSkillTrace
-                              usage={skillUsage}
-                              messageId={msg.id}
-                              sessionId={sessionId}
+                            usage={skillUsage}
+                            messageId={msg.id}
+                            sessionId={sessionId}
                           />
                         </MessageContent>
 
@@ -2193,7 +2398,12 @@ export function ChatArea({
                                   ? "Stop voice"
                                   : "Read aloud"
                               }
-                              onClick={() => handleSpeakResponse(msg.id, formattedAssistantText)}
+                              onClick={() =>
+                                handleSpeakResponse(
+                                  msg.id,
+                                  formattedAssistantText,
+                                )
+                              }
                               disabled={
                                 isStreaming ||
                                 (loadingSpeechMessageId !== null &&
@@ -2206,7 +2416,8 @@ export function ChatArea({
                                 <Volume2Icon
                                   className={cn(
                                     "h-3.5 w-3.5",
-                                    loadingSpeechMessageId === msg.id && "animate-pulse",
+                                    loadingSpeechMessageId === msg.id &&
+                                      "animate-pulse",
                                   )}
                                 />
                               )}
@@ -2217,12 +2428,21 @@ export function ChatArea({
                             >
                               <CopyIcon className="h-3.5 w-3.5" />
                             </MessageAction>
+                            {(persistedTraces.length > 0 ||
+                              traceDiagnostics) && (
+                              <TraceMenu
+                                traces={persistedTraces}
+                                diagnostics={traceDiagnostics}
+                              />
+                            )}
                             <AiResponseFeedback
                               className="ml-1"
                               subject={{
                                 surface: "ai_assistant",
                                 subjectType: "assistant_message",
                                 subjectId: msg.id,
+                                messageId: msg.id,
+                                traceId: langfuseTraceId ?? null,
                                 projectId: selectedProjectIdProp ?? null,
                                 sessionId: sessionId ?? null,
                                 contentSnapshot: {
@@ -2256,7 +2476,6 @@ export function ChatArea({
                   <CrossSourceTimeline projectId={selectedProjectIdProp} />
                 </div>
               )}
-
             </ConversationContent>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
             <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
@@ -2276,6 +2495,45 @@ export function ChatArea({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function WidgetWelcomePrompt({
+  disabled,
+  suggestions,
+  onAction,
+  onDismiss,
+}: {
+  disabled: boolean;
+  suggestions: AssistantSuggestion[];
+  onAction: (prompt: string) => void;
+  onDismiss?: () => void;
+}) {
+  return (
+    <div className="text-left">
+      {onDismiss && (
+        <div className="mb-1 flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onDismiss}
+            aria-label="Dismiss AI welcome message"
+            className="-mr-1 -mt-1 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+      <div>
+        <AssistantSuggestionList
+          disabled={disabled}
+          suggestions={suggestions.slice(0, 3)}
+          variant="compact"
+          onSelectPrompt={onAction}
+        />
+      </div>
     </div>
   );
 }

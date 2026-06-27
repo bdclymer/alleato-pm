@@ -95,7 +95,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Number",
         alwaysVisible: true,
         render: (co) => (
-          <div className="font-medium">{co.change_order_number || "—"}</div>
+          <div className="font-medium">{co.change_order_number}</div>
         ),
       },
       {
@@ -103,7 +103,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Revision",
         render: (co) => (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {co.revision != null ? co.revision : "—"}
+            {co.revision ?? null}
           </span>
         ),
       },
@@ -111,7 +111,7 @@ export function PrimeContractChangeOrdersTab({
         id: "title",
         label: "Title",
         render: (co) => (
-          <span className="text-foreground">{co.title || co.description || "—"}</span>
+          <span className="text-foreground">{co.title || co.description || null}</span>
         ),
       },
       {
@@ -124,7 +124,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Executed",
         render: (co) => (
           <span className="text-sm text-muted-foreground">
-            {co.executed ? "Yes" : "—"}
+            {co.executed ? "Yes" : null}
           </span>
         ),
       },
@@ -144,7 +144,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Date Initiated",
         render: (co) => (
           <span className="text-sm text-muted-foreground">
-            {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+            {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : null}
           </span>
         ),
       },
@@ -153,7 +153,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Due Date",
         render: (co) => (
           <span className="text-sm text-muted-foreground">
-            {co.due_date ? new Date(co.due_date).toLocaleDateString() : "—"}
+            {co.due_date ? new Date(co.due_date).toLocaleDateString() : null}
           </span>
         ),
       },
@@ -162,7 +162,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Review Date",
         render: (co) => (
           <span className="text-sm text-muted-foreground">
-            {co.review_date ? new Date(co.review_date).toLocaleDateString() : "—"}
+            {co.review_date ? new Date(co.review_date).toLocaleDateString() : null}
           </span>
         ),
       },
@@ -171,7 +171,7 @@ export function PrimeContractChangeOrdersTab({
         label: "Designated Reviewer",
         render: (co) => (
           <span className="text-sm text-muted-foreground">
-            {co.designated_reviewer || "—"}
+            {co.designated_reviewer || null}
           </span>
         ),
       },

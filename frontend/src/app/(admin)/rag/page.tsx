@@ -26,6 +26,10 @@ import { cn } from "@/lib/utils";
 
 import type { DailySyncRow } from "@/app/api/admin/rag-snapshots/route";
 import type {
+  ActiveAlert,
+  ActiveAlertsResponse,
+} from "@/app/api/admin/source-sync/active-alerts/route";
+import type {
   LifecycleDocumentsResponse,
   SourceSyncStatus,
 } from "@/app/api/admin/source-sync/_contracts";
@@ -948,6 +952,57 @@ function DailySyncHistory({ days, loading }: { days: DailySyncRow[]; loading: bo
   );
 }
 
+// How many individual alert lines the banner shows before collapsing the rest
+// into a single summary line. Keeps a hard outage loud without burying it under
+// a wall of chronic stale-source warnings.
+const BANNER_MAX_LINES = 5;
+
+/**
+ * Loud-but-focused banner for active pipeline alerts (the same rows the Teams
+ * notifier writes). Leads with hard "stopped vectorizing" failures
+ * (pipeline_outcome) — the real-time, actionable signal — then the most severe
+ * remaining alerts, capped at BANNER_MAX_LINES with a "+N more" summary so a true
+ * outage is never buried. Renders nothing when everything is healthy. Chronic
+ * per-source staleness lives in the RAG lifecycle tab, not here.
+ */
+function PipelineAlertsBanner({ alerts }: { alerts: ActiveAlert[] }) {
+  if (alerts.length === 0) return null;
+
+  const hardDown = alerts.filter((a) => a.category === "pipeline_outcome");
+  const rest = alerts.filter((a) => a.category !== "pipeline_outcome");
+  // API already sorts by severity then recency; hard outages first.
+  const ordered = [...hardDown, ...rest];
+  const shown = ordered.slice(0, BANNER_MAX_LINES);
+  const hidden = ordered.length - shown.length;
+
+  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  const headline =
+    hardDown.length > 0
+      ? `Pipeline failing — ${hardDown.length} source${hardDown.length === 1 ? "" : "s"} stopped vectorizing`
+      : `${criticalCount || alerts.length} active pipeline alert${
+          (criticalCount || alerts.length) === 1 ? "" : "s"
+        }`;
+
+  return (
+    <InfoAlert variant={hardDown.length > 0 || criticalCount > 0 ? "error" : "warning"} role="alert">
+      <div className="font-medium">{headline}</div>
+      <ul className="mt-1.5 space-y-1 text-xs">
+        {shown.map((alert) => (
+          <li key={alert.alertKey}>
+            <span className="font-medium">{alert.title}</span>
+            {alert.message ? ` — ${alert.message}` : null}
+          </li>
+        ))}
+      </ul>
+      {hidden > 0 ? (
+        <div className="mt-1.5 text-xs opacity-70">
+          +{hidden} more active alert{hidden === 1 ? "" : "s"} — see the RAG lifecycle tab for per-source detail.
+        </div>
+      ) : null}
+    </InfoAlert>
+  );
+}
+
 export default function RagDashboardPage() {
   const searchParams = useSearchParams();
   const [days, setDays] = React.useState<DailySyncRow[]>([]);
@@ -955,6 +1010,7 @@ export default function RagDashboardPage() {
   const [historyLoading, setHistoryLoading] = React.useState(true);
   const [lifecycleLoading, setLifecycleLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [alerts, setAlerts] = React.useState<ActiveAlert[]>([]);
   const [lifecycleWindow, setLifecycleWindow] = React.useState<LifecycleWindow>({
     days: 7,
     start: null,
@@ -991,9 +1047,24 @@ export default function RagDashboardPage() {
       });
   }, []);
 
+  const loadAlerts = React.useCallback(() => {
+    void apiFetch<ActiveAlertsResponse>("/api/admin/source-sync/active-alerts")
+      .then((res) => {
+        setAlerts(res.alerts ?? []);
+      })
+      .catch(() => {
+        // A failed alert feed must not blank the dashboard; the source-sync
+        // status panel still renders. Leave prior alerts in place.
+      });
+  }, []);
+
   React.useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  React.useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   React.useEffect(() => {
     loadLifecycle(lifecycleWindow);
@@ -1013,6 +1084,7 @@ export default function RagDashboardPage() {
           onClick={() => {
             loadHistory();
             loadLifecycle(lifecycleWindow);
+            loadAlerts();
           }}
           disabled={loading}
         >
@@ -1027,6 +1099,8 @@ export default function RagDashboardPage() {
           <div className="text-xs opacity-80">{error}</div>
         </InfoAlert>
       ) : null}
+
+      <PipelineAlertsBanner alerts={alerts} />
 
       <PageTabs
         variant="inline"

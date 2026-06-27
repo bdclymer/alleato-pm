@@ -2,7 +2,12 @@
 
 import { spawn } from "node:child_process";
 
-const timeoutMs = Number(process.env.TYPECHECK_TIMEOUT_MS || 60000);
+// A clean full-program check of the frontend takes ~90s on a warm machine.
+// The previous 60s bound killed tsc mid-run, swallowing real type errors (e.g.
+// TS2322 in assistant-widgets.ts) before they could be printed — a silent-failure
+// detection gap. The bound exists to catch genuine hangs, so it sits well above
+// the real cost with headroom for a cold/loaded machine, not at the wire.
+const timeoutMs = Number(process.env.TYPECHECK_TIMEOUT_MS || 300000);
 const disableTimeout = process.env.TYPECHECK_NO_TIMEOUT === "1";
 
 const child = spawn(

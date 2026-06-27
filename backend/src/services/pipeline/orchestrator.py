@@ -15,8 +15,10 @@ from typing import Any, Dict
 from .parser import run_parser
 from .document_parser import run_document_parser
 from .financial_parser import run_financial_parser
+from .vision_analyzer import run_vision_analyzer
 from .embedder import run_embedder
 from .extractor import run_extractor
+from ..ops.db_pressure_guard import AppDbProjectionError
 from ..intelligence.compiler import process_source_document_to_packet
 from ..supabase_helpers import get_supabase_client, update_ingestion_job_state
 
@@ -147,6 +149,21 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
                 results["parser"] = run_parser(metadata_id)
             logger.info("[Pipeline] Parser done: %s", results["parser"])
 
+            # Vision analysis runs after parsing, before embedding.
+            # Applies to PDFs only (drawings, submittals, specs).
+            # Failures are logged but do not block the rest of the pipeline.
+            if is_document:
+                logger.info("[Pipeline] Stage 1b/4: Vision Analyzer → %s", metadata_id)
+                try:
+                    results["vision"] = run_vision_analyzer(metadata_id, client)
+                    logger.info("[Pipeline] Vision done: %s", results["vision"])
+                except Exception as vision_exc:
+                    logger.warning(
+                        "[Pipeline] Vision analysis failed (non-fatal) for %s: %s",
+                        metadata_id, vision_exc,
+                    )
+                    results["vision"] = {"error": str(vision_exc)}
+
             logger.info("[Pipeline] Stage 2/4: Embedder → %s", metadata_id)
             results["embedder"] = run_embedder(metadata_id)
             logger.info("[Pipeline] Embedder done: %s", results["embedder"])
@@ -156,14 +173,27 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
             logger.info("[Pipeline] Extractor done: %s", results["extractor"])
 
             logger.info("[Pipeline] Stage 4/4: Intelligence Compiler → %s", metadata_id)
-            results["intelligence_compiler"] = process_source_document_to_packet(
-                client,
-                metadata_id,
-            )
-            logger.info(
-                "[Pipeline] Intelligence compiler done: %s",
-                results["intelligence_compiler"],
-            )
+            try:
+                results["intelligence_compiler"] = process_source_document_to_packet(
+                    client,
+                    metadata_id,
+                )
+                logger.info(
+                    "[Pipeline] Intelligence compiler done: %s",
+                    results["intelligence_compiler"],
+                )
+            except AppDbProjectionError as exc:
+                logger.warning(
+                    "[Pipeline] Intelligence compiler final projection blocked; "
+                    "continuing terminal ingestion metadata_id=%s: %s",
+                    metadata_id,
+                    exc,
+                )
+                results["intelligence_compiler"] = {
+                    "status": "projection_blocked",
+                    "error": str(exc),
+                    "non_blocking": True,
+                }
 
             results["status"] = "done"
             return results

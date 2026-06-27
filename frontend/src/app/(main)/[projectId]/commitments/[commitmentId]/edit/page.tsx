@@ -20,6 +20,11 @@ import type { CreatePurchaseOrderInput, PurchaseOrderSovLineItem } from "@/lib/s
 type SubcontractInitialData = Partial<CreateSubcontractInput> & { sovLines?: SovLineItem[] };
 type PurchaseOrderInitialData = Partial<CreatePurchaseOrderInput> & {
   contractCompanyName?: string;
+  assignedToName?: string;
+  billToCompanyName?: string;
+  billToContactName?: string;
+  shipToCompanyName?: string;
+  shipToContactName?: string;
   sovLines?: PurchaseOrderSovLineItem[];
 };
 type CommitmentAttachment = {
@@ -137,6 +142,26 @@ export default function EditCommitmentPage() {
         description: typeof r.description === "string" ? r.description : undefined,
         billTo: typeof r.bill_to === "string" ? r.bill_to : undefined,
         shipTo: typeof r.ship_to === "string" ? r.ship_to : undefined,
+        billToCompanyId: typeof r.bill_to_company_id === "string" ? r.bill_to_company_id : undefined,
+        billToContactId: typeof r.bill_to_contact_id === "string" ? r.bill_to_contact_id : undefined,
+        billToAddress: typeof r.bill_to_address === "string" ? r.bill_to_address : undefined,
+        billToAddressLine2: typeof r.bill_to_address_line2 === "string" ? r.bill_to_address_line2 : undefined,
+        billToCity: typeof r.bill_to_city === "string" ? r.bill_to_city : undefined,
+        billToState: typeof r.bill_to_state === "string" ? r.bill_to_state : undefined,
+        billToZip: typeof r.bill_to_zip === "string" ? r.bill_to_zip : undefined,
+        billToCompanyName: (r.bill_to_company as { name?: string } | null)?.name,
+        billToContactName: (r.bill_to_contact as { full_name?: string; name?: string } | null)?.full_name
+          ?? (r.bill_to_contact as { name?: string } | null)?.name,
+        shipToCompanyId: typeof r.ship_to_company_id === "string" ? r.ship_to_company_id : undefined,
+        shipToContactId: typeof r.ship_to_contact_id === "string" ? r.ship_to_contact_id : undefined,
+        shipToAddress: typeof r.ship_to_address === "string" ? r.ship_to_address : undefined,
+        shipToAddressLine2: typeof r.ship_to_address_line2 === "string" ? r.ship_to_address_line2 : undefined,
+        shipToCity: typeof r.ship_to_city === "string" ? r.ship_to_city : undefined,
+        shipToState: typeof r.ship_to_state === "string" ? r.ship_to_state : undefined,
+        shipToZip: typeof r.ship_to_zip === "string" ? r.ship_to_zip : undefined,
+        shipToCompanyName: (r.ship_to_company as { name?: string } | null)?.name,
+        shipToContactName: (r.ship_to_contact as { full_name?: string; name?: string } | null)?.full_name
+          ?? (r.ship_to_contact as { name?: string } | null)?.name,
         shipVia: typeof r.ship_via === "string" ? r.ship_via : undefined,
         paymentTerms: typeof r.payment_terms === "string" ? r.payment_terms : undefined,
         dates: {
@@ -146,6 +171,7 @@ export default function EditCommitmentPage() {
           issuedOnDate: typeof r.issued_on_date === "string" ? r.issued_on_date : undefined,
         },
         assignedTo: typeof r.assigned_to === "string" ? r.assigned_to : undefined,
+        assignedToName: typeof r.assigned_to_name === "string" ? r.assigned_to_name : undefined,
         invoiceContactIds: Array.isArray(r.invoice_contact_ids)
           ? (r.invoice_contact_ids as string[])
           : [],
@@ -305,13 +331,26 @@ export default function EditCommitmentPage() {
         contract_number: data.contractNumber,
         title: data.title,
         contract_company_id: data.contractCompanyId || null,
-        company_license_number: data.companyLicenseNumber || null,
         status: data.status,
         executed: data.executed ?? false,
         description: data.description || null,
         assigned_to: data.assignedTo || null,
         bill_to: data.billTo || null,
         ship_to: data.shipTo || null,
+        bill_to_company_id: data.billToCompanyId || null,
+        bill_to_contact_id: data.billToContactId || null,
+        bill_to_address: data.billToAddress || null,
+        bill_to_address_line2: data.billToAddressLine2 || null,
+        bill_to_city: data.billToCity || null,
+        bill_to_state: data.billToState || null,
+        bill_to_zip: data.billToZip || null,
+        ship_to_company_id: data.shipToCompanyId || null,
+        ship_to_contact_id: data.shipToContactId || null,
+        ship_to_address: data.shipToAddress || null,
+        ship_to_address_line2: data.shipToAddressLine2 || null,
+        ship_to_city: data.shipToCity || null,
+        ship_to_state: data.shipToState || null,
+        ship_to_zip: data.shipToZip || null,
         ship_via: data.shipVia || null,
         payment_terms: data.paymentTerms || null,
         is_private: data.privacy?.isPrivate ?? true,

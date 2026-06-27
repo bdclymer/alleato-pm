@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/sheet";
 
 const SIDE_PANEL_WIDTHS = {
+  xs: "min(100vw, 18rem)",
+  compact: "min(100vw, 24rem)",
   sm: "min(100vw, 28rem)",
   md: "min(100vw, 34rem)",
   lg: "min(100vw, 42rem)",

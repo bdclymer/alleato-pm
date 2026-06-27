@@ -1,0 +1,10 @@
+
+> alleato-procore@0.1.0 rag:verify:metadata-boundary
+> node scripts/verify/verify_rag_document_metadata_boundary.mjs
+
+RAG document metadata boundary check failed:
+- backend/src/services/pipeline/document_parser.py:347 document_metadata select includes heavy column(s): content, raw_text
+- backend/src/services/pipeline/embedder.py:260 document_metadata select includes heavy column(s): content, raw_text
+- backend/src/services/integrations/microsoft_graph/onedrive_project_assignment_backfill.py:173 document_metadata select includes heavy column(s): content, raw_text
+- frontend/src/lib/ai/tools/document-intelligence.ts:812 document_metadata select includes heavy column(s): content
+- frontend/src/lib/ai/tools/document-intelligence.ts:985 document_metadata select includes heavy column(s): content

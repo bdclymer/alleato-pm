@@ -2,6 +2,7 @@ import {
   adminTools,
   buildToolUrl,
   companyWideHeaderTools,
+  companyWideToolSections,
   coreTools,
   developerCompanyAdminTools,
   filterToolsByPermission,
@@ -181,9 +182,9 @@ describe("navigation config", () => {
     // Guardrail: the AI assistant is intentionally available to ALL authenticated
     // users. It must not be marked developerOnly (which would hide its nav link)
     // unless the page + /api/ai-assistant routes also enforce the role server-side.
-    const aiTool = companyWideHeaderTools.find((tool) => tool.name === "AI");
+    const aiTool = companyWideHeaderTools.find((tool) => tool.path === "ai");
 
-    expect(aiTool).toMatchObject({ name: "AI", path: "ai" });
+    expect(aiTool).toMatchObject({ name: "Alleato AI", path: "ai" });
     expect(aiTool?.developerOnly).toBeUndefined();
 
     const tools = filterToolsByPermission(
@@ -195,10 +196,7 @@ describe("navigation config", () => {
       false,
     );
 
-    expect(tools.some((tool) => tool.name === "AI")).toBe(true);
-    expect(tools.some((tool) => tool.name === "Skill Library")).toBe(true);
-    expect(tools.some((tool) => tool.name === "Teach Alleato")).toBe(true);
-    expect(tools.some((tool) => tool.name === "AI Learning Promotions")).toBe(false);
+    expect(tools.some((tool) => tool.name === "Alleato AI")).toBe(true);
   });
 
   it("keeps company-wide Work tools enabled for non-developer users", () => {
@@ -232,5 +230,33 @@ describe("navigation config", () => {
     for (const expectedTool of expectedTools) {
       expect(tools.some((tool) => tool.name === expectedTool.name)).toBe(true);
     }
+  });
+
+  it("keeps removed company-wide surfaces out of company navigation", () => {
+    const removedToolNames = ["Assignment Inbox", "Teams Conversations", "Teams Messages"];
+    const removedPaths = ["assignment-inbox", "teams-conversations", "files"];
+    const visibleCompanyToolNames = companyWideHeaderTools.map((tool) => tool.name);
+    const visibleCompanyToolPaths = companyWideHeaderTools.map((tool) => tool.path);
+    const groupedCompanyToolNames = companyWideToolSections.flatMap(
+      (section) => section.toolNames,
+    );
+
+    for (const removedToolName of removedToolNames) {
+      expect(visibleCompanyToolNames).not.toContain(removedToolName);
+      expect(groupedCompanyToolNames).not.toContain(removedToolName);
+    }
+
+    for (const removedPath of removedPaths) {
+      expect(visibleCompanyToolPaths).not.toContain(removedPath);
+    }
+
+    expect(groupedCompanyToolNames).not.toContain("Documents");
+    expect(coreTools).toContainEqual(
+      expect.objectContaining({
+        name: "Documents",
+        path: "documents",
+        requiresProject: true,
+      }),
+    );
   });
 });

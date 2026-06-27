@@ -4,6 +4,7 @@ packet-first intelligence layer (insight_cards) via the candidate -> promotion p
 
 from src.services.intelligence import client as intelligence_client
 from src.services.intelligence import compiler
+from src.services.ops.db_pressure_guard import AppDbProjectionError
 from src.services.pipeline import extractor, llm
 from src.services.pipeline.models import (
     DecisionItem,
@@ -315,6 +316,23 @@ def test_upsert_task_high_confidence_deep_task_auto_created(monkeypatch):
     assert row["extraction_metadata"]["deep_confidence"] == 0.95
 
 
+def test_upsert_task_legacy_fireflies_task_records_prompt_version(monkeypatch):
+    _patch_employee_resolver(monkeypatch)
+    recorder = {"upserted": []}
+    client = _FakeTaskClient(recorder)
+
+    legacy = TaskItem(
+        description="Check headphone and sound settings before the next call.",
+        assignee="Sam",
+    )
+    extractor._upsert_task(client, legacy, "meeting-1", [42], 42)
+
+    row = recorder["upserted"][0]
+    assert row["source_system"] == "fireflies"
+    assert row["extraction_source"] == "fireflies_pipeline_legacy"
+    assert row["extraction_prompt_version"] == extractor.LEGACY_FIREFLIES_TASK_PROMPT_VERSION
+
+
 def test_promote_meeting_signals_skips_without_project():
     structured = StructuredData(decisions=[DecisionItem(description="x" * 50)])
     result = extractor._promote_meeting_signals(object(), "meeting-1", None, None, structured)
@@ -395,3 +413,25 @@ def test_promote_meeting_signals_writes_clears_prior_and_promotes_high_confidenc
     # Only the rich decision clears the 0.85 bar; the thin risk stays needs_review.
     assert result["signals_promoted"] == 1
     assert len(recorder["promoted"]) == 1
+
+
+def test_safe_promote_meeting_signals_treats_pm_projection_guard_as_non_blocking(monkeypatch):
+    def _blocked(*_args, **_kwargs):
+        raise AppDbProjectionError(
+            "Blocked intelligence_promote_signal_candidate: final projection disabled"
+        )
+
+    monkeypatch.setattr(extractor, "_promote_meeting_signals", _blocked)
+
+    result = extractor._safe_promote_meeting_signals(
+        object(),
+        "meeting-1",
+        42,
+        "2026-06-09T00:00:00Z",
+        StructuredData(decisions=[DecisionItem(description="Approve the revised plan")]),
+    )
+
+    assert result["signals_written"] == 0
+    assert result["signals_promoted"] == 0
+    assert result["projection_status"] == "blocked"
+    assert "final projection disabled" in result["projection_error"]

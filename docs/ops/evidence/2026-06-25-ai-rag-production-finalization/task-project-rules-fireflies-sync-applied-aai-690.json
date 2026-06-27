@@ -1,0 +1,318 @@
+{
+  "status": "pass",
+  "dryRun": false,
+  "lookbackDays": 60,
+  "limit": 5000,
+  "sourceSystemFilter": "fireflies",
+  "syncExistingProjectIds": true,
+  "projectsLoaded": 113,
+  "rulesLoaded": 283,
+  "tasksScanned": 90,
+  "assignments": 5,
+  "existingProjectIdMismatches": 48,
+  "existingProjectIdMismatchesUpdated": 48,
+  "byProject": {
+    "810:Bella Vegas": 1,
+    "865:Goodwill Canton, IL": 1,
+    "870:Goodwill Washington": 1,
+    "871:Goodwill Pioneer": 1,
+    "754:Goodwill Allisonville Rd IN": 1
+  },
+  "samples": [
+    {
+      "id": "4c4af62f-213f-47c1-b3e4-17288bb0c767",
+      "title": "Verify Bella Vegas status offline",
+      "project_id": "810",
+      "project_name": "Bella Vegas",
+      "score": 133,
+      "evidence": [
+        "rule:Bella",
+        "rule:Bella Vegas",
+        "bella vegas"
+      ]
+    },
+    {
+      "id": "5c17b246-6c73-40cf-ae6f-b0f9a1d9c579",
+      "title": "Restart Canton roofing and steel work",
+      "project_id": "865",
+      "project_name": "Goodwill Canton, IL",
+      "score": 45,
+      "evidence": [
+        "rule:Canton"
+      ]
+    },
+    {
+      "id": "a6516230-f751-47a5-98b4-9a4b78a99b55",
+      "title": "Schedule Washington partition installation",
+      "project_id": "870",
+      "project_name": "Goodwill Washington",
+      "score": 24,
+      "evidence": [
+        "washington"
+      ]
+    },
+    {
+      "id": "8589e2ec-b144-4dfa-a511-a39f197518ce",
+      "title": "Confirm Pioneer Parkway flooring closeout",
+      "project_id": "871",
+      "project_name": "Goodwill Pioneer",
+      "score": 59,
+      "evidence": [
+        "goodwill pioneer",
+        "pioneer"
+      ]
+    },
+    {
+      "id": "ae720e82-2c43-444b-829d-d54c58d4f854",
+      "title": "Accelerate Allisonville Goodwill schedule",
+      "project_id": "754",
+      "project_name": "Goodwill Allisonville Rd IN",
+      "score": 49,
+      "evidence": [
+        "rule:Allisonville"
+      ]
+    }
+  ],
+  "existingProjectIdMismatchSamples": [
+    {
+      "id": "cb2a7158-5685-443c-ab27-9c1b196ec5aa",
+      "title": "Service laptop for Notion stability",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "fcca3486-9a80-4bfc-885f-11c777e4f9fd",
+      "title": "Help Gregory access transaction coding",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "60",
+      "previous_project_ids": []
+    },
+    {
+      "id": "88c30664-58a7-4f8d-9b9f-e3ae7df45685",
+      "title": "Track prompt PTO absence reporting",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "3ed70b36-cc02-4fc5-9fba-60d4359b33ed",
+      "title": "Publish PTO email copy instructions",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "460aa4c4-f504-4b3d-a042-c30802f43c33",
+      "title": "Maintain accurate PTO deduction records",
+      "source_system": "fireflies",
+      "metadata_id": "01KV5SMW8XBE46AR2AYRTFXAXV",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "663427c0-0796-4429-a4ff-04deb438a117",
+      "title": "Create Job Planner commitments",
+      "source_system": "fireflies",
+      "metadata_id": "01KTYF2KMQ3VHQX96HW3DANVNC",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "e4578997-2bf0-4054-801c-30906ec369f9",
+      "title": "Resubmit Brooksville Road architectural plans",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "877",
+      "previous_project_ids": []
+    },
+    {
+      "id": "a67935d0-35fc-46d0-94af-d219560455b1",
+      "title": "Advance Allisonville Road site work",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "754",
+      "previous_project_ids": []
+    },
+    {
+      "id": "b7638f99-ac4d-405b-a831-2c6d84843b73",
+      "title": "Prepare Kokomo June 12 submittal",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "1016",
+      "previous_project_ids": []
+    },
+    {
+      "id": "e4210a63-07e3-42b7-a8e1-6b78aed46cde",
+      "title": "Oversee Bloomington Excel door installation",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "47",
+      "previous_project_ids": []
+    },
+    {
+      "id": "32e7d9ce-1b6e-4374-88c0-2b4f10b4dc76",
+      "title": "Schedule Treymont inspections",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSB51YRSQA4EFR6W8G8",
+      "project_id": "25108",
+      "previous_project_ids": []
+    },
+    {
+      "id": "9d12b7a7-6a5d-41ba-81f0-675034ecd955",
+      "title": "Monitor Canton roof after repair",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "previous_project_ids": []
+    },
+    {
+      "id": "1e619824-8e64-44d5-b268-eea591eaa9e7",
+      "title": "Manage Washington overnight flooring shifts",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "previous_project_ids": []
+    },
+    {
+      "id": "351ba1c6-bcfb-4b7d-bb0c-2fd250abd9cb",
+      "title": "Schedule Pioneer punch walk",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "871",
+      "previous_project_ids": []
+    },
+    {
+      "id": "ae7a56ea-42bc-417d-a67c-daf55664ed91",
+      "title": "Obtain Galesburg contractor proposal",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "previous_project_ids": []
+    },
+    {
+      "id": "83fab490-7bca-4b24-991a-391c7870753f",
+      "title": "Finalize billing documents and job budgets",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "previous_project_ids": []
+    },
+    {
+      "id": "b4b4b22a-fcf8-4ece-b4df-38048bcda1cc",
+      "title": "Schedule Chris follow-up interviews after CEO approval",
+      "source_system": "fireflies",
+      "metadata_id": "01KT4AYE4HNQ91FNY2H0W1EQA4",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "090b5815-bbcc-4f58-a4e5-597bb5b84ffb",
+      "title": "Submit Chris screening package for CEO review",
+      "source_system": "fireflies",
+      "metadata_id": "01KT4AYE4HNQ91FNY2H0W1EQA4",
+      "project_id": "90",
+      "previous_project_ids": []
+    },
+    {
+      "id": "28bbca9b-7d2e-44b0-8e38-9e19b8a3e4a0",
+      "title": "Schedule Paradise Isles condo meeting",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "58",
+      "previous_project_ids": []
+    },
+    {
+      "id": "0bacbe7a-6ac7-4d54-ba7a-83027206fb5d",
+      "title": "Collect Vermillion electrical subcontractor quotes",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "67",
+      "previous_project_ids": []
+    },
+    {
+      "id": "172a4b87-2be2-4841-b0cb-13eddc4ac9f0",
+      "title": "Submit revised Eye Surgeons budget",
+      "source_system": "fireflies",
+      "metadata_id": "01KSQ8GCSF9XESN5NDRF5FBE2Z",
+      "project_id": "1033",
+      "previous_project_ids": []
+    },
+    {
+      "id": "852f56fe-1ce0-4bdc-87dd-57758d79685d",
+      "title": "Send Andrew the revised Galesburg number after entering the",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "previous_project_ids": []
+    },
+    {
+      "id": "ae9e9457-ed9e-4f1b-84b6-e8afe30e8e76",
+      "title": "Follow up with the remaining Galesburg contractor to obtain the",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "869",
+      "previous_project_ids": []
+    },
+    {
+      "id": "6fbbb2ce-1215-4b10-bd28-c7a8e06c2334",
+      "title": "Monitor Canton roof conditions after the next rain and escalate",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "previous_project_ids": []
+    },
+    {
+      "id": "02a803aa-67df-46e6-9ece-c0253ce3875b",
+      "title": "Schedule Canton painters to begin painting the sales floor after",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "previous_project_ids": []
+    },
+    {
+      "id": "4668acef-fc97-42a1-ac58-20b88fc6e325",
+      "title": "Mobilize Canton tapers to resume front section and bump-out",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "865",
+      "previous_project_ids": []
+    },
+    {
+      "id": "edfcc48a-0d97-4c48-bf46-4543140960af",
+      "title": "Restart the shut-down Washington HVAC unit and complete return",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "previous_project_ids": []
+    },
+    {
+      "id": "ae6be9b2-ffa4-4361-8a03-6ea94777cfee",
+      "title": "Complete Washington men’s restroom and secondary office",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "previous_project_ids": []
+    },
+    {
+      "id": "f270a7aa-30b0-44a9-b263-be416bd021dd",
+      "title": "Coordinate Washington after-hours work for June 8",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "previous_project_ids": []
+    },
+    {
+      "id": "062e8f39-ffd0-4961-8a84-d6eb76faffd4",
+      "title": "Clean up Washington and Canton budgets and apply any leftover",
+      "source_system": "fireflies",
+      "metadata_id": "01KSZFMS2HXSMAF1BA42B2VDSE",
+      "project_id": "870",
+      "previous_project_ids": []
+    }
+  ]
+}

@@ -1,12 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { MoreVertical, Percent } from "lucide-react";
+import { CircleHelp, MoreVertical, Percent } from "lucide-react";
 import { toast } from "sonner";
 
 import { InlineAddButton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,7 +275,26 @@ export function FinancialMarkupFormSection({
   return (
     <FormSection
       title="Financial Markup"
-      description="Configure percentage-based markups that will be added as line items to the schedule of values."
+      description={
+        <span className="inline-flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-flex text-muted-foreground"
+                aria-label="Financial Markup help"
+              >
+                <CircleHelp className="size-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-72">
+              <p>
+                Configure percentage-based markups that will be added as line items
+                to the schedule of values.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </span>
+      }
       actions={
         <InlineAddButton
           type="button"

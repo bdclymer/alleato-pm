@@ -47,12 +47,6 @@ const TASK_BOARD_COLUMNS: BoardColumnDefinition[] = [
   },
 ];
 
-const PRIORITY_DOT_CLASSNAME: Record<string, string> = {
-  high: "bg-destructive",
-  medium: "bg-amber-500",
-  low: "bg-slate-300 dark:bg-slate-500",
-};
-
 function toBoardStatus(status: string | null): TaskBoardStatus {
   const normalized = (status ?? "").toLowerCase();
   if (DONE_STATUSES.has(normalized)) return "done";
@@ -96,7 +90,6 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
   const overdue =
     isOverdue(item.due_date) && toBoardStatus(item.status) !== "done";
   const priorityKey = (item.priority ?? "").toLowerCase();
-  const priorityDotClassName = PRIORITY_DOT_CLASSNAME[priorityKey];
   const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
   const taskSnapshot = showFeedback ? buildTaskFeedbackSnapshot(item) : null;
 
@@ -114,51 +107,24 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
       }}
       className="h-auto w-full justify-start rounded-md border border-border/60 bg-background p-3 text-left font-normal transition-colors hover:bg-muted/30"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p
-            className={cn(
-              "text-sm font-medium leading-snug text-foreground",
-              toBoardStatus(item.status) === "done" &&
-                "text-muted-foreground line-through decoration-muted-foreground/40",
-            )}
-          >
-            {title}
-          </p>
-          {projectLabel && (
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-            {projectLabel}
-            </p>
-          )}
-          {showFeedback && item.id && taskSnapshot ? (
-            <div
-              className="mt-1 flex items-center"
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              <TaskFeedbackButtons
-                projectId={taskSnapshot.projectId}
-                taskId={item.id}
-                taskSnapshot={taskSnapshot}
-                className="text-[11px]"
-              />
-            </div>
-          ) : null}
-        </div>
-        {priorityDotClassName ? (
-          <span
-            className={cn(
-              "mt-1 h-2 w-2 shrink-0 rounded-full",
-              priorityDotClassName,
-            )}
-            aria-hidden
-          />
-        ) : null}
-      </div>
+      <p
+        className={cn(
+          "text-sm font-medium leading-snug text-foreground",
+          toBoardStatus(item.status) === "done" &&
+            "text-muted-foreground line-through decoration-muted-foreground/40",
+        )}
+      >
+        {title}
+      </p>
+      {projectLabel && (
+        <p className="mt-1 truncate text-xs text-muted-foreground">
+          {projectLabel}
+        </p>
+      )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
         <span className="inline-flex min-w-0 items-center gap-1.5">
-          <UserRound className="h-3.5 w-3.5 shrink-0" />
+          <UserRound className="h-3 w-3 shrink-0" />
           <span className="truncate">{assigneeLabel}</span>
         </span>
         {dueLabel ? (
@@ -168,13 +134,10 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
               overdue && "font-medium text-destructive",
             )}
           >
-            <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+            <CalendarClock className="h-3 w-3 shrink-0" />
             {dueLabel}
           </span>
         ) : null}
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
         {item.priority ? (
           <TableTagBadge
             label={item.priority}
@@ -183,6 +146,21 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
         ) : null}
         {sourceLabel ? (
           <TableTagBadge label={sourceLabel} variant="outline" />
+        ) : null}
+        {showFeedback && item.id && taskSnapshot ? (
+          <div
+            className="ml-auto flex items-center"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <TaskFeedbackButtons
+              projectId={taskSnapshot.projectId}
+              taskId={item.id}
+              taskSnapshot={taskSnapshot}
+              compact
+              className="text-[11px]"
+            />
+          </div>
         ) : null}
       </div>
     </div>

@@ -1,0 +1,124 @@
+
+> alleato-procore@0.1.0 rag:verify:chat-architecture
+> node scripts/verify/verify_ai_chat_architecture.mjs
+
+{
+  "status": "pass",
+  "checkedAt": "2026-06-26T06:16:45.318Z",
+  "inventory": {
+    "packageVersions": {
+      "ai": "6.0.175",
+      "@ai-sdk/react": "^3.0.177",
+      "@ai-sdk/openai": "^3.0.25",
+      "@ai-sdk/mcp": "^1.0.36"
+    },
+    "tools": {
+      "consult": [
+        "consultCFO",
+        "consultCHRO",
+        "consultCMO",
+        "consultCOO",
+        "consultCRO",
+        "consultMicrosoftExecutiveAssistant",
+        "consultVPBD"
+      ],
+      "project": [
+        "findProjectDocuments",
+        "getActionItemsAndInsights",
+        "getFinancialAnalysis",
+        "getMeetingIntelligence",
+        "getMeetingsByDate",
+        "getPortfolioOverview",
+        "getProjectBriefingSnapshot",
+        "getProjectBudgetSummary",
+        "getProjectDetails",
+        "getProjectRiskAnalysis",
+        "getProjectsWithRisks",
+        "searchDocuments"
+      ],
+      "operational": [
+        "findProject",
+        "getCompanyKnowledge",
+        "getCrossProjectComparison",
+        "getForecastComparison",
+        "getHistoricalTrends",
+        "getMeetingDetails",
+        "getPeopleAndRoles",
+        "getRFIStatus",
+        "getRecentEmails",
+        "getScheduleAnalysis",
+        "getSubmittalStatus",
+        "getVendorPerformance",
+        "queryBudgetData",
+        "queryChangeOrders",
+        "queryCommitments",
+        "queryDirectCosts",
+        "queryDocumentRows",
+        "queryScheduleTasks",
+        "recallPastConversations",
+        "saveInsight",
+        "saveToKnowledgeBase",
+        "searchEmails",
+        "searchExternalDocuments",
+        "searchMeetingsByTopic",
+        "searchMemories",
+        "searchStructuredFinancialRows",
+        "searchTeamsMessages",
+        "semanticSearch",
+        "writeMemory"
+      ],
+      "financial": [
+        "getBudgetLineItems",
+        "getChangeOrderDetails",
+        "getCommitmentsOverview",
+        "getCostTrends",
+        "getDirectCostsSummary",
+        "getMarginAnalysis"
+      ],
+      "acumatica": [
+        "getAPAgingReport",
+        "getARAgingReport",
+        "getAcumaticaProjectBudget",
+        "getAcumaticaProjectList",
+        "getCashPositionReport",
+        "getPurchaseOrderSummary",
+        "getRecentBills",
+        "getRecentInvoices",
+        "getVendorSpendReport"
+      ],
+      "action": [
+        "addBoardItem",
+        "createChangeEvent",
+        "createChangeOrder",
+        "createCommitment",
+        "createContact",
+        "createGeneratedTask",
+        "createInitiativeCard",
+        "createMeetingNote",
+        "createOutlookCalendarInvite",
+        "createProjectCompany",
+        "createProjectContact",
+        "createRFI",
+        "createSubmittal",
+        "createTask",
+        "deleteGeneratedTask",
+        "draftOutlookEmail",
+        "flagProjectRisk",
+        "generateProjectSummary",
+        "logDailyReport",
+        "sendTeamsMessage",
+        "submitFeedback",
+        "updateGeneratedTask",
+        "updateProjectStatus",
+        "updateRFIStatus"
+      ],
+      "web": [
+        "researchCompany",
+        "searchConstructionMarket",
+        "searchWeb"
+      ]
+    }
+  },
+  "failures": [],
+  "warnings": []
+}

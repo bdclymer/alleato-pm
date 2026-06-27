@@ -10,8 +10,6 @@ import {
   ChevronsRight,
   ChevronRight,
   ChevronDown,
-  GitCompare,
-  Inbox,
   Menu,
   Sparkles,
   X,
@@ -41,7 +39,7 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebarButton } from "./comments-sidebar-button";
-import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
+import { FeedbackButton } from "./feedback-button";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
@@ -61,28 +59,6 @@ type PermissionUserBreadcrumbRecord = {
 };
 
 const userManagementBreadcrumbTitleCache = new Map<string, string>();
-
-function ProcoreReferenceToggle() {
-  const { open, toggle } = useProcorePanelStore();
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={toggle}
-      aria-label="Toggle Procore reference panel"
-      aria-pressed={open ? "true" : "false"}
-      className={cn(
-        "h-8 w-8",
-        open
-          ? "bg-primary/10 text-primary hover:bg-primary/20"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
-      )}
-    >
-      <GitCompare className="h-4 w-4" />
-    </Button>
-  );
-}
 
 function AiChatButton() {
   const pathname = usePathname()!;
@@ -248,7 +224,7 @@ export function SiteHeader() {
 
   return (
     <header
-      className="relative z-40 flex h-12 shrink-0 items-center text-foreground"
+      className="relative z-40 flex h-12 shrink-0 items-center text-foreground shadow-sm"
       {...feedbackTargetProps("app.site-header")}
     >
       <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">
@@ -330,20 +306,11 @@ export function SiteHeader() {
             userEmail={user?.email ?? null}
           />
           <AiChatButton />
-          <Link
-            href="/feedback-inbox"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Feedback inbox"
-          >
-            <Inbox className="h-4 w-4" />
-          </Link>
+          <FeedbackButton />
           <CommentsSidebarButton />
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
-          {user?.email === "megan@megankharrison.com" && (
-            <ProcoreReferenceToggle />
-          )}
           <HeaderUserMenu
             user={user}
             projectId={nav.projectId}
@@ -445,11 +412,16 @@ function MobileNavOverlay({
       isAppAdmin,
       userType,
       isDeveloper,
+      user?.email ?? null,
     ),
   }));
   const companyToolList = [
     ...companyWideHeaderTools,
-    ...(isDeveloper ? developerCompanyAdminTools : []),
+    // Only the single Admin Dashboard link; other internal admin tools are
+    // reachable from that page.
+    ...(isDeveloper
+      ? developerCompanyAdminTools.filter((tool) => tool.name === "Admin Dashboard")
+      : []),
   ];
   const companyTools = filterToolsByPermission(
     companyToolList,
@@ -660,6 +632,7 @@ function ToolsDropdown({
       isAppAdmin,
       userType,
       isDeveloper,
+      userEmail,
     ),
   }));
   const visibleCompanyTools = filterToolsByPermission(
@@ -854,12 +827,10 @@ function CompanyToolsPanel({
   activeToolName: string;
   onClose: () => void;
 }) {
-  const sections = adminTools.length
-    ? [
-        ...companyWideToolSections,
-        { label: "Admin", toolNames: adminTools.map((tool) => tool.name) },
-      ]
-    : companyWideToolSections;
+  // Only the named Company-wide sections render. The single Admin Dashboard
+  // link lives at the end of the "Company" section; other internal admin tools
+  // are reachable from the Admin Dashboard page itself.
+  const sections = companyWideToolSections;
   const allTools = [...tools, ...adminTools];
   const allVisibleTools = [...visibleTools, ...visibleAdminTools];
 

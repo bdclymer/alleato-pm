@@ -29,6 +29,11 @@ class _Table:
         self.payload = payload
         return self
 
+    def upsert(self, payload):
+        self.action = "upsert"
+        self.payload = payload
+        return self
+
     def delete(self):
         self.action = "delete"
         return self
@@ -46,6 +51,23 @@ class _Table:
                     row.update(self.payload)
                     updated.append(dict(row))
             return _Result(updated)
+        if self.action == "upsert":
+            payloads = self.payload if isinstance(self.payload, list) else [self.payload]
+            upserted = []
+            for payload in payloads:
+                existing = None
+                payload_id = payload.get("id")
+                if payload_id is not None:
+                    existing = next((row for row in table if row.get("id") == payload_id), None)
+                if existing is None:
+                    existing = next((row for row in table if row.get("chunk_id") == payload.get("chunk_id")), None)
+                if existing is None:
+                    table.append(dict(payload))
+                    upserted.append(dict(payload))
+                else:
+                    existing.update(payload)
+                    upserted.append(dict(existing))
+            return _Result(upserted)
         if self.action == "delete":
             matching_ids = {id(row) for row in self.rows}
             self.db.tables[self.table_name] = [row for row in table if id(row) not in matching_ids]
@@ -98,6 +120,60 @@ def test_embed_graph_document_skips_app_status_update_when_using_rag_metadata(mo
     assert chunks == 0
     assert rag.tables["document_chunks"] == []
     assert rag.tables["rag_document_metadata"][0]["embedding_status"] == "skipped"
+
+
+def test_graph_embed_success_upserts_missing_rag_metadata():
+    rag = _Supabase({"rag_document_metadata": []})
+    doc = {
+        "id": "onedrive-vision-only",
+        "title": "Riser Clamps.pdf",
+        "project_id": 1009,
+        "source": "microsoft_graph",
+        "source_system": "onedrive",
+        "source_item_id": "drive-item-1",
+        "type": "drawing",
+        "category": "document",
+        "source_path": "Drawings/Riser Clamps.pdf",
+        "source_web_url": "https://example.test/Riser%20Clamps.pdf",
+        "status": "ocr_failed",
+    }
+
+    embed._upsert_rag_embedding_success(
+        rag,
+        doc,
+        content="",
+        chunk_count=1,
+        source_type="vision_page_summary",
+    )
+
+    assert rag.tables["rag_document_metadata"] == [
+        {
+            "id": "onedrive-vision-only",
+            "app_document_id": "onedrive-vision-only",
+            "project_id": 1009,
+            "source": "microsoft_graph",
+            "source_system": "onedrive",
+            "source_item_id": "drive-item-1",
+            "title": "Riser Clamps.pdf",
+            "type": "drawing",
+            "category": "document",
+            "storage_bucket": None,
+            "storage_path": "Drawings/Riser Clamps.pdf",
+            "source_web_url": "https://example.test/Riser%20Clamps.pdf",
+            "content_length": 0,
+            "embedding_status": "embedded",
+            "embedding_attempts": 0,
+            "embedding_error": None,
+            "parsing_status": "ocr_failed",
+            "processing_metadata": {
+                "app_status": "ocr_failed",
+                "chunk_count": 1,
+                "source_type": "vision_page_summary",
+                "embedding_path": "microsoft_graph.embed_graph_document",
+            },
+            "last_content_loaded_at": rag.tables["rag_document_metadata"][0]["last_content_loaded_at"],
+        }
+    ]
 
 
 def test_graph_embed_queues_source_intelligence_by_default(monkeypatch):

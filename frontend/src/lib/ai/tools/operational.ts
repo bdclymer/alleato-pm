@@ -4,7 +4,8 @@ import {
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
-import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
+import { type ToolGuardrails } from "./guardrails";
+import { createToolContext, type ToolContext } from "./tool-context";
 import { createStructuredQueryTools } from "./structured-queries";
 import {
   type ToolTracePayload,
@@ -58,6 +59,11 @@ const RAG_RETRIEVAL_TELEMETRY_ENABLED =
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  /**
+   * Injected data seam. When omitted, a real ToolContext is built from env —
+   * preserving the original behavior for callers that haven't migrated yet.
+   */
+  ctx?: ToolContext;
 };
 
 type RecentEmailDirection = "mailbox" | "to" | "from" | "to_or_from";
@@ -514,11 +520,12 @@ export function createOperationalTools(
   userId: string,
   options: CreateOperationalToolsOptions = {},
 ) {
-  const supabase = createServiceClient();
-  const ragSupabase = createRagServiceClient();
-  const guardrails = createToolGuardrails(userId, {
-    pinnedProjectId: options.pinnedProjectId,
-  });
+  const ctx =
+    options.ctx ??
+    createToolContext({ userId, pinnedProjectId: options.pinnedProjectId });
+  const supabase = ctx.db;
+  const ragSupabase = ctx.rag;
+  const guardrails = ctx.guardrails;
 
   async function requireAdminForCommunications(sourceLabel: string) {
     const scope = await guardrails.getScope();
@@ -570,7 +577,11 @@ export function createOperationalTools(
               "person_id, role, user_type, status, " +
                 "people(id, first_name, last_name, email, job_title, " +
                 "phone_mobile, phone_business, person_type, " +
-                "companies(id, name))",
+                // Disambiguate: people<->companies has FKs in both directions
+                // (people.company_id and companies.primary_contact_id), so the
+                // embed must name the FK or PostgREST errors "more than one
+                // relationship". Guarded by the AI read-tool contract harness.
+                "companies!people_company_id_fkey(id, name))",
             )
             .eq("project_id", resolved.id)
             .eq("status", "active");
@@ -1535,7 +1546,7 @@ export function createOperationalTools(
           }
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
-            const openai = getOpenAI();
+            const openai = ctx.openai;
             const embeddingArg3072 = await generateEmbedding(
               openai,
               query,
@@ -2162,7 +2173,7 @@ export function createOperationalTools(
           // memories.embedding column type. The halfvec overload of
           // search_conversation_memories handles user-level filtering correctly.
           // Fixed: 2026-05-08 (Problem 6 — embedding dimension inconsistency).
-          const openaiClient = getOpenAI();
+          const openaiClient = ctx.openai;
           // generateEmbedding throws on API failure — no silent empty results.
           const queryEmbedding = await generateEmbedding(
             openaiClient,
@@ -2303,7 +2314,7 @@ export function createOperationalTools(
             // 2. Semantic search on real meeting summaries via document_metadata.summary_embedding
             (async () => {
               try {
-                const openai = getOpenAI();
+                const openai = ctx.openai;
                 const emb = await generateEmbedding(
                   openai,
                   topic,
@@ -2317,11 +2328,30 @@ export function createOperationalTools(
                     ? { p_project_id: resolvedProjectId }
                     : {}),
                 });
-              } catch {
-                return { data: [], error: null };
+              } catch (err) {
+                // Do NOT swallow into a clean empty result — a failed query
+                // embedding or RPC (e.g. the recurring provider auth/credit
+                // wall) would otherwise look identical to "no semantic
+                // matches", silently degrading to keyword-only with no trace.
+                console.error(
+                  "[searchMeetingsByTopic] semantic search failed:",
+                  err,
+                );
+                return { data: [], error: err as Error };
               }
             })(),
           ]);
+
+          // Both halves run best-effort; if the semantic half errored we still
+          // return keyword results but flag the degradation so the model (and
+          // logs) know coverage was reduced rather than empty.
+          const semanticSearchDegraded = Boolean(semanticRes.error);
+          if (semanticSearchDegraded) {
+            console.error(
+              "[searchMeetingsByTopic] returning keyword-only results; semantic branch degraded:",
+              semanticRes.error,
+            );
+          }
 
           // Collect unique meeting IDs from both searches
           const meetingIds = new Set<string>();
@@ -2338,7 +2368,10 @@ export function createOperationalTools(
           if (meetingIds.size === 0) {
             return {
               results: [],
-              message: `No meetings found discussing "${topic}". Try broader terms.`,
+              ...(semanticSearchDegraded ? { semanticSearchDegraded } : {}),
+              message: semanticSearchDegraded
+                ? `No meetings matched "${topic}" by keyword, and semantic search was unavailable (degraded), so coverage may be incomplete. Try broader terms or retry.`
+                : `No meetings found discussing "${topic}". Try broader terms.`,
             };
           }
 
@@ -2369,6 +2402,7 @@ export function createOperationalTools(
               ? `Filtered to project ${resolvedProjectId}`
               : "All projects",
             topic,
+            ...(semanticSearchDegraded ? { semanticSearchDegraded } : {}),
             totalResults: meetings.length,
             results: meetings.map((m) => ({
               sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,

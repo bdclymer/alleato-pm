@@ -23,6 +23,7 @@ from ..supabase_helpers import (
     update_ingestion_job_state,
 )
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from ..ops.db_pressure_guard import AppDbProjectionError
 from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, StructuredData, TaskItem
 from . import llm
@@ -80,6 +81,7 @@ MEETING_PACKET_COMPILER_VERSION = "meeting_extractor_compiler_v0_1"
 # extraction_prompt_version on every AI-sourced task; deep tasks satisfy it with
 # this. Bump when the deep extraction prompt materially changes.
 DEEP_EXTRACTION_PROMPT_VERSION = "deep_extractor_v0_1"
+LEGACY_FIREFLIES_TASK_PROMPT_VERSION = "fireflies_pipeline_legacy_v0_1"
 
 # Map a RiskItem.category to an insight_cards.card_type. Values MUST stay within
 # compiler.INSIGHT_CARD_TYPES (and the insight_cards.card_type CHECK constraint).
@@ -693,7 +695,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     # compiler uses. Replaces the deprecated no-op _upsert_insight writer so
     # full-transcript meeting intelligence becomes durable, deduped cards.
     signal_result = (
-        _promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
+        _safe_promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
         if is_meeting
         else {"signals_written": 0, "signals_promoted": 0}
     )
@@ -721,6 +723,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "tasksSkipped": max(len(tasks_to_persist) - persisted_task_count, 0),
         "signalsWritten": signal_result.get("signals_written", 0),
         "signalsPromoted": signal_result.get("signals_promoted", 0),
+        "signalProjectionStatus": signal_result.get("projection_status"),
+        "signalProjectionError": signal_result.get("projection_error"),
     }
 
 
@@ -988,6 +992,39 @@ def _promote_meeting_signals(
     return result
 
 
+def _safe_promote_meeting_signals(
+    client,
+    metadata_id: str,
+    project_id: int | None,
+    source_occurred_at: str | None,
+    structured: "StructuredData",
+) -> Dict[str, Any]:
+    """Keep extraction terminal when only final PM projection is disabled."""
+    try:
+        return _promote_meeting_signals(
+            client,
+            metadata_id,
+            project_id,
+            source_occurred_at,
+            structured,
+        )
+    except AppDbProjectionError as exc:
+        logger.warning(
+            "[Extractor] Meeting signal projection blocked after extraction; "
+            "continuing vectorization metadata_id=%s project_id=%s: %s",
+            metadata_id,
+            project_id,
+            exc,
+        )
+        return {
+            "signals_written": 0,
+            "signals_promoted": 0,
+            "target_id": None,
+            "projection_status": "blocked",
+            "projection_error": str(exc),
+        }
+
+
 _TITLE_CLAUSE_RE = re.compile(
     r"(?:,\s+(?:especially|including|particularly|such as|e\.g\.|for example)"
     r"|;\s+|\.\s+| — | and explore | to support (?!a\b))",
@@ -1032,6 +1069,14 @@ def _upsert_task(
             resolved_project_id = int(project_ids[0])
         except (TypeError, ValueError):
             resolved_project_id = None
+    resolved_project_ids = list(project_ids or [])
+    if resolved_project_id is not None:
+        try:
+            scalar_project_id = int(resolved_project_id)
+        except (TypeError, ValueError):
+            scalar_project_id = None
+        if scalar_project_id is not None and scalar_project_id not in resolved_project_ids:
+            resolved_project_ids.append(scalar_project_id)
 
     # Reject role/trade names that are not real people.
     if (task.assignee or "").strip().lower() in _TRADE_ROLE_NAMES:
@@ -1109,6 +1154,7 @@ def _upsert_task(
         prompt_version = DEEP_EXTRACTION_PROMPT_VERSION
     else:
         extraction_source = "fireflies_pipeline_legacy"
+        prompt_version = LEGACY_FIREFLIES_TASK_PROMPT_VERSION
 
     data = {
         "metadata_id": metadata_id,
@@ -1122,7 +1168,7 @@ def _upsert_task(
         "embedding": task.embedding,
         "status": "open",
         "source_system": source_system,
-        "project_ids": project_ids or [],
+        "project_ids": resolved_project_ids,
         "project_id": resolved_project_id,
         "client_id": client_id,
         "extraction_source": extraction_source,

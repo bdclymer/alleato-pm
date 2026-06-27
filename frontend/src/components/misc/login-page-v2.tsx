@@ -47,27 +47,29 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
       toast.success("Successfully logged in");
 
-      if (redirectTo && redirectTo !== "/") {
-        const validatedUrl = validateCallbackUrl(redirectTo);
+      // Always resolve the landing server-side so a callbackUrl pointing at a
+      // project the user can't access (e.g. the browser's last-viewed project
+      // for a subcontractor scoped to a single job) is dropped instead of
+      // dumping them onto an Access Denied wall.
+      const validatedCallback =
+        redirectTo && redirectTo !== "/" ? validateCallbackUrl(redirectTo) : null;
+      const query =
+        validatedCallback && validatedCallback !== "/"
+          ? `?callbackUrl=${encodeURIComponent(validatedCallback)}`
+          : "";
+      try {
+        const result = await apiFetch<{ redirect?: string }>(
+          `/api/auth/post-login-redirect${query}`,
+        );
         setTimeout(() => {
-          router.push(validatedUrl);
+          router.push(result?.redirect || "/");
           router.refresh();
         }, 100);
-      } else {
-        try {
-          const result = await apiFetch<{ redirect?: string }>(
-            "/api/auth/post-login-redirect",
-          );
-          setTimeout(() => {
-            router.push(result?.redirect || "/");
-            router.refresh();
-          }, 100);
-        } catch {
-          setTimeout(() => {
-            router.push("/");
-            router.refresh();
-          }, 100);
-        }
+      } catch {
+        setTimeout(() => {
+          router.push(validatedCallback || "/");
+          router.refresh();
+        }, 100);
       }
     } catch (error) {
       const message =

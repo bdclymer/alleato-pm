@@ -49,12 +49,21 @@ function readFilter(
 type DocumentsTableDefinitionOptions = {
   entityKey?: string;
   defaultFilters?: Partial<DocumentFilterState>;
+  /** Filters that ALWAYS win — applied after URL params are merged, preventing
+   *  the parseFiltersFromSearchParams spread from clobbering them back to
+   *  undefined.  Smart-group selection uses this to guarantee the group's
+   *  document_type / type constraint reaches the API regardless of URL state. */
+  forcedFilters?: Partial<DocumentFilterState>;
+  /** Free-text search that ALWAYS wins (overrides the user's search input) —
+   *  used by search-based smart groups (e.g. Commitments). */
+  forcedSearch?: string;
   searchPlaceholder?: string;
   defaultSortBy?: string;
   defaultSortDirection?: "asc" | "desc";
   columns?: ColumnConfig[];
   defaultVisibleColumns?: string[];
   forcedProjectId?: number;
+  defaultView?: "table" | "card" | "list";
 };
 
 export function createDocumentsTableDefinition(
@@ -63,7 +72,7 @@ export function createDocumentsTableDefinition(
   return {
     entityKey: options.entityKey ?? "documents",
     allowedViews: ["table", "card", "list"],
-    defaultView: "table",
+    defaultView: options.defaultView ?? "table",
     defaultPerPage: 25,
     defaultSortBy: options.defaultSortBy ?? "created_at",
     defaultSortDirection: options.defaultSortDirection ?? "desc",
@@ -141,6 +150,20 @@ export function createDocumentsTableDefinition(
       }
       if (typeof query.filters.date_to === "string" && query.filters.date_to) {
         params.set("date_to", query.filters.date_to);
+      }
+
+      // Apply forced filters AFTER the URL-param-derived filters so that the
+      // parseFiltersFromSearchParams spread (which sets every key, returning
+      // undefined for absent URL params) cannot clobber them back to undefined.
+      if (options.forcedFilters) {
+        for (const [k, v] of Object.entries(options.forcedFilters)) {
+          if (typeof v === "string" && v) {
+            params.set(k, v);
+          }
+        }
+      }
+      if (options.forcedSearch && options.forcedSearch.trim()) {
+        params.set("search", options.forcedSearch.trim());
       }
 
       params.set("page", String(query.page));

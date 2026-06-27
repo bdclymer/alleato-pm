@@ -35,6 +35,8 @@ interface TaskFeedbackButtonsProps {
   taskSnapshot: TaskSnapshot;
   sessionId?: string | null;
   className?: string;
+  /** Render smaller icon buttons for dense surfaces (e.g. board cards). */
+  compact?: boolean;
   /**
    * Called after the user submits bad feedback with a category that indicates
    * the task should not exist (trivial, not_actionable, duplicate, too_vague).
@@ -54,9 +56,12 @@ export function TaskFeedbackButtons({
   taskSnapshot,
   sessionId,
   className,
+  compact = false,
   onRemove,
   onTrivial,
 }: TaskFeedbackButtonsProps) {
+  const buttonSizeClass = compact ? "h-5 w-5" : "h-6 w-6";
+  const iconSizeClass = compact ? "h-3 w-3" : "h-3.5 w-3.5";
   const { signal, isSubmitting, submitFeedback } = useTaskFeedback({
     projectId,
     taskId,
@@ -144,15 +149,15 @@ export function TaskFeedbackButtons({
       <Button
         variant="ghost"
         size="icon"
-        className="h-6 w-6 hover:text-foreground"
+        className={cn(buttonSizeClass, "hover:text-foreground")}
         disabled={isSubmitting}
         onClick={handleGood}
         aria-label="Mark as good example"
       >
         {isSubmitting ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className={cn(iconSizeClass, "animate-spin")} />
         ) : (
-          <ThumbsUp className="h-3.5 w-3.5" />
+          <ThumbsUp className={iconSizeClass} />
         )}
       </Button>
 
@@ -161,11 +166,11 @@ export function TaskFeedbackButtons({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 hover:text-destructive"
+            className={cn(buttonSizeClass, "hover:text-destructive")}
             disabled={isSubmitting}
             aria-label="Mark as bad example"
           >
-            <ThumbsDown className="h-3.5 w-3.5" />
+            <ThumbsDown className={iconSizeClass} />
           </Button>
         </PopoverTrigger>
         <PopoverContent

@@ -1,0 +1,8 @@
+
+> alleato-procore@0.1.0 typecheck
+> rm -f tsconfig.tsbuildinfo && node scripts/run-typecheck-bounded.mjs
+
+src/lib/ai/workflow-registry.ts(299,25): error TS2344: Type 'T | undefined' does not satisfy the constraint 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/lib/ai/workflow-registry.ts(409,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

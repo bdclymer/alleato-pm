@@ -1,0 +1,877 @@
+{
+  "generated_at": "2026-06-25T22:09:45.617Z",
+  "queued_ids": [
+    "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+    "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+    "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+    "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+    "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+    "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+    "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+    "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+    "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+    "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c"
+  ],
+  "snapshots": [
+    {
+      "polled_at": "2026-06-25T22:08:25.283Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": null,
+            "updated_at": "2026-06-25T21:54:24.149Z",
+            "chunk_count": 0,
+            "embedded_chunk_count": 0,
+            "vision_chunk_count": 0,
+            "latest_chunk_updated_at": null
+          },
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "segmented",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": null
+        }
+      ]
+    },
+    {
+      "polled_at": "2026-06-25T22:08:42.099Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "segmented",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:41.534Z"
+          }
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": null,
+            "updated_at": "2026-06-25T21:54:24.149Z",
+            "chunk_count": 0,
+            "embedded_chunk_count": 0,
+            "vision_chunk_count": 0,
+            "latest_chunk_updated_at": null
+          },
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": null
+        }
+      ]
+    },
+    {
+      "polled_at": "2026-06-25T22:08:57.782Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:41.534Z"
+          }
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": null,
+            "updated_at": "2026-06-25T21:54:24.149Z",
+            "chunk_count": 0,
+            "embedded_chunk_count": 0,
+            "vision_chunk_count": 0,
+            "latest_chunk_updated_at": null
+          },
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": null
+        }
+      ]
+    },
+    {
+      "polled_at": "2026-06-25T22:09:13.459Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:41.534Z"
+          }
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": null,
+            "updated_at": "2026-06-25T21:54:24.149Z",
+            "chunk_count": 0,
+            "embedded_chunk_count": 0,
+            "vision_chunk_count": 0,
+            "latest_chunk_updated_at": null
+          },
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "segmented",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": null
+        }
+      ]
+    },
+    {
+      "polled_at": "2026-06-25T22:09:29.143Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:41.534Z"
+          }
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "segmented",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": null,
+            "updated_at": "2026-06-25T21:54:24.149Z",
+            "chunk_count": 0,
+            "embedded_chunk_count": 0,
+            "vision_chunk_count": 0,
+            "latest_chunk_updated_at": null
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:09:27.652Z"
+          }
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:09:17.615Z"
+          }
+        }
+      ]
+    },
+    {
+      "polled_at": "2026-06-25T22:09:44.828Z",
+      "rows": [
+        {
+          "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+          "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:47.895Z",
+          "content_length": 5173,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:09:35.063Z"
+          }
+        },
+        {
+          "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+          "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.637Z",
+          "content_length": 3498,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:41.534Z"
+          }
+        },
+        {
+          "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+          "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.128Z",
+          "content_length": 4367,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+          "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.393Z",
+          "content_length": 3537,
+          "rag": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "app_document_id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "parsing_status": "segmented",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T21:54:03.326Z",
+            "chunk_count": 14,
+            "embedded_chunk_count": 14,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T21:54:02.956Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T21:53:56.704Z"
+          }
+        },
+        {
+          "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+          "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+          "status": "embedded",
+          "created_at": "2026-06-26T01:50:48.383Z",
+          "content_length": 7133,
+          "rag": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "app_document_id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "parsing_status": "raw_text_extracted",
+            "embedding_status": "embedded",
+            "updated_at": "2026-06-25T22:09:38.675Z",
+            "chunk_count": 30,
+            "embedded_chunk_count": 30,
+            "vision_chunk_count": 1,
+            "latest_chunk_updated_at": "2026-06-25T22:09:38.352Z"
+          },
+          "page_intelligence": {
+            "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:09:27.652Z"
+          }
+        },
+        {
+          "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+          "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.886Z",
+          "content_length": 3760,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:07:57.127Z"
+          }
+        },
+        {
+          "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+          "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.147Z",
+          "content_length": 7246,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:06.577Z"
+          }
+        },
+        {
+          "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+          "title": "[011] A401 - ENLARGED PLANS.pdf",
+          "status": "raw_ingested",
+          "created_at": "2026-06-26T01:50:47.648Z",
+          "content_length": 8632,
+          "rag": null,
+          "page_intelligence": null
+        },
+        {
+          "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+          "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:49.407Z",
+          "content_length": 19669,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:08:12.017Z"
+          }
+        },
+        {
+          "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+          "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+          "status": "complete",
+          "created_at": "2026-06-26T01:50:48.135Z",
+          "content_length": 1814,
+          "rag": null,
+          "page_intelligence": {
+            "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+            "page_intelligence_count": 1,
+            "pages_with_ai_summary": 1,
+            "latest_processed_at": "2026-06-25T22:09:17.615Z"
+          }
+        }
+      ]
+    }
+  ]
+}

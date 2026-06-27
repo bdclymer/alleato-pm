@@ -60,14 +60,15 @@ export default function MainLayout({
 }) {
   const pathname = usePathname()!;
   const shouldMountDeferredPanels = useDeferredMount(6_000);
-  const isTeamChatPage = pathname?.startsWith("/team-chat");
+  const isImmersiveChatPage =
+    pathname?.startsWith("/team-chat") || pathname?.startsWith("/comments");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const isAiAssistant =
     pathname === "/ai" ||
     pathname?.startsWith("/ai/") ||
     pathname?.startsWith("/ai-assistant");
   const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
-  if (isTeamChatPage) {
+  if (isImmersiveChatPage) {
     return (
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />
@@ -86,16 +87,11 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
-              {!isDrawingViewer && (
-                isAiAssistant ? (
-                  <div key="site-header-mobile" className="md:hidden">
-                    <SiteHeader key="site-header" />
-                  </div>
-                ) : (
-                  <SiteHeader key="site-header" />
-                )
-              )}
+            <div
+              className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
+              style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
+            >
+              {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main
                 id="app-main-content"
                 key="main-content"

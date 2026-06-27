@@ -1,0 +1,35 @@
+{
+  "placeholderOnlyDocuments": 16,
+  "placeholderOnlyIds": [
+    "03599dc2-404a-5de8-a290-87ffba220cb7",
+    "0dc2f684-ede4-5f51-9ab6-1193f0c86a92",
+    "0ef844fb-3e56-5024-8102-4d42d3d06495",
+    "21d783d5-6c56-584a-9f67-bdb84e0900da",
+    "467becd3-88c5-5002-81f9-8382922dbaa8",
+    "50f705c9-9fe7-5423-b8f5-b6184997f8af",
+    "577029d5-ea40-57b7-b847-7d2a8fef3db6",
+    "5e343094-404a-5bb5-917f-f1c0baa3d632",
+    "6a7eeaaa-4568-5a86-b16f-5b449b2bc555",
+    "739507a0-81eb-5814-8fff-8df56035d746",
+    "7f74c816-d491-529a-aa43-5c9567edf751",
+    "8238710d-66f9-5652-ba62-6bf27c852aad",
+    "8b5f0c5d-1e53-57e9-ae44-6a9edbec1179",
+    "9b23216d-39d6-5200-ae70-a7935a4b6e6d",
+    "c8175f68-1de3-5ca8-bab1-6e2a80ec7d5a",
+    "ecb5789c-02c3-519a-b52f-a83ec252a9fc"
+  ],
+  "ragMetadataUpdated": 16,
+  "placeholderChunksDeleted": 67,
+  "deletedBySourceType": {
+    "meeting_summary_embed": 6,
+    "meeting_summary": 29,
+    "meeting_segment_summary": 30,
+    "teams_channel": 2
+  },
+  "appUpdate": {
+    "attempted": true,
+    "updated": 16,
+    "error": null
+  },
+  "remainingPlaceholderChunks": 0
+}

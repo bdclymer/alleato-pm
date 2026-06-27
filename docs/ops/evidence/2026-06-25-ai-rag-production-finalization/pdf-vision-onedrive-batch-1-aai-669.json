@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-06-25T23:36:54.274014+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-manual-batch-4-aai-669.json",
+  "batch_size": 5,
+  "results": [
+    {
+      "id": "onedrive_01F674PXVQ6G7ZOOJT6FCLPWYK2QQKGK53",
+      "title": "0002 Uniqlo Loose.PDF",
+      "started_at": "2026-06-25T23:32:13.686873+00:00",
+      "ok": false,
+      "error": "{'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}",
+      "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py\", line 84, in execute\n    raise APIError(dict(json_obj))\npostgrest.exceptions.APIError: {'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}\n",
+      "finished_at": "2026-06-25T23:33:41.075000+00:00"
+    },
+    {
+      "id": "onedrive_01F674PXTM3X4Y4QP3DZGJ42HM266XSIZ2",
+      "title": "0002 Uniqlo FP 2.1 - Rack Fab Review.pdf",
+      "started_at": "2026-06-25T23:33:41.075457+00:00",
+      "ok": false,
+      "error": "{'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}",
+      "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py\", line 84, in execute\n    raise APIError(dict(json_obj))\npostgrest.exceptions.APIError: {'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}\n",
+      "finished_at": "2026-06-25T23:33:49.858441+00:00"
+    },
+    {
+      "id": "onedrive_01F674PXVPFX7VWEVNABDZ3NL2LXVJHSSR",
+      "title": "0002 Uniqlo Fab.PDF",
+      "started_at": "2026-06-25T23:33:49.858743+00:00",
+      "ok": false,
+      "error": "{'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}",
+      "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py\", line 84, in execute\n    raise APIError(dict(json_obj))\npostgrest.exceptions.APIError: {'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}\n",
+      "finished_at": "2026-06-25T23:35:14.534923+00:00"
+    },
+    {
+      "id": "onedrive_01F674PXVCUTD22WTAWRBIZ6R6ZFEPSPAM",
+      "title": "UNIQLO - Warehouse - Existing Conditions survey.pdf",
+      "started_at": "2026-06-25T23:35:14.535183+00:00",
+      "ok": false,
+      "error": "{'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}",
+      "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py\", line 84, in execute\n    raise APIError(dict(json_obj))\npostgrest.exceptions.APIError: {'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}\n",
+      "finished_at": "2026-06-25T23:35:26.462440+00:00"
+    },
+    {
+      "id": "onedrive_01F674PXTKNIVK5KVS3NEKHGXF5PGOJBN2",
+      "title": "EXOTEC - RACKS REQUIREMENTS - Phillipsburg meeting - Presentation.pdf",
+      "started_at": "2026-06-25T23:35:26.462731+00:00",
+      "ok": false,
+      "error": "{'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}",
+      "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 47, in <module>\n  File \"/opt/homebrew/lib/python3.13/site-packages/postgrest/_sync/request_builder.py\", line 84, in execute\n    raise APIError(dict(json_obj))\npostgrest.exceptions.APIError: {'message': \"Could not find the table 'public.document_chunks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.document_rows'\", 'details': None}\n",
+      "finished_at": "2026-06-25T23:36:54.274002+00:00"
+    }
+  ]
+}

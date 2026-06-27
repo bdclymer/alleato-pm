@@ -6,7 +6,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 
 // Types excluded from the default view — they live in Communications, not Documents.
 // The user can still filter to see them explicitly via ?type=teams_dm etc.
-const DEFAULT_EXCLUDED_TYPES = [
+// Communication/transcript types hidden from the default document list unless a
+// `type` filter explicitly selects them. Exported so the smart-group counts
+// endpoint can apply the SAME exclusion and keep rail counts == grid rows.
+export const DEFAULT_EXCLUDED_TYPES = [
   "teams_dm",
   "teams_dm_conversation",
   "teams_message",
@@ -123,6 +126,9 @@ export const GET = withApiGuardrails(
       `,
         { count: "exact" },
       )
+      // Align with group-counts/route.ts — exclude soft-deleted records so the
+      // grid count matches the sidebar badge counts.
+      .is("deleted_at", null)
       .order(sortColumn, {
         ascending: sortDirection === "asc",
         nullsFirst: false,

@@ -3,37 +3,27 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  ArrowUpRight,
   BookOpen,
   Briefcase,
   Building2,
   CalendarDays,
   FileText,
   HardHat,
+  List,
   Receipt,
-  Search,
   Settings,
   Shield,
   Users,
-  X,
 } from "lucide-react";
 
-import { EmptyState } from "@/components/ds";
+import { Button, EmptyState, ExpandingSearch } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   useKnowledgeDocuments,
   type KnowledgeDocument,
 } from "@/hooks/use-knowledge-documents";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
-import { apiFetch } from "@/lib/api-client";
-import { toast } from "sonner";
-
-// ---------------------------------------------------------------------------
-// Category config
-// ---------------------------------------------------------------------------
+import { cn } from "@/lib/utils";
 
 const CATEGORY_ORDER = [
   "Company Policies",
@@ -64,374 +54,459 @@ const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
 };
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
-  "Company Policies": "Handbooks, code of conduct, safety policies, and compliance documents.",
-  "HR & Onboarding": "Hiring checklists, benefits, onboarding guides, and people operations.",
+  "Company Policies": "Policies, safety requirements, compliance notes, and handbook material.",
+  "HR & Onboarding": "People operations, onboarding steps, benefits, and internal team guidance.",
   "Finance & Accounting": "Billing, AR/AP, expense policies, and accounting procedures.",
-  Contracts: "Master agreements, subcontracts, NDAs, and standard contract templates.",
-  "Field Operations": "Site safety, equipment manuals, and daily field procedures.",
-  Meetings: "Recurring meeting notes, decisions log, and shared agendas.",
-  "Notion & Tools": "Internal tooling guides, Notion workspace docs, and SOPs.",
-  "Project Management": "Methodology, project setup, scheduling, and PM templates.",
-  Templates: "Reusable letters, forms, RFI templates, and standard correspondence.",
-  Other: "Reference material that doesn't fit a primary category.",
+  Contracts: "Agreement templates, subcontract references, NDAs, and contract standards.",
+  "Field Operations": "Site procedures, field standards, safety practices, and equipment references.",
+  Meetings: "Meeting notes, recurring agendas, decision records, and follow-up references.",
+  "Notion & Tools": "Internal tooling guides, workspace notes, and operational SOPs.",
+  "Project Management": "Project setup, scheduling, PM workflows, and execution standards.",
+  Templates: "Reusable forms, letters, RFI templates, and standard correspondence.",
+  Other: "Reference material that does not fit a primary knowledge topic.",
 };
+
+const PAGE_SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "topics", label: "Topics" },
+] as const;
 
 function deriveCategory(doc: KnowledgeDocument): Category {
   if (!doc.tags) return "Other";
-  const first = doc.tags.split(",")[0].trim();
-  return (CATEGORY_ORDER as readonly string[]).includes(first)
+  const first = doc.tags.split(",")[0]?.trim();
+  return first && (CATEGORY_ORDER as readonly string[]).includes(first)
     ? (first as Category)
     : "Other";
 }
-
-function getDisplayDate(doc: KnowledgeDocument): string {
-  const value = doc.date ?? doc.created_at;
-  if (!value) return "No date";
-  return new Date(value).toLocaleDateString();
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function KnowledgeBasePage() {
   const { data: documents = [], isLoading } = useKnowledgeDocuments();
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
   const [activeCategory, setActiveCategory] = React.useState<Category | null>(null);
-  const [openingDocumentId, setOpeningDocumentId] = React.useState<string | null>(null);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
-  const hasFilter = Boolean(searchTerm || activeCategory);
-
-  const filteredDocuments = React.useMemo(() => {
-    let docs = documents;
-    if (activeCategory) {
-      docs = docs.filter((d) => deriveCategory(d) === activeCategory);
-    }
-    if (searchTerm) {
-      docs = docs.filter((doc) => {
-        const haystack = [doc.title ?? "", doc.file_name ?? "", doc.tags ?? ""]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(searchTerm);
-      });
-    }
-    return docs;
-  }, [documents, activeCategory, searchTerm]);
 
   const categoryCounts = React.useMemo(() => {
     const counts: Partial<Record<Category, number>> = {};
     for (const doc of documents) {
-      const cat = deriveCategory(doc);
-      counts[cat] = (counts[cat] ?? 0) + 1;
+      const category = deriveCategory(doc);
+      counts[category] = (counts[category] ?? 0) + 1;
     }
     return counts;
   }, [documents]);
 
-  const presentCategories = CATEGORY_ORDER.filter(
-    (c) => (categoryCounts[c] ?? 0) > 0,
+  const visibleCategories = React.useMemo(
+    () => CATEGORY_ORDER.filter((category) => (categoryCounts[category] ?? 0) > 0),
+    [categoryCounts],
   );
 
-  async function handleOpenDocument(document: KnowledgeDocument) {
-    if (!document.file_path) {
-      toast.error("Document has no associated file.");
-      return;
-    }
+  const displayCategories = React.useMemo(() => {
+    if (!searchTerm) return visibleCategories;
 
-    setOpeningDocumentId(document.id);
-    try {
-      const { url } = await apiFetch<{ url: string }>(
-        `/api/knowledge/signed-url?id=${encodeURIComponent(document.id)}`,
-      );
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      toast.error("Could not load document. Try again.");
-    } finally {
-      setOpeningDocumentId(null);
-    }
-  }
+    return visibleCategories.filter((category) => {
+      if (
+        category.toLowerCase().includes(searchTerm) ||
+        CATEGORY_DESCRIPTIONS[category].toLowerCase().includes(searchTerm)
+      ) {
+        return true;
+      }
+
+      return documents.some((doc) => {
+        if (deriveCategory(doc) !== category) return false;
+        const haystack = [
+          doc.title ?? "",
+          doc.file_name ?? "",
+          doc.tags ?? "",
+          doc.category ?? "",
+          doc.source ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(searchTerm);
+      });
+    });
+  }, [documents, searchTerm, visibleCategories]);
 
   return (
-    <PageShell variant="detail" title="Knowledge Base" showHeader={false}>
-      {/* Hero panel */}
-      <section className="relative overflow-hidden rounded-2xl bg-muted/40 px-6 py-14 sm:px-12 sm:py-16">
-        {isAdmin && (
-          <Link
-            href="/knowledge/manage"
-            className="absolute right-5 top-5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            Manage sources
-          </Link>
-        )}
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Knowledge Base
-          </h1>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-            Browse company documents, lessons learned, and reference material
-            that Ask Alleato can use.
-          </p>
-          <div className="relative mx-auto mt-8 max-w-lg">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-            <Input
-              placeholder="Search company knowledge…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-11 bg-background pl-11 pr-10 text-sm shadow-xs placeholder:text-muted-foreground/60"
-            />
-            {search && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground/60 hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </section>
+    <PageShell
+      variant="detailWide"
+      title="Knowledge Base"
+      showHeader={false}
+      contentClassName="max-w-screen-2xl"
+    >
+      <div className="space-y-6">
+        <DocsTopBar isAdmin={isAdmin} search={search} onSearchChange={setSearch} />
 
-      {/* Body */}
-      {isLoading ? (
-        <CategoryGridSkeleton />
-      ) : hasFilter ? (
-        <FilteredResults
-          documents={filteredDocuments}
-          searchTerm={searchTerm}
-          activeCategory={activeCategory}
-          onClearCategory={() => setActiveCategory(null)}
-          onClearSearch={() => setSearch("")}
-          onOpenDocument={handleOpenDocument}
-          openingDocumentId={openingDocumentId}
-        />
-      ) : presentCategories.length === 0 ? (
-        <EmptyState
-          icon={<BookOpen className="h-5 w-5" />}
-          title="No knowledge entries yet"
-          description="Admins can add approved knowledge from the source manager."
-        />
-      ) : (
-        <CategoryGrid
-          categories={presentCategories}
-          counts={categoryCounts}
-          onSelect={setActiveCategory}
-        />
-      )}
+        <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-16">
+          <KnowledgeTopicNav
+            categories={visibleCategories}
+            counts={categoryCounts}
+            activeCategory={activeCategory}
+            totalCount={documents.length}
+            onSelect={setActiveCategory}
+          />
+
+          <main className="min-w-0 space-y-10">
+            <section id="overview" className="scroll-mt-24 space-y-4">
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-primary">Product knowledge</p>
+                <h1 className="text-3xl font-semibold leading-tight tracking-normal text-foreground md:text-4xl">
+                  Alleato Knowledge Base
+                </h1>
+                <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+                  Search approved internal sources, browse by topic, and open the
+                  documents Ask Alleato can cite when it answers operational questions.
+                </p>
+              </div>
+            </section>
+
+            <MobileTopicNav
+              categories={visibleCategories}
+              counts={categoryCounts}
+              activeCategory={activeCategory}
+              totalCount={documents.length}
+              onSelect={setActiveCategory}
+            />
+
+            {isLoading ? (
+              <KnowledgeDocsSkeleton />
+            ) : documents.length === 0 ? (
+              <EmptyState
+                icon={<BookOpen className="h-5 w-5" />}
+                title="No knowledge entries yet"
+                description="Admins can add approved knowledge from the source manager."
+              />
+            ) : (
+              <>
+                <TopicCards
+                  categories={displayCategories}
+                  counts={categoryCounts}
+                  activeCategory={activeCategory}
+                  onSelect={setActiveCategory}
+                  onClearFilters={() => {
+                    setSearch("");
+                    setActiveCategory(null);
+                  }}
+                  hasFilter={Boolean(searchTerm || activeCategory)}
+                />
+              </>
+            )}
+          </main>
+
+          <OnThisPage isAdmin={isAdmin} />
+        </div>
+      </div>
     </PageShell>
   );
 }
 
-// ---------------------------------------------------------------------------
-// CategoryGrid
-// ---------------------------------------------------------------------------
+function DocsTopBar({
+  isAdmin,
+  search,
+  onSearchChange,
+}: {
+  isAdmin: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
+}) {
+  return (
+    <header className="flex flex-col gap-4 pb-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <BookOpen className="h-4 w-4 text-primary" />
+          Knowledge
+        </div>
+        <nav aria-label="Knowledge views" className="hidden items-center gap-5 text-sm md:flex">
+          <span className="font-medium text-foreground">Product</span>
+          <Link href="/knowledge/manage" className="text-muted-foreground hover:text-foreground">
+            Sources
+          </Link>
+        </nav>
+      </div>
 
-function CategoryGrid({
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <ExpandingSearch
+          placeholder="Search knowledge..."
+          value={search}
+          onChange={onSearchChange}
+          defaultExpanded
+          className="w-full sm:w-80 [&_input]:h-11 [&_input]:w-full [&_input]:rounded-lg sm:[&_input]:h-9"
+        />
+        {isAdmin && (
+          <Button asChild variant="ghost" size="sm" className="justify-start gap-1.5">
+            <Link href="/knowledge/manage">
+              <Settings className="h-4 w-4" />
+              Add knowledge
+            </Link>
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function KnowledgeTopicNav({
   categories,
   counts,
+  activeCategory,
+  totalCount,
   onSelect,
 }: {
   categories: readonly Category[];
   counts: Partial<Record<Category, number>>;
-  onSelect: (cat: Category) => void;
+  activeCategory: Category | null;
+  totalCount: number;
+  onSelect: (category: Category | null) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {categories.map((cat) => {
-        const count = counts[cat] ?? 0;
-        return (
-          <div
-            key={cat}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelect(cat)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelect(cat);
-              }
-            }}
-            className="group relative flex cursor-pointer flex-col items-start gap-4 rounded-2xl bg-card p-6 text-left shadow-xs transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground/70 transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-              {CATEGORY_ICONS[cat]}
-            </div>
-            <div className="flex-1 space-y-1.5">
-              <div className="text-base font-semibold text-foreground">
-                {cat}
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {CATEGORY_DESCRIPTIONS[cat]}
-              </p>
-            </div>
-            <div className="flex w-full items-center justify-between pt-2">
-              <span className="text-xs text-muted-foreground">
-                {count} {count === 1 ? "entry" : "entries"}
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground transition-colors group-hover:text-primary">
-                Browse
-                <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <aside className="hidden lg:block">
+      <nav aria-label="Knowledge topics" className="sticky top-6 space-y-6">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-foreground">Product</p>
+          <TopicButton
+            label="All knowledge"
+            count={totalCount}
+            isActive={activeCategory === null}
+            onClick={() => onSelect(null)}
+          />
+          {categories.map((category) => (
+            <TopicButton
+              key={category}
+              label={category}
+              count={counts[category] ?? 0}
+              isActive={activeCategory === category}
+              onClick={() => onSelect(category)}
+              icon={CATEGORY_ICONS[category]}
+            />
+          ))}
+        </div>
+      </nav>
+    </aside>
   );
 }
 
-function CategoryGridSkeleton() {
+function MobileTopicNav({
+  categories,
+  counts,
+  activeCategory,
+  totalCount,
+  onSelect,
+}: {
+  categories: readonly Category[];
+  counts: Partial<Record<Category, number>>;
+  activeCategory: Category | null;
+  totalCount: number;
+  onSelect: (category: Category | null) => void;
+}) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div
-          key={i}
-          className="h-48 animate-pulse rounded-2xl bg-muted/40"
+    <nav aria-label="Knowledge topic shortcuts" className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
+      <TopicPill
+        label="All"
+        count={totalCount}
+        isActive={activeCategory === null}
+        onClick={() => onSelect(null)}
+      />
+      {categories.map((category) => (
+        <TopicPill
+          key={category}
+          label={category}
+          count={counts[category] ?? 0}
+          isActive={activeCategory === category}
+          onClick={() => onSelect(category)}
         />
       ))}
-    </div>
+    </nav>
   );
 }
 
-// ---------------------------------------------------------------------------
-// FilteredResults
-// ---------------------------------------------------------------------------
-
-function FilteredResults({
-  documents,
-  searchTerm,
-  activeCategory,
-  onClearCategory,
-  onClearSearch,
-  onOpenDocument,
-  openingDocumentId,
+function TopicButton({
+  label,
+  count,
+  isActive,
+  onClick,
+  icon,
 }: {
-  documents: KnowledgeDocument[];
-  searchTerm: string;
-  activeCategory: Category | null;
-  onClearCategory: () => void;
-  onClearSearch: () => void;
-  onOpenDocument: (doc: KnowledgeDocument) => void;
-  openingDocumentId: string | null;
+  label: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
 }) {
-  const hint = activeCategory
-    ? CATEGORY_DESCRIPTIONS[activeCategory]
-    : `Showing entries matching "${searchTerm}".`;
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-0.5">
-          <div className="text-base font-semibold text-foreground">
-            {activeCategory ?? "Search results"}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {documents.length} {documents.length === 1 ? "entry" : "entries"}
-            {" · "}
-            {hint}
-          </p>
-        </div>
-        {activeCategory && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onClearCategory}
-            className="h-8 gap-1.5 text-xs"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            All categories
-          </Button>
-        )}
-      </div>
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onClick}
+      className={cn(
+        "flex h-auto min-h-10 w-full justify-between gap-3 whitespace-normal rounded-md px-3 py-2 text-left text-sm transition-colors",
+        isActive
+          ? "bg-primary/10 font-medium text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        {icon && <span className="shrink-0">{icon}</span>}
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="shrink-0 text-xs tabular-nums">{count}</span>
+    </Button>
+  );
+}
 
-      {documents.length === 0 ? (
+function TopicPill({
+  label,
+  count,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-auto min-h-11 shrink-0 gap-2 whitespace-nowrap rounded-md px-3 text-sm transition-colors",
+        isActive
+          ? "bg-primary/10 font-medium text-primary"
+          : "bg-muted/60 text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <span>{label}</span>
+      <span className="text-xs tabular-nums">{count}</span>
+    </Button>
+  );
+}
+
+function TopicCards({
+  categories,
+  counts,
+  activeCategory,
+  onSelect,
+  onClearFilters,
+  hasFilter,
+}: {
+  categories: readonly Category[];
+  counts: Partial<Record<Category, number>>;
+  activeCategory: Category | null;
+  onSelect: (category: Category) => void;
+  onClearFilters: () => void;
+  hasFilter: boolean;
+}) {
+  return (
+    <section id="topics" className="scroll-mt-24 space-y-4">
+      {categories.length === 0 ? (
         <EmptyState
-          icon={<FileText className="h-5 w-5" />}
-          title="No entries found"
+          icon={<BookOpen className="h-5 w-5" />}
+          title="No matching topics"
           description="Try a broader phrase or clear the current filter."
           action={
-            searchTerm ? (
-              <Button size="sm" variant="secondary" onClick={onClearSearch}>
-                Clear search
+            hasFilter ? (
+              <Button size="sm" variant="secondary" onClick={onClearFilters}>
+                Clear filters
               </Button>
             ) : undefined
           }
         />
       ) : (
-        <DocumentList
-          docs={documents}
-          onOpenDocument={onOpenDocument}
-          openingDocumentId={openingDocumentId}
-        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {categories.map((category) => (
+          <Button
+            key={category}
+            type="button"
+            variant="ghost"
+            onClick={() => onSelect(category)}
+            className={cn(
+              "group flex h-auto min-h-36 w-full items-start justify-between gap-5 whitespace-normal rounded-lg px-5 py-5 text-left transition-colors",
+              activeCategory === category
+                ? "bg-primary/10 text-primary hover:bg-primary/10"
+                : "bg-muted/45 text-foreground hover:bg-muted/70",
+            )}
+          >
+            <span className="flex min-w-0 gap-3">
+              <span
+                className={cn(
+                  "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background/80 text-muted-foreground group-hover:text-primary",
+                  activeCategory === category && "text-primary",
+                )}
+              >
+                {CATEGORY_ICONS[category]}
+              </span>
+              <span className="space-y-1">
+                <span
+                  className={cn(
+                    "block text-base font-semibold text-foreground group-hover:text-primary",
+                    activeCategory === category && "text-primary",
+                  )}
+                >
+                  {category}
+                </span>
+                <span className="block max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {CATEGORY_DESCRIPTIONS[category]}
+                </span>
+              </span>
+            </span>
+            <span className="shrink-0 rounded-md bg-background/80 px-2 py-1 text-sm tabular-nums text-muted-foreground">
+              {counts[category] ?? 0}
+            </span>
+          </Button>
+        ))}
+        </div>
       )}
-    </div>
+    </section>
   );
 }
 
-// ---------------------------------------------------------------------------
-// DocumentList
-// ---------------------------------------------------------------------------
-
-function DocumentList({
-  docs,
-  onOpenDocument,
-  openingDocumentId,
-}: {
-  docs: KnowledgeDocument[];
-  onOpenDocument: (doc: KnowledgeDocument) => void;
-  openingDocumentId: string | null;
-}) {
+function OnThisPage({ isAdmin }: { isAdmin: boolean }) {
   return (
-    <div className="overflow-hidden rounded-xl bg-card shadow-xs">
-      {docs.map((doc, idx) => (
-        <div
-          key={doc.id}
-          role="button"
-          tabIndex={0}
-          aria-busy={openingDocumentId === doc.id}
-          onClick={() => onOpenDocument(doc)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onOpenDocument(doc);
-            }
-          }}
-          className={
-            "group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none" +
-            (idx > 0 ? " border-t border-muted" : "")
-          }
-        >
-          <div className="flex min-w-0 items-start gap-3">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                {doc.title ?? doc.file_name ?? "Untitled"}
-              </p>
-              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>
-                  {getDisplayDate(doc)}
-                </span>
-                {doc.file_name && doc.file_name !== doc.title && (
-                  <span className="truncate text-muted-foreground/60">
-                    {doc.file_name}
-                  </span>
-                )}
-              </div>
+    <aside className="hidden xl:block">
+      <nav aria-label="On this page" className="sticky top-6 space-y-3 text-sm">
+        <div className="flex items-center gap-2 font-medium text-foreground">
+          <List className="h-4 w-4 text-muted-foreground" />
+          On this page
+        </div>
+        <div className="space-y-2">
+          {PAGE_SECTIONS.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="block text-muted-foreground hover:text-primary"
+            >
+              {section.label}
+            </a>
+          ))}
+          {isAdmin && (
+            <Link href="/knowledge/manage" className="block pt-2 text-primary">
+              Add knowledge
+            </Link>
+          )}
+        </div>
+      </nav>
+    </aside>
+  );
+}
+
+function KnowledgeDocsSkeleton() {
+  return (
+    <div className="space-y-8" aria-label="Loading knowledge">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {[1, 2, 3, 4].map((item) => (
+          <div key={item} className="min-h-36 space-y-4 rounded-lg bg-muted/45 p-5">
+            <div className="h-9 w-9 animate-pulse rounded-md bg-background/80" />
+            <div className="space-y-2">
+              <div className="h-5 w-2/3 animate-pulse rounded-md bg-background/80" />
+              <div className="h-4 w-full animate-pulse rounded-md bg-background/80" />
+              <div className="h-4 w-3/4 animate-pulse rounded-md bg-background/80" />
             </div>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
-            {openingDocumentId === doc.id ? "Opening" : "Open"}
-            <ArrowUpRight className="h-4 w-4 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

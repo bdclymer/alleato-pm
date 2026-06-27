@@ -22,9 +22,9 @@ const files = {
   acumaticaTools: "frontend/src/lib/ai/tools/acumatica.ts",
   actionTools: "frontend/src/lib/ai/tools/action-tools.ts",
   mcpTools: "frontend/src/lib/ai/tools/mcp-tools.ts",
+  architectureDoc: "docs/architecture/AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md",
   providerConfig: "frontend/src/lib/ai/provider-config.ts",
   webTools: "frontend/src/lib/ai/tools/web-search.ts",
-  auditDoc: "docs/archive/2026-06-22-docs-migration/ai-plan/AI-CHAT-IMPLEMENTATION-AUDIT-2026-04-26.md",
   backendApiDoc: "backend/API.md",
   backendRequirements: "backend/requirements.txt",
 };
@@ -36,6 +36,8 @@ const removedLegacyPaths = [
   "backend/src/scripts/rag_chatkit_server.py",
   "backend/src/scripts/rag_chatkit_server_streaming.py",
   "backend/src/scripts/rag_chatkit_server_unified.py",
+  "backend/src/scripts/eval_graph_sync.py",
+  "backend/src/scripts/eval_mine_emails.py",
   "backend/tests/test_rag_chatkit.py",
   "frontend/src/app/(chat)/chat-admin-view",
   "frontend/src/app/(chat)/chat-demo",
@@ -216,7 +218,7 @@ const providerConfig = read(files.providerConfig);
 const actionTools = read(files.actionTools);
 const mcpTools = readIfExists(files.mcpTools);
 const operationalTools = read(files.operationalTools);
-const auditDoc = readIfExists(files.auditDoc);
+const architectureDoc = read(files.architectureDoc);
 
 const inventory = {
   packageVersions: {
@@ -357,9 +359,11 @@ const hasSourceHealth =
 requireCondition(hasSourceHealth, "chat route does not inject source-health status for Microsoft/Acumatica/meeting systems");
 
 warnCondition(
-  auditDoc.includes("frontend/src/lib/ai/tools/mcp-tools.ts") &&
-    auditDoc.includes("@ai-sdk/mcp"),
-  "audit doc should identify the current live AI SDK MCP implementation",
+  architectureDoc.includes("frontend/src/lib/ai/tools/mcp-tools.ts") &&
+    architectureDoc.includes("@ai-sdk/mcp") &&
+    architectureDoc.includes("createMCPClient") &&
+    architectureDoc.includes("chat_history.metadata.tool_trace"),
+  "authoritative AI/RAG architecture doc should identify the current live AI SDK MCP implementation",
 );
 warnCondition(
   !operationalTools.includes("throw err;"),

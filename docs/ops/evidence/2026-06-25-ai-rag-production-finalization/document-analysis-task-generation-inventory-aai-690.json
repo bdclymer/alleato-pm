@@ -1,0 +1,44 @@
+{
+  "samples": [
+    {
+      "id": "5e2e2ca8-2560-448c-9ba4-d450f24365c8",
+      "title": "Review and process Contract Change Order PC-2403-0001 for the",
+      "family": "contract",
+      "created_at": "2026-06-14T22:00:50.200044+00:00",
+      "project_id": 43,
+      "metadata_id": "outlook_attachment_dec0f859953cb5837a9002f1_11f706836d290348363b538c",
+      "project_ids": [
+        43
+      ],
+      "assignee_name": "Andrew Cannon",
+      "source_system": "email",
+      "assignee_email": "acannon@alleatogroup.com",
+      "document_title": "Contract Change Order PC-2403-0001 (31).pdf",
+      "document_source": "microsoft_graph",
+      "extraction_source": "deep_extractor",
+      "document_project_id": 43,
+      "document_source_system": "outlook_attachment"
+    }
+  ],
+  "generatedAt": "2026-06-26T05:12:08.368971+00:00",
+  "familyCoverage": [
+    {
+      "tasks": 1,
+      "family": "contract",
+      "with_owner": 1,
+      "with_project": 1,
+      "with_project_array": 1,
+      "newest_task_created_at": "2026-06-14 22:00:50.200044+00"
+    }
+  ],
+  "extractionCoverage": [
+    {
+      "tasks": 1,
+      "with_owner": 1,
+      "with_project": 1,
+      "source_system": "email",
+      "extraction_source": "deep_extractor",
+      "with_project_array": 1
+    }
+  ]
+}

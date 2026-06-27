@@ -273,7 +273,7 @@ export function buildDocumentTableColumns(opts?: {
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
-            className="font-medium hover:underline underline-offset-2"
+            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
           >
             {item.title || "Untitled Document"}
           </a>
@@ -486,11 +486,12 @@ export function renderDocumentCard(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto flex flex-col gap-2 rounded-lg border border-border p-4 text-left hover:bg-muted/50"
+      data-testid="document-card"
+      className="h-auto w-full min-w-0 flex flex-col items-stretch gap-2 whitespace-normal rounded-lg border border-border p-4 text-left hover:bg-muted/50"
       onClick={() => onView(item)}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-medium text-sm line-clamp-2">
+      <div className="flex w-full min-w-0 items-start justify-between gap-2">
+        <span className="min-w-0 font-medium text-sm line-clamp-2">
           {item.title || "Untitled Document"}
         </span>
         <StatusBadge
@@ -504,10 +505,10 @@ export function renderDocumentCard(
           }
         />
       </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        {item.type && <span>{item.type}</span>}
-        {item.category && <span>{item.category}</span>}
-        {item.source && <span>{item.source}</span>}
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {item.type && <span className="truncate">{item.type}</span>}
+        {item.category && <span className="truncate">{item.category}</span>}
+        {item.source && <span className="truncate">{item.source}</span>}
         {item.created_at && <span>{formatDate(item.created_at)}</span>}
       </div>
       {item.error_message && (

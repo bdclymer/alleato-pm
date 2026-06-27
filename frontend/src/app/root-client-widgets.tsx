@@ -57,7 +57,7 @@ export function RootClientWidgets() {
       {shouldMountDeferredWidgets && <GlobalAiWidget />}
       {shouldMountDeferredWidgets && (
         <>
-          <AdminFeedbackWidget showLauncher={false} />
+          <AdminFeedbackWidget />
           <VeltGlobalLayer />
         </>
       )}

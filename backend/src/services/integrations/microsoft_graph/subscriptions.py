@@ -179,6 +179,62 @@ def _existing_subscription(supabase: Any, target: GraphSubscriptionTarget) -> Op
     return dict(rows[0]) if rows else None
 
 
+def _remove_stale_subscription_rows(
+    supabase: Any,
+    *,
+    selected_targets: List[GraphSubscriptionTarget],
+) -> int:
+    """Mark subscription rows outside the configured target set as removed.
+
+    Rows are retained for audit/history, but they must not continue to appear as
+    active renewal debt after a mailbox leaves the configured sync target list.
+    """
+
+    target_keys = {(target.source, target.resource_id) for target in selected_targets}
+    target_sources = {target.source for target in selected_targets}
+    response = (
+        _get_graph_subscription_read_client()
+        .table("graph_subscriptions")
+        .select("source,resource_id,status")
+        .execute()
+    )
+    rows = response.data or []
+    stale_rows = [
+        row
+        for row in rows
+        if row.get("source") in target_sources
+        and (row.get("source"), row.get("resource_id")) not in target_keys
+        and row.get("status") != "removed"
+    ]
+    if not stale_rows:
+        return 0
+
+    removed = 0
+    now_iso = _utcnow().isoformat()
+    write_client = _get_graph_subscription_write_client()
+    for row in stale_rows:
+        source = row.get("source")
+        resource_id = row.get("resource_id")
+        if not source or not resource_id:
+            continue
+        update_response = (
+            write_client.table("graph_subscriptions")
+            .update({
+                "status": "removed",
+                "last_error_message": None,
+                "metadata": {
+                    "removal_reason": "not_in_configured_subscription_targets",
+                    "removed_at": now_iso,
+                },
+            })
+            .eq("source", source)
+            .eq("resource_id", resource_id)
+            .execute()
+        )
+        removed += len(update_response.data or [])
+    return removed
+
+
 def _upsert_subscription(
     supabase: Any,
     target: GraphSubscriptionTarget,
@@ -239,6 +295,37 @@ def _create_subscription_payload(
     return payload
 
 
+def _requires_fresh_subscription(
+    existing: Optional[Dict[str, Any]],
+    *,
+    existing_expiration: Optional[datetime],
+    now: datetime,
+) -> bool:
+    if not existing:
+        return False
+
+    status = str(existing.get("status") or "").lower()
+    last_error_message = str(existing.get("last_error_message") or "")
+    if status in {"renewal_due", "removed", "missed", "failed", "expired"}:
+        return True
+    if "reauthorizationrequired" in last_error_message.replace(" ", "").lower():
+        return True
+    if existing_expiration and existing_expiration <= now:
+        return True
+    return False
+
+
+def _delete_stale_subscription(graph_client: Any, graph_subscription_id: str) -> None:
+    try:
+        graph_client.delete(f"/subscriptions/{graph_subscription_id}")
+    except Exception as exc:
+        logger.warning(
+            "[GraphSubscriptions] DELETE failed for stale subscription %s; continuing with fresh create: %s",
+            graph_subscription_id,
+            exc,
+        )
+
+
 def ensure_subscriptions(
     supabase: Any,
     *,
@@ -255,7 +342,19 @@ def ensure_subscriptions(
         raise RuntimeError("MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE or GRAPH_WEBHOOK_CLIENT_STATE is required")
 
     selected_targets = targets if targets is not None else configured_subscription_targets()
-    stats = {"checked": 0, "created": 0, "renewed": 0, "skipped": 0, "failed": 0, "errors": []}
+    stale_removed = _remove_stale_subscription_rows(
+        supabase,
+        selected_targets=selected_targets,
+    )
+    stats = {
+        "checked": 0,
+        "created": 0,
+        "renewed": 0,
+        "skipped": 0,
+        "failed": 0,
+        "stale_removed": stale_removed,
+        "errors": [],
+    }
     now = _utcnow()
     renew_cutoff = now + timedelta(hours=renew_within_hours)
 
@@ -283,8 +382,18 @@ def ensure_subscriptions(
                 lifecycle_notification_url=lifecycle_notification_url,
                 expiration_hours=expiration_hours,
             )
+            needs_fresh_subscription = _requires_fresh_subscription(
+                existing,
+                existing_expiration=existing_expiration,
+                now=now,
+            )
             if existing_graph_id and existing_resource and existing_resource != target.resource:
-                graph_client.delete(f"/subscriptions/{existing_graph_id}")
+                _delete_stale_subscription(graph_client, existing_graph_id)
+                response = graph_client.post("/subscriptions", payload)
+                graph_subscription_id = response.get("id")
+                stats["created"] += 1
+            elif existing_graph_id and needs_fresh_subscription:
+                _delete_stale_subscription(graph_client, existing_graph_id)
                 response = graph_client.post("/subscriptions", payload)
                 graph_subscription_id = response.get("id")
                 stats["created"] += 1

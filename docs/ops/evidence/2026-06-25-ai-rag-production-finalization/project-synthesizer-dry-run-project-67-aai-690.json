@@ -1,0 +1,59 @@
+{
+  "project_id": 67,
+  "since": "2026-06-25",
+  "docs_seen": 2,
+  "emails": 1,
+  "teams": 0,
+  "skipped": 1,
+  "cards_written": 0,
+  "tasks_written": 0,
+  "dry_run": true,
+  "errors": [],
+  "samples": [
+    {
+      "doc_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcXZAAA=",
+      "comm_type": "email",
+      "title": "Email: Re: Project Name: 'Vermillion Rise TI' Number: '462305' confirmation.",
+      "text_chars": 3226,
+      "extraction_failed": false,
+      "extraction_error": null,
+      "what_changed": "The thread confirms the state filing for Vermillion Rise TI has already been paid and does not require any further payment action. Tony also says he now has direct contact and will respond if Brandon needs anything else.",
+      "signals": 6,
+      "tasks": 1,
+      "sample_signals": [
+        {
+          "type": "decision",
+          "title": "Treat the design release fee notice as a paid receipt, not an amount owed.",
+          "evidence": "this is a receipt that has already been paid sir not something we owe."
+        },
+        {
+          "type": "risk",
+          "title": "The project filing/payment communication created avoidable time loss and confusion over whether the fee was owed.",
+          "evidence": "I wasted about an hour yesterday and another hour today getting to the right person"
+        },
+        {
+          "type": "initiative_signal",
+          "title": "Use Tony's direct contact going forward to reduce delays in resolving billing or filing questions.",
+          "evidence": "I now have direct line contact get help if needed."
+        },
+        {
+          "type": "project_update",
+          "title": "The filing confirmation includes a total fee amount and indicates the design release was successfully e-filed.",
+          "evidence": "Thank you for e-filing."
+        },
+        {
+          "type": "open_question",
+          "title": "Tony says he checked with accounting and could not find any outstanding balance on this item.",
+          "evidence": "I could not find that we owed anything, and that was just confirmed with their accounting dept Caroline Kemp."
+        }
+      ],
+      "sample_tasks": [
+        {
+          "description": "Verify whether Brandon needs any further action on the filing/receipt issue and respond if so.",
+          "assignee": "Tony Courtney"
+        }
+      ]
+    }
+  ],
+  "capped_at_max_extractions": 1
+}

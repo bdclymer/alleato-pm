@@ -48,10 +48,6 @@ export function PrivacySection({
     <section className="space-y-4">
       <SectionRuleHeading label="Contract Privacy" />
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Privacy restricts access to project admins and selected non-admin users.
-        </p>
-
         <Controller
           name="privacy.isPrivate"
           control={control}
@@ -150,17 +146,17 @@ export function PrivacySection({
               name="privacy.allowNonAdminViewSovItems"
               control={control}
               render={({ field }) => (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="privacy-allow-sov"
-                    checked={field.value ?? false}
-                    onCheckedChange={(checked) => field.onChange(!!checked)}
-                    disabled={isSubmitting}
-                  />
-                  <Label htmlFor="privacy-allow-sov" className="text-sm font-normal cursor-pointer">
-                    Allow these non-admin users to view the SOV items
-                  </Label>
-                </div>
+            <div className="flex items-start gap-2 leading-none">
+              <Checkbox
+                id="privacy-allow-sov"
+                checked={field.value ?? false}
+                onCheckedChange={(checked) => field.onChange(!!checked)}
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="privacy-allow-sov" className="text-sm leading-none font-normal cursor-pointer">
+                Allow these non-admin users to view the SOV items
+              </Label>
+            </div>
               )}
             />
           </>

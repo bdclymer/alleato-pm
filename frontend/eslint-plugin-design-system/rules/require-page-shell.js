@@ -71,6 +71,12 @@ module.exports = {
       // data and pass it to a client component that owns the UnifiedTablePage shell.
       // Adding PageShell here would create a double shell.
       '(tables)/',
+      // Dev-tool pages with fully custom layouts — a sidebar nav + scrollable demo canvas
+      // that intentionally owns its own structure. Adding PageShell would double-wrap.
+      'ui-library/page.tsx',
+      // Public no-auth pages (e.g. subcontractor RFI response): these live outside the
+      // authenticated app shell entirely and use their own lightweight layouts.
+      'app/respond/',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 

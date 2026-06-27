@@ -24,6 +24,7 @@ import {
   createProjectTools,
   type CreateProjectToolsOptions,
 } from "@/lib/ai/tools/project-tools";
+import { createToolContext } from "@/lib/ai/tools/tool-context";
 import {
   createWebSearchTools,
   type CreateWebSearchToolsOptions,
@@ -1134,6 +1135,7 @@ export function createStrategistTools(
     pinnedProjectId?: number;
     sessionId?: string;
     includeActionTools?: boolean;
+    generatedTaskWriteMode?: ActionToolsOptions["generatedTaskWriteMode"];
   } = {},
 ) {
   const visibilitySnapshots: ToolVisibilitySnapshot[] = [];
@@ -1147,14 +1149,23 @@ export function createStrategistTools(
     selectedProjectId: options.pinnedProjectId ?? null,
   };
 
+  // One ToolContext per strategist request, threaded into the project + action
+  // factory trees so they share a single set of clients instead of each
+  // constructing their own.
+  const ctx = createToolContext({
+    userId,
+    pinnedProjectId: options.pinnedProjectId,
+  });
+  const toolOptions = { ...options, ctx };
+
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = omitMicrosoftOperatorTools(
-    registeredProjectTools(userId, options, registryPolicy, recordVisibility),
+    registeredProjectTools(userId, toolOptions, registryPolicy, recordVisibility),
   );
   const strategistActionTools = options.includeActionTools
     ? omitMicrosoftOperatorTools(
-        registeredActionTools(userId, options, registryPolicy, recordVisibility),
+        registeredActionTools(userId, toolOptions, registryPolicy, recordVisibility),
       )
     : {};
   const featureRequestTools = registeredFactoryTools({

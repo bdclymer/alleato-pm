@@ -1,0 +1,261 @@
+
+> alleato-procore@0.1.0 verify:graph-subscriptions
+> node scripts/verify/verify_graph_subscriptions.mjs --json
+
+{
+  "ok": true,
+  "checkedAt": "2026-06-26T12:21:26.671Z",
+  "source": "outlook_email",
+  "minActiveSubscriptions": 10,
+  "expectedTargetCount": 10,
+  "missingActiveTargets": [],
+  "subscriptionCount": 11,
+  "activeSubscriptionCount": 10,
+  "syncStateCount": 12,
+  "erroredSyncStateCount": 0,
+  "subscriptions": [
+    {
+      "source": "outlook_email",
+      "resource_id": "cgillespie@alleatogroup.com",
+      "resource_name": "Outlook: cgillespie@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:54.581283+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:55.545525+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:55.592279+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "njepson@alleatogroup.com",
+      "resource_name": "Outlook: njepson@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:42.391458+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:53.980279+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:54.474176+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "mparsons@alleatogroup.com",
+      "resource_name": "Outlook: mparsons@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:40.340875+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:42.237451+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:42.293392+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "jdawson@alleatogroup.com",
+      "resource_name": "Outlook: jdawson@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:35.134651+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:40.136489+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:40.25183+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "ctragesser@alleatogroup.com",
+      "resource_name": "Outlook: ctragesser@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:33.02968+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:34.99506+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:35.038802+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "accounting@alleatogroup.com",
+      "resource_name": "Outlook: accounting@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:31.820155+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:32.89177+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:32.934671+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "crusin@alleatogroup.com",
+      "resource_name": "Outlook: crusin@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:20:27.39148+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:20:28.515578+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:31.657893+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "awehner@alleatogroup.com",
+      "resource_name": "Outlook: awehner@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:19:03.677978+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:05.84099+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:05.886673+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "acannon@alleatogroup.com",
+      "resource_name": "Outlook: acannon@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:18:55.839747+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:19:03.447937+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:19:03.583538+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "bclymer@alleatogroup.com",
+      "resource_name": "Outlook: bclymer@alleatogroup.com",
+      "status": "active",
+      "expiration_at": "2026-06-28T12:18:54.340956+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-06-26T12:18:55.687852+00:00",
+      "last_error_message": null,
+      "updated_at": "2026-06-26T12:18:55.731773+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "mharrison@alleatogroup.com",
+      "resource_name": "Outlook: mharrison@alleatogroup.com",
+      "status": "renewal_due",
+      "expiration_at": "2026-05-15T20:03:54.517+00:00",
+      "last_notification_at": null,
+      "last_renewed_at": "2026-05-13T20:03:56.658+00:00",
+      "last_error_message": "Microsoft Graph lifecycle event: reauthorizationRequired",
+      "updated_at": "2026-05-15T17:03:55.63+00:00"
+    }
+  ],
+  "syncStates": [
+    {
+      "source": "outlook_email",
+      "resource_id": "accounting@alleatogroup.com",
+      "resource_name": "Outlook: accounting@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T11:17:31.215553+00:00",
+      "items_synced": 7,
+      "error_message": null,
+      "updated_at": "2026-06-10T22:24:44.232+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "acannon@alleatogroup.com",
+      "resource_name": "Outlook: acannon@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T10:18:03.761912+00:00",
+      "items_synced": 16,
+      "error_message": null,
+      "updated_at": "2026-06-09T02:29:53.245+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "cgillespie@alleatogroup.com",
+      "resource_name": "Outlook: cgillespie@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T09:17:42.085625+00:00",
+      "items_synced": 10,
+      "error_message": null,
+      "updated_at": "2026-05-20T19:00:52.679+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "bclymer@alleatogroup.com",
+      "resource_name": "Outlook: bclymer@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-26T11:30:43.635656+00:00",
+      "items_synced": 3,
+      "error_message": null,
+      "updated_at": "2026-05-18T17:24:36.767+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "mharrison@alleatogroup.com",
+      "resource_name": "Outlook: mharrison@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-05-15T18:58:49.96+00:00",
+      "items_synced": 1,
+      "error_message": null,
+      "updated_at": "2026-05-15T18:58:50.017+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+      "resource_name": "Outlook: 38f414d6-e90d-4886-b2f3-5a1b644c3fa2",
+      "sync_status": "success",
+      "last_sync_at": "2026-05-13T20:06:20.616+00:00",
+      "items_synced": 20,
+      "error_message": null,
+      "updated_at": "2026-05-13T20:06:20.728+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "ctragesser@alleatogroup.com",
+      "resource_name": "Outlook: ctragesser@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-26T11:28:18.225546+00:00",
+      "items_synced": 12,
+      "error_message": null,
+      "updated_at": "2026-05-11T17:59:55.547+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "njepson@alleatogroup.com",
+      "resource_name": "Outlook: njepson@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-26T11:23:49.20677+00:00",
+      "items_synced": 11,
+      "error_message": null,
+      "updated_at": "2026-05-05T15:39:37.433+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "awehner@alleatogroup.com",
+      "resource_name": "Outlook: awehner@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T13:18:09.886866+00:00",
+      "items_synced": 14,
+      "error_message": null,
+      "updated_at": "2026-05-05T15:39:37.433+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "crusin@alleatogroup.com",
+      "resource_name": "Outlook: crusin@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T15:18:08.651996+00:00",
+      "items_synced": 18,
+      "error_message": null,
+      "updated_at": "2026-05-05T15:39:37.433+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "jdawson@alleatogroup.com",
+      "resource_name": "Outlook: jdawson@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T16:18:07.951765+00:00",
+      "items_synced": 16,
+      "error_message": null,
+      "updated_at": "2026-05-05T15:39:37.433+00:00"
+    },
+    {
+      "source": "outlook_email",
+      "resource_id": "mparsons@alleatogroup.com",
+      "resource_name": "Outlook: mparsons@alleatogroup.com",
+      "sync_status": "success",
+      "last_sync_at": "2026-06-25T21:17:16.787154+00:00",
+      "items_synced": 5,
+      "error_message": null,
+      "updated_at": "2026-05-05T15:39:37.433+00:00"
+    }
+  ]
+}

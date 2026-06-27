@@ -20,7 +20,8 @@ export type AssistantWidgetKind =
   | "create_event"
   | "project_action_preview"
   | "decision_packet"
-  | "feature_request_packet";
+  | "feature_request_packet"
+  | "executive_daily_brief";
 
 export type AssistantWidgetField = {
   label: string;
@@ -205,6 +206,10 @@ export type OutlookInboxSummaryWidgetItem = {
   recommendedAction: string;
   replyPrompt: string;
   draftPrompt: string;
+  /** True only when a real Outlook draft reply already exists for this thread. */
+  draftReady?: boolean;
+  /** Short preview of the prepared draft reply, shown when draftReady is true. */
+  draftPreview?: string | null;
 };
 
 export type OutlookInboxSummaryWidgetPayload = {
@@ -635,6 +640,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "project_action_preview",
   "decision_packet",
   "feature_request_packet",
+  "executive_daily_brief",
 ] as const satisfies readonly AssistantWidgetKind[];
 
 function normalizePrompt(prompt: string): string {
@@ -788,16 +794,20 @@ export function buildAssistantWidgetsFromPrompt(params: {
   if (
     containsAny(lower, [
       "create change event",
+      "create change request",
       "log change event",
+      "log change request",
       "draft change event",
+      "draft change request",
+      "change request",
       "change event",
     ])
   ) {
-    const title = compactTitle(prompt, "Draft change event");
+    const title = compactTitle(prompt, "Draft change request");
     widgets.push({
       type: "project_action_preview",
       id: "change-event-preview",
-      title: "Change event preview",
+      title: "Change request preview",
       actionType: "change_event",
       projectId: params.selectedProjectId ?? null,
       fields: [
@@ -807,7 +817,7 @@ export function buildAssistantWidgetsFromPrompt(params: {
         { label: "Status", value: "open", editable: true },
       ],
       confirmPrompt:
-        "Create a change event from this preview. Show the final write preview first and wait for my confirmation.",
+        "Create a change request/change event from this preview. Show the final write preview first and wait for my confirmation.",
     });
   }
 

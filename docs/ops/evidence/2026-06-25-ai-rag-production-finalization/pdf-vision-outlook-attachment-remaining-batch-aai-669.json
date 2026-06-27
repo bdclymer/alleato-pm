@@ -1,0 +1,295 @@
+{
+  "generated_at": "2026-06-26T00:09:03.833251+00:00",
+  "source": "docs/ops/evidence/2026-06-25-ai-rag-production-finalization/pdf-backfill-candidates-after-vision-only-onedrive-repair-aai-669.json",
+  "batch_size": 18,
+  "results": [
+    {
+      "id": "outlook_attachment_4a7e9897392b7143214bc88a_633792c74b4e65d9e3cc3f41",
+      "title": "Frame Elevations.pdf",
+      "started_at": "2026-06-26T00:04:15.061800+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 163
+      },
+      "finished_at": "2026-06-26T00:04:24.040550+00:00"
+    },
+    {
+      "id": "outlook_attachment_4a7e9897392b7143214bc88a_50592cb86228fa93f97d490b",
+      "title": "Overhead Door Cut Sheet.pdf",
+      "started_at": "2026-06-26T00:04:24.041858+00:00",
+      "ok": true,
+      "chunks_written": 4,
+      "page_intelligence_count": 3,
+      "rag_chunk_count": 4,
+      "vision_chunk_count": 3,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 170
+      },
+      "finished_at": "2026-06-26T00:04:38.541593+00:00"
+    },
+    {
+      "id": "outlook_attachment_4a7e9897392b7143214bc88a_5905e13a614a504522a5f895",
+      "title": "Donation Door Elevation.pdf",
+      "started_at": "2026-06-26T00:04:38.541877+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 170
+      },
+      "finished_at": "2026-06-26T00:04:46.403039+00:00"
+    },
+    {
+      "id": "outlook_attachment_026f1dff96ab4b4bc1bb5623_e788175e85e80962fd1c31ff",
+      "title": "Frame Elevations.pdf",
+      "started_at": "2026-06-26T00:04:46.403346+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 163
+      },
+      "finished_at": "2026-06-26T00:04:52.465917+00:00"
+    },
+    {
+      "id": "outlook_attachment_026f1dff96ab4b4bc1bb5623_cb65d6c54c8a51dee52472a3",
+      "title": "Overhead Door Cut Sheet.pdf",
+      "started_at": "2026-06-26T00:04:52.466664+00:00",
+      "ok": true,
+      "chunks_written": 4,
+      "page_intelligence_count": 3,
+      "rag_chunk_count": 4,
+      "vision_chunk_count": 3,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 170
+      },
+      "finished_at": "2026-06-26T00:05:08.072305+00:00"
+    },
+    {
+      "id": "outlook_attachment_026f1dff96ab4b4bc1bb5623_fc1aa458a08fab50537da76a",
+      "title": "Donation Door Elevation.pdf",
+      "started_at": "2026-06-26T00:05:08.072739+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 170
+      },
+      "finished_at": "2026-06-26T00:05:14.888494+00:00"
+    },
+    {
+      "id": "outlook_attachment_a935979726d4ed19071c239c_6226878c4a0745b37036a0b1",
+      "title": "06.24.DUCT-WRAP WORK PROGRESSIONS & NOTES.pdf",
+      "started_at": "2026-06-26T00:05:14.888819+00:00",
+      "ok": true,
+      "chunks_written": 5,
+      "page_intelligence_count": 4,
+      "rag_chunk_count": 5,
+      "vision_chunk_count": 4,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 182
+      },
+      "finished_at": "2026-06-26T00:05:36.323878+00:00"
+    },
+    {
+      "id": "outlook_attachment_1e6e23f3ce425db9664051c4_1f683dfd02f250f5f1cb2f6a",
+      "title": "Goodwill Office - A401_Enlarged Stair Plan and Elevation_6-23-26.pdf",
+      "started_at": "2026-06-26T00:05:36.324320+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 218
+      },
+      "finished_at": "2026-06-26T00:05:47.346407+00:00"
+    },
+    {
+      "id": "outlook_attachment_7f2b1435b81ccae624bab307_3a25a05baf2512b2c1be1fb8",
+      "title": "Park Collective Floor Plan 2026-06-23.pdf",
+      "started_at": "2026-06-26T00:05:47.346913+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 185
+      },
+      "finished_at": "2026-06-26T00:05:54.822439+00:00"
+    },
+    {
+      "id": "outlook_attachment_417a3ebb426e70eaec98c8f7_195f63c7ff5dd716c02be32a",
+      "title": "Goodwill Brookville Rd REV1. Alleato.pdf",
+      "started_at": "2026-06-26T00:05:54.822813+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 215
+      },
+      "finished_at": "2026-06-26T00:06:01.479683+00:00"
+    },
+    {
+      "id": "outlook_attachment_badbf8e216da638306875aa0_a4a669e0f333d2bdbe4a5419",
+      "title": "conap - Arch.pdf",
+      "started_at": "2026-06-26T00:06:01.480070+00:00",
+      "ok": true,
+      "chunks_written": 3,
+      "page_intelligence_count": 2,
+      "rag_chunk_count": 3,
+      "vision_chunk_count": 2,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 135
+      },
+      "finished_at": "2026-06-26T00:06:11.989471+00:00"
+    },
+    {
+      "id": "outlook_attachment_badbf8e216da638306875aa0_beaa7fcce5d1c19de8e4db63",
+      "title": "conap - PE2.pdf",
+      "started_at": "2026-06-26T00:06:11.990002+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 134
+      },
+      "finished_at": "2026-06-26T00:06:21.702860+00:00"
+    },
+    {
+      "id": "outlook_attachment_3a7e7c9629a7765e2ec830fc_45b71f791e101518bb565044",
+      "title": "Ace-Champaign_PERMIT DRAFT_2026-06-15.pdf",
+      "started_at": "2026-06-26T00:06:21.703352+00:00",
+      "ok": true,
+      "chunks_written": 26,
+      "page_intelligence_count": 25,
+      "rag_chunk_count": 26,
+      "vision_chunk_count": 25,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 170
+      },
+      "finished_at": "2026-06-26T00:07:59.454448+00:00"
+    },
+    {
+      "id": "outlook_attachment_bef35c12b95a05599eec9a10_bf625f8e012adfb20ee7f1dd",
+      "title": "Vermillion Permit Set 06.12.26.pdf",
+      "started_at": "2026-06-26T00:07:59.454864+00:00",
+      "ok": true,
+      "chunks_written": 8,
+      "page_intelligence_count": 7,
+      "rag_chunk_count": 8,
+      "vision_chunk_count": 7,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 154
+      },
+      "finished_at": "2026-06-26T00:08:29.604435+00:00"
+    },
+    {
+      "id": "outlook_attachment_70bcd7532c96d48ff746a92b_531515395026935ab7f07f2f",
+      "title": "510429.pdf",
+      "started_at": "2026-06-26T00:08:29.604892+00:00",
+      "ok": true,
+      "chunks_written": 3,
+      "page_intelligence_count": 2,
+      "rag_chunk_count": 3,
+      "vision_chunk_count": 2,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 139
+      },
+      "finished_at": "2026-06-26T00:08:43.595492+00:00"
+    },
+    {
+      "id": "outlook_attachment_70bcd7532c96d48ff746a92b_d888f07cea874ca35777e41f",
+      "title": "INV-004385.pdf",
+      "started_at": "2026-06-26T00:08:43.595919+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 143
+      },
+      "finished_at": "2026-06-26T00:08:49.713416+00:00"
+    },
+    {
+      "id": "outlook_attachment_70bcd7532c96d48ff746a92b_ecbc236d6d158209cc413adf",
+      "title": "INV-004076 (1).pdf",
+      "started_at": "2026-06-26T00:08:49.713907+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 147
+      },
+      "finished_at": "2026-06-26T00:08:58.249100+00:00"
+    },
+    {
+      "id": "outlook_attachment_70bcd7532c96d48ff746a92b_064937c79e2a48ec10e7c414",
+      "title": "INV-003913 (1).pdf",
+      "started_at": "2026-06-26T00:08:58.249494+00:00",
+      "ok": true,
+      "chunks_written": 2,
+      "page_intelligence_count": 1,
+      "rag_chunk_count": 2,
+      "vision_chunk_count": 1,
+      "rag_metadata": {
+        "embedding_status": "embedded",
+        "parsing_status": "embedded",
+        "content_length": 147
+      },
+      "finished_at": "2026-06-26T00:09:03.833240+00:00"
+    }
+  ]
+}

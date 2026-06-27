@@ -4,15 +4,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, CheckCircle2, GitCommitHorizontal } from "lucide-react";
 
-import { Button, EmptyState, Heading } from "@/components/ds";
+import { Button, EmptyState, Heading, SectionHeader } from "@/components/ds";
 import { KpiRow, type KpiBlockProps } from "@/components/ds/kpi";
 import { Timeline, type TimelineItem } from "@/components/ds/timeline";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
 import {
   SourceReferenceButton,
   type SourceReferenceRecord,
 } from "@/components/ai-intelligence/source-reference-button";
 import { PageShell } from "@/components/layout";
+import { ChangeCard } from "@/features/intelligence/change-card";
+import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
@@ -35,7 +38,12 @@ import type { Database } from "@/types/database.types";
 
 type ProjectRow = Pick<
   Database["public"]["Tables"]["projects"]["Row"],
-  "id" | "name" | "project_number" | "budget" | "budget_used" | "phase" | "stage" | "summary" | "work_scope"
+  "id" | "name" | "project_number" | "budget" | "budget_used" | "phase" | "stage" | "summary" | "work_scope" | "type"
+>;
+
+type InternalTaskRow = Pick<
+  Database["public"]["Tables"]["tasks"]["Row"],
+  "id" | "title" | "description" | "status" | "due_date" | "priority" | "assignee_name" | "created_at"
 >;
 
 type SourceDocumentRow = Pick<
@@ -248,6 +256,30 @@ function summarizeText(value: string | null | undefined, maxLength = 260): strin
   return `${truncated.trim()}...`;
 }
 
+/**
+ * A synthesized "read" is never a raw email/source dump. When the intelligence
+ * pipeline copies a source document verbatim (header, From:/To:, &nbsp; junk,
+ * signature) instead of summarizing it, we must NOT render that as if it were an
+ * executive summary. Detect the telltale structure so the dashboard refuses to
+ * surface garbage. (Root cause is a backend synthesis bug affecting ~20 projects;
+ * this is the display-side guardrail until that is fixed.)
+ */
+function looksLikeRawSource(value: string | null | undefined): boolean {
+  const text = (value ?? "").trim();
+  if (!text) return false;
+  if (/^\s*subject:\s/i.test(text)) return true;
+  if (/\bfrom:\s*[^\s@]+@/i.test(text) && /\bto:\s*[^\s@]+@/i.test(text)) return true;
+  // Multiple raw &nbsp; entities = un-processed source HTML, never a clean summary.
+  if ((text.match(/&nbsp;/gi) ?? []).length >= 2) return true;
+  return false;
+}
+
+/** Synthesized narrative, or empty string — never a raw source dump. */
+function safeNarrative(value: string | null | undefined, maxLength = 260): string {
+  if (looksLikeRawSource(value)) return "";
+  return summarizeText(value, maxLength);
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
@@ -261,7 +293,7 @@ function cleanUnknown(value: unknown): string {
 }
 
 function cleanUnknownList(value: unknown, max = 4): string[] {
-  return asArray(value).map((item) => summarizeText(cleanUnknown(item) || cleanUnknown(asRecord(item).summary) || cleanUnknown(asRecord(item).title), 180)).filter(Boolean).slice(0, max);
+  return asArray(value).map((item) => safeNarrative(cleanUnknown(item) || cleanUnknown(asRecord(item).summary) || cleanUnknown(asRecord(item).title), 180)).filter(Boolean).slice(0, max);
 }
 
 function summaryRecord(packet: ClientProjectIntelligencePacket): Record<string, unknown> {
@@ -280,7 +312,7 @@ function packetSourceAliasMap(packet: ClientProjectIntelligencePacket): Map<stri
     const record = asRecord(source);
     const sourceId = cleanUnknown(record.id);
     if (!sourceId) return;
-    sourceAliases(index + 1).forEach((alias) => map.set(alias, sourceId));
+    for (const alias of sourceAliases(index + 1)) { map.set(alias, sourceId); }
     map.set(sourceId, sourceId);
   });
   return map;
@@ -491,20 +523,55 @@ async function loadOperatingRecordState(
   };
 }
 
-function sourceDocsForEvidence(
-  evidence: InsightCardEvidence[],
-  sourceDocumentMap: Map<string, SourceDocumentRow>,
-): SourceDocumentRow[] {
-  const seen = new Set<string>();
-  const rows: SourceDocumentRow[] = [];
-  for (const item of evidence) {
-    if (!item.sourceDocumentId || seen.has(item.sourceDocumentId)) continue;
-    const row = sourceDocumentMap.get(item.sourceDocumentId);
-    if (!row) continue;
-    seen.add(item.sourceDocumentId);
-    rows.push(row);
-  }
-  return rows;
+
+async function loadSourceDocumentMap(
+  supabase: ReturnType<typeof createServiceClient>,
+  evidenceSourceIds: string[],
+): Promise<Map<string, SourceDocumentRow>> {
+  if (evidenceSourceIds.length === 0) return new Map();
+
+  const ragSupabase = isRagDatabaseReadsEnabled() ? createRagServiceClient() : null;
+  const intakeSupabase = createOutlookIntakeServiceClient();
+  const sourceDocumentsResult = await supabase
+    .from("document_metadata")
+    .select(
+      "id, title, type, category, source, source_system, date, created_at, summary, overview, description, notes, content, raw_text, source_web_url, fireflies_link, meeting_link, url, participants, participants_array",
+    )
+    .in("id", evidenceSourceIds);
+  const ragSourceDocumentsResult = ragSupabase
+    ? await ragSupabase
+        .from("rag_document_metadata")
+        .select("id, title, type, category, source, source_system, summary, overview, content, raw_text, source_web_url, url")
+        .in("id", evidenceSourceIds)
+    : { data: [], error: null };
+  const attachmentLinksResult = await intakeSupabase
+    .from("outlook_email_intake_attachments")
+    .select("document_metadata_id, email_attachment_id, content_type, file_name")
+    .in("document_metadata_id", evidenceSourceIds);
+
+  const ragSourceMap = new Map(
+    (((ragSourceDocumentsResult.data ?? []) as RagSourceDocumentRow[]) ?? []).map((source) => [source.id, source]),
+  );
+  const attachmentLinkMap = new Map(
+    (((attachmentLinksResult.data ?? []) as OutlookAttachmentLinkRow[]) ?? [])
+      .filter((row): row is OutlookAttachmentLinkRow & { document_metadata_id: string } => Boolean(row.document_metadata_id))
+      .map((row) => [row.document_metadata_id, row]),
+  );
+  const sourceDocuments = ((sourceDocumentsResult.data ?? []) as SourceDocumentRow[]).map((source) => {
+    const merged = mergeSourceDocumentRows(source, ragSourceMap.get(source.id));
+    const attachmentLink = attachmentLinkMap.get(source.id);
+    if (!attachmentLink) return merged;
+    return {
+      ...merged,
+      source_metadata: {
+        ...asRecord(merged.source_metadata),
+        email_attachment_id: attachmentLink.email_attachment_id,
+        attachment_content_type: attachmentLink.content_type,
+        attachment_file_name: attachmentLink.file_name,
+      },
+    };
+  });
+  return new Map(sourceDocuments.map((source) => [source.id, source]));
 }
 
 function supportingSourcesForIds(
@@ -598,11 +665,13 @@ function reportTypeLabel(value: string): string {
 function OperatingRecordSection({
   operatingRecord,
   projectId,
+  projectBudget,
 }: {
   operatingRecord: OperatingRecordState;
   projectId: number;
+  projectBudget?: number | null;
 }) {
-  const { currentState, latestSnapshot, changeEventCandidates, reportSuggestions } = operatingRecord;
+  const { currentState, latestSnapshot, changeEventCandidates } = operatingRecord;
   if (!currentState && !latestSnapshot) return null;
 
   const financial = latestSnapshot?.financial_snapshot ?? {};
@@ -613,7 +682,7 @@ function OperatingRecordSection({
   const sourceCount = typeof sourceCoverage.source_count === "number" ? sourceCoverage.source_count : null;
   const healthTone = operatingHealthTone(currentState?.health_status);
   const warnings = cleanUnknownList(latestSnapshot?.warnings, 3);
-  const budget = typeof financial.budget === "number" ? financial.budget : null;
+  const budget = typeof financial.budget === "number" ? financial.budget : (projectBudget ?? null);
   const budgetUsed = typeof financial.budget_used === "number" ? financial.budget_used : null;
 
   const metrics: KpiBlockProps[] = [
@@ -654,10 +723,10 @@ function OperatingRecordSection({
   return (
     <section className="space-y-6">
       <div className="space-y-3">
-        <SectionHeading eyebrow="Operating record" title="Current project read from sources and database state" />
+        <SectionHeader title="Operating record" />
         <div className="max-w-4xl space-y-2">
           <p className="text-sm leading-7 text-muted-foreground">
-            {summarizeText(currentState?.current_summary, 620) || "No current operating summary has been projected yet."}
+            {safeNarrative(currentState?.current_summary, 620) || "A written project summary isn’t available yet."}
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className={toneClasses(healthTone)}>Health: {formatLabel(currentState?.health_status ?? "unknown")}</span>
@@ -674,22 +743,25 @@ function OperatingRecordSection({
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Financial</p>
           <p className="text-sm leading-6 text-muted-foreground">
-            {currentState?.financial_read ||
-              `Budget ${budget != null ? formatCurrency(budget) : "not set"} · used ${formatCurrency(budgetUsed)}`}
+            {currentState?.financial_read && !looksLikeRawSource(currentState.financial_read)
+              ? currentState.financial_read
+              : `Budget ${budget != null ? formatCurrency(budget) : "not set"} · used ${formatCurrency(budgetUsed)}`}
           </p>
         </div>
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Schedule</p>
           <p className="text-sm leading-6 text-muted-foreground">
-            {currentState?.schedule_read ||
-              `Start ${formatDate(cleanUnknown(schedule.start_date))} · substantial completion ${formatDate(cleanUnknown(schedule.substantial_completion_date))}`}
+            {currentState?.schedule_read && !looksLikeRawSource(currentState.schedule_read)
+              ? currentState.schedule_read
+              : `Start ${formatDate(cleanUnknown(schedule.start_date))} · substantial completion ${formatDate(cleanUnknown(schedule.substantial_completion_date))}`}
           </p>
         </div>
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Field / reports</p>
           <p className="text-sm leading-6 text-muted-foreground">
-            {currentState?.field_read ||
-              `${countTotal(counts, "daily_logs")} daily logs · ${countTotal(counts, "progress_reports")} progress reports`}
+            {currentState?.field_read && !looksLikeRawSource(currentState.field_read)
+              ? currentState.field_read
+              : `${countTotal(counts, "daily_logs")} daily logs · ${countTotal(counts, "progress_reports")} progress reports`}
           </p>
         </div>
       </div>
@@ -709,14 +781,14 @@ function OperatingRecordSection({
 
       {changeEventCandidates.length > 0 ? (
         <div className="space-y-3">
-          <SectionHeading eyebrow="Potential change events" title="Review before this becomes retroactive cleanup" />
+          <SectionHeader title="Potential change events" />
           <div className="divide-y divide-border/60">
             {changeEventCandidates.map((candidate) => (
               <article key={candidate.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0 space-y-1">
                   <p className="text-sm font-medium text-foreground">{candidate.title}</p>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {summarizeText(candidate.reason || candidate.description, 260)}
+                    {safeNarrative(candidate.reason || candidate.description, 260)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Confidence: {formatLabel(candidate.confidence)} · Status: {formatLabel(candidate.status)}
@@ -731,30 +803,6 @@ function OperatingRecordSection({
         </div>
       ) : null}
 
-      {reportSuggestions.length > 0 ? (
-        <div className="space-y-3">
-          <SectionHeading eyebrow="Report suggestions" title="Reusable daily and weekly report inputs" />
-          <div className="divide-y divide-border/60">
-            {reportSuggestions.map((suggestion) => (
-              <article key={suggestion.id} className="py-3 first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="text-sm font-medium text-foreground">{suggestion.title}</p>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {reportTypeLabel(suggestion.report_type)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {summarizeText(
-                    cleanUnknown(asRecord(suggestion.suggestion_payload).summary) ||
-                      cleanUnknown(asRecord(suggestion.suggestion_payload).updates),
-                    240,
-                  ) || "Structured suggestion is ready for review."}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -763,16 +811,6 @@ function OperatingRecordSection({
 // Section A — Snapshot: AI executive read + hard SQL numbers + delta
 // --------------------------------------------------------------------------
 
-function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{eyebrow}</p>
-      <Heading level={5} as="h2" className="text-lg">
-        {title}
-      </Heading>
-    </div>
-  );
-}
 
 function SnapshotSection({
   packet,
@@ -787,7 +825,7 @@ function SnapshotSection({
   projectId: number;
   sourceDocumentMap: Map<string, SourceDocumentRow>;
 }) {
-  const executiveRead = summarizeText(
+  const executiveRead = safeNarrative(
     cleanUnknown(summaryRecord(packet).currentExecutiveRead) ||
       packet.currentStatus ||
       packet.strategicRead ||
@@ -820,15 +858,17 @@ function SnapshotSection({
     { label: "Documents", value: String(counts.documents), href: `/${projectId}/documents` },
   ];
 
-  const financial = summaryText(packet, "financialPosition");
-  const schedule = summaryText(packet, "scheduleAndProcurement");
+  const financial = safeNarrative(summaryText(packet, "financialPosition"), 320);
+  const schedule = safeNarrative(summaryText(packet, "scheduleAndProcurement"), 320);
   const whatChanged = summaryItems(packet, "whatChanged", ["impact"]).slice(0, 4);
 
   return (
     <section className="space-y-6">
       <div className="space-y-3">
-        <SectionHeading eyebrow="Executive snapshot" title="What is happening right now" />
-        <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{executiveRead}</p>
+        <SectionHeader title="Executive snapshot" />
+        {executiveRead ? (
+          <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{executiveRead}</p>
+        ) : null}
       </div>
 
       <KpiRow metrics={metrics} size="small" />
@@ -840,7 +880,7 @@ function SnapshotSection({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Financial read
               </p>
-              <p className="text-sm leading-6 text-muted-foreground">{summarizeText(financial, 320)}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{financial}</p>
             </div>
           ) : null}
           {schedule ? (
@@ -848,7 +888,7 @@ function SnapshotSection({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Schedule &amp; procurement
               </p>
-              <p className="text-sm leading-6 text-muted-foreground">{summarizeText(schedule, 320)}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{schedule}</p>
             </div>
           ) : null}
         </div>
@@ -859,21 +899,20 @@ function SnapshotSection({
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             What changed since the last update
           </p>
-          <div className="space-y-3">
-            {whatChanged.map((item) => (
-              <div key={item.title} className="flex gap-3">
-                <GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  {item.detail ? (
-                    <p className="text-sm leading-6 text-muted-foreground">{summarizeText(item.detail, 200)}</p>
-                  ) : null}
+          <div className="flex flex-col gap-2">
+            {[...whatChanged].reverse().map((item) => (
+              <ChangeCard
+                key={item.title}
+                title={item.title}
+                preview={item.detail ? safeNarrative(item.detail, 120) : undefined}
+                detail={item.detail ? safeNarrative(item.detail, 600) : undefined}
+                sources={
                   <SourceLinkRow
                     projectId={projectId}
                     sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
                   />
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         </div>
@@ -985,37 +1024,46 @@ function NeedsAttentionSection({
   const items = buildAttentionItems(packet);
   if (items.length === 0) return null;
 
+  const TONE_CARD: Record<string, string> = {
+    risk: "border-l-destructive bg-destructive/5",
+    watch: "border-l-amber-500 bg-amber-500/5",
+    ok: "border-l-emerald-500 bg-emerald-500/5",
+  };
+
   return (
-    <section className="space-y-4">
-      <SectionHeading eyebrow="Needs attention" title="Risks, decisions, and actions in priority order" />
-      <div className="divide-y divide-border/60">
+    <section className="space-y-3">
+      <SectionHeader title="Needs attention" />
+      <div className="space-y-2">
         {items.map((item) => {
           const Icon = KIND_ICON[item.kind];
+          const cardClass = TONE_CARD[item.tone] ?? "border-l-border bg-muted/30";
           return (
-            <article key={item.key} className="flex gap-4 py-4 first:pt-0 last:pb-0">
-              <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClasses(item.tone)}`} />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <Heading level={6} as="h3" className="text-sm leading-5">
-                    {item.title}
-                  </Heading>
-                  <span className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${toneClasses(item.tone)}`}>
-                    {item.badge}
-                  </span>
+            <article key={item.key} className={`rounded-r-md border border-l-4 p-4 ${cardClass}`}>
+              <div className="flex gap-3">
+                <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClasses(item.tone)}`} />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <Heading level={6} as="h3" className="text-sm leading-5">
+                      {item.title}
+                    </Heading>
+                    <span className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${toneClasses(item.tone)}`}>
+                      {item.badge}
+                    </span>
+                  </div>
+                  {item.detail ? (
+                    <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(item.detail, 240)}</p>
+                  ) : null}
+                  {item.owner || item.due ? (
+                    <p className="text-xs text-muted-foreground">
+                      {item.owner ? `Owner: ${item.owner}` : "Owner not named"}
+                      {item.due ? ` · Due: ${item.due}` : ""}
+                    </p>
+                  ) : null}
+                  <SourceLinkRow
+                    projectId={projectId}
+                    sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
+                  />
                 </div>
-                {item.detail ? (
-                  <p className="text-sm leading-6 text-muted-foreground">{summarizeText(item.detail, 240)}</p>
-                ) : null}
-                {item.owner || item.due ? (
-                  <p className="text-xs text-muted-foreground">
-                    {item.owner ? `Owner: ${item.owner}` : "Owner not named"}
-                    {item.due ? ` · Due: ${item.due}` : ""}
-                  </p>
-                ) : null}
-                <SourceLinkRow
-                  projectId={projectId}
-                  sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
-                />
               </div>
             </article>
           );
@@ -1106,7 +1154,7 @@ function ProgressLogSection({
   return (
     <section className="space-y-4">
       <div className="space-y-1">
-        <SectionHeading eyebrow="Progress log" title="Decisions, risks, and AI flags over time" />
+        <SectionHeader title="Progress log" />
         <p className="text-sm text-muted-foreground">
           Surfaced from meetings, emails, and Teams — most recent first.
         </p>
@@ -1167,7 +1215,7 @@ function OperatingTimelineSection({ events }: { events: OperatingTimelineEventRo
     description: [
       formatLabel(event.event_type),
       event.priority !== "low" ? `${formatLabel(event.priority)} priority` : "",
-      summarizeText(event.summary || event.why_it_matters, 260),
+      safeNarrative(event.summary || event.why_it_matters, 260),
     ]
       .filter(Boolean)
       .join(" — "),
@@ -1181,17 +1229,7 @@ function OperatingTimelineSection({ events }: { events: OperatingTimelineEventRo
             : "default",
   }));
 
-  return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <SectionHeading eyebrow="Operating timeline" title="Reverse-chronological source-backed project history" />
-        <p className="text-sm text-muted-foreground">
-          Durable events from source syntheses and project database snapshots.
-        </p>
-      </div>
-      <Timeline items={items} />
-    </section>
-  );
+  return <Timeline items={items} />;
 }
 
 function IntelligenceEmptyState({ project, reason }: { project: ProjectRow; reason: string }) {
@@ -1208,6 +1246,312 @@ function IntelligenceEmptyState({ project, reason }: { project: ProjectRow; reas
   );
 }
 
+// --------------------------------------------------------------------------
+// Internal projects (projects.type === "Internal") — Operations intelligence.
+// Reframes the same source-derived signals into the four things that actually
+// matter for an internal initiative: issues that arose, processes to improve,
+// follow-ups owed, and tasks. No construction KPIs, contracts, or financials.
+// --------------------------------------------------------------------------
+
+const INTERNAL_ISSUE_TYPES = new Set([
+  "risk",
+  "schedule_risk",
+  "financial_exposure",
+  "blocker",
+  "flag",
+  "open_question",
+  "sentiment",
+]);
+const INTERNAL_PROCESS_TYPES = new Set(["process_issue", "product_need", "requirement"]);
+const INTERNAL_FOLLOWUP_TYPES = new Set(["decision", "change_management"]);
+const INTERNAL_TASK_EVENT_TYPES = new Set(["task"]);
+// A signal whose lifecycle is closed should not read as still-open work.
+const INTERNAL_CLOSED_STATUSES = new Set(["resolved", "did_not_materialize", "done", "complete", "completed"]);
+
+const INTERNAL_PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+
+type InternalItem = {
+  key: string;
+  title: string;
+  summary?: string;
+  meta: string;
+  owner?: string;
+  date?: string;
+  sourceDocumentId?: string | null;
+  rank: number;
+};
+
+function eventToInternalItem(event: OperatingTimelineEventRow): InternalItem {
+  const statusNote = event.current_status && event.current_status !== "open" ? formatLabel(event.current_status) : "";
+  const meta = [
+    formatLabel(event.event_type),
+    event.priority !== "low" ? `${formatLabel(event.priority)} priority` : "",
+    statusNote,
+    formatTimelineDate(event.event_at),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    key: event.id,
+    title: event.title,
+    summary: safeNarrative(event.summary || event.why_it_matters, 280),
+    meta,
+    owner: event.owner_label ?? undefined,
+    date: event.event_at,
+    sourceDocumentId: event.source_document_id,
+    rank: INTERNAL_PRIORITY_RANK[event.priority] ?? 2,
+  };
+}
+
+function currentStateItems(value: unknown, badge: string): InternalItem[] {
+  return asArray(value)
+    .map((raw, index): InternalItem | null => {
+      const record = asRecord(raw);
+      const title = cleanUnknown(record.title) || cleanUnknown(record.summary);
+      if (!title) return null;
+      const detail = cleanUnknown(record.detail) || cleanUnknown(record.description) || cleanUnknown(record.reason);
+      const detailSummary = detail && detail !== title ? safeNarrative(detail, 280) : undefined;
+      return {
+        key: `${badge}:${index}:${title.slice(0, 40)}`,
+        title,
+        summary: detailSummary,
+        meta: badge,
+        owner: cleanUnknown(record.owner) || undefined,
+        date: cleanUnknown(record.occurredAt || record.date) || undefined,
+        rank: 2,
+      };
+    })
+    .filter((item): item is InternalItem => Boolean(item));
+}
+
+function dedupeInternalItems(items: InternalItem[]): InternalItem[] {
+  const seen = new Set<string>();
+  return items
+    .filter((item) => {
+      const norm = cleanText(item.title).toLowerCase();
+      if (!norm || seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    })
+    .sort((a, b) => a.rank - b.rank);
+}
+
+function InternalItemSection({
+  eyebrow,
+  items,
+  projectId,
+  sourceDocumentMap,
+  limit = 8,
+}: {
+  eyebrow: string;
+  items: InternalItem[];
+  projectId: number;
+  sourceDocumentMap: Map<string, SourceDocumentRow>;
+  limit?: number;
+}) {
+  if (items.length === 0) return null;
+  const shown = items.slice(0, limit);
+  return (
+    <section className="space-y-3">
+      <SectionHeader title={eyebrow} />
+      <div className="divide-y divide-border/60">
+        {shown.map((item) => {
+          const source = item.sourceDocumentId ? sourceDocumentMap.get(item.sourceDocumentId) : undefined;
+          return (
+            <article key={item.key} className="space-y-1 py-3 first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-sm font-medium text-foreground">{item.title}</p>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {item.meta}
+                </span>
+              </div>
+              {item.summary ? (
+                <p className="text-sm leading-6 text-muted-foreground">{item.summary}</p>
+              ) : null}
+              {item.owner ? <p className="text-xs text-muted-foreground">Owner: {item.owner}</p> : null}
+              {source ? <SourceLinkRow projectId={projectId} sources={[source]} /> : null}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function internalTaskRank(task: InternalTaskRow, now: number): number {
+  const due = task.due_date ? new Date(task.due_date).getTime() : null;
+  const overdue = due != null && !Number.isNaN(due) && due < now;
+  const priorityRank = INTERNAL_PRIORITY_RANK[(task.priority ?? "").toLowerCase()] ?? 2;
+  return (overdue ? 0 : 10) + priorityRank;
+}
+
+function InternalTaskSection({ tasks, nowMs }: { tasks: InternalTaskRow[]; nowMs: number }) {
+  if (tasks.length === 0) return null;
+  const ordered = [...tasks].sort((a, b) => internalTaskRank(a, nowMs) - internalTaskRank(b, nowMs)).slice(0, 12);
+  return (
+    <section className="space-y-3">
+      <SectionHeader title="Tasks" />
+      <div className="divide-y divide-border/60">
+        {ordered.map((task) => {
+          const dueMs = task.due_date ? new Date(task.due_date).getTime() : null;
+          const overdue = dueMs != null && !Number.isNaN(dueMs) && dueMs < nowMs;
+          return (
+            <article key={task.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {cleanText(task.title) || safeNarrative(task.description, 100) || "Untitled task"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatLabel(task.status)}
+                  {task.priority ? ` · ${formatLabel(task.priority)} priority` : ""}
+                  {task.assignee_name ? ` · ${task.assignee_name}` : ""}
+                </p>
+              </div>
+              {task.due_date ? (
+                <span className={`shrink-0 text-xs ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                  {overdue ? "Overdue " : "Due "}
+                  {formatDate(task.due_date)}
+                </span>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+async function loadInternalTasks(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectId: number,
+): Promise<InternalTaskRow[]> {
+  const columns = "id, title, description, status, due_date, priority, assignee_name, created_at";
+  const [byArray, byScalar] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select(columns)
+      .contains("project_ids", [projectId])
+      .not("status", "in", '("done","cancelled")')
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(20),
+    supabase
+      .from("tasks")
+      .select(columns)
+      .eq("project_id", projectId)
+      .not("status", "in", '("done","cancelled")')
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(20),
+  ]);
+  const byId = new Map<string, InternalTaskRow>();
+  for (const task of [...(byArray.data ?? []), ...(byScalar.data ?? [])]) {
+    if (!byId.has(task.id)) byId.set(task.id, task);
+  }
+  return Array.from(byId.values());
+}
+
+function InternalIntelligenceView({
+  project,
+  operatingRecord,
+  tasks,
+  projectId,
+  sourceDocumentMap,
+  nowMs,
+}: {
+  project: ProjectRow;
+  operatingRecord: OperatingRecordState;
+  tasks: InternalTaskRow[];
+  projectId: number;
+  sourceDocumentMap: Map<string, SourceDocumentRow>;
+  nowMs: number;
+}) {
+  const { currentState, timelineEvents } = operatingRecord;
+
+  const openEvents = timelineEvents.filter(
+    (event) => !INTERNAL_CLOSED_STATUSES.has((event.current_status ?? "").toLowerCase()),
+  );
+  const eventsOfType = (types: Set<string>) =>
+    openEvents.filter((event) => types.has(event.event_type)).map(eventToInternalItem);
+
+  // Timeline events are the cleanest, typed, dated source. Fall back to the
+  // project_current_state arrays only when no events exist for a bucket.
+  const issues = dedupeInternalItems(
+    eventsOfType(INTERNAL_ISSUE_TYPES).length > 0
+      ? eventsOfType(INTERNAL_ISSUE_TYPES)
+      : [
+          ...currentStateItems(currentState?.active_risks, "Risk"),
+          ...currentStateItems(currentState?.needs_attention, "Needs attention"),
+        ],
+  );
+  const processItems = dedupeInternalItems(eventsOfType(INTERNAL_PROCESS_TYPES));
+  const followUps = dedupeInternalItems(
+    eventsOfType(INTERNAL_FOLLOWUP_TYPES).length > 0
+      ? eventsOfType(INTERNAL_FOLLOWUP_TYPES)
+      : currentStateItems(currentState?.open_decisions, "Open decision"),
+  );
+  const taskEventItems = eventsOfType(INTERNAL_TASK_EVENT_TYPES);
+
+  const executiveRead = safeNarrative(currentState?.current_summary, 620);
+  const hasAnything =
+    Boolean(executiveRead) ||
+    issues.length > 0 ||
+    processItems.length > 0 ||
+    followUps.length > 0 ||
+    tasks.length > 0 ||
+    taskEventItems.length > 0;
+
+  return (
+    <>
+      {executiveRead ? (
+        <section className="space-y-3">
+          <SectionHeader title="Current read" />
+          <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{executiveRead}</p>
+        </section>
+      ) : null}
+
+      <InternalItemSection
+        eyebrow="Issues raised"
+        items={issues}
+        projectId={projectId}
+        sourceDocumentMap={sourceDocumentMap}
+      />
+
+      <InternalItemSection
+        eyebrow="Process improvements"
+        items={processItems}
+        projectId={projectId}
+        sourceDocumentMap={sourceDocumentMap}
+      />
+
+      <InternalItemSection
+        eyebrow="Follow-ups needed"
+        items={followUps}
+        projectId={projectId}
+        sourceDocumentMap={sourceDocumentMap}
+      />
+
+      <InternalTaskSection tasks={tasks} nowMs={nowMs} />
+
+      {taskEventItems.length > 0 ? (
+        <InternalItemSection
+          eyebrow="Action items from sources"
+          items={taskEventItems}
+          projectId={projectId}
+          sourceDocumentMap={sourceDocumentMap}
+        />
+      ) : null}
+
+      <DailyIngestionFeed projectId={projectId} />
+
+      {!hasAnything ? (
+        <EmptyState
+          title="No operations intelligence yet"
+          description={`${project.name ?? `Project ${project.id}`} has no source-derived issues, follow-ups, or tasks yet. Once meetings, email, or Teams activity is ingested, they’ll surface here.`}
+        />
+      ) : null}
+    </>
+  );
+}
+
 export default async function ProjectIntelligencePage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const numericProjectId = Number.parseInt(projectId, 10);
@@ -1219,7 +1563,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
   const supabase = createServiceClient();
   const projectResult = await supabase
     .from("projects")
-    .select("id, name, project_number, budget, budget_used, phase, stage, summary, work_scope")
+    .select("id, name, project_number, budget, budget_used, phase, stage, summary, work_scope, type")
     .eq("id", numericProjectId)
     .single();
 
@@ -1228,6 +1572,58 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
   }
 
   const project = projectResult.data;
+
+  // Internal initiatives (projects.type === "Internal") get the operations
+  // intelligence layout: issues, process improvements, follow-ups, tasks —
+  // not the construction KPI / contract / financial brief.
+  if (project.type === "Internal") {
+    const [operatingRecord, internalTasks] = await Promise.all([
+      loadOperatingRecordState(supabase, numericProjectId),
+      loadInternalTasks(supabase, numericProjectId),
+    ]);
+    const internalEvidenceIds = Array.from(
+      new Set(
+        operatingRecord.timelineEvents
+          .map((event) => event.source_document_id)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+    const internalSourceMap = await loadSourceDocumentMap(supabase, internalEvidenceIds);
+    const nowMs = Date.now();
+
+    return (
+      <PageShell
+        variant="dashboard"
+        title={`${project.name ?? `Project ${project.id}`} Intelligence`}
+        titleContent={
+          <div className="space-y-2">
+            <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
+              {project.name ?? `Project ${project.id}`} Intelligence
+            </h1>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <p className="text-sm text-muted-foreground">Internal initiative</p>
+              <p className="text-sm text-muted-foreground">
+                {operatingRecord.currentState
+                  ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
+                  : "Last updated not available"}
+              </p>
+            </div>
+          </div>
+        }
+        contentClassName="space-y-10"
+      >
+        <InternalIntelligenceView
+          project={project}
+          operatingRecord={operatingRecord}
+          tasks={internalTasks}
+          projectId={numericProjectId}
+          sourceDocumentMap={internalSourceMap}
+          nowMs={nowMs}
+        />
+      </PageShell>
+    );
+  }
+
   const target = await resolveIntelligenceTarget({
     query: project.name ?? `Project ${project.id}`,
     selectedProjectId: numericProjectId,
@@ -1293,52 +1689,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       ].filter((value): value is string => Boolean(value)),
     ),
   );
-  const ragSupabase = isRagDatabaseReadsEnabled() ? createRagServiceClient() : null;
-  const intakeSupabase = createOutlookIntakeServiceClient();
-  const sourceDocumentsResult = evidenceSourceIds.length
-    ? await supabase
-        .from("document_metadata")
-        .select(
-          "id, title, type, category, source, source_system, date, created_at, summary, overview, description, notes, content, raw_text, source_web_url, fireflies_link, meeting_link, url, participants, participants_array",
-        )
-        .in("id", evidenceSourceIds)
-    : { data: [], error: null };
-  const ragSourceDocumentsResult =
-    ragSupabase && evidenceSourceIds.length
-      ? await ragSupabase
-          .from("rag_document_metadata")
-          .select("id, title, type, category, source, source_system, summary, overview, content, raw_text, source_web_url, url")
-          .in("id", evidenceSourceIds)
-      : { data: [], error: null };
-  const attachmentLinksResult = evidenceSourceIds.length
-    ? await intakeSupabase
-        .from("outlook_email_intake_attachments")
-        .select("document_metadata_id, email_attachment_id, content_type, file_name")
-        .in("document_metadata_id", evidenceSourceIds)
-    : { data: [], error: null };
-  const ragSourceMap = new Map(
-    (((ragSourceDocumentsResult.data ?? []) as RagSourceDocumentRow[]) ?? []).map((source) => [source.id, source]),
-  );
-  const attachmentLinkMap = new Map(
-    (((attachmentLinksResult.data ?? []) as OutlookAttachmentLinkRow[]) ?? [])
-      .filter((row): row is OutlookAttachmentLinkRow & { document_metadata_id: string } => Boolean(row.document_metadata_id))
-      .map((row) => [row.document_metadata_id, row]),
-  );
-  const sourceDocuments = ((sourceDocumentsResult.data ?? []) as SourceDocumentRow[]).map((source) => {
-    const merged = mergeSourceDocumentRows(source, ragSourceMap.get(source.id));
-    const attachmentLink = attachmentLinkMap.get(source.id);
-    if (!attachmentLink) return merged;
-    return {
-      ...merged,
-      source_metadata: {
-        ...asRecord(merged.source_metadata),
-        email_attachment_id: attachmentLink.email_attachment_id,
-        attachment_content_type: attachmentLink.content_type,
-        attachment_file_name: attachmentLink.file_name,
-      },
-    };
-  });
-  const sourceDocumentMap = new Map(sourceDocuments.map((source) => [source.id, source]));
+  const sourceDocumentMap = await loadSourceDocumentMap(supabase, evidenceSourceIds);
 
   return (
     <PageShell
@@ -1361,14 +1712,27 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
           </div>
         </div>
       }
-      actions={
-        <Button asChild size="sm" variant="default">
-          <Link href="/ai">Ask Alleato AI</Link>
-        </Button>
-      }
       contentClassName="space-y-10"
     >
-      {hasOperatingRecord ? <OperatingRecordSection operatingRecord={operatingRecord} projectId={numericProjectId} /> : null}
+      {packet ? (
+        <SnapshotSection
+          packet={packet}
+          project={project}
+          counts={counts}
+          projectId={numericProjectId}
+          sourceDocumentMap={sourceDocumentMap}
+        />
+      ) : null}
+
+      {hasOperatingRecord ? (
+        <OperatingRecordSection
+          operatingRecord={operatingRecord}
+          projectId={numericProjectId}
+          projectBudget={project.budget}
+        />
+      ) : null}
+
+      <DailyIngestionFeed projectId={numericProjectId} />
 
       {!target && !hasOperatingRecord ? (
         <IntelligenceEmptyState
@@ -1386,31 +1750,69 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
           }
         />
       ) : packet ? (
-        <>
-          <SnapshotSection
-            packet={packet}
-            project={project}
-            counts={counts}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <NeedsAttentionSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
+        <NeedsAttentionSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
+      ) : null}
+
+      {/* Report suggestions + timeline — collapsed by default */}
+      {(operatingRecord.reportSuggestions.length > 0 ||
+        operatingRecord.timelineEvents.length > 0 ||
+        timelineEntries.length > 0) ? (
+        <Accordion type="multiple" className="border-t pt-2">
+          {operatingRecord.reportSuggestions.length > 0 ? (
+            <AccordionItem value="report-suggestions">
+              <AccordionTrigger className="text-sm font-medium">
+                Report suggestions
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="divide-y divide-border/60">
+                  {operatingRecord.reportSuggestions.map((suggestion) => (
+                    <article key={suggestion.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <p className="text-sm font-medium text-foreground">{suggestion.title}</p>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          {reportTypeLabel(suggestion.report_type)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {safeNarrative(
+                          cleanUnknown(asRecord(suggestion.suggestion_payload).summary) ||
+                            cleanUnknown(asRecord(suggestion.suggestion_payload).updates),
+                          240,
+                        ) || "Structured suggestion is ready for review."}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ) : null}
+
           {operatingRecord.timelineEvents.length > 0 ? (
-            <OperatingTimelineSection events={operatingRecord.timelineEvents} />
-          ) : (
-            <ProgressLogSection entries={timelineEntries} packet={packet} projectId={numericProjectId} />
-          )}
-        </>
-      ) : operatingRecord.timelineEvents.length > 0 ? (
-        <OperatingTimelineSection events={operatingRecord.timelineEvents} />
-      ) : timelineEntries.length > 0 ? (
-        <ProgressLogSection entries={timelineEntries} packet={null} projectId={numericProjectId} />
-      ) : (
+            <AccordionItem value="operating-timeline">
+              <AccordionTrigger className="text-sm font-medium">
+                Operating timeline
+              </AccordionTrigger>
+              <AccordionContent>
+                <OperatingTimelineSection events={operatingRecord.timelineEvents} />
+              </AccordionContent>
+            </AccordionItem>
+          ) : timelineEntries.length > 0 ? (
+            <AccordionItem value="progress-log">
+              <AccordionTrigger className="text-sm font-medium">
+                Progress log
+              </AccordionTrigger>
+              <AccordionContent>
+                <ProgressLogSection entries={timelineEntries} packet={packet ?? null} projectId={numericProjectId} />
+              </AccordionContent>
+            </AccordionItem>
+          ) : null}
+        </Accordion>
+      ) : !packet && !hasOperatingRecord && target ? (
         <IntelligenceEmptyState
           project={project}
           reason="The target exists, but no current packet has been generated yet."
         />
-      )}
+      ) : null}
     </PageShell>
   );
 }

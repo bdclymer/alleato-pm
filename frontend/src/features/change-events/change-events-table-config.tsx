@@ -323,6 +323,7 @@ export function buildChangeEventTableColumns(
     {
       // Revenue > Prime PCO (dollar amount)
       ...byId("revenue_prime_pco"),
+      align: "right" as const,
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.rom)}</span>
       ),
@@ -344,6 +345,7 @@ export function buildChangeEventTableColumns(
     {
       // Cost > Cost ROM
       ...byId("cost_rom"),
+      align: "right" as const,
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.cost_rom)}</span>
       ),
@@ -357,6 +359,7 @@ export function buildChangeEventTableColumns(
     {
       // Cost > Commitment (dollar amount)
       ...byId("commitment"),
+      align: "right" as const,
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.commitment)}</span>
       ),

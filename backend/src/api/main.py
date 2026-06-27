@@ -43,7 +43,7 @@ init_posthog()
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 try:
     from openai import OpenAI
@@ -53,6 +53,7 @@ except ImportError:
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
+from src.services.url_resource_ingestion import UrlIngestionError, UrlResourceIngestionService
 from src.api.admin_endpoints import require_admin_api_key
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
 from src.services.agents.docs_research_agent import DocsResearchRequest, run_docs_research_agent
@@ -170,17 +171,18 @@ class ChatRequest(BaseModel):
     limit: int = 5
 
 
-class IngestRequest(BaseModel):
-    path: str
-    project_id: Optional[int] = None
-    dry_run: bool = True
-
-
 class FirefliesRecentSyncRequest(BaseModel):
     limit: int = 5
     project_id: Optional[int] = None
     dry_run: bool = False
     write_markdown_dir: Optional[str] = None
+
+
+class UrlResourceIngestRequest(BaseModel):
+    urls: List[str]
+    project_id: Optional[int] = None
+    dry_run: bool = False
+    run_pipeline: bool = True
 
 
 class GraphSyncRequest(BaseModel):
@@ -327,6 +329,10 @@ def get_ingestion_pipeline(
     store: SupabaseRagStore = Depends(get_rag_store),
 ) -> FirefliesIngestionPipeline:
     return FirefliesIngestionPipeline(store)
+
+
+def get_url_resource_ingestion_service() -> UrlResourceIngestionService:
+    return UrlResourceIngestionService()
 
 
 @app.get("/health", tags=["System"], summary="Health check")
@@ -751,46 +757,6 @@ async def extract_schedule_pdf_text(
     }
 
 
-@app.post("/api/ingest/fireflies", tags=["Ingestion"], summary="Ingest Fireflies transcript")
-def ingest_fireflies_endpoint(
-    payload: IngestRequest,
-    pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Ingest a Fireflies meeting transcript into the knowledge base.
-
-    This endpoint processes Fireflies meeting transcripts and extracts:
-    - Meeting metadata
-    - Transcript chunks for semantic search
-    - Action items and tasks
-    - Key insights and decisions
-
-    Args:
-        payload: IngestRequest with path to transcript file, optional project_id, and dry_run flag.
-
-    Returns:
-        Dict with ingestion result details.
-    """
-    allow_file_ingest = os.getenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "false").lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    if not allow_file_ingest:
-        raise HTTPException(
-            status_code=410,
-            detail=(
-                "Legacy file-based Fireflies ingest is disabled. "
-                "Use POST /api/ingest/fireflies/recent (or enable "
-                "ENABLE_LEGACY_FIREFLIES_FILE_INGEST=true for explicit legacy use)."
-            ),
-        )
-
-    result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
-    return {"result": result.__dict__}
-
-
 @app.post("/api/ingest/fireflies/recent", tags=["Ingestion"], summary="Sync recent Fireflies transcripts")
 def ingest_recent_fireflies_endpoint(
     payload: FirefliesRecentSyncRequest,
@@ -806,6 +772,40 @@ def ingest_recent_fireflies_endpoint(
         project_id=payload.project_id,
         dry_run=payload.dry_run,
         write_markdown_dir=payload.write_markdown_dir,
+    )
+
+
+@app.post("/api/ingest/url-resources", tags=["Ingestion"], summary="Ingest web URLs into the existing RAG pipeline")
+def ingest_url_resources_endpoint(
+    payload: UrlResourceIngestRequest,
+    service: UrlResourceIngestionService = Depends(get_url_resource_ingestion_service),
+    _: None = Depends(require_admin_api_key),
+) -> JSONResponse:
+    try:
+        results = service.ingest_urls(
+            payload.urls,
+            project_id=payload.project_id,
+            dry_run=payload.dry_run,
+            run_pipeline=payload.run_pipeline,
+        )
+    except UrlIngestionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=_public_backend_error("URL resource ingestion failed", exc),
+        ) from exc
+
+    failed = [item for item in results if item.get("status") == "failed"]
+    return JSONResponse(
+        status_code=207 if failed else 200,
+        content={
+            "results": results,
+            "ingested_count": sum(1 for item in results if item.get("status") in {"ingested", "updated"}),
+            "skipped_count": sum(1 for item in results if item.get("status") == "skipped_unchanged"),
+            "failed_count": len(failed),
+            "dry_run": payload.dry_run,
+        },
     )
 
 
@@ -1795,32 +1795,6 @@ async def get_meeting_digest(metadata_id: str) -> Dict[str, Any]:
     if not resp.data:
         raise HTTPException(status_code=404, detail="Digest not found")
     return resp.data
-
-
-@app.post("/api/digests/daily/generate", tags=["Digests"])
-async def trigger_daily_digest(
-    background_tasks: BackgroundTasks,
-    date: Optional[str] = Query(None, description="YYYY-MM-DD, default today"),
-    days: int = Query(1, description="Number of days to include"),
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Manually trigger daily digest generation."""
-    if os.getenv("LEGACY_DAILY_DIGEST_ENABLED", "false").lower() != "true":
-        logger.warning(
-            "[DailyDigest] Legacy daily digest API blocked. Executive Daily Brief must run through the AI Ops gateway ledger."
-        )
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "LEGACY_DAILY_DIGEST_DISABLED",
-                "message": "Legacy daily digest is disabled. Executive Daily Brief generation must run through the AI Ops gateway ledger.",
-                "canonical_runner": "frontend/scripts/run-executive-daily-brief.ts",
-            },
-        )
-
-    from src.services.daily_digest import run_daily_digest
-    background_tasks.add_task(run_daily_digest, date, days)
-    return {"status": "queued", "date": date, "days": days}
 
 
 @app.get("/api/digests/daily/{date}", tags=["Digests"])

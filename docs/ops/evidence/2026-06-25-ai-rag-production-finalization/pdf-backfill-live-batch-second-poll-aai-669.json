@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-06-25T22:23:29.449Z",
+  "rows": [
+    {
+      "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+      "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+      "status": "complete",
+      "content_length": 4367,
+      "page_intelligence": {
+        "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+        "app_document_id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 4367,
+        "chunk_count": 30,
+        "embedded_chunk_count": 30,
+        "document_chunk_count": 14,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3",
+      "title": "[007] A101D - FIRST FLOOR DIMENSION PLAN.pdf",
+      "status": "complete",
+      "content_length": 6429,
+      "page_intelligence": {
+        "id": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3",
+        "app_document_id": "drawing-revision:3cc5129d-ee54-4966-8f99-5e5bdd020ba3",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 6429,
+        "chunk_count": 21,
+        "embedded_chunk_count": 21,
+        "document_chunk_count": 10,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+      "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+      "status": "complete",
+      "content_length": 3760,
+      "page_intelligence": {
+        "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+        "app_document_id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 3760,
+        "chunk_count": 18,
+        "embedded_chunk_count": 18,
+        "document_chunk_count": 8,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418",
+      "title": "[005] AD101 - DEMOLITION PLAN.pdf",
+      "status": "complete",
+      "content_length": 6128,
+      "page_intelligence": {
+        "id": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418",
+        "app_document_id": "drawing-revision:81a30e30-80b3-465f-8a4a-96d17a3b4418",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 6128,
+        "chunk_count": 19,
+        "embedded_chunk_count": 19,
+        "document_chunk_count": 9,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+      "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+      "status": "complete",
+      "content_length": 7246,
+      "page_intelligence": {
+        "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+        "app_document_id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 7246,
+        "chunk_count": 29,
+        "embedded_chunk_count": 29,
+        "document_chunk_count": 14,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8",
+      "title": "[008] A101R - FIRST FLOOR REFERENCE PLAN.pdf",
+      "status": "complete",
+      "content_length": 7452,
+      "page_intelligence": {
+        "id": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8",
+        "app_document_id": "drawing-revision:b79c427f-d9d5-438c-bb2f-d128e12fd9d8",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 7452,
+        "chunk_count": 19,
+        "embedded_chunk_count": 19,
+        "document_chunk_count": 9,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1",
+      "title": "[006] A001 - WALL TYPES.pdf",
+      "status": "complete",
+      "content_length": 6319,
+      "page_intelligence": {
+        "id": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1",
+        "app_document_id": "drawing-revision:c4047204-3dbb-41fa-bc9a-08dfd02d7fe1",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 6319,
+        "chunk_count": 20,
+        "embedded_chunk_count": 20,
+        "document_chunk_count": 9,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+      "title": "[011] A401 - ENLARGED PLANS.pdf",
+      "status": "complete",
+      "content_length": 8632,
+      "page_intelligence": {
+        "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+        "app_document_id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 8632,
+        "chunk_count": 37,
+        "embedded_chunk_count": 37,
+        "document_chunk_count": 18,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+      "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+      "status": "complete",
+      "content_length": 19669,
+      "page_intelligence": {
+        "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+        "app_document_id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 19669,
+        "chunk_count": 42,
+        "embedded_chunk_count": 42,
+        "document_chunk_count": 21,
+        "vision_chunk_count": 1
+      }
+    },
+    {
+      "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+      "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+      "status": "complete",
+      "content_length": 1814,
+      "page_intelligence": {
+        "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+        "page_intelligence_count": 1
+      },
+      "rag": {
+        "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+        "app_document_id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+        "embedding_status": "embedded",
+        "parsing_status": "segmented",
+        "rag_content_length": 1814,
+        "chunk_count": 20,
+        "embedded_chunk_count": 20,
+        "document_chunk_count": 9,
+        "vision_chunk_count": 1
+      }
+    }
+  ]
+}

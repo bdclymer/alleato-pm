@@ -87,7 +87,7 @@ export function buildProgressReportTableColumns(): TableColumn<ProgressReportAll
       render: (report) => (
         <Link
           href={`/${report.project.id}/progress-reports`}
-          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          className="text-sm font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
           onClick={(event) => event.stopPropagation()}
         >
           {projectLabel(report)}

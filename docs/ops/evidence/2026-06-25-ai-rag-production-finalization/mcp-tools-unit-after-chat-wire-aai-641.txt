@@ -1,0 +1,3 @@
+
+> alleato-procore@0.1.0 test:unit
+> jest mcp-tools.test.ts --runInBand

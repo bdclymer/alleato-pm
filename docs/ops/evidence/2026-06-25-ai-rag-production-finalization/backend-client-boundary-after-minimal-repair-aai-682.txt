@@ -1,0 +1,8 @@
+
+> alleato-procore@0.1.0 rag:verify:backend-client-boundary
+> node scripts/verify/verify_backend_rag_table_boundary.mjs
+
+Backend RAG table boundary check failed:
+- backend/src/scripts/run_email_digest.py:84 RAG-owned table "outlook_email_intake" must use an AI DB resolver, not an implicit PM APP client.
+- backend/src/scripts/run_email_digest.py:94 RAG-owned table "outlook_email_intake_attachments" must use an AI DB resolver, not an implicit PM APP client.
+- backend/src/services/agents/microsoft_executive_assistant/tools.py:455 RAG-owned table "outlook_email_intake" must use an AI DB resolver, not an implicit PM APP client.

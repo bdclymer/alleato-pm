@@ -1,0 +1,85 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 14,
+  "sourceLimit": 10000,
+  "rowsPrepared": 1784,
+  "rowsWritten": 0,
+  "bySourceAndStatus": [
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "failed_permanent",
+      "count": 126
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "indexed_for_rag",
+      "count": 449
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "project_assignment_review",
+      "count": 465
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "failed_permanent",
+      "count": 26
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "project_assignment_review",
+      "count": 235
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "indexed_for_rag",
+      "count": 24
+    },
+    {
+      "source_system": "fireflies",
+      "status": "indexed_for_rag",
+      "count": 10
+    },
+    {
+      "source_system": "microsoft_graph_outlook",
+      "status": "project_intelligence_updated",
+      "count": 140
+    },
+    {
+      "source_system": "fireflies",
+      "status": "project_assignment_review",
+      "count": 7
+    },
+    {
+      "source_system": "fireflies",
+      "status": "actions_routed",
+      "count": 4
+    },
+    {
+      "source_system": "fireflies",
+      "status": "project_intelligence_updated",
+      "count": 59
+    },
+    {
+      "source_system": "microsoft_graph_teams",
+      "status": "project_intelligence_updated",
+      "count": 3
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_assignment_review",
+      "count": 136
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "project_intelligence_updated",
+      "count": 67
+    },
+    {
+      "source_system": "microsoft_graph_sharepoint",
+      "status": "indexed_for_rag",
+      "count": 33
+    }
+  ]
+}

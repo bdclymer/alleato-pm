@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
 import { cn } from "@/lib/utils";
+import type { AiWidgetNotificationDraft } from "@/lib/collaboration/ai-widget-notifications";
 import { ChatArea } from "./chat-area";
 import { ChatWithSession } from "./rag-chat-page";
 
@@ -34,12 +35,20 @@ export function WidgetAiChat({
   view = "chat",
   onViewChange,
   onAssistantActivity,
+  onCompactStateChange,
+  showWelcomePrompt = false,
+  onWelcomePromptDismiss,
+  notificationDraft,
 }: {
   /** Reserved for parity with the launcher; focus is handled by GlobalAiWidget. */
   autoFocusComposer?: boolean;
   view?: WidgetAiChatView;
   onViewChange?: (view: WidgetAiChatView) => void;
   onAssistantActivity?: () => void;
+  onCompactStateChange?: (compact: boolean) => void;
+  showWelcomePrompt?: boolean;
+  onWelcomePromptDismiss?: () => void;
+  notificationDraft?: AiWidgetNotificationDraft | null;
 }) {
   const queryClient = useQueryClient();
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -55,6 +64,7 @@ export function WidgetAiChat({
     skillUsageByMessageId,
     responseQualityByMessageId,
     traceDiagnosticsByMessageId,
+    langfuseTraceIdByMessageId,
     isLoadingMessages,
     loadMessagesError,
     loadSessionMessages,
@@ -73,13 +83,35 @@ export function WidgetAiChat({
     string | null
   >(null);
   const [noSessionInput, setNoSessionInput] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null,
+  );
   const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
     DEFAULT_AI_ASSISTANT_MODEL,
   );
   const [councilMode, setCouncilMode] = useState(false);
+  const consumedNotificationDraftIdRef = useRef<string | null>(null);
 
   const effectiveSessionId = activeSessionId ?? pendingSessionId;
+
+  useEffect(() => {
+    onCompactStateChange?.(view === "chat" && !effectiveSessionId);
+  }, [effectiveSessionId, onCompactStateChange, view]);
+
+  useEffect(() => {
+    if (!notificationDraft?.prompt) return;
+    if (consumedNotificationDraftIdRef.current === notificationDraft.id) return;
+
+    consumedNotificationDraftIdRef.current = notificationDraft.id;
+    setPendingSessionId(null);
+    setPendingFirstMessage(null);
+    setPendingFirstFiles(undefined);
+    setOptimisticUserMessage(null);
+    resetSessionMessages();
+    setActiveSessionId(null);
+    setNoSessionInput(notificationDraft.prompt);
+    onViewChange?.("chat");
+  }, [notificationDraft, onViewChange, resetSessionMessages]);
 
   // Load history when an existing conversation is opened. Skip a session we just
   // created and haven't sent to yet — fetching would return [] and wipe the live
@@ -204,6 +236,7 @@ export function WidgetAiChat({
         skillUsageByMessageId={skillUsageByMessageId}
         responseQualityByMessageId={responseQualityByMessageId}
         traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
+        langfuseTraceIdByMessageId={langfuseTraceIdByMessageId}
         isLoadingMessages={isLoadingMessages}
         loadMessagesError={loadMessagesError}
         pendingFirstMessage={pendingFirstMessage}
@@ -237,6 +270,7 @@ export function WidgetAiChat({
       responseQualityByMessageId={{}}
       skillUsageByMessageId={{}}
       traceDiagnosticsByMessageId={{}}
+      langfuseTraceIdByMessageId={{}}
       liveStatus={null}
       chatError={loadMessagesError}
       isLoadingMessages={false}
@@ -255,6 +289,8 @@ export function WidgetAiChat({
       }}
       onStop={() => {}}
       welcomeHideOrb
+      showWidgetWelcomePrompt={showWelcomePrompt}
+      onWidgetWelcomeDismiss={onWelcomePromptDismiss}
     />
   );
 }

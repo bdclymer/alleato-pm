@@ -1,0 +1,69 @@
+
+> alleato-procore@0.1.0 rag:verify:meetings
+> node scripts/verify/verify_meeting_vectorization_health.mjs
+
+{
+  "policy": {
+    "recentMeetingCoverageWindowDays": 14,
+    "firefliesBacklogConcernWindowDays": 60
+  },
+  "metadata": {
+    "total_meetings": 1735,
+    "latest_meeting_at": "2026-06-25T19:00:00.000Z"
+  },
+  "summaryMetadata": {
+    "total_rag_metadata": 40132,
+    "embedded_summaries": 4864,
+    "latest_summary_embedding_at": "2026-06-25T21:54:03.326Z"
+  },
+  "recent": {
+    "recent_meetings": 75
+  },
+  "chunks": {
+    "total_chunks": 39436,
+    "embedded_chunks": 39436,
+    "docs_with_embedded_chunks": 2145,
+    "latest_chunk_embedding_at": "2026-06-25T21:54:02.556Z"
+  },
+  "recentChunkCoverage": {
+    "recent_meetings": 75,
+    "recent_meetings_with_chunks": 75,
+    "recent_meetings_with_embedded_chunks": 75,
+    "transcript_expected_meetings": 0,
+    "transcript_expected_meetings_with_embedded_transcript_chunks": 0,
+    "recent_chunks": 1739,
+    "recent_embedded_chunks": 1739,
+    "latest_recent_chunk_embedding_at": "2026-06-25T21:39:00.193Z"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "done",
+      "count": 146,
+      "oldest_created_at": "2026-04-27T13:12:55.980Z",
+      "newest_updated_at": "2026-06-25T21:54:58.909Z"
+    },
+    {
+      "stage": "embedded",
+      "count": 3,
+      "oldest_created_at": "2026-04-30T14:30:38.041Z",
+      "newest_updated_at": "2026-05-14T17:30:12.943Z"
+    }
+  ],
+  "probes": {
+    "documentChunkSearch": {
+      "result_count": 5,
+      "max_similarity": 1
+    },
+    "embeddingProvider": {
+      "ok": true,
+      "providers": [
+        "ai-gateway",
+        "openai-direct"
+      ]
+    }
+  },
+  "warnings": [],
+  "failures": []
+}
+
+Meeting vectorization health: PASS

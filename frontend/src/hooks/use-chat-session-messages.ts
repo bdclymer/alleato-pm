@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api-client";
 import {
   type ChatHistoryMessage,
   dbMessageToUIMessage,
+  extractLangfuseTraceIds,
   extractResponseQuality,
   extractSources,
   extractToolTraces,
@@ -43,11 +44,15 @@ export function useChatSessionMessages() {
   const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
     Record<string, ResponseQuality>
   >({});
-  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] = useState<
-    Record<string, AssistantTraceDiagnostics>
+  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] =
+    useState<Record<string, AssistantTraceDiagnostics>>({});
+  const [langfuseTraceIdByMessageId, setLangfuseTraceIdByMessageId] = useState<
+    Record<string, string>
   >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [loadMessagesError, setLoadMessagesError] = useState<string | null>(null);
+  const [loadMessagesError, setLoadMessagesError] = useState<string | null>(
+    null,
+  );
 
   const reset = useCallback(() => {
     setInitialMessages([]);
@@ -57,56 +62,65 @@ export function useChatSessionMessages() {
     setSkillUsageByMessageId({});
     setResponseQualityByMessageId({});
     setTraceDiagnosticsByMessageId({});
+    setLangfuseTraceIdByMessageId({});
     setLoadMessagesError(null);
   }, []);
 
-  const loadSessionMessages = useCallback(async (sessionId: string) => {
-    setIsLoadingMessages(true);
-    setLoadMessagesError(null);
-    try {
-      // Transient network failures (browser "Failed to fetch" — dev server
-      // recompiling/restarting, a wifi blip) should self-heal rather than
-      // strand the panel on a permanent error. Retry a few times with backoff;
-      // only surface the error if every attempt fails.
-      const data = await (async () => {
-        const maxAttempts = 3;
-        let lastError: unknown;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            return await apiFetch<{ messages?: ChatHistoryMessage[] }>(
-              `/api/ai-assistant/messages/${sessionId}`,
-            );
-          } catch (err) {
-            lastError = err;
-            const isTransient =
-              err instanceof TypeError ||
-              (err instanceof Error &&
-                /failed to fetch|load failed|network/i.test(err.message));
-            if (!isTransient || attempt === maxAttempts) throw err;
-            await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+  const loadSessionMessages = useCallback(
+    async (sessionId: string) => {
+      setIsLoadingMessages(true);
+      setLoadMessagesError(null);
+      try {
+        // Transient network failures (browser "Failed to fetch" — dev server
+        // recompiling/restarting, a wifi blip) should self-heal rather than
+        // strand the panel on a permanent error. Retry a few times with backoff;
+        // only surface the error if every attempt fails.
+        const data = await (async () => {
+          const maxAttempts = 3;
+          let lastError: unknown;
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              return await apiFetch<{ messages?: ChatHistoryMessage[] }>(
+                `/api/ai-assistant/messages/${sessionId}`,
+              );
+            } catch (err) {
+              lastError = err;
+              const isTransient =
+                err instanceof TypeError ||
+                (err instanceof Error &&
+                  /failed to fetch|load failed|network/i.test(err.message));
+              if (!isTransient || attempt === maxAttempts) throw err;
+              await new Promise((resolve) =>
+                setTimeout(resolve, 300 * attempt),
+              );
+            }
           }
-        }
-        throw lastError;
-      })();
-      const historyMessages = (data.messages || []) as ChatHistoryMessage[];
-      setInitialMessages(historyMessages.map((m) => dbMessageToUIMessage(m)));
-      setToolTracesByMessageId(extractToolTraces(historyMessages));
-      setSourcesByMessageId(extractSources(historyMessages));
-      setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
-      setSkillUsageByMessageId(extractSkillUsage(historyMessages));
-      setResponseQualityByMessageId(extractResponseQuality(historyMessages));
-      setTraceDiagnosticsByMessageId(extractTraceDiagnostics(historyMessages));
-    } catch (error) {
-      reset();
-      setLoadMessagesError(
-        error instanceof Error
-          ? `Conversation history could not be loaded: ${error.message}`
-          : "Conversation history could not be loaded.",
-      );
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  }, [reset]);
+          throw lastError;
+        })();
+        const historyMessages = (data.messages || []) as ChatHistoryMessage[];
+        setInitialMessages(historyMessages.map((m) => dbMessageToUIMessage(m)));
+        setToolTracesByMessageId(extractToolTraces(historyMessages));
+        setSourcesByMessageId(extractSources(historyMessages));
+        setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
+        setSkillUsageByMessageId(extractSkillUsage(historyMessages));
+        setResponseQualityByMessageId(extractResponseQuality(historyMessages));
+        setTraceDiagnosticsByMessageId(
+          extractTraceDiagnostics(historyMessages),
+        );
+        setLangfuseTraceIdByMessageId(extractLangfuseTraceIds(historyMessages));
+      } catch (error) {
+        reset();
+        setLoadMessagesError(
+          error instanceof Error
+            ? `Conversation history could not be loaded: ${error.message}`
+            : "Conversation history could not be loaded.",
+        );
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    },
+    [reset],
+  );
 
   return {
     initialMessages,
@@ -116,6 +130,7 @@ export function useChatSessionMessages() {
     skillUsageByMessageId,
     responseQualityByMessageId,
     traceDiagnosticsByMessageId,
+    langfuseTraceIdByMessageId,
     isLoadingMessages,
     loadMessagesError,
     loadSessionMessages,

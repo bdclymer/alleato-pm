@@ -57,6 +57,10 @@ export interface AiResponseFeedbackSubject {
   surface: AiResponseSurface;
   /** The subject's stable id if it has one (e.g. message id, insight id). */
   subjectId?: string | null;
+  /** Concrete chat/UI message id when different from the subject id. */
+  messageId?: string | null;
+  /** Langfuse trace id for attaching user feedback to the exact trace. */
+  traceId?: string | null;
   /** Subject type tag (e.g. "assistant_message", "insight_card"). */
   subjectType: string;
   /** Optional project context for project-scoped learnings. */

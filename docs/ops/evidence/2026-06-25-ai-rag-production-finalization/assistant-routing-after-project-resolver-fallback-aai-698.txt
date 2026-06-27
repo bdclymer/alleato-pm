@@ -1,0 +1,61 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-routing
+> pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium
+
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Already up to date
+Done in 216ms using pnpm v11.7.0
+[dotenv@17.2.3] injecting env (151) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (8) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+Running 6 tests using 1 worker
+
+(node:37184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37184) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from ../.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+Existing auth session is still valid; verifying protected route access
+  ✓  1 [setup] › tests/auth.setup.ts:159:6 › authenticate (594ms)
+(node:37377) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37377) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+  ✓  2 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling (4.3s)
+  ✓  3 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing (3.4s)
+  ✓  4 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project (1.7s)
+  ✓  5 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction (2.4s)
+  ✘  6 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback (7.1s)
+
+
+  1) [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+
+    Error: assistant must plan intent before routing
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mundefined[39m
+
+      63 | ): void {
+      64 |   const plannerTrace = toolTrace(metadata).find((trace) => trace.tool === "intentPlanner");
+    > 65 |   expect(plannerTrace, "assistant must plan intent before routing").toBeTruthy();
+         |                                                                     ^
+      66 |
+      67 |   const output = asRecord(plannerTrace?.output);
+      68 |   expect(expectedIntents).toContain(output.intent);
+        at expectIntentPlanner (/Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:65:69)
+        at /Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:229:5
+
+  1 failed
+    [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+  5 passed (21.4s)

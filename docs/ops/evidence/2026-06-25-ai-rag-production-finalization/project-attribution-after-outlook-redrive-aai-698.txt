@@ -1,0 +1,11 @@
+
+> alleato-procore@0.1.0 verify:project-attribution
+> node scripts/verify/verify_project_attribution_rules.mjs
+
+Project attribution rule health:
+- audit window: 7 days
+- active rules: 283
+- active Projects-table subject rules: 219
+- subject-rule backfilled Outlook rows: 0
+- attribution-rule Outlook rows: 0
+Project attribution rule health check passed.

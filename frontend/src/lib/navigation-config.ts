@@ -23,7 +23,6 @@ import {
   FolderOpen,
   Hammer,
   Home,
-  Inbox,
   Kanban,
   LayoutDashboard,
   Lock,
@@ -35,16 +34,22 @@ import {
   Sparkles,
   Table,
   TrendingUp,
+  UserCog,
   Users,
   Wrench,
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
+import { OWNER_EMAIL } from "@/lib/auth/owner";
 
 /**
  * The single owner of the workspace. Tools flagged `ownerOnly` are visible only
  * to this user — used to hide internal vision/roadmap surfaces from the team.
+ *
+ * Defined in the server-safe `@/lib/auth/owner` module and re-exported here so
+ * existing client imports (`@/lib/navigation-config`) keep working while API
+ * routes can import the constant without pulling in client-only navigation code.
  */
-export const OWNER_EMAIL = "megan@megankharrison.com";
+export { OWNER_EMAIL };
 
 export type PermissionModule =
   | "directory"
@@ -101,7 +106,7 @@ export interface HeaderNavGroup {
 
 export const companyWideHeaderTools: HeaderNavigationTool[] = [
   {
-    name: "AI",
+    name: "Alleato AI",
     path: "ai",
     requiresProject: false,
     icon: Bot,
@@ -121,6 +126,14 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: Users,
     description: "People, companies, contacts",
     module: "directory",
+  },
+  {
+    name: "User Management",
+    path: "user-management",
+    requiresProject: false,
+    icon: UserCog,
+    description: "Users, roles, and permission templates",
+    adminOnly: true,
   },
   {
     name: "Meetings",
@@ -156,27 +169,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "Alleato OS documentation site",
-  },
-  {
-    name: "Documents",
-    path: "files",
-    requiresProject: false,
-    icon: FolderOpen,
-    description: "Company files and documents",
-  },
-  {
-    name: "Teams Conversations",
-    path: "teams-conversations",
-    requiresProject: false,
-    icon: MessageCircle,
-    description: "Compiled Microsoft Teams conversation threads",
-  },
-  {
-    name: "Assignment Inbox",
-    path: "assignment-inbox",
-    requiresProject: false,
-    icon: Inbox,
-    description: "Unassigned meetings, emails, Teams messages, and documents",
   },
   {
     name: "Estimates",
@@ -240,6 +232,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Clock,
     description: "Executive Daily Brief run ledger and evidence rows",
+    developerOnly: true,
+  },
+  {
+    name: "AI Chat History",
+    path: "ai-chat-history",
+    requiresProject: false,
+    icon: Bot,
+    description: "Assistant turns with traces, tools, usage, and write status",
     developerOnly: true,
   },
   {
@@ -421,23 +421,16 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory"],
-  },
-  {
-    label: "AI",
-    toolNames: ["AI"],
+    toolNames: ["Projects", "Company Directory", "Alleato AI", "Admin Dashboard"],
   },
   {
     label: "Work",
     toolNames: [
-      "Assignment Inbox",
       "Meetings",
       "Tasks",
       "Manpower",
       "Knowledge Base",
       "Documentation",
-      "Documents",
-      "Teams Conversations",
     ],
   },
   {
@@ -612,6 +605,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     icon: Briefcase,
     tools: [
       { name: "Home", path: "home", icon: Home, requiresProject: true },
+      { name: "Alleato AI", path: "ai", icon: Bot, requiresProject: false },
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
       { name: "Project Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" as PermissionModule },
@@ -636,7 +630,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" as PermissionModule },
       { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" as PermissionModule },
       { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
+      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule, ownerOnly: true },
     ],
   },
   {
@@ -809,6 +803,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: Mail,
         description: "Application and Resend emails",
         module: "documents",
+        ownerOnly: true,
       },
     ],
     subGroups: [
@@ -873,6 +868,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
     label: "Project",
     tools: [
       {
+        name: "Alleato AI",
+        path: "ai",
+        requiresProject: false,
+        icon: Bot,
+        description: "AI-powered project guidance",
+      },
+      {
         name: "Project Directory",
         path: "directory",
         requiresProject: true,
@@ -931,6 +933,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Clock,
     description: "Executive Daily Brief run ledger and evidence rows",
+    adminOnly: true,
+  },
+  {
+    name: "AI Chat History",
+    path: "/ai-chat-history",
+    requiresProject: false,
+    icon: Bot,
+    description: "Assistant turns with traces and write status",
     adminOnly: true,
   },
   {

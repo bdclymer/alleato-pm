@@ -1,11 +1,31 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronLeft, Ellipsis, Sparkles, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Maximize2,
+  Minimize2,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCollaborationNotifications } from "@/hooks/use-collaboration-notifications";
+import { isAiApprovalQueueNotification } from "@/lib/collaboration/ai-approval-queue";
+import {
+  getFirstUnreadAiWidgetNotificationDraft,
+  getUnreadAiApprovalDecisionNotifications,
+  getUnreadAiWidgetNotifications,
+  isAiWidgetNotificationKind,
+  type AiWidgetNotificationDraft,
+} from "@/lib/collaboration/ai-widget-notifications";
+import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
+
+const AI_WIDGET_WELCOME_STORAGE_KEY = "alleato-ai-widget-welcome-seen-v1";
 
 /**
  * Routes where the floating widget is hidden: auth screens, and surfaces that
@@ -32,27 +52,103 @@ function focusFirstPanelElement(panel: HTMLDivElement) {
   focusable?.focus();
 }
 
+function reportWelcomeStorageError(error: unknown) {
+  console.error("[ai-widget] Welcome notification storage failed", error);
+}
+
+function reportNotificationError(error: unknown) {
+  console.error("[ai-widget] Collaboration notification sync failed", error);
+}
+
 export function GlobalAiWidget() {
   const [open, setOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [view, setView] = React.useState<WidgetAiChatView>("chat");
   const [expanded, setExpanded] = React.useState(false);
-  const [hasUnread, setHasUnread] = React.useState(false);
+  const [compactPanel, setCompactPanel] = React.useState(false);
+  const [hasAssistantActivityUnread, setHasAssistantActivityUnread] =
+    React.useState(false);
+  const [showWelcomePrompt, setShowWelcomePrompt] = React.useState(false);
+  const [notificationDraft, setNotificationDraft] =
+    React.useState<AiWidgetNotificationDraft | null>(null);
   const launcherRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
   const openRef = React.useRef(open);
   const pathname = usePathname() ?? "/";
   const hidden = shouldHideForRoute(pathname);
+  const {
+    notifications,
+    error: notificationError,
+    markAsRead,
+  } = useCollaborationNotifications({ enabled: !hidden });
+  const unreadAiNotifications = React.useMemo(
+    () => getUnreadAiWidgetNotifications(notifications),
+    [notifications],
+  );
+  const unreadApprovalDecisionNotifications = React.useMemo(
+    () => getUnreadAiApprovalDecisionNotifications(notifications),
+    [notifications],
+  );
+  const unreadApprovalDecisionCount = unreadApprovalDecisionNotifications.length;
+  const hasUnreadAiWelcomeNotification = unreadAiNotifications.some(
+    (notification) => notification.kind === "ai_assistant_welcome",
+  );
+  const hasUnreadInterruptingAiNotification = unreadAiNotifications.some(
+    shouldInterruptAiWidget,
+  );
+  const unreadNotificationDraft = React.useMemo(
+    () => getFirstUnreadAiWidgetNotificationDraft(notifications),
+    [notifications],
+  );
+  const hasUnread =
+    hasAssistantActivityUnread ||
+    showWelcomePrompt ||
+    hasUnreadInterruptingAiNotification;
 
   React.useEffect(() => {
     openRef.current = open;
-    if (open) setHasUnread(false);
+    if (open) setHasAssistantActivityUnread(false);
   }, [open]);
+
+  React.useEffect(() => {
+    if (notificationError) reportNotificationError(notificationError);
+  }, [notificationError]);
 
   // Collapse the panel when navigating to a route the widget hides on.
   React.useEffect(() => {
     if (hidden) setOpen(false);
   }, [hidden]);
+
+  React.useEffect(() => {
+    if (hidden) {
+      setShowWelcomePrompt(false);
+      return;
+    }
+
+    try {
+      const hasSeenWelcome =
+        window.localStorage.getItem(AI_WIDGET_WELCOME_STORAGE_KEY) === "seen";
+      const shouldShowWelcome =
+        !hasSeenWelcome || hasUnreadAiWelcomeNotification;
+      setShowWelcomePrompt(shouldShowWelcome);
+    } catch (error) {
+      reportWelcomeStorageError(error);
+      setShowWelcomePrompt(false);
+    }
+  }, [hasUnreadAiWelcomeNotification, hidden]);
+
+  const markWelcomeSeen = React.useCallback(() => {
+    try {
+      window.localStorage.setItem(AI_WIDGET_WELCOME_STORAGE_KEY, "seen");
+    } catch (error) {
+      reportWelcomeStorageError(error);
+    }
+  }, []);
+
+  const dismissWelcomePrompt = React.useCallback(() => {
+    markWelcomeSeen();
+    setShowWelcomePrompt(false);
+  }, [markWelcomeSeen]);
 
   React.useEffect(() => {
     if (open) {
@@ -66,18 +162,65 @@ export function GlobalAiWidget() {
 
   const closePanel = React.useCallback(() => {
     setOpen(false);
+    if (showWelcomePrompt) setShowWelcomePrompt(false);
     window.requestAnimationFrame(() => {
       launcherRef.current?.focus();
     });
-  }, []);
+  }, [showWelcomePrompt]);
 
   const openPanel = React.useCallback(() => {
     setOpen(true);
-    setHasUnread(false);
-  }, []);
+    setHasAssistantActivityUnread(false);
+    if (showWelcomePrompt) markWelcomeSeen();
+    setNotificationDraft(unreadNotificationDraft);
+
+    const markableNotifications = unreadAiNotifications.filter(
+      (notification) =>
+        isAiWidgetNotificationKind(notification.kind) &&
+        !isAiApprovalQueueNotification(notification),
+    );
+    if (markableNotifications.length > 0) {
+      void Promise.all(
+        markableNotifications.map((notification) =>
+          markAsRead(notification.id),
+        ),
+      ).catch(reportNotificationError);
+    }
+  }, [
+    markAsRead,
+    markWelcomeSeen,
+    showWelcomePrompt,
+    unreadAiNotifications,
+    unreadNotificationDraft,
+  ]);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    if (unreadNotificationDraft) {
+      setNotificationDraft((current) =>
+        current?.id === unreadNotificationDraft.id
+          ? current
+          : unreadNotificationDraft,
+      );
+    }
+
+    const markableNotifications = unreadAiNotifications.filter(
+      (notification) =>
+        isAiWidgetNotificationKind(notification.kind) &&
+        !isAiApprovalQueueNotification(notification),
+    );
+    if (markableNotifications.length > 0) {
+      void Promise.all(
+        markableNotifications.map((notification) =>
+          markAsRead(notification.id),
+        ),
+      ).catch(reportNotificationError);
+    }
+  }, [markAsRead, open, unreadAiNotifications, unreadNotificationDraft]);
 
   const handleAssistantActivity = React.useCallback(() => {
-    if (!openRef.current) setHasUnread(true);
+    if (!openRef.current) setHasAssistantActivityUnread(true);
   }, []);
 
   React.useEffect(() => {
@@ -150,13 +293,14 @@ export function GlobalAiWidget() {
           className={cn(
             "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
             "transition-[opacity,transform] duration-200 ease-out",
+            compactPanel && !expanded && "global-ai-widget-panel-compact",
             expanded && "global-ai-widget-panel-expanded",
             open
               ? "translate-y-0 opacity-100"
               : "pointer-events-none translate-y-5 opacity-0",
           )}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-border/70 px-3 py-2.5">
+          <div className="flex shrink-0 items-center justify-between px-3.5 py-3">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               {view === "chat" ? (
                 <Button
@@ -175,12 +319,12 @@ export function GlobalAiWidget() {
 
               <div className="flex min-w-0 items-center gap-2">
                 {view === "chat" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                    <Sparkles
-                      className="size-4 text-primary"
-                      strokeWidth={1.8}
-                    />
-                  </div>
+                  <img
+                    src="/alleato-favicon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-6 w-6 shrink-0 rounded-sm"
+                  />
                 )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">
@@ -201,7 +345,11 @@ export function GlobalAiWidget() {
                 aria-pressed={expanded}
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
-                <Ellipsis className="h-4 w-4" />
+                {expanded ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 type="button"
@@ -215,12 +363,31 @@ export function GlobalAiWidget() {
               </Button>
             </div>
           </div>
+          {unreadApprovalDecisionCount > 0 && (
+            <Link
+              href="/ai/approvals"
+              className="mx-3.5 mb-2 flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="truncate">
+                {unreadApprovalDecisionCount === 1
+                  ? "1 AI decision needs review"
+                  : `${unreadApprovalDecisionCount} AI decisions need review`}
+              </span>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                Open
+              </span>
+            </Link>
+          )}
           <div className="flex min-h-0 flex-1 flex-col">
             <WidgetAiChat
               autoFocusComposer={open && view === "chat"}
               view={view}
               onViewChange={setView}
               onAssistantActivity={handleAssistantActivity}
+              onCompactStateChange={setCompactPanel}
+              showWelcomePrompt={showWelcomePrompt}
+              onWelcomePromptDismiss={dismissWelcomePrompt}
+              notificationDraft={notificationDraft}
             />
           </div>
         </div>

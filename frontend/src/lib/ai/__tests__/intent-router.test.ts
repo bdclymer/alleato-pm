@@ -187,6 +187,7 @@ describe("intent router", () => {
       "action item: confirm RFI response deadline with design team",
       "Generate a task from this meeting note",
       "Make a task to revisit the budget next week",
+      "Create the task for Candon",
     ];
 
     it.each(WRITE_CASES)(
@@ -206,6 +207,48 @@ describe("intent router", () => {
       expect(classifyAssistantIntent("What are my open tasks?")).toBe("task_followup");
       expect(classifyAssistantIntent("Show me my action items")).toBe("task_followup");
       expect(classifyAssistantIntent("What's on my plate this week?")).toBe("task_followup");
+    });
+  });
+
+  describe("source-lookup false positives on field names", () => {
+    // Regression: production session 55e73199… — the prompt
+    // "I really dont understand what Line Item Revenue Source does in change events"
+    // routed to source_lookup → semanticSearch over transcripts, because the bare
+    // keyword \bsource\b matched the field name "Revenue Source". The user got six
+    // irrelevant transcript snippets instead of an explanation of the field.
+    it("routes 'what Line Item Revenue Source does' to app_help, not source_lookup", () => {
+      const intent = classifyAssistantIntent(
+        "I really dont understand what Line Item Revenue Source does in change events",
+      );
+      expect(intent).toBe("app_help");
+      expect(intent).not.toBe("source_lookup");
+    });
+
+    it.each([
+      "what does the Line Item Revenue Source field do",
+      "what does the forecast column mean",
+      "I don't understand what the retainage toggle does",
+      "I'm confused about the prime contract dropdown",
+    ])("conceptual feature question routes to app_help: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt)).toBe("app_help");
+    });
+
+    it.each([
+      "what's the revenue source for this change event",
+      "is the funding source the same on both lines",
+    ])("'source' as a domain field name is NOT source_lookup: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt)).not.toBe("source_lookup");
+    });
+
+    it.each([
+      "show me the emails about the sprinkler change",
+      "pull up the teams messages on Westfield retainage",
+      "find the transcript where we discussed the change order",
+      "what's the source for that budget number",
+      "what is the underlying source for this figure",
+      "show me where that came from in the inbox",
+    ])("genuine evidence lookups still route to source_lookup: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt)).toBe("source_lookup");
     });
   });
 

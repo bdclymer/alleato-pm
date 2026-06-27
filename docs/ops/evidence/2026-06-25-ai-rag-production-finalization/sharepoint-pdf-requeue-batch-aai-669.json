@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-06-25T22:07:43.483Z",
+  "backendUrl": "https://alleato-backend-rbnj.onrender.com",
+  "candidate_count": 10,
+  "results": [
+    {
+      "id": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd",
+      "title": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+      "file_name": "[023] M701 - HVAC SPECIFICATIONS.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:49.407Z",
+      "content_length": 19669,
+      "queued_at": "2026-06-25T22:07:32.913Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:ee3d3857-fa3f-4efc-8056-431b90bafffd"
+      }
+    },
+    {
+      "id": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18",
+      "title": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+      "file_name": "[017] P601 - PLUMBING SCHEDULES & DETAILS.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:49.147Z",
+      "content_length": 7246,
+      "queued_at": "2026-06-25T22:07:34.328Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:9045babc-bece-455b-86f1-280d1bb07b18"
+      }
+    },
+    {
+      "id": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf",
+      "title": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+      "file_name": "[016] P101 - FIRST FLOOR PLUMBING PLAN.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:48.886Z",
+      "content_length": 3760,
+      "queued_at": "2026-06-25T22:07:35.290Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:782fc364-b9e9-4a2b-a144-09dc47a893bf"
+      }
+    },
+    {
+      "id": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954",
+      "title": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+      "file_name": "[015] PD101 - FIRST FLOOR PLUMBING.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:48.637Z",
+      "content_length": 3498,
+      "queued_at": "2026-06-25T22:07:36.507Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:22e04ddb-475c-43b0-9742-2a51528b5954"
+      }
+    },
+    {
+      "id": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d",
+      "title": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+      "file_name": "[014] A601 - DOOR + WINDOW SCHEDULE.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:48.383Z",
+      "content_length": 7133,
+      "queued_at": "2026-06-25T22:07:37.468Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:56009cac-4eb5-46c2-b808-721360835c7d"
+      }
+    },
+    {
+      "id": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf",
+      "title": "[013] A520 - SECTIONS AND DETAILS.pdf",
+      "file_name": "[013] A520 - SECTIONS AND DETAILS.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:48.135Z",
+      "content_length": 1814,
+      "queued_at": "2026-06-25T22:07:38.463Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:fa8dad32-f124-4bd4-bfe5-272f04aed9bf"
+      }
+    },
+    {
+      "id": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475",
+      "title": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+      "file_name": "[012] A410 - INTERIOR ELEVATIONS.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:47.895Z",
+      "content_length": 5173,
+      "queued_at": "2026-06-25T22:07:39.455Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:0e33807c-a962-4317-bbab-5062a2f85475"
+      }
+    },
+    {
+      "id": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860",
+      "title": "[011] A401 - ENLARGED PLANS.pdf",
+      "file_name": "[011] A401 - ENLARGED PLANS.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:47.648Z",
+      "content_length": 8632,
+      "queued_at": "2026-06-25T22:07:40.418Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:c8b6fa9d-127d-4077-ae58-eaa206ba3860"
+      }
+    },
+    {
+      "id": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9",
+      "title": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+      "file_name": "[010] A201 - EXTERIOR ELEVATIONS AND SECTION.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:47.393Z",
+      "content_length": 3537,
+      "queued_at": "2026-06-25T22:07:41.544Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:4d3acc68-890a-4bfc-bb02-63616d13a0c9"
+      }
+    },
+    {
+      "id": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c",
+      "title": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+      "file_name": "[009] A111 - REFLECTED CEILING PLAN.pdf",
+      "source_system": "drawing_upload",
+      "type": "drawing",
+      "document_type": "drawing",
+      "status": "raw_ingested",
+      "project_id": "25125",
+      "created_at": "2026-06-26T01:50:47.128Z",
+      "content_length": 4367,
+      "queued_at": "2026-06-25T22:07:42.522Z",
+      "http_status": 200,
+      "ok": true,
+      "response": {
+        "status": "queued",
+        "metadataId": "drawing-revision:3604d06a-7e4e-4a88-b8cf-63a3540d939c"
+      }
+    }
+  ]
+}

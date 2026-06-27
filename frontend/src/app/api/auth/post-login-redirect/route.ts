@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export const GET = withApiGuardrails(
   "auth/post-login-redirect#GET",
-  async () => {
+  async ({ request }) => {
     const supabase = await createClient();
     const {
       data: { user },
@@ -15,7 +15,8 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ redirect: "/" });
     }
 
-    const redirect = await getPostLoginRedirect(supabase, user.id);
+    const callbackUrl = new URL(request.url).searchParams.get("callbackUrl");
+    const redirect = await getPostLoginRedirect(supabase, user.id, callbackUrl);
     return NextResponse.json({ redirect });
   },
 );

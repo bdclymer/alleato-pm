@@ -20,9 +20,9 @@ import {
   DataTable as DsDataTable,
   EntityAttachments,
   ErrorState,
-  ExpandingSearch,
   EmptyState as DsEmptyState,
 } from "@/components/ds";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -107,19 +107,6 @@ interface InvoiceItem {
   updated_at: string;
 }
 
-interface MeetingItem {
-  id: string;
-  title: string | null;
-  date: string | null;
-  status: string | null;
-  category: string | null;
-  participants: string | null;
-  project_id: number | null;
-  project_name: string | null;
-  project_number: string | null;
-  created_at: string | null;
-}
-
 interface CommitmentItem {
   id: string;
   type: "subcontract" | "purchase_order";
@@ -144,13 +131,11 @@ interface CompanyDetailsResponse {
   projects: CompanyProjectItem[];
   commitments: CommitmentItem[];
   invoices: InvoiceItem[];
-  meetings: MeetingItem[];
   summary: {
     contact_count: number;
     project_count: number;
     commitment_count: number;
     invoice_count: number;
-    meeting_count: number;
   };
 }
 
@@ -247,7 +232,6 @@ export default function CompanyDetailsPage() {
   const associatedProjects = data?.projects ?? [];
   const commitments = data?.commitments ?? [];
   const invoices = data?.invoices ?? [];
-  const meetings = data?.meetings ?? [];
   const filteredInvoices = invoiceFilter === "open" ? invoices.filter((item) => isOpenInvoice(item.status)) : invoices;
   const filteredCommitments = React.useMemo(() => {
     const query = commitmentQuery.trim().toLowerCase();
@@ -267,32 +251,6 @@ export default function CompanyDetailsPage() {
       return haystack.includes(query);
     });
   }, [commitmentQuery, commitments]);
-  const meetingsByProject = React.useMemo(() => {
-    const grouped = new Map<number, { project: CompanyProjectItem | null; items: MeetingItem[] }>();
-
-    for (const meeting of meetings) {
-      if (typeof meeting.project_id !== "number") continue;
-      const existing = grouped.get(meeting.project_id);
-      if (existing) {
-        existing.items.push(meeting);
-        continue;
-      }
-      const project = associatedProjects.find((item) => item.id === meeting.project_id) || null;
-      grouped.set(meeting.project_id, { project, items: [meeting] });
-    }
-
-    return Array.from(grouped.entries())
-      .map(([, value]) => ({
-        ...value,
-        items: value.items.sort((a, b) => {
-          const aTime = a.date ? new Date(a.date).getTime() : 0;
-          const bTime = b.date ? new Date(b.date).getTime() : 0;
-          return bTime - aTime;
-        }),
-      }))
-      .sort((a, b) => (a.project?.name || "").localeCompare(b.project?.name || ""));
-  }, [associatedProjects, meetings]);
-
   const loadDetails = React.useCallback(async () => {
     try {
       setIsLoading(true);
@@ -637,13 +595,6 @@ export default function CompanyDetailsPage() {
       : `https://${company.website}`
     : null;
   const primaryContact = contacts.find((c) => c.id === company.primary_contact_id) ?? contacts[0] ?? null;
-  const meetingRows = meetingsByProject.flatMap(({ project, items }) =>
-    items.slice(0, 6).map((meeting) => ({
-      ...meeting,
-      display_project_name: project?.name || meeting.project_name || "Unknown project",
-    })),
-  );
-
   return (
     <PageShell
       variant="detailWide"
@@ -829,10 +780,11 @@ export default function CompanyDetailsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <SectionRuleHeading label="Commitments" />
                   {commitments.length > 0 && (
-                    <ExpandingSearch
+                    <ExpandableSearch
                       value={commitmentQuery}
                       onChange={setCommitmentQuery}
                       placeholder="Search scope or trade..."
+                      ariaLabel="Search commitments"
                     />
                   )}
                 </div>
@@ -956,52 +908,6 @@ export default function CompanyDetailsPage() {
                 )}
               </section>
 
-              <section className="space-y-4">
-                <SectionRuleHeading label="Meetings" />
-                {meetingsByProject.length === 0 ? (
-                  <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
-                ) : (
-                  <DsDataTable<(MeetingItem & { display_project_name: string })>
-                    rows={meetingRows}
-                    columns={[
-                      {
-                        key: "meeting",
-                        header: "Meeting",
-                        primary: true,
-                        render: (meeting) => (
-                          <Link
-                            href={`/${meeting.project_id}/meetings/${meeting.id}`}
-                            className="font-medium text-foreground underline-offset-4 hover:underline"
-                          >
-                            {meeting.title || "Untitled meeting"}
-                          </Link>
-                        ),
-                      },
-                      {
-                        key: "project",
-                        header: "Project",
-                        render: (meeting) => meeting.display_project_name,
-                      },
-                      {
-                        key: "status",
-                        header: "Status",
-                        render: (meeting) => (
-                          <div className="flex items-center gap-2">
-                            <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
-                            {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "date",
-                        header: "Date",
-                        align: "right",
-                        render: (meeting) => formatDate(meeting.date),
-                      },
-                    ]}
-                  />
-                )}
-              </section>
             </div>
           </main>
 

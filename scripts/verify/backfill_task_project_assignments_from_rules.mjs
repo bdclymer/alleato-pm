@@ -31,6 +31,8 @@ for (let index = 2; index < process.argv.length; index += 1) {
 const dryRun = args.get("dry-run") === "true" || args.get("apply") !== "true";
 const lookbackDays = numberArg("days", 14);
 const limit = numberArg("limit", 5000);
+const sourceSystemFilter = textArg("source-system", "");
+const syncExistingProjectIds = args.get("sync-existing-project-ids") === "true";
 
 function numberArg(name, fallback) {
   const raw = args.get(name);
@@ -41,6 +43,12 @@ function numberArg(name, fallback) {
     process.exit(1);
   }
   return value;
+}
+
+function textArg(name, fallback) {
+  const raw = args.get(name);
+  if (raw === undefined) return fallback;
+  return String(raw).trim();
 }
 
 function normalize(value) {
@@ -168,18 +176,38 @@ try {
       select id, title, description, source_system, metadata_id, created_at
       from public.tasks
       where project_id is null
+        and ($3::text = '' or source_system = $3::text)
         and created_at >= now() - ($1::text || ' days')::interval
       order by created_at desc
       limit $2
     `,
-    [lookbackDays, limit],
+    [lookbackDays, limit, sourceSystemFilter],
   )).rows;
 
   const assignments = tasks
     .map((task) => ({ task, assignment: chooseAssignment(task, projects, attributionRules) }))
     .filter((item) => item.assignment);
 
-  if (!dryRun && assignments.length > 0) {
+  const existingProjectIdMismatches = syncExistingProjectIds
+    ? (await client.query(
+        `
+          select id, title, source_system, metadata_id, created_at, project_id, coalesce(project_ids, '{}'::bigint[]) as project_ids
+          from public.tasks
+          where project_id is not null
+            and ($3::text = '' or source_system = $3::text)
+            and created_at >= now() - ($1::text || ' days')::interval
+            and (
+              project_ids is null
+              or not (project_id = any(project_ids))
+            )
+          order by created_at desc
+          limit $2
+        `,
+        [lookbackDays, limit, sourceSystemFilter],
+      )).rows
+    : [];
+
+  if (!dryRun && (assignments.length > 0 || existingProjectIdMismatches.length > 0)) {
     await client.query("begin");
     try {
       for (const { task, assignment } of assignments) {
@@ -187,11 +215,38 @@ try {
           `
             update public.tasks
             set project_id = $1,
+              project_ids = case
+                when project_ids is null then array[$1]::bigint[]
+                when $1 = any(project_ids) then project_ids
+                else array_append(project_ids, $1)
+              end,
               updated_at = now()
             where id = $2
               and project_id is null
           `,
           [assignment.project.id, task.id],
+        );
+      }
+      if (existingProjectIdMismatches.length > 0) {
+        await client.query(
+          `
+            update public.tasks t
+            set project_ids = case
+                when t.project_ids is null then array[v.project_id]::bigint[]
+                when v.project_id = any(t.project_ids) then t.project_ids
+                else array_append(t.project_ids, v.project_id)
+              end,
+              updated_at = now()
+            from (
+              select *
+              from jsonb_to_recordset($1::jsonb) as x(task_id uuid, project_id bigint)
+            ) v
+            where t.id = v.task_id
+          `,
+          [JSON.stringify(existingProjectIdMismatches.map((row) => ({
+            task_id: String(row.id),
+            project_id: Number(row.project_id),
+          })))],
         );
       }
       await client.query("commit");
@@ -212,10 +267,14 @@ try {
     dryRun,
     lookbackDays,
     limit,
+    sourceSystemFilter: sourceSystemFilter || null,
+    syncExistingProjectIds,
     projectsLoaded: projects.length,
     rulesLoaded: attributionRules.length,
     tasksScanned: tasks.length,
     assignments: assignments.length,
+    existingProjectIdMismatches: existingProjectIdMismatches.length,
+    existingProjectIdMismatchesUpdated: dryRun ? 0 : existingProjectIdMismatches.length,
     byProject,
     samples: assignments.slice(0, 30).map(({ task, assignment }) => ({
       id: task.id,
@@ -224,6 +283,14 @@ try {
       project_name: assignment.project.name,
       score: assignment.score,
       evidence: assignment.evidence,
+    })),
+    existingProjectIdMismatchSamples: existingProjectIdMismatches.slice(0, 30).map((task) => ({
+      id: task.id,
+      title: task.title,
+      source_system: task.source_system,
+      metadata_id: task.metadata_id,
+      project_id: task.project_id,
+      previous_project_ids: task.project_ids,
     })),
   }, null, 2));
 } finally {

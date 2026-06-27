@@ -25,6 +25,15 @@ export type AssistantToolCapability =
   | "generate"
   | "persist";
 
+export type AssistantToolRoutingPolicy = {
+  useWhen: string[];
+  doNotUseWhen: string[];
+  preferredFreshness: string;
+  emptyResultBehavior: string;
+  citationRule: string;
+  regressionPrompts: string[];
+};
+
 export type AssistantToolRegistryEntry = ToolDefinition & {
   owner: string;
   category: AssistantToolCategory;
@@ -41,6 +50,7 @@ export type AssistantToolRegistryEntry = ToolDefinition & {
     requiresSourceRefs: boolean;
     ledgerRequired: boolean;
   };
+  routingPolicy?: AssistantToolRoutingPolicy;
   factory: {
     modulePath: string;
     exportName: string;
@@ -180,7 +190,74 @@ export function toolDefinitionsForWorkflow(input: {
   return assistantToolsForWorkflow(input).map(toToolDefinition);
 }
 
-export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet {
+export function renderAssistantToolRoutingGuide(
+  input: {
+    registry?: AssistantToolRegistryEntry[];
+    workflowId?: string;
+    allowedToolNames?: readonly string[];
+    maxPolicies?: number;
+  } = {},
+): string {
+  const priority = new Map(
+    [
+      "searchTeamsMessages",
+      "getRecentEmails",
+      "searchEmails",
+      "getMeetingsByDate",
+      "searchMeetingsByTopic",
+      "getMeetingDetails",
+      "semanticSearch",
+      "searchExternalDocuments",
+      "searchDocuments",
+      "findProjectDocuments",
+      "getAcumaticaProjectBudget",
+      "getAPAgingReport",
+      "getProjectBriefingSnapshot",
+      "getCommitmentsOverview",
+    ].map((name, index) => [name, index]),
+  );
+  const tools = assistantToolsForWorkflow({
+    registry: input.registry,
+    workflowId: input.workflowId ?? AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    allowedToolNames: input.allowedToolNames,
+  })
+    .filter((entry) => entry.routingPolicy)
+    .sort(
+      (a, b) =>
+        (priority.get(a.name) ?? Number.MAX_SAFE_INTEGER) -
+        (priority.get(b.name) ?? Number.MAX_SAFE_INTEGER),
+    )
+    .slice(0, input.maxPolicies ?? 12);
+
+  if (tools.length === 0) return "";
+
+  const lines = [
+    "## Tool Routing Policy",
+    "Use these registry-owned rules before choosing tools. Prefer the narrowest source-specific tool when the user names a communication/data source; use broad RAG only for cross-source or document searches.",
+    ...tools.map((entry) => {
+      const policy = entry.routingPolicy;
+      if (!policy) return "";
+      const sourceFamilies = (entry.sourceFamilies ?? []).join(", ");
+      const useWhen = policy.useWhen.join(" ");
+      const doNotUseWhen = policy.doNotUseWhen.join(" ");
+      return [
+        `- ${entry.name}${sourceFamilies ? ` (${sourceFamilies})` : ""}:`,
+        `Use when: ${useWhen}`,
+        `Do not use when: ${doNotUseWhen}`,
+        `Freshness: ${policy.preferredFreshness}`,
+        `Empty result: ${policy.emptyResultBehavior}`,
+        `Cite: ${policy.citationRule}`,
+        `Regression prompts: ${policy.regressionPrompts.join("; ")}`,
+      ].join(" ");
+    }),
+  ];
+
+  return lines.filter(Boolean).join("\n");
+}
+
+export function filterRegisteredToolSet(
+  input: RegisteredToolSetInput,
+): ToolSet {
   const registry = input.registry ?? GLOBAL_ASSISTANT_TOOL_REGISTRY;
   const factoryEntries = assistantToolsForWorkflow({
     registry,
@@ -199,7 +276,9 @@ export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet 
   const missingTools = optionalFactoryDisabled
     ? []
     : visibility.visibleToolNames.filter((name) => !input.tools[name]);
-  const unregisteredTools = toolNames.filter((name) => !registeredNames.has(name));
+  const unregisteredTools = toolNames.filter(
+    (name) => !registeredNames.has(name),
+  );
 
   if (missingTools.length > 0 || unregisteredTools.length > 0) {
     const details = [
@@ -298,7 +377,9 @@ function hiddenReasonForEntry(
   if (
     entry.requiresDeliveryPermission &&
     allowedChannels.size > 0 &&
-    (entry.allowedChannels ?? []).every((channel) => !allowedChannels.has(channel))
+    (entry.allowedChannels ?? []).every(
+      (channel) => !allowedChannels.has(channel),
+    )
   ) {
     return "delivery_channel_denied";
   }
@@ -328,6 +409,7 @@ export function toToolDefinition(
       requiresWritePermission: entry.requiresWritePermission,
       requiresDeliveryPermission: entry.requiresDeliveryPermission,
       evidencePolicy: entry.evidencePolicy,
+      routingPolicy: entry.routingPolicy,
       factory: entry.factory,
     },
   };
@@ -456,8 +538,10 @@ function factoryToolEntries(input: {
 function assistantReadToolCategory(name: string): AssistantToolCategory {
   const normalized = name.toLowerCase();
   if (normalized.includes("conversation")) return "memory";
-  if (normalized.includes("document") || normalized.includes("spec")) return "document";
-  if (normalized.includes("memory") || normalized.includes("knowledge")) return "memory";
+  if (normalized.includes("document") || normalized.includes("spec"))
+    return "document";
+  if (normalized.includes("memory") || normalized.includes("knowledge"))
+    return "memory";
   if (
     normalized.includes("cost") ||
     normalized.includes("budget") ||
@@ -503,6 +587,156 @@ function assistantReadSourceFamilies(
   }
   if (normalized.includes("meeting")) return ["meeting", "fireflies"];
   return ["procore", "project_intelligence", "insight_card"];
+}
+
+function assistantReadRoutingPolicy(
+  name: string,
+): AssistantToolRoutingPolicy | undefined {
+  switch (name) {
+    case "searchTeamsMessages":
+      return {
+        useWhen: [
+          "User asks about Teams messages, DMs, chats, threads, conversations, or Teams chatter.",
+          "User asks for recent or same-day Teams message insights.",
+        ],
+        doNotUseWhen: [
+          "User asks about Fireflies meetings or meeting transcripts without Teams.",
+          "User asks about Outlook inbox or email triage.",
+        ],
+        preferredFreshness:
+          "Use Teams-specific retrieval that checks live Microsoft Graph first when available, then synced Teams RAG rows.",
+        emptyResultBehavior:
+          "State that Teams retrieval returned no matching rows and do not substitute meetings or emails as if they were Teams results.",
+        citationRule:
+          "Cite as Teams message/conversation with title or channel and date.",
+        regressionPrompts: [
+          "what insights can be found in the teams messages today?",
+          "show me recent Teams chatter about Westfield",
+        ],
+      };
+    case "getRecentEmails":
+    case "searchEmails":
+      return {
+        useWhen: [
+          "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
+          "User asks what important emails came in today or this morning.",
+        ],
+        doNotUseWhen: [
+          "User asks about Teams messages or chats.",
+          "User asks about meeting transcripts or Fireflies meetings.",
+        ],
+        preferredFreshness:
+          "Use live Microsoft Graph Outlook reads for inbox/date triage when available; use synced rows only as an explicit fallback.",
+        emptyResultBehavior:
+          "State that Outlook/email retrieval returned no matching rows or fell back, including the source/freshness caveat.",
+        citationRule: "Cite as Outlook/email with sender, subject, and date.",
+        regressionPrompts: [
+          "what are my most important emails from today?",
+          "anything urgent in my inbox this morning?",
+        ],
+      };
+    case "searchMeetingsByTopic":
+    case "getMeetingDetails":
+    case "getMeetingsByDate":
+      return {
+        useWhen: [
+          "User asks what was discussed, decided, raised, or assigned in meetings.",
+          "User asks for Fireflies, meeting transcripts, OACs, huddles, or meeting intelligence.",
+        ],
+        doNotUseWhen: [
+          "User asks specifically for Teams messages, chats, or DMs.",
+          "User asks specifically for Outlook inbox or email results.",
+        ],
+        preferredFreshness:
+          "Use date-aware meeting retrieval for today/yesterday/specific dates; use semantic meeting search for topical historical questions.",
+        emptyResultBehavior:
+          "State that meeting retrieval returned no matching rows and do not fill the gap with Teams/email unless the user requested cross-source context.",
+        citationRule: "Cite as Fireflies/meeting with meeting title and date.",
+        regressionPrompts: [
+          "what meetings were held today?",
+          "what did the Westfield OAC decide?",
+        ],
+      };
+    case "semanticSearch":
+    case "searchExternalDocuments":
+    case "searchDocuments":
+    case "findProjectDocuments":
+      return {
+        useWhen: [
+          "User asks to search across documents, RAG chunks, OneDrive/SharePoint files, specs, drawings, or broad unstructured evidence.",
+          "User asks a cross-source investigation spanning more than one source family.",
+        ],
+        doNotUseWhen: [
+          "A narrower source-specific path exists for same-day Teams, Outlook inbox, or meeting-date questions.",
+          "User asks for structured project/accounting rows rather than unstructured evidence.",
+        ],
+        preferredFreshness:
+          "Use source-specific live/structured retrieval before broad semantic search when the user names one current communication source.",
+        emptyResultBehavior:
+          "State that document/RAG search returned no matching passages and identify the queried source scope.",
+        citationRule:
+          "Cite as document/RAG result with title, source type, and date when available.",
+        regressionPrompts: [
+          "search documents for the insurance requirement",
+          "research the emails, Teams, and meetings to see where this started",
+        ],
+      };
+    case "getAcumaticaProjectBudget":
+    case "getAcumaticaProjectList":
+    case "getAPAgingReport":
+    case "getARAgingReport":
+    case "getCashPositionReport":
+    case "getVendorSpendReport":
+    case "getRecentBills":
+    case "getRecentInvoices":
+    case "getPurchaseOrderSummary":
+      return {
+        useWhen: [
+          "User asks about Acumatica, accounting, AP/AR aging, cash, vendor spend, bills, invoices, purchase orders, or project budget from accounting data.",
+        ],
+        doNotUseWhen: [
+          "User asks for meeting/email/Teams commentary about financial issues rather than accounting rows.",
+          "User asks for Procore budget line workflow state rather than Acumatica truth.",
+        ],
+        preferredFreshness:
+          "Use the structured Acumatica tool or sync-health-aware accounting source before interpreting communication evidence.",
+        emptyResultBehavior:
+          "State that Acumatica/accounting retrieval returned no rows or is stale, and do not invent financial totals.",
+        citationRule:
+          "Cite as Acumatica/accounting data with report/entity name and as-of time when available.",
+        regressionPrompts: [
+          "pull current AR aging from Acumatica",
+          "which vendors have we spent the most with this year?",
+        ],
+      };
+    case "getProjectBriefingSnapshot":
+    case "getCommitmentsOverview":
+    case "getChangeOrderDetails":
+    case "getBudgetLineItems":
+    case "getRFIStatus":
+    case "getSubmittalStatus":
+      return {
+        useWhen: [
+          "User asks about structured project records, current project status, commitments, change orders, budget lines, RFIs, or submittals.",
+        ],
+        doNotUseWhen: [
+          "User asks for exact communication evidence from Teams, Outlook, or meetings.",
+          "User asks for Acumatica accounting truth rather than project-management records.",
+        ],
+        preferredFreshness:
+          "Use structured project tools for record state, then layer communication evidence only when the user asks for why or latest movement.",
+        emptyResultBehavior:
+          "State which structured project record source returned no rows and avoid replacing record state with narrative communication evidence.",
+        citationRule:
+          "Cite as Alleato/Procore project record with record type and project when available.",
+        regressionPrompts: [
+          "what is the current status of Vermillion Rise?",
+          "show open RFIs and submittals for this project",
+        ],
+      };
+    default:
+      return undefined;
+  }
 }
 
 const projectToolNames = [
@@ -557,7 +791,6 @@ const projectToolNames = [
   "getOutlookCalendarEvents",
   "getSopBacklog",
   "getFinanceSpendRollup",
-  "getMeetingIntelligence",
   "getProjectBriefingSnapshot",
   "getPortfolioOverview",
   "getProjectsWithRisks",
@@ -571,8 +804,8 @@ const projectToolNames = [
   "getProjectDetails",
 ] as const;
 
-const projectAssistantTools: AssistantToolRegistryEntry[] = projectToolNames.map(
-  (name) =>
+const projectAssistantTools: AssistantToolRegistryEntry[] =
+  projectToolNames.map((name) =>
     assistantChatTool({
       name,
       description: `Core project read tool exposed by createProjectTools: ${name}.`,
@@ -602,9 +835,10 @@ const projectAssistantTools: AssistantToolRegistryEntry[] = projectToolNames.map
           name === "saveInsight" ||
           name === "writeMemory",
       },
+      routingPolicy: assistantReadRoutingPolicy(name),
       factory: PROJECT_TOOL_FACTORY,
     }),
-);
+  );
 
 const actionToolNames = [
   "createChangeOrder",
@@ -688,7 +922,9 @@ const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(
       owner: "ai_assistant",
       category: isDelivery ? "delivery" : "workflow",
       capabilities: isDelivery ? ["write", "delivery"] : ["write"],
-      sourceFamilies: isDelivery ? ["outlook", "email", "teams", "delivery"] : ["procore", "system"],
+      sourceFamilies: isDelivery
+        ? ["outlook", "email", "teams", "delivery"]
+        : ["procore", "system"],
       allowedChannels: isDelivery ? ["email", "teams"] : undefined,
       requiresProjectScope: !nonProjectScopedActionTools.has(name),
       requiresWritePermission: true,
@@ -736,6 +972,7 @@ const structuredOutputAssistantTools = factoryToolEntries({
 
 const featureRequestWriteTools = new Set([
   "captureFeatureRequestPacket",
+  "captureIdeaItem",
   "updateFeatureRequestPacket",
   "generateImplementationPlan",
   "generateClaudeCodeHandoff",
@@ -750,6 +987,7 @@ const featureRequestAssistantTools = factoryToolEntries({
   names: [
     "findRelatedFeatureRequests",
     "captureFeatureRequestPacket",
+    "captureIdeaItem",
     "updateFeatureRequestPacket",
     "scoreFeatureRequestReadiness",
     "generateImplementationPlan",
@@ -811,7 +1049,10 @@ const workspaceAssistantTools = factoryToolEntries({
   owningAdapter: "workspace_tools",
   category: "workflow",
   sourceFamilies: ["system"],
-  writeToolNames: new Set(["saveWorkspaceArtifact", "promoteWorkspaceArtifact"]),
+  writeToolNames: new Set([
+    "saveWorkspaceArtifact",
+    "promoteWorkspaceArtifact",
+  ]),
   sourceBearing: false,
 });
 
@@ -854,7 +1095,12 @@ const executiveBriefAssistantTools = factoryToolEntries({
   ),
   owningAdapter: "executive_brief_tools",
   category: "generation",
-  sourceFamilies: ["daily_recap", "project_intelligence", "document", "acumatica"],
+  sourceFamilies: [
+    "daily_recap",
+    "project_intelligence",
+    "document",
+    "acumatica",
+  ],
   writeToolNames: new Set(["generateExecutiveDailyBrief"]),
 });
 
@@ -874,7 +1120,10 @@ const marketingAssistantTools = factoryToolEntries({
     "createMarketingContentAsset",
     "getMarketingCalendar",
   ],
-  factory: factory("frontend/src/lib/ai/tools/marketing.ts", "createMarketingTools"),
+  factory: factory(
+    "frontend/src/lib/ai/tools/marketing.ts",
+    "createMarketingTools",
+  ),
   owningAdapter: "marketing_tools",
   category: "workflow",
   sourceFamilies: ["document", "project_intelligence", "system"],
