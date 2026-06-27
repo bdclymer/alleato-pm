@@ -67,6 +67,10 @@ Completed backend Pipeline A insight stub retirement slice:
 
 - [2026-06-27-retire-pipeline-a-insight-stubs.md](../tasks/2026-06-27-retire-pipeline-a-insight-stubs.md)
 
+Completed final verifier warning-gap closure slice:
+
+- [2026-06-27-final-verifier-warning-gaps.md](../tasks/2026-06-27-final-verifier-warning-gaps.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -1455,3 +1459,18 @@ Active latency hardening slice:
   - delegated compact AI/RAG verifier bundle passed all 7 commands.
 - Evidence:
   - [Task](../tasks/2026-06-27-retire-pipeline-a-insight-stubs.md)
+
+### 2026-06-27: AAI-753 Final Verifier Warning Gaps Closed
+
+- Closed the stale AI SDK MCP architecture warning:
+  - subagent proof showed live `/api/ai-assistant/chat` already discovers, merges, traces, and closes MCP tools;
+  - `scripts/verify/verify_ai_chat_architecture.mjs` now checks the current `assistantMcpToolDescriptor` descriptor policy instead of the removed `isReadOnlyMcpTool` symbol;
+  - `npm run rag:verify:chat-architecture` now passes with 0 warnings.
+- Closed the Microsoft assistant cron detection gap:
+  - live Render read-back showed `alleato-microsoft-executive-assistant-check` was suspended even though the verifier only warned about missing run history;
+  - resumed the Render cron via `POST /v1/services/crn-d8orvmmrnols73etajrg/resume`;
+  - triggered manual run `crn-d8orvmmrnols73etajrg-1782572727`;
+  - `scripts/verify/verify_microsoft_assistant_health.mjs` now fails on suspended cron state and can use Render job history when service-level `lastSuccessfulRunAt` is absent;
+  - `npm run verify:microsoft-assistant-health -- --json` passes with 0 warnings and `lastSuccessfulRunAt=2026-06-27T15:07:07Z`.
+- Evidence:
+  - [Task](../tasks/2026-06-27-final-verifier-warning-gaps.md)

@@ -137,12 +137,12 @@ Current verifier refresh on 2026-06-27:
 | Graph embedding | `npm run rag:verify:graph-embedding` | PASS |
 | Source lifecycle | `npm run rag:verify:source-lifecycle` | PASS |
 | Graph subscriptions | `npm run verify:graph-subscriptions -- --json` | PASS: 11 expected targets, 11 active subscriptions, 0 stale, 0 missing, 0 errored sync states. |
-| Chat architecture | `npm run rag:verify:chat-architecture` | PASS |
+| Chat architecture | `npm run rag:verify:chat-architecture` | PASS with 0 warnings after AAI-753 aligned the MCP verifier to the descriptor-based MCP policy. |
 | Source-specific RAG | `npm run rag:verify:source-specific` | PASS |
 | Retrieval contract | `npm run rag:verify:retrieval-contract` | PASS after AI memory metadata backfill repaired 26415 uncitable chunks. Evidence: `ai-memory-citation-metadata-repair-20260627.md`. |
 | Chunk integrity | `npm run rag:verify:chunk-integrity` | PASS; warnings only for short/non-sequential chunks. |
 | Response contract | `npm run rag:verify:response-contract` | PASS |
-| Microsoft assistant health | `npm run verify:microsoft-assistant-health -- --json` | PASS |
+| Microsoft assistant health | `npm run verify:microsoft-assistant-health -- --json` | PASS with 0 warnings after AAI-753 resumed the Render cron and hardened suspended-cron detection. |
 | Provider cleanup guard | `npm run verify:deprecated-provider-env` | PASS |
 | DB inventory | `npm run db:inventory -- --check-only` | PASS |
 | Supabase generated types | `npm run db:types:check` | PASS |

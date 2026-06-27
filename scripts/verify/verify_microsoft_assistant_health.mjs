@@ -145,6 +145,16 @@ async function fetchJson(url, options = {}) {
   return { body, headers: response.headers };
 }
 
+async function getLatestRenderSuccessfulJob(serviceId) {
+  const { body } = await fetchJson(`${RENDER_SERVICE_URL}/${serviceId}/jobs?limit=20`, {
+    headers: { authorization: `Bearer ${process.env.RENDER_API_KEY}` },
+  });
+  const rows = Array.isArray(body) ? body : [];
+  const jobs = rows.map((row) => row.job ?? row).filter(Boolean);
+  const succeeded = jobs.find((job) => job.status === "succeeded");
+  return succeeded?.finishedAt ?? succeeded?.startedAt ?? succeeded?.createdAt ?? null;
+}
+
 async function verifyRenderCron(options) {
   if (options.skipRender) {
     return result("render_cron", true, "Skipped Render cron check.", { skipped: true });
@@ -174,11 +184,17 @@ async function verifyRenderCron(options) {
     const command = details.envSpecificDetails?.dockerCommand ?? "";
     const failures = [];
     if (service.type !== "cron_job") failures.push(`type=${service.type || "<missing>"}`);
+    if (service.suspended !== "not_suspended") failures.push(`suspended=${service.suspended || "<missing>"}`);
     if (details.schedule !== EXPECTED_CRON_SCHEDULE) failures.push(`schedule=${details.schedule || "<missing>"}`);
     if (service.rootDir !== EXPECTED_CRON_ROOT) failures.push(`rootDir=${service.rootDir || "<missing>"}`);
     if (command !== EXPECTED_CRON_COMMAND) failures.push("dockerCommand drift");
 
-    const lastSuccessfulRunAt = service.lastSuccessfulRunAt ?? details.lastSuccessfulRunAt ?? null;
+    const lastSuccessfulRunAt =
+      service.lastSuccessfulRunAt ??
+      details.lastSuccessfulRunAt ??
+      (service.suspended === "not_suspended"
+        ? await getLatestRenderSuccessfulJob(item.id)
+        : null);
     const runAgeMinutes = minutesSince(lastSuccessfulRunAt);
     if (!lastSuccessfulRunAt && options.requireCronRun) {
       failures.push("lastSuccessfulRunAt=<missing>");
