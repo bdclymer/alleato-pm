@@ -216,6 +216,33 @@ describe("intent router", () => {
     });
   });
 
+  describe("change_event_write intent routing", () => {
+    it.each([
+      "Create a change request from the emails about the electrical room mini split.",
+      "Draft a change event from the latest Teams messages about the permit delay.",
+      "Log a potential change event using the project context on this page.",
+      "Use the evidence on this project to create a change request for the added split system.",
+      "Find the source first, then draft the change event.",
+      "Convert this scope issue into a change request.",
+      "Help me create a change request for the Playmakers project. Ask for any missing required fields, use available project evidence where possible, and preview the change request before anything is submitted.",
+    ])("classifies mixed evidence/create prompt as change_event_write: %s", (prompt) => {
+      const intent = classifyAssistantIntent(prompt, { selectedProjectId: 25125 });
+      expect(intent).toBe("change_event_write");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    });
+
+    it.each([
+      "Show me the emails about the sprinkler change.",
+      "Pull up the Teams messages about the potential change.",
+      "What source evidence supports that change event?",
+      "What's the revenue source for this change event?",
+    ])("keeps read-only change/source prompt out of change_event_write: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt, { selectedProjectId: 25125 })).not.toBe(
+        "change_event_write",
+      );
+    });
+  });
+
   describe("source-lookup false positives on field names", () => {
     // Regression: production session 55e73199… — the prompt
     // "I really dont understand what Line Item Revenue Source does in change events"

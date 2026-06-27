@@ -7,6 +7,7 @@ export type AssistantIntent =
   | "decision_lookup"
   | "task_followup"
   | "task_write"
+  | "change_event_write"
   | "email_action"
   | "calendar_action"
   | "external_research"
@@ -48,6 +49,12 @@ const CALENDAR_ACTION_PATTERNS = [
 const EMAIL_ACTION_PATTERNS = [
   /\b(draft|write|prepare|compose)\b.{0,50}\b(email|e-mail|reply|response|outlook message|message)\b/i,
   /\b(email|e-mail|reply|respond)\b.{0,50}\b(draft|write|prepare|compose|back)\b/i,
+];
+
+const CHANGE_EVENT_WRITE_PATTERNS = [
+  /\b(create|draft|log|prepare|open|raise|start|make|set up)\b.{0,80}\b(change request|change event|potential change|field change|scope change)\b/i,
+  /\b(change request|change event|potential change|field change|scope change)\b.{0,80}\b(create|draft|log|prepare|open|raise|start|make)\b/i,
+  /\b(turn|convert)\b.{0,80}\b(into|to)\b.{0,40}\b(change request|change event|potential change)\b/i,
 ];
 
 // Broad pattern for any mention of a communication artifact. Does NOT include
@@ -184,6 +191,10 @@ export function classifyAssistantIntent(
     return "email_action";
   }
 
+  if (CHANGE_EVENT_WRITE_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "change_event_write";
+  }
+
   if (EXTERNAL_RESEARCH_PATTERNS.some((pattern) => pattern.test(text))) {
     return "external_research";
   }
@@ -262,6 +273,8 @@ export function shouldUsePacketFirstIntent(intent: AssistantIntent): boolean {
   // in text rather than calling createGeneratedTask. Write intents go straight
   // to streamText so the MANDATORY TASK WRITE PROTOCOL in the system prompt
   // can take effect.
+  // change_event_write is also excluded so source/evidence phrasing can be used
+  // as field-filling context without hijacking the request into source lookup.
   return (
     intent === "target_briefing" ||
     intent === "latest_status" ||

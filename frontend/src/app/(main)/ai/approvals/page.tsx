@@ -41,10 +41,12 @@ function formatDeliveryChannelLabel(channel: string): string {
 function AiApprovalQueueRow({
   notification,
   onMarkReviewed,
+  onConfirmChangeEvent,
   onDiscard,
 }: {
   notification: CollaborationNotification;
   onMarkReviewed: (id: string, review?: NotificationReviewPayload) => void;
+  onConfirmChangeEvent: (id: string, review?: NotificationReviewPayload) => void;
   onDiscard: (id: string) => void;
 }) {
   const metadata = getAiApprovalQueueMetadata(notification.metadata);
@@ -64,6 +66,11 @@ function AiApprovalQueueRow({
     Boolean(notification.readAt) ||
     reviewChecks.length === 0 ||
     reviewChecks.every((check) => checkedReviewIds.has(check.id));
+  const isChangeEventConfirmation =
+    !notification.readAt &&
+    metadata.eventType === "ai_change_event_awaiting_approval" &&
+    preview?.table === "change_events";
+  const canConfirmChangeEvent = isChangeEventConfirmation && canMarkReviewed;
 
   function toggleReviewCheck(id: string, checked: boolean) {
     setCheckedReviewIds((current) => {
@@ -75,6 +82,16 @@ function AiApprovalQueueRow({
       }
       return next;
     });
+  }
+
+  function buildReviewPayload(): NotificationReviewPayload {
+    const checkedReviewChecks = reviewChecks.filter((check) =>
+      checkedReviewIds.has(check.id),
+    );
+    return {
+      checkedIds: checkedReviewChecks.map((check) => check.id),
+      checkedLabels: checkedReviewChecks.map((check) => check.label),
+    };
   }
 
   return (
@@ -159,6 +176,22 @@ function AiApprovalQueueRow({
           </Button>
         ) : null}
         {!notification.readAt ? (
+          isChangeEventConfirmation ? (
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              disabled={!canConfirmChangeEvent}
+              onClick={() => {
+                if (!canConfirmChangeEvent) return;
+                onConfirmChangeEvent(notification.id, buildReviewPayload());
+              }}
+            >
+              Confirm
+            </Button>
+          ) : null
+        ) : null}
+        {!notification.readAt ? (
           <Button
             type="button"
             variant="ghost"
@@ -167,13 +200,7 @@ function AiApprovalQueueRow({
             onClick={() => {
               if (!canMarkReviewed) return;
 
-              const checkedReviewChecks = reviewChecks.filter((check) =>
-                checkedReviewIds.has(check.id),
-              );
-              onMarkReviewed(notification.id, {
-                checkedIds: checkedReviewChecks.map((check) => check.id),
-                checkedLabels: checkedReviewChecks.map((check) => check.label),
-              });
+              onMarkReviewed(notification.id, buildReviewPayload());
             }}
           >
             Mark reviewed
@@ -208,10 +235,12 @@ function AiApprovalQueueHeader() {
 function AiApprovalQueueTable({
   notifications,
   onMarkReviewed,
+  onConfirmChangeEvent,
   onDiscard,
 }: {
   notifications: CollaborationNotification[];
   onMarkReviewed: (id: string, review?: NotificationReviewPayload) => void;
+  onConfirmChangeEvent: (id: string, review?: NotificationReviewPayload) => void;
   onDiscard: (id: string) => void;
 }) {
   if (notifications.length === 0) {
@@ -238,6 +267,7 @@ function AiApprovalQueueTable({
             key={notification.id}
             notification={notification}
             onMarkReviewed={onMarkReviewed}
+            onConfirmChangeEvent={onConfirmChangeEvent}
             onDiscard={onDiscard}
           />
         ))}
@@ -255,6 +285,7 @@ export default function AiApprovalsPage() {
     hasMore,
     fetchMore,
     markReviewed,
+    confirmAiChangeEvent,
     deleteNotification,
   } = useCollaborationNotifications({
     kind: AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
@@ -283,6 +314,9 @@ export default function AiApprovalsPage() {
             <AiApprovalQueueTable
               notifications={queueItems}
               onMarkReviewed={(id, review) => void markReviewed(id, review)}
+              onConfirmChangeEvent={(id, review) =>
+                void confirmAiChangeEvent(id, review)
+              }
               onDiscard={(id) => void deleteNotification(id)}
             />
           )}

@@ -66,6 +66,7 @@ function notification(
 describe("AiApprovalsPage", () => {
   it("filters to AI approval decisions and gates review completion checks", () => {
     const markReviewed = jest.fn();
+    const confirmAiChangeEvent = jest.fn();
     const deleteNotification = jest.fn();
 
     mockUseCollaborationNotifications.mockReturnValue({
@@ -85,6 +86,7 @@ describe("AiApprovalsPage", () => {
       fetchMore: jest.fn(),
       markAsRead: jest.fn(),
       markReviewed,
+      confirmAiChangeEvent,
       markAllAsRead: jest.fn(),
       deleteNotification,
       deleteAll: jest.fn(),
@@ -133,5 +135,62 @@ describe("AiApprovalsPage", () => {
         "Scope and revenue assumptions are correct.",
       ],
     });
+  });
+
+  it("confirms a change-event preview after review checks are complete", () => {
+    const markReviewed = jest.fn();
+    const confirmAiChangeEvent = jest.fn();
+    const deleteNotification = jest.fn();
+
+    mockUseCollaborationNotifications.mockReturnValue({
+      notifications: [notification()],
+      unreadCount: 1,
+      isLoading: false,
+      isFetchingMore: false,
+      error: null,
+      hasMore: false,
+      fetchMore: jest.fn(),
+      markAsRead: jest.fn(),
+      markReviewed,
+      confirmAiChangeEvent,
+      markAllAsRead: jest.fn(),
+      deleteNotification,
+      deleteAll: jest.fn(),
+    });
+
+    render(<AiApprovalsPage />);
+
+    const confirmButton = screen.getByRole("button", { name: "Confirm" });
+    expect(confirmButton).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByLabelText("Generated fields match the intended record."),
+    );
+    fireEvent.click(screen.getByLabelText("Dates are correct."));
+    fireEvent.click(
+      screen.getByLabelText("Line items and totals are correct."),
+    );
+    fireEvent.click(
+      screen.getByLabelText("Scope and revenue assumptions are correct."),
+    );
+
+    expect(confirmButton).toBeEnabled();
+    fireEvent.click(confirmButton);
+
+    expect(confirmAiChangeEvent).toHaveBeenCalledWith("decision-1", {
+      checkedIds: [
+        "generated-fields",
+        "dates",
+        "line-items",
+        "scope-revenue",
+      ],
+      checkedLabels: [
+        "Generated fields match the intended record.",
+        "Dates are correct.",
+        "Line items and totals are correct.",
+        "Scope and revenue assumptions are correct.",
+      ],
+    });
+    expect(markReviewed).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { createActionTools } from "@/lib/ai/tools/action-tools";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const querySchema = z.object({
@@ -25,6 +26,16 @@ const patchSchema = z.discriminatedUnion("action", [
       })
       .optional(),
   }),
+  z.object({
+    action: z.literal("confirm-ai-change-event"),
+    id: z.string().uuid(),
+    review: z
+      .object({
+        checkedIds: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+        checkedLabels: z.array(z.string().trim().min(1).max(200)).max(20).default([]),
+      })
+      .optional(),
+  }),
   z.object({ action: z.literal("mark-all-read") }),
   z.object({ action: z.literal("delete"), id: z.string().uuid() }),
   z.object({ action: z.literal("delete-all") }),
@@ -36,6 +47,86 @@ function getMetadataRecord(metadata: unknown): Record<string, unknown> {
   }
 
   return metadata as Record<string, unknown>;
+}
+
+function getRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function getNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function getBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function buildChangeEventConfirmInput(params: {
+  notificationId: string;
+  projectId: number | null;
+  metadata: Record<string, unknown>;
+}) {
+  if (getString(params.metadata.eventType) !== "ai_change_event_awaiting_approval") {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "collaboration/notifications#PATCH",
+      message: "This AI approval is not a change-event draft.",
+    });
+  }
+
+  const preview = getRecord(params.metadata.preview);
+  if (getString(preview.table) !== "change_events") {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "collaboration/notifications#PATCH",
+      message: "This AI approval does not contain a change-event preview.",
+    });
+  }
+
+  const fields = getRecord(preview.fields);
+  const projectId = getNumber(fields.project_id) ?? params.projectId ?? undefined;
+  const title = getString(fields.title);
+  if (!projectId || !title) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "collaboration/notifications#PATCH",
+      message: "The change-event preview is missing project or title fields.",
+    });
+  }
+
+  return {
+    projectId,
+    title,
+    description: getString(fields.description),
+    scope: getString(fields.scope),
+    type: getString(fields.type),
+    status: getString(fields.status),
+    reason: getString(fields.reason),
+    origin: getString(fields.origin),
+    expectingRevenue: getBoolean(fields.expecting_revenue),
+    lineItemRevenueSource: getString(fields.line_item_revenue_source),
+    confirmed: true,
+    idempotencyKey:
+      getString(params.metadata.eventKey) ?? `ai-approval:${params.notificationId}`,
+  };
+}
+
+function getCreatedRecordId(output: unknown): string | null {
+  const record = getRecord(getRecord(output).record);
+  const id = record.id;
+  if (typeof id === "string" && id.trim()) return id;
+  if (typeof id === "number" && Number.isFinite(id)) return String(id);
+  return null;
 }
 
 export const GET = withApiGuardrails(
@@ -237,6 +328,126 @@ export const PATCH = withApiGuardrails(
       }
 
       return NextResponse.json({ success: true });
+    }
+
+    if (payload.action === "confirm-ai-change-event") {
+      const reviewedAt = new Date().toISOString();
+      const { data: existing, error: existingError } = await supabase
+        .from("collaboration_notifications")
+        .select("metadata, project_id, entity_type")
+        .eq("id", payload.id)
+        .eq("user_id", user.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Failed to load AI approval metadata: ${existingError.message}`,
+          details: existingError,
+        });
+      }
+
+      if (!existing) {
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "collaboration/notifications#PATCH",
+          message: "AI approval notification was not found.",
+        });
+      }
+
+      if (
+        existing.entity_type &&
+        !["change_events", "change-events"].includes(existing.entity_type)
+      ) {
+        throw new GuardrailError({
+          code: "INVALID_PAYLOAD",
+          where: "collaboration/notifications#PATCH",
+          message: "This AI approval is not linked to change events.",
+        });
+      }
+
+      const metadataRecord = getMetadataRecord(existing.metadata);
+      const confirmInput = buildChangeEventConfirmInput({
+        notificationId: payload.id,
+        projectId: existing.project_id,
+        metadata: metadataRecord,
+      });
+      const tools = createActionTools(user.id, {
+        pinnedProjectId: confirmInput.projectId,
+      });
+      const execute = tools.createChangeEvent.execute;
+      if (!execute) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: "Change-event creation tool is unavailable.",
+        });
+      }
+
+      const output = await execute(confirmInput, {
+        toolCallId: `ai-approval-${payload.id}`,
+        messages: [],
+      } as never);
+      const outputRecord = getRecord(output);
+      if (outputRecord.success !== true) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message:
+            getString(outputRecord.error) ??
+            "Change-event creation failed while confirming the AI approval.",
+          details: outputRecord,
+        });
+      }
+
+      const recordId = getCreatedRecordId(output);
+      const metadata = {
+        ...metadataRecord,
+        review: {
+          source: "ai_approval_queue",
+          reviewedAt,
+          reviewedBy: user.id,
+          checkedIds: payload.review?.checkedIds ?? [],
+          checkedLabels: payload.review?.checkedLabels ?? [],
+        },
+        confirmation: {
+          source: "ai_approval_queue",
+          confirmedAt: reviewedAt,
+          confirmedBy: user.id,
+          toolName: "createChangeEvent",
+          recordId,
+          idempotencyKey: confirmInput.idempotencyKey,
+        },
+      };
+
+      const { error } = await supabase
+        .from("collaboration_notifications")
+        .update({
+          read_at: reviewedAt,
+          entity_id: recordId,
+          metadata,
+        })
+        .eq("id", payload.id)
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
+
+      if (error) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "collaboration/notifications#PATCH",
+          message: `Change event was created, but the approval notification could not be updated: ${error.message}`,
+          details: error,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        action: "confirmed",
+        recordId,
+        output,
+      });
     }
 
     if (payload.action === "mark-all-read") {

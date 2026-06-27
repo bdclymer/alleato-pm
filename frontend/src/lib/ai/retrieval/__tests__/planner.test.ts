@@ -83,6 +83,46 @@ describe("planRetrieval", () => {
     expect(plan.reason).toContain("project_context_source_specific_rag");
   });
 
+  it.each([
+    "Create a change request from the emails about the electrical room mini split.",
+    "Draft a change event from the latest Teams messages about the permit delay.",
+    "Use the evidence on this project to log a potential change.",
+    "Find the source first, then draft the change event.",
+    "Help me create a change request for the Playmakers project. Ask for any missing required fields, use available project evidence where possible, and preview the change request before anything is submitted.",
+  ])(
+    "routes evidence-backed change-event writes to the tool loop: %s",
+    (message) => {
+      const plan = planRetrieval({
+        message,
+        selectedProjectId: 25125,
+        messages: [userMsg(message)],
+      });
+
+      expect(plan.intent).toBe("change_event_write");
+      expect(plan.responseFormat).toBe("conversational");
+      expect(plan.reason).toBe("project_context_change_event_write_request");
+      expect(plan.selectedProjectId).toBe(25125);
+      expect(plan.sources.intelligencePacket).toBeDefined();
+      expect(plan.sources.projectSnapshot).toBeDefined();
+      expect(plan.sources.semanticVectorSearch).toEqual({ query: message });
+      expect(plan.sources.sourceSpecificRag).toBeUndefined();
+    },
+  );
+
+  it("keeps change-event source review prompts on source lookup when no write is requested", () => {
+    const message = "Show me the emails about the electrical room change event.";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 25125,
+      messages: [userMsg(message)],
+    });
+
+    expect(plan.intent).toBe("source_lookup");
+    expect(plan.responseFormat).toBe("source_lookup");
+    expect(plan.reason).toBe("project_context_source_lookup_intent");
+    expect(plan.sources.semanticVectorSearch).toBeDefined();
+  });
+
   it("routes same-day Teams message prompts away from generic semantic search", () => {
     const message = "what insights can be found in the teams messages today?";
     const plan = planRetrieval({
