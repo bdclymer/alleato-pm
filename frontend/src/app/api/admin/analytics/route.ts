@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireAdmin } from "@/app/api/admin/_shared";
 import { createServiceClient } from "@/lib/supabase/service";
-import { buildRecentLogins } from "./recent-logins";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +17,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
 
   const [
     usersResult,
-    recentLoginsResult,
     errorsResult,
     errorGroupsResult,
     syncStatusResult,
@@ -30,13 +28,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
       .from("user_profiles")
       .select("id, email, full_name, is_active, is_admin, created_at, role")
       .order("created_at", { ascending: false }),
-
-    // Recent logins from the authoritative source: Supabase Auth tracks every
-    // sign-in on `auth.users.last_sign_in_at`. The legacy `users_auth.last_login_at`
-    // column is never written by any code path, so reading it returned an empty
-    // panel for every user. `auth.users.id` === `user_profiles.id`, so the rows
-    // enrich cleanly against the profiles fetched above.
-    supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
 
     // Error events last 30 days
     supabase
@@ -67,7 +58,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
       .order("created_at", { ascending: false })
       .limit(500),
 
-    // Recent admin feedback items (activity feed)
+    // Recent admin feedback items
     supabase
       .from("admin_feedback_items")
       .select("id, title, status, severity, created_at, page_path, page_title")
@@ -76,14 +67,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
   ]);
 
   const users = usersResult.data ?? [];
-  // Never swallow an auth-admin failure silently — an empty logins panel must
-  // mean "nobody logged in", not "the query failed".
-  if (recentLoginsResult.error) {
-    throw new Error(
-      `${WHERE} failed to list auth users: ${recentLoginsResult.error.message}`,
-    );
-  }
-  const authUsers = recentLoginsResult.data?.users ?? [];
   const errors = errorsResult.data ?? [];
   const errorGroups = errorGroupsResult.data ?? [];
   const syncStatuses = syncStatusResult.data ?? [];
@@ -99,8 +82,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
   const activeUsers = users.filter((u) => u.is_active).length;
   const adminUsers = users.filter((u) => u.is_admin).length;
   const newUsers7d = users.filter((u) => new Date(u.created_at).getTime() >= cut7d).length;
-
-  const enrichedLogins = buildRecentLogins(authUsers, users);
 
   // ── Error stats ───────────────────────────────────────────────────────────
   const errorsLast24h = errors.filter((e) => new Date(e.created_at).getTime() >= cut24h);
@@ -127,6 +108,34 @@ export const GET = withApiGuardrails(WHERE, async () => {
     });
   }
 
+  const pagePerformance = Array.from(
+    errors.reduce<
+      Map<string, { pagePath: string; errors24h: number; errors7d: number; errors30d: number; lastSeenAt: string }>
+    >((acc, errorEvent) => {
+      const pagePath = errorEvent.page_path || "Unknown page";
+      const eventTime = new Date(errorEvent.created_at).getTime();
+      const current = acc.get(pagePath) ?? {
+        pagePath,
+        errors24h: 0,
+        errors7d: 0,
+        errors30d: 0,
+        lastSeenAt: errorEvent.created_at,
+      };
+
+      current.errors30d += 1;
+      if (eventTime >= cut7d) current.errors7d += 1;
+      if (eventTime >= cut24h) current.errors24h += 1;
+      if (new Date(errorEvent.created_at).getTime() > new Date(current.lastSeenAt).getTime()) {
+        current.lastSeenAt = errorEvent.created_at;
+      }
+
+      acc.set(pagePath, current);
+      return acc;
+    }, new Map()).values(),
+  )
+    .sort((a, b) => b.errors7d - a.errors7d || b.errors24h - a.errors24h)
+    .slice(0, 8);
+
   // ── AI stats ──────────────────────────────────────────────────────────────
   const aiTotal30d = aiEvents.length;
   const aiLast24h = aiEvents.filter((e) => new Date(e.created_at).getTime() >= cut24h).length;
@@ -138,28 +147,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
   // ── Feedback activity ─────────────────────────────────────────────────────
   const feedbackLast7d = feedbackItems.filter((f) => new Date(f.created_at).getTime() >= cut7d).length;
 
-  // ── Activity feed (combined recent events) ────────────────────────────────
-  const activityFeed = [
-    ...feedbackItems.slice(0, 10).map((f) => ({
-      type: "feedback" as const,
-      id: f.id,
-      title: f.title,
-      subtitle: f.page_title ?? f.page_path ?? "",
-      severity: f.severity ?? "medium",
-      timestamp: f.created_at,
-    })),
-    ...errors.slice(0, 10).map((e) => ({
-      type: "error" as const,
-      id: e.id,
-      title: e.error_message.slice(0, 80),
-      subtitle: e.page_path ?? "",
-      severity: e.severity,
-      timestamp: e.created_at,
-    })),
-  ]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 20);
-
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     users: {
@@ -167,7 +154,6 @@ export const GET = withApiGuardrails(WHERE, async () => {
       active: activeUsers,
       admins: adminUsers,
       newLast7d: newUsers7d,
-      recentLogins: enrichedLogins,
     },
     errors: {
       last24h: { total: errorsLast24h.length, bySeverity: countBySeverity(errorsLast24h) },
@@ -175,6 +161,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
       last30d: { total: errors.length, bySeverity: countBySeverity(errors) },
       topGroups: errorGroups,
       series: errorSeries,
+      pagePerformance,
     },
     ai: {
       events30d: aiTotal30d,
@@ -190,6 +177,5 @@ export const GET = withApiGuardrails(WHERE, async () => {
       recentCount7d: feedbackLast7d,
       recent: feedbackItems.slice(0, 5),
     },
-    activityFeed,
   });
 });
