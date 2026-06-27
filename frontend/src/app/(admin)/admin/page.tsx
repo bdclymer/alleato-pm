@@ -74,7 +74,7 @@ import {
 
 import { PageShell } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TasksInbox } from "@/features/tasks/tasks-inbox";
+import { TasksKanbanPage } from "@/features/tasks/tasks-kanban-page";
 
 import { AdminDirectoryView } from "./admin-directory-view";
 
@@ -785,7 +785,7 @@ export default function AdminDashboardPage() {
           <AdminDirectoryView sections={sections} />
         </TabsContent>
         <TabsContent value="kanban" className="m-0">
-          <TasksInbox defaultScope="all" defaultView="board" showTabs={false} />
+          <TasksKanbanPage />
         </TabsContent>
       </Tabs>
 
