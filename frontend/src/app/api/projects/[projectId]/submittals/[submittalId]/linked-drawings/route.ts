@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const ROUTE_BASE =
@@ -19,9 +19,7 @@ export const GET = withApiGuardrails<{
   const { projectId, submittalId } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
       code: "UNAUTHORIZED",
@@ -54,9 +52,7 @@ export const POST = withApiGuardrails<{
   const { projectId, submittalId } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
       code: "UNAUTHORIZED",

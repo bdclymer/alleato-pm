@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   buildOwnerInvoiceLineItemSovFields,
   normalizeOwnerInvoiceLineItems,
@@ -36,8 +36,8 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET", message: "Authentication required." });
     }
 
@@ -89,8 +89,8 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST", message: "Authentication required." });
     }
 
@@ -178,8 +178,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH", message: "Authentication required." });
     }
 

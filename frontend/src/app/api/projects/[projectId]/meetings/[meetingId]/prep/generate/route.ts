@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { generateText, stepCountIs } from "ai";
@@ -22,12 +22,8 @@ export const POST = withApiGuardrails(
   async ({ request, params }) => {
   
     const { projectId, meetingId } = await params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep/generate#POST", message: "Authentication required." });
     }
 

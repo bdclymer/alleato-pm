@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { BudgetLineItemsPayloadSchema } from "@/lib/schemas/budget";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -140,12 +140,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       };
     };
     // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized - please log in" },
         { status: 401 },

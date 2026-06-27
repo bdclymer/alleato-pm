@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { SpecificationAreaService } from "@/services/SpecificationAreaService";
 import {
   specificationAreaSchema,
@@ -20,9 +20,7 @@ export const GET = withApiGuardrails<{ projectId: string; areaId: string }>(
   const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#GET", message: "Authentication required." });
   }
@@ -49,9 +47,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; areaId: string }>(
   const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#PATCH", message: "Authentication required." });
   }
@@ -95,9 +91,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; areaId: string }>(
   const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#DELETE", message: "Authentication required." });
   }

@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { assertNonNilUuid } from "@/lib/guardrails/path-params";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
 import { logger } from "@/lib/logger";
@@ -404,9 +404,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     // Auth check FIRST — before parsing the request body. An unauthenticated
     // request with an empty body must return 401, not 500 from a JSON parse
     // error. Issue surfaced via api-smoke-contracts.mjs PR gate.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",
@@ -646,9 +644,7 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
     const supabase = await createClient();
 
     // Get the current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "UNAUTHORIZED", where: "commitments/[commitmentId]#DELETE", message: "Authentication required." });
     }
@@ -727,9 +723,7 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
     const supabase = await createClient();
 
     // Auth check FIRST — see PUT handler comment.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",

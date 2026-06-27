@@ -11,7 +11,7 @@ import {
   type PageAccessPolicy,
 } from "@/lib/page-access";
 import type { PermissionModule } from "@/lib/permissions-shared";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const PageAccessPolicySchema = z.object({
@@ -30,9 +30,7 @@ const PutSchema = z.object({
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({

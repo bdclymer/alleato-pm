@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 import { after, NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { sendOwnerBriefingToTeams } from "@/lib/executive/owner-briefing-delivery";
 import { flushLangfuse } from "@/instrumentation";
 import {
@@ -162,10 +162,7 @@ export const POST = withApiGuardrails(
 
         if (!isAuthorized) {
           try {
-            const supabase = await createClient();
-            const {
-              data: { user },
-            } = await supabase.auth.getUser();
+            const user = await getApiRouteUser();
             isAuthorized = Boolean(user);
           } catch (error) {
             console.warn("[executive-briefing] Session auth check failed.", {

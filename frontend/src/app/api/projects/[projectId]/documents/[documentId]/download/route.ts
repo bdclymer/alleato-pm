@@ -1,7 +1,7 @@
 import { apiErrorResponse } from "@/lib/api-error";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   createOutlookIntakeServiceClient,
   createServiceClient,
@@ -139,12 +139,9 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
         ? "inline"
         : "attachment";
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/documents/[documentId]/download#GET",

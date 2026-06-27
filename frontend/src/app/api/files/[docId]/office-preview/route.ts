@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWithGuardrails, WRITE_POLICY } from "@/lib/fetch-with-guardrails";
 import { getGraphToken } from "@/lib/microsoft-graph/calendar-invites";
@@ -63,13 +63,9 @@ function resolveGraphIds(
 export const GET = withApiGuardrails<{ docId: string }>(
   WHERE,
   async ({ params, requestId }) => {
-    const authClient = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await authClient.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: WHERE,

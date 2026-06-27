@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 
 import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { GET, POST } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/submittals/ai-review/review-run-service", () => ({
   createSubmittalAIReviewService: jest.fn(),
@@ -34,6 +37,10 @@ function mockUser(user = { id: "user-1" }) {
 describe("/api/projects/[projectId]/submittals/[submittalId]/ai-review", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("rejects unauthenticated review requests", async () => {

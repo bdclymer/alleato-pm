@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/lib/api-error';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 import type { Database } from '@/types/database.types';
 import {
   getPatternCConfig,
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
   // Verify caller is authenticated
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     return validationError('Unauthorized', 401);
   }
 

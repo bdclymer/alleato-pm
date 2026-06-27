@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export async function POST() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
         { status: 401 },

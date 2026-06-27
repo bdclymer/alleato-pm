@@ -1,13 +1,16 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { GET, POST } from "../route";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 const createClientMock = createClient as jest.Mock;
 
@@ -35,6 +38,10 @@ function createQuery(result: unknown, onInsert?: jest.Mock) {
 describe("subcontractor invoices POST", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("creates retainage release invoices with prefilled release-only line items", async () => {

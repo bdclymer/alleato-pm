@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { withApiGuardrails } from "@/lib/guardrails/api";
@@ -10,11 +10,8 @@ export const GET = withApiGuardrails<Promise<{ meetingId: string }>>(
     const { meetingId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "/api/meetings/[meetingId]#GET",

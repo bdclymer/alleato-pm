@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -15,8 +15,7 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

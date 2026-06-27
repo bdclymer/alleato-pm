@@ -1,7 +1,7 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
 import type { DependencyPolicy } from "@/lib/guardrails/dependency";
 import { fetchWithPolicy } from "@/lib/guardrails/dependency";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 type SourceSyncPath = "status" | "recompute" | "graph-sync" | "graph-embed";
 
@@ -72,10 +72,8 @@ export function getBackendAdminApiKey(): string {
 
 export async function requireAdmin(where: string): Promise<{ userId: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const userError = null as Error | null;
 
   if (userError || !user) {
     throw new GuardrailError({

@@ -2,14 +2,12 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });

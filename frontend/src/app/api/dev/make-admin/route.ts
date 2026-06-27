@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 /**
  * POST /api/dev/make-admin
@@ -25,12 +25,9 @@ export const POST = withApiGuardrails(
   try {
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Not authenticated. Log in first." },
         { status: 401 },
@@ -123,12 +120,9 @@ export const GET = withApiGuardrails(
   try {
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 },

@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import { APP_BASE_URL } from "@/lib/email/client";
@@ -110,12 +110,9 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const projectIdNum = Number.parseInt(params.projectId, 10);
     const invoiceIdNum = Number.parseInt(params.invoiceId, 10);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/invite#POST",

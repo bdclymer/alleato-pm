@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import { POST } from "../route";
@@ -8,8 +8,11 @@ process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
@@ -55,6 +58,10 @@ function createQuery(result: unknown, hooks?: { upsert?: jest.Mock; update?: jes
 describe("subcontractor invoice invite route", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     sendEmailMock.mockResolvedValue({ id: "email-1", error: null });
   });
 

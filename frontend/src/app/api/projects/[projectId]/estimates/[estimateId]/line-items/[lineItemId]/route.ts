@@ -11,7 +11,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 import { EstimateLineItemSchema } from '@/lib/schemas/estimates';
 import { EstimateService } from '@/lib/services/estimate-service';
 
@@ -31,12 +31,9 @@ export const PUT = withApiGuardrails<{
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/estimates/[estimateId]/line-items/[lineItemId]#PUT", message: "Authentication required." });
     }
 
@@ -96,12 +93,9 @@ export const DELETE = withApiGuardrails<{
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/estimates/[estimateId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 

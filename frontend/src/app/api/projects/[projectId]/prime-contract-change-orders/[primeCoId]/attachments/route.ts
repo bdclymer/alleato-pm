@@ -7,7 +7,7 @@ import {
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 async function verifyPrimeContractChangeOrder(
@@ -34,8 +34,8 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#GET", message: "Authentication required." });
     }
 
@@ -79,8 +79,8 @@ export const POST = withApiGuardrails(
 
     const supabase = await createClient();
     const serviceClient = createServiceClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments#POST", message: "Authentication required." });
     }
 

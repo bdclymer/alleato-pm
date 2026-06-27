@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,13 +38,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/scheduling/tasks/convert#POST",
   async ({ request, params }) => {
     const { projectId } = params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/scheduling/tasks/convert#POST",

@@ -1,12 +1,10 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export async function requireAiLearningPromotionsAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const userError = null as Error | null;
 
   if (userError || !user) {
     throw new GuardrailError({

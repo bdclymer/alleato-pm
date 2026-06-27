@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -90,9 +90,7 @@ export const PATCH = withApiGuardrails(
 
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs/[rfqId]#PATCH", message: "Authentication required." });
     }
@@ -153,9 +151,7 @@ export const DELETE = withApiGuardrails(
 
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs/[rfqId]#DELETE", message: "Authentication required." });
     }

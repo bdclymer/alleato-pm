@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[projectId]/invoicing/billing-periods
@@ -14,10 +14,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
     const { projectId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       return NextResponse.json(
@@ -71,10 +69,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
     const { projectId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       return NextResponse.json(

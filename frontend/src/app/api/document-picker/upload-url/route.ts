@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/lib/api-error';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import {
   buildPatternCStoragePath,
@@ -38,8 +38,8 @@ interface SignedUploadRequest {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     return validationError('Unauthorized', 401);
   }
 

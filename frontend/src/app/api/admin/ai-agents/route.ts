@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 
@@ -12,12 +12,9 @@ const WHERE_PATCH = "/api/admin/ai-agents#PATCH";
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (error || !user) {
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where,

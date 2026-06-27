@@ -14,7 +14,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskListParams, ScheduleTaskCreate } from "@/types/scheduling";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -32,12 +32,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks#GET", message: "Authentication required." });
     }
 
@@ -109,12 +106,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks#POST", message: "Authentication required." });
     }
 

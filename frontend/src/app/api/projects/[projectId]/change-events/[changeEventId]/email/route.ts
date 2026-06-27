@@ -1,5 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -53,9 +53,7 @@ export const POST = withApiGuardrails(
 
     const supabase = await createClient();
     const serviceClient = createServiceClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     const { data: changeEvent, error: ceError } = await supabase
       .from("change_events")

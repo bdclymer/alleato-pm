@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 // DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]
 // Delete a single line item. Only allowed when invoice is draft or revise_and_resubmit.
@@ -12,8 +12,8 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; 
     const supabase = await createClient();
     const { projectId, invoiceId, lineItemId } = params;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 

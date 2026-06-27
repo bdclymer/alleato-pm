@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -8,8 +8,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 export const GET = withApiGuardrails(
   "/api/monitoring/websocket#GET",
   async ({ request }) => {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const authError = null as Error | null;
   if (authError || !user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
@@ -132,8 +132,8 @@ export const POST = withApiGuardrails(
   "/api/monitoring/websocket#POST",
   async ({ request }) => {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
     if (authError || !user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

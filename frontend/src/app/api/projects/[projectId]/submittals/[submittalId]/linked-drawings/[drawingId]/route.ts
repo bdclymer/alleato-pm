@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const ROUTE_BASE =
   "projects/[projectId]/submittals/[submittalId]/linked-drawings/[drawingId]";
@@ -20,9 +20,7 @@ export const DELETE = withApiGuardrails<{
   const { projectId, submittalId, drawingId } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
       code: "UNAUTHORIZED",

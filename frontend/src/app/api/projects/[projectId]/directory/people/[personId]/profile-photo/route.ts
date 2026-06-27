@@ -4,7 +4,7 @@ import { Buffer } from "node:buffer";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -36,12 +36,9 @@ export const POST = withApiGuardrails(
 
     // Still need regular auth client for permission check
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/profile-photo#POST", message: "Authentication required." });
     }
 

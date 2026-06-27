@@ -15,7 +15,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 import { DirectCostListParamsSchema } from '@/lib/schemas/direct-costs';
 import { DirectCostService } from '@/lib/services/direct-cost-service';
 
@@ -31,12 +31,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/direct-costs#GET", message: "Authentication required." });
     }
 

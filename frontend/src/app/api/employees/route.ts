@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -56,11 +56,8 @@ function isTestEmployee(person: {
 
 export const GET = withApiGuardrails("/api/employees#GET", async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/employees#GET",

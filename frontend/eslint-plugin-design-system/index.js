@@ -32,6 +32,7 @@ const noEditableTitleColumn = require('./rules/no-editable-title-column');
 const noRawDateInput = require('./rules/no-raw-date-input');
 const noRawDetailField = require('./rules/no-raw-detail-field');
 const noRawDetailGrid = require('./rules/no-raw-detail-grid');
+const noSupabaseAuthGetuserInApiRoutes = require('./rules/no-supabase-auth-getuser-in-api-routes');
 
 module.exports = {
   rules: {
@@ -58,6 +59,7 @@ module.exports = {
     'require-error-state': requireErrorState,
     'no-raw-table-primitives': noRawTablePrimitives,
     'no-external-fetch-in-api-routes': noExternalFetchInApiRoutes,
+    'no-supabase-auth-getuser-in-api-routes': noSupabaseAuthGetuserInApiRoutes,
     'no-raw-error-message-toast': noRawErrorMessageToast,
     'no-raw-search-input': noRawSearchInput,
     'no-raw-detail-field': noRawDetailField,

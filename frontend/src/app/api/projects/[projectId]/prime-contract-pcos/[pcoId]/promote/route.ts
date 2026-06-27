@@ -14,7 +14,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
@@ -28,11 +28,8 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
     const supabase = await createClient();
 
     // Auth check
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]/promote#POST", message: "Authentication required." });
     }
 

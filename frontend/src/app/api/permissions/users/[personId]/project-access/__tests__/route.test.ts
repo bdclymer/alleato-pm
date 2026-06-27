@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 
 import { DELETE, POST } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn(),
 }));
 
 jest.mock("@/lib/supabase/service", () => ({
@@ -13,6 +14,7 @@ jest.mock("@/lib/supabase/service", () => ({
 }));
 
 const createClientMock = createClient as jest.MockedFunction<typeof createClient>;
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 const createServiceClientMock = createServiceClient as jest.MockedFunction<typeof createServiceClient>;
 
 type QueryResult = {
@@ -42,13 +44,11 @@ function createQuery(result: QueryResult) {
 }
 
 function setupAuth() {
+  getApiRouteUserMock.mockResolvedValue({
+    id: "admin-auth-id",
+    email: "admin@example.com",
+  });
   createClientMock.mockResolvedValue({
-    auth: {
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: { id: "admin-auth-id", email: "admin@example.com" } },
-        error: null,
-      }),
-    },
     from: jest.fn((table: string) => {
       if (table === "user_profiles") {
         return createQuery({ data: { is_admin: true }, error: null });

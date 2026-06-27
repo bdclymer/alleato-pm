@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withApiGuardrails, parseJsonBody, validateResponseContract } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
 const ParamsSchema = z.object({
@@ -175,9 +176,7 @@ export const POST = withApiGuardrails<Promise<{ projectId: string; commitmentId:
       });
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     const { data, error } = await supabase
       .from("commitment_pcos")

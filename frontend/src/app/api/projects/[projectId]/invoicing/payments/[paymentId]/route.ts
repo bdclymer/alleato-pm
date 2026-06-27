@@ -2,17 +2,14 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 type Ctx = { params: { projectId: string; paymentId: string } };
 
 async function getAuthedClient() {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) return { supabase, error: "Not authenticated" as const };
+  const user = await getApiRouteUser();
+  if (!user) return { supabase, error: "Not authenticated" as const };
   return { supabase, user, error: null };
 }
 

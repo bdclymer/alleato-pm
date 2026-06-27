@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 
 import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { DELETE } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/submittals/ai-review/review-run-service", () => ({
   createSubmittalAIReviewService: jest.fn(),
@@ -37,6 +40,10 @@ describe("/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/[dr
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("validates project scope before deleting a linked drawing", async () => {

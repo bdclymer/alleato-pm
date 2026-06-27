@@ -2,7 +2,7 @@ import { Buffer } from "node:buffer";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryService } from "@/services/directoryService";
@@ -33,12 +33,9 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "avatar/[personId]#GET",

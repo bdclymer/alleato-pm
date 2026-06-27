@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
 import { fetchInvoicePdfData } from "../pdf/route";
@@ -50,9 +50,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const supabase = await createClient();
     const serviceClient = createServiceClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     const body = (await request.json()) as EmailRequestBody;
     const toList = normalizeEmails(body.to);

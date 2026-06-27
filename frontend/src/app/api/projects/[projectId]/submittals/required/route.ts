@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export interface RequiredSubmittalItem {
   drawingId: string;
@@ -40,9 +40,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const pid = parseInt(projectId, 10);
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",

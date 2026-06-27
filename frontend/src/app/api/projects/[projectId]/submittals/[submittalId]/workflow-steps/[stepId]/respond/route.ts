@@ -6,7 +6,7 @@ import {
   recordSubmittalWorkflowResponse,
   submittalWorkflowResponseStatusSchema,
 } from "@/lib/submittals/workflow-response-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
@@ -29,12 +29,9 @@ export const POST = withApiGuardrails(
     const { projectId, submittalId, stepId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST",

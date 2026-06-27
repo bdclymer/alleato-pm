@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 
 interface OutboundAuditRow {
@@ -66,9 +66,7 @@ interface LegacySummary {
 
 async function requireAdminAuth() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     return {

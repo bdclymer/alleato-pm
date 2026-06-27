@@ -4,7 +4,7 @@ import { deletePatternCDocumentLink } from "@/lib/documents/pattern-c-attachment
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]#DELETE",
@@ -15,8 +15,8 @@ export const DELETE = withApiGuardrails(
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 

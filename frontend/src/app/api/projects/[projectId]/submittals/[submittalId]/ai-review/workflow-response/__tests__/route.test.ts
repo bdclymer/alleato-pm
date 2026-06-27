@@ -1,13 +1,16 @@
 import { NextRequest } from "next/server";
 
 import { recordSubmittalWorkflowResponse } from "@/lib/submittals/workflow-response-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { POST } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
@@ -48,6 +51,10 @@ function mockUser(user = { id: "user-1" }) {
 describe("/api/projects/[projectId]/submittals/[submittalId]/ai-review/workflow-response", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("rejects unauthenticated AI review workflow responses", async () => {

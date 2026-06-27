@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { SMART_GROUPS } from "@/features/documents/smart-groups";
 import { DEFAULT_EXCLUDED_TYPES } from "@/app/api/documents/status/route";
@@ -13,11 +13,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/documents/group-counts#GET",

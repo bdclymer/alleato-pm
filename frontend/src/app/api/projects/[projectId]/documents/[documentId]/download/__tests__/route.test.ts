@@ -4,15 +4,18 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import { NextRequest } from "next/server";
 
 import { GET } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   createOutlookIntakeServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
@@ -130,6 +133,10 @@ function buildServiceClient() {
 describe("project document download route", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("prefers file_url before source_web_url for external fallbacks", async () => {

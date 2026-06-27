@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 /** Resolve route params whether Next provides plain object or promise-wrapped params. */
 async function resolvePathParams(
@@ -30,7 +30,8 @@ async function forwardToSupabaseAPI(
   // OWASP A01:2021 - Broken Access Control: Supabase Management API
   // access is restricted to verified admin users only.
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const authError = null as Error | null;
   if (authError || !user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",

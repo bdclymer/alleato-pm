@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const stepSchema = z.object({
   step_type: z.string().min(1),
@@ -28,8 +28,8 @@ export const GET = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/submittals/workflow-templates#GET",
@@ -59,8 +59,8 @@ export const POST = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/submittals/workflow-templates#POST",

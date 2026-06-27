@@ -5,7 +5,7 @@ import {
 } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -214,12 +214,9 @@ export const PUT = withApiGuardrails(
 
     const supabase =
       (await createClient()) as unknown as RuntimeSubmittalSettingsClient;
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where,

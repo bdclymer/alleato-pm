@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ async function authorize(request: Request): Promise<{ ok: boolean; via: string }
   }
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (user) return { ok: true, via: "session" };
   } catch (error) {
     console.warn("insight-card acknowledge session auth failed; falling back to token auth", error);

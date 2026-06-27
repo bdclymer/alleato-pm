@@ -4,12 +4,15 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import { NextRequest } from "next/server";
 
 import { DELETE } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
@@ -110,6 +113,10 @@ function buildServiceClient(removeError: { message: string } | null = null) {
 describe("project document route DELETE", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
   });
 
   it("removes a storage-backed file before soft-deleting the document row", async () => {

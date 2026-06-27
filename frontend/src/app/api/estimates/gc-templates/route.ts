@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   const body = (await request.json()) as { name: string; items: unknown[] };
   if (!body.name?.trim()) {

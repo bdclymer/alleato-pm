@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +19,9 @@ export const DELETE = withApiGuardrails<RouteContext["params"]>(
   async ({ params }) => {
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "fm-global/submissions/[submissionId]#DELETE",

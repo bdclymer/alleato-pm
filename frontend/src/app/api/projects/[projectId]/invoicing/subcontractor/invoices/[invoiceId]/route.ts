@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
@@ -13,10 +13,8 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       return NextResponse.json(
@@ -439,10 +437,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       return NextResponse.json(
@@ -579,10 +575,8 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       return NextResponse.json(

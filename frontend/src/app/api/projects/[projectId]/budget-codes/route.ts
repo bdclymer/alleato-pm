@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 type BudgetCodeResponse = {
@@ -199,9 +199,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const supabase = await createClient();
 
     // Get the current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget-codes#POST", message: "Authentication required." });

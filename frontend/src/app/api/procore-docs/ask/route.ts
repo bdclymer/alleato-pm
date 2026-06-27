@@ -12,7 +12,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { generateText } from "ai";
-import { createClient as createAuthClient } from "@/lib/supabase/server";
+import { createClient as createAuthClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -194,9 +194,8 @@ export const POST = withApiGuardrails(
   async ({ request }) => {
   
     const supabase = getServiceSupabase();
-    const authSupabase = await createAuthClient();
-    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "procore-docs/ask#POST", message: "Authentication required." });
     }
     const body = await request.json();

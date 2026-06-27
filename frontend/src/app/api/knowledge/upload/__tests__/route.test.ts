@@ -12,6 +12,7 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn().mockResolvedValue({ id: "admin-1" }),
 }));
 
 const createClientMock = createClient as jest.MockedFunction<typeof createClient>;

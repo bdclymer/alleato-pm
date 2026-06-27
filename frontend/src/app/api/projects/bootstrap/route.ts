@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 /**
@@ -101,9 +101,7 @@ export const POST = withApiGuardrails(
     const customName = body.name;
 
     // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/bootstrap#POST", message: "Authentication required." });
     }

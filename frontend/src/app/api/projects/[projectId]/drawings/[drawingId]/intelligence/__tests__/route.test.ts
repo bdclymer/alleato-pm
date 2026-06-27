@@ -125,6 +125,7 @@ describe("/api/projects/[projectId]/drawings/[drawingId]/intelligence", () => {
         }),
       },
     });
+    getApiRouteUserMock.mockResolvedValue(null);
 
     const response = await GET(buildRequest(), params());
     const body = await response.json();

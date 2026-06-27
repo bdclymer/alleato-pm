@@ -8,7 +8,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -78,9 +78,7 @@ export const PATCH = withApiGuardrails(
     const body = await request.json();
 
     // Auth check
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis/[rfiId]#PATCH", message: "Authentication required." });
     }
@@ -358,9 +356,7 @@ export const DELETE = withApiGuardrails(
     const supabase = await createClient();
 
     // Auth check
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis/[rfiId]#DELETE", message: "Authentication required." });
     }

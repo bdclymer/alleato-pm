@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { exportSubcontractorInvoiceToAcumatica } from "@/lib/acumatica/export-service";
 
 // POST → resend this invoice to the ERP (Acumatica).
@@ -22,7 +22,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST", message: "Authentication required." });
 
     // Verify the invoice exists

@@ -4,7 +4,7 @@ import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createSubmittalAIReviewService } from "@/lib/submittals/ai-review/review-run-service";
 import { submittalReviewDispositionSchema } from "@/lib/submittals/ai-review/schemas";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 const WHERE =
   "projects/[projectId]/submittals/[submittalId]/ai-review/checks/[checkId]";
@@ -15,10 +15,7 @@ const patchBodySchema = z.object({
 });
 
 async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({

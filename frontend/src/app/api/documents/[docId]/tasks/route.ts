@@ -4,7 +4,7 @@ import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const CreateDocumentTaskSchema = z.object({
@@ -32,12 +32,9 @@ export const POST = withApiGuardrails<{ docId: string }>(
   "documents/[docId]/tasks#POST",
   async ({ request, params }) => {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "documents/[docId]/tasks#POST",

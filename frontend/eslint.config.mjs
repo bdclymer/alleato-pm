@@ -99,6 +99,7 @@ const config = [
       "design-system/no-raw-table-primitives": "warn",
       // Gate 16: blocks raw fetch() to external URLs in API routes
       "design-system/no-external-fetch-in-api-routes": "warn",
+      "design-system/no-supabase-auth-getuser-in-api-routes": "error",
       // Gate 20: blocks toast.error(err instanceof Error ? err.message : "fallback")
       // which leaks raw browser errors ("Failed to fetch") into the UI
       "design-system/no-raw-error-message-toast": "warn",
