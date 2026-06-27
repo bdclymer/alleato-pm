@@ -26,6 +26,7 @@ export function projectName(value: string | null | undefined): string {
   // "Multiple (8 projects)" → "Across 8 projects" (no sloppy parentheses).
   const multiple = s.match(/^multiple\s*\((\d+)\s*projects?\)$/i);
   if (multiple) return `Across ${multiple[1]} projects`;
+  if (/^\d+\s+(?:[NSEW]|north|south|east|west)\b/i.test(s)) return s;
   return s.replace(/^\d[\d-]*\s+/, "").trim() || s;
 }
 

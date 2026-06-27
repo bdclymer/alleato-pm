@@ -5,10 +5,12 @@ import {
   bucketInsightCardBriefSections,
   executiveBriefSourceDescriptors,
   executiveBriefSourceSelectionSummary,
+  executiveBriefThinContentWarnings,
   getHitDateAnchor,
   getRecencyAnchor,
   ensureExecutiveBriefSourceBreadth,
   hydrateExecutiveOperatingBrief,
+  limitSectionsForSynthesis,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
   shouldSuppressDailyBriefGenericItem,
@@ -801,6 +803,193 @@ describe("executive operating brief priority lanes", () => {
     expect(brief.cashAndMarginWatch.map((entry) => entry.item.title)).toContain(
       "$422K in pending COs on hold",
     );
+  });
+
+  it("keeps transcript-first meeting items in the synthesis input cap", () => {
+    const transcriptItems = Array.from({ length: 5 }, (_, index) =>
+      briefItem(`June 25 meeting transcript ${index + 1}`, {
+        source: "Meeting",
+        sourceDetail: `Transcript ${index + 1}`,
+        sourceId: `meeting-${index + 1}`,
+        retrieval: "Transcript-first daily brief source",
+        project: `Project ${index + 1}`,
+        summary:
+          "Meeting transcript discussed schedule risk, standardized workflow, and owner follow-up.",
+        citations: [
+          {
+            source: "Meeting",
+            sourceDetail: `Transcript ${index + 1}`,
+            sourceId: `meeting-${index + 1}`,
+            evidence:
+              "Meeting transcript discussed schedule risk, standardized workflow, and owner follow-up.",
+            date: "June 25, 2026",
+          },
+        ],
+      }),
+    );
+    const noisyUpdates = Array.from({ length: 8 }, (_, index) =>
+      briefItem(`Non-meeting update ${index + 1}`, {
+        source: "Email",
+        project: "Email noise",
+      }),
+    );
+
+    const limited = limitSectionsForSynthesis({
+      needsBrandon: [],
+      waitingOnOthers: [],
+      importantUpdates: [...noisyUpdates, ...transcriptItems],
+    });
+
+    expect(limited.sections.importantUpdates).toEqual(
+      expect.arrayContaining(transcriptItems),
+    );
+    expect(limited.sections.importantUpdates.length).toBeGreaterThan(2);
+  });
+
+  it("warns when rich source coverage collapses into a thin final brief", () => {
+    const warnings = executiveBriefThinContentWarnings(
+      {
+        needsBrandon: [],
+        waitingOnOthers: [
+          briefItem("Goodwill approval follow-up", {
+            project: "26-105 Goodwill Pioneer PKWY",
+          }),
+        ],
+        importantUpdates: [
+          briefItem("$422K pending CO aggregate", {
+            project: "Multiple (9 projects)",
+          }),
+        ],
+      },
+      [
+        {
+          label: "Meeting",
+          detail: "Recent meeting transcripts and summaries",
+          count: 23,
+          latest: "June 26, 2026",
+          status: "loaded",
+        },
+        {
+          label: "Email",
+          detail: "Recent email evidence",
+          count: 236,
+          latest: "June 27, 2026",
+          status: "loaded",
+        },
+      ],
+    );
+
+    expect(warnings.join(" ")).toMatch(/degraded/i);
+    expect(warnings.join(" ")).toMatch(/source-funnel collapse/i);
+  });
+
+  it("does not classify project approval/change-event work as finance health", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Door swaps, asphalt work, drywall repairs, and an electrical panel move need contract scope and owner approval clarity.",
+          recommendedAction:
+            "Send Goodwill one list that marks each item as approved, pending, or covered by contract.",
+          whyItMatters:
+            "Without owner approval clarity, the project team cannot create the right change event or close the scope risk.",
+          project: "26-105 Goodwill Pioneer PKWY",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [],
+    });
+
+    const finance = brief.businessHealth?.find(
+      (entry) => entry.area === "Finance",
+    );
+
+    expect(finance?.summary).toBe(
+      "No material finance issue surfaced in this source window.",
+    );
+  });
+
+  it("normalizes generic finance labels on meeting-derived business topics", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [
+        briefItem("A large pursuit may be split or reduced", {
+          source: "Meeting",
+          project: "Alleato Finance",
+          sourceDetail: "Rob+Brandon discussion",
+          retrieval: "Transcript-first daily brief source",
+          summary:
+            "The pursuit may drop from about $12 million or $13 million to about $3 million and may be split between two contractors on the same building.",
+          recommendedAction:
+            "Talk with Jesse before any response and confirm whether Alleato still wants the smaller scope.",
+          whyItMatters:
+            "If the award drops to about $3 million, Brandon needs to decide whether the smaller scope is still worth the coordination risk.",
+          citations: [
+            {
+              source: "Meeting",
+              sourceDetail: "Rob+Brandon discussion",
+              sourceId: "meeting-1",
+              evidence:
+                "The pursuit may drop from about $12 million or $13 million to about $3 million and may be split between two contractors on the same building.",
+              date: "June 26, 2026",
+            },
+          ],
+        }),
+      ],
+      waitingOnOthers: [],
+      importantUpdates: [],
+    });
+
+    expect(brief.topExecutiveFocus[0]?.item.project).toBe(
+      "Business Development",
+    );
+  });
+
+  it("restores 440 W when a meeting row carries only the broken W label", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("440 W needs a clear owner explanation", {
+          source: "Meeting",
+          project: "W",
+          retrieval: "Transcript-first daily brief source",
+          summary:
+            "440 W bid increased by $1.6 million after the scope moved to full restoration.",
+          citations: [
+            {
+              source: "Meeting",
+              sourceDetail: "440 W - Alleato Group Interview",
+              sourceId: "meeting-440",
+              evidence:
+                "440 W bid increased by $1.6 million after the scope moved to full restoration.",
+              date: "June 26, 2026",
+            },
+          ],
+        }),
+      ],
+      importantUpdates: [],
+    });
+
+    expect(brief.topExecutiveFocus[0]?.item.project).toBe("440 W");
+  });
+
+  it("does not treat a cash wrap mention as finance health", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Canton has sanding done after roof repair and a bump out framed for conduit and cash wrap.",
+          project: "26-107 Goodwill Canton, IL",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [],
+    });
+
+    expect(
+      brief.businessHealth?.find((entry) => entry.area === "Finance")?.summary,
+    ).toBe("No material finance issue surfaced in this source window.");
   });
 });
 

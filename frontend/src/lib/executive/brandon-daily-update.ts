@@ -207,6 +207,11 @@ type FallbackMetadataResult = {
   warnings: string[];
 };
 
+type RecentTranscriptResult = {
+  items: BrandonBriefItem[];
+  warnings: string[];
+};
+
 type SupportedSectionsResult = {
   sections: BrandonDailyUpdatePacket["sections"];
   warnings: string[];
@@ -953,7 +958,10 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem | null {
     projectInternalId: row.project_id ?? null,
     status: "Recent source review",
     tone: "neutral",
-    retrieval: "Recent document_metadata keyword match",
+    retrieval:
+      sourceLabel === "Meeting"
+        ? "Recent meeting transcript source"
+        : "Recent document_metadata keyword match",
   };
 }
 
@@ -1597,6 +1605,48 @@ async function loadFallbackMetadata(
   };
 }
 
+async function loadRecentMeetingTranscriptItems(
+  cutoffIso: string,
+  limit = 24,
+): Promise<RecentTranscriptResult> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .select(
+      "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,action_items,content,raw_text,url,source_web_url,fireflies_link,meeting_link",
+    )
+    .eq("type", "meeting")
+    .or(
+      `date.gte.${cutoffIso},created_at.gte.${cutoffIso},captured_at.gte.${cutoffIso}`,
+    )
+    .order("date", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return {
+      items: [],
+      warnings: [`Recent meeting transcript retrieval failed: ${error.message}`],
+    };
+  }
+
+  const cutoffDateKey = getEasternDateKey(
+    parseDate(cutoffIso) ?? new Date(cutoffIso),
+  );
+  const items = ((data ?? []) as DocumentMetaRow[])
+    .filter((row) => isRecentSourceRow(row, cutoffDateKey))
+    .map(makeFallbackItem)
+    .filter((item): item is BrandonBriefItem => item !== null)
+    .map((item) => ({
+      ...item,
+      source: "Meeting" as const,
+      tone: item.tone === "neutral" ? ("watch" as const) : item.tone,
+      status: "Recent meeting transcript",
+      retrieval: "Transcript-first daily brief source",
+    }));
+
+  return { items, warnings: [] };
+}
+
 async function loadRecentSourceCoverage(
   cutoffIso: string,
 ): Promise<BrandonBriefSourceCoverage[]> {
@@ -1985,6 +2035,17 @@ function countBriefItems(
   );
 }
 
+function isMeetingTranscriptItem(item: BrandonBriefItem): boolean {
+  const retrieval = item.retrieval?.toLowerCase() ?? "";
+  return (
+    item.source === "Meeting" &&
+    (retrieval.includes("transcript") ||
+      item.citations.some((citation) =>
+        citation.sourceDetail.toLowerCase().includes("meeting"),
+      ))
+  );
+}
+
 export function executiveBriefSectionCounts(
   sections: BrandonDailyUpdatePacket["sections"],
 ) {
@@ -2065,7 +2126,7 @@ function rawHitGroupsSummary(groups: RawHit[][]) {
   };
 }
 
-function limitSectionsForSynthesis(
+export function limitSectionsForSynthesis(
   sections: BrandonDailyUpdatePacket["sections"],
 ): { sections: BrandonDailyUpdatePacket["sections"]; droppedCount: number } {
   const originalCount = countBriefItems(sections);
@@ -2077,10 +2138,19 @@ function limitSectionsForSynthesis(
     sections.waitingOnOthers,
     "waitingOnOthers",
   ).slice(0, 5);
-  const importantUpdates = rankBriefItems(
+  const rankedImportantUpdates = rankBriefItems(
     sections.importantUpdates,
     "importantUpdates",
-  ).slice(0, 2);
+  );
+  const protectedTranscriptUpdates = rankedImportantUpdates
+    .filter(isMeetingTranscriptItem)
+    .slice(0, 8);
+  const importantUpdates = [
+    ...protectedTranscriptUpdates,
+    ...rankedImportantUpdates.filter(
+      (item) => !protectedTranscriptUpdates.includes(item),
+    ),
+  ].slice(0, Math.max(6, protectedTranscriptUpdates.length));
   const limitedSections = { needsBrandon, waitingOnOthers, importantUpdates };
 
   return {
@@ -2112,6 +2182,51 @@ function briefItemDedupeKey(item: BrandonBriefItem) {
     item.project.trim().toLowerCase(),
     item.sourceId?.trim().toLowerCase() ?? item.sourceDetail.trim().toLowerCase(),
   ].join("|");
+}
+
+function normalizedMeetingProjectLabel(item: BrandonBriefItem): string {
+  if (item.source !== "Meeting") return item.project;
+  const current = item.project.trim();
+  const generic = new Set([
+    "",
+    "no project linked",
+    "alleato finance",
+    "company-wide",
+    "company wide",
+    "w",
+  ]);
+  if (!generic.has(current.toLowerCase())) return current;
+
+  const text = briefItemText(item);
+  if (hasAny(text, ["440 w", "homeowners", "bid increase"])) return "440 W";
+  if (hasAny(text, ["sprinkler", "mains", "verticals", "overhead tie"]))
+    return "Alleato Internal Ops";
+  if (hasAny(text, ["world insurance", "auto-owners", "certificate"]))
+    return "Company insurance";
+  if (
+    hasAny(text, [
+      "large pursuit",
+      "pursuit",
+      "two contractors",
+      "same building",
+      "award drops",
+      "smaller scope",
+    ])
+  ) {
+    return "Business Development";
+  }
+
+  const sourceDetail = compactText(item.sourceDetail, 80);
+  return sourceDetail || "Company operations";
+}
+
+function normalizeMeetingProjectLabelsInSections(
+  sections: BrandonDailyUpdatePacket["sections"],
+): BrandonDailyUpdatePacket["sections"] {
+  return mapBriefSections(sections, (item) => ({
+    ...item,
+    project: normalizedMeetingProjectLabel(item),
+  }));
 }
 
 function uniqueProjectLabels(sections: BrandonDailyUpdatePacket["sections"]) {
@@ -2183,6 +2298,41 @@ export function ensureExecutiveBriefSourceBreadth(
   return result;
 }
 
+export function executiveBriefThinContentWarnings(
+  sections: BrandonDailyUpdatePacket["sections"],
+  sourceCoverage: BrandonBriefSourceCoverage[],
+): string[] {
+  const warnings: string[] = [];
+  const itemCount = countBriefItems(sections);
+  const projectCount = uniqueProjectLabels(sections).size;
+  const meetingCount =
+    sourceCoverage.find((source) => source.label === "Meeting")?.count ?? 0;
+  const totalSourceCount = sourceCoverage.reduce(
+    (total, source) => total + source.count,
+    0,
+  );
+
+  if (meetingCount >= 5 && itemCount < 6) {
+    warnings.push(
+      `Executive Daily Brief degraded: ${meetingCount} meeting transcript(s) were available, but only ${itemCount} final item(s) survived synthesis. The generator must preserve more transcript-backed business context before the brief is trusted.`,
+    );
+  }
+
+  if (meetingCount >= 10 && projectCount < 4) {
+    warnings.push(
+      `Executive Daily Brief degraded: ${meetingCount} meeting transcript(s) were available, but the final brief represents only ${projectCount} project/context label(s). This is a source-funnel collapse, not a healthy executive synthesis.`,
+    );
+  }
+
+  if (totalSourceCount >= 50 && itemCount < 6) {
+    warnings.push(
+      `Executive Daily Brief degraded: ${totalSourceCount} source record(s) were loaded, but only ${itemCount} final item(s) were produced. Source coverage is not sufficient proof of brief quality.`,
+    );
+  }
+
+  return warnings;
+}
+
 function stripJsonFence(value: string): string {
   return value
     .replace(/^```(?:json)?\s*/i, "")
@@ -2251,6 +2401,18 @@ function normalizeSynthesizedItem(
   return {
     ...primary,
     title: compactText(item.title, 120),
+    project: normalizedMeetingProjectLabel({
+      ...primary,
+      title: compactText(item.title, 120),
+      summary,
+      evidenceFacts,
+      recommendedAction,
+      whyItMatters,
+      citations: mergedCitations,
+      source: primaryCitation.source,
+      sourceDetail: primaryCitation.sourceDetail,
+      evidence: primaryCitation.evidence,
+    }),
     summary,
     evidenceFacts,
     bullets: getExecutiveBriefBullets({
@@ -2680,6 +2842,7 @@ async function synthesizeSections(
     "- status: a short plain status phrase. tone: one of risk, watch, good, neutral.\n" +
     "\n\nJUDGMENT:\n" +
     "- Do NOT write a meeting recap. Do not organize around who met, agenda order, or what was discussed. Organize around the executive question: what changed, why it matters, what pattern it fits, what business outcome it affects, and what leadership should do.\n" +
+    "- Treat Meeting candidates marked as transcript-first sources as the primary material for cross-meeting synthesis. Use email, Teams, financial, document, and project intelligence candidates to confirm or sharpen the meeting read, not to replace it.\n" +
     "- Internally evaluate each candidate through this hierarchy before writing: observation -> significance -> pattern detection -> business impact -> priority -> recommendation.\n" +
     "- Prefer cross-meeting or cross-source insight over isolated facts. If multiple meetings point to the same issue, write the larger business pattern and cite the supporting candidates.\n" +
     "- Every included item must affect at least one executive outcome: schedule, profit, cash, client satisfaction, growth, risk, team performance, or reputation. Drop anything that does not.\n" +
@@ -3065,6 +3228,7 @@ function compactOperatingBriefItem(item: BrandonBriefItem): BrandonBriefItem {
 
   return {
     ...item,
+    project: normalizedMeetingProjectLabel(item),
     summary: compactCompleteText(item.summary, 360),
     evidence: item.evidence
       ? compactCompleteText(item.evidence, 240)
@@ -3188,13 +3352,14 @@ function buildBusinessHealth(
         "payment",
         "invoice",
         "margin",
-        "change order",
-        "pending revenue",
         "wip",
         "reconciliation",
         "payroll",
-        "reporting",
-        "cash",
+        "reporting cadence",
+        "retainage",
+        "erp",
+        "acumatica",
+        "cash flow",
       ],
       healthyWords: ["standardized", "reconciled", "improved", "stable"],
     },
@@ -3213,7 +3378,7 @@ function buildBusinessHealth(
     },
     {
       area: "People",
-      words: ["staff", "crew", "manpower", "hiring", "onboarding", "vp"],
+      words: ["crew", "manpower", "hiring", "onboarding", "vp"],
       healthyWords: ["assigned", "covered", "onboard", "ready"],
     },
     {
@@ -4068,7 +4233,12 @@ export async function generateBrandonDailyUpdate(
   const windowStartDateKey = getWindowStartDateKey(windowDays);
   const cutoff = new Date(`${windowStartDateKey}T00:00:00-04:00`);
   const cutoffIso = cutoff.toISOString();
-  const [fallbackResult, financialPulseResult, operatingRecordResult] =
+  const [
+    fallbackResult,
+    recentTranscriptResult,
+    financialPulseResult,
+    operatingRecordResult,
+  ] =
     await withExecutiveDailyBriefObservation(
       "executive-daily-brief.source-preflight",
       {
@@ -4076,14 +4246,17 @@ export async function generateBrandonDailyUpdate(
         input: { windowDays, windowStartDateKey, cutoffIso, sourceBackedOnly },
         metadata: { stage: "source_preflight" },
         output: (result) => {
-          const [fallback, financial, operating] = result as [
+          const [fallback, transcripts, financial, operating] = result as [
             FallbackMetadataResult,
+            RecentTranscriptResult,
             FinancialPulseData,
             OperatingRecordBriefResult,
           ];
           return {
             fallbackRows: fallback.rows.length,
             fallbackWarningCount: fallback.warnings.length,
+            recentTranscriptItemCount: transcripts.items.length,
+            recentTranscriptWarningCount: transcripts.warnings.length,
             financialProjectCount: financial.arByProject.length,
             financialPendingCOProjectCount:
               financial.pendingCOsByProject.length,
@@ -4099,6 +4272,7 @@ export async function generateBrandonDailyUpdate(
       async () =>
         Promise.all([
           loadFallbackMetadata(cutoff),
+          loadRecentMeetingTranscriptItems(cutoffIso),
           loadFinancialPulse().catch((err: unknown) => {
             const msg = err instanceof Error ? err.message : String(err);
             return {
@@ -4300,6 +4474,7 @@ export async function generateBrandonDailyUpdate(
           rankedHitCount: rankedHits.length,
           dedupedHitCount: dedupedHits.length,
           fallbackRowCount: fallbackResult.rows.length,
+          recentTranscriptItemCount: recentTranscriptResult.items.length,
         },
         metadata: { stage: "source_candidate_selection" },
         output: (result) => {
@@ -4328,7 +4503,10 @@ export async function generateBrandonDailyUpdate(
           .map(makeFallbackItem)
           .filter((item): item is BrandonBriefItem => item !== null);
         const seeded = mergeSeedItems(
-          assignHitsToSections(dedupedHits, items),
+          assignHitsToSections(dedupedHits, [
+            ...recentTranscriptResult.items,
+            ...items,
+          ]),
           operatingRecordResult.sections,
         );
         const limited = sourceBackedOnly
@@ -4467,8 +4645,10 @@ export async function generateBrandonDailyUpdate(
   // the fully-merged, enriched brief — no matter whether it entered via the LLM,
   // the deterministic financial items, or the merge. AR stays out of the brief
   // until the Acumatica feed is trusted again (product decision, 2026-06).
-  const sections = capExecutiveBriefSections(
-    sanitizeAccountingSections(enforceExecutiveBriefBullets(numberedSections)),
+  const sections = normalizeMeetingProjectLabelsInSections(
+    capExecutiveBriefSections(
+      sanitizeAccountingSections(enforceExecutiveBriefBullets(numberedSections)),
+    ),
   );
   const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await withExecutiveDailyBriefObservation(
@@ -4492,8 +4672,13 @@ export async function generateBrandonDailyUpdate(
   const sourceCoverageWarnings = sourceCoverage
     .map((source) => source.warning)
     .filter((warning): warning is string => Boolean(warning));
+  const thinContentWarnings = executiveBriefThinContentWarnings(
+    sections,
+    sourceCoverage,
+  );
   const sourceHealthWarnings = [
     ...fallbackResult.warnings,
+    ...recentTranscriptResult.warnings,
     ...financialPulse.warnings,
     ...preflightWarnings,
     ...chunkSearchWarnings,
@@ -4503,6 +4688,7 @@ export async function generateBrandonDailyUpdate(
     ...supportedResult.warnings,
     ...enrichedResult.warnings,
     ...sourceCoverageWarnings,
+    ...thinContentWarnings,
   ];
 
   return {
@@ -4531,6 +4717,7 @@ export async function generateBrandonDailyUpdate(
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       `Project operating records: ${operatingRecordResult.itemCount} timeline/change-event candidate item(s) were added to the synthesis candidate set from project_intelligence_timeline_events and change_event_candidates.`,
+      `Transcript-first synthesis: ${recentTranscriptResult.items.length} recent meeting transcript item(s) were inserted before source ranking so cross-meeting patterns are not dependent on keyword RAG hits.`,
       `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,
       `Full-transcript enrichment: ${fullTextEnrichedCount} surfaced item(s) were upgraded from the lossy document_metadata auto-summary to the complete embedded transcript text from the vector store (document_chunks in the AI Database) before synthesis.`,
       "The briefing window covers the last 3 business days in Eastern time (weekends skipped) so a Monday brief still includes the prior Thursday and Friday without dragging in week-old noise.",

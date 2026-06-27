@@ -82,4 +82,27 @@ describe("formatExecutiveBriefingTeamsMessage spacing", () => {
     expect(message).toContain(`${NBSP}\n\n**GW Kokomo**`);
     expect(message).toContain(`${NBSP}\n\n**Uniqlo Fishers**`);
   });
+
+  it("does not strip address-style project names like 440 W", () => {
+    const message = formatExecutiveBriefingTeamsMessage(
+      makePacket({
+        importantUpdates: [
+          makeItem({
+            project: "440 W",
+            title: "440 West needs a clear explanation for the higher bid",
+            summary:
+              "440 W bid increased after the scope changed to full restoration.",
+            bullets: [
+              "440 W bid increased after the scope changed to full restoration.",
+            ],
+          }),
+        ],
+      }),
+      "Brandon",
+      { now: NOW },
+    );
+
+    expect(message).toContain("**440 W**");
+    expect(message).not.toContain("**W**");
+  });
 });
