@@ -74,8 +74,8 @@ import {
 
 import { PageShell } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TasksKanbanPage } from "@/features/tasks/tasks-kanban-page";
 
+import { AdminKanbanView } from "./admin-kanban-view";
 import { AdminDirectoryView } from "./admin-directory-view";
 
 type AdminMenuItem = {
@@ -785,7 +785,7 @@ export default function AdminDashboardPage() {
           <AdminDirectoryView sections={sections} />
         </TabsContent>
         <TabsContent value="kanban" className="m-0">
-          <TasksKanbanPage />
+          <AdminKanbanView sections={sections} />
         </TabsContent>
       </Tabs>
 

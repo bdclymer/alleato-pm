@@ -60,7 +60,7 @@ import {
   PropertyRow,
   StatusBadge,
 } from "@/components/ds";
-import { ApiError, apiFetch } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   type TasksRow,
@@ -527,7 +527,7 @@ function TaskDetailDialog({
   onPatch,
   onDelete,
 }: {
-  projectId?: string | null;
+  projectId: string;
   task: TasksRow | null;
   open: boolean;
   loading: boolean;
@@ -1019,8 +1019,8 @@ function TaskDetailDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete task?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the task from the Kanban board. This action cannot
-              be undone.
+              This removes the task from the project Kanban board. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1044,7 +1044,7 @@ function TaskDetailDialog({
 }
 
 interface TasksKanbanPageProps {
-  projectId?: string | null;
+  projectId: string;
 }
 
 export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
@@ -1053,7 +1053,6 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
     React.useState<TaskKanbanStatus[]>(DEFAULT_COLUMN_ORDER);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [scopeFallback, setScopeFallback] = React.useState(false);
   const [savingTaskId, setSavingTaskId] = React.useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
     null,
@@ -1082,23 +1081,10 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
     async function loadTasks() {
       setLoading(true);
       setError(null);
-      setScopeFallback(false);
       try {
-        const taskPath = projectId
-          ? `/api/tasks?project_id=${projectId}&scope=all`
-          : "/api/tasks?scope=all";
-        let payload: { data?: TasksRow[] };
-        try {
-          payload = await apiFetch<{ data?: TasksRow[] }>(taskPath);
-        } catch (err) {
-          if (projectId || !(err instanceof ApiError) || err.status !== 403) {
-            throw err;
-          }
-          payload = await apiFetch<{ data?: TasksRow[] }>(
-            "/api/tasks?scope=mine",
-          );
-          if (!cancelled) setScopeFallback(true);
-        }
+        const payload = await apiFetch<{ data?: TasksRow[] }>(
+          `/api/tasks?project_id=${projectId}&scope=all`,
+        );
         if (cancelled) return;
         const nextColumns = buildColumns(payload.data ?? []);
         columnsRef.current = nextColumns;
@@ -1294,9 +1280,7 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
           <p className="mt-1 max-w-md text-sm text-muted-foreground">{error}</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href={projectId ? `/${projectId}/tasks` : "/tasks"}>
-            Open task inbox
-          </Link>
+          <Link href={`/${projectId}/tasks`}>Open task inbox</Link>
         </Button>
       </div>
     );
@@ -1306,11 +1290,6 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
 
   return (
     <div className="min-w-0 space-y-3">
-      {scopeFallback ? (
-        <p className="text-xs text-muted-foreground">
-          Showing your tasks because all-task access is not available.
-        </p>
-      ) : null}
       {savingTaskId ? (
         <div className="text-xs text-muted-foreground">Saving task...</div>
       ) : null}
