@@ -521,6 +521,10 @@ def _is_security_account_notice(text: str) -> bool:
             "github application has been added",
             "recently authorized to access your account",
             "application was recently authorized",
+            "new sign-in detected",
+            "was recently signed-in",
+            "login request was made",
+            "log in code",
         )
     )
 
@@ -575,13 +579,13 @@ def _message_reason(message: dict[str, Any], bucket: str) -> str:
     if bucket == "Alert now":
         return "The email contains a direct external ask with explicit timing."
     if bucket == "Reply":
-        return "The sender appears to be asking for a direct response."
+        return "External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone."
     if bucket == "Delegate":
         return "This looks like an internal follow-up that needs ownership or routing."
     if "quarantine" in text or "security" in text:
         return "Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident."
     if _is_security_account_notice(text):
-        return "Security/account-change notice; verify it only if the GitHub app authorization was unexpected."
+        return "Security/account-change notice; verify it only if this account activity was unexpected."
     if "approaching spend limit" in text or "payment is due" in text:
         return "Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone."
     if _is_construction_risk_notice(text):
@@ -660,12 +664,12 @@ def _action_risk(message: dict[str, Any], bucket: str) -> str:
             return "Ignoring it could miss the sender's stated timeline."
         return "Ignoring it could leave an external sender waiting on a direct answer."
     if bucket == "Reply":
-        return "Ignoring it could stall an active external thread that appears to expect a response."
+        return "If this thread expects Brandon's response, ignoring it could stall an external follow-up."
     if bucket == "Delegate":
         return "Ignoring it could leave an internal follow-up without a clear owner."
     if bucket == "Watch":
         if _is_security_account_notice(text):
-            return "Ignoring it is safe only if this GitHub app authorization was expected."
+            return "Ignoring it is safe only if this account activity was expected."
         if _is_construction_risk_notice(text):
             return "Ignoring it could miss a project-risk signal that needs an owner if the work is active."
         if "payment is due" in text or "approaching spend limit" in text:
@@ -729,6 +733,10 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
         )
         lines.append(f"   Response path: {_short_action_label(message)}.")
         lines.append(f"   Why: {_message_reason(message, bucket)}")
+        if bucket in {"Alert now", "Reply", "Delegate"}:
+            lines.append("   Ownership: likely action candidate, but not confirmed from this inbox row alone.")
+        else:
+            lines.append("   Ownership: no confirmed user-owned action from this inbox row alone.")
         lines.append(f"   Preview: {_message_evidence(message)}")
         lines.append("")
     return "\n".join(lines).strip()
@@ -824,7 +832,7 @@ def _render_bucketed_triage_answer(
     lines = [heading, ""]
     if include_only_reply_needed:
         lines.append(
-            "No clear emergency was identified in the live inbox read; the items below are the strongest reply candidates, separated from watch/no-reply items."
+            "From today's live Outlook messages, no clear emergency was identified; the items below are the strongest reply candidates, separated from watch/no-reply items."
         )
         lines.append("")
     elif not buckets["Alert now"]:
