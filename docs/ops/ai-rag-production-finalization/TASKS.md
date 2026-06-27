@@ -43,6 +43,10 @@ Completed env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
 
+Completed Outlook legacy mirroring removal slice:
+
+- [2026-06-26-remove-outlook-legacy-mirroring-gates.md](../tasks/2026-06-26-remove-outlook-legacy-mirroring-gates.md)
+
 Completed legacy Fireflies file-ingest removal slice:
 
 - [2026-06-26-remove-legacy-fireflies-file-ingest.md](../tasks/2026-06-26-remove-legacy-fireflies-file-ingest.md)
@@ -153,6 +157,7 @@ Evidence directory:
 - [x] Delete obsolete Vercel Graph/Graph-embed/Acumatica cron routes only after replacement ownership is proven.
 - [x] Remove AAI-703-proven obsolete manual Graph/email eval implementations.
 - [x] Repair AAI-705 database inventory drift so active AI/RAG/workflow tables are documented instead of false orphan candidates.
+- [x] Remove Outlook legacy mirroring gates after raw intake and canonical RAG ownership are proven.
 - [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
 - [ ] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
@@ -328,7 +333,7 @@ Evidence directory:
   - `LEGACY_DAILY_DIGEST_ENABLED` moved to AAI-708 and is being removed with the legacy backend daily digest route/job path.
   - `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` moved to AAI-706 and is being removed with the legacy file-ingest route.
   - `GRAPH_API_INGESTION_ENABLED` is an active provider/web-service pressure guard.
-  - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` are migrate-first Outlook compatibility gates.
+  - `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, and `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` moved to AAI-709 and were removed after Outlook raw intake/RAG ownership proof.
 - Evidence:
   - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
   - [env-db-cleanup-candidate-inventory-aai-705.md](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-candidate-inventory-aai-705.md)
@@ -902,6 +907,20 @@ Evidence directory:
 - Links:
   - [Task](../tasks/2026-06-26-outlook-webhook-subscription-readiness.md)
   - [Linear AAI-715](https://linear.app/megankharrison/issue/AAI-715/restore-active-outlook-graph-webhook-subscriptions)
+
+### 2026-06-27: AAI-709 Outlook Legacy Mirroring Removed
+
+- Removed disabled Outlook Graph sync legacy mirroring gates and helpers after webhook readiness and canonical Outlook intake/RAG ownership were restored.
+- New Outlook syncs no longer write into legacy `project_emails`, no longer link intake attachments to legacy `email_attachments`, and no longer create separate `outlook_link` document rows from email hyperlinks.
+- Kept production paths active: `outlook_email_intake`, `outlook_email_intake_attachments`, `document_metadata`, `rag_document_metadata`, and `document_chunks`.
+- Updated the RAG architecture doc and cleanup inventory so the removed gates are no longer described as active compatibility candidates.
+- Delegated verification passed:
+  - Python compile for Outlook service/tests.
+  - `backend/.venv/bin/python -m pytest backend/tests/test_outlook_intake.py -q`: 20 passed.
+  - Deleted-symbol scan: zero matches in Outlook service/tests.
+- Evidence:
+  - [Task](../tasks/2026-06-26-remove-outlook-legacy-mirroring-gates.md)
+  - [Proof](../evidence/2026-06-25-ai-rag-production-finalization/outlook-legacy-mirroring-removal-aai-709.md)
 
 ### 2026-06-26: AAI-715 Outlook Webhook Subscription Coverage Restored
 
