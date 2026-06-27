@@ -23,7 +23,7 @@ export default function TablesLayout({
             <SiteHeader />
             <main
               id="app-main-content"
-              className="flex flex-1 flex-col gap-4 pt-2 pb-4 min-w-0"
+              className="flex min-h-0 flex-1 flex-col gap-4 pt-2 pb-4 min-w-0"
             >
               {children}
             </main>

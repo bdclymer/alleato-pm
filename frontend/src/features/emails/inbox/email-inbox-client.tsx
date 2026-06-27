@@ -498,7 +498,10 @@ export function EmailInboxClient({
     : null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div
+      data-email-inbox-root
+      className="flex h-full min-h-0 w-full overflow-hidden bg-background"
+    >
       {/* Left panel — fixed width */}
       <div className="w-96 shrink-0 border-r border-border/50 flex flex-col overflow-hidden">
         <EmailListPanel
