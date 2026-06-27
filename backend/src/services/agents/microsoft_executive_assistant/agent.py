@@ -768,6 +768,7 @@ def _render_action_lists(
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append("  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.")
             if include_owner:
                 lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
@@ -791,6 +792,7 @@ def _render_action_lists(
                 response_path = "Watch" if _action_bucket(message) == "Watch" else "No reply needed"
             lines.append(f"  Response path: {response_path}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append("  User-owned action: no confirmed reply action from this inbox row.")
             if include_owner:
                 lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
@@ -832,12 +834,12 @@ def _render_bucketed_triage_answer(
     lines = [heading, ""]
     if include_only_reply_needed:
         lines.append(
-            "From today's live Outlook messages, no clear emergency was identified; the items below are the strongest reply candidates, separated from watch/no-reply items."
+            "From today's live Outlook messages, no confirmed user-owned reply action was proven; the items below are the strongest reply candidates, separated from watch/no-reply items."
         )
         lines.append("")
     elif not buckets["Alert now"]:
         lines.append(
-            "No true urgent/critical email was identified from the available evidence; the items below are routine replies, watch items, and noise separated by action level."
+            "No confirmed user-owned urgent action was proven from the available evidence; security/project-risk watch items may need verification if unexpected or tied to active work."
         )
         lines.append("")
 
@@ -854,6 +856,7 @@ def _render_bucketed_triage_answer(
             if count > 1:
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Action: {bucket}. Reason: {_message_reason(message, bucket)}")
+            lines.append("  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
             if False and bucket in {"Alert now", "Reply", "Delegate"}:
@@ -924,7 +927,7 @@ def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -
     action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply"}][:6]
     informational = [message for message in rows if _action_bucket(message) == "Watch"][:6]
     omitted_noise = len([message for message in rows if _action_bucket(message) == "Ignore/noise"])
-    lead = "No confirmed emergency was identified from today's arrivals; reply items and security/watch notices are separated below."
+    lead = "No confirmed user-owned urgent action was proven from today's Outlook arrivals; reply candidates and security/watch notices are separated below."
     if omitted_noise:
         lead += f" {omitted_noise} routine/no-reply item(s) were excluded."
     return _render_action_lists(
