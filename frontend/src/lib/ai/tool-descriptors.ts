@@ -643,6 +643,14 @@ export const generatedTaskStatusSchema = z.enum([
   "cancelled",
 ]);
 
+export const projectCompanyTypeSchema = z.enum([
+  "YOUR_COMPANY",
+  "VENDOR",
+  "SUBCONTRACTOR",
+  "SUPPLIER",
+  "CONNECTED_COMPANY",
+]);
+
 export const createChangeOrderDescription =
   "Create a new prime contract change order (PCCO). Use when the user says " +
   "'create a change order', 'add a CO', or describes a scope change that needs " +
@@ -825,6 +833,89 @@ export const deleteGeneratedTaskDescription =
 export const deleteGeneratedTaskInputSchema = z.object({
   taskId: z.string().uuid().describe("Task ID from public.tasks"),
   reason: z.string().optional().describe("Why the task should be deleted"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z.string().optional(),
+});
+
+export const createProjectCompanyDescription =
+  "Add a company to a project's directory. Use when the user says 'add [company] to this project', " +
+  "'add a vendor/subcontractor/supplier', or provides company directory details. Reuses an existing global company by exact name when possible, assigns it to the project, and previews before writing.";
+
+export const createProjectCompanyInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  name: z.string().describe("Company name"),
+  companyType: projectCompanyTypeSchema.default("VENDOR"),
+  emailAddress: z.string().email().optional().describe("Project directory email for the company"),
+  businessPhone: z.string().optional().describe("Company business phone"),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  website: z.string().optional(),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z.string().optional(),
+});
+
+export const createProjectContactDescription =
+  "Add a contact to a project's directory. Use when the user says 'add [person] as a contact', " +
+  "'add this vendor contact to the project', or provides contact details. Reuses an existing person by email, links them to the project directory, optionally links their company, and previews before writing.";
+
+export const createProjectContactInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  firstName: z.string().describe("Contact first name"),
+  lastName: z.string().describe("Contact last name"),
+  email: z.string().email().optional(),
+  jobTitle: z.string().optional(),
+  phoneBusiness: z.string().optional(),
+  phoneMobile: z.string().optional(),
+  companyId: z.string().uuid().optional().describe("Existing companies.id if known"),
+  companyName: z.string().optional().describe("Existing company name to link by exact name"),
+  role: z
+    .string()
+    .optional()
+    .describe("Project-specific role, e.g. Architect, Owner Rep, Electrical PM"),
+  makePrimaryCompanyContact: z.boolean().default(false),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z.string().optional(),
+});
+
+export const flagProjectRiskDescription =
+  "Flag a project risk or insight. Use when the user says 'flag a risk', " +
+  "'log an issue', or 'mark this as a concern'. Creates an AI insight record " +
+  "that shows up in the risk dashboard. Preview before writing.";
+
+export const flagProjectRiskInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  title: z.string().describe("Risk title — short, specific"),
+  description: z.string().describe("Full description of the risk"),
+  severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  insightType: z
+    .enum([
+      "financial_risk",
+      "schedule_risk",
+      "scope_risk",
+      "team_risk",
+      "client_risk",
+      "general",
+    ])
+    .default("general"),
+  financialImpact: z.number().optional().describe("Estimated dollar impact"),
+  timelineImpactDays: z.number().optional().describe("Estimated schedule impact in days"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z.string().optional(),
+});
+
+export const updateRFIStatusDescription =
+  "Update the status of an existing RFI. Use when the user says " +
+  "'close RFI #[n]', 'mark RFI [n] as answered', or 'RFI [n] is resolved'. " +
+  "Always preview before writing.";
+
+export const updateRFIStatusInputSchema = z.object({
+  rfiId: z.string().optional().describe("RFI UUID if known"),
+  rfiNumber: z.number().optional().describe("RFI number (easier to get from user)"),
+  projectId: z.number().describe("Project ID — needed to look up by number"),
+  newStatus: z.enum(["open", "answered", "closed", "void"]).describe("New status"),
+  response: z.string().optional().describe("Optional response text to record"),
   confirmed: z.boolean().default(false),
   idempotencyKey: z.string().optional(),
 });
@@ -1246,6 +1337,50 @@ export const assistantActionToolDescriptors: AssistantToolDescriptor[] = [
     inputSchemaName: "deleteGeneratedTask.input",
     outputSchemaName: "deleteGeneratedTask.output",
     inputSchema: deleteGeneratedTaskInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "createProjectCompany",
+    description: createProjectCompanyDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createProjectCompany.input",
+    outputSchemaName: "createProjectCompany.output",
+    inputSchema: createProjectCompanyInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "createProjectContact",
+    description: createProjectContactDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "createProjectContact.input",
+    outputSchemaName: "createProjectContact.output",
+    inputSchema: createProjectContactInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "flagProjectRisk",
+    description: flagProjectRiskDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "flagProjectRisk.input",
+    outputSchemaName: "flagProjectRisk.output",
+    inputSchema: flagProjectRiskInputSchema,
+    category: "workflow",
+    sourceFamilies: ["procore", "system"],
+  },
+  {
+    ...confirmedWriteDescriptorDefaults,
+    name: "updateRFIStatus",
+    description: updateRFIStatusDescription,
+    owningAdapter: "action_tools",
+    inputSchemaName: "updateRFIStatus.input",
+    outputSchemaName: "updateRFIStatus.output",
+    inputSchema: updateRFIStatusInputSchema,
     category: "workflow",
     sourceFamilies: ["procore", "system"],
   },

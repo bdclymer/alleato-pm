@@ -14,9 +14,12 @@ import {
   createChangeOrderInputSchema,
   createChangeEventInputSchema,
   createGeneratedTaskInputSchema,
+  createProjectCompanyInputSchema,
+  createProjectContactInputSchema,
   createRFIInputSchema,
   createTaskInputSchema,
   deleteGeneratedTaskInputSchema,
+  flagProjectRiskInputSchema,
   findProjectDocumentsInputSchema,
   getAcumaticaProjectBudgetInputSchema,
   getAcumaticaProjectListInputSchema,
@@ -38,6 +41,7 @@ import {
   getVendorSpendReportInputSchema,
   updateGeneratedTaskInputSchema,
   updateProjectStatusInputSchema,
+  updateRFIStatusInputSchema,
 } from "../tool-descriptors";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
@@ -431,10 +435,14 @@ describe("global AI assistant tool registry", () => {
         "createGeneratedTask",
         "updateGeneratedTask",
         "deleteGeneratedTask",
+        "createProjectCompany",
+        "createProjectContact",
+        "flagProjectRisk",
+        "updateRFIStatus",
       ],
     });
 
-    expect(definitions).toHaveLength(8);
+    expect(definitions).toHaveLength(12);
     expect(
       definitions.map((definition) => [
         definition.name,
@@ -512,6 +520,42 @@ describe("global AI assistant tool registry", () => {
         ],
         [
           "deleteGeneratedTask",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createProjectCompany",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createProjectContact",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "flagProjectRisk",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "updateRFIStatus",
           true,
           true,
           true,
@@ -684,6 +728,56 @@ describe("global AI assistant tool registry", () => {
       }),
     ).toEqual({
       taskId: "9e095a8e-7a1e-454a-a136-862b687ac49c",
+      confirmed: false,
+    });
+    expect(
+      createProjectCompanyInputSchema.parse({
+        projectId: 101,
+        name: "Acme Electric",
+      }),
+    ).toEqual({
+      projectId: 101,
+      name: "Acme Electric",
+      companyType: "VENDOR",
+      confirmed: false,
+    });
+    expect(
+      createProjectContactInputSchema.parse({
+        projectId: 101,
+        firstName: "Sam",
+        lastName: "Foreman",
+      }),
+    ).toEqual({
+      projectId: 101,
+      firstName: "Sam",
+      lastName: "Foreman",
+      makePrimaryCompanyContact: false,
+      confirmed: false,
+    });
+    expect(
+      flagProjectRiskInputSchema.parse({
+        projectId: 101,
+        title: "Permit delay",
+        description: "AHJ review is holding rough-in.",
+      }),
+    ).toEqual({
+      projectId: 101,
+      title: "Permit delay",
+      description: "AHJ review is holding rough-in.",
+      severity: "medium",
+      insightType: "general",
+      confirmed: false,
+    });
+    expect(
+      updateRFIStatusInputSchema.parse({
+        projectId: 101,
+        rfiNumber: 12,
+        newStatus: "answered",
+      }),
+    ).toEqual({
+      projectId: 101,
+      rfiNumber: 12,
+      newStatus: "answered",
       confirmed: false,
     });
   });
