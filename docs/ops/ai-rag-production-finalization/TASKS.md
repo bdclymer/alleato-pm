@@ -92,7 +92,7 @@ Evidence directory:
 - [x] Confirm Graph subscription reconciliation cron exists and is active in Render.
 - [x] Repair stale cached Outlook intake for Microsoft Executive Assistant health.
 - [x] Verify Outlook messages from the one-week operational concern window sync, embed, project-assign, generate tasks where applicable, and appear in semantic search.
-- [ ] Verify Outlook data is available to every relevant AI assistant through the finalized RAG/tool path.
+- [x] Verify Outlook data is available to every relevant AI assistant through the finalized RAG/tool path.
 
 ### Phase 5: Microsoft Teams Pipeline
 
@@ -983,37 +983,34 @@ Evidence directory:
   - rerun direct backend probe;
   - rerun `npm run verify:microsoft-assistant-health -- --json`;
   - rerun `npm run rag:verify:inbox-evals:prod`.
-- Remaining:
+- Runtime recovery:
   - backend probe advanced to 200 after Render deploy `dep-d8vko5ok1i2s73ercb70`;
   - frontend bridge was patched/published in `583c27e46a716beb0f33e872abae3aa467b3786e` so inbox widgets no longer replace the chat answer with a one-line widget summary;
   - production inbox eval improved from 1/5 to 3/5 after Vercel deployment `dpl_FFz1BHCF7peYZsVXpLiM1ejkC9hV`;
-  - remaining eval failures are backend answer-quality/ranking issues in the Microsoft Executive Assistant deterministic inbox renderer.
-- Follow-up patch in progress:
+  - backend renderer patches were deployed through Render; final live backend deploy for this slice is `dep-d8vli367r5hc73attkjg` (`3d9b133f2`) plus follow-up ownership deploy `dep-d8vlg83bc2fs738vlfkg` (`02fc9b18`) and preview cleanup deploy `dep-d8vlc519rddc739urt10` (`fa24e6ec`).
+- Follow-up patches completed:
   - classify temp-power/electrical-risk thread language as `Watch` instead of `Ignore/noise`;
   - keep Watch/Ignore context in reply-triage answers so the assistant does not imply every visible item needs a reply.
-- Second backend tightening in progress:
   - exclude routine/no-reply noise from `important emails this morning` answers;
   - summarize non-reply Watch/Ignore items in reply triage instead of listing them as equal reply work;
   - add reply draft direction for reply/delegate items without claiming a draft was created.
-- Third backend tightening in progress:
   - remove Outlook safety-banner text from evidence snippets;
   - make ownership wording explicit that ownership is not confirmed by inbox presence alone;
   - enforce same-day filtering for reply-triage prompts;
   - add an explicit no-critical-email lead for urgent triage when no `Alert now` item exists.
-- Fourth backend tightening in progress:
   - classify GitHub app-authorization/account-change notices as `Watch` instead of generic no-reply noise;
   - suppress draft-direction copy in arrived-today summaries unless the user asked for drafting.
-- Fifth backend tightening in progress:
   - suppress speculative owner/draft fields in list-style triage answers;
   - exclude routine/no-reply rows from arrived-today output while reporting the excluded count;
   - keep account-security watch rows out of `important this morning` while retaining project-risk watch rows.
-- Sixth backend tightening in progress:
   - make `last five emails` a pure source listing with sender, subject, timestamp, and preview only;
   - change arrived-today heading to explicitly include `Outlook emails received today` and `attention`;
   - name watch/no-reply rows in reply triage without classifying them as reply work.
-- Seventh backend tightening in progress:
   - add restrained response path/reason to `last five emails` without speculative owner/risk fields;
   - strip invisible Outlook/marketing padding characters from evidence snippets.
+  - add restrained response path/reason to `last five emails` without speculative owner/risk fields;
+  - strip invisible Outlook/marketing padding characters from evidence snippets;
+  - add arrived-today decision summary so reply candidates and watch items are explicit.
 - Verification:
   - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
   - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;
@@ -1022,8 +1019,13 @@ Evidence directory:
   - local smoke confirms morning, arrived-today, and reply-triage output omit speculative owner/draft lines and exclude routine no-reply rows.
   - local smoke confirms pure last-five listing, arrived-today wording, and named non-reply triage rows.
   - local smoke confirms last-five action labels and cleaned marketing preview text.
+  - production eval passed: `npm run rag:verify:inbox-evals:prod` returned `Pass: 5/5` against `https://projects.alleatogroup.com/api/ai-assistant/chat`.
+  - Evidence: [inbox-evals-prod-after-arrived-decision-summary.txt](../evidence/2026-06-25-ai-rag-production-finalization/inbox-evals-prod-after-arrived-decision-summary.txt)
+  - Eval artifacts:
+    - [results.json](../../archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T05-02-53-708Z-409e073e/results.json)
+    - [summary.md](../../archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T05-02-53-708Z-409e073e/summary.md)
   - focused backend pytest is blocked before collection by missing `python-multipart` in the test environment, unrelated to the assistant classifier patch.
-- Do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
+- Outlook assistant-consumption proof is complete for the production inbox regression bundle; continue with the next finalization slice.
 
 ### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
 

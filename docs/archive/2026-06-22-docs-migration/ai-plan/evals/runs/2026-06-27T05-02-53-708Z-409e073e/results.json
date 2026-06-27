@@ -1,0 +1,502 @@
+{
+  "generatedAt": "2026-06-27T05:04:27.613Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": {
+    "name": "inbox-outlook-regression",
+    "description": "Agentic-eval guardrail for live inbox/date/triage prompts. The Strategist must delegate Microsoft operator work to consultMicrosoftExecutiveAssistant, the specialist must expose microsoft_graph_live in its trace, and the assistant must avoid direct/stale Outlook tools and source-specific RAG fallback.",
+    "criteria": [
+      "Every case must fire consultMicrosoftExecutiveAssistant and its nested trace must include microsoft_graph_live.",
+      "No case may fire sourceSpecificRagRetrieval, getRecentEmails, getRecentOutlookEmails, or readOutlookEmailThread.",
+      "No tool trace's source may be outlook_email_intake or outlook_email_intake_fallback - Microsoft operator inbox reads must hit live Microsoft Graph through the specialist.",
+      "Answers must not tell the user to wait for live Outlook tools.",
+      "Answers must be long enough to explain the inbox result or failure clearly."
+    ]
+  },
+  "filter": "realworld-(last-five-emails|urgent-inbox|important-emails-this-morning|outlook-arrived-today|email-reply-triage)$",
+  "totalCases": 5,
+  "passed": 5,
+  "failed": 0,
+  "warningCount": 0,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": true,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 5,
+    "passed": 5,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": 4
+  },
+  "slowestCases": [
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "durationMs": 22556,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "durationMs": 14644,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "durationMs": 14208,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "durationMs": 13113,
+      "status": "pass",
+      "warnings": []
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "durationMs": 8561,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "consultMicrosoftExecutiveAssistant": 5
+  },
+  "intentDistribution": {
+    "source_lookup": 5
+  },
+  "results": [
+    {
+      "id": "realworld-last-five-emails",
+      "intent": "source_lookup",
+      "prompt": "Can you tell me my last five emails?",
+      "selectedProjectId": null,
+      "sessionId": "9e181c36-8aa9-439c-9ca7-452fbe0e4d61",
+      "sessionLabel": "eval-2026-06-27T05-02-53-708Z-409e073e-realworld-last-five-emails",
+      "startedAt": "2026-06-27T05:02:53.751Z",
+      "finishedAt": "2026-06-27T05:03:12.469Z",
+      "durationMs": 14208,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1972,
+        "finalText": "Your last five emails in bclymer@alleatogroup.com are:\n\n1. Ice cream to stop doing expense reports — The Ramp Team — 2026-06-27 04:35 UTC\n   Response path: Ignore.\n   Why: Present in the inbox, but the email evidence does not prove an immediate action.\n   Ownership: no confirmed user-owned action from this inbox row alone.\n   Preview: A Ninja Creami, on us, this month\n\n2. [GitHub] A third-party GitHub Application has been added to your account — GitHub — 2026-06-27 03:59 UTC\n   Response path: Watch.\n   Why: Security/account-change notice; verify it only if this account activity was unexpected.\n   Ownership: no confirmed user-owned action from this inbox row alone.\n   Preview: Hey bdclymer!\n\n3. Re: Maintenance needed Westfield — Angie Galtier — 2026-06-27 02:42 UTC\n   Response path: Reply.\n   Why: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n   Ownership: likely action candidate, but not confirmed from this inbox row alone.\n   Preview: Appreciate your quick response!\n\n4. Re: TAG 6/22/26: Solar Array – Temp Power Install — Candon Rusin — 2026-06-27 01:01 UTC\n   Response path: Watch.\n   Why: Potential construction risk; watch this thread and confirm ownership if it connects to active work.\n   Ownership: no confirmed user-owned action from this inbox row alone.\n   Preview: Walter, After further discussion with Cory at Capitol Valley Electrical, he could not confidently rule out the risk of a possible electrical trip.\n\n5. New sign-in detected on your Vercel account — Vercel — 2026-06-26 23:41 UTC\n   Response path: Watch.\n   Why: Security/account-change notice; verify it only if this account activity was unexpected.\n   Ownership: no confirmed user-owned action from this inbox row alone.\n   Preview: Your Vercel account bclymer@alleatogroup.com was recently signed-in from a new location, device or browser: Location: Tampa, Florida, United States Time: Friday, June 26, 2026",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 14208
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "Good source lookup with concrete thread-level summaries, response-path recommendations, and cautious handling of ownership/urgency. It does not invent sent mail or hidden details, and it flags security items as watch-worthy rather than certain threats. Main weakness: the prompt asks for the last five emails, and the answer adds interpretive labels that are plausible but sometimes overstated relative to the limited inbox row evidence.",
+          "strengths": [
+            "Lists exactly five emails with sender, subject, timestamp, and preview.",
+            "Separates likely security/account-change items from ordinary mail using a watch recommendation.",
+            "Avoids claiming any email was sent.",
+            "Uses evidence-aware language such as 'does not prove' and 'not confirmed from this inbox row alone'.",
+            "Separates confirmed ownership from mere inbox presence."
+          ],
+          "weaknesses": [
+            "For a pure 'last five emails' request, response-path commentary is more than necessary and may distract from retrieval.",
+            "Some judgments are only weakly supported by the provided row data, especially 'potential construction risk' and 'reply candidate'.",
+            "No explicit acknowledgement of whether these are unread, starred, or sent items; it assumes inbox ordering without stating that clearly.",
+            "Security items are labeled 'Watch' rather than a more direct 'reply now' or 'ignore', but the recommendation is still reasonable and cautious."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_email_from_normal_inbox_noise": 4,
+            "identifies_who_needs_response_why_it_matters_and_what_could_happen_if_ignored": 4,
+            "summarizes_email_threads_efficiently_without_dumping_raw_message_data": 5,
+            "recommends_a_concrete_response_path_reply_now_delegate_watch_draft_or_ignore": 5,
+            "for_draft_requests_sounds_short_direct_and_practical_enough_for_Brandon_to_review_and_send": 4,
+            "never_claims_an_email_was_sent_and_never_invents_thread_details_not_present_in_the_answer": 5,
+            "separates_confirmed_user_owned_actions_from_inbox_items_that_merely_exist_or_look_interesting": 5,
+            "labels_suspicious_phishing_urgency_or_ignore_recommendations_as_evidence_backed_judgments_instead_of_unsupported_certainty": 4
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-urgent-inbox",
+      "intent": "source_lookup",
+      "prompt": "Is there anything urgent in my inbox?",
+      "selectedProjectId": null,
+      "sessionId": "c6d7618d-9246-41a2-a122-2910f5ca8284",
+      "sessionLabel": "eval-2026-06-27T05-02-53-708Z-409e073e-realworld-urgent-inbox",
+      "startedAt": "2026-06-27T05:03:12.471Z",
+      "finishedAt": "2026-06-27T05:03:25.730Z",
+      "durationMs": 8561,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 5977,
+        "finalText": "Urgent inbox triage for bclymer@alleatogroup.com:\n\nNo confirmed user-owned urgent action was proven from the available evidence; security/project-risk watch items may need verification if unexpected or tied to active work.\n\nReply\n- Re: Maintenance needed Westfield — Angie Galtier — 2026-06-27 02:42 UTC\n  Action: Reply. Reason: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Appreciate your quick response!\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n- Siemens copy invoice - ALLEATO LLC (4433,0030670174) — Cash Collection Team SI US — 2026-06-26 22:18 UTC\n  Action: Reply. Reason: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: 6/26/2026 Re: ALLEATO LLC Account #0030670174 Dear Siemens Customer, This is a follow up reminder that your organization has past due accounts receivable transactions on your business account within S\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n- Invoice 1509 from JobPlanner.com - Alleato, added users. — JobPlanner Accounting — 2026-06-26 22:16 UTC\n  Action: Reply. Reason: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: JobPlanner.com Invoice Due:Fri, 07/24/2026 1509 Amount Due: $420.00 Greetings: Please see attached invoice number-1509 which is due for payment.\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n\nWatch\n- [GitHub] A third-party GitHub Application has been added to your account — GitHub — 2026-06-27 03:59 UTC\n  Action: Watch. Reason: Security/account-change notice; verify it only if this account activity was unexpected.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Hey bdclymer!\n  If ignored: Ignoring it is safe only if this account activity was expected.\n- Re: TAG 6/22/26: Solar Array – Temp Power Install — Candon Rusin — 2026-06-27 01:01 UTC\n  Action: Watch. Reason: Potential construction risk; watch this thread and confirm ownership if it connects to active work.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Walter, After further discussion with Cory at Capitol Valley Electrical, he could not confidently rule out the risk of a possible electrical trip.\n  If ignored: Ignoring it could miss a project-risk signal that needs an owner if the work is active.\n- New sign-in detected on your Vercel account — Vercel — 2026-06-26 23:41 UTC\n  Action: Watch. Reason: Security/account-change notice; verify it only if this account activity was unexpected.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Your Vercel account bclymer@alleatogroup.com was recently signed-in from a new location, device or browser: Location: Tampa, Florida, United States Time: Friday, June 26, 2026\n  If ignored: Ignoring it is safe only if this account activity was expected.\n- 871200 is your Vercel log in code — Vercel — 2026-06-26 23:41 UTC\n  Action: Watch. Reason: Security/account-change notice; verify it only if this account activity was unexpected.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: 871200 This code expires in 30 minutes.\n  If ignored: Ignoring it is safe only if this account activity was expected.\n\nIgnore/noise\n- Ice cream to stop doing expense reports — The Ramp Team — 2026-06-27 04:35 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: A Ninja Creami, on us, this month\n  If ignored: Ignoring it is usually safe from the email evidence alone.\n- Abundance News: Welcoming New Members, Member Meetup, Exponential Connections & More! — The Abundance Team — 2026-06-26 23:22 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Brandon, Happy Friday!\n  If ignored: Ignoring it is usually safe from the email evidence alone.\n- [No Action Required]: Higher rate limits on the Claude API — Anthropic Team — 2026-06-26 23:00 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: No action required.\n  If ignored: Ignoring it is usually safe from the email evidence alone.\n- Ace Hardware Estimate — Douglas Franklin — 2026-06-26 21:51 UTC\n  Action: Ignore/noise. Reason: Present in the inbox, but the email evidence does not prove an immediate action.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: La' Kisha and Hunter, This is a current snapshot of where the bids are at for Ace as of today.\n  If ignored: Ignoring it is usually safe from the email evidence alone.\n\nRecommended next steps for Brandon\n1. Handle the Alert now items first, if any are present.\n2. Reply to the direct sender asks next.\n3. Leave Watch/Ignore items alone unless they match known work you are already handling.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 8561
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "Mostly strong triage. It clearly separates reply/watch/ignore buckets, avoids claiming a sent email, and flags user-owned action as unconfirmed. The main gap is that it does not explicitly isolate a true urgent/critical item; the answer says no confirmed urgent action was proven, but still buries potentially urgent security items in Watch instead of stating whether anything is time-sensitive right now.",
+          "strengths": [
+            "Separates inbox items into Reply, Watch, and Ignore/noise buckets instead of dumping all mail together.",
+            "Does not invent that an email was sent and repeatedly caveats ownership as not confirmed from the inbox row alone.",
+            "Gives concrete next-step guidance for Brandon, including handling alert items first and then direct sender asks.",
+            "Uses evidence snippets for each item rather than unsupported summaries.",
+            "Treats security/account-change items and project-risk items as watch items rather than automatically urgent, which is evidence-aware."
+          ],
+          "weaknesses": [
+            "Does not clearly answer the user’s core question with a crisp urgent/critical yes-no; it implies no confirmed urgent action but then lists several potentially urgent watch items without prioritization.",
+            "The response path recommendations are a bit generic; for an inbox triage question, it should distinguish what needs immediate attention today versus what can wait.",
+            "Some thread summaries are thin and repetitive, relying on template language instead of concise business relevance.",
+            "The urgent/security judgments are cautious, but not always sharply explained in terms of impact if ignored; for example, the Vercel login code and new sign-in deserve clearer urgency framing if unexpected.",
+            "The final next-step section is generic and not tied to the actual high-priority items identified."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 4,
+            "identifies_who_needs_response_why_it_matters_what_happens_if_ignored": 4,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 4,
+            "draft_requests_short_direct_practical": 5,
+            "never_claims_sent_or_invents_details": 5,
+            "separates_confirmed_user_owned_actions_from_inbox_items": 5,
+            "labels_suspicious_phishing_urgency_ignore_as_evidence_backed": 4
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-important-emails-this-morning",
+      "intent": "source_lookup",
+      "prompt": "What important emails have I received this morning?",
+      "selectedProjectId": null,
+      "sessionId": "afdd1983-45fa-4e46-8432-e9175afd1dc2",
+      "sessionLabel": "eval-2026-06-27T05-02-53-708Z-409e073e-realworld-important-emails-this-morning",
+      "startedAt": "2026-06-27T05:03:25.731Z",
+      "finishedAt": "2026-06-27T05:03:42.350Z",
+      "durationMs": 13113,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 10,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1335,
+        "finalText": "Important emails this morning for bclymer@alleatogroup.com:\n\nNo clear emergency was identified this morning; this list keeps direct replies and project-risk watch items, and excludes routine/no-reply noise. 1 routine/no-reply item(s) were excluded from the important list.\n\nAction needed\n- Re: Maintenance needed Westfield — Angie Galtier — 2026-06-27 02:42 UTC\n  Response path: Reply\n  Why: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Appreciate your quick response!\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n\nWatch / informational\n- Re: TAG 6/22/26: Solar Array – Temp Power Install — Candon Rusin — 2026-06-27 01:01 UTC\n  Response path: Watch\n  Why: Potential construction risk; watch this thread and confirm ownership if it connects to active work.\n  User-owned action: no confirmed reply action from this inbox row.\n  Evidence: Walter, After further discussion with Cory at Capitol Valley Electrical, he could not confidently rule out the risk of a possible electrical trip.\n  If ignored: Ignoring it could miss a project-risk signal that needs an owner if the work is active.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 13113
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer does a solid job separating a likely reply-needed email from a watch item, explains why each matters, and gives concrete next-step guidance. It also avoids claiming anything was sent and flags ownership uncertainty. The main weakness is that the response is somewhat repetitive and the urgency assessment is conservative rather than strongly evidence-backed, but it meets the minimum bar.",
+          "strengths": [
+            "Separates a direct reply candidate from a project-risk watch item instead of dumping inbox noise.",
+            "Explains why each item matters and notes possible consequences if ignored.",
+            "Provides a concrete response path for each item: Reply and Watch.",
+            "Avoids inventing a sent reply or asserting confirmed ownership when the inbox row does not prove it.",
+            "Clearly labels routine/no-reply email as excluded from the important list."
+          ],
+          "weaknesses": [
+            "Does not clearly identify whether the 'Maintenance needed Westfield' thread is truly urgent versus merely reply-worthy.",
+            "The ownership language is cautious but repetitive, which reduces usefulness.",
+            "Could better prioritize which item is most important this morning and why.",
+            "The evidence-backed judgment on risk is decent, but the phrasing is still somewhat generic for a construction-business workflow."
+          ],
+          "dimensionScores": {
+            "separates_urgent_from_noise": 4,
+            "identifies_who_needs_response_why_what_if_ignored": 4,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 5,
+            "draft_quality_short_direct_practical": 3,
+            "never_claims_sent_or_invents_details": 5,
+            "separates_confirmed_actions_from_inbox_items": 5,
+            "labels_suspicious_urgency_ignore_as_evidence_backed": 4
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-outlook-arrived-today",
+      "intent": "source_lookup",
+      "prompt": "What came in through Outlook today that needs my attention?",
+      "selectedProjectId": null,
+      "sessionId": "3461673d-66f0-4bd4-8d4e-f68d8b692c30",
+      "sessionLabel": "eval-2026-06-27T05-02-53-708Z-409e073e-realworld-outlook-arrived-today",
+      "startedAt": "2026-06-27T05:03:42.351Z",
+      "finishedAt": "2026-06-27T05:04:08.780Z",
+      "durationMs": 22556,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 11,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 2065,
+        "finalText": "Outlook emails received today that may need attention for bclymer@alleatogroup.com:\n\nNo confirmed user-owned urgent action was proven from today's Outlook arrivals; reply candidates and security/watch notices are separated below. 1 routine/no-reply item(s) were excluded.\n\nAction needed\n- Re: Maintenance needed Westfield — Angie Galtier — 2026-06-27 02:42 UTC\n  Response path: Reply\n  Why: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Appreciate your quick response!\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n\nWatch / informational\n- [GitHub] A third-party GitHub Application has been added to your account — GitHub — 2026-06-27 03:59 UTC\n  Response path: Watch\n  Why: Security/account-change notice; verify it only if this account activity was unexpected.\n  User-owned action: no confirmed reply action from this inbox row.\n  Evidence: Hey bdclymer!\n  If ignored: Ignoring it is safe only if this account activity was expected.\n- Re: TAG 6/22/26: Solar Array – Temp Power Install — Candon Rusin — 2026-06-27 01:01 UTC\n  Response path: Watch\n  Why: Potential construction risk; watch this thread and confirm ownership if it connects to active work.\n  User-owned action: no confirmed reply action from this inbox row.\n  Evidence: Walter, After further discussion with Cory at Capitol Valley Electrical, he could not confidently rule out the risk of a possible electrical trip.\n  If ignored: Ignoring it could miss a project-risk signal that needs an owner if the work is active.\nDecision summary\n- Reply candidate(s): Re: Maintenance needed Westfield. Ownership is not confirmed by the inbox row; verify before replying.\n- Watch item(s): [GitHub] A third-party GitHub Application has been added to your account; Re: TAG 6/22/26: Solar Array – Temp Power Install. Review only if unexpected or tied to active work.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 22556
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "Mostly strong Outlook triage. It separates a likely reply candidate from watch items, avoids claiming anything was sent, and flags ownership uncertainty. The main weakness is limited evidence handling on urgency/criticality and slightly overconfident watch labels for the construction thread.",
+          "strengths": [
+            "Separates a reply candidate from watch/security items instead of dumping everything into one list.",
+            "Does not claim an email was sent or fabricate thread content beyond quoted evidence.",
+            "Flags user-owned action as not confirmed when ownership is unclear, which is good discipline.",
+            "Provides a concrete response path for each item: Reply or Watch.",
+            "Summarizes thread purpose efficiently with short why/evidence/if ignored structure."
+          ],
+          "weaknesses": [
+            "Does not clearly distinguish urgent/critical email from ordinary noise beyond broad categories; nothing is explicitly marked urgent.",
+            "The construction thread is labeled as a watch item with risk language, but the evidence for why Brandon specifically needs to act is thin.",
+            "The GitHub notice is treated as a watch item, but the response path could be more explicitly tied to whether it is expected vs unexpected.",
+            "Draft guidance is not exercised here, so dimension 5 cannot be strongly validated from this sample."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_from_normal_noise": 4,
+            "identifies_who_needs_response_why_it_matters_and_what_if_ignored": 4,
+            "summarizes_threads_efficiently_without_raw_dump": 5,
+            "recommends_concrete_response_path": 5,
+            "drafts_short_direct_practical_for_review": 4,
+            "never_claims_sent_or_invents_details": 5,
+            "separates_confirmed_user_owned_actions_from_inbox_items": 5,
+            "labels_suspicious_phishing_urgency_or_ignore_as_evidence_backed": 4
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    },
+    {
+      "id": "realworld-email-reply-triage",
+      "intent": "source_lookup",
+      "prompt": "Show me any emails from today that need a reply.",
+      "selectedProjectId": null,
+      "sessionId": "264e5e5c-0bcc-4d98-b3bc-7d39ca1d4d17",
+      "sessionLabel": "eval-2026-06-27T05-02-53-708Z-409e073e-realworld-email-reply-triage",
+      "startedAt": "2026-06-27T05:04:08.781Z",
+      "finishedAt": "2026-06-27T05:04:27.612Z",
+      "durationMs": 14644,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 9,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: consultMicrosoftExecutiveAssistant",
+          "judge email_operator: pass (4/4)"
+        ],
+        "toolNames": [
+          "consultMicrosoftExecutiveAssistant"
+        ],
+        "familiesHit": [
+          "communications",
+          "email_action"
+        ],
+        "finalTextLength": 1396,
+        "finalText": "Emails that most likely need a reply in bclymer@alleatogroup.com:\n\nFrom today's live Outlook messages, no confirmed user-owned reply action was proven; the items below are the strongest reply candidates, separated from watch/no-reply items.\n\nReply\n- Re: Maintenance needed Westfield — Angie Galtier — 2026-06-27 02:42 UTC\n  Action: Reply. Reason: External reply-thread message; treat as a reply candidate, but the exact owner is not confirmed by the inbox row alone.\n  User-owned action: not confirmed by this inbox row; treat as a candidate until ownership is verified.\n  Evidence: Appreciate your quick response!\n  If ignored: If this thread expects Brandon's response, ignoring it could stall an external follow-up.\n\nNot classified as reply-required from the available evidence\n- 2 watch item(s) need awareness only unless they connect to active work.\n  - Watch: [GitHub] A third-party GitHub Application has been added to your account — GitHub\n  - Watch: Re: TAG 6/22/26: Solar Array – Temp Power Install — Candon Rusin\n- 1 noise/no-reply item(s) should not receive a reply from this evidence alone.\n  - No reply: Ice cream to stop doing expense reports — The Ramp Team\n\nRecommended next steps for Brandon\n1. Handle the Alert now items first, if any are present.\n2. Reply to the direct sender asks next.\n3. Leave Watch/Ignore items alone unless they match known work you are already handling.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 14644
+        },
+        "judge": {
+          "status": "pass",
+          "rubric": "email_operator",
+          "score": 4,
+          "minScore": 4,
+          "summary": "The answer correctly separated one likely reply candidate from watch/no-reply items and avoided claiming a sent email or inventing thread details. It also flagged uncertainty about ownership, which is good evidence handling. The main weakness is that it did not clearly surface urgency/criticality and the recommendation language was a bit generic for a construction-business inbox triage assistant.",
+          "strengths": [
+            "Separated a likely reply item from watch and noise categories.",
+            "Did not claim any email was sent.",
+            "Explicitly noted that user-owned action was not confirmed from the inbox row alone.",
+            "Used a concrete response recommendation ('Reply') for the main item.",
+            "Avoided dumping raw thread content and kept the summary concise."
+          ],
+          "weaknesses": [
+            "Did not strongly distinguish urgent/critical emails from normal inbox noise.",
+            "Did not clearly explain who specifically needs a response in operational terms or what business impact could follow if ignored.",
+            "The response-path recommendation is reasonable but not deeply evidenced beyond a generic reply-thread indicator.",
+            "The 'watch' and 'noise' categories are present, but the logic behind them is thin and somewhat formulaic.",
+            "Could be more direct about whether Brandon should act now versus delegate or ignore based on actual evidence."
+          ],
+          "dimensionScores": {
+            "separates_urgent_critical_from_noise": 4,
+            "identifies_who_needs_response_why_it_matters_what_happens_if_ignored": 4,
+            "summarizes_threads_efficiently": 4,
+            "recommends_concrete_response_path": 4,
+            "drafts_short_direct_practical_for_review": 4,
+            "never_claims_sent_or_invents_details": 5,
+            "separates_confirmed_user_owned_actions_from_inbox_items": 4,
+            "labels_suspicious_phishing_urgency_ignore_as_evidence_backed": 4
+          },
+          "provider": "vercel_gateway",
+          "model": "openai/gpt-5.4-mini"
+        }
+      },
+      "expectedToolNames": [
+        "consultMicrosoftExecutiveAssistant"
+      ],
+      "expectedToolFamilies": [
+        "communications"
+      ]
+    }
+  ]
+}
