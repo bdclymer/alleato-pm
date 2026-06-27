@@ -10,6 +10,7 @@ import {
   type DailyBriefPacket as BrandonDailyUpdatePacket,
   type DailyBriefRefreshRecord,
 } from "@/lib/executive/daily-brief";
+import { hydrateExecutiveOperatingBrief } from "@/lib/executive/brandon-daily-update";
 import { withBriefItemSourceRefs } from "@/lib/ai-ops/executive-daily-brief-evidence";
 
 type DailyRecapRow = Database["public"]["Tables"]["daily_recaps"]["Row"];
@@ -124,7 +125,7 @@ function createFingerprint(item: BrandonBriefItem, section: FollowUpSection) {
 
 function buildRecapText(packet: BrandonDailyUpdatePacket) {
   if (packet.operatingBrief) {
-    const brief = packet.operatingBrief;
+    const brief = hydrateExecutiveOperatingBrief(packet);
     // Each focus item shows what it is, why it matters (the owner's judgment
     // line), and the next move. Rendering whyItMatters is what makes this a brief
     // worth reading instead of a flat task list.

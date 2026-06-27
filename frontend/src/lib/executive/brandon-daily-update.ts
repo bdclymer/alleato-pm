@@ -3536,6 +3536,43 @@ export function buildExecutiveOperatingBrief(
   };
 }
 
+export function hydrateExecutiveOperatingBrief(
+  packet: Pick<BrandonDailyUpdatePacket, "sections" | "operatingBrief">,
+): ExecutiveOperatingBrief {
+  const derived = buildExecutiveOperatingBrief(packet.sections);
+  const stored = packet.operatingBrief;
+  if (!stored) return derived;
+
+  return {
+    ...derived,
+    ...stored,
+    businessHealth:
+      stored.businessHealth && stored.businessHealth.length > 0
+        ? stored.businessHealth
+        : derived.businessHealth,
+    emergingPatterns:
+      stored.emergingPatterns && stored.emergingPatterns.length > 0
+        ? stored.emergingPatterns
+        : derived.emergingPatterns,
+    strategicRisks:
+      stored.strategicRisks && stored.strategicRisks.length > 0
+        ? stored.strategicRisks
+        : derived.strategicRisks,
+    opportunities:
+      stored.opportunities && stored.opportunities.length > 0
+        ? stored.opportunities
+        : derived.opportunities,
+    leadershipWatchlist:
+      stored.leadershipWatchlist && stored.leadershipWatchlist.length > 0
+        ? stored.leadershipWatchlist
+        : derived.leadershipWatchlist,
+    chiefOfStaffInsights:
+      stored.chiefOfStaffInsights && stored.chiefOfStaffInsights.length > 0
+        ? stored.chiefOfStaffInsights
+        : derived.chiefOfStaffInsights,
+  };
+}
+
 async function enrichBriefSections(
   sections: BrandonDailyUpdatePacket["sections"],
   financialPulse: FinancialPulseData | null,

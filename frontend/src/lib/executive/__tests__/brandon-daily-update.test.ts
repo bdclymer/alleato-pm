@@ -7,6 +7,7 @@ import {
   executiveBriefSourceSelectionSummary,
   getHitDateAnchor,
   getRecencyAnchor,
+  hydrateExecutiveOperatingBrief,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
   shouldSuppressDailyBriefGenericItem,
@@ -510,7 +511,7 @@ describe("executive operating brief priority lanes", () => {
   });
 
   it("builds chief-of-staff sections from cross-meeting signals", () => {
-    const brief = buildExecutiveOperatingBrief({
+    const sections = {
       needsBrandon: [
         briefItem("VP onboarding decisions are still open", {
           summary:
@@ -567,7 +568,8 @@ describe("executive operating brief priority lanes", () => {
           project: "Company finance",
         }),
       ],
-    });
+    };
+    const brief = buildExecutiveOperatingBrief(sections);
 
     expect(brief.businessHealth?.map((item) => item.area)).toEqual([
       "Projects",
@@ -596,6 +598,71 @@ describe("executive operating brief priority lanes", () => {
     expect(brief.leadershipWatchlist?.length).toBeGreaterThan(0);
     expect(brief.chiefOfStaffInsights?.join(" ")).toMatch(
       /pattern-level|system design|external dependency/i,
+    );
+  });
+
+  it("hydrates stale stored operating briefs with missing chief-of-staff fields", () => {
+    const sections = {
+      needsBrandon: [
+        briefItem("VP onboarding decisions are still open", {
+          summary:
+            "The team needs reporting structure, office assignment, equipment, and org chart placement before onboarding.",
+          recommendedAction:
+            "Finalize the VP reporting structure and office plan before July 8.",
+          project: "Company operations",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Utility confirmation is still pending", {
+          summary:
+            "Telephone utility removal depends on owner IT confirmation before field work proceeds.",
+          recommendedAction:
+            "Get written owner IT confirmation on the abandoned telephone utilities.",
+          tone: "risk",
+          project: "Ace Hardware Champaign",
+        }),
+        briefItem("Sprinkler material delivery is not confirmed", {
+          summary:
+            "The rack installation sequence depends on subcontractor material delivery and permit approval.",
+          recommendedAction:
+            "Confirm permit timing and sprinkler material delivery before the next coordination call.",
+          tone: "risk",
+          project: "Superior Beverage",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("Accounting WIP workflow is being standardized", {
+          summary:
+            "Accounting is standardizing WIP reviews, reconciliation, payroll import, and reporting cadence.",
+          recommendedAction:
+            "Turn the WIP workflow into a monthly close checklist.",
+          tone: "good",
+          project: "Company finance",
+        }),
+      ],
+    };
+    const fullBrief = buildExecutiveOperatingBrief(sections);
+    const {
+      businessHealth: _businessHealth,
+      emergingPatterns: _emergingPatterns,
+      strategicRisks: _strategicRisks,
+      opportunities: _opportunities,
+      leadershipWatchlist: _leadershipWatchlist,
+      chiefOfStaffInsights: _chiefOfStaffInsights,
+      ...staleStoredBrief
+    } = fullBrief;
+
+    const hydrated = hydrateExecutiveOperatingBrief({
+      sections,
+      operatingBrief: staleStoredBrief,
+    });
+
+    expect(hydrated.startHere).toEqual(staleStoredBrief.startHere);
+    expect(hydrated.businessHealth?.length).toBeGreaterThan(0);
+    expect(hydrated.emergingPatterns?.length).toBeGreaterThan(0);
+    expect(hydrated.strategicRisks?.length).toBeGreaterThan(0);
+    expect(hydrated.chiefOfStaffInsights?.join(" ")).toMatch(
+      /pattern-level|external dependency/i,
     );
   });
 });

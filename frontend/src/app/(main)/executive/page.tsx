@@ -24,8 +24,8 @@ import {
 } from "@/lib/executive/executive-briefing-workflow";
 import { clampDailyBriefWindowDays } from "@/lib/executive/daily-brief";
 import {
-  buildExecutiveOperatingBrief,
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
+  hydrateExecutiveOperatingBrief,
   type BrandonBriefItem,
   type ExecutiveOperatingBrief,
   type ExecutiveOperatingBriefRiskItem,
@@ -985,8 +985,7 @@ export default async function ExecutiveDailyInsightsPage({
   ]);
   const { draft, staleFollowUps, fingerprintMap } = dashboard;
   const packet = draft.packet;
-  const operatingBrief =
-    packet.operatingBrief ?? buildExecutiveOperatingBrief(packet.sections);
+  const operatingBrief = hydrateExecutiveOperatingBrief(packet);
   const sectionEntries = [
     ...packet.sections.needsBrandon.map((item) => ({
       section: "needsBrandon" as const,
