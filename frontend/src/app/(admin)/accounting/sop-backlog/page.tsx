@@ -18,7 +18,6 @@ import {
   SectionHeader,
   StatusBadge,
   Textarea,
-  KpiRow,
 } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 
@@ -111,9 +110,6 @@ export default function SopBacklogPage() {
     loadRecords();
   }, [loadRecords]);
 
-  const neededRecords = records.filter((record) => record.status === "needed");
-  const linkedRecords = records.filter((record) => record.linked_document_metadata_id);
-  const overdueRecords = neededRecords.filter((record) => record.age_days >= 30);
 
   async function createRecord(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -183,26 +179,6 @@ export default function SopBacklogPage() {
       description="Track accounting and finance SOP items that still need a linked process or file."
     >
       <div className="space-y-8">
-        <KpiRow
-          metrics={[
-            {
-              label: "Needed SOPs",
-              value: String(neededRecords.length),
-              context: "Waiting on closure action",
-            },
-            {
-              label: "Linked records",
-              value: String(linkedRecords.length),
-              context: "Associated with a file",
-            },
-            {
-              label: "Needed over 30 days",
-              value: String(overdueRecords.length),
-              context: "Needs immediate follow-up",
-            },
-          ]}
-        />
-
         {error && (
           <InfoAlert variant="error" role="alert">
             {error}
