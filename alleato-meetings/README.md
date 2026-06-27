@@ -42,7 +42,10 @@ Next.js UI: meetings list + detail (summary, action items, decisions/risks, tran
 
 ### 1. Create a Supabase project (its own, not alleato-pm's)
 - New project at supabase.com → SQL Editor → paste & run [`supabase/schema.sql`](./supabase/schema.sql).
-- Copy the project URL and the **service_role** key.
+- Copy the project URL, the **anon** key (for login), and the **service_role** key (for data).
+- **Authentication → Providers**: enable **Email** (magic link). **Authentication → URL
+  Configuration**: add your deploy URL and `<deploy-url>/auth/callback` to the redirect
+  allowlist (and `http://localhost:3000/auth/callback` for local dev).
 
 ### 2. Microsoft Graph access (admin — required, app is inert without it)
 Use the existing Alleato Graph app registration or create a dedicated one. Then:
@@ -64,13 +67,14 @@ Use the existing Alleato Graph app registration or create a dedicated one. Then:
 
 ### 3. Environment
 Copy [`.env.example`](./.env.example) → `.env.local` (local) or set in Vercel. You need
-`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MS_TENANT_ID`,
-`MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `ANTHROPIC_API_KEY`, `SYNC_SECRET`, `APP_PASSWORD`.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `ANTHROPIC_API_KEY`, `SYNC_SECRET`.
 
 ### 4. Run
 ```bash
 npm install
-npm run dev          # http://localhost:3000  (Basic-auth: any user / APP_PASSWORD)
+npm run dev          # http://localhost:3000 — sign in via magic link (Supabase Auth)
+npm test             # unit tests (VTT parser, formatters, idempotency key)
 ```
 Trigger a sync:
 ```bash
@@ -104,10 +108,19 @@ policy) is incomplete.
 - The service-role key is used **server-side only** (route handlers + server
   components). Never import `src/lib/supabase.ts` into a client component.
 - The recordings bucket is **private**; the detail page serves a short-lived signed URL.
-- The whole UI is behind a Basic-auth password gate (`APP_PASSWORD`). Replace with
-  Supabase Auth / SSO for per-user accounts before wider rollout.
+- The whole UI is behind **Supabase Auth** (magic-link login); middleware redirects
+  unauthenticated users to `/login`. Data tables have RLS enabled and are read via the
+  service role server-side. To restrict who can sign in, use Supabase's allowed email
+  domains / invite-only settings.
+
+## Features
+- Meetings dashboard (search, attendee avatars, "synced X ago" health pill, **Sync now**)
+- Action Items rollup across all meetings — filters + **mark done** (writes back)
+- Per-meeting detail — summary, action items (owner/due), decisions/risks, transcript, video
+- Global **Search** across titles, summaries, and full transcripts
+- Magic-link login + sign-out
+- Unit tests (`npm test`)
 
 ## Next steps / not yet built
-- Per-user auth (currently a shared password).
-- Project/-tagging, search across meetings, semantic retrieval.
+- Project tagging, semantic (vector) search.
 - Zoom / Google Meet coverage (needs a joining bot — out of scope here).

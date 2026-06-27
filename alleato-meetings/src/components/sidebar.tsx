@@ -1,15 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createBrowserSupabase } from "@/lib/supabase/auth-browser";
 
 const NAV = [
   { href: "/", label: "Meetings", icon: MeetingsIcon },
   { href: "/action-items", label: "Action Items", icon: TasksIcon },
+  { href: "/search", label: "Search", icon: SearchNavIcon },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // No chrome on the auth screens.
+  if (pathname === "/login" || pathname.startsWith("/auth")) return null;
+
+  async function signOut() {
+    await createBrowserSupabase().auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="fixed left-0 top-0 z-20 hidden h-screen w-[248px] flex-col border-r border-line bg-ink-900/70 backdrop-blur-xl lg:flex">
@@ -48,13 +60,38 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto px-6 py-6">
-        <div className="flex items-center gap-2 text-[11px] text-faint">
+      <div className="mt-auto px-3 py-6">
+        <button
+          type="button"
+          onClick={signOut}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted transition-colors hover:bg-ink-800 hover:text-text"
+        >
+          <SignOutIcon className="text-faint" />
+          <span className="font-500">Sign out</span>
+        </button>
+        <div className="mt-3 flex items-center gap-2 px-3 text-[11px] text-faint">
           <span className="h-1.5 w-1.5 rounded-full bg-good" />
           Teams-native capture
         </div>
       </div>
     </aside>
+  );
+}
+
+function SearchNavIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.6" />
+      <path d="m20 20-3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function SignOutIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 17l-5-5 5-5M5 12h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

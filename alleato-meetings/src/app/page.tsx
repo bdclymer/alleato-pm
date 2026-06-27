@@ -1,5 +1,6 @@
 import { supabaseService } from "@/lib/supabase";
 import { MeetingsBrowser, type MeetingCard } from "@/components/meetings-browser";
+import { SyncNowButton } from "@/components/sync-now-button";
 import { relativeTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -72,12 +73,15 @@ function Shell({ children, sync }: { children: React.ReactNode; sync: SyncStatus
             Every Teams meeting, transcribed and distilled — summary, action items, decisions.
           </p>
         </div>
-        {sync.relative && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-ink-850 px-3 py-1.5 text-xs text-muted">
-            <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-good" : "bg-warn"}`} />
-            Synced {sync.relative}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {sync.relative && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-ink-850 px-3 py-1.5 text-xs text-muted">
+              <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-good" : "bg-warn"}`} />
+              Synced {sync.relative}
+            </span>
+          )}
+          <SyncNowButton />
+        </div>
       </header>
       {children}
     </div>

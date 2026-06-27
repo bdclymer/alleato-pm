@@ -20,6 +20,24 @@ type Filter = "all" | "overdue" | "unassigned";
 export function ActionItemsBoard({ rows }: { rows: ActionRow[] }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [statuses, setStatuses] = useState<Record<string, string>>(() =>
+    Object.fromEntries(rows.map((r) => [r.id, r.status])),
+  );
+
+  async function toggle(id: string) {
+    const next = statuses[id] === "done" ? "open" : "done";
+    setStatuses((s) => ({ ...s, [id]: next })); // optimistic
+    try {
+      const res = await fetch(`/api/action-items/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setStatuses((s) => ({ ...s, [id]: next === "done" ? "open" : "done" })); // revert
+    }
+  }
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -62,15 +80,28 @@ export function ActionItemsBoard({ rows }: { rows: ActionRow[] }) {
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((r, i) => (
+          {filtered.map((r, i) => {
+            const done = statuses[r.id] === "done";
+            return (
             <li
               key={r.id}
               className="animate-rise flex items-start gap-3.5 rounded-xl border border-line bg-ink-850 p-4 transition-colors hover:border-gold/30"
               style={{ animationDelay: `${Math.min(i, 14) * 30}ms` }}
             >
-              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
+              <button
+                type="button"
+                onClick={() => toggle(r.id)}
+                aria-label={done ? "Mark as open" : "Mark as done"}
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                  done ? "border-good bg-good/20 text-good" : "border-line text-transparent hover:border-gold"
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path d="m5 13 4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-text">{r.title}</p>
+                <p className={`text-sm ${done ? "text-faint line-through" : "text-text"}`}>{r.title}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                   {r.owner ? (
                     <span className="inline-flex items-center gap-1.5 text-xs text-muted">
@@ -89,7 +120,8 @@ export function ActionItemsBoard({ rows }: { rows: ActionRow[] }) {
                 </div>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
