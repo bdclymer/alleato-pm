@@ -142,10 +142,14 @@ Current verifier refresh on 2026-06-27:
 | Supabase generated types | `npm run db:types:check` | PASS |
 | Acumatica | `npm run verify:acumatica-sync-health` | PASS |
 | Render AI provider health | `npm run rag:verify:render-ai` | PASS |
+| Product-facing Outlook source lookup | `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- realworld-last-five-emails` | PASS: `/api/ai-assistant/chat` returned HTTP 200, persisted the assistant message, fired `consultMicrosoftExecutiveAssistant`, and nested read_live_outlook_inbox reported `source=microsoft_graph_live` with 5 live messages. |
+| Product-facing Teams source lookup | `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- source-lookup-teams` | PASS with caveat: route/persistence/tool metadata passed, but the final answer said direct Teams-specific Westfield rows were unavailable and fell back to packet/context evidence. |
+| Product-facing meeting source lookup | `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- source-lookup-meetings` | FAIL on latency only: HTTP 200 and persisted retrieval metadata existed, but duration was 153819ms, exceeding the 75000ms eval max budget. |
 
 Additional primary historical/current evidence:
 
 - `npm run rag:verify:meeting-pipeline`
+- Product smoke proof: `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/product-retrieval-smoke-aai-739.md`
 
 Evidence is distributed across the files named in the checklist table above.
 The canonical progress ledger records the sequence of failures, repairs,

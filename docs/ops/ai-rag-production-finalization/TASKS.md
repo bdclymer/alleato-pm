@@ -1361,3 +1361,18 @@ Evidence directory:
   - `npm run rag:verify:chat-architecture`, `source-specific`, `retrieval-contract`, `chunk-integrity`, and `response-contract` passed.
   - `npm run verify:microsoft-assistant-health -- --json` passed.
   - `npm run verify:deprecated-provider-env`, `db:inventory -- --check-only`, `db:types:check`, `verify:acumatica-sync-health`, and `rag:verify:render-ai` passed.
+
+### 2026-06-27: AAI-739 Product-Facing Retrieval Smoke Proof Added
+
+- Created product smoke proof:
+  - [Task](../tasks/2026-06-27-ai-rag-product-retrieval-smoke.md)
+  - [Evidence](../evidence/2026-06-25-ai-rag-production-finalization/product-retrieval-smoke-aai-739.md)
+- Primary passing smoke:
+  - `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- realworld-last-five-emails`
+  - Result: PASS in 13982ms.
+  - Proof: `/api/ai-assistant/chat` returned HTTP 200, assistant message persisted, `consultMicrosoftExecutiveAssistant` fired, nested read_live_outlook_inbox reported `source=microsoft_graph_live`, `count=5`, and mailbox `bclymer@alleatogroup.com`.
+- Secondary Teams smoke:
+  - `source-lookup-teams` passed route/persistence/tool metadata but was weaker proof because direct Teams-specific Westfield rows were unavailable for the prompt and the answer fell back to packet/context evidence.
+- Meeting smoke finding:
+  - `source-lookup-meetings` returned HTTP 200 and persisted retrieval metadata, but failed the eval because it took 153819ms, exceeding the 75000ms max budget.
+  - This is a performance follow-up risk, not hidden as a pass.
