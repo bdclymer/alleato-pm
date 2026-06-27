@@ -513,10 +513,8 @@ def _likely_reply_needed(message: dict[str, Any]) -> bool:
     return False
 
 
-def _action_bucket(message: dict[str, Any]) -> str:
-    text = _message_text(message)
-    subject = str(message.get("subject") or "")
-    if any(
+def _is_security_account_notice(text: str) -> bool:
+    return any(
         token in text
         for token in (
             "third-party github application",
@@ -524,7 +522,28 @@ def _action_bucket(message: dict[str, Any]) -> str:
             "recently authorized to access your account",
             "application was recently authorized",
         )
-    ):
+    )
+
+
+def _is_construction_risk_notice(text: str) -> bool:
+    return any(
+        token in text
+        for token in (
+            "could not confidently rule out",
+            "could not rule out",
+            "possible electrical trip",
+            "electrical trip",
+            "risk",
+            "temp power",
+            "temporary power",
+        )
+    )
+
+
+def _action_bucket(message: dict[str, Any]) -> str:
+    text = _message_text(message)
+    subject = str(message.get("subject") or "")
+    if _is_security_account_notice(text):
         return "Watch"
     if _is_automated_sender(message):
         if "payment is due" in text or "approaching spend limit" in text:
@@ -536,18 +555,7 @@ def _action_bucket(message: dict[str, Any]) -> str:
         return "Watch"
     if "approaching spend limit" in text or "payment is due" in text:
         return "Watch"
-    if any(
-        token in text
-        for token in (
-            "could not confidently rule out",
-            "could not rule out",
-            "possible electrical trip",
-            "electrical trip",
-            "risk",
-            "temp power",
-            "temporary power",
-        )
-    ):
+    if _is_construction_risk_notice(text):
         return "Watch"
     if _has_explicit_deadline(text) and not _is_internal_sender(message):
         return "Alert now"
@@ -572,29 +580,11 @@ def _message_reason(message: dict[str, Any], bucket: str) -> str:
         return "This looks like an internal follow-up that needs ownership or routing."
     if "quarantine" in text or "security" in text:
         return "Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident."
-    if any(
-        token in text
-        for token in (
-            "third-party github application",
-            "github application has been added",
-            "recently authorized to access your account",
-            "application was recently authorized",
-        )
-    ):
+    if _is_security_account_notice(text):
         return "Security/account-change notice; verify it only if the GitHub app authorization was unexpected."
     if "approaching spend limit" in text or "payment is due" in text:
         return "Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone."
-    if any(
-        token in text
-        for token in (
-            "could not confidently rule out",
-            "could not rule out",
-            "possible electrical trip",
-            "electrical trip",
-            "temp power",
-            "temporary power",
-        )
-    ):
+    if _is_construction_risk_notice(text):
         return "Potential construction risk; watch this thread and confirm ownership if it connects to active work."
     if "sign in" in text or "verification code" in text:
         return "Authentication message; usually ignorable unless the sign-in was requested."
@@ -673,27 +663,9 @@ def _action_risk(message: dict[str, Any], bucket: str) -> str:
     if bucket == "Delegate":
         return "Ignoring it could leave an internal follow-up without a clear owner."
     if bucket == "Watch":
-        if any(
-            token in text
-            for token in (
-                "third-party github application",
-                "github application has been added",
-                "recently authorized to access your account",
-                "application was recently authorized",
-            )
-        ):
+        if _is_security_account_notice(text):
             return "Ignoring it is safe only if this GitHub app authorization was expected."
-        if any(
-            token in text
-            for token in (
-                "could not confidently rule out",
-                "could not rule out",
-                "possible electrical trip",
-                "electrical trip",
-                "temp power",
-                "temporary power",
-            )
-        ):
+        if _is_construction_risk_notice(text):
             return "Ignoring it could miss a project-risk signal that needs an owner if the work is active."
         if "payment is due" in text or "approaching spend limit" in text:
             return "Ignoring it could let a billing issue become time-sensitive later."
@@ -768,7 +740,8 @@ def _render_action_lists(
     action_needed: list[dict[str, Any]],
     informational: list[dict[str, Any]],
     lead: Optional[str] = None,
-    include_draft_direction: bool = True,
+    include_draft_direction: bool = False,
+    include_owner: bool = False,
 ) -> str:
     lines = [heading, ""]
     if lead:
@@ -787,7 +760,8 @@ def _render_action_lists(
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
-            lines.append(f"  Owner: {_action_owner(message, bucket)}")
+            if include_owner:
+                lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
             if include_draft_direction and bucket in {"Alert now", "Reply", "Delegate"}:
@@ -809,7 +783,8 @@ def _render_action_lists(
                 response_path = "Watch" if _action_bucket(message) == "Watch" else "No reply needed"
             lines.append(f"  Response path: {response_path}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
-            lines.append(f"  Owner: {_action_owner(message, bucket)}")
+            if include_owner:
+                lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
         lines.append("")
@@ -871,10 +846,9 @@ def _render_bucketed_triage_answer(
             if count > 1:
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Action: {bucket}. Reason: {_message_reason(message, bucket)}")
-            lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
-            if bucket in {"Alert now", "Reply", "Delegate"}:
+            if False and bucket in {"Alert now", "Reply", "Delegate"}:
                 lines.append(f"  {_reply_draft_direction(message, bucket)}")
         lines.append("")
 
@@ -910,7 +884,11 @@ def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
         )
 
     action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
-    informational = [message for message in rows if _action_bucket(message) == "Watch"][:4]
+    informational = [
+        message
+        for message in rows
+        if _action_bucket(message) == "Watch" and _is_construction_risk_notice(_message_text(message))
+    ][:4]
     omitted_noise = len([message for message in rows if _action_bucket(message) == "Ignore/noise"])
     lead = (
         "No clear emergency was identified this morning; this list keeps direct replies and project-risk watch items, and excludes routine/no-reply noise."
@@ -928,12 +906,16 @@ def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
 def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
     rows = _dedupe_messages(_trimmed_messages_for_today(messages))
     action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply"}][:6]
-    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply"}][:6]
+    informational = [message for message in rows if _action_bucket(message) == "Watch"][:6]
+    omitted_noise = len([message for message in rows if _action_bucket(message) == "Ignore/noise"])
+    lead = "No confirmed emergency was identified from today's arrivals; reply items and security/watch notices are separated below."
+    if omitted_noise:
+        lead += f" {omitted_noise} routine/no-reply item(s) were excluded."
     return _render_action_lists(
         heading=f"Messages that arrived today for {mailbox}:",
         action_needed=action_needed,
         informational=informational,
-        lead="No confirmed emergency was identified from today's arrivals; reply items, security/watch notices, and informational items are separated below.",
+        lead=lead,
         include_draft_direction=False,
     )
 
