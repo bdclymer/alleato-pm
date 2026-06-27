@@ -1017,7 +1017,7 @@ export function createActionTools(
             prime_contract_id: draft.primeContractId,
             updated_at: new Date().toISOString(),
           })
-          .select("id, title, number, status")
+          .select("id, project_id, title, number, status")
           .single();
 
         if (error) {

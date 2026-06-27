@@ -57,6 +57,11 @@ const CHANGE_EVENT_WRITE_PATTERNS = [
   /\b(turn|convert)\b.{0,80}\b(into|to)\b.{0,40}\b(change request|change event|potential change)\b/i,
 ];
 
+const CHANGE_EVENT_FIELD_FOLLOWUP_PATTERNS = [
+  /\b(CR-\d[\w-]*|change request|change event|owner change|scope change|field change)\b.{0,120}\b(title|description|type|scope|status|reason|origin|expecting revenue|revenue(?!\s+source))\b/i,
+  /\b(title|description|type|scope|status|reason|origin|expecting revenue|revenue(?!\s+source))\b.{0,120}\b(CR-\d[\w-]*|change request|change event|owner change|scope change|field change)\b/i,
+];
+
 // Broad pattern for any mention of a communication artifact. Does NOT include
 // "meetings?" because "review recent meetings" and "show meeting insights" are
 // status/briefing questions that should go through packet-first retrieval, not
@@ -191,7 +196,10 @@ export function classifyAssistantIntent(
     return "email_action";
   }
 
-  if (CHANGE_EVENT_WRITE_PATTERNS.some((pattern) => pattern.test(text))) {
+  if (
+    CHANGE_EVENT_WRITE_PATTERNS.some((pattern) => pattern.test(text)) ||
+    CHANGE_EVENT_FIELD_FOLLOWUP_PATTERNS.some((pattern) => pattern.test(text))
+  ) {
     return "change_event_write";
   }
 

@@ -34,13 +34,15 @@ describe("assistant create workflow registry", () => {
       ["status", "select", 6, "change_events.status"],
       ["reason", "select", 7, "change_events.reason"],
       ["origin", "select", 8, "change_events.origin"],
-      ["expectingRevenue", "boolean", 9, "change_events.expecting_revenue"],
+      ["originId", "text", 9, "change_events.origin_id"],
+      ["expectingRevenue", "boolean", 10, "change_events.expecting_revenue"],
       [
         "lineItemRevenueSource",
         "select",
-        10,
+        11,
         "change_events.line_item_revenue_source",
       ],
+      ["primeContractId", "text", 12, "change_events.prime_contract_id"],
     ]);
     expect(getAssistantCreateWorkflow("change_event")).toBe(
       CHANGE_REQUEST_WORKFLOW,
@@ -89,6 +91,31 @@ describe("assistant create workflow registry", () => {
     });
   });
 
+  it("normalizes dictated change-event shorthand without forcing enum corrections", () => {
+    const result = normalizeChangeRequestDraft({
+      projectId: 1067,
+      title: "CR-9299-0030 Design Updates",
+      description: "Owner requested design updates to add acoustic ceilings.",
+      type: "owner change",
+      scope: "Atascope",
+      status: "OpenStatus",
+      reason: "They wanted to add acoustic ceilings.",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      draft: {
+        projectId: 1067,
+        title: "CR-9299-0030 Design Updates",
+        type: "Owner Change",
+        scope: "Out of Scope",
+        status: "Open",
+        reason: "Client Request",
+        expectingRevenue: true,
+      },
+    });
+  });
+
   it("builds the preview/write field payload from the normalized draft", () => {
     const result = normalizeChangeRequestDraft({
       projectId: 43,
@@ -111,8 +138,10 @@ describe("assistant create workflow registry", () => {
       status: "Pending Approval",
       reason: null,
       origin: "Internal",
+      origin_id: null,
       expecting_revenue: false,
       line_item_revenue_source: "Enter manually",
+      prime_contract_id: null,
     });
   });
 });

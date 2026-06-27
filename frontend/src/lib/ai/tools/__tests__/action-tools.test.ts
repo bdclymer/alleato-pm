@@ -473,6 +473,7 @@ describe("createChangeEvent", () => {
         single: jest.fn().mockResolvedValue({
           data: {
             id: "ce-1",
+            project_id: payload.project_id,
             title: payload.title,
             number: payload.number,
             status: payload.status,
@@ -581,6 +582,7 @@ describe("createChangeEvent", () => {
         'Change request **010 — "Owner-requested lobby finish change"** logged. Do you have any attachments you want to add to this change event?',
       record: {
         id: "ce-1",
+        project_id: 43,
         number: "010",
         status: "Open",
       },

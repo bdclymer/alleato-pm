@@ -48,6 +48,7 @@ import {
   isPersonalTaskRegisterRequest,
 } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { preserveActionToolTraceOutput } from "@/lib/ai/action-tool-trace";
 import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
@@ -779,6 +780,17 @@ function buildLiveToolTrace(
   }) as Record<string, unknown> | undefined;
   const error = asString(trace.error);
 
+  const summarizedOutput = {
+    source: output.source ?? microsoftLiveTrace?.source ?? asRecord(microsoftLiveTrace?.output).source ?? null,
+    count: output.count ?? null,
+    summary: output.summary ?? null,
+    error: output.error ?? error ?? null,
+    orchestrator: response.orchestrator ?? null,
+    mode: response.mode ?? null,
+    actionCount: Array.isArray(response.actions) ? response.actions.length : null,
+    toolTrace: responseToolTrace,
+  };
+
   return {
     tool,
     toolName: tool,
@@ -790,16 +802,10 @@ function buildLiveToolTrace(
     output:
       trace.output === undefined
         ? undefined
-        : {
-            source: output.source ?? microsoftLiveTrace?.source ?? asRecord(microsoftLiveTrace?.output).source ?? null,
-            count: output.count ?? null,
-            summary: output.summary ?? null,
-            error: output.error ?? error ?? null,
-            orchestrator: response.orchestrator ?? null,
-            mode: response.mode ?? null,
-            actionCount: Array.isArray(response.actions) ? response.actions.length : null,
-            toolTrace: responseToolTrace,
-          },
+        : preserveActionToolTraceOutput({
+            rawOutput: trace.output,
+            summarizedOutput,
+          }),
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
   };

@@ -231,6 +231,16 @@ describe("intent router", () => {
       expect(shouldUsePacketFirstIntent(intent)).toBe(false);
     });
 
+    it("keeps Playmakers-style field follow-up questions in the create workflow", () => {
+      const intent = classifyAssistantIntent(
+        "CR-9299-0030 the title is Design Updates and it's an owner change. How do I know for expecting revenue?",
+        { selectedProjectId: 1067 },
+      );
+
+      expect(intent).toBe("change_event_write");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    });
+
     it.each([
       "Show me the emails about the sprinkler change.",
       "Pull up the Teams messages about the potential change.",

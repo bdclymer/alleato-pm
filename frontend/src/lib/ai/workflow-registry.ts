@@ -285,10 +285,14 @@ const scopeLookup = enumLookup(CHANGE_REQUEST_SCOPE_OPTIONS, {
   other: "TBD",
   in_scope: "In Scope",
   out_of_scope: "Out of Scope",
+  outascope: "Out of Scope",
+  atascope: "Out of Scope",
 });
 
 const statusLookup = enumLookup(CHANGE_REQUEST_STATUS_OPTIONS, {
   open: "Open",
+  open_status: "Open",
+  openstatus: "Open",
   in_review: "Pending Approval",
   pending: "Pending Approval",
   pending_approval: "Pending Approval",
@@ -325,6 +329,26 @@ function normalizeOptionalEnum<T extends string>(params: {
     ok: false,
     error: `Invalid change request ${params.label} "${raw}". Use one of: ${Array.from(new Set(params.lookup.values())).join(", ")}.`,
   };
+}
+
+function coerceChangeRequestReason(params: {
+  value?: string | null;
+  type?: string;
+}): string | null | undefined {
+  const raw = params.value?.trim();
+  if (!raw) return raw;
+  if (reasonLookup.has(normalizeKey(raw))) return raw;
+
+  if (
+    params.type === "Owner Change" &&
+    /\b(owner|client|customer|requested|request|asked|wanted|directed)\b/i.test(
+      raw,
+    )
+  ) {
+    return "Client Request";
+  }
+
+  return raw;
 }
 
 export type NormalizeChangeRequestInput = {
@@ -412,7 +436,10 @@ export function normalizeChangeRequestDraft(
   if (!status.ok) return { ok: false, error: status.error };
 
   const reason = normalizeOptionalEnum({
-    value: input.reason,
+    value: coerceChangeRequestReason({
+      value: input.reason,
+      type: type.value,
+    }),
     lookup: reasonLookup,
     label: "reason",
   });

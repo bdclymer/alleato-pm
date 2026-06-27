@@ -328,6 +328,34 @@ function getToolParts(msg: UIMessage): ToolPart[] {
   }, []);
 }
 
+function getPersistedActionToolParts(traces: ToolTraceItem[]): ToolPart[] {
+  return traces.reduce<ToolPart[]>((parts, trace, index) => {
+    const toolName =
+      typeof trace.tool === "string" && trace.tool.trim()
+        ? trace.tool.trim()
+        : null;
+    if (toolName !== "createChangeEvent") return parts;
+
+    const output = asObject(trace.output);
+    const preview = asObject(output.preview);
+    const record = asObject(output.record);
+    const hasPreview =
+      output.action === "preview" && Object.keys(preview).length > 0;
+    const hasRecord = Object.keys(record).length > 0;
+    if (!hasPreview && !hasRecord) return parts;
+
+    parts.push({
+      type: `tool-${toolName}`,
+      toolCallId: `persisted-${toolName}-${trace.timestamp ?? index}`,
+      input: trace.input ?? {},
+      state: output.error ? "output-error" : "output-available",
+      output,
+      errorText: typeof output.error === "string" ? output.error : undefined,
+    });
+    return parts;
+  }, []);
+}
+
 function getArtifactParts(msg: UIMessage): ToolPart[] {
   return getToolParts(msg).filter(
     (part) => part.type === "tool-saveWorkspaceArtifact",
@@ -517,6 +545,7 @@ function getRecordDeepLinks(
 
   const projectId =
     toNumber(input.projectId) ??
+    toNumber(input.selectedProjectId) ??
     toNumber((record as Record<string, unknown>)?.project_id);
   const recordId =
     toStringValue((record as Record<string, unknown>)?.id) ??
@@ -1927,6 +1956,10 @@ export function ChatArea({
                 const trailingAssistantWidgetParts =
                   assistantWidgetParts.filter(isOutlookInboxSummaryWidget);
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
+                const persistedActionToolParts =
+                  toolParts.length === 0
+                    ? getPersistedActionToolParts(persistedTraces)
+                    : [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
                 const skillUsage = skillUsageByMessageId[msg.id];
@@ -2230,6 +2263,23 @@ export function ChatArea({
                             >
                               {formattedAssistantText}
                             </MessageResponse>
+                          )}
+
+                          {persistedActionToolParts.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {persistedActionToolParts.map((part) => (
+                                <ToolCallItem
+                                  key={part.toolCallId}
+                                  part={part}
+                                  onApprove={handleToolApprove}
+                                  onEdit={handleToolEdit}
+                                  onRun={handleToolRun}
+                                  onApprovalResponse={onToolApprovalResponse}
+                                  sessionId={sessionId}
+                                  selectedProjectId={selectedProjectIdProp}
+                                />
+                              ))}
+                            </div>
                           )}
 
                           {trailingAssistantWidgetParts.map((widget) => (
