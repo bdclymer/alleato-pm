@@ -74,7 +74,7 @@ import {
 
 import { PageShell } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProductBoardClient } from "@/features/product-board/product-board-client";
+import { TasksInbox } from "@/features/tasks/tasks-inbox";
 
 import { AdminDirectoryView } from "./admin-directory-view";
 
@@ -779,13 +779,13 @@ export default function AdminDashboardPage() {
       <Tabs defaultValue="directory" className="gap-6">
         <TabsList variant="line">
           <TabsTrigger value="directory">Directory</TabsTrigger>
-          <TabsTrigger value="product-board">Product Board</TabsTrigger>
+          <TabsTrigger value="kanban">Kanban</TabsTrigger>
         </TabsList>
         <TabsContent value="directory" className="m-0">
           <AdminDirectoryView sections={sections} />
         </TabsContent>
-        <TabsContent value="product-board" className="m-0">
-          <ProductBoardClient />
+        <TabsContent value="kanban" className="m-0">
+          <TasksInbox defaultScope="all" defaultView="board" showTabs={false} />
         </TabsContent>
       </Tabs>
 
