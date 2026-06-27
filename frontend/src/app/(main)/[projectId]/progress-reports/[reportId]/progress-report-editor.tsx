@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Download, Edit, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import {
   ContentSectionStack,
   DetailPanel,
   SectionRuleHeading,
-  SummaryValueRow,
 } from "@/components/layout";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { StatusBadge } from "@/components/ds/status-badge";
@@ -123,6 +122,47 @@ function ContactList({ contacts }: { contacts: ProgressReportContact[] }) {
       ))}
     </div>
   );
+}
+
+function SideRailSection({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-4 border-t border-border/60 pt-5 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-3">
+        <SectionRuleHeading label={title} className="mb-0 pb-0" />
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SideRailRow({
+  label,
+  value,
+  valueClassName = "text-foreground",
+}: {
+  label: string;
+  value: ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] items-start gap-4">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={`min-w-0 text-sm font-medium ${valueClassName}`}>{value}</span>
+    </div>
+  );
+}
+
+function SideRailEmpty({ children }: { children: ReactNode }) {
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 }
 
 function PhotoGrid({
@@ -1027,141 +1067,170 @@ export function ProgressReportEditor({
           </DetailPanel>
         </div>
 
-        <aside className="space-y-6">
-          <DetailPanel>
-            <SectionRuleHeading label="Details" className="mb-6 pb-0" />
-            <dl className="space-y-3 text-sm">
-              <SummaryValueRow
-                label="Construction Start"
+        <aside className="space-y-6 xl:border-l xl:border-border/60 xl:pl-6">
+          <SideRailSection title="Report">
+            <div className="space-y-3">
+              <SideRailRow label="Status" value={<StatusBadge status={draft.status} />} />
+              <SideRailRow label="Week start" value={formatProgressReportDate(draft.week_start)} />
+              <SideRailRow label="Week end" value={formatProgressReportDate(draft.week_end)} />
+              <SideRailRow
+                label="Construction start"
                 value={formatProgressReportDate(draft.construction_start_date) || "—"}
+                valueClassName={draft.construction_start_date ? "text-foreground" : "text-muted-foreground"}
               />
-              <SummaryValueRow
-                label="Scheduled Substantial Completion Date"
+              <SideRailRow
+                label="Substantial completion"
                 value={formatProgressReportDate(draft.scheduled_completion_date) || "—"}
+                valueClassName={draft.scheduled_completion_date ? "text-foreground" : "text-muted-foreground"}
               />
-              <SummaryValueRow
-                label="Week End"
-                value={formatProgressReportDate(draft.week_end)}
+              <SideRailRow
+                label="Weather lost"
+                value={`${draft.weather_days_lost} day${draft.weather_days_lost === 1 ? "" : "s"}`}
               />
-              <SummaryValueRow
-                label="Week Start"
-                value={formatProgressReportDate(draft.week_start)}
-              />
-              <SummaryValueRow
-                label="Days Lost due to Weather"
-                value={String(draft.weather_days_lost)}
-              />
-            </dl>
-          </DetailPanel>
+            </div>
+          </SideRailSection>
 
-          <DetailPanel>
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <SectionRuleHeading label="Project Team" className="pb-0" />
+          <SideRailSection
+            title="Delivery"
+            action={
               <Button
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="h-7 w-7 p-0"
+                className="h-8 w-8"
                 onClick={() => setIsEditing(true)}
+                aria-label="Edit delivery details"
               >
                 <Edit className="h-3.5 w-3.5" />
               </Button>
-            </div>
-            {draft.contacts.length > 0 ? (
-              <div className="space-y-4">
-                {draft.contacts.map((contact, index) => (
-                  <div key={`${contact.email}-${index}`} className="space-y-0.5">
-                    {contact.role ? (
-                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                        {contact.role}
-                      </div>
-                    ) : null}
-                    <div className="text-sm font-medium text-foreground">
-                      {contact.name || "Unnamed"}
-                    </div>
-                    {contact.email ? (
-                      <div className="text-xs text-muted-foreground">{contact.email}</div>
-                    ) : null}
-                    {contact.phone ? (
-                      <div className="text-xs text-muted-foreground">{contact.phone}</div>
-                    ) : null}
+            }
+          >
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Client recipients</p>
+                {draft.client_recipients.length > 0 ? (
+                  <div className="space-y-1">
+                    {draft.client_recipients.map((recipient) => (
+                      <p key={recipient} className="break-words text-sm font-medium text-foreground">
+                        {recipient}
+                      </p>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <SideRailEmpty>No recipients saved.</SideRailEmpty>
+                )}
               </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full gap-1.5"
-                onClick={() => setIsEditing(true)}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add team members
-              </Button>
-            )}
-          </DetailPanel>
 
-          {reportQuery.data.report.source_snapshot && (
-            (() => {
-              const snap = reportQuery.data.report.source_snapshot;
-              const hasSources = snap.meetings.length > 0 || snap.emails.length > 0;
-              if (!hasSources) return null;
-              return (
-                <DetailPanel>
-                  <SectionRuleHeading label="AI Sources" className="mb-4 pb-0" />
-                  <p className="mb-4 text-xs text-muted-foreground">
-                    Content generated {formatProgressReportDate(snap.generatedAt, "MMM d, yyyy")} from:
-                  </p>
-                  <div className="space-y-4">
-                    {snap.meetings.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                          Meetings ({snap.meetings.length})
-                        </p>
-                        <ul className="space-y-2">
-                          {snap.meetings.map((meeting) => (
-                            <li key={meeting.id}>
-                              <Link
-                                href={`/${projectId}/meetings/${meeting.id}`}
-                                className="group block text-sm text-foreground hover:text-primary"
-                              >
-                                <span className="min-w-0">
-                                  <span className="line-clamp-2 font-medium">{meeting.title}</span>
-                                  {meeting.date && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {formatProgressReportDate(meeting.date)}
-                                    </span>
-                                  )}
-                                </span>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">Project team</p>
+                {draft.contacts.length > 0 ? (
+                  <div className="divide-y divide-border/60">
+                    {draft.contacts.map((contact, index) => (
+                      <div key={`${contact.email}-${index}`} className="space-y-0.5 py-3 first:pt-0 last:pb-0">
+                        {contact.role ? (
+                          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                            {contact.role}
+                          </div>
+                        ) : null}
+                        <div className="text-sm font-medium text-foreground">
+                          {contact.name || "Unnamed contact"}
+                        </div>
+                        {contact.email ? (
+                          <div className="break-words text-xs text-muted-foreground">{contact.email}</div>
+                        ) : null}
+                        {contact.phone ? (
+                          <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                        ) : null}
                       </div>
-                    )}
-                    {snap.emails.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                          Emails ({snap.emails.length})
-                        </p>
-                        <ul className="space-y-2">
-                          {snap.emails.map((email) => (
-                            <li key={email.id} className="text-sm">
-                              <p className="line-clamp-2 font-medium text-foreground">{email.subject}</p>
-                              {email.date && (
-                                <p className="text-xs text-muted-foreground">
-                                  {formatProgressReportDate(email.date)}
-                                </p>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                </DetailPanel>
+                ) : (
+                  <SideRailEmpty>No project team contacts added.</SideRailEmpty>
+                )}
+              </div>
+            </div>
+          </SideRailSection>
+
+          <SideRailSection title="Source Context">
+            {(() => {
+              const snap = reportQuery.data.report.source_snapshot;
+              const hasSources =
+                snap.meetings.length > 0 ||
+                snap.emails.length > 0 ||
+                snap.photos.length > 0;
+
+              if (!hasSources) {
+                return <SideRailEmpty>No source records were captured for this draft.</SideRailEmpty>;
+              }
+
+              return (
+                <div className="space-y-5">
+                  {snap.generatedAt ? (
+                    <p className="text-xs text-muted-foreground">
+                      Generated {formatProgressReportDate(snap.generatedAt, "MMM d, yyyy")}
+                    </p>
+                  ) : null}
+
+                  {snap.meetings.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Meetings
+                        </p>
+                        <span className="text-xs text-muted-foreground">{snap.meetings.length}</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {snap.meetings.slice(0, 3).map((meeting) => (
+                          <li key={meeting.id}>
+                            <Link
+                              href={`/${projectId}/meetings/${meeting.id}`}
+                              className="group block text-sm text-foreground hover:text-primary"
+                              target="_blank"
+                            >
+                              <span className="line-clamp-2 font-medium">{meeting.title}</span>
+                              {meeting.date ? (
+                                <span className="block text-xs text-muted-foreground">
+                                  {formatProgressReportDate(meeting.date)}
+                                </span>
+                              ) : null}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {snap.emails.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Emails
+                        </p>
+                        <span className="text-xs text-muted-foreground">{snap.emails.length}</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {snap.emails.slice(0, 3).map((email) => (
+                          <li key={email.id} className="text-sm">
+                            <p className="line-clamp-2 font-medium text-foreground">{email.subject}</p>
+                            {email.date ? (
+                              <p className="text-xs text-muted-foreground">
+                                {formatProgressReportDate(email.date)}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {snap.photos.length > 0 ? (
+                    <div className="space-y-3">
+                      <SideRailRow label="Photos in snapshot" value={String(snap.photos.length)} />
+                    </div>
+                  ) : null}
+                </div>
               );
-            })()
-          )}
+            })()}
+          </SideRailSection>
         </aside>
       </div>
     </ContentSectionStack>
