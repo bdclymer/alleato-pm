@@ -167,9 +167,9 @@ Evidence directory:
 - [x] Repair AAI-705 database inventory drift so active AI/RAG/workflow tables are documented instead of false orphan candidates.
 - [x] Remove Outlook legacy mirroring gates after raw intake and canonical RAG ownership are proven.
 - [x] Retire the Outlook RAG-to-app incident bridge after canonical Outlook intake repair ownership is proven.
-- [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
+- [x] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
 - [x] Remove unused environment variables and orphaned database code where safe.
-- [ ] Confirm the codebase has one production implementation for every major workflow.
+- [x] Confirm the codebase has one production implementation for every major workflow.
 
 ### Phase 13: Final Production Readiness
 
@@ -182,7 +182,7 @@ Evidence directory:
 - [x] Task generation is validated.
 - [x] Error handling and retry logic are exercised.
 - [x] Logging and monitoring are operational.
-- [ ] Final deliverables are produced.
+- [x] Final deliverables are produced.
 
 ## Progress Notes
 
@@ -1335,3 +1335,29 @@ Evidence directory:
 - Evidence:
   - [Task](../tasks/2026-06-27-finalize-env-db-cleanup-proof.md)
   - [Final proof](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-final-aai-737.md)
+
+### 2026-06-27: AAI-738 Final Production Deliverables Produced
+
+- Created the final production-readiness deliverables package:
+  - [Task](../tasks/2026-06-27-ai-rag-final-deliverables.md)
+  - [Final deliverables](../evidence/2026-06-25-ai-rag-production-finalization/final-production-readiness-deliverables-aai-738.md)
+- The deliverables include:
+  - checklist of every completed pipeline;
+  - remaining blockers/residual risks;
+  - deleted legacy code and obsolete implementation list;
+  - architectural changes summary;
+  - current and historical end-to-end testing evidence;
+  - final production implementation confirmation.
+- Fresh verifier refresh initially caught a real Fireflies regression:
+  - `npm run rag:verify:meetings` failed at 73/75 recent meetings embedded.
+  - `npm run rag:verify:source-lifecycle` failed on Fireflies embedded coverage.
+- Repair:
+  - `npm run rag:backfill:meeting-chunks -- --days=14 --limit=100` inserted 2 missing recent meeting chunks.
+- Final verifier state after repair:
+  - `npm run rag:verify:meetings` passed with 75/75 recent meetings embedded.
+  - `npm run rag:verify:source-lifecycle` passed.
+  - `npm run rag:verify:graph-embedding` passed.
+  - `npm run verify:graph-subscriptions -- --json` passed with 11 active targets, 0 stale subscriptions, 0 missing targets, and 0 errored sync states.
+  - `npm run rag:verify:chat-architecture`, `source-specific`, `retrieval-contract`, `chunk-integrity`, and `response-contract` passed.
+  - `npm run verify:microsoft-assistant-health -- --json` passed.
+  - `npm run verify:deprecated-provider-env`, `db:inventory -- --check-only`, `db:types:check`, `verify:acumatica-sync-health`, and `rag:verify:render-ai` passed.
