@@ -9,8 +9,8 @@ type RouteParams = { params: Promise<{ sessionId: string }> };
 
 /**
  * PATCH /api/ai-assistant/conversations/[sessionId]
- * Rename a conversation.
- * Body: { title: string }
+ * Rename and/or pin a conversation.
+ * Body: { title?: string, is_pinned?: boolean } — at least one field required.
  */
 export const PATCH = withApiGuardrails(
   "ai-assistant/conversations/[sessionId]#PATCH",
@@ -23,9 +23,31 @@ export const PATCH = withApiGuardrails(
   const { sessionId } = await params;
   const body = await request.json();
 
-  if (!body.title?.trim()) {
+  const update: { title?: string; is_pinned?: boolean } = {};
+
+  if (body.title !== undefined) {
+    if (!body.title?.trim()) {
+      return NextResponse.json(
+        { error: "Title cannot be empty" },
+        { status: 400 },
+      );
+    }
+    update.title = body.title.trim();
+  }
+
+  if (body.is_pinned !== undefined) {
+    if (typeof body.is_pinned !== "boolean") {
+      return NextResponse.json(
+        { error: "is_pinned must be a boolean" },
+        { status: 400 },
+      );
+    }
+    update.is_pinned = body.is_pinned;
+  }
+
+  if (Object.keys(update).length === 0) {
     return NextResponse.json(
-      { error: "Title is required" },
+      { error: "Provide a title or is_pinned to update" },
       { status: 400 },
     );
   }
@@ -33,7 +55,7 @@ export const PATCH = withApiGuardrails(
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("conversations")
-    .update({ title: body.title.trim() })
+    .update(update)
     .eq("session_id", sessionId)
     .eq("user_id", user.id);
 

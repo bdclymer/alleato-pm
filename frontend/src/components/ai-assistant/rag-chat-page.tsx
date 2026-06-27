@@ -14,6 +14,7 @@ import {
   useCreateConversation,
   useRenameConversation,
   useDeleteConversation,
+  useTogglePinConversation,
 } from "@/hooks/use-rag-conversations";
 import { useChatSessionMessages } from "@/hooks/use-chat-session-messages";
 import {
@@ -324,6 +325,7 @@ export function RagChatPage() {
   const createConversation = useCreateConversation();
   const renameConversation = useRenameConversation();
   const deleteConversation = useDeleteConversation();
+  const togglePinConversation = useTogglePinConversation();
 
   // Load messages when session changes
   useEffect(() => {
@@ -424,6 +426,13 @@ export function RagChatPage() {
     [deleteConversation, activeSessionId, setActiveSession],
   );
 
+  const handleTogglePin = useCallback(
+    (sessionId: string, isPinned: boolean) => {
+      togglePinConversation.mutate({ sessionId, isPinned });
+    },
+    [togglePinConversation],
+  );
+
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
     async (message: string, files?: FileUIPart[]) => {
@@ -457,6 +466,7 @@ export function RagChatPage() {
         onNewChat={handleNewChat}
         onRename={handleRename}
         onDelete={handleDelete}
+        onTogglePin={handleTogglePin}
       />
       <div className="fixed left-4 top-20 z-30 md:left-20">
         <Tooltip>

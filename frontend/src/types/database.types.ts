@@ -8919,6 +8919,7 @@ export type Database = {
         Row: {
           created_at: string | null
           is_archived: boolean | null
+          is_pinned: boolean
           last_message_at: string | null
           metadata: Json | null
           session_id: string
@@ -8928,6 +8929,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           is_archived?: boolean | null
+          is_pinned?: boolean
           last_message_at?: string | null
           metadata?: Json | null
           session_id: string
@@ -8937,6 +8939,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           is_archived?: boolean | null
+          is_pinned?: boolean
           last_message_at?: string | null
           metadata?: Json | null
           session_id?: string
