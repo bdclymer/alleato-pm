@@ -1,6 +1,6 @@
 # Disable Brandon Microsoft Email Assistant Mailbox Writes
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Linear: AAI-759 - https://linear.app/megankharrison/issue/AAI-759/deactivate-brandon-microsoft-email-assistant-drafts-until-further
 Date: 2026-06-27
@@ -25,7 +25,7 @@ Keep the Microsoft email assistant active for Brandon's mailbox reads, questions
 - [x] Disable backend Microsoft Executive Assistant auto-draft behavior.
 - [x] Disable scheduled Microsoft Executive Assistant auto-draft behavior.
 - [x] Add a code-level mailbox mutation gate for Outlook category/tag writes.
-- [ ] Deploy the mailbox mutation gate to production.
+- [x] Deploy the mailbox mutation gate to production.
 - [x] Verify provider read-back for `MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED=false`.
 - [x] Verify logs/health surfaces available for monitoring mailbox write attempts.
 - [x] Verify provider read-back without exposing secrets.
@@ -41,6 +41,8 @@ Keep the Microsoft email assistant active for Brandon's mailbox reads, questions
 | Post-change health | `npm run verify:microsoft-assistant-health -- --json` | Pass | At 2026-06-27T15:40:04Z, Render cron, live Graph inbox, cached intake, and sync ledger all passed. Last successful cron run was 2026-06-27T15:39:50Z. |
 | Mailbox mutation env read-back | Render API `GET /v1/services/<id>/env-vars?limit=100` | Pass | At 2026-06-27T15:47:26Z, cron and backend had `MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED=false`, `MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT=false`, and `MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT=true`. |
 | Guardrail tests | `backend/.venv/bin/python -m pytest backend/tests/test_microsoft_executive_assistant.py -q -k "mailbox_mutations or outlook_category_patch or patch_outlook_email_categories_clears or outlook_event_trigger"` | Pass | 7 passed. Confirms category writes are blocked by default, the explicit category tool is hidden while mutations are disabled, and webhook prompt no longer promises Outlook categories. |
+| Render deploy read-back | Render API `GET /v1/services/<id>/deploys?limit=5` | Pass | Backend deploy `dep-d8vv1g8js32c73c9ua0g` and cron deploy `dep-d8vv1ggjs32c73c9ua60` are live on commit `5bea555a9e916971fcf76a0b3f7c039b5f36f3e9`. |
+| Post-deploy health | `npm run verify:microsoft-assistant-health -- --json` | Pass | At 2026-06-27T15:49:45Z, Render cron, live Graph inbox, cached intake, and sync ledger all passed. Last successful cron run was 2026-06-27T15:46:26Z. |
 
 ## Failure-Loudly Behavior
 
