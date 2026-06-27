@@ -62,6 +62,17 @@ type ApiErrorPayload = {
   hint?: string;
   details?: string;
 };
+type GitHubWarningPayload = {
+  code:
+    | "not_configured"
+    | "invalid_credentials"
+    | "insufficient_permissions"
+    | "repo_not_found"
+    | "validation_failed"
+    | "issue_create_failed";
+  message: string;
+  details?: string;
+};
 
 function toErrorDetails(value: unknown) {
   if (typeof value === "object" && value !== null) {
@@ -84,6 +95,49 @@ function toErrorDetails(value: unknown) {
   }
 
   return { message: "Unexpected error" };
+}
+
+function classifyGitHubIssueFailure(error: unknown): GitHubWarningPayload {
+  const message = error instanceof Error ? error.message : String(error);
+  const details = message.slice(0, 600);
+
+  if (/401|bad credentials/i.test(message)) {
+    return {
+      code: "invalid_credentials",
+      message: "GitHub rejected the configured feedback token.",
+      details,
+    };
+  }
+
+  if (/403|resource not accessible|permission/i.test(message)) {
+    return {
+      code: "insufficient_permissions",
+      message: "GitHub feedback token does not have permission to create issues.",
+      details,
+    };
+  }
+
+  if (/404|not found/i.test(message)) {
+    return {
+      code: "repo_not_found",
+      message: "GitHub feedback repository was not found for the configured owner/repo.",
+      details,
+    };
+  }
+
+  if (/validation failed/i.test(message)) {
+    return {
+      code: "validation_failed",
+      message: "GitHub rejected the feedback issue payload.",
+      details,
+    };
+  }
+
+  return {
+    code: "issue_create_failed",
+    message: "GitHub issue creation failed after the feedback was saved.",
+    details,
+  };
 }
 
 function toJsonValue(value: unknown): JsonValue {
@@ -295,7 +349,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
   }
 
   let githubIssue: { number: number; url: string; state: string } | null = null;
-  let githubWarning: string | null = null;
+  let githubWarning: GitHubWarningPayload | null = null;
 
   try {
     githubIssue = await createGitHubIssue({
@@ -317,7 +371,28 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
       toolContext,
     });
   } catch (error) {
-    githubWarning = error instanceof Error ? error.message : "GitHub issue creation failed";
+    githubWarning = classifyGitHubIssueFailure(error);
+    logger.warn({
+      msg: "[AdminFeedback] GitHub issue creation failed",
+      feedbackId: inserted.id,
+      warningCode: githubWarning.code,
+      warningMessage: githubWarning.message,
+      warningDetails: githubWarning.details,
+    });
+  }
+
+  if (!githubIssue && !githubWarning) {
+    githubWarning = {
+      code: "not_configured",
+      message:
+        "GitHub feedback integration is not configured in this environment.",
+    };
+    logger.warn({
+      msg: "[AdminFeedback] GitHub issue creation skipped",
+      feedbackId: inserted.id,
+      warningCode: githubWarning.code,
+      warningMessage: githubWarning.message,
+    });
   }
 
   if (githubIssue) {
@@ -380,9 +455,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
     title,
     screenshotUrl,
     githubIssue,
-    githubWarning:
-      githubWarning ??
-      (githubIssue ? null : "GitHub feedback integration is not configured in this environment."),
+    githubWarning,
     teamsWarning:
       teamsResult.ok || teamsResult.reason === "not_configured"
         ? null

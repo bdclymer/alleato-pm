@@ -12,6 +12,8 @@ import {
   CircleStop,
   Crosshair,
   Lightbulb,
+  Pause,
+  Play,
   Trash2,
   Upload,
   Video,
@@ -204,6 +206,13 @@ function waitForComposerToLeaveViewport() {
   });
 }
 
+function formatRecordingElapsed(elapsedMs: number) {
+  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 function FeedbackToolButton({
   label,
   onClick,
@@ -272,6 +281,7 @@ export function AdminFeedbackWidget() {
   );
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
   const recordingHandleRef = useRef<ScreenRecorderHandle | null>(null);
@@ -353,6 +363,7 @@ export function AdminFeedbackWidget() {
     try {
       const { blob } = await handle.stop();
       setIsRecording(false);
+      setIsRecordingPaused(false);
       if (blob.size === 0) {
         toast.error("Recording was empty — try again.");
         if (shouldReopenComposer) {
@@ -393,6 +404,7 @@ export function AdminFeedbackWidget() {
       }
     } catch (error) {
       setIsRecording(false);
+      setIsRecordingPaused(false);
       reportNonCriticalFailure({
         area: "admin-feedback-widget",
         operation: "stop-screen-recording",
@@ -417,6 +429,7 @@ export function AdminFeedbackWidget() {
       const handle = await startScreenRecording();
       recordingHandleRef.current = handle;
       setIsRecording(true);
+      setIsRecordingPaused(false);
       const startedAt = performance.now();
       recordingTimerRef.current = window.setInterval(() => {
         setRecordingElapsedMs(performance.now() - startedAt);
@@ -445,6 +458,50 @@ export function AdminFeedbackWidget() {
     void finalizeRecording();
   }, [finalizeRecording]);
 
+  const pauseRecording = useCallback(() => {
+    const handle = recordingHandleRef.current;
+    if (!handle || handle.recorder.state !== "recording") {
+      return;
+    }
+
+    try {
+      handle.recorder.pause();
+      setIsRecordingPaused(true);
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "admin-feedback-widget",
+        operation: "pause-screen-recording",
+        error,
+        userVisibleFallback: "Could not pause the screen recording.",
+      });
+      toast.error("Could not pause recording", {
+        description: getErrorDetail(error),
+      });
+    }
+  }, []);
+
+  const resumeRecording = useCallback(() => {
+    const handle = recordingHandleRef.current;
+    if (!handle || handle.recorder.state !== "paused") {
+      return;
+    }
+
+    try {
+      handle.recorder.resume();
+      setIsRecordingPaused(false);
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "admin-feedback-widget",
+        operation: "resume-screen-recording",
+        error,
+        userVisibleFallback: "Could not resume the screen recording.",
+      });
+      toast.error("Could not resume recording", {
+        description: getErrorDetail(error),
+      });
+    }
+  }, []);
+
   const discardRecording = useCallback(() => {
     if (recordingHandleRef.current) {
       try {
@@ -459,6 +516,7 @@ export function AdminFeedbackWidget() {
       recordingTimerRef.current = null;
     }
     setIsRecording(false);
+    setIsRecordingPaused(false);
     setIsUploadingVideo(false);
     setRecordingElapsedMs(0);
     setVideoPreviewUrl((current) => {
@@ -783,7 +841,7 @@ export function AdminFeedbackWidget() {
       try {
         const payload = await apiFetch<{
           githubIssue?: { url?: string };
-          githubWarning?: unknown;
+          githubWarning?: { message?: string } | string | null;
         }>("/api/admin/feedback", {
           method: "POST",
           body: JSON.stringify({
@@ -836,9 +894,15 @@ export function AdminFeedbackWidget() {
         if (payload?.githubIssue?.url) {
           toast.success("Feedback submitted and GitHub issue created.");
         } else if (payload?.githubWarning) {
-          toast.success(
-            "Feedback saved, but GitHub issue creation needs configuration.",
-          );
+          const warningDescription =
+            typeof payload.githubWarning === "string"
+              ? payload.githubWarning
+              : payload.githubWarning.message;
+          toast.warning("Feedback saved; GitHub issue was not created.", {
+            description:
+              warningDescription ||
+              "Open Feedback Inbox and send it to GitHub after the integration is fixed.",
+          });
         } else {
           toast.success(getSubmissionSuccessLabel(form.feedbackType));
         }
@@ -869,6 +933,10 @@ export function AdminFeedbackWidget() {
     })();
   };
 
+  const recordingStatusLabel = isRecordingPaused
+    ? `Recording paused at ${formatRecordingElapsed(recordingElapsedMs)}`
+    : `Recording ${formatRecordingElapsed(recordingElapsedMs)}`;
+
   return (
     <>
       {hoveredRect && isSelecting && (
@@ -888,6 +956,62 @@ export function AdminFeedbackWidget() {
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
         >
           Click an element, then keep writing in the sheet.
+        </div>
+      )}
+      {isRecording && (
+        <div
+          className="fixed bottom-4 left-1/2 z-[9999] flex w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 items-center justify-between gap-3 rounded-full border border-border bg-background px-3 py-2 text-sm shadow-sm sm:right-4 sm:left-auto sm:w-auto sm:translate-x-0"
+          role="status"
+          aria-live="polite"
+          {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={cn(
+                "h-2.5 w-2.5 shrink-0 rounded-full bg-destructive",
+                !isRecordingPaused && "animate-pulse",
+              )}
+              aria-hidden="true"
+            />
+            <span className="truncate font-medium text-foreground">
+              {recordingStatusLabel}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={isRecordingPaused ? resumeRecording : pauseRecording}
+              aria-label={isRecordingPaused ? "Resume recording" : "Pause recording"}
+            >
+              {isRecordingPaused ? (
+                <Play className="h-4 w-4" />
+              ) : (
+                <Pause className="h-4 w-4" />
+              )}
+            </Button>
+            {!dialogOpen && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setDialogOpen(true)}
+              >
+                Form
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={stopRecording}
+              className="gap-1.5 rounded-full"
+            >
+              <CircleStop className="h-3.5 w-3.5" />
+              Stop
+            </Button>
+          </div>
         </div>
       )}
 
@@ -1081,10 +1205,10 @@ export function AdminFeedbackWidget() {
                     <span className="mt-1 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-destructive" />
                   }
                 >
-                  Recording {Math.floor(recordingElapsedMs / 1000)}s /
-                  {" "}
-                  {Math.floor(MAX_RECORDING_DURATION_MS / 1000)}s. Stop when
-                  you are done, then send the feedback.
+                  {isRecordingPaused ? "Recording paused" : "Recording"} at{" "}
+                  {formatRecordingElapsed(recordingElapsedMs)} /{" "}
+                  {formatRecordingElapsed(MAX_RECORDING_DURATION_MS)}. Use the
+                  recording bar to pause or stop, then send the feedback.
                 </InfoAlert>
               )}
 
