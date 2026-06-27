@@ -508,6 +508,96 @@ describe("executive operating brief priority lanes", () => {
       expect(line).not.toMatch(LEAK);
     }
   });
+
+  it("builds chief-of-staff sections from cross-meeting signals", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [
+        briefItem("VP onboarding decisions are still open", {
+          summary:
+            "The team needs reporting structure, office assignment, equipment, and org chart placement before onboarding.",
+          recommendedAction:
+            "Finalize the VP reporting structure and office plan before July 8.",
+          whyItMatters:
+            "Unclear onboarding decisions are already creating internal speculation before the new VP starts.",
+          tone: "watch",
+          project: "Company operations",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Utility confirmation is still pending", {
+          summary:
+            "Telephone utility removal depends on owner IT confirmation before field work proceeds.",
+          recommendedAction:
+            "Get written owner IT confirmation on the abandoned telephone utilities.",
+          whyItMatters:
+            "If the utility status is wrong, the field team can run into a preventable removal issue.",
+          tone: "risk",
+          project: "Ace Hardware Champaign",
+        }),
+        briefItem("Sprinkler material delivery is not confirmed", {
+          summary:
+            "The rack installation sequence depends on subcontractor material delivery and permit approval.",
+          recommendedAction:
+            "Confirm permit timing and sprinkler material delivery before the next coordination call.",
+          whyItMatters:
+            "External partner timing can slip the rack install even if Alleato is ready.",
+          tone: "risk",
+          project: "Superior Beverage",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("Building Connected workflow is becoming standard", {
+          summary:
+            "Estimating is standardizing bid package creation, proposal storage, and bidder follow-up.",
+          recommendedAction:
+            "Document the Building Connected workflow so another estimator can run it without tribal knowledge.",
+          whyItMatters:
+            "A repeatable estimating workflow reduces missed scope before construction begins.",
+          tone: "good",
+          project: "Union Collective",
+        }),
+        briefItem("Accounting WIP workflow is being standardized", {
+          summary:
+            "Accounting is standardizing WIP reviews, reconciliation, payroll import, and reporting cadence.",
+          recommendedAction:
+            "Turn the WIP workflow into a monthly close checklist.",
+          whyItMatters:
+            "Repeatable financial reporting reduces the amount Brandon has to personally interpret each month.",
+          tone: "good",
+          project: "Company finance",
+        }),
+      ],
+    });
+
+    expect(brief.businessHealth?.map((item) => item.area)).toEqual([
+      "Projects",
+      "Finance",
+      "Operations",
+      "People",
+      "Technology",
+    ]);
+    expect(brief.emergingPatterns?.map((pattern) => pattern.title)).toEqual(
+      expect.arrayContaining([
+        "External dependency management is the main execution risk",
+        "Alleato is standardizing its operating system",
+      ]),
+    );
+    expect(brief.strategicRisks?.[0]).toEqual(
+      expect.objectContaining({
+        likelihood: expect.stringMatching(/low|medium|high/),
+        nextAction: expect.any(String),
+      }),
+    );
+    expect(brief.opportunities).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("written operating standard"),
+      ]),
+    );
+    expect(brief.leadershipWatchlist?.length).toBeGreaterThan(0);
+    expect(brief.chiefOfStaffInsights?.join(" ")).toMatch(
+      /pattern-level|system design|external dependency/i,
+    );
+  });
 });
 
 describe("applyProjectNumbers", () => {

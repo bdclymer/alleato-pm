@@ -160,6 +160,51 @@ function buildRecapText(packet: BrandonDailyUpdatePacket) {
       ...focusLines,
     ];
 
+    if (brief.businessHealth?.length) {
+      lines.push("", "BUSINESS HEALTH:");
+      brief.businessHealth.forEach((item) => {
+        lines.push(`- ${item.area} (${item.status}): ${item.summary}`);
+      });
+    }
+
+    if (brief.emergingPatterns?.length) {
+      lines.push("", "EMERGING PATTERNS:");
+      brief.emergingPatterns.forEach((pattern) => {
+        lines.push(`- ${pattern.title}: ${pattern.significance}`);
+        pattern.evidence.forEach((evidence) => lines.push(`  - ${evidence}`));
+      });
+    }
+
+    if (brief.strategicRisks?.length) {
+      lines.push("", "STRATEGIC RISKS:");
+      brief.strategicRisks.forEach((risk) => {
+        lines.push(
+          `- ${risk.title} (${risk.likelihood} likelihood, ${risk.trend}): ${risk.impact}. Next: ${risk.nextAction}`,
+        );
+      });
+    }
+
+    if (brief.opportunities?.length) {
+      lines.push("", "OPPORTUNITIES:");
+      brief.opportunities.forEach((opportunity) => {
+        lines.push(`- ${opportunity}`);
+      });
+    }
+
+    if (brief.leadershipWatchlist?.length) {
+      lines.push("", "LEADERSHIP WATCHLIST:");
+      brief.leadershipWatchlist.forEach((watchItem) => {
+        lines.push(`- ${watchItem}`);
+      });
+    }
+
+    if (brief.chiefOfStaffInsights?.length) {
+      lines.push("", "AI CHIEF OF STAFF INSIGHTS:");
+      brief.chiefOfStaffInsights.forEach((insight) => {
+        lines.push(`- ${insight}`);
+      });
+    }
+
     if (extraMoves.length > 0) {
       lines.push("", "OTHER MOVES:");
       extraMoves.forEach((move, index) => lines.push(`${index + 1}. ${move}`));
@@ -419,7 +464,8 @@ function isFollowUpInsideSourceWindow(
   followUp: ExecutiveBriefingFollowUp,
   cutoffDateKey: string,
 ) {
-  const anchor = parseDate(followUp.source_date) ?? parseDate(followUp.last_seen_at);
+  const anchor =
+    parseDate(followUp.source_date) ?? parseDate(followUp.last_seen_at);
   return anchor !== null && getEasternDateParts(anchor) >= cutoffDateKey;
 }
 
@@ -467,11 +513,17 @@ function formatDailyRecapError(error: {
   }`;
 }
 
-async function withAppDbClient<T>(callback: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+async function withAppDbClient<T>(
+  callback: (client: import("pg").PoolClient) => Promise<T>,
+): Promise<T> {
   const databaseUrl =
-    process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL;
+    process.env.APP_DATABASE_URL ??
+    process.env.DATABASE_URL ??
+    process.env.SUPABASE_DB_URL;
   if (!databaseUrl) {
-    throw new Error("App database URL is not configured for executive briefing fallback.");
+    throw new Error(
+      "App database URL is not configured for executive briefing fallback.",
+    );
   }
   const pg = await import("pg");
   const url = new URL(databaseUrl);
@@ -519,7 +571,9 @@ function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
   ) as T;
 }
 
-async function loadExistingDraftFromAppDb(recapDate: string): Promise<DailyRecapRow | null> {
+async function loadExistingDraftFromAppDb(
+  recapDate: string,
+): Promise<DailyRecapRow | null> {
   return withAppDbClient(async (client) => {
     const result = await client.query(
       `
@@ -532,7 +586,9 @@ async function loadExistingDraftFromAppDb(recapDate: string): Promise<DailyRecap
       `,
       [CEO_EXECUTIVE_BRIEFING_RECAP_KIND, recapDate],
     );
-    return result.rows[0] ? (normalizeDbRow(result.rows[0]) as DailyRecapRow) : null;
+    return result.rows[0]
+      ? (normalizeDbRow(result.rows[0]) as DailyRecapRow)
+      : null;
   });
 }
 
@@ -540,10 +596,14 @@ async function persistExecutiveBriefingDraftToAppDb(
   row: DailyRecapInsert,
 ): Promise<DailyRecapRow> {
   return withAppDbClient(async (client) => {
-    const entries = Object.entries(row).filter(([, value]) => value !== undefined);
+    const entries = Object.entries(row).filter(
+      ([, value]) => value !== undefined,
+    );
     if (row.id) {
       const updateEntries = entries.filter(([key]) => key !== "id");
-      const assignments = updateEntries.map(([key], index) => `${key} = $${index + 1}`);
+      const assignments = updateEntries.map(
+        ([key], index) => `${key} = $${index + 1}`,
+      );
       const values = updateEntries.map(([, value]) => toDbValue(value));
       const result = await client.query(
         `
@@ -554,7 +614,8 @@ async function persistExecutiveBriefingDraftToAppDb(
         `,
         [...values, row.id],
       );
-      if (result.rows[0]) return normalizeDbRow(result.rows[0]) as DailyRecapRow;
+      if (result.rows[0])
+        return normalizeDbRow(result.rows[0]) as DailyRecapRow;
     }
 
     const columns = entries.map(([key]) => key);
@@ -582,7 +643,11 @@ async function persistExecutiveBriefingDraft(
   const supabase = createServiceClient();
 
   const runUpsert = (payload: DailyRecapInsert) =>
-    supabase.from("daily_recaps").upsert(payload, { onConflict: "id" }).select("*").single();
+    supabase
+      .from("daily_recaps")
+      .upsert(payload, { onConflict: "id" })
+      .select("*")
+      .single();
 
   let response = await runUpsert(row);
 
@@ -687,7 +752,9 @@ async function upsertFollowUpsToAppDb(
   }
 
   return withAppDbClient(async (client) => {
-    const fingerprints = entries.map(({ item, section }) => createFingerprint(item, section));
+    const fingerprints = entries.map(({ item, section }) =>
+      createFingerprint(item, section),
+    );
     const existingResult = await client.query<FollowUpRow>(
       `
         select *
@@ -776,7 +843,9 @@ export async function regenerateExecutiveBriefingDraft(options?: {
   });
   const dateRange = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(dateRange.recapDate);
-  const previousPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
+  const previousPacket = parseStoredPacket(
+    existingDraft?.briefing_packet ?? null,
+  );
   const versionedPacket = withPacketSourceRefs(
     withDailyBriefVersionMetadata(packet, previousPacket),
     dateRange.recapDate,
@@ -793,8 +862,9 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     recap_text: recapText,
     recap_html: null,
     meeting_count:
-      versionedPacket.sourceCoverage.find((source) => source.label === "Meeting")
-        ?.count ?? 0,
+      versionedPacket.sourceCoverage.find(
+        (source) => source.label === "Meeting",
+      )?.count ?? 0,
     project_count: projectCount(versionedPacket),
     briefing_packet: toSupabaseJson(versionedPacket),
     workflow_status: "draft",
@@ -866,7 +936,9 @@ async function loadFollowUpsFromAppDb(): Promise<ExecutiveBriefingFollowUp[]> {
         order by last_seen_at desc
       `,
     );
-    return result.rows.map((row) => toDashboardFollowUp(normalizeDbRow(row) as FollowUpRow));
+    return result.rows.map((row) =>
+      toDashboardFollowUp(normalizeDbRow(row) as FollowUpRow),
+    );
   });
 }
 
@@ -876,7 +948,9 @@ export async function getExecutiveBriefingDashboard(options?: {
   const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
   const { recapDate, dateRangeStart } = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(recapDate);
-  const storedPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
+  const storedPacket = parseStoredPacket(
+    existingDraft?.briefing_packet ?? null,
+  );
   const packet = storedPacket
     ? {
         ...storedPacket,

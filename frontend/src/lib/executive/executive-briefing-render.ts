@@ -13,12 +13,15 @@ import type {
 } from "@/lib/executive/brandon-daily-update";
 
 export const APP_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://projects.alleatogroup.com";
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  "https://projects.alleatogroup.com";
 
 // Strip a leading project code so only the readable name remains:
 //   "31 Uniqlo..." → "Uniqlo...", "26-103 Exol Wilmer" → "Exol Wilmer".
 export function projectName(value: string | null | undefined): string {
-  const s = String(value ?? "").replace(/\s+/g, " ").trim();
+  const s = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!s || /^no project linked$/i.test(s)) return "Company-wide";
   // "Multiple (8 projects)" → "Across 8 projects" (no sloppy parentheses).
   const multiple = s.match(/^multiple\s*\((\d+)\s*projects?\)$/i);
@@ -28,13 +31,25 @@ export function projectName(value: string | null | undefined): string {
 
 // Clip at sentence/word boundary.
 export function clip(value: string | null | undefined, max = 110): string {
-  const s = String(value ?? "").replace(/\s+/g, " ").trim();
+  const s = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (s.length <= max) return s;
   const cut = s.slice(0, max);
-  const dot = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("?"), cut.lastIndexOf("!"));
+  const dot = Math.max(
+    cut.lastIndexOf("."),
+    cut.lastIndexOf("?"),
+    cut.lastIndexOf("!"),
+  );
   if (dot >= 50) return cut.slice(0, dot + 1);
   const sp = cut.lastIndexOf(" ");
   return (sp > 0 ? cut.slice(0, sp) : cut) + "…";
+}
+
+function sentence(value: string): string {
+  const text = value.trim();
+  if (!text) return text;
+  return /[.!?]$/.test(text) ? text : `${text}.`;
 }
 
 // Strip "Label: " prefix the AI sometimes adds to bullets. Keep just the substance.
@@ -74,7 +89,10 @@ function projectIdFromLabel(value: string | null | undefined): number | null {
 // pipeline stored, fall back to the numeric prefix on the project label
 // ("1016 GW Kokomo" → 1016).
 function resolveProjectId(item: BrandonBriefItem): number | null {
-  if (typeof item.projectInternalId === "number" && item.projectInternalId > 0) {
+  if (
+    typeof item.projectInternalId === "number" &&
+    item.projectInternalId > 0
+  ) {
     return item.projectInternalId;
   }
   return projectIdFromLabel(item.project);
@@ -137,7 +155,9 @@ export function linkedClaimSources(
 // One plain insight sentence, pulled from whyItMatters. Rendered on its own
 // bold line (no "What this means" label).
 export function insightLine(item: BrandonBriefItem): string | null {
-  const text = String(item.whyItMatters ?? "").replace(/\s+/g, " ").trim();
+  const text = String(item.whyItMatters ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (text.length < 12) return null;
   return clip(text, 280);
 }
@@ -148,7 +168,8 @@ export function isFinancialItem(item: BrandonBriefItem): boolean {
   const retrieval = (item.retrieval ?? "").toLowerCase();
   const sourceDetail = (item.sourceDetail ?? "").toLowerCase();
   return (
-    retrieval.startsWith("financial pulse:") || sourceDetail.includes("acumatica")
+    retrieval.startsWith("financial pulse:") ||
+    sourceDetail.includes("acumatica")
   );
 }
 
@@ -232,6 +253,48 @@ export function formatExecutiveBriefingTeamsMessage(
       blocks.push(`[${source.label}](${source.href})`);
     }
   };
+
+  const operatingBrief = packet.operatingBrief;
+  const pushPlainSection = (title: string, lines: string[]) => {
+    const visible = lines.map((line) => clip(line, 260)).filter(Boolean);
+    if (visible.length === 0) return;
+    blocks.push(`**${title}**`);
+    visible.forEach((line) => blocks.push(`- ${line}`));
+  };
+
+  if (operatingBrief) {
+    pushPlainSection("Start here", operatingBrief.startHere.slice(0, 3));
+    pushPlainSection(
+      "Business health",
+      (operatingBrief.businessHealth ?? []).map(
+        (item) => `${item.area} (${item.status}): ${item.summary}`,
+      ),
+    );
+    pushPlainSection(
+      "Emerging patterns",
+      (operatingBrief.emergingPatterns ?? []).map(
+        (pattern) => `${pattern.title}: ${pattern.significance}`,
+      ),
+    );
+    pushPlainSection(
+      "Strategic risks",
+      (operatingBrief.strategicRisks ?? [])
+        .slice(0, 5)
+        .map(
+          (risk) =>
+            `${risk.title} (${risk.likelihood}, ${risk.trend}): ${sentence(risk.impact)} Next: ${risk.nextAction}`,
+        ),
+    );
+    pushPlainSection("Opportunities", operatingBrief.opportunities ?? []);
+    pushPlainSection(
+      "Leadership watchlist",
+      operatingBrief.leadershipWatchlist ?? [],
+    );
+    pushPlainSection(
+      "AI Chief of Staff insights",
+      operatingBrief.chiefOfStaffInsights ?? [],
+    );
+  }
 
   if (priorities.length > 0) {
     blocks.push(`**Needs your attention**`);

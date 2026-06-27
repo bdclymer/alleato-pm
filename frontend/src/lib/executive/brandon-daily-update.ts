@@ -62,6 +62,27 @@ export type ExecutiveOperatingBriefRiskItem =
     impact: string;
   };
 
+export type ExecutiveOperatingBriefHealthItem = {
+  area: string;
+  status: "healthy" | "watch" | "risk";
+  summary: string;
+};
+
+export type ExecutiveOperatingBriefPattern = {
+  title: string;
+  evidence: string[];
+  significance: string;
+  trend: "increasing" | "stable" | "improving";
+};
+
+export type ExecutiveOperatingBriefStrategicRisk = {
+  title: string;
+  likelihood: "low" | "medium" | "high";
+  impact: string;
+  trend: "increasing" | "stable" | "improving";
+  nextAction: string;
+};
+
 export type ExecutiveOperatingBrief = {
   startHere: string[];
   hasUnusualExecutiveLoad: boolean;
@@ -80,6 +101,12 @@ export type ExecutiveOperatingBrief = {
   importantBusinessSignals: string[];
   recommendedMoves: string[];
   lowerPriorityMomentum: ExecutiveOperatingBriefShortItem[];
+  businessHealth?: ExecutiveOperatingBriefHealthItem[];
+  emergingPatterns?: ExecutiveOperatingBriefPattern[];
+  strategicRisks?: ExecutiveOperatingBriefStrategicRisk[];
+  opportunities?: string[];
+  leadershipWatchlist?: string[];
+  chiefOfStaffInsights?: string[];
 };
 
 // The Daily Brief looks back 3 business days (weekends skipped). This keeps a
@@ -2522,14 +2549,18 @@ async function synthesizeSections(
   // avoids previously-flagged mistakes. Scoped strictly to `daily_brief`
   // (cross-project) — failures here must not block synthesis.
   let briefLearningBlock: string | null = null;
+  const synthesisWarnings: string[] = [];
   try {
     const learnings = await getSurfaceScopedLearnings({
       surface: "daily_brief",
       limit: 3,
     });
     briefLearningBlock = buildAgentLearningContextBlock(learnings).block;
-  } catch {
-    // keep the base prompt
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    synthesisWarnings.push(
+      `Daily Brief learning context lookup failed; continuing without feedback learnings. ${message}`,
+    );
   }
 
   const system =
@@ -2554,6 +2585,10 @@ async function synthesizeSections(
     "- sourceIndexes: array of the candidate index numbers this item is built from, most relevant first.\n" +
     "- status: a short plain status phrase. tone: one of risk, watch, good, neutral.\n" +
     "\n\nJUDGMENT:\n" +
+    "- Do NOT write a meeting recap. Do not organize around who met, agenda order, or what was discussed. Organize around the executive question: what changed, why it matters, what pattern it fits, what business outcome it affects, and what leadership should do.\n" +
+    "- Internally evaluate each candidate through this hierarchy before writing: observation -> significance -> pattern detection -> business impact -> priority -> recommendation.\n" +
+    "- Prefer cross-meeting or cross-source insight over isolated facts. If multiple meetings point to the same issue, write the larger business pattern and cite the supporting candidates.\n" +
+    "- Every included item must affect at least one executive outcome: schedule, profit, cash, client satisfaction, growth, risk, team performance, or reputation. Drop anything that does not.\n" +
     "- needsBrandon: only things Brandon personally has to decide, approve, confirm, or escalate. Keep this short and real.\n" +
     "- waitingOnOthers: work that is pending on the project team, a client, a vendor, estimating, finance, or design.\n" +
     "- importantUpdates: material context worth knowing that needs no action from Brandon today.\n" +
@@ -2624,7 +2659,7 @@ async function synthesizeSections(
           .filter((item): item is BrandonBriefItem => item !== null),
       },
       modelUsed: synthesisModel,
-      warnings: [],
+      warnings: synthesisWarnings,
       degraded: false,
     };
   } catch (error) {
@@ -3024,6 +3059,309 @@ function businessSignalFromLane(
   return `${label}: ${items.length} material item${items.length === 1 ? "" : "s"} surfaced; highest signal is ${top.item.project} - ${top.item.title}.`;
 }
 
+type ScoredBriefEntry = ReturnType<typeof scoreBriefItem> & {
+  section: keyof BrandonDailyUpdatePacket["sections"];
+  item: BrandonBriefItem;
+};
+
+function evidenceLine(entry: ScoredBriefEntry): string {
+  return `${entry.item.project}: ${entry.item.title}`;
+}
+
+function entriesMatching(
+  entries: ScoredBriefEntry[],
+  words: string[],
+): ScoredBriefEntry[] {
+  return entries.filter((entry) => hasAny(briefItemText(entry.item), words));
+}
+
+function buildBusinessHealth(
+  entries: ScoredBriefEntry[],
+): ExecutiveOperatingBriefHealthItem[] {
+  const areaSpecs: Array<{
+    area: string;
+    words: string[];
+    healthyWords?: string[];
+  }> = [
+    {
+      area: "Projects",
+      words: ["project", "schedule", "field", "permit", "design", "owner"],
+      healthyWords: ["complete", "approved", "resolved", "healthy"],
+    },
+    {
+      area: "Finance",
+      words: [
+        "payment",
+        "invoice",
+        "margin",
+        "change order",
+        "pending revenue",
+        "wip",
+        "reconciliation",
+        "payroll",
+        "reporting",
+        "cash",
+      ],
+      healthyWords: ["standardized", "reconciled", "improved", "stable"],
+    },
+    {
+      area: "Operations",
+      words: [
+        "process",
+        "workflow",
+        "standard",
+        "communication",
+        "documentation",
+        "reporting",
+        "owner",
+      ],
+      healthyWords: ["standardized", "documented", "repeatable", "improved"],
+    },
+    {
+      area: "People",
+      words: ["staff", "crew", "manpower", "hiring", "onboarding", "vp"],
+      healthyWords: ["assigned", "covered", "onboard", "ready"],
+    },
+    {
+      area: "Technology",
+      words: ["api", "software", "integration", "platform"],
+      healthyWords: ["integrated", "automated", "standardized", "ready"],
+    },
+  ];
+
+  return areaSpecs.map((spec) => {
+    const matches = entriesMatching(entries, spec.words);
+    const highest = matches[0];
+    const riskCount = matches.filter(
+      (entry) => entry.item.tone === "risk" || entry.score >= 70,
+    ).length;
+    const healthyCount = matches.filter((entry) =>
+      hasAny(briefItemText(entry.item), spec.healthyWords ?? []),
+    ).length;
+    const status: ExecutiveOperatingBriefHealthItem["status"] =
+      riskCount > 0
+        ? "risk"
+        : matches.length > healthyCount
+          ? "watch"
+          : "healthy";
+    const summary = highest
+      ? `${highest.item.title} is the clearest current signal for ${spec.area.toLowerCase()}. ${cleanWhyItMatters(highest.item)}`
+      : `No material ${spec.area.toLowerCase()} issue surfaced in this source window.`;
+    return { area: spec.area, status, summary };
+  });
+}
+
+function buildPattern(
+  title: string,
+  matches: ScoredBriefEntry[],
+  significance: string,
+): ExecutiveOperatingBriefPattern | null {
+  const unique = Array.from(
+    new Map(matches.map((entry) => [evidenceLine(entry), entry])).values(),
+  );
+  if (unique.length < 2) return null;
+  const riskCount = unique.filter(
+    (entry) => entry.item.tone === "risk" || entry.score >= 65,
+  ).length;
+  return {
+    title,
+    evidence: unique.slice(0, 3).map(evidenceLine),
+    significance,
+    trend: riskCount >= 2 ? "increasing" : "stable",
+  };
+}
+
+function buildEmergingPatterns(
+  entries: ScoredBriefEntry[],
+): ExecutiveOperatingBriefPattern[] {
+  return [
+    buildPattern(
+      "External dependency management is the main execution risk",
+      entriesMatching(entries, [
+        "permit",
+        "utility",
+        "subcontractor",
+        "vendor",
+        "supplier",
+        "material",
+        "delivery",
+        "owner approval",
+        "client input",
+        "waiting",
+      ]),
+      "The repeated signal is not internal effort; it is schedule certainty depending on outside parties closing their loops.",
+    ),
+    buildPattern(
+      "Alleato is standardizing its operating system",
+      entriesMatching(entries, [
+        "standard",
+        "workflow",
+        "process",
+        "repeatable",
+        "documentation",
+        "building connected",
+        "reconciliation",
+        "reporting",
+      ]),
+      "This is the kind of process maturity that reduces Brandon-dependent interpretation and lets teams operate from shared rules.",
+    ),
+    buildPattern(
+      "Field communication is still consuming management attention",
+      entriesMatching(entries, [
+        "field",
+        "photo",
+        "daily report",
+        "work log",
+        "communication",
+        "progress report",
+      ]),
+      "The recurring issue is not just missing updates; it is management time spent reconstructing reality after the fact.",
+    ),
+    buildPattern(
+      "Financial conversations are moving toward management rhythm",
+      entriesMatching(entries, [
+        "wip",
+        "reconciliation",
+        "payroll",
+        "reporting cadence",
+        "financial",
+        "margin",
+      ]),
+      "The finance signal is stronger when it points to repeatable review and reporting behavior rather than one-off cleanup.",
+    ),
+  ].filter((pattern): pattern is ExecutiveOperatingBriefPattern =>
+    Boolean(pattern),
+  );
+}
+
+function likelihoodFromScore(score: number): "low" | "medium" | "high" {
+  if (score >= 78) return "high";
+  if (score >= 58) return "medium";
+  return "low";
+}
+
+function buildStrategicRisks(
+  riskRadar: ExecutiveOperatingBriefRiskItem[],
+): ExecutiveOperatingBriefStrategicRisk[] {
+  return riskRadar.slice(0, 6).map((entry) => ({
+    title: `${entry.item.project}: ${entry.item.title}`,
+    likelihood: likelihoodFromScore(entry.score),
+    impact: entry.impact,
+    trend:
+      entry.score >= 70 || entry.item.tone === "risk" ? "increasing" : "stable",
+    nextAction: entry.nextAction,
+  }));
+}
+
+function buildOpportunities(entries: ScoredBriefEntry[]): string[] {
+  const opportunities = [
+    {
+      words: ["standard", "workflow", "process", "documentation", "repeatable"],
+      line: "Convert the clearest repeatable process into a written operating standard before the next project cycle.",
+    },
+    {
+      words: ["closeout", "punch list", "turnover"],
+      line: "Use upcoming closeout work to release trapped value and reduce stale follow-up load.",
+    },
+    {
+      words: ["api", "integration", "automation", "software"],
+      line: "Keep evaluating software by whether it can become part of the AI operating system, not just whether it solves a local task.",
+    },
+    {
+      words: ["estimating", "bid package", "proposal", "building connected"],
+      line: "Treat estimating standardization as leverage: cleaner bid packages reduce scope misses before construction starts.",
+    },
+  ];
+
+  return opportunities
+    .filter((opportunity) =>
+      entries.some((entry) =>
+        hasAny(briefItemText(entry.item), opportunity.words),
+      ),
+    )
+    .map((opportunity) => opportunity.line);
+}
+
+function buildLeadershipWatchlist(entries: ScoredBriefEntry[]): string[] {
+  return entries
+    .filter(
+      (entry) =>
+        entry.section === "waitingOnOthers" ||
+        entry.item.tone === "risk" ||
+        hasAny(briefItemText(entry.item), [
+          "permit",
+          "lead time",
+          "delivery",
+          "approval",
+          "closeout",
+          "hiring",
+          "manpower",
+          "material",
+        ]),
+    )
+    .slice(0, 8)
+    .map(
+      (entry) =>
+        `${entry.item.project}: ${entry.item.title} - ${recommendedMove(entry.item)}`,
+    );
+}
+
+function buildChiefOfStaffInsights(
+  entries: ScoredBriefEntry[],
+  patterns: ExecutiveOperatingBriefPattern[],
+  opportunities: string[],
+): string[] {
+  const insights: string[] = [];
+  const systemDesignCount = entriesMatching(entries, [
+    "standard",
+    "workflow",
+    "process",
+    "documentation",
+    "api",
+    "integration",
+    "automation",
+  ]).length;
+  const externalDependencyCount = entriesMatching(entries, [
+    "waiting",
+    "permit",
+    "vendor",
+    "subcontractor",
+    "client input",
+    "owner approval",
+    "delivery",
+  ]).length;
+
+  if (patterns.length > 0) {
+    insights.push(
+      `The most useful read is pattern-level: ${patterns[0].title.toLowerCase()}.`,
+    );
+  }
+  if (systemDesignCount >= 2) {
+    insights.push(
+      "Brandon is spending more attention on system design than isolated problem solving; the brief should preserve those operating-system signals.",
+    );
+  }
+  if (externalDependencyCount >= 2) {
+    insights.push(
+      "The execution risk is shifting toward external dependency follow-through, so watch ownership and due dates more closely than internal activity volume.",
+    );
+  }
+  if (
+    opportunities.length > 0 &&
+    (patterns.length > 0 || systemDesignCount >= 2)
+  ) {
+    insights.push(
+      "The opportunity is leverage: turn the strongest repeated practice into a company standard while the evidence is fresh.",
+    );
+  }
+
+  return insights.length > 0
+    ? insights
+    : [
+        "No cross-meeting chief-of-staff insight rose above the source evidence threshold.",
+      ];
+}
+
 export function buildExecutiveOperatingBrief(
   sections: BrandonDailyUpdatePacket["sections"],
 ): ExecutiveOperatingBrief {
@@ -3155,6 +3493,16 @@ export function buildExecutiveOperatingBrief(
     .filter((signal): signal is string => Boolean(signal));
 
   const recommendedMoves = uniqueRecommendedMoves(allShort).filter(Boolean);
+  const businessHealth = buildBusinessHealth(ranked);
+  const emergingPatterns = buildEmergingPatterns(ranked);
+  const strategicRisks = buildStrategicRisks(riskRadar);
+  const opportunities = buildOpportunities(ranked);
+  const leadershipWatchlist = buildLeadershipWatchlist(ranked);
+  const chiefOfStaffInsights = buildChiefOfStaffInsights(
+    ranked,
+    emergingPatterns,
+    opportunities,
+  );
   const first = ranked[0];
   const startHere = first
     ? [
@@ -3179,6 +3527,12 @@ export function buildExecutiveOperatingBrief(
     importantBusinessSignals,
     recommendedMoves,
     lowerPriorityMomentum,
+    businessHealth,
+    emergingPatterns,
+    strategicRisks,
+    opportunities,
+    leadershipWatchlist,
+    chiefOfStaffInsights,
   };
 }
 
@@ -3825,25 +4179,24 @@ export async function generateBrandonDailyUpdate(
   // Pull the full embedded transcript text for every surfaced item BEFORE
   // synthesis, so both synthesis and enrichment read the complete meeting
   // instead of the lossy auto-summary the keyword-fallback path carries.
-  const fullTextEnrichedCount =
-    sourceBackedOnly
-      ? 0
-      : await withExecutiveDailyBriefObservation(
-          "executive-daily-brief.full-text-enrichment",
-          {
-            type: "retriever",
-            input: executiveBriefSourceSelectionSummary(sectionsForSynthesis),
-            metadata: { stage: "full_text_enrichment" },
-            output: (result) => ({
-              enrichedItemCount: result as number,
-              candidateCount: countBriefItems(sectionsForSynthesis),
-            }),
-          },
-          async () =>
-            enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(
-              () => 0,
-            ),
-        );
+  const fullTextEnrichedCount = sourceBackedOnly
+    ? 0
+    : await withExecutiveDailyBriefObservation(
+        "executive-daily-brief.full-text-enrichment",
+        {
+          type: "retriever",
+          input: executiveBriefSourceSelectionSummary(sectionsForSynthesis),
+          metadata: { stage: "full_text_enrichment" },
+          output: (result) => ({
+            enrichedItemCount: result as number,
+            candidateCount: countBriefItems(sectionsForSynthesis),
+          }),
+        },
+        async () =>
+          enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(
+            () => 0,
+          ),
+      );
 
   const synthesizedResult = sourceBackedOnly
     ? {
