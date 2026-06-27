@@ -51,6 +51,10 @@ Residual risks that remain intentionally explicit:
 - Direct OpenAI embedding probe still reports quota exhaustion in the meeting
   verifier warning, but the production provider path is AI Gateway and the AI
   Gateway probe passes.
+- A fresh retrieval-contract refresh on 2026-06-27 found AI memory chunks
+  without citation metadata. This was repaired by updating the AI memory write
+  path to upsert `rag_document_metadata`, backfilling `26415` existing AI memory
+  chunks, and rerunning `npm run rag:verify:retrieval-contract` to PASS.
 - `document_insights` is retained and marked blocked because the
   `actionable_insights` view depends on it. It is not safe to drop until that
   view is retired or migrated.
@@ -133,7 +137,7 @@ Current verifier refresh on 2026-06-27:
 | Graph subscriptions | `npm run verify:graph-subscriptions -- --json` | PASS: 11 expected targets, 11 active subscriptions, 0 stale, 0 missing, 0 errored sync states. |
 | Chat architecture | `npm run rag:verify:chat-architecture` | PASS |
 | Source-specific RAG | `npm run rag:verify:source-specific` | PASS |
-| Retrieval contract | `npm run rag:verify:retrieval-contract` | PASS |
+| Retrieval contract | `npm run rag:verify:retrieval-contract` | PASS after AI memory metadata backfill repaired 26415 uncitable chunks. Evidence: `ai-memory-citation-metadata-repair-20260627.md`. |
 | Chunk integrity | `npm run rag:verify:chunk-integrity` | PASS; warnings only for short/non-sequential chunks. |
 | Response contract | `npm run rag:verify:response-contract` | PASS |
 | Microsoft assistant health | `npm run verify:microsoft-assistant-health -- --json` | PASS |

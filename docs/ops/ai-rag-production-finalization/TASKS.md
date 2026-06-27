@@ -930,8 +930,8 @@ Active latency hardening slice:
 - SharePoint source sync/retrieval is healthy.
 - PDF/upload/document backfill has no active missing rows in the tracked recent candidate set after AAI-669 final inventory.
 - AAI-682 boundary verifiers were repaired in later AAI-705 evidence; keep them in the final all-pipeline verifier bundle instead of treating this as an open blocker.
-- A prior unrelated typecheck blocker in untracked `frontend/src/lib/ai/workflow-registry.ts` was outside the AAI-682 slice; current full/project typecheck status must be delegated and rechecked before final closeout.
-- Remaining finalization gates are the unchecked master checklist items above: Fireflies final E2E proof, Outlook assistant-consumption proof, continued cleanup/deletion proof, and final all-pipeline production-readiness evidence.
+- A prior unrelated typecheck blocker in untracked `frontend/src/lib/ai/workflow-registry.ts` was outside the AAI-682 slice; later delegated typecheck evidence passed for the AI/RAG finalization-owned files.
+- The master checklist is complete. Keep running compact final verifier refreshes before any further production-readiness closeout because these pipelines depend on live external systems.
 
 ### 2026-06-26: AAI-715 Outlook Webhook Subscription Blocker Opened
 
@@ -1406,5 +1406,26 @@ Active latency hardening slice:
 - Secondary Teams smoke:
   - `source-lookup-teams` passed route/persistence/tool metadata but was weaker proof because direct Teams-specific Westfield rows were unavailable for the prompt and the answer fell back to packet/context evidence.
 - Meeting smoke finding:
-  - `source-lookup-meetings` returned HTTP 200 and persisted retrieval metadata, but failed the eval because it took 153819ms, exceeding the 75000ms max budget.
-  - This is a performance follow-up risk, not hidden as a pass.
+  - Baseline `source-lookup-meetings` returned HTTP 200 and persisted retrieval metadata, but failed the eval because it took 153819ms, exceeding the 75000ms max budget.
+  - AAI-749 fixed the path and the post-deploy production recheck passed in `5141ms` with 0 failures and 0 warnings.
+  - Artifact: `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T14-36-47-831Z-31a8441e/source-lookup-meetings.json`
+
+### 2026-06-27: AI Memory Citation Metadata Contract Repaired
+
+- Fresh compact verifier refresh found a real retrieval-contract failure:
+  - `npm run rag:verify:retrieval-contract` failed because retrievable AI memory chunks were missing citation/reference metadata.
+  - Example failing row: `ai_memory_bb4b0ddb-b2be-4bd5-8116-961917615b0d` had `doc_title=null`.
+- Root cause:
+  - `syncMemoryChunkToAiDb()` wrote AI memory vectors to `document_chunks` but did not upsert the matching `rag_document_metadata` record.
+- Durable fix:
+  - `frontend/src/lib/ai/services/ai-memory-service.ts` now writes AI memory source metadata before writing the chunk and fails loudly if metadata sync fails.
+  - Focused Jest coverage now asserts memory creation writes both `rag_document_metadata` and `document_chunks`.
+- Live data repair:
+  - Backfilled existing uncitable AI memory chunks in the RAG database.
+  - Result: `before=26415`, `repaired=26415`, `after=0`.
+- Verification:
+  - `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/services/__tests__/ai-memory-service.test.ts --runInBand` passed with `6/6`.
+  - Delegated changed-file typecheck passed for `ai-memory-service.ts` and its focused test.
+  - `npm run rag:verify:retrieval-contract` passed.
+- Evidence:
+  - [AI memory citation metadata repair](../evidence/2026-06-25-ai-rag-production-finalization/ai-memory-citation-metadata-repair-20260627.md)

@@ -106,9 +106,17 @@ Limitations:
 ## Latency Finding: Meeting Source Lookup
 
 Update 2026-06-27: tracked and patched under AAI-749. The baseline failure
-below is retained as the original production smoke finding. The fix evidence is
-recorded in
-`docs/ops/evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md`.
+below is retained as the original production smoke finding. The post-deploy
+production recheck now passes:
+
+- Status: PASS, 1/1
+- Duration: `5141ms`
+- Failures: none
+- Warnings: none
+- Artifact:
+  `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T14-36-47-831Z-31a8441e/source-lookup-meetings.json`
+- Fix evidence:
+  `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md`
 
 Command:
 

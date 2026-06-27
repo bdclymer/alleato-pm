@@ -114,12 +114,14 @@ function createMemoryWriteSupabaseMock({
   mockedCreateServiceClient.mockReturnValue({ from } as never);
 
   const upsert = jest.fn().mockResolvedValue({ error: null });
+  const ragFrom = jest.fn(() => ({ upsert }));
   mockedCreateRagServiceClient.mockReturnValue({
-    from: jest.fn(() => ({ upsert })),
+    from: ragFrom,
   } as never);
 
   return {
     from,
+    ragFrom,
     update,
     updateEq,
     insert,
@@ -153,7 +155,9 @@ describe("AI memory recall ranking", () => {
       importance: 1,
     });
 
-    expect(rankMemoriesForRecall([staleMemory, freshMemory])[0].id).toBe("fresh");
+    expect(rankMemoriesForRecall([staleMemory, freshMemory])[0].id).toBe(
+      "fresh",
+    );
   });
 
   it("boosts selected-project memories and explains the ranking inputs", () => {
@@ -177,9 +181,9 @@ describe("AI memory recall ranking", () => {
 
     expect(ranked[0].id).toBe("selected-project");
     expect(ranked[0].ranking_reason).toContain("project=selected");
-    expect(scoreMemoryForRecall(selectedProjectMemory, { projectId: 983 }).reason).toContain(
-      "freshness=",
-    );
+    expect(
+      scoreMemoryForRecall(selectedProjectMemory, { projectId: 983 }).reason,
+    ).toContain("freshness=");
   });
 
   it("exposes selected memory ranking metadata for the debugger payload", () => {
@@ -189,7 +193,8 @@ describe("AI memory recall ranking", () => {
         memory({
           id: "project-fact",
           project_id: 983,
-          content: "Ulta Fresno owner updates should prioritize meeting transcripts.",
+          content:
+            "Ulta Fresno owner updates should prioritize meeting transcripts.",
           created_at: "2026-05-18T12:00:00.000Z",
           similarity: 0.72,
         }),
@@ -229,7 +234,9 @@ describe("AI memory write notification decisions", () => {
   });
 
   it("records a quiet notification decision when a memory is created", async () => {
-    createMemoryWriteSupabaseMock({ insertedId: "memory-created" });
+    const { ragFrom, upsert } = createMemoryWriteSupabaseMock({
+      insertedId: "memory-created",
+    });
 
     await expect(
       writeMemory({
@@ -257,6 +264,30 @@ describe("AI memory write notification decisions", () => {
         title: "AI memory saved",
         body: "Prefers short summaries.",
       }),
+    );
+    expect(ragFrom).toHaveBeenCalledWith("rag_document_metadata");
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "memory-created",
+        app_document_id: "memory-created",
+        project_id: 25125,
+        source: "ai_memory",
+        source_system: "ai_memory",
+        source_item_id: "memory-created",
+        title: "AI memory: preference",
+        source_web_url: "/settings/memory?memoryId=memory-created",
+        url: "/settings/memory?memoryId=memory-created",
+        embedding_status: "embedded",
+      }),
+      { onConflict: "id" },
+    );
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chunk_id: "ai_memory_memory-created",
+        document_id: "memory-created",
+        source_type: "ai_memory",
+      }),
+      { onConflict: "chunk_id" },
     );
   });
 
