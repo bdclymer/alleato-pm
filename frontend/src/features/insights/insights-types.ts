@@ -8,6 +8,7 @@ export type InsightRow = {
   confidence: string;
   owner: string;
   project_name: string;
+  projectId: number | null;
   next_action: string;
   why_it_matters: string;
   resolved: boolean;

@@ -39,6 +39,7 @@ export default async function AIInsightsPage() {
     confidence: card.confidence,
     owner: card.suggested_owner_label ?? "",
     project_name: card.intelligence_targets?.name ?? "",
+    projectId: card.intelligence_targets?.project_id ?? null,
     next_action: card.next_action ?? "",
     why_it_matters: card.why_it_matters ?? "",
     resolved: card.current_status === "resolved",

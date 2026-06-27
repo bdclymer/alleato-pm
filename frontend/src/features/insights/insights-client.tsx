@@ -262,15 +262,28 @@ function matchesFilters(
 
 interface InsightsClientProps {
   data: InsightRow[];
+  /** Override the page header. Defaults to the AI Insights heading. */
+  header?: { title: string; description: string };
+  /** Distinct table-state key so reused surfaces don't share URL/filter state. */
+  entityKey?: string;
 }
 
-export function InsightsClient({ data }: InsightsClientProps) {
+const DEFAULT_HEADER = {
+  title: "AI Insights",
+  description: "AI-generated insights from meetings and documents",
+};
+
+export function InsightsClient({
+  data,
+  header = DEFAULT_HEADER,
+  entityKey = "ai-insights",
+}: InsightsClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const tableState = useUnifiedTableState({
-    entityKey: "ai-insights",
+    entityKey,
     searchParams,
     pathname,
     router,
@@ -309,7 +322,7 @@ export function InsightsClient({ data }: InsightsClientProps) {
 
   return (
     <UnifiedTablePage
-      header={{ title: "AI Insights", description: "AI-generated insights from meetings and documents" }}
+      header={header}
       toolbar={{
         totalItems: data.length,
         filteredItems: filteredItems.length,
