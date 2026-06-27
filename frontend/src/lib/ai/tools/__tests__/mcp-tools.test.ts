@@ -67,6 +67,35 @@ describe("AI assistant MCP tool policy", () => {
         "mcp_excalidraw_save_checkpoint",
       ].sort(),
     );
+    expect(
+      mcpToolPolicyForTests.describeMcpToolExposure(
+        {
+          name: "excalidraw",
+          url: "https://mcp.excalidraw.com/mcp",
+          allowedTools: mcpToolPolicyForTests.EXCALIDRAW_MCP_ALLOWED_TOOLS,
+        },
+        tools,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          prefixedName: "mcp_excalidraw_create_view",
+          enabled: true,
+          effect: "allowlisted_artifact_write",
+          reason: "server_allowlist",
+          metadata: expect.objectContaining({
+            descriptorOwned: true,
+            runtimeDiscovered: true,
+          }),
+        }),
+        expect.objectContaining({
+          prefixedName: "mcp_excalidraw_delete_everything",
+          enabled: false,
+          effect: "denied",
+          reason: "not_in_server_allowlist",
+        }),
+      ]),
+    );
   });
 
   it("keeps generic MCP servers read-only by default", () => {
@@ -82,5 +111,44 @@ describe("AI assistant MCP tool policy", () => {
         "read_checkpoint",
       ),
     ).toBe(true);
+    expect(
+      mcpToolPolicyForTests.descriptorForMcpTool(
+        { name: "generic", url: "https://example.com/mcp" },
+        "create_view",
+      ),
+    ).toMatchObject({
+      prefixedName: "mcp_generic_create_view",
+      enabled: false,
+      effect: "denied",
+      reason: "dangerous_mutation_pattern",
+      metadata: {
+        descriptorOwned: true,
+        runtimeDiscovered: true,
+        serverName: "generic",
+        originalToolName: "create_view",
+      },
+    });
+    expect(
+      mcpToolPolicyForTests.descriptorForMcpTool(
+        { name: "generic", url: "https://example.com/mcp" },
+        "read_checkpoint",
+      ),
+    ).toMatchObject({
+      prefixedName: "mcp_generic_read_checkpoint",
+      enabled: true,
+      effect: "read",
+      reason: "generic_read_only",
+    });
+    expect(
+      mcpToolPolicyForTests.descriptorForMcpTool(
+        { name: "generic", url: "https://example.com/mcp" },
+        "summarize_context",
+      ),
+    ).toMatchObject({
+      prefixedName: "mcp_generic_summarize_context",
+      enabled: false,
+      effect: "denied",
+      reason: "not_read_only_pattern",
+    });
   });
 });

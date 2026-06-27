@@ -911,6 +911,108 @@ export const assistantSourceReadToolDescriptorByName = new Map(
   ]),
 );
 
+const READONLY_MCP_TOOL_PATTERNS = [
+  /^get/i,
+  /^list/i,
+  /^read/i,
+  /^search/i,
+  /^query/i,
+  /^retrieve/i,
+  /^find/i,
+  /^lookup/i,
+];
+
+const DANGEROUS_MCP_TOOL_PATTERNS = [
+  /apply/i,
+  /create/i,
+  /delete/i,
+  /drop/i,
+  /execute[_-]?sql/i,
+  /insert/i,
+  /migration/i,
+  /mutate/i,
+  /remove/i,
+  /run[_-]?sql/i,
+  /truncate/i,
+  /update/i,
+  /upsert/i,
+  /write/i,
+];
+
+export type AssistantMcpToolDescriptor = {
+  serverName: string;
+  toolName: string;
+  prefixedName: string;
+  enabled: boolean;
+  effect: "read" | "allowlisted_artifact_write" | "denied";
+  reason:
+    | "server_allowlist"
+    | "generic_read_only"
+    | "not_in_server_allowlist"
+    | "dangerous_mutation_pattern"
+    | "not_read_only_pattern";
+  metadata: {
+    descriptorOwned: true;
+    runtimeDiscovered: true;
+    serverName: string;
+    originalToolName: string;
+  };
+};
+
+export function assistantMcpToolDescriptor(input: {
+  serverName: string;
+  toolName: string;
+  allowedTools?: readonly string[];
+}): AssistantMcpToolDescriptor {
+  const prefixedName = `mcp_${input.serverName}_${input.toolName}`;
+  const metadata = {
+    descriptorOwned: true,
+    runtimeDiscovered: true,
+    serverName: input.serverName,
+    originalToolName: input.toolName,
+  } as const;
+
+  if (input.allowedTools) {
+    const enabled = input.allowedTools.includes(input.toolName);
+    return {
+      serverName: input.serverName,
+      toolName: input.toolName,
+      prefixedName,
+      enabled,
+      effect: enabled ? "allowlisted_artifact_write" : "denied",
+      reason: enabled ? "server_allowlist" : "not_in_server_allowlist",
+      metadata,
+    };
+  }
+
+  if (
+    DANGEROUS_MCP_TOOL_PATTERNS.some((pattern) => pattern.test(input.toolName))
+  ) {
+    return {
+      serverName: input.serverName,
+      toolName: input.toolName,
+      prefixedName,
+      enabled: false,
+      effect: "denied",
+      reason: "dangerous_mutation_pattern",
+      metadata,
+    };
+  }
+
+  const enabled = READONLY_MCP_TOOL_PATTERNS.some((pattern) =>
+    pattern.test(input.toolName),
+  );
+  return {
+    serverName: input.serverName,
+    toolName: input.toolName,
+    prefixedName,
+    enabled,
+    effect: enabled ? "read" : "denied",
+    reason: enabled ? "generic_read_only" : "not_read_only_pattern",
+    metadata,
+  };
+}
+
 export function registryEntryFromAssistantToolDescriptor(
   descriptor: AssistantToolDescriptor,
 ): AssistantToolRegistryEntry {
