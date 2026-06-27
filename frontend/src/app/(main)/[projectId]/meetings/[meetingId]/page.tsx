@@ -10,6 +10,10 @@ import { collectSegmentItems } from "@/lib/meetings/collect-segment-items";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { Database } from "@/types/database.types";
 
+// Uses createServiceClient() to sign recording URLs — must be dynamic so the
+// production build never tries to prerender it without SUPABASE_SERVICE_ROLE_KEY.
+export const dynamic = "force-dynamic";
+
 type MeetingSegment =
   Database["public"]["Tables"]["meeting_segments"]["Row"] & {
     opportunities?: unknown[];
