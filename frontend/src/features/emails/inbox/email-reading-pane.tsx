@@ -3,6 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import {
+  Ban,
   Bot,
   Check,
   ChevronDown,
@@ -42,9 +43,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { BRANDON_LEARNING_SUPPRESSION_PREFIX } from "@/lib/email-assistant/brandon-learning";
 import { cleanEmailBody } from "./email-body";
 import type { InboxEmail } from "./email-inbox-client";
@@ -600,6 +603,185 @@ function DraftReplyPanel({
   );
 }
 
+type FilterRuleScope = "domain" | "sender" | "subject";
+type FilterRuleAction = "skip" | "review";
+
+/**
+ * "Ignore like this" — turns the open email into a reusable `email_filter_rules`
+ * row so future emails from the same sender/domain (or matching a subject phrase)
+ * are dropped or flagged at ingestion. Admin-only: the API enforces it, and the
+ * trigger is hidden for non-admins.
+ */
+function IgnoreLikeThisPopover({ email }: { email: InboxEmail }) {
+  const [open, setOpen] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+
+  const fromEmail = email.fromEmail?.trim().toLowerCase() || null;
+  const domain =
+    fromEmail && fromEmail.includes("@") ? fromEmail.split("@")[1] : null;
+
+  const [scope, setScope] = React.useState<FilterRuleScope>(
+    domain ? "domain" : "subject",
+  );
+  const [subjectContains, setSubjectContains] = React.useState("");
+  const [action, setAction] = React.useState<FilterRuleAction>("skip");
+
+  // Reset the form whenever a different email is opened.
+  React.useEffect(() => {
+    setScope(domain ? "domain" : "subject");
+    setSubjectContains("");
+    setAction("skip");
+  }, [email.id, domain]);
+
+  const subject = subjectContains.trim();
+  const canCreate =
+    (scope === "domain" && Boolean(domain)) ||
+    (scope === "sender" && Boolean(fromEmail)) ||
+    (scope === "subject" && subject.length > 0);
+
+  const scopeOptions: { id: FilterRuleScope; label: string; disabled?: boolean }[] = [
+    { id: "domain", label: domain ? `Anyone @${domain}` : "Sender domain", disabled: !domain },
+    { id: "sender", label: fromEmail ? `Only ${fromEmail}` : "This address", disabled: !fromEmail },
+    { id: "subject", label: "Any sender (subject only)" },
+  ];
+
+  async function handleCreate() {
+    if (!canCreate) return;
+    setSaving(true);
+
+    const matchLabel =
+      scope === "domain" && domain
+        ? `@${domain}`
+        : scope === "sender" && fromEmail
+          ? fromEmail
+          : "subject match";
+    const label = `Ignore ${matchLabel}${subject ? ` · "${subject}"` : ""}`.slice(0, 120);
+
+    const payload: Record<string, string> = {
+      action,
+      label,
+      sourceMessageId: email.graphMessageId,
+      sourceSubject: email.subject,
+    };
+    if (scope === "domain" && domain) payload.senderDomain = domain;
+    if (scope === "sender" && fromEmail) payload.senderPattern = fromEmail;
+    if (subject) payload.subjectPattern = `%${subject}%`;
+
+    try {
+      await apiFetch("/api/email-filter-rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      toast.success(
+        action === "skip"
+          ? "Filter rule created — future emails like this won't be imported."
+          : "Filter rule created — future emails like this will be flagged for review.",
+      );
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to create filter rule.", {
+        description:
+          error instanceof Error ? error.message : "Unknown filter-rule error.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground"
+        >
+          <Ban className="size-3.5" />
+          Ignore like this
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3" align="start">
+        <p className="text-xs font-medium text-foreground">
+          Stop importing emails like this
+        </p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          Applies to future syncs, not emails already imported.
+        </p>
+
+        <div className="mt-3 flex flex-col gap-0.5">
+          {scopeOptions.map((opt) => (
+            <Button
+              key={opt.id}
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={opt.disabled}
+              onClick={() => setScope(opt.id)}
+              className={cn(
+                "h-auto w-full justify-start px-2.5 py-1.5 text-xs",
+                scope === opt.id ? "text-foreground font-medium" : "text-muted-foreground",
+              )}
+            >
+              {opt.label}
+              {scope === opt.id && <Check className="size-3 text-primary ml-auto" />}
+            </Button>
+          ))}
+        </div>
+
+        <div className="mt-2">
+          <Input
+            value={subjectContains}
+            onChange={(e) => setSubjectContains(e.target.value)}
+            placeholder={
+              scope === "subject"
+                ? "Subject contains… (required)"
+                : "Subject contains… (optional)"
+            }
+            className="h-8 text-xs"
+          />
+        </div>
+
+        <div className="mt-3 flex items-center gap-1.5">
+          <span className="text-[11px] text-muted-foreground mr-1">Then</span>
+          {(["skip", "review"] as const).map((a) => (
+            <Button
+              key={a}
+              type="button"
+              variant={action === a ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAction(a)}
+              className="h-7 px-2.5 text-xs"
+            >
+              {a === "skip" ? "Skip entirely" : "Flag for review"}
+            </Button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-center justify-end gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => void handleCreate()}
+            disabled={!canCreate || saving}
+          >
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            Create rule
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface EmailReadingPaneProps {
   email: InboxEmail | null;
   draftReplyOpen: boolean;
@@ -630,6 +812,8 @@ export function EmailReadingPane({
   const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [summary, setSummary] = React.useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = React.useState(false);
+  const { profile } = useCurrentUserProfile();
+  const isAdmin = profile?.isAdmin ?? false;
 
   React.useEffect(() => {
     setSummaryOpen(false);
@@ -907,6 +1091,8 @@ export function EmailReadingPane({
         </Button>
 
         <TagsEditor tags={email.tags} onChange={onTagsChange} />
+
+        {isAdmin && <IgnoreLikeThisPopover email={email} />}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
