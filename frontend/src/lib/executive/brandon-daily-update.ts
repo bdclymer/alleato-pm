@@ -2089,6 +2089,100 @@ function limitSectionsForSynthesis(
   };
 }
 
+function sectionEntries(sections: BrandonDailyUpdatePacket["sections"]) {
+  return [
+    ...sections.needsBrandon.map((item) => ({
+      section: "needsBrandon" as const,
+      item,
+    })),
+    ...sections.waitingOnOthers.map((item) => ({
+      section: "waitingOnOthers" as const,
+      item,
+    })),
+    ...sections.importantUpdates.map((item) => ({
+      section: "importantUpdates" as const,
+      item,
+    })),
+  ];
+}
+
+function briefItemDedupeKey(item: BrandonBriefItem) {
+  return [
+    item.title.trim().toLowerCase(),
+    item.project.trim().toLowerCase(),
+    item.sourceId?.trim().toLowerCase() ?? item.sourceDetail.trim().toLowerCase(),
+  ].join("|");
+}
+
+function uniqueProjectLabels(sections: BrandonDailyUpdatePacket["sections"]) {
+  return new Set(
+    sectionEntries(sections)
+      .map(({ item }) => item.project.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function ensureExecutiveBriefSourceBreadth(
+  sections: BrandonDailyUpdatePacket["sections"],
+  sourceSections: BrandonDailyUpdatePacket["sections"],
+  options: {
+    minItems?: number;
+    minProjectLabels?: number;
+    maxAddedItems?: number;
+  } = {},
+): BrandonDailyUpdatePacket["sections"] {
+  const minItems = options.minItems ?? 6;
+  const minProjectLabels = options.minProjectLabels ?? 4;
+  const maxAddedItems = options.maxAddedItems ?? 6;
+  const currentProjectLabels = uniqueProjectLabels(sections);
+
+  if (
+    countBriefItems(sections) >= minItems &&
+    currentProjectLabels.size >= minProjectLabels
+  ) {
+    return sections;
+  }
+
+  const result: BrandonDailyUpdatePacket["sections"] = {
+    needsBrandon: [...sections.needsBrandon],
+    waitingOnOthers: [...sections.waitingOnOthers],
+    importantUpdates: [...sections.importantUpdates],
+  };
+  const seen = new Set(sectionEntries(result).map(({ item }) => briefItemDedupeKey(item)));
+  const candidates = sectionEntries(sourceSections)
+    .filter(({ item }) => !seen.has(briefItemDedupeKey(item)))
+    .sort((left, right) => {
+      const leftProjectSeen = currentProjectLabels.has(
+        left.item.project.trim().toLowerCase(),
+      );
+      const rightProjectSeen = currentProjectLabels.has(
+        right.item.project.trim().toLowerCase(),
+      );
+      if (leftProjectSeen !== rightProjectSeen) return leftProjectSeen ? 1 : -1;
+      return (
+        scoreBriefItem(right.item, right.section).score -
+        scoreBriefItem(left.item, left.section).score
+      );
+    });
+
+  let added = 0;
+  for (const candidate of candidates) {
+    if (added >= maxAddedItems) break;
+    if (
+      countBriefItems(result) >= minItems &&
+      uniqueProjectLabels(result).size >= minProjectLabels
+    ) {
+      break;
+    }
+    result[candidate.section].push(candidate.item);
+    currentProjectLabels.add(candidate.item.project.trim().toLowerCase());
+    seen.add(briefItemDedupeKey(candidate.item));
+    added += 1;
+  }
+
+  return result;
+}
+
 function stripJsonFence(value: string): string {
   return value
     .replace(/^```(?:json)?\s*/i, "")
@@ -3282,6 +3376,15 @@ function buildStrategicRisks(
   }));
 }
 
+function isFinancialAggregateBriefItem(item: BrandonBriefItem): boolean {
+  const text = briefItemText(item);
+  return (
+    item.project.toLowerCase().startsWith("multiple (") ||
+    item.sourceDetail.toLowerCase().includes("acumatica") ||
+    hasAny(text, ["pending cos", "pending co", "on-hold change orders"])
+  );
+}
+
 function buildOpportunities(entries: ScoredBriefEntry[]): string[] {
   const opportunities = [
     {
@@ -3462,17 +3565,18 @@ export function buildExecutiveOperatingBrief(
   const riskRadar = ranked
     .filter(
       (entry) =>
-        entry.item.tone === "risk" ||
-        entry.score >= 58 ||
-        hasAny(briefItemText(entry.item), [
-          "risk",
-          "delay",
-          "blocked",
-          "margin",
-          "overage",
-          "unapproved",
-          "unbilled",
-        ]),
+        !isFinancialAggregateBriefItem(entry.item) &&
+        (entry.item.tone === "risk" ||
+          entry.score >= 58 ||
+          hasAny(briefItemText(entry.item), [
+            "risk",
+            "delay",
+            "blocked",
+            "margin",
+            "overage",
+            "unapproved",
+            "unbilled",
+          ])),
     )
     .map((entry) => ({
       ...operatingShortItem(entry.item, entry.section),
@@ -3493,18 +3597,20 @@ export function buildExecutiveOperatingBrief(
     .map((item) => operatingShortItem(item, "needsBrandon"))
     .sort((a, b) => b.score - a.score);
   const peopleAndAccountability = ranked
-    .filter((entry) =>
-      hasAny(briefItemText(entry.item), [
-        "owner",
-        "assignee",
-        "assign",
-        "stale",
-        "aging",
-        "follow-up",
-        "accountability",
-        "unassigned",
-        "who owns",
-      ]),
+    .filter(
+      (entry) =>
+        !isFinancialAggregateBriefItem(entry.item) &&
+        hasAny(briefItemText(entry.item), [
+          "owner",
+          "assignee",
+          "assign",
+          "stale",
+          "aging",
+          "follow-up",
+          "accountability",
+          "unassigned",
+          "who owns",
+        ]),
     )
     .map((entry) => operatingShortItem(entry.item, entry.section));
   const allShort = ranked.map((entry) =>
@@ -4274,6 +4380,10 @@ export async function generateBrandonDailyUpdate(
         degraded: false,
       }
     : await synthesizeSections(sectionsForSynthesis, financialPulse);
+  const breadthCheckedSynthesisSections = ensureExecutiveBriefSourceBreadth(
+    synthesizedResult.sections,
+    seededSections,
+  );
 
   const communicationSignalResult = await withExecutiveDailyBriefObservation(
     "executive-daily-brief.communication-signals",
@@ -4304,7 +4414,7 @@ export async function generateBrandonDailyUpdate(
     {
       type: "chain",
       input: {
-        synthesized: executiveBriefSectionCounts(synthesizedResult.sections),
+        synthesized: executiveBriefSectionCounts(breadthCheckedSynthesisSections),
         communicationSignals: executiveBriefSectionCounts(
           communicationSignalResult.sections,
         ),
@@ -4323,7 +4433,7 @@ export async function generateBrandonDailyUpdate(
       filterSupportedSections(
         mergeSeedItems(
           mergeSeedItems(
-            synthesizedResult.sections,
+            breadthCheckedSynthesisSections,
             communicationSignalResult.sections,
           ),
           financialBriefItems,

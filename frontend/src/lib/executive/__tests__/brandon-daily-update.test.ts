@@ -7,6 +7,7 @@ import {
   executiveBriefSourceSelectionSummary,
   getHitDateAnchor,
   getRecencyAnchor,
+  ensureExecutiveBriefSourceBreadth,
   hydrateExecutiveOperatingBrief,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
@@ -704,6 +705,101 @@ describe("executive operating brief priority lanes", () => {
           expect.stringContaining("$422K in pending COs"),
         ]),
       }),
+    );
+  });
+
+  it("supplements low-count synthesis output from source-backed candidates", () => {
+    const synthesized = {
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          project: "26-105 Goodwill Pioneer PKWY",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          project: "Multiple (9 projects)",
+        }),
+      ],
+    };
+    const sourceCandidates = {
+      needsBrandon: [
+        briefItem("Union Collective owner decision is due", {
+          project: "26-119 Union Collective",
+          tone: "risk",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Exol Morrisville permit response is waiting", {
+          project: "26-116 Exol Morrisville",
+        }),
+        ...synthesized.waitingOnOthers,
+      ],
+      importantUpdates: [
+        briefItem("Goodwill Washington closeout is progressing", {
+          project: "26-106 Goodwill Washington",
+        }),
+        briefItem("Alleato finance WIP review needs a checklist", {
+          project: "Alleato Finance",
+        }),
+        ...synthesized.importantUpdates,
+      ],
+    };
+
+    const broadened = ensureExecutiveBriefSourceBreadth(
+      synthesized,
+      sourceCandidates,
+      { minItems: 5, minProjectLabels: 4 },
+    );
+
+    expect(
+      new Set(
+        [
+          ...broadened.needsBrandon,
+          ...broadened.waitingOnOthers,
+          ...broadened.importantUpdates,
+        ].map((item) => item.project),
+      ).size,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      [
+        ...broadened.needsBrandon,
+        ...broadened.waitingOnOthers,
+        ...broadened.importantUpdates,
+      ],
+    ).toHaveLength(5);
+  });
+
+  it("keeps finance aggregates out of non-finance derived sections", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Owner approval is still needed before the team can close the change-event scope.",
+          project: "26-105 Goodwill Pioneer PKWY",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          summary:
+            "Nine projects have on-hold change orders totaling $422K in pending revenue.",
+          sourceDetail: "Acumatica ERP - Change Order Report",
+          project: "Multiple (9 projects)",
+          tone: "watch",
+        }),
+      ],
+    });
+
+    expect(
+      brief.projectRiskRadar.map((entry) => entry.item.title),
+    ).not.toContain("$422K in pending COs on hold");
+    expect(
+      brief.peopleAndAccountability.map((entry) => entry.item.title),
+    ).not.toContain("$422K in pending COs on hold");
+    expect(brief.cashAndMarginWatch.map((entry) => entry.item.title)).toContain(
+      "$422K in pending COs on hold",
     );
   });
 });
