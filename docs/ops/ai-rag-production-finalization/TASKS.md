@@ -984,9 +984,18 @@ Evidence directory:
   - rerun `npm run verify:microsoft-assistant-health -- --json`;
   - rerun `npm run rag:verify:inbox-evals:prod`.
 - Remaining:
-  - if the backend probe advances from 503 to 502, fix the Deep Agents provider/runtime path;
-  - if the probe returns 200 but eval fails, fix the assistant bridge/eval-answer contract;
-  - do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
+  - backend probe advanced to 200 after Render deploy `dep-d8vko5ok1i2s73ercb70`;
+  - frontend bridge was patched/published in `583c27e46a716beb0f33e872abae3aa467b3786e` so inbox widgets no longer replace the chat answer with a one-line widget summary;
+  - production inbox eval improved from 1/5 to 3/5 after Vercel deployment `dpl_FFz1BHCF7peYZsVXpLiM1ejkC9hV`;
+  - remaining eval failures are backend answer-quality/ranking issues in the Microsoft Executive Assistant deterministic inbox renderer.
+- Follow-up patch in progress:
+  - classify temp-power/electrical-risk thread language as `Watch` instead of `Ignore/noise`;
+  - keep Watch/Ignore context in reply-triage answers so the assistant does not imply every visible item needs a reply.
+- Verification:
+  - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
+  - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;
+  - focused backend pytest is blocked before collection by missing `python-multipart` in the test environment, unrelated to the assistant classifier patch.
+- Do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
 
 ### 2026-06-26: AAI-718 Outlook Stale Subscription Prevention Published
 
