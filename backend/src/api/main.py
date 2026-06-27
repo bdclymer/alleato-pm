@@ -505,7 +505,6 @@ def _build_chat_reply(
             retrieval_mode = "recent"
 
     tasks = store.list_tasks(project_id=project_id, status="open", limit=limit)
-    insights = store.list_insights(project_id=project_id, limit=limit)
     project = store.get_project(project_id) if project_id is not None else None
 
     sources: List[Dict[str, Any]] = []
@@ -547,10 +546,6 @@ def _build_chat_reply(
     if tasks:
         reply_lines.append(
             "Top open tasks: " + "; ".join(task.get("title", "Task") for task in tasks[:3])
-        )
-    if insights:
-        reply_lines.append(
-            "Recent insights: " + "; ".join(insight.get("summary", "")[:80] for insight in insights[:3])
         )
     if sources:
         if retrieval_mode == "financial_structured":
@@ -599,7 +594,6 @@ def _build_chat_reply(
         "reply": "\n".join(reply_lines),
         "sources": sources,
         "tasks": tasks,
-        "insights": insights,
     }
 
 
@@ -618,13 +612,12 @@ def list_projects_api(store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[
 
 @app.get("/api/projects/{project_id}", tags=["Projects"], summary="Get project details")
 def project_detail_api(project_id: int, store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[str, Any]:
-    """Get detailed information about a specific project including tasks and insights."""
+    """Get detailed information about a specific project including open tasks."""
     project = store.get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     tasks = store.list_tasks(project_id=project_id, status="open", limit=50)
-    insights = store.list_insights(project_id=project_id, limit=20)
-    return {"project": project, "tasks": tasks, "insights": insights}
+    return {"project": project, "tasks": tasks}
 
 
 @app.post("/api/chat", tags=["RAG Chat"], summary="Simple chat endpoint")

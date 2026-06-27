@@ -39,10 +39,7 @@ class TestProjectsAPI:
         mock_supabase_store.list_tasks.return_value = [
             {"id": "task-1", "title": "Test Task", "status": "open"}
         ]
-        mock_supabase_store.list_insights.return_value = [
-            {"id": "insight-1", "type": "risk", "summary": "Test Risk"}
-        ]
-        
+
         response = client.get("/api/projects/1")
         
         assert response.status_code == 200
@@ -50,14 +47,11 @@ class TestProjectsAPI:
         
         assert data["project"]["name"] == "Test Project"
         assert len(data["tasks"]) == 1
-        assert len(data["insights"]) == 1
-        
+        assert "insights" not in data
+
         mock_supabase_store.get_project.assert_called_once_with(1)
         mock_supabase_store.list_tasks.assert_called_once_with(
             project_id=1, status="open", limit=50
-        )
-        mock_supabase_store.list_insights.assert_called_once_with(
-            project_id=1, limit=20
         )
     
     @pytest.mark.unit
@@ -72,14 +66,13 @@ class TestProjectsAPI:
         assert data["detail"] == "Project not found"
     
     @pytest.mark.unit
-    def test_get_project_detail_with_no_tasks_or_insights(
+    def test_get_project_detail_with_no_tasks(
         self, client, mock_supabase_store, sample_project_data
     ):
-        """Test project detail with no associated tasks or insights."""
+        """Test project detail with no associated tasks."""
         mock_supabase_store.get_project.return_value = sample_project_data
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
-        
+
         response = client.get("/api/projects/1")
         
         assert response.status_code == 200
@@ -87,4 +80,4 @@ class TestProjectsAPI:
         
         assert data["project"]["name"] == "Test Project"
         assert data["tasks"] == []
-        assert data["insights"] == []
+        assert "insights" not in data

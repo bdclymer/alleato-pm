@@ -20,9 +20,6 @@ class TestChatAPI:
         mock_supabase_store.list_tasks.return_value = [
             {"id": "task-1", "title": "Mitigate risk A", "status": "open"}
         ]
-        mock_supabase_store.list_insights.return_value = [
-            {"id": "insight-1", "type": "risk", "summary": "Budget overrun risk"}
-        ]
         mock_supabase_store.get_project.return_value = {
             "id": 1,
             "name": "Test Project",
@@ -38,12 +35,11 @@ class TestChatAPI:
         assert "reply" in data
         assert "sources" in data
         assert "tasks" in data
-        assert "insights" in data
-        
+        assert "insights" not in data
+
         # Check that appropriate methods were called
         mock_supabase_store.search_chunks_by_keyword.assert_called()
         mock_supabase_store.list_tasks.assert_called_with(project_id=1, status="open", limit=5)
-        mock_supabase_store.list_insights.assert_called_with(project_id=1, limit=5)
     
     @pytest.mark.unit
     def test_chat_endpoint_empty_message(self, client):
@@ -61,7 +57,6 @@ class TestChatAPI:
         mock_supabase_store.search_chunks_by_keyword.return_value = []
         mock_supabase_store.fetch_recent_chunks.return_value = []
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
         mock_supabase_store.get_project.return_value = None
         
         response = client.post("/api/chat", json={"message": "Find something"})
@@ -72,7 +67,6 @@ class TestChatAPI:
         assert "No relevant transcripts or tasks were found" in data["reply"]
         assert data["sources"] == []
         assert data["tasks"] == []
-        assert data["insights"] == []
 
     @pytest.mark.unit
     def test_chat_financial_query_prefers_structured_rows(self, client, mock_supabase_store):
@@ -94,7 +88,6 @@ class TestChatAPI:
             }
         ]
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
         mock_supabase_store.get_project.return_value = None
 
         response = client.post(
@@ -124,7 +117,6 @@ class TestChatAPI:
             }
         ]
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
         mock_supabase_store.get_project.return_value = None
 
         response = client.post(

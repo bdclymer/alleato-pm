@@ -33,7 +33,7 @@ Production AI strategist chat is handled by the frontend Next.js route at `front
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/projects` | List all projects |
-| `GET` | `/api/projects/{project_id}` | Get project details with tasks & insights |
+| `GET` | `/api/projects/{project_id}` | Get project details with open tasks |
 
 ### Ingestion
 

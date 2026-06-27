@@ -63,6 +63,10 @@ Completed legacy daily digest removal slice:
 
 - [2026-06-26-remove-legacy-daily-digest-backend-path.md](../tasks/2026-06-26-remove-legacy-daily-digest-backend-path.md)
 
+Completed backend Pipeline A insight stub retirement slice:
+
+- [2026-06-27-retire-pipeline-a-insight-stubs.md](../tasks/2026-06-27-retire-pipeline-a-insight-stubs.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -1429,3 +1433,25 @@ Active latency hardening slice:
   - `npm run rag:verify:retrieval-contract` passed.
 - Evidence:
   - [AI memory citation metadata repair](../evidence/2026-06-25-ai-rag-production-finalization/ai-memory-citation-metadata-repair-20260627.md)
+
+### 2026-06-27: AAI-751 Backend Pipeline A Insight Stubs Retired
+
+- Found an active legacy/no-op compatibility path:
+  - `SupabaseRagStore.list_insights()` and `insert_insight()` were deprecated no-ops.
+  - Backend `/api/chat`, `/api/projects/{project_id}`, and Fireflies ingestion still called those no-op methods.
+- Removed the active dead path:
+  - backend chat replies no longer call the legacy insight reader or return an inert `insights` response field;
+  - backend project detail no longer calls the legacy insight reader or returns an inert `insights` response field;
+  - Fireflies ingestion no longer calls the no-op legacy insight writer;
+  - the deprecated helper methods were removed from `SupabaseRagStore`;
+  - public OpenAPI JSON/YAML and backend API docs were updated.
+- Replacement owner:
+  - canonical intelligence remains owned by `insight_cards`, `source_signal_candidates`, intelligence packets, tasks, chunks, and AI memories.
+- Verification:
+  - static scan found no remaining `list_insights()` / `insert_insight()` active references or orphan OpenAPI `Insight` schema refs;
+  - OpenAPI JSON parsed successfully;
+  - touched backend modules passed `py_compile`;
+  - focused backend tests passed: `59 passed`;
+  - delegated compact AI/RAG verifier bundle passed all 7 commands.
+- Evidence:
+  - [Task](../tasks/2026-06-27-retire-pipeline-a-insight-stubs.md)

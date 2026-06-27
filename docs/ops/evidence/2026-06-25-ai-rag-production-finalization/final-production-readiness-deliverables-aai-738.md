@@ -76,6 +76,8 @@ Deleted or retired implementation families:
   `ENABLE_LEGACY_FIREFLIES_FILE_INGEST`.
 - Legacy backend daily digest service/scheduler/API generation path and
   `LEGACY_DAILY_DIGEST_ENABLED`.
+- Deprecated backend Pipeline A insight no-op reader/writer stubs and their
+  active calls from backend RAG chat, project detail, and Fireflies ingestion.
 - Outlook legacy mirroring gates and legacy project-email mirroring behavior.
 - Outlook RAG-to-app incident bridge script:
   `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py`.
