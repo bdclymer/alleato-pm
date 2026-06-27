@@ -21,3 +21,24 @@ export async function requireOwner(): Promise<void> {
     redirect("/access-denied?reason=owner-only");
   }
 }
+
+/**
+ * Like {@link requireOwner}, but additionally lets a short allow-list of named
+ * accounts through. Use for an owner-locked surface that one or two specific
+ * users legitimately need (e.g. the subject of a personalized AI tool reviewing
+ * their own feedback). The allow-list is matched case-insensitively. Every other
+ * owner-only surface keeps using `requireOwner` — this does not widen them.
+ */
+export async function requireOwnerOrEmails(allowedEmails: string[]): Promise<void> {
+  const user = await getApiRouteUser();
+  if (!user) {
+    redirect("/auth/login");
+  }
+  const email = user.email?.trim().toLowerCase() ?? "";
+  const isAllowed =
+    isOwnerEmail(user.email) ||
+    allowedEmails.some((allowed) => allowed.trim().toLowerCase() === email);
+  if (!isAllowed) {
+    redirect("/access-denied?reason=owner-only");
+  }
+}
