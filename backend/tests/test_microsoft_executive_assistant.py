@@ -15,8 +15,10 @@ from src.services.agents.microsoft_executive_assistant.tools import (
     _patch_message_category,
     _patch_message_categories,
     draft_teams_message_for_review,
+    microsoft_executive_assistant_tools,
     patch_outlook_email_categories,
     read_live_outlook_inbox,
+    write_email_triage,
 )
 from src.services.agents.microsoft_executive_assistant.triggers import (
     run_outlook_event_microsoft_executive_assistant,
@@ -639,7 +641,7 @@ def test_outlook_event_trigger_runs_from_webhook_for_brandon_outlook(monkeypatch
     assert "webhook was accepted and queued for delta sync" in captured["request"].prompt
     assert "Use live Outlook tools" in captured["request"].prompt
     assert "write_email_triage" in captured["request"].prompt
-    assert "Brandon sees the Outlook category" in captured["request"].prompt
+    assert "records the decision" in captured["request"].prompt
     assert "Outlook reply draft in Brandon's Drafts folder" in captured["request"].prompt
     assert "Never send email directly" in captured["request"].prompt
     assert "Megan" not in captured["request"].prompt
@@ -817,6 +819,7 @@ class _FakeCategoryGraph:
 
 
 def test_outlook_category_patch_merges_existing_categories(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", "true")
     graph = _FakeCategoryGraph(existing_categories=["Client", "Existing"])
     monkeypatch.setattr(
         "src.services.integrations.microsoft_graph.client.get_graph_client",
@@ -836,6 +839,7 @@ def test_outlook_category_patch_merges_existing_categories(monkeypatch):
 
 
 def test_outlook_category_patch_dedupes_case_insensitively(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", "true")
     graph = _FakeCategoryGraph(existing_categories=["reply needed", "Client"])
     monkeypatch.setattr(
         "src.services.integrations.microsoft_graph.client.get_graph_client",
@@ -855,6 +859,7 @@ def test_outlook_category_patch_dedupes_case_insensitively(monkeypatch):
 
 
 def test_patch_outlook_email_categories_clears_when_explicitly_empty(monkeypatch):
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", "true")
     graph = _FakeCategoryGraph(existing_categories=["Client", "Existing"])
     monkeypatch.setattr(
         "src.services.integrations.microsoft_graph.client.get_graph_client",
@@ -870,6 +875,63 @@ def test_patch_outlook_email_categories_clears_when_explicitly_empty(monkeypatch
 
     assert result["ok"] is True
     assert result["categories"] == []
+
+
+def test_outlook_category_patch_blocked_when_mailbox_mutations_disabled(monkeypatch):
+    monkeypatch.delenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", raising=False)
+    graph = _FakeCategoryGraph(existing_categories=["Client", "Existing"])
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: graph,
+    )
+
+    result = _patch_message_category(
+        "bclymer@alleatogroup.com",
+        "message-1",
+        "Reply Needed",
+    )
+
+    assert result == {"patched": False, "reason": "mailbox_mutations_disabled"}
+    assert graph.calls == []
+
+
+def test_write_email_triage_does_not_patch_outlook_when_mailbox_mutations_disabled(monkeypatch):
+    monkeypatch.delenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", raising=False)
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX", "bclymer@alleatogroup.com")
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.tools._supabase_client",
+        lambda: None,
+    )
+    graph = _FakeCategoryGraph(existing_categories=[])
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: graph,
+    )
+
+    raw_result = write_email_triage.func(
+        graph_message_id="message-1",
+        triage_action="reply_needed",
+        triage_reason="Needs a customer reply.",
+    )
+    result = json.loads(raw_result)
+
+    assert result["categoryResult"] == {
+        "patched": False,
+        "reason": "mailbox_mutations_disabled",
+    }
+    assert graph.calls == []
+
+
+def test_category_mutation_tool_hidden_when_mailbox_mutations_disabled(monkeypatch):
+    monkeypatch.delenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", raising=False)
+
+    tool_names = {
+        getattr(tool, "name", getattr(tool, "__name__", ""))
+        for tool in microsoft_executive_assistant_tools()
+    }
+
+    assert "patch_outlook_email_categories" not in tool_names
+    assert "write_email_triage" in tool_names
 
 
 # ---------------------------------------------------------------------------

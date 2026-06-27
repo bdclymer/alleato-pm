@@ -207,6 +207,14 @@ def _auto_draft_enabled() -> bool:
     return os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT", "true").lower() in {"1", "true", "yes"}
 
 
+def _mailbox_mutations_enabled() -> bool:
+    return os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
 def _auto_teams_alert_enabled() -> bool:
     return os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true").lower() in {"1", "true", "yes"}
 
@@ -419,7 +427,7 @@ def draft_outlook_email_for_review(
     )
 
     graph_result: dict[str, Any] = {"created": False, "reason": "auto_draft_disabled"}
-    if _auto_draft_enabled() and mailbox:
+    if _auto_draft_enabled() and _mailbox_mutations_enabled() and mailbox:
         graph_result = _create_graph_draft(
             mailbox=mailbox,
             to_recipients=to_recipients,
@@ -428,6 +436,12 @@ def draft_outlook_email_for_review(
             cc_recipients=cc_recipients or [],
             reply_to_message_id=reply_to_graph_message_id,
         )
+    elif _auto_draft_enabled() and not _mailbox_mutations_enabled():
+        logger.warning(
+            "[ExecAssistant] MAILBOX_MUTATION_BLOCKED action=outlook_draft mailbox=%s reason=mailbox_mutations_disabled",
+            mailbox or "<missing>",
+        )
+        graph_result = {"created": False, "reason": "mailbox_mutations_disabled"}
 
     payload = {
         "action": "draft_created" if graph_result.get("created") else "preview",
@@ -542,8 +556,8 @@ def write_email_triage(
     """Record the triage classification for a synced Outlook email.
 
     Writes triage_action, triage_reason, and triage_at to the outlook_email_intake
-    row matching graph_message_id. Optionally patches the Outlook category on the
-    live message so Brandon sees a coloured tag in his inbox.
+    row matching graph_message_id. Outlook category writes are gated by
+    MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED.
 
     triage_action must be one of: urgent, reply_needed, delegate, fyi, watch, delete.
     """
@@ -588,8 +602,7 @@ def write_email_triage(
                     "detail": (
                         f"No outlook_email_intake row for graph_message_id={graph_message_id}. "
                         "The message has not been synced to the DB yet (webhook drain / sync "
-                        "must populate it before triage can persist). Outlook category was still "
-                        "applied to the live message."
+                        "must populate it before triage can persist)."
                     ),
                 }
                 logger.warning(
@@ -605,7 +618,13 @@ def write_email_triage(
 
     # Write Outlook category so Brandon sees a coloured label in his inbox
     category_result: dict[str, Any] = {"patched": False, "reason": "skipped"}
-    if write_outlook_category:
+    if write_outlook_category and not _mailbox_mutations_enabled():
+        logger.warning(
+            "[ExecAssistant] MAILBOX_MUTATION_BLOCKED action=outlook_category graph_message_id=%s reason=mailbox_mutations_disabled",
+            graph_message_id,
+        )
+        category_result = {"patched": False, "reason": "mailbox_mutations_disabled"}
+    elif write_outlook_category:
         mailbox = mailbox_user_id or os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX")
         category_name = TRIAGE_CATEGORY_MAP.get(action)
         if mailbox and category_name and graph_message_id:
@@ -681,6 +700,14 @@ def _patch_message_categories(
     merge_existing: bool = True,
 ) -> dict[str, Any]:
     """Patch Outlook categories on a message via Graph API. Best-effort, never raises."""
+    if not _mailbox_mutations_enabled():
+        logger.warning(
+            "[ExecAssistant] MAILBOX_MUTATION_BLOCKED action=outlook_categories_patch mailbox=%s message_id=%s reason=mailbox_mutations_disabled",
+            mailbox,
+            message_id,
+        )
+        return {"patched": False, "reason": "mailbox_mutations_disabled"}
+
     try:
         from src.services.integrations.microsoft_graph.client import get_graph_client
 
@@ -730,6 +757,13 @@ def patch_outlook_email_categories(
     Adds categories without removing existing categories. Pass an empty list to clear them.
     This writes directly to the live Outlook mailbox — Brandon will see the tag instantly.
     """
+    if not _mailbox_mutations_enabled():
+        logger.warning(
+            "[ExecAssistant] MAILBOX_MUTATION_BLOCKED action=patch_outlook_email_categories graph_message_id=%s reason=mailbox_mutations_disabled",
+            graph_message_id,
+        )
+        return _json({"ok": False, "patched": False, "reason": "mailbox_mutations_disabled"})
+
     mailbox = (
         mailbox_user_id
         or os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX")
@@ -760,7 +794,7 @@ def patch_outlook_email_categories(
 
 def microsoft_executive_assistant_tools() -> list[Any]:
     """Return the Microsoft specialist's runtime tools."""
-    return [
+    tools = [
         read_live_outlook_inbox,
         search_outlook_emails,
         search_microsoft_teams_messages,
@@ -769,5 +803,7 @@ def microsoft_executive_assistant_tools() -> list[Any]:
         draft_outlook_email_for_review,
         draft_teams_message_for_review,
         write_email_triage,
-        patch_outlook_email_categories,
     ]
+    if _mailbox_mutations_enabled():
+        tools.append(patch_outlook_email_categories)
+    return tools

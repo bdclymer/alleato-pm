@@ -414,7 +414,9 @@ services:
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
-        value: "true"
+        value: "false"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED
+        value: "false"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
         value: "true"
       - key: NOTIFICATION_SERVICE_KEY
@@ -834,7 +836,9 @@ services:
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
-        value: "true"
+        value: "false"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED
+        value: "false"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
         value: "true"
       - key: MICROSOFT_CLIENT_ID

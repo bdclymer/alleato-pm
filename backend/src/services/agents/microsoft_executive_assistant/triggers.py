@@ -68,7 +68,8 @@ def run_scheduled_microsoft_executive_assistant_check(
             "1. Call read_live_outlook_inbox with unread_only=true to fetch recent unread messages.\n"
             "2. For EACH email, classify it with one of: urgent, reply_needed, delegate, fyi, watch, delete.\n"
             "3. Call write_email_triage for each classified email (pass graph_message_id, triage_action, "
-            "and a one-sentence triage_reason). This persists your decision and tags the email in Outlook.\n"
+            "and a one-sentence triage_reason). This persists your decision to Alleato's review ledger; "
+            "do not assume the live Outlook message can be tagged.\n"
             "4. For every urgent or reply_needed email that has a safe response path, call "
             "draft_outlook_email_for_review with reply_to_graph_message_id so the reply lands in Brandon's "
             "Outlook Drafts folder. If a safe response cannot be drafted, say why in the triage reason.\n"
@@ -115,8 +116,8 @@ def run_outlook_event_microsoft_executive_assistant(
         sessionId=f"microsoft-executive-assistant:outlook-event:{message_id or mailbox}",
         prompt=(
             "A Microsoft Graph Outlook webhook was accepted and queued for delta sync. Use live Outlook tools "
-            "to review the new or changed mailbox item, classify urgency, call write_email_triage so Brandon "
-            "sees the Outlook category, prepare a concise Teams escalation only if the item is urgent, pass "
+            "to review the new or changed mailbox item, classify urgency, call write_email_triage so Alleato "
+            "records the decision, prepare a concise Teams escalation only if the item is urgent, pass "
             "the email's graph_message_id to draft_teams_message_for_review so delivery is deduped, and "
             "create an Outlook reply draft in Brandon's Drafts folder when the item needs a response and a safe "
             "response path exists. Never send email directly; Brandon reviews and sends from Outlook.\n\n"
