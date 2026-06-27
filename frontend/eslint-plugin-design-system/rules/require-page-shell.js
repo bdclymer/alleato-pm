@@ -8,9 +8,10 @@
  *
  * What it checks:
  * - The file exports a default function (a Next.js page)
- * - The file imports PageShell from @/components/layout or UnifiedTablePage from
- *   @/components/tables/unified
- * - The returned JSX contains a <PageShell> or <UnifiedTablePage> element
+ * - The file imports PageShell from @/components/layout, UnifiedTablePage from
+ *   @/components/tables/unified, or an approved feature-owned page shell
+ * - The returned JSX contains a <PageShell>, <UnifiedTablePage>, or approved
+ *   feature-owned page shell element
  *
  * Exceptions (via eslint-disable or path-based):
  * - Files in (auth)/ routes (login, signup pages have custom layouts)
@@ -27,13 +28,13 @@ module.exports = {
     },
     messages: {
       missingPageShell:
-        'Page files must use <PageShell> from "@/components/layout" or <UnifiedTablePage> from "@/components/tables/unified". ' +
+        'Page files must use <PageShell> from "@/components/layout", <UnifiedTablePage> from "@/components/tables/unified", or an approved feature-owned page shell. ' +
         'Do not write raw <div> + manual headings. ' +
         'See CLAUDE.md → "BUILDING A NEW PAGE? START HERE" for variants: ' +
         'dashboard, table, form, detail, content.',
       missingPageShellImport:
         'Page file is missing the shared page shell import. ' +
-        'Add PageShell from "@/components/layout" or UnifiedTablePage from "@/components/tables/unified".',
+        'Add PageShell from "@/components/layout", UnifiedTablePage from "@/components/tables/unified", or an approved feature-owned page shell.',
     },
     schema: [],
   },
@@ -88,9 +89,15 @@ module.exports = {
       // Track imports
       ImportDeclaration(node) {
         const source = node.source.value;
-        if (source === '@/components/layout' || source === '@/components/layout/page-shell') {
+        if (
+          source === '@/components/layout' ||
+          source === '@/components/layout/page-shell' ||
+          source === '@/components/layout/page-scaffold'
+        ) {
           const hasPageShell = node.specifiers.some(
-            s => s.imported && s.imported.name === 'PageShell'
+            s =>
+              s.imported &&
+              (s.imported.name === 'PageShell' || s.imported.name === 'PageScaffold')
           );
           if (hasPageShell) hasSharedPageShellImport = true;
         }
@@ -101,13 +108,23 @@ module.exports = {
           );
           if (hasUnifiedTablePage) hasSharedPageShellImport = true;
         }
+
+        if (source === '@/features/emails/inbox/email-inbox-client') {
+          const hasEmailInboxClient = node.specifiers.some(
+            s => s.imported && s.imported.name === 'EmailInboxClient'
+          );
+          if (hasEmailInboxClient) hasSharedPageShellImport = true;
+        }
       },
 
       // Track JSX usage of page-level shell primitives.
       JSXOpeningElement(node) {
         if (
           node.name.type === 'JSXIdentifier' &&
-          (node.name.name === 'PageShell' || node.name.name === 'UnifiedTablePage')
+          (node.name.name === 'PageShell' ||
+            node.name.name === 'PageScaffold' ||
+            node.name.name === 'UnifiedTablePage' ||
+            node.name.name === 'EmailInboxClient')
         ) {
           hasSharedPageShellJSX = true;
         }
