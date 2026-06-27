@@ -71,6 +71,10 @@ Completed final verifier warning-gap closure slice:
 
 - [2026-06-27-final-verifier-warning-gaps.md](../tasks/2026-06-27-final-verifier-warning-gaps.md)
 
+Completed unreferenced RAG utility script deletion slice:
+
+- [2026-06-27-delete-unreferenced-rag-utility-scripts.md](../tasks/2026-06-27-delete-unreferenced-rag-utility-scripts.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -1502,3 +1506,21 @@ Active latency hardening slice:
     `4225e8f18`.
 - Evidence:
   - [Task](../tasks/2026-06-27-remove-extractor-pipeline-a-noop.md)
+
+### 2026-06-27: AAI-756 Unreferenced Legacy RAG Utility Scripts Deleted
+
+- Deleted two runtime-safe legacy utilities after import/package/provider proof:
+  - `scripts/ingestion/ingest_knowledge_base_folder.py`
+  - `scripts/ops/backfill-legacy-drawing-document-metadata.mjs`
+- Replacement owners:
+  - production SharePoint/Graph ingestion remains owned by backend Microsoft
+    Graph sync services and Render jobs;
+  - production drawing OCR/metadata remains owned by the upload/OCR pipeline;
+  - historical drawing backfill evidence remains in the submittal synthetic
+    proof task.
+- Retained intentionally:
+  - `scripts/ingestion/sharepoint_project_folder_dry_run.py` remains because
+    `package.json` still exposes `rag:sharepoint:dry-run`, and `package.json`
+    has unrelated dirty edits from another session.
+- Evidence:
+  - [Task](../tasks/2026-06-27-delete-unreferenced-rag-utility-scripts.md)
