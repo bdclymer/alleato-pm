@@ -3,7 +3,7 @@ import { PortfolioView } from "@/types/portfolio";
 export const portfolioViews: PortfolioView[] = [
   {
     id: "projects",
-    name: "Projects",
+    name: "Company",
     isDefault: true,
   },
   {

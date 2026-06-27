@@ -113,11 +113,11 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "AI-powered project guidance",
   },
   {
-    name: "Projects",
+    name: "Company",
     path: "",
     requiresProject: false,
     icon: Briefcase,
-    description: "All projects",
+    description: "Company home",
   },
   {
     name: "Company Directory",
@@ -421,7 +421,7 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory", "Alleato AI", "Admin Dashboard"],
+    toolNames: ["Company", "Company Directory", "Alleato AI", "Admin Dashboard"],
   },
   {
     label: "Work",
@@ -440,7 +440,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
 ];
 
 export const coreTools: NavigationTool[] = [
-  { name: "Projects", path: "", icon: Briefcase, requiresProject: false },
+  { name: "Company", path: "", icon: Briefcase, requiresProject: false },
   { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
   { name: "Home", path: "home", icon: Home, requiresProject: true },
   { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
