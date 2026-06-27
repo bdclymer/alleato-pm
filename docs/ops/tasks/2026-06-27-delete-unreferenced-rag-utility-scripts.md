@@ -45,7 +45,7 @@ evidence filled in. If any item cannot be completed, change `Status` to
 - [x] Delete `scripts/ops/backfill-legacy-drawing-document-metadata.mjs`.
 - [x] Preserve historical drawing proof as evidence, without treating the deleted backfill as an active implementation.
 - [x] Update finalization progress ledger.
-- [x] Leave `scripts/ingestion/sharepoint_project_folder_dry_run.py` untouched because `package.json` still references it.
+- [x] Leave `scripts/ingestion/sharepoint_project_folder_dry_run.py` untouched in this slice because `package.json` still referenced it; follow-up AAI-758 removed both together.
 - [x] Errors remain specific and actionable; no silent fallback added.
 
 ## Integration Checklist
@@ -77,10 +77,10 @@ evidence filled in. If any item cannot be completed, change `Status` to
 | Check | Command / artifact | Result | Notes |
 | --- | --- | --- | --- |
 | Read-only script audit | delegated sub-agent `019f09a3-8d5c-7b90-a6e6-e57ef74cd44b` | Pass | `ingest_knowledge_base_folder.py` and `backfill-legacy-drawing-document-metadata.mjs` had only self-usage comments, no package script refs, no Render refs, and no production path usage. |
-| Package script guard | delegated sub-agent `019f09a3-8d5c-7b90-a6e6-e57ef74cd44b` | Pass | `sharepoint_project_folder_dry_run.py` is retained because `package.json` still exposes `rag:sharepoint:dry-run`. |
+| Package script guard | delegated sub-agent `019f09a3-8d5c-7b90-a6e6-e57ef74cd44b` | Pass | `sharepoint_project_folder_dry_run.py` was retained in this slice because `package.json` still exposed `rag:sharepoint:dry-run`; follow-up AAI-758 removed both together. |
 | Drawing idempotency proof | `docs/ops/tasks/2026-06-25-submittal-ai-synthetic-proof.md` | Pass | Prior post-apply dry-run found zero remaining legacy drawing metadata candidates for project `25125`. |
 | Compact deletion verification | delegated sub-agent `019f09a9-8017-7bf2-bc6e-e198ed90b81b` | Pass | Deleted filenames have no live `package.json`, `render.yaml`, backend, or app runtime references; remaining matches are historical proof docs/artifacts. |
-| Retained SharePoint dry-run proof | `rg -n "sharepoint_project_folder_dry_run" package.json scripts/ingestion/sharepoint_project_folder_dry_run.py` | Pass | Package script still references the retained file, so it is out of scope for this deletion. |
+| Retained SharePoint dry-run proof | `rg -n "sharepoint_project_folder_dry_run" package.json scripts/ingestion/sharepoint_project_folder_dry_run.py` | Pass | At AAI-756 close, the package script still referenced the file, so it was out of scope for that deletion. AAI-758 removed both together. |
 | Compact AI/RAG verifier bundle | delegated sub-agent `019f09a1-b599-7cd1-af7b-a6d33f10f299` | Pass | Chat architecture, source-specific, source-lifecycle, meetings, retrieval-contract, Graph subscriptions, and Microsoft assistant health all passed after `4225e8f18`. |
 
 ## Files To Change
@@ -92,9 +92,9 @@ evidence filled in. If any item cannot be completed, change `Status` to
 
 ## Risks / Gaps
 
-- This slice intentionally does not remove `scripts/ingestion/sharepoint_project_folder_dry_run.py`
-  because the root `package.json` still references it and that file currently
-  has unrelated dirty edits from another session.
+- This slice intentionally did not remove `scripts/ingestion/sharepoint_project_folder_dry_run.py`
+  because the root `package.json` still referenced it. Follow-up AAI-758
+  removed the package script and file together.
 
 ## Blockers
 

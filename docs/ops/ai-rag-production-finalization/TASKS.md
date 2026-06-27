@@ -75,6 +75,10 @@ Completed unreferenced RAG utility script deletion slice:
 
 - [2026-06-27-delete-unreferenced-rag-utility-scripts.md](../tasks/2026-06-27-delete-unreferenced-rag-utility-scripts.md)
 
+Completed SharePoint dry-run entrypoint removal slice:
+
+- [2026-06-27-remove-sharepoint-dry-run-entrypoint.md](../tasks/2026-06-27-remove-sharepoint-dry-run-entrypoint.md)
+
 Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
@@ -1518,9 +1522,20 @@ Active latency hardening slice:
   - production drawing OCR/metadata remains owned by the upload/OCR pipeline;
   - historical drawing backfill evidence remains in the submittal synthetic
     proof task.
-- Retained intentionally:
-  - `scripts/ingestion/sharepoint_project_folder_dry_run.py` remains because
-    `package.json` still exposes `rag:sharepoint:dry-run`, and `package.json`
-    has unrelated dirty edits from another session.
+- Follow-up:
+  - `scripts/ingestion/sharepoint_project_folder_dry_run.py` was retained in
+    AAI-756 because the package script still existed, then removed with the
+    package entrypoint in AAI-758.
 - Evidence:
   - [Task](../tasks/2026-06-27-delete-unreferenced-rag-utility-scripts.md)
+
+### 2026-06-27: AAI-758 SharePoint Dry-Run Entrypoint Removed
+
+- Removed the last package-exposed legacy SharePoint preview path:
+  - deleted root package script `rag:sharepoint:dry-run`;
+  - deleted `scripts/ingestion/sharepoint_project_folder_dry_run.py`.
+- Replacement owner:
+  - production SharePoint/Graph ingestion remains owned by backend Microsoft
+    Graph sync services and Render jobs.
+- Evidence:
+  - [Task](../tasks/2026-06-27-remove-sharepoint-dry-run-entrypoint.md)
