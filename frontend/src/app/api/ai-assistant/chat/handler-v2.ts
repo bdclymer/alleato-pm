@@ -85,6 +85,7 @@ import {
 } from "@/lib/ai/services/marketing-service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createChatHistoryWriter } from "./chat-history-writer";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
   isDeepAgentsStrategistModelId,
@@ -2124,6 +2125,12 @@ async function tryWriteProjectPacketFastPath(params: {
 }
 
 async function runChatV2(args: HandlerArgs): Promise<Response> {
+  // One persistence seam for every chat_history write this request makes —
+  // centralizes the row shape and the loud-failure contract (see chat-history-writer).
+  const chatHistory = createChatHistoryWriter(args.supabase, {
+    sessionId: args.sessionId,
+    userId: args.user.id,
+  });
   const lastUserMessage = [...args.messages]
     .reverse()
     .find((m) => m.role === "user");
@@ -2984,22 +2991,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (lastUserContent.trim()) {
-        const { error } = await args.supabase.from("chat_history").insert({
-          session_id: args.sessionId,
-          user_id: args.user.id,
-          role: "user",
-          content: lastUserContent,
-          metadata: {
+        await chatHistory.persistOrThrow(
+          "user",
+          lastUserContent,
+          {
             architecture: "retrieval-planner-v2",
             client_message_id: lastUserMessage?.id ?? null,
           },
-        });
-
-        if (error) {
-          throw new Error(
-            `Persisting the user message failed: ${error.message}`,
-          );
-        }
+          "user message",
+        );
       }
 
       if (isMicrosoftSpecialistDelegationPlan(plan.reason)) {
