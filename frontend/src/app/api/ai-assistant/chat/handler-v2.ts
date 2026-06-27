@@ -1863,16 +1863,40 @@ function buildAnswerDebugMetadata(params: {
   };
 }
 
-function shouldUseDirectRecentTeamsFastPath(params: {
+function shouldUseDirectSourceSpecificFastPath(params: {
   plan: ReturnType<typeof planRetrieval>;
   retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
 }): boolean {
   return (
     params.plan.responseFormat === "source_specific_rag" &&
-    params.plan.sources.sourceSpecificRag?.kind === "recent_teams_discussions" &&
+    (
+      params.plan.sources.sourceSpecificRag?.kind === "recent_teams_discussions" ||
+      params.plan.sources.sourceSpecificRag?.kind === "recent_meetings" ||
+      params.plan.sources.sourceSpecificRag?.kind === "meetings_on_date"
+    ) &&
     typeof params.retrievalCtx.sourceSpecificRagAnswer?.content === "string" &&
     params.retrievalCtx.sourceSpecificRagAnswer.content.trim().length > 0
   );
+}
+
+function directSourceSpecificResponseLabel(
+  kind: NonNullable<
+    ReturnType<typeof planRetrieval>["sources"]["sourceSpecificRag"]
+  >["kind"],
+): string {
+  if (kind === "recent_teams_discussions") return "source-specific-recent-teams";
+  if (kind === "meetings_on_date") return "source-specific-meetings-on-date";
+  return "source-specific-recent-meetings";
+}
+
+function directSourceSpecificStatusMessage(
+  kind: NonNullable<
+    ReturnType<typeof planRetrieval>["sources"]["sourceSpecificRag"]
+  >["kind"],
+): string {
+  return kind === "recent_teams_discussions"
+    ? "Recent Teams source answer returned"
+    : "Meeting source answer returned";
 }
 
 async function persistDirectDeepAgentResponse(params: {
@@ -4071,7 +4095,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         }
       }
 
-      if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx })) {
+      if (shouldUseDirectSourceSpecificFastPath({ plan, retrievalCtx })) {
+        const sourceSpecificKind =
+          plan.sources.sourceSpecificRag?.kind ?? "recent_meetings";
         const sourceAnswer = sanitizeDirectSourceSpecificAnswer(
           retrievalCtx.sourceSpecificRagAnswer?.content ?? "",
         );
@@ -4099,12 +4125,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           sessionId: args.sessionId,
           userId: args.user.id,
           content,
-          responseLabel: "source-specific-recent-teams",
+          responseLabel: directSourceSpecificResponseLabel(sourceSpecificKind),
           sourceDebug,
           trace: {
             input: lastUserContent,
             intent: plan.intent,
-            modelId: "retrieval-planner-v2-direct-recent-teams",
+            modelId: `retrieval-planner-v2-direct-${sourceSpecificKind}`,
             selectedProjectId: args.selectedProjectId ?? null,
             toolTrace,
           },
@@ -4131,7 +4157,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         responseAlreadyPersisted = true;
         writeTextResponse(
           writer,
-          "strategist-direct-recent-teams",
+          `strategist-direct-${sourceSpecificKind}`,
           content,
         );
         writer.write({
@@ -4139,7 +4165,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           id: "strategist-status",
           data: {
             stage: "complete",
-            message: "Recent Teams source answer returned",
+            message: directSourceSpecificStatusMessage(sourceSpecificKind),
             status: "success",
             timestamp: new Date().toISOString(),
           },

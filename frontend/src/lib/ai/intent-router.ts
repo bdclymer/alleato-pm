@@ -118,7 +118,8 @@ const APP_HELP_PATTERNS = [
   // definition verb AND a feature/action object so data questions ("I don't
   // understand why we're over budget") are NOT stolen into app help.
   /\b(i (really |honestly )?(don'?t|dont|do not) (really |fully |quite )?understand|i'?m (really |so )?confused (about|by|on|with)|help me understand)\b.{0,80}\b(field|column|button|tab|section|toggle|setting|option|feature|page|screen|widget|dropdown|do|does|mean|means|work|works|used for|for)\b/i,
-  /\bwhat (does|do|is|are)\b.{0,70}\b(field|column|button|tab|toggle|setting|option|feature|do|mean|means|stand for|used for|represent)\b/i,
+  /\bwhat (does|do|is|are)\b.{0,70}\b(field|column|button|tab|toggle|setting|option|feature|mean|means|stand for|used for|represent)\b/i,
+  /\bwhat does\b.{0,70}\b(revenue source|funding source|cost source|income source|payment source|budget source|data source|line[- ]?item source)\b.{0,20}\bdo\b/i,
 ];
 
 const OWNER_PORTFOLIO_BRIEFING_PATTERNS = [

@@ -67,6 +67,10 @@ Evidence directory:
 
 - [2026-06-25-ai-rag-production-finalization](../evidence/2026-06-25-ai-rag-production-finalization)
 
+Active latency hardening slice:
+
+- [2026-06-27-meeting-source-lookup-latency.md](../tasks/2026-06-27-meeting-source-lookup-latency.md)
+
 ## Master Checklist
 
 ### Phase 1: Architecture And Source Of Truth
@@ -418,6 +422,30 @@ Evidence directory:
 - Residual risk: the Outlook redrive completed source sync and embedding, but the intelligence extraction phase reported the existing high-churn AI/intelligence write guard for source-signal, insight-card, packet, and task writes. Track that as the next event-driven intelligence/task-write cleanup slice before final platform readiness.
 - Evidence:
   - [assistant-routing-after-direct-project-planner-trace-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-routing-after-direct-project-planner-trace-aai-698.txt)
+
+### 2026-06-27: AAI-749 Meeting Source Lookup Latency Patched
+
+- Investigated the failing production `source-lookup-meetings` eval.
+- Root cause: `sourceSpecificRagRetrieval` completed in `1463ms`, but the route
+  then fell through into the broad agentic loop, including 30
+  `searchMeetingsByTopic` completions over about `128.552s` plus off-path
+  MCP/CHRO/memory/document tools.
+- Patched the direct source-specific fast path so successful meeting
+  source-specific retrieval returns directly for recent meetings and
+  meetings-on-date requests, matching the existing direct Teams source-specific path.
+- Added a planner regression for the exact failing Brandon/billing/recent
+  meetings prompt.
+- Tightened an unrelated app-help regex false positive that routed
+  `What are Brandon's must-do items today?` to product help.
+- Verification passed:
+  - `npm run rag:verify:source-specific`
+  - `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/__tests__/intent-router.test.ts --runInBand`
+  - delegated `cd frontend && npm run typecheck:changed -- src/app/api/ai-assistant/chat/handler-v2.ts src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/intent-router.ts src/lib/ai/__tests__/intent-router.test.ts ../scripts/verify/verify_ai_source_specific_rag_contract.mjs`
+- Remaining: rerun the production `source-lookup-meetings` eval after deploy to
+  prove the public site is under the `75000ms` max budget.
+- Evidence:
+  - [meeting-source-lookup-latency-aai-749.md](../evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md)
+  - [2026-06-27-meeting-source-lookup-latency.md](../tasks/2026-06-27-meeting-source-lookup-latency.md)
   - [chat-architecture-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/chat-architecture-final-aai-698.txt)
   - [assistant-operational-readiness-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/assistant-operational-readiness-final-aai-698.txt)
   - [source-specific-final-aai-698.txt](../evidence/2026-06-25-ai-rag-production-finalization/source-specific-final-aai-698.txt)

@@ -25,6 +25,12 @@ describe("intent router", () => {
     }
   });
 
+  it("does not classify owner must-do briefing prompts as app help", () => {
+    const intent = classifyAssistantIntent("What are Brandon's must-do items today?");
+
+    expect(intent).not.toBe("app_help");
+  });
+
   it("preserves exact source lookup prompts", () => {
     const intent = classifyAssistantIntent("What source evidence supports that?");
 

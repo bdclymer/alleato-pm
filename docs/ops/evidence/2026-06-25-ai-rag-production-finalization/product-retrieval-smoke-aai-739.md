@@ -105,6 +105,11 @@ Limitations:
 
 ## Latency Finding: Meeting Source Lookup
 
+Update 2026-06-27: tracked and patched under AAI-749. The baseline failure
+below is retained as the original production smoke finding. The fix evidence is
+recorded in
+`docs/ops/evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md`.
+
 Command:
 
 ```bash

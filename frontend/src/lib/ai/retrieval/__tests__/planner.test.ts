@@ -98,6 +98,22 @@ describe("planRetrieval", () => {
     expect(plan.sources.semanticVectorSearch).toBeUndefined();
   });
 
+  it("routes recent meeting evidence prompts to source-specific RAG before specialist tools", () => {
+    const message =
+      "Did Brandon say anything about billing in recent meetings that I need to remember?";
+    const plan = planRetrieval({
+      message,
+      messages: [userMsg(message)],
+    });
+
+    expect(plan.responseFormat).toBe("source_specific_rag");
+    expect(plan.reason).toBe("source_specific_rag_recent_meetings");
+    expect(plan.sources.sourceSpecificRag).toEqual({
+      kind: "recent_meetings",
+    });
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+  });
+
   it("routes selected-project source-health wording to packet and snapshot checks", () => {
     const message =
       "Before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.";
