@@ -665,6 +665,47 @@ describe("executive operating brief priority lanes", () => {
       /pattern-level|external dependency/i,
     );
   });
+
+  it("keeps an emerging pattern for mixed project and finance signals", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Door swaps, asphalt work, drywall repairs, and an electrical panel move need contract scope and approval clarity.",
+          recommendedAction:
+            "Send Goodwill one list that marks each item as approved, pending, or covered by contract.",
+          whyItMatters:
+            "Without owner approval clarity, the project team cannot create the right change event or close the scope risk.",
+          project: "26-105 Goodwill Pioneer PKWY",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          summary:
+            "Nine projects have on-hold change orders totaling $422K in pending revenue.",
+          recommendedAction:
+            "Review the on-hold change orders and assign a next step for each one.",
+          whyItMatters:
+            "The pending revenue remains exposed until accounting and project managers close the approval loop.",
+          project: "Multiple (9 projects)",
+          tone: "watch",
+        }),
+      ],
+    });
+
+    expect(brief.emergingPatterns?.[0]).toEqual(
+      expect.objectContaining({
+        title:
+          "Approval and revenue follow-through are the current operating constraint",
+        evidence: expect.arrayContaining([
+          expect.stringContaining("Goodwill added work"),
+          expect.stringContaining("$422K in pending COs"),
+        ]),
+      }),
+    );
+  });
 });
 
 describe("applyProjectNumbers", () => {

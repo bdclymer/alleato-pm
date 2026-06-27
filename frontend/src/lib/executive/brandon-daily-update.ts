@@ -3174,7 +3174,7 @@ function buildPattern(
 function buildEmergingPatterns(
   entries: ScoredBriefEntry[],
 ): ExecutiveOperatingBriefPattern[] {
-  return [
+  const predefinedPatterns = [
     buildPattern(
       "External dependency management is the main execution risk",
       entriesMatching(entries, [
@@ -3232,6 +3232,35 @@ function buildEmergingPatterns(
   ].filter((pattern): pattern is ExecutiveOperatingBriefPattern =>
     Boolean(pattern),
   );
+
+  if (predefinedPatterns.length > 0 || entries.length < 2) {
+    return predefinedPatterns;
+  }
+
+  const strongest = entries.slice(0, 3);
+  const riskCount = strongest.filter(
+    (entry) => entry.item.tone === "risk" || entry.score >= 65,
+  ).length;
+  const hasFinance = strongest.some((entry) => entry.lane === "cashMargin");
+  const hasExecution = strongest.some((entry) =>
+    ["scheduleField", "customerOwner", "subcontractorVendor"].includes(
+      entry.lane,
+    ),
+  );
+  const title =
+    hasFinance && hasExecution
+      ? "Approval and revenue follow-through are the current operating constraint"
+      : "The material signals are concentrated enough to require follow-through";
+
+  return [
+    {
+      title,
+      evidence: strongest.map(evidenceLine),
+      significance:
+        "The common pattern is not volume; it is that the few surfaced items all need clear ownership, approval status, and next-step closure before they stop carrying business risk.",
+      trend: riskCount >= 2 ? "increasing" : "stable",
+    },
+  ];
 }
 
 function likelihoodFromScore(score: number): "low" | "medium" | "high" {
