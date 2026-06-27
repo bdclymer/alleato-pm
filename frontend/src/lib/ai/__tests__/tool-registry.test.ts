@@ -11,9 +11,12 @@ import {
 } from "../tool-registry";
 import type { ToolSet } from "ai";
 import {
+  createChangeOrderInputSchema,
   createChangeEventInputSchema,
+  createGeneratedTaskInputSchema,
   createRFIInputSchema,
   createTaskInputSchema,
+  deleteGeneratedTaskInputSchema,
   findProjectDocumentsInputSchema,
   getAcumaticaProjectBudgetInputSchema,
   getAcumaticaProjectListInputSchema,
@@ -33,6 +36,7 @@ import {
   searchTeamsMessagesInputSchema,
   semanticSearchInputSchema,
   getVendorSpendReportInputSchema,
+  updateGeneratedTaskInputSchema,
   updateProjectStatusInputSchema,
 } from "../tool-descriptors";
 import {
@@ -419,14 +423,18 @@ describe("global AI assistant tool registry", () => {
     const definitions = toolDefinitionsForWorkflow({
       workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
       allowedToolNames: [
+        "createChangeOrder",
         "createChangeEvent",
         "updateProjectStatus",
         "createRFI",
         "createTask",
+        "createGeneratedTask",
+        "updateGeneratedTask",
+        "deleteGeneratedTask",
       ],
     });
 
-    expect(definitions).toHaveLength(4);
+    expect(definitions).toHaveLength(8);
     expect(
       definitions.map((definition) => [
         definition.name,
@@ -439,6 +447,15 @@ describe("global AI assistant tool registry", () => {
       ]),
     ).toEqual(
       expect.arrayContaining([
+        [
+          "createChangeOrder",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
         [
           "createChangeEvent",
           true,
@@ -468,6 +485,33 @@ describe("global AI assistant tool registry", () => {
         ],
         [
           "createTask",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createGeneratedTask",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "updateGeneratedTask",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "deleteGeneratedTask",
           true,
           true,
           true,
@@ -559,6 +603,17 @@ describe("global AI assistant tool registry", () => {
       limit: 30,
     });
     expect(
+      createChangeOrderInputSchema.parse({
+        projectId: 101,
+        title: "ASI 04 masonry revision",
+      }),
+    ).toEqual({
+      projectId: 101,
+      title: "ASI 04 masonry revision",
+      status: "draft",
+      confirmed: false,
+    });
+    expect(
       createChangeEventInputSchema.parse({
         projectId: 101,
         title: "Owner scope change",
@@ -601,6 +656,34 @@ describe("global AI assistant tool registry", () => {
       projectId: 101,
       name: "Pour slab",
       priority: "normal",
+      confirmed: false,
+    });
+    expect(
+      createGeneratedTaskInputSchema.parse({
+        title: "Follow up on sleeve layout",
+      }),
+    ).toEqual({
+      title: "Follow up on sleeve layout",
+      priority: "normal",
+      status: "open",
+      confirmed: false,
+    });
+    expect(
+      updateGeneratedTaskInputSchema.parse({
+        taskId: "9e095a8e-7a1e-454a-a136-862b687ac49c",
+        status: "done",
+      }),
+    ).toEqual({
+      taskId: "9e095a8e-7a1e-454a-a136-862b687ac49c",
+      status: "done",
+      confirmed: false,
+    });
+    expect(
+      deleteGeneratedTaskInputSchema.parse({
+        taskId: "9e095a8e-7a1e-454a-a136-862b687ac49c",
+      }),
+    ).toEqual({
+      taskId: "9e095a8e-7a1e-454a-a136-862b687ac49c",
       confirmed: false,
     });
   });

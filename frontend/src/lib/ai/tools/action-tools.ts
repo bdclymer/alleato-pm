@@ -42,12 +42,22 @@ import {
   buildChangeRequestReviewCard,
 } from "@/lib/ai/change-request-field-guide";
 import {
+  createChangeOrderDescription,
+  createChangeOrderInputSchema,
   createChangeEventDescription,
   createChangeEventInputSchema,
+  createGeneratedTaskDescription,
+  createGeneratedTaskInputSchema,
   createRFIDescription,
   createRFIInputSchema,
   createTaskDescription,
   createTaskInputSchema,
+  deleteGeneratedTaskDescription,
+  deleteGeneratedTaskInputSchema,
+  generatedTaskPrioritySchema,
+  generatedTaskStatusSchema,
+  updateGeneratedTaskDescription,
+  updateGeneratedTaskInputSchema,
   updateProjectStatusDescription,
   updateProjectStatusInputSchema,
 } from "@/lib/ai/tool-descriptors";
@@ -82,8 +92,6 @@ export type CreateRFIPreviewInput = {
   scheduleImpact?: "yes" | "no" | "tbd";
 };
 
-const generatedTaskPrioritySchema = z.enum(["low", "normal", "medium", "high", "critical", "urgent"]);
-const generatedTaskStatusSchema = z.enum(["open", "in_progress", "completed", "done", "blocked", "cancelled"]);
 const projectCompanyTypeSchema = z.enum([
   "YOUR_COMPANY",
   "VENDOR",
@@ -828,34 +836,8 @@ export function createActionTools(
     // -------------------------------------------------------------------------
 
     createChangeOrder: tool({
-      description:
-        "Create a new prime contract change order (PCCO). Use when the user says " +
-        "'create a change order', 'add a CO', or describes a scope change that needs " +
-        "to be documented as a change order. Always show a preview and ask for " +
-        "confirmation before writing. If projectId is unknown, call getPortfolioOverview first.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID — required"),
-        contractId: z
-          .string()
-          .optional()
-          .describe(
-            "Prime contract ID (uuid) if known — prime_contract_change_orders.contract_id is a uuid FK, never a number",
-          ),
-        title: z.string().describe("Change order title"),
-        totalAmount: z.number().optional().describe("Dollar amount — can be 0 if TBD"),
-        status: z
-          .enum(["draft", "pending", "submitted", "approved", "rejected", "void"])
-          .default("draft")
-          .describe("Initial status — defaults to draft"),
-        confirmed: z
-          .boolean()
-          .default(false)
-          .describe("Set to true only after user confirms the preview"),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createChangeOrderDescription,
+      inputSchema: createChangeOrderInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createChangeOrder", options, async (input) => {
         const { projectId, contractId, title, totalAmount, status, confirmed } = input;
@@ -1328,29 +1310,8 @@ export function createActionTools(
     }),
 
     createGeneratedTask: tool({
-      description:
-        "Create an action item in the main Tasks page task register (public.tasks). " +
-        "Use this for AI-generated follow-ups, reminders, accountability items, or user-created action items " +
-        "that should appear on /tasks or /[projectId]/tasks. If the action item supports a known schedule/Gantt task, pass scheduleTaskId to link it. Preview before writing.",
-      inputSchema: z.object({
-        projectId: z.number().optional().describe("Project ID if the task belongs to a project"),
-        scheduleTaskId: z
-          .string()
-          .uuid()
-          .optional()
-          .describe("Optional schedule_tasks.id when this action item supports a specific schedule/Gantt activity"),
-        title: z.string().describe("Short task title"),
-        description: z.string().optional().describe("Task detail or source context"),
-        assignee: z.string().optional().describe("Person responsible"),
-        dueDate: z.string().optional().describe("ISO due date"),
-        priority: generatedTaskPrioritySchema.default("normal"),
-        status: generatedTaskStatusSchema.default("open"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createGeneratedTaskDescription,
+      inputSchema: createGeneratedTaskInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createGeneratedTask", options, async (input) => {
         const {
@@ -2082,20 +2043,8 @@ export function createActionTools(
     }),
 
     updateGeneratedTask: tool({
-      description:
-        "Update an existing task in the main Tasks page task register (public.tasks). " +
-        "Use when the user asks to modify, reassign, reprioritize, close, or change a due date for a Tasks page item. Preview before writing.",
-      inputSchema: z.object({
-        taskId: z.string().uuid().describe("Task ID from public.tasks"),
-        title: z.string().optional(),
-        description: z.string().optional(),
-        assignee: z.string().optional(),
-        dueDate: z.string().nullable().optional(),
-        priority: generatedTaskPrioritySchema.optional(),
-        status: generatedTaskStatusSchema.optional(),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: updateGeneratedTaskDescription,
+      inputSchema: updateGeneratedTaskInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("updateGeneratedTask", options, async (input) => {
         const current = await loadGeneratedTaskForWrite(input.taskId);
@@ -2181,14 +2130,8 @@ export function createActionTools(
     }),
 
     deleteGeneratedTask: tool({
-      description:
-        "Delete an existing task from the main Tasks page task register (public.tasks). Preview before writing.",
-      inputSchema: z.object({
-        taskId: z.string().uuid().describe("Task ID from public.tasks"),
-        reason: z.string().optional().describe("Why the task should be deleted"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: deleteGeneratedTaskDescription,
+      inputSchema: deleteGeneratedTaskInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("deleteGeneratedTask", options, async (input) => {
         const current = await loadGeneratedTaskForWrite(input.taskId);
