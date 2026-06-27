@@ -441,8 +441,12 @@ Active latency hardening slice:
   - `npm run rag:verify:source-specific`
   - `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/__tests__/intent-router.test.ts --runInBand`
   - delegated `cd frontend && npm run typecheck:changed -- src/app/api/ai-assistant/chat/handler-v2.ts src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/intent-router.ts src/lib/ai/__tests__/intent-router.test.ts ../scripts/verify/verify_ai_source_specific_rag_contract.mjs`
-- Remaining: rerun the production `source-lookup-meetings` eval after deploy to
-  prove the public site is under the `75000ms` max budget.
+- Follow-up production verification passed after deployment
+  `dpl_GeJhJvxRNw9ncjTr1uN8J97bTRNF` reached `Ready` and was aliased to
+  `projects.alleatogroup.com`:
+  - `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- source-lookup-meetings`
+  - Result: PASS, `5141ms`, 1/1, 0 failures, 0 warnings.
+  - Artifact: `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T14-36-47-831Z-31a8441e/source-lookup-meetings.json`
 - Evidence:
   - [meeting-source-lookup-latency-aai-749.md](../evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md)
   - [2026-06-27-meeting-source-lookup-latency.md](../tasks/2026-06-27-meeting-source-lookup-latency.md)

@@ -90,12 +90,14 @@ owner-briefing task phrases are no longer stolen into `app_help`.
 | Source-specific contract | `npm run rag:verify:source-specific` | PASS |
 | Focused planner/router unit tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/__tests__/intent-router.test.ts --runInBand` | PASS, 110/110 |
 | Delegated changed-file typecheck | `cd frontend && npm run typecheck:changed -- src/app/api/ai-assistant/chat/handler-v2.ts src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/intent-router.ts src/lib/ai/__tests__/intent-router.test.ts ../scripts/verify/verify_ai_source_specific_rag_contract.mjs` | PASS |
+| Eval contract cleanup | `npm run rag:verify:source-specific`; `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/source-specific-rag.test.ts --runInBand`; `node --check scripts/verify/verify_ai_assistant_eval_suite.mjs`; delegated `cd frontend && npm run typecheck:changed -- src/lib/ai/retrieval/source-specific-rag.ts ../scripts/verify/verify_ai_assistant_eval_suite.mjs` | PASS |
 
 ## Deployment / Production Recheck
 
-This slice proves the route fix locally and through static/source-specific
-contract gates. The production eval should be rerun after this commit is
-deployed:
+Deployment `dpl_GeJhJvxRNw9ncjTr1uN8J97bTRNF` is `Ready` on Vercel and aliased
+to `projects.alleatogroup.com`.
+
+Production eval command:
 
 ```bash
 AI_EVAL_BASE_URL=https://projects.alleatogroup.com \
@@ -104,9 +106,12 @@ AI_EVAL_JUDGE_ENABLED=false \
 npm run rag:verify:eval-suite:case -- source-lookup-meetings
 ```
 
-Expected post-deploy proof:
+Result:
 
-- duration under `75000ms`
-- direct provider path `direct-source-specific-rag`
-- no broad `searchMeetingsByTopic` fan-out after `sourceSpecificRagRetrieval`
-- no off-path MCP discovery for this meeting-source prompt
+- PASS, 1/1
+- Duration: `5141ms`
+- Tools fired: `backendDeepAgentExecutiveBriefing`, `sourceSpecificRagRetrieval`
+- Failures: none
+- Warnings: none
+- Artifact:
+  `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T14-36-47-831Z-31a8441e/source-lookup-meetings.json`

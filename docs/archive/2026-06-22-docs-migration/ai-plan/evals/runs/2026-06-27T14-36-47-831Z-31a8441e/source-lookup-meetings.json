@@ -1,0 +1,319 @@
+{
+  "id": "source-lookup-meetings",
+  "intent": "source_lookup",
+  "prompt": "Did Brandon say anything about billing in recent meetings that I need to remember?",
+  "selectedProjectId": null,
+  "sessionId": "36e618c6-f2f8-48de-b533-17afdb118d19",
+  "sessionLabel": "eval-2026-06-27T14-36-47-831Z-31a8441e-source-lookup-meetings",
+  "startedAt": "2026-06-27T14:36:47.938Z",
+  "finishedAt": "2026-06-27T14:36:53.534Z",
+  "durationMs": 5141,
+  "httpStatus": 200,
+  "streamError": null,
+  "streamEventCount": 8,
+  "persistedFound": true,
+  "score": {
+    "status": "pass",
+    "failures": [],
+    "warnings": [],
+    "observations": [
+      "tools fired: backendDeepAgentExecutiveBriefing, sourceSpecificRagRetrieval"
+    ],
+    "toolNames": [
+      "backendDeepAgentExecutiveBriefing",
+      "sourceSpecificRagRetrieval"
+    ],
+    "familiesHit": [
+      "project",
+      "financial",
+      "risk",
+      "meetings",
+      "actions",
+      "task_management",
+      "source_health"
+    ],
+    "finalTextLength": 6277,
+    "finalText": "I treated this as a source lookup, not a project status report.\n\n**Recent Meetings**\n\n1. **Ice Cream Shop Equipment Review** — 2026-06-26\n   # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiew... [Source: 01KW1PP717RNHRDV56RJZF614P]\n2. **Quarterly Meeting Brainstorm** — 2026-06-25\n   # Quarterly Meeting Brainstorm **Date:** 6/25/2026, 3:00:00 PM **Duration:** 1 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com,jgaona@alleatogroup.com, mcalcetero@alleatogroup.com, jgaona@alleatogroup.com ## Summary - **Insurance Policy Update:** Shift from Cincinnati t... [Source: 01KVV1ZXBWSG077B23VWVA0F7V]\n3. **Weekly Touch Base** — 2026-06-22\n   # Weekly Touch Base **Date:** 6/22/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,njepson@alleatogroup.com,acannon@alleatogroup.com,kgreen@alleatogroup.com,mamico@alleatogroup.com,nbrimie@alleatogroup.com,ctragesser@alleatogroup.com,rrapean@alleatogroup.com,cgi... [Source: 01KV6SR4SQX64Y5X86XP4J265Q]\n4. **AlleatoGroup Virtual Meeting** — 2026-06-17\n   # AlleatoGroup Virtual Meeting **Date:** 6/17/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** sustainergy@sustainergy.coop,dfranklin@alleatogroup.com,loie@sustainergy.coop,acannon@alleatogroup.com, dfranklin@alleatogroup.com, loie@sustainergy.coop, acannon@alleatogroup.com ## Summary - **... [Source: 01KVB36BX0AWWXRG42VPQ0PPAA]\n5. **Goodwill Weekly OAC Meeting** — 2026-06-16\n   # Goodwill Weekly OAC Meeting **Date:** 6/16/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning@goodwillindy.org,fireflies@alleatogroup.com,ctragesser@alleatogroup.com,tinman... [Source: 01KTNFDNB0FSP7TXHB8X6HTKNP]\n6. **Salary and PTO review** — 2026-06-15\n   # Salary and PTO review **Date:** 6/15/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com, mcalcetero@alleatogroup.com ## Summary - **PTO Policy:** Short appointments don’t need PTO; full/half days off count. Staff must notify HR and manage... [Source: 01KV5SMW8XBE46AR2AYRTFXAXV]\n7. **How to write commitments Job Planner** — 2026-06-12\n   # How to write commitments Job Planner **Date:** 6/12/2026, 5:45:00 PM **Duration:** 0 minutes **Participants:** dsatterfield@alleatogroup.com,acannon@alleatogroup.com,fireflies@alleatogroup.com, acannon@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Commitment Process:** Standard workf... [Source: 01KTYF2KMQ3VHQX96HW3DANVNC]\n8. **Dustin Interview- VP Role** — 2026-06-12\n   # Dustin Interview- VP Role **Date:** 6/12/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** jgaona@alleatogroup.com,fireflies@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Leadership Experience:** 17+ years leading a contracting firm, managing culture, operations, marketing,... [Source: 01KTSDHMWZK41424ATS0563A71]\n9. **Schedule Review** — 2026-06-03\n   # Schedule Review **Date:** 6/3/2026, 5:00:00 PM **Duration:** 1 minutes **Participants:** dsatterfield@alleatogroup.com,bwright@alleatogroup.com,phollingsworth@alleatogroup.com, dsatterfield@alleatogroup.com, bwright@alleatogroup.com ## Summary - **Scope Clarification:** Resolved discrepancies betw... [Source: 01KT72NMHWWNEN5CJWKXQ61NJT]\n10. **Weekly OPS (Estimators)** — 2026-06-02\n   # Weekly OPS (Estimators) **Date:** 6/2/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleat... [Source: 01KSQ8GCSF9XESN5NDRF5FBE2Z]\n\n**Meeting Insights**\n- Decisions: Additionally, height standardization for countertops was agreed upon, along with ADA-compliant drop-down areas on both order and pickup sides. ## Short Summary The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter. ## Keywords Goodwill Retail, Ace Champagne, Union Collective, Construction progress, Permitting, Office remodel The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter.\n- Follow-ups: # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiewicz@dkgrar.com, g@damngoodinteriors.com, m@damngoodinteriors.com, e@damngoodinteriors.com, dfranklin@alleatogroup.com, dstewart@fgschaefer.com ## Summary - **CAD File Coordination:** Melissa’s team will send updated CAD drawings today; Daniel’s team to revise by Monday to avoid duplication and speed layout finalization. - **Menu Wall Space:** Limited wall space due to large windows; lowering/removing storage rack considered to increase menu visibility without hurting equipment space. Andrew committed to confirming display case specifications to ensure accurate millwork drawings, while concerns about limited wall space for menu visibility due to large windows were addressed.\n- Risks: - **Brooksville Road Permit:** Resubmitted, feedback expected within 5-10 days; follow-up call planned if delayed.\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed source index.\n- Pulled 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only.",
+    "backendDeepAgentMemory": {
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "skillUsage": {
+      "totalSelected": 0,
+      "selectionSurface": null,
+      "skills": []
+    },
+    "latencyBudget": {
+      "warnDurationMs": 30000,
+      "maxDurationMs": 75000,
+      "durationMs": 5141
+    }
+  },
+  "expectedToolNames": [
+    "sourceSpecificRagRetrieval"
+  ],
+  "expectedToolFamilies": [
+    "meetings"
+  ],
+  "streamEvents": [
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "planning",
+        "message": "Plan: source_specific_rag_recent_meetings",
+        "status": "loading",
+        "timestamp": "2026-06-27T14:36:50.861Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Checking Render Deep Agents executive briefing",
+        "status": "loading",
+        "timestamp": "2026-06-27T14:36:51.188Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "backend-deep-agents",
+        "message": "Render Deep Agents executive bridge failed; falling back to local retrieval: backend.deep-agent-research did not complete within retry policy.",
+        "status": "warning",
+        "timestamp": "2026-06-27T14:36:51.323Z"
+      }
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "retrieval-complete",
+        "message": "Retrieved (1 sources, 0 warnings)",
+        "status": "success",
+        "durations": {
+          "source_specific_rag": 1552
+        },
+        "timestamp": "2026-06-27T14:36:52.916Z"
+      }
+    },
+    {
+      "type": "text-start",
+      "id": "strategist-direct-recent_meetings"
+    },
+    {
+      "type": "text-delta",
+      "id": "strategist-direct-recent_meetings",
+      "delta": "I treated this as a source lookup, not a project status report.\n\n**Recent Meetings**\n\n1. **Ice Cream Shop Equipment Review** — 2026-06-26\n   # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiew... [Source: 01KW1PP717RNHRDV56RJZF614P]\n2. **Quarterly Meeting Brainstorm** — 2026-06-25\n   # Quarterly Meeting Brainstorm **Date:** 6/25/2026, 3:00:00 PM **Duration:** 1 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com,jgaona@alleatogroup.com, mcalcetero@alleatogroup.com, jgaona@alleatogroup.com ## Summary - **Insurance Policy Update:** Shift from Cincinnati t... [Source: 01KVV1ZXBWSG077B23VWVA0F7V]\n3. **Weekly Touch Base** — 2026-06-22\n   # Weekly Touch Base **Date:** 6/22/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,njepson@alleatogroup.com,acannon@alleatogroup.com,kgreen@alleatogroup.com,mamico@alleatogroup.com,nbrimie@alleatogroup.com,ctragesser@alleatogroup.com,rrapean@alleatogroup.com,cgi... [Source: 01KV6SR4SQX64Y5X86XP4J265Q]\n4. **AlleatoGroup Virtual Meeting** — 2026-06-17\n   # AlleatoGroup Virtual Meeting **Date:** 6/17/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** sustainergy@sustainergy.coop,dfranklin@alleatogroup.com,loie@sustainergy.coop,acannon@alleatogroup.com, dfranklin@alleatogroup.com, loie@sustainergy.coop, acannon@alleatogroup.com ## Summary - **... [Source: 01KVB36BX0AWWXRG42VPQ0PPAA]\n5. **Goodwill Weekly OAC Meeting** — 2026-06-16\n   # Goodwill Weekly OAC Meeting **Date:** 6/16/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning@goodwillindy.org,fireflies@alleatogroup.com,ctragesser@alleatogroup.com,tinman... [Source: 01KTNFDNB0FSP7TXHB8X6HTKNP]\n6. **Salary and PTO review** — 2026-06-15\n   # Salary and PTO review **Date:** 6/15/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com, mcalcetero@alleatogroup.com ## Summary - **PTO Policy:** Short appointments don’t need PTO; full/half days off count. Staff must notify HR and manage... [Source: 01KV5SMW8XBE46AR2AYRTFXAXV]\n7. **How to write commitments Job Planner** — 2026-06-12\n   # How to write commitments Job Planner **Date:** 6/12/2026, 5:45:00 PM **Duration:** 0 minutes **Participants:** dsatterfield@alleatogroup.com,acannon@alleatogroup.com,fireflies@alleatogroup.com, acannon@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Commitment Process:** Standard workf... [Source: 01KTYF2KMQ3VHQX96HW3DANVNC]\n8. **Dustin Interview- VP Role** — 2026-06-12\n   # Dustin Interview- VP Role **Date:** 6/12/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** jgaona@alleatogroup.com,fireflies@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Leadership Experience:** 17+ years leading a contracting firm, managing culture, operations, marketing,... [Source: 01KTSDHMWZK41424ATS0563A71]\n9. **Schedule Review** — 2026-06-03\n   # Schedule Review **Date:** 6/3/2026, 5:00:00 PM **Duration:** 1 minutes **Participants:** dsatterfield@alleatogroup.com,bwright@alleatogroup.com,phollingsworth@alleatogroup.com, dsatterfield@alleatogroup.com, bwright@alleatogroup.com ## Summary - **Scope Clarification:** Resolved discrepancies betw... [Source: 01KT72NMHWWNEN5CJWKXQ61NJT]\n10. **Weekly OPS (Estimators)** — 2026-06-02\n   # Weekly OPS (Estimators) **Date:** 6/2/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleat... [Source: 01KSQ8GCSF9XESN5NDRF5FBE2Z]\n\n**Meeting Insights**\n- Decisions: Additionally, height standardization for countertops was agreed upon, along with ADA-compliant drop-down areas on both order and pickup sides. ## Short Summary The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter. ## Keywords Goodwill Retail, Ace Champagne, Union Collective, Construction progress, Permitting, Office remodel The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter.\n- Follow-ups: # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiewicz@dkgrar.com, g@damngoodinteriors.com, m@damngoodinteriors.com, e@damngoodinteriors.com, dfranklin@alleatogroup.com, dstewart@fgschaefer.com ## Summary - **CAD File Coordination:** Melissa’s team will send updated CAD drawings today; Daniel’s team to revise by Monday to avoid duplication and speed layout finalization. - **Menu Wall Space:** Limited wall space due to large windows; lowering/removing storage rack considered to increase menu visibility without hurting equipment space. Andrew committed to confirming display case specifications to ensure accurate millwork drawings, while concerns about limited wall space for menu visibility due to large windows were addressed.\n- Risks: - **Brooksville Road Permit:** Resubmitted, feedback expected within 5-10 days; follow-up call planned if delayed.\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed source index.\n- Pulled 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only."
+    },
+    {
+      "type": "text-end",
+      "id": "strategist-direct-recent_meetings"
+    },
+    {
+      "type": "data-status",
+      "id": "strategist-status",
+      "data": {
+        "stage": "complete",
+        "message": "Meeting source answer returned",
+        "status": "success",
+        "timestamp": "2026-06-27T14:36:53.046Z"
+      }
+    }
+  ],
+  "persistedMetadata": {
+    "model": "openai/gpt-5.4",
+    "tool_trace": [
+      {
+        "tool": "backendDeepAgentExecutiveBriefing",
+        "agent": "frontend-ai-assistant",
+        "input": {
+          "message": "Did Brandon say anything about billing in recent meetings that I need to remember?",
+          "selectedProjectId": null
+        },
+        "detail": "backend.deep-agent-research did not complete within retry policy.",
+        "status": "failed",
+        "toolName": "backendDeepAgentExecutiveBriefing",
+        "timestamp": "2026-06-27T14:36:51.323Z",
+        "durationMs": 0
+      },
+      {
+        "tool": "sourceSpecificRagRetrieval",
+        "agent": "retrieval-planner-v2",
+        "input": {
+          "kind": "recent_meetings",
+          "message": "Did Brandon say anything about billing in recent meetings that I need to remember?",
+          "selectedProjectId": null
+        },
+        "output": {
+          "rowCount": 10
+        },
+        "status": "success",
+        "toolName": "sourceSpecificRagRetrieval",
+        "timestamp": "2026-06-27T14:36:52.917Z",
+        "durationMs": 1552
+      }
+    ],
+    "architecture": "retrieval-planner-v2",
+    "source_debug": {
+      "memory": {
+        "memories": [
+          {
+            "id": "abc5562b-bb7b-410f-a861-cf02de2a5635",
+            "type": "preference",
+            "content": "The user prefers detailed, specific updates on project status, risks, and next steps for Vermillion Rise Warehouse.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "1fb5e36f-485c-4ad1-8368-d989ff2ef1a0",
+            "type": "preference",
+            "content": "User prefers high-leverage, action-oriented tasks prioritized daily for Vermillion Rise Warehouse project.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "330dcd98-1e96-4bff-8a31-b5809ee253e8",
+            "type": "preference",
+            "content": "User prefers to have tasks and RFIs associated with specific project names, due dates, and assignees documented clearly.",
+            "projectId": null,
+            "visibility": "private"
+          },
+          {
+            "id": "f7d94005-c55f-475f-ae18-3bc44a8bfd80",
+            "type": "fact",
+            "content": "Brandon's main pain points are trust in financial data, billing transparency, and operational follow-up scattered across meetings, email, and Teams.",
+            "projectId": null,
+            "similarity": 0.545637837180503,
+            "visibility": "team",
+            "rankingScore": 10.78791357779475,
+            "rankingReason": "freshness=0.95; project=global; similarity=0.55; importance=0.90"
+          },
+          {
+            "id": "364bb912-ac22-46ff-8edc-53bf42fd789e",
+            "type": "fact",
+            "content": "Brandon reviewed the most recent Brandon-related Teams messages with the latest substantive DM thread surfacing on 2026-04-29.",
+            "projectId": null,
+            "similarity": 0.526612436734838,
+            "visibility": "team",
+            "rankingScore": 10.216969383076671,
+            "rankingReason": "freshness=0.91; project=global; similarity=0.53; importance=0.70"
+          },
+          {
+            "id": "7e845510-1ef0-47e2-b2b0-315e6fe78aa0",
+            "type": "fact",
+            "content": "The next scheduled review of Brandon’s Profit & Loss formula and quarterly tax planning discussions will be arranged, with a future call to be scheduled.",
+            "projectId": null,
+            "similarity": 0.524757881618852,
+            "visibility": "team",
+            "rankingScore": 9.075429420780964,
+            "rankingReason": "freshness=0.80; project=global; similarity=0.52; importance=0.70"
+          },
+          {
+            "id": "a1059ff5-a246-4dae-a790-8208b95cf552",
+            "type": "fact",
+            "content": "A future call will be scheduled with Brandon to review his Profit & Loss formula and establish quarterly reviews for optimal tax sheltering, planned around 6:51 into the meeting.",
+            "projectId": null,
+            "similarity": 0.519943355770452,
+            "visibility": "team",
+            "rankingScore": 9.070039938572517,
+            "rankingReason": "freshness=0.80; project=global; similarity=0.52; importance=0.70"
+          },
+          {
+            "id": "8bb4f007-481e-49d9-86a2-4329f19e2690",
+            "type": "fact",
+            "content": "The next scheduled review of Brandon’s Profit & Loss formula and quarterly tax planning discussions will be arranged via future calls, with a focus on managing money movements for tax benefits.",
+            "projectId": null,
+            "similarity": 0.511937130178906,
+            "visibility": "team",
+            "rankingScore": 9.064698026252575,
+            "rankingReason": "freshness=0.79; project=global; similarity=0.51; importance=0.80"
+          },
+          {
+            "id": "0e49ff50-9c6b-4ae6-a202-bd2915f419fa",
+            "type": "fact",
+            "content": "The next scheduled review of Brandon’s Profit & Loss formula and quarterly tax planning is to be arranged, with a future call to be scheduled for this purpose.",
+            "projectId": null,
+            "similarity": 0.511638055056835,
+            "visibility": "team",
+            "rankingScore": 9.008700142058453,
+            "rankingReason": "freshness=0.79; project=global; similarity=0.51; importance=0.70"
+          }
+        ],
+        "teamUsed": 6,
+        "retrieved": {
+          "team": 4,
+          "relevant": 6,
+          "preferences": 3
+        },
+        "totalUsed": 9,
+        "relevantUsed": 0,
+        "preferencesUsed": 3,
+        "recentConversationsUsed": 3
+      },
+      "skills": {
+        "reason": "No approved Skill Library records were selected for this answer, or the answer used a delegated/direct path that does not yet inject skills.",
+        "status": "not_loaded_or_not_selected"
+      },
+      "sources": {
+        "timing": {
+          "slowest": [
+            {
+              "tool": "sourceSpecificRagRetrieval",
+              "agent": "retrieval-planner-v2",
+              "status": "success",
+              "durationMs": 1552
+            },
+            {
+              "tool": "backendDeepAgentExecutiveBriefing",
+              "agent": "frontend-ai-assistant",
+              "status": "failed",
+              "durationMs": 0
+            }
+          ],
+          "failedCount": 1,
+          "totalMeasuredMs": 1552
+        },
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "sourceSpecificRagRetrieval"
+        ],
+        "evidenceCount": null,
+        "toolCallCount": 2,
+        "sourceCoverage": []
+      },
+      "orchestrator": "retrieval-planner-v2-direct-recent-teams",
+      "outputPolicy": null,
+      "retrievalPlan": {
+        "intent": "latest_status",
+        "reason": "source_specific_rag_recent_meetings",
+        "sources": [
+          "sourceSpecificRag"
+        ],
+        "responseFormat": "source_specific_rag"
+      }
+    },
+    "provider_path": "direct-source-specific-rag",
+    "retrieval_plan": {
+      "intent": "latest_status",
+      "reason": "source_specific_rag_recent_meetings",
+      "sources": [
+        "sourceSpecificRag"
+      ],
+      "responseFormat": "source_specific_rag"
+    },
+    "synthesis_model": "openai/gpt-5.4",
+    "response_quality": {
+      "score": 77,
+      "reasons": [
+        "at least one successful tool call",
+        "multiple source citations"
+      ],
+      "confidence": "medium",
+      "sourceQuality": "high",
+      "hasMetaCommentary": false
+    }
+  }
+}

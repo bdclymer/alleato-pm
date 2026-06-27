@@ -39,6 +39,9 @@ budget.
 | Source-specific contract | `npm run rag:verify:source-specific` | PASS | Confirms source-specific prefetch and direct source-specific fast path contract. |
 | Focused unit tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/__tests__/intent-router.test.ts --runInBand` | PASS | 110/110. Includes exact meeting prompt regression and app-help false-positive guard. |
 | Delegated changed-file typecheck | `cd frontend && npm run typecheck:changed -- src/app/api/ai-assistant/chat/handler-v2.ts src/lib/ai/retrieval/__tests__/planner.test.ts src/lib/ai/intent-router.ts src/lib/ai/__tests__/intent-router.test.ts ../scripts/verify/verify_ai_source_specific_rag_contract.mjs` | PASS | Subagent reported no new `any` type debt. |
+| Eval contract cleanup | `npm run rag:verify:source-specific`; `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/source-specific-rag.test.ts --runInBand`; `node --check scripts/verify/verify_ai_assistant_eval_suite.mjs`; delegated `cd frontend && npm run typecheck:changed -- src/lib/ai/retrieval/source-specific-rag.ts ../scripts/verify/verify_ai_assistant_eval_suite.mjs` | PASS | Removed user-facing `RAG index` wording and aligned the tracked eval runner with the direct `sourceSpecificRagRetrieval` contract. |
+| Deployment readback | `vercel inspect https://alleato-5fr4hxc7e-meganharrisons-projects.vercel.app --scope team_lZighRY9Xpkb6qZBqDApczKZ` | PASS | Deployment `dpl_GeJhJvxRNw9ncjTr1uN8J97bTRNF` is `Ready` and aliased to `projects.alleatogroup.com`. |
+| Production product eval | `AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=180000 AI_EVAL_JUDGE_ENABLED=false npm run rag:verify:eval-suite:case -- source-lookup-meetings` | PASS | `5141ms`, 1/1 passing, 0 failures, 0 warnings. Artifact: `docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T14-36-47-831Z-31a8441e/source-lookup-meetings.json`. |
 | Evidence artifact | `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/meeting-source-lookup-latency-aai-749.md` | PASS | Root cause, fix, verification, and post-deploy production recheck command recorded. |
 
 ## Files To Change
@@ -56,8 +59,8 @@ budget.
 - The live route is production-facing; any fix must preserve source-grounded
   answers and avoid hiding slow/failed tools.
 - The checkout contains unrelated dirty files; stage only AAI-749-owned files.
-- Production `source-lookup-meetings` eval still needs to be rerun after deploy
-  to prove the public site has the new direct meeting-source path.
+- Production `source-lookup-meetings` eval now passes after deploy; remaining
+  risk is limited to broader eval-suite coverage outside this latency slice.
 
 ## Final Status
 
