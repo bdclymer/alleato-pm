@@ -191,6 +191,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: Clock,
     description: "All change events across projects",
   },
+  {
+    name: "Potential Change Orders",
+    path: "potential-change-orders",
+    requiresProject: false,
+    icon: Receipt,
+    description: "AI-surfaced change-order signals to review",
+  },
 ];
 
 export const developerCompanyAdminTools: HeaderNavigationTool[] = [
@@ -435,7 +442,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "Financial",
-    toolNames: ["Estimates", "Prime Contracts", "Change Events"],
+    toolNames: ["Estimates", "Prime Contracts", "Change Events", "Potential Change Orders"],
   },
 ];
 
@@ -941,7 +948,7 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Bot,
     description: "Assistant turns with traces and write status",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Feedback Inbox",
@@ -949,7 +956,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: MessageCircle,
     description: "User feedback and requests",
-    adminOnly: true,
   },
   {
     name: "Product Board",
