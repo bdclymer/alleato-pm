@@ -12,6 +12,10 @@ import {
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
 import { withExecutiveDailyBriefObservation } from "@/lib/ai/executive-daily-brief-langfuse";
+import {
+  buildAgentLearningContextBlock,
+  getSurfaceScopedLearnings,
+} from "@/lib/ai/services/agent-learning-service";
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import {
   type FinancialPulseData,
@@ -2514,6 +2518,20 @@ async function synthesizeSections(
     existingCitationCount: item.citations.length,
   }));
 
+  // Inject learnings from prior human feedback on the daily brief so the model
+  // avoids previously-flagged mistakes. Scoped strictly to `daily_brief`
+  // (cross-project) — failures here must not block synthesis.
+  let briefLearningBlock: string | null = null;
+  try {
+    const learnings = await getSurfaceScopedLearnings({
+      surface: "daily_brief",
+      limit: 3,
+    });
+    briefLearningBlock = buildAgentLearningContextBlock(learnings).block;
+  } catch {
+    // keep the base prompt
+  }
+
   const system =
     "You are Brandon's trusted operating partner. Brandon owns Alleato Group, a commercial construction company. You write his daily brief. He is busy and practical. He wants to know what is going on, what it means, what needs his decision, and who owns the next step. " +
     "Today is " +
@@ -2544,7 +2562,8 @@ async function synthesizeSections(
     "- HARD RULE — leave out all accounting money figures: do NOT mention accounts receivable (AR), accounts payable (AP), overdue balances, amounts owed, days past due, invoice aging, cash flow, or collections ANYWHERE — not in a title, bullet, summary, evidence fact, or the 'what this means' line. If a source's only substance is money owed or overdue, drop it entirely. (Pending change-order scope is fine; dollar balances owed are not.)\n" +
     "- HARD RULE — drop external solicitations, cold outreach, vendor marketing, investment/equity opportunities, and generic business-development pitches unless the evidence shows an active Alleato project obligation, client commitment, signed pursuit, or Brandon has already assigned an internal owner. Do not turn a salesperson's requested follow-up into a Brandon action item.\n" +
     "- If a source is too vague to be useful, leave it out entirely.\n" +
-    "\nReturn ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates, each an array of item objects.";
+    "\nReturn ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates, each an array of item objects." +
+    (briefLearningBlock ? `\n\n${briefLearningBlock}` : "");
 
   const user =
     "Write today's brief for Brandon from the source candidates below. " +

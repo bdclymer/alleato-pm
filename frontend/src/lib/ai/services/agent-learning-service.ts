@@ -466,6 +466,48 @@ export function buildAgentLearningContextBlock(learnings: AgentLearning[]) {
   return buildLearningContextPayload(learnings);
 }
 
+/**
+ * Deterministic surface-scoped learning fetch for non-chat generators (executive
+ * daily brief, progress reports) that produce content outside the assistant's
+ * embedding-driven retrieval path. Unlike `getRelevantAgentLearnings` (which does
+ * an embedding search NOT filtered by surface, so it would pull unrelated chat
+ * learnings into a brief), this filters strictly on an exact `scope_tags` match —
+ * so a `daily_brief` generator only ever sees `daily_brief` learnings. Highest
+ * confidence first; project-scoped learnings plus globals when a project is given.
+ */
+export async function getSurfaceScopedLearnings(params: {
+  surface: string;
+  projectId?: number | null;
+  limit?: number;
+}): Promise<AgentLearning[]> {
+  const supabase = createUntypedServiceClient();
+  let query = supabase
+    .from(AGENT_LEARNINGS_TABLE)
+    .select(
+      "id, title, source, status, prevention_prompt, scope_tags, tool_id, project_id, occurrences, confidence",
+    )
+    .eq("status", "active")
+    .contains("scope_tags", [params.surface])
+    .order("confidence", { ascending: false })
+    .limit(params.limit ?? 3);
+
+  if (params.projectId != null) {
+    query = query.or(`project_id.is.null,project_id.eq.${params.projectId}`);
+  } else {
+    query = query.is("project_id", null);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn(
+      "[agent-learning-service] getSurfaceScopedLearnings failed:",
+      error.message,
+    );
+    return [];
+  }
+  return (data ?? []) as AgentLearning[];
+}
+
 export async function recordAgentLearningUsages(params: {
   sessionId: string;
   userId: string;

@@ -10,6 +10,10 @@ import {
   PROGRESS_REPORT_SYSTEM_PROMPT,
   buildProgressReportUserMessage,
 } from "@/lib/ai/prompts/progress-report";
+import {
+  buildAgentLearningContextBlock,
+  getSurfaceScopedLearnings,
+} from "@/lib/ai/services/agent-learning-service";
 
 /**
  * AI progress report enrichment.
@@ -473,11 +477,27 @@ export async function generateProgressReportSections({
     reportSuggestions,
   });
 
+  // Inject any learnings from prior human feedback on this surface so the model
+  // avoids previously-flagged mistakes. Scoped strictly to `progress_report`
+  // (plus this project) — failures here must not block generation.
+  let systemPrompt = PROGRESS_REPORT_SYSTEM_PROMPT;
+  try {
+    const learnings = await getSurfaceScopedLearnings({
+      surface: "progress_report",
+      projectId,
+      limit: 3,
+    });
+    const { block } = buildAgentLearningContextBlock(learnings);
+    if (block) systemPrompt = `${PROGRESS_REPORT_SYSTEM_PROMPT}\n\n${block}`;
+  } catch {
+    // keep the base prompt
+  }
+
   // Use a low temperature because progress reports are operational documents:
   // concise, grounded, and repeatable is more valuable than creative variation.
   const result = await generateText({
     model: getLanguageModel(MODEL_ID),
-    system: PROGRESS_REPORT_SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
     temperature: 0.4,
   });

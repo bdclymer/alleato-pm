@@ -13,6 +13,7 @@ import {
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { Markdown } from "@/components/misc/markdown";
+import { AiFeedbackControl } from "@/components/ai/ai-feedback-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -965,6 +966,20 @@ export function ProgressReportEditor({
               value={draft.open_items}
               empty="No open items added yet."
             />
+            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+              <span>Rate this AI draft</span>
+              <AiFeedbackControl
+                surface="progress_report"
+                subjectType="progress_report"
+                subjectId={reportId}
+                projectId={projectId}
+                contentText={[
+                  draft.past_week_highlights,
+                  draft.upcoming_week_activities,
+                  draft.open_items,
+                ].join("\n\n")}
+              />
+            </div>
             <section className="space-y-3">
               <SectionRuleHeading label="Days Lost Due to Weather" className="mb-2" />
               <p className="text-sm font-medium text-foreground">

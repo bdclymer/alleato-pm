@@ -11,6 +11,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { AiFeedbackControl } from "@/components/ai/ai-feedback-control";
 import {
   ExecutiveProjectLinkForm,
   type ExecutiveProjectOption,
@@ -193,6 +194,14 @@ export function ExecutiveSignalCard({
                 <Eye className="h-3.5 w-3.5" />
               </Button>
             )}
+            <AiFeedbackControl
+              className="ml-auto"
+              surface="daily_brief"
+              subjectType="brief_item"
+              subjectId={followUpId ?? null}
+              projectId={currentProjectId ?? null}
+              contentText={[item.title, ...executiveBullets].join(" ")}
+            />
           </div>
 
           {rawEvidenceOpen && hasRawEvidence && (
