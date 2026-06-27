@@ -96,8 +96,10 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
     "status",
     "reason",
     "origin",
+    "originId",
     "expectingRevenue",
     "lineItemRevenueSource",
+    "primeContractId",
   ],
   lookupDependencies: ["projectId"],
   permissionNotes: [
@@ -190,11 +192,20 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       mapsTo: "change_events.origin",
     },
     {
+      name: "originId",
+      label: "Origin record",
+      type: "text",
+      required: false,
+      promptOrder: 9,
+      description: "Optional linked source record id for the selected origin.",
+      mapsTo: "change_events.origin_id",
+    },
+    {
       name: "expectingRevenue",
       label: "Expecting revenue",
       type: "boolean",
       required: false,
-      promptOrder: 9,
+      promptOrder: 10,
       description: "Whether revenue is expected from this change.",
       defaultValue: true,
       mapsTo: "change_events.expecting_revenue",
@@ -204,7 +215,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Line item revenue source",
       type: "select",
       required: false,
-      promptOrder: 10,
+      promptOrder: 11,
       description: "Optional line item revenue calculation mode.",
       options: [
         "Match Revenue to Latest Cost",
@@ -212,6 +223,15 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
         "Quantity x Unit Cost",
       ],
       mapsTo: "change_events.line_item_revenue_source",
+    },
+    {
+      name: "primeContractId",
+      label: "Prime contract",
+      type: "text",
+      required: false,
+      promptOrder: 12,
+      description: "Optional prime contract UUID used as the markup basis.",
+      mapsTo: "change_events.prime_contract_id",
     },
   ],
 } as const;
@@ -316,8 +336,10 @@ export type NormalizeChangeRequestInput = {
   status?: string | null;
   reason?: string | null;
   origin?: string | null;
+  originId?: string | null;
   expectingRevenue?: boolean | null;
   lineItemRevenueSource?: string | null;
+  primeContractId?: string | null;
 };
 
 export type NormalizedChangeRequestDraft = {
@@ -329,8 +351,10 @@ export type NormalizedChangeRequestDraft = {
   status: (typeof CHANGE_REQUEST_STATUS_OPTIONS)[number];
   reason: (typeof CHANGE_REQUEST_REASON_OPTIONS)[number] | null;
   origin: (typeof CHANGE_REQUEST_ORIGIN_OPTIONS)[number];
+  originId: string | null;
   expectingRevenue: boolean;
   lineItemRevenueSource: string | null;
+  primeContractId: string | null;
 };
 
 export type NormalizeChangeRequestResult =
@@ -413,8 +437,10 @@ export function normalizeChangeRequestDraft(
       status: status.value ?? "Open",
       reason: reason.value ?? null,
       origin: origin.value ?? "Internal",
+      originId: input.originId?.trim() || null,
       expectingRevenue: input.expectingRevenue ?? true,
       lineItemRevenueSource: input.lineItemRevenueSource?.trim() || null,
+      primeContractId: input.primeContractId?.trim() || null,
     },
   };
 }
@@ -431,8 +457,10 @@ export function buildChangeRequestPreviewFields(
     status: draft.status,
     reason: draft.reason,
     origin: draft.origin,
+    origin_id: draft.originId,
     expecting_revenue: draft.expectingRevenue,
     line_item_revenue_source: draft.lineItemRevenueSource,
+    prime_contract_id: draft.primeContractId,
   };
 }
 

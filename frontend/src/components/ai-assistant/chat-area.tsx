@@ -11,7 +11,6 @@ import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
-import { getPreviewReviewGroups } from "./preview-review-card";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -158,6 +157,8 @@ import {
   resolveAssistantSuggestions,
   type AssistantSuggestion,
 } from "@/lib/ai/assistant-suggestion-resolver";
+import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
+import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -485,35 +486,6 @@ function getToolPreview(part: ToolPart): Record<string, unknown> | null {
   return Object.keys(preview).length > 0 ? preview : null;
 }
 
-const CHANGE_EVENT_PREVIEW_FIELD_LABELS: Record<string, string> = {
-  project_id: "Project",
-  title: "Title",
-  description: "Description",
-  scope: "Scope",
-  type: "Type",
-  status: "Status",
-};
-
-function getPreviewHeading(previewTable: string | null): string {
-  if (previewTable === "change_events") return "Change request preview";
-  return "Pending write";
-}
-
-function getPreviewFieldLabel(previewTable: string | null, key: string): string {
-  if (previewTable === "change_events") {
-    return CHANGE_EVENT_PREVIEW_FIELD_LABELS[key] ?? key;
-  }
-  return key;
-}
-
-function formatPreviewValueForDisplay(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" && Number.isFinite(value)) return String(value);
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (value == null) return "Not set";
-  return JSON.stringify(value);
-}
-
 function getToolOutputRecord(part: ToolPart): Record<string, unknown> | null {
   const output = asObject(part.output);
   const record = asObject(output.record);
@@ -834,8 +806,6 @@ function ToolCallItem({
 }) {
   const preview = getToolPreview(part);
   const previewFields = asObject(preview?.fields);
-  const previewEntries = Object.entries(previewFields);
-  const previewReviewGroups = getPreviewReviewGroups(preview);
   const links = getRecordDeepLinks(part);
   const approvalId = part.approval?.id;
 
@@ -935,109 +905,41 @@ function ToolCallItem({
             </ConfirmationTitle>
           </ConfirmationRejected>
         </Confirmation>
-        {preview && (
-          <div className="space-y-2 rounded-xl bg-muted/40 p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-              {getPreviewHeading(previewTable)}
-            </p>
-            {previewEntries.length > 0 && (
-              <>
-                {previewReviewGroups.length > 0 ? (
-                  <div className="space-y-3">
-                    {previewReviewGroups.map((group) => (
-                      <div key={group.title} className="space-y-1.5">
-                        <p className="text-[11px] font-medium text-muted-foreground">
-                          {group.title}
-                        </p>
-                        <div className="space-y-1">
-                          {group.fields.map((field) => (
-                            <div
-                              key={`${group.title}-${field.key}`}
-                              className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] gap-3 text-xs"
-                            >
-                              <span className="min-w-0 text-muted-foreground">
-                                {field.label}
-                                {field.required ? (
-                                  <span className="ml-1 text-foreground">*</span>
-                                ) : null}
-                              </span>
-                              <span className="min-w-0 break-words text-right text-foreground">
-                                {field.value ?? "Not set"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {previewEntries.slice(0, 8).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex items-start justify-between gap-3 text-xs"
-                      >
-                        <span className="text-muted-foreground">
-                          {getPreviewFieldLabel(previewTable, key)}
-                        </span>
-                        <span className="w-2/3 break-words text-right text-foreground">
-                          {formatPreviewValueForDisplay(value)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Button
-                type="button"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => onApprove(part)}
-              >
-                Approve
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs"
-                onClick={() => onEdit(part)}
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="h-7 text-xs"
-                onClick={() => onRun(part)}
-              >
-                Run
-              </Button>
+        {preview && toolName === "createChangeEvent" ? (
+          <AssistantChangeEventFormCardV2
+            preview={preview}
+            onConfirm={() => onApprove(part)}
+            onCancel={() => onEdit(part)}
+            cancelLabel="Edit"
+          />
+        ) : preview ? (
+          <AssistantPreviewReviewCard
+            preview={preview}
+            onApprove={() => onApprove(part)}
+            onEdit={() => onEdit(part)}
+            onRun={() => onRun(part)}
+          />
+        ) : null}
+        {preview &&
+          isTaskPreview &&
+          taskProjectId != null &&
+          part.state !== "output-available" && (
+            <div className="mt-2 flex items-center justify-end">
+              <TaskFeedbackButtons
+                projectId={taskProjectId}
+                taskSnapshot={{
+                  name: taskName,
+                  assignee: taskAssignee,
+                  dueDate: taskDueDate,
+                  priority:
+                    toStringValue(previewFields.priority) ?? "normal",
+                  notes: null,
+                  projectId: taskProjectId,
+                }}
+                sessionId={sessionId ?? null}
+              />
             </div>
-            {isTaskPreview &&
-              taskProjectId != null &&
-              part.state !== "output-available" && (
-                <div className="mt-2 flex items-center justify-end">
-                  <TaskFeedbackButtons
-                    projectId={taskProjectId}
-                    taskSnapshot={{
-                      name: taskName,
-                      assignee: taskAssignee,
-                      dueDate: taskDueDate,
-                      priority:
-                        toStringValue(previewFields.priority) ?? "normal",
-                      notes: null,
-                      projectId: taskProjectId,
-                    }}
-                    sessionId={sessionId ?? null}
-                  />
-                </div>
-              )}
-          </div>
-        )}
+          )}
         {(part.state === "output-available" ||
           part.state === "output-error") && (
           <ToolOutput output={part.output} errorText={part.errorText} />

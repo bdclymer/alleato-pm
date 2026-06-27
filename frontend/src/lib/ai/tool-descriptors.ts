@@ -741,6 +741,10 @@ export const createChangeEventInputSchema = z.object({
     ),
   reason: z.string().optional().describe("Optional native reason."),
   origin: z.string().optional().describe("Optional native origin."),
+  originId: z
+    .string()
+    .optional()
+    .describe("Optional linked origin record id for the selected origin."),
   expectingRevenue: z
     .boolean()
     .optional()
@@ -749,6 +753,10 @@ export const createChangeEventInputSchema = z.object({
     .string()
     .optional()
     .describe("Optional line item revenue calculation mode."),
+  primeContractId: z
+    .string()
+    .optional()
+    .describe("Optional prime contract UUID used as the markup basis."),
   confirmed: z.boolean().default(false),
   idempotencyKey: z
     .string()

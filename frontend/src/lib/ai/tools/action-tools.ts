@@ -1010,9 +1010,11 @@ export function createActionTools(
             status: draft.status,
             reason: draft.reason,
             origin: draft.origin,
+            origin_id: draft.originId,
             number: nextNumber,
             expecting_revenue: draft.expectingRevenue,
             line_item_revenue_source: draft.lineItemRevenueSource,
+            prime_contract_id: draft.primeContractId,
             updated_at: new Date().toISOString(),
           })
           .select("id, title, number, status")
@@ -1033,7 +1035,7 @@ export function createActionTools(
 
         const response = {
           success: true,
-          message: `Change request **${data.number} — "${draft.title}"** logged.`,
+          message: `Change request **${data.number} — "${draft.title}"** logged. Do you have any attachments you want to add to this change event?`,
           record: data,
         };
         await recordWriteAudit({

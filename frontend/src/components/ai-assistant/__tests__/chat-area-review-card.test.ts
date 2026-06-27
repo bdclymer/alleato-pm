@@ -1,15 +1,19 @@
-import { getPreviewReviewGroups } from "../preview-review-card";
+import {
+  getPreviewReviewCard,
+  getPreviewReviewGroups,
+} from "../preview-review-card";
 
 describe("getPreviewReviewGroups", () => {
   it("extracts structured assistant write-preview review groups", () => {
-    const groups = getPreviewReviewGroups({
+    const card = getPreviewReviewCard({
       table: "change_events",
       fields: {
         project_id: 43,
         title: "Owner-requested lobby finish change",
       },
       reviewCard: {
-        title: "Review change request",
+        title: "Change event draft",
+        subtitle: "Review the fields before Alleato creates the record.",
         recordType: "change_event",
         groups: [
           {
@@ -41,10 +45,24 @@ describe("getPreviewReviewGroups", () => {
             ],
           },
         ],
+        notices: [
+          {
+            tone: "info",
+            text: "Chat create writes the change event header.",
+          },
+        ],
       },
     });
 
-    expect(groups).toEqual([
+    expect(card.title).toBe("Change event draft");
+    expect(card.subtitle).toBe("Review the fields before Alleato creates the record.");
+    expect(card.notices).toEqual([
+      {
+        tone: "info",
+        text: "Chat create writes the change event header.",
+      },
+    ]);
+    expect(card.groups).toEqual([
       {
         title: "Required",
         fields: [
@@ -76,6 +94,42 @@ describe("getPreviewReviewGroups", () => {
             helper: undefined,
             required: false,
             generated: true,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("keeps the legacy group helper available for existing call sites", () => {
+    const groups = getPreviewReviewGroups({
+      reviewCard: {
+        groups: [
+          {
+            title: "Line items",
+            fields: [
+              {
+                key: "line_items",
+                label: "Line items",
+                value: "Not supported by chat create yet",
+                helper: "Use the full form after creation.",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(groups).toEqual([
+      {
+        title: "Line items",
+        fields: [
+          {
+            key: "line_items",
+            label: "Line items",
+            value: "Not supported by chat create yet",
+            helper: "Use the full form after creation.",
+            required: false,
+            generated: false,
           },
         ],
       },
