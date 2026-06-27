@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireAdmin } from "@/app/api/admin/_shared";
 import { createServiceClient } from "@/lib/supabase/service";
+import { buildRecentLogins } from "./recent-logins";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +31,12 @@ export const GET = withApiGuardrails(WHERE, async () => {
       .select("id, email, full_name, is_active, is_admin, created_at, role")
       .order("created_at", { ascending: false }),
 
-    // Recent logins via users_auth joined to user_profiles via people
-    supabase
-      .from("users_auth")
-      .select("auth_user_id, last_login_at, person_id")
-      .not("last_login_at", "is", null)
-      .order("last_login_at", { ascending: false })
-      .limit(20),
+    // Recent logins from the authoritative source: Supabase Auth tracks every
+    // sign-in on `auth.users.last_sign_in_at`. The legacy `users_auth.last_login_at`
+    // column is never written by any code path, so reading it returned an empty
+    // panel for every user. `auth.users.id` === `user_profiles.id`, so the rows
+    // enrich cleanly against the profiles fetched above.
+    supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
 
     // Error events last 30 days
     supabase
@@ -76,7 +76,14 @@ export const GET = withApiGuardrails(WHERE, async () => {
   ]);
 
   const users = usersResult.data ?? [];
-  const recentLogins = recentLoginsResult.data ?? [];
+  // Never swallow an auth-admin failure silently — an empty logins panel must
+  // mean "nobody logged in", not "the query failed".
+  if (recentLoginsResult.error) {
+    throw new Error(
+      `${WHERE} failed to list auth users: ${recentLoginsResult.error.message}`,
+    );
+  }
+  const authUsers = recentLoginsResult.data?.users ?? [];
   const errors = errorsResult.data ?? [];
   const errorGroups = errorGroupsResult.data ?? [];
   const syncStatuses = syncStatusResult.data ?? [];
@@ -93,21 +100,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
   const adminUsers = users.filter((u) => u.is_admin).length;
   const newUsers7d = users.filter((u) => new Date(u.created_at).getTime() >= cut7d).length;
 
-  // Map auth_user_id → user_profile for login enrichment
-  const profileByAuthId = Object.fromEntries(users.map((u) => [u.id, u]));
-
-  const enrichedLogins = recentLogins
-    .slice(0, 15)
-    .map((row) => {
-      const profile = profileByAuthId[row.auth_user_id];
-      return {
-        authUserId: row.auth_user_id,
-        lastLoginAt: row.last_login_at,
-        email: profile?.email ?? null,
-        fullName: profile?.full_name ?? null,
-        isAdmin: profile?.is_admin ?? false,
-      };
-    });
+  const enrichedLogins = buildRecentLogins(authUsers, users);
 
   // ── Error stats ───────────────────────────────────────────────────────────
   const errorsLast24h = errors.filter((e) => new Date(e.created_at).getTime() >= cut24h);
