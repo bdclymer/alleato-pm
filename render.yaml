@@ -43,7 +43,7 @@ services:
     dockerContext: ./backend
     schedule: "*/30 * * * *"
     dockerCommand: >-
-      python3 -c "import asyncio; from src.services.health.source_sync_health import _run_source_sync_health_recompute; asyncio.run(_run_source_sync_health_recompute())"
+      python3 -c "import asyncio; from src.services.scheduler import run_source_sync_health_recompute_job; asyncio.run(run_source_sync_health_recompute_job())"
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services

@@ -1604,13 +1604,107 @@ async def run_deep_agent_microsoft_executive_assistant(
 
 
 # In-process cache for the source-sync health endpoint.
-# The handler performs 10+ Supabase queries across two projects (MAIN + RAG)
-# and can take 20-30 s on busy instances — far exceeding the Next.js 25 s timeout
-# when retried. Caching for 60 s keeps the UI responsive without stale risk for
-# a status-monitoring endpoint whose meaningful resolution is minutes, not seconds.
+#
+# The handler performs 12+ Supabase queries across two projects (MAIN + RAG),
+# several fetching thousands of rows, and takes 16-22 s on a cold/uncached run —
+# close to (and sometimes past) the Next.js route timeout, which then drops the
+# /rag Source Sync panel to "unavailable" with an empty pipeline.
+#
+# We therefore serve from an in-process cache with **stale-while-revalidate**
+# semantics:
+#   * a fresh entry (younger than the fresh TTL) is returned directly;
+#   * a stale entry is returned IMMEDIATELY while a single background thread
+#     recomputes — so the slow query never sits on the request path once the
+#     cache has been populated even once;
+#   * only a truly cold cache (a fresh process with no entry yet) computes
+#     synchronously, and startup pre-warm (see ``prewarm_source_sync_health``)
+#     makes even that rare.
+# This keeps warm hits ~0.2 s and reliable, instead of one request every TTL
+# paying the full 16-22 s and risking the upstream timeout.
 _SOURCE_SYNC_HEALTH_CACHE: Tuple[float, Dict[str, Any]] | None = None
-_SOURCE_SYNC_HEALTH_CACHE_TTL_S = 60.0
+# A cached entry younger than this is served without triggering a refresh.
+_SOURCE_SYNC_HEALTH_FRESH_TTL_S = 90.0
+# Serializes the cold (no-cache) synchronous compute so concurrent first-hits
+# don't all run the full query.
 _SOURCE_SYNC_HEALTH_CACHE_LOCK = threading.Lock()
+# Dedupes background refreshes to a single in-flight runner at a time.
+_SOURCE_SYNC_HEALTH_REFRESH_LOCK = threading.Lock()
+_SOURCE_SYNC_HEALTH_REFRESHING = False
+
+
+def _compute_source_sync_health_payload() -> Dict[str, Any]:
+    """Run the full (slow) source-sync health query and store it in the cache."""
+    global _SOURCE_SYNC_HEALTH_CACHE  # noqa: PLW0603
+    from src.services.health.source_sync_health import get_source_sync_health
+    from src.services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    payload = get_source_sync_health(client)
+    _SOURCE_SYNC_HEALTH_CACHE = (time.monotonic(), payload)
+    return payload
+
+
+def _source_sync_health_cache_response(
+    cached: Tuple[float, Dict[str, Any]],
+) -> Dict[str, Any]:
+    cached_at, cached_payload = cached
+    age = time.monotonic() - cached_at
+    return {
+        **cached_payload,
+        "cachedAt": cached_payload.get("generatedAt"),
+        "cacheAgeSeconds": round(age, 1),
+    }
+
+
+def _refresh_source_sync_health_in_background() -> None:
+    """Recompute the health payload off the request path, deduped to one runner."""
+    global _SOURCE_SYNC_HEALTH_REFRESHING  # noqa: PLW0603
+    with _SOURCE_SYNC_HEALTH_REFRESH_LOCK:
+        if _SOURCE_SYNC_HEALTH_REFRESHING:
+            return
+        _SOURCE_SYNC_HEALTH_REFRESHING = True
+
+    def _run() -> None:
+        global _SOURCE_SYNC_HEALTH_REFRESHING  # noqa: PLW0603
+        try:
+            _compute_source_sync_health_payload()
+        except Exception as exc:  # pragma: no cover - best-effort background work
+            logger.warning(
+                "[SourceSyncHealthAPI] background refresh failed: %s", exc, exc_info=True
+            )
+        finally:
+            with _SOURCE_SYNC_HEALTH_REFRESH_LOCK:
+                _SOURCE_SYNC_HEALTH_REFRESHING = False
+
+    threading.Thread(
+        target=_run, name="source-sync-health-refresh", daemon=True
+    ).start()
+
+
+def prewarm_source_sync_health() -> None:
+    """Populate the cache at startup so the first /rag load never blocks.
+
+    Runs the compute on a daemon thread; failures are non-fatal (the endpoint
+    falls back to a synchronous cold compute on first request).
+    """
+
+    def _run() -> None:
+        # Hold the cache lock so an early request that misses the cache waits for
+        # this warmup and reuses its result instead of computing in parallel.
+        with _SOURCE_SYNC_HEALTH_CACHE_LOCK:
+            if _SOURCE_SYNC_HEALTH_CACHE is not None:
+                return
+            try:
+                _compute_source_sync_health_payload()
+                logger.info("[SourceSyncHealthAPI] cache pre-warmed at startup")
+            except Exception as exc:  # pragma: no cover - best-effort warmup
+                logger.warning(
+                    "[SourceSyncHealthAPI] startup pre-warm failed (non-critical): %s", exc
+                )
+
+    threading.Thread(
+        target=_run, name="source-sync-health-prewarm", daemon=True
+    ).start()
 
 
 @app.get("/api/health/source-sync", tags=["Health"], summary="Source sync and intelligence health")
@@ -1619,38 +1713,32 @@ async def get_source_sync_health_status(
 ) -> Dict[str, Any]:
     """Return sync freshness, vectorization, task extraction, compiler, and packet health.
 
-    Results are cached in-process for up to 60 seconds to avoid repeated full-table
-    scans across both Supabase projects on every poll interval. The ``cachedAt``
-    field in the response shows the age of the cached result.
+    Served from an in-process cache with stale-while-revalidate semantics: a
+    fresh entry is returned directly, a stale entry is returned immediately while
+    a background thread recomputes, and only a truly cold cache computes
+    synchronously. The ``cacheAgeSeconds`` field reports the age of the served
+    result so callers can see how stale it is.
     """
-    global _SOURCE_SYNC_HEALTH_CACHE  # noqa: PLW0603
-
-    # Fast path: return cached result if still fresh (lock-free read is safe here
-    # because Python GIL guarantees atomic reference reads on CPython).
+    # Fast path: a cached entry exists. Lock-free read is safe — CPython
+    # guarantees atomic reference reads, and the worst case is a redundant
+    # background refresh kick (itself deduped).
     cached = _SOURCE_SYNC_HEALTH_CACHE
     if cached is not None:
-        cached_at, cached_payload = cached
-        age = time.monotonic() - cached_at
-        if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
-            return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+        age = time.monotonic() - cached[0]
+        if age >= _SOURCE_SYNC_HEALTH_FRESH_TTL_S:
+            # Stale: serve now, recompute off the request path.
+            _refresh_source_sync_health_in_background()
+        return _source_sync_health_cache_response(cached)
 
+    # Cold cache (fresh process / pre-warm not finished): compute synchronously,
+    # but only once — concurrent first-hits queue on the lock and reuse the result.
     with _SOURCE_SYNC_HEALTH_CACHE_LOCK:
-        # Re-check under lock — another thread may have refreshed while we waited.
         cached = _SOURCE_SYNC_HEALTH_CACHE
         if cached is not None:
-            cached_at, cached_payload = cached
-            age = time.monotonic() - cached_at
-            if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
-                return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+            return _source_sync_health_cache_response(cached)
 
         try:
-            from src.services.health.source_sync_health import get_source_sync_health
-            from src.services.supabase_helpers import get_supabase_client
-
-            client = get_supabase_client()
-            payload = get_source_sync_health(client)
-            _SOURCE_SYNC_HEALTH_CACHE = (time.monotonic(), payload)
-            return payload
+            return _compute_source_sync_health_payload()
         except Exception as exc:
             logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
             raise HTTPException(
@@ -1714,6 +1802,14 @@ async def start_scheduler():
         init_scheduler()
     except Exception as e:
         logger.warning("Scheduler init failed (non-critical): %s", e)
+
+    # Pre-warm the source-sync health cache so the first /rag load is served from
+    # cache (~0.2 s) instead of paying the cold 16-22 s recompute on the request
+    # path. Runs on a daemon thread; failures are non-fatal.
+    try:
+        prewarm_source_sync_health()
+    except Exception as e:  # pragma: no cover - warmup is best-effort
+        logger.warning("Source-sync health pre-warm kickoff failed (non-critical): %s", e)
 
     if alleato_system_mcp_enabled():
         app.state.alleato_system_mcp_lifespan = create_alleato_system_mcp_lifespan()

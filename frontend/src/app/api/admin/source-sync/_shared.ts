@@ -136,7 +136,11 @@ export async function fetchBackendSourceSync(
           ? 270_000
           : path === "recompute" || path === "graph-embed"
             ? 60_000
-            : 25_000,
+            // "status" path: the backend serves from a stale-while-revalidate
+            // cache (~0.2 s warm), so this only matters on a cold-process miss.
+            // 45 s gives the rare synchronous 16-22 s recompute headroom instead
+            // of dropping the panel to "unavailable" at the old 25 s boundary.
+            : 45_000,
       maxRetries: path === "recompute" || path === "graph-sync" ? 0 : 1,
       backoffMs: 250,
       ...policy,
