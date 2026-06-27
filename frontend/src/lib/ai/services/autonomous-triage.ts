@@ -48,6 +48,12 @@ export type {
 const TRIAGE_MODEL = "openai/gpt-4.1-nano";
 /** Cap per run so a backlog can't blow the cron's time/token budget. */
 export const MAX_CANDIDATES_PER_RUN = 40;
+/**
+ * Only these learning sources are auto-triaged. `admin_feedback` candidates are
+ * page-scoped UI bug reports (their own feedback-inbox review owns them), not
+ * reusable assistant prevention prompts — so they are deliberately excluded.
+ */
+export const TRIAGEABLE_SOURCES = ["thumbs_down", "eval_failure"] as const;
 
 interface CandidateRow {
   id: string;
@@ -123,6 +129,10 @@ export async function runAutonomousTriage(
       "id, title, source, problem_signature, symptoms, prevention_prompt, confidence, occurrences",
     )
     .eq("status", "candidate")
+    // Only triage genuine AI-quality learnings. `admin_feedback` candidates are
+    // page-scoped UI bug reports from the feedback inbox — they have their own
+    // human review flow and must not be auto-promoted into the assistant.
+    .in("source", [...TRIAGEABLE_SOURCES])
     .order("last_seen_at", { ascending: false })
     .limit(MAX_CANDIDATES_PER_RUN);
 
