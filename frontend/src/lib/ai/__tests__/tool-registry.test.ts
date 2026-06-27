@@ -12,15 +12,24 @@ import {
 import type { ToolSet } from "ai";
 import {
   findProjectDocumentsInputSchema,
+  getAcumaticaProjectBudgetInputSchema,
+  getAcumaticaProjectListInputSchema,
+  getAPAgingReportInputSchema,
+  getARAgingReportInputSchema,
+  getCashPositionReportInputSchema,
   getMeetingDetailsInputSchema,
   getMeetingsByDateInputSchema,
   getRecentEmailsInputSchema,
+  getPurchaseOrderSummaryInputSchema,
+  getRecentBillsInputSchema,
+  getRecentInvoicesInputSchema,
   searchDocumentsInputSchema,
   searchEmailsInputSchema,
   searchExternalDocumentsInputSchema,
   searchMeetingsByTopicInputSchema,
   searchTeamsMessagesInputSchema,
   semanticSearchInputSchema,
+  getVendorSpendReportInputSchema,
 } from "../tool-descriptors";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
@@ -353,6 +362,55 @@ describe("global AI assistant tool registry", () => {
     });
   });
 
+  it("uses descriptor-owned setup for Acumatica source-read tools", () => {
+    const definitions = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: [
+        "getAcumaticaProjectBudget",
+        "getAcumaticaProjectList",
+        "getAPAgingReport",
+        "getARAgingReport",
+        "getCashPositionReport",
+        "getVendorSpendReport",
+        "getRecentBills",
+        "getRecentInvoices",
+        "getPurchaseOrderSummary",
+      ],
+    });
+
+    expect(definitions).toHaveLength(9);
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.descriptorOwned,
+        definition.metadata.inputSchemaOwned,
+        definition.metadata.sourceFamilies,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["getAcumaticaProjectBudget", true, true, ["acumatica"]],
+        ["getAcumaticaProjectList", true, true, ["acumatica"]],
+        ["getAPAgingReport", true, true, ["acumatica"]],
+        ["getARAgingReport", true, true, ["acumatica"]],
+        ["getCashPositionReport", true, true, ["acumatica"]],
+        ["getVendorSpendReport", true, true, ["acumatica"]],
+        ["getRecentBills", true, true, ["acumatica"]],
+        ["getRecentInvoices", true, true, ["acumatica"]],
+        ["getPurchaseOrderSummary", true, true, ["acumatica"]],
+      ]),
+    );
+    expect(
+      definitions.find(
+        (definition) => definition.name === "getAcumaticaProjectBudget",
+      )?.metadata.routingPolicy,
+    ).toMatchObject({
+      emptyResultBehavior: expect.stringContaining("do not invent financial totals"),
+      regressionPrompts: expect.arrayContaining([
+        "pull current AR aging from Acumatica",
+      ]),
+    });
+  });
+
   it("keeps source-read input schemas on the descriptor surface", () => {
     expect(getRecentEmailsInputSchema.parse({})).toMatchObject({
       daysBack: 1,
@@ -402,6 +460,31 @@ describe("global AI assistant tool registry", () => {
     expect(searchDocumentsInputSchema.parse({ query: "fire ratings" })).toEqual({
       query: "fire ratings",
       maxResults: 10,
+    });
+    expect(getAPAgingReportInputSchema.parse({})).toEqual({});
+    expect(getARAgingReportInputSchema.parse({})).toEqual({});
+    expect(getCashPositionReportInputSchema.parse({})).toEqual({
+      windowDays: 90,
+    });
+    expect(getVendorSpendReportInputSchema.parse({ vendorId: "PROOUT" })).toEqual({
+      vendorId: "PROOUT",
+    });
+    expect(getRecentBillsInputSchema.parse({})).toEqual({
+      limit: 20,
+    });
+    expect(getRecentInvoicesInputSchema.parse({ status: "Open" })).toEqual({
+      status: "Open",
+      limit: 20,
+    });
+    expect(
+      getAcumaticaProjectBudgetInputSchema.parse({ projectId: "25108" }),
+    ).toEqual({
+      projectId: "25108",
+      typeFilter: "all",
+    });
+    expect(getAcumaticaProjectListInputSchema.parse({})).toEqual({});
+    expect(getPurchaseOrderSummaryInputSchema.parse({})).toEqual({
+      limit: 30,
     });
   });
 
