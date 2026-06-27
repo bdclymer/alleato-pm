@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   parseJsonBody,
@@ -40,13 +40,12 @@ const ContactListEnvelopeSchema = z.object({
  * useful for assigning people to project teams.
  */
 export const GET = withApiGuardrails("/api/contacts#GET", async ({ request }) => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  // Identify the user from the cookie JWT (no Supabase Auth network call) to
+  // avoid racing parallel route handlers on refresh-token rotation, which trips
+  // reuse detection and revokes the session. The query below still uses the
+  // cookie-scoped client so RLS continues to apply.
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/contacts#GET",
@@ -55,6 +54,7 @@ export const GET = withApiGuardrails("/api/contacts#GET", async ({ request }) =>
       severity: "medium",
     });
   }
+  const supabase = await createClient();
 
   const searchParams = request.nextUrl.searchParams;
   const search = searchParams.get("search") || undefined;
@@ -128,13 +128,8 @@ export const GET = withApiGuardrails("/api/contacts#GET", async ({ request }) =>
  * Required fields: first_name, last_name
  */
 export const POST = withApiGuardrails("/api/contacts#POST", async ({ request }) => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/contacts#POST",
@@ -143,6 +138,7 @@ export const POST = withApiGuardrails("/api/contacts#POST", async ({ request }) 
       severity: "medium",
     });
   }
+  const supabase = await createClient();
 
   const body = await parseJsonBody(
     request,

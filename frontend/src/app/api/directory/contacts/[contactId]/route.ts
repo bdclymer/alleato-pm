@@ -4,7 +4,7 @@ import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const PatchBodySchema = z
   .object({
@@ -48,12 +48,9 @@ export const PATCH = withApiGuardrails<{ contactId: string }>(
     const parsed = await parseJsonBody(request, PatchBodySchema, where);
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "directory/contacts/[contactId]#PATCH",

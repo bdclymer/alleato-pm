@@ -1,22 +1,28 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 export const GET = withApiGuardrails(
   "clients#GET",
   async ({ request }) => {
-  
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Identify the user from the cookie JWT — no Supabase Auth network call.
+    // Calling supabase.auth.getUser() here races other parallel route handlers
+    // on refresh-token rotation, which trips reuse detection and revokes the
+    // user's whole session (symptom: pages render but every API says
+    // "Authentication required"). See getApiRouteUser docs.
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "clients#GET", message: "Authentication required." });
     }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const status = searchParams.get("status");
 
+    const supabase = createServiceClient();
     let query = supabase
       .from("companies")
       .select("id, name, type, status, website, address, city, state, created_at")
@@ -35,14 +41,13 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "clients#POST",
   async ({ request }) => {
-  
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "clients#POST", message: "Authentication required." });
     }
     const body = await request.json();
 
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("companies")
       .insert({ name: body.name, type: "client", status: body.status || "active" })
