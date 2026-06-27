@@ -3492,16 +3492,25 @@ function buildEmergingPatterns(
     Boolean(pattern),
   );
 
-  if (predefinedPatterns.length > 0 || entries.length < 2) {
+  if (predefinedPatterns.length >= 2 || entries.length < 2) {
     return predefinedPatterns;
   }
 
-  const strongest = entries.slice(0, 3);
-  const riskCount = strongest.filter(
+  const usedEvidence = new Set(
+    predefinedPatterns.flatMap((pattern) => pattern.evidence),
+  );
+  const strongestUnused = entries
+    .filter((entry) => !usedEvidence.has(evidenceLine(entry)))
+    .slice(0, 3);
+  const fallbackEvidence =
+    strongestUnused.length >= 2 ? strongestUnused : entries.slice(0, 3);
+  const riskCount = fallbackEvidence.filter(
     (entry) => entry.item.tone === "risk" || entry.score >= 65,
   ).length;
-  const hasFinance = strongest.some((entry) => entry.lane === "cashMargin");
-  const hasExecution = strongest.some((entry) =>
+  const hasFinance = fallbackEvidence.some(
+    (entry) => entry.lane === "cashMargin",
+  );
+  const hasExecution = fallbackEvidence.some((entry) =>
     ["scheduleField", "customerOwner", "subcontractorVendor"].includes(
       entry.lane,
     ),
@@ -3512,11 +3521,12 @@ function buildEmergingPatterns(
       : "The material signals are concentrated enough to require follow-through";
 
   return [
+    ...predefinedPatterns,
     {
       title,
-      evidence: strongest.map(evidenceLine),
+      evidence: fallbackEvidence.map(evidenceLine),
       significance:
-        "The common pattern is not volume; it is that the few surfaced items all need clear ownership, approval status, and next-step closure before they stop carrying business risk.",
+        "The common pattern is not volume; it is that the surfaced items need clear ownership, approval status, and next-step closure before they stop carrying business risk.",
       trend: riskCount >= 2 ? "increasing" : "stable",
     },
   ];
@@ -3583,18 +3593,19 @@ function buildLeadershipWatchlist(entries: ScoredBriefEntry[]): string[] {
   return entries
     .filter(
       (entry) =>
-        entry.section === "waitingOnOthers" ||
-        entry.item.tone === "risk" ||
-        hasAny(briefItemText(entry.item), [
-          "permit",
-          "lead time",
-          "delivery",
-          "approval",
-          "closeout",
-          "hiring",
-          "manpower",
-          "material",
-        ]),
+        !isFinancialAggregateBriefItem(entry.item) &&
+        (entry.section === "waitingOnOthers" ||
+          entry.item.tone === "risk" ||
+          hasAny(briefItemText(entry.item), [
+            "permit",
+            "lead time",
+            "delivery",
+            "approval",
+            "closeout",
+            "hiring",
+            "manpower",
+            "material",
+          ])),
     )
     .slice(0, 8)
     .map(
@@ -3749,7 +3760,11 @@ export function buildExecutiveOperatingBrief(
     }));
 
   const cashAndMarginWatch = ranked
-    .filter((entry) => entry.lane === "cashMargin")
+    .filter(
+      (entry) =>
+        entry.lane === "cashMargin" &&
+        !isFinancialAggregateBriefItem(entry.item),
+    )
     .map((entry) => ({
       ...operatingShortItem(entry.item, entry.section),
       impact: getImpactText(entry.item),

@@ -27,6 +27,10 @@ filled in. If any item cannot be completed, change `Status` to
       brief passes the rubric.
 - [x] Keep the eval packet-level and deterministic so it can run without live AI
       calls or database writes.
+- [x] Add a live verifier script that scores the latest stored `daily_recaps`
+      packet.
+- [x] Fix remaining live failures: one-pattern output and repeated aggregate
+      financial-topic surfacing.
 
 ## Verification Checklist
 
@@ -40,13 +44,19 @@ filled in. If any item cannot be completed, change `Status` to
 | Check | Command / artifact | Result | Notes |
 | --- | --- | --- | --- |
 | Unit regressions | `cd frontend && npm run test:unit -- src/lib/executive/__tests__/executive-brief-reference-eval.test.ts --runInBand` | Pass | 3 tests pass. The prior Goodwill / duplicate-$422K thin packet fails the rubric; a June 25/26 reference-shaped operating brief passes. |
-| Focused lint | `cd frontend && npx eslint src/lib/executive/executive-brief-reference-eval.ts src/lib/executive/__tests__/executive-brief-reference-eval.test.ts` | Pass | No errors. |
+| Generator + eval unit regressions | `cd frontend && npm run test:unit -- src/lib/executive/__tests__/brandon-daily-update.test.ts src/lib/executive/__tests__/executive-brief-reference-eval.test.ts --runInBand` | Pass | 39 tests pass. Adds coverage for fallback Emerging Patterns and keeping aggregate financial topics out of repeated derived sections. |
+| Focused lint | `cd frontend && npx eslint --no-warn-ignored scripts/evaluate-executive-brief-reference.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-brief-reference-eval.ts src/lib/executive/__tests__/brandon-daily-update.test.ts src/lib/executive/__tests__/executive-brief-reference-eval.test.ts` | Pass | No errors. |
 | Changed type debt | `cd frontend && npm run typecheck:changed` | Pass | No new `any` usage detected. |
+| Live regeneration | `cd frontend && AI_PROVIDER_PATH=openai npx tsx scripts/regenerate-executive-briefing.ts` with secure local env sourced for the command only | Pass | Regenerated daily recap `65817931-5259-421e-a3c4-bbb43fcd09aa`; AI Ops run `739d3e9f-15e4-45ea-81db-cadcc46006ad`; 7 items. |
+| Live reference eval | `cd frontend && npx tsx scripts/evaluate-executive-brief-reference.ts` | Pass | Latest stored packet scored 100/100: 7 items, 6 project/context labels, 6 meeting-backed items, 2 Emerging Patterns, no repeated `$422K` aggregate topic. |
 
 ## Files To Change
 
 - `frontend/src/lib/executive/executive-brief-reference-eval.ts`
 - `frontend/src/lib/executive/__tests__/executive-brief-reference-eval.test.ts`
+- `frontend/src/lib/executive/brandon-daily-update.ts`
+- `frontend/src/lib/executive/__tests__/brandon-daily-update.test.ts`
+- `frontend/scripts/evaluate-executive-brief-reference.ts`
 - `docs/ops/tasks/2026-06-27-executive-brief-reference-eval.md`
 
 ## Risks / Gaps

@@ -217,6 +217,20 @@ function normalizedTopicKey(value: string): string {
     .trim();
 }
 
+function financialAggregateTopicKey(value: string): string | null {
+  const normalized = normalizeText(value);
+  if (
+    !/\$?422k\b/.test(normalized) &&
+    !normalized.includes("pending co") &&
+    !normalized.includes("pending change order") &&
+    !normalized.includes("on-hold change order") &&
+    !normalized.includes("on hold change order")
+  ) {
+    return null;
+  }
+  return normalizedTopicKey(value);
+}
+
 function collectTopicTitles(packet: BrandonDailyUpdatePacket): string[] {
   const titles = allCoreItems(packet).map((item) => item.title);
   const operatingBrief = packet.operatingBrief;
@@ -241,7 +255,8 @@ function collectTopicTitles(packet: BrandonDailyUpdatePacket): string[] {
 function maxRepeatedTopicMentionCount(packet: BrandonDailyUpdatePacket): number {
   const counts = new Map<string, number>();
   for (const title of collectTopicTitles(packet)) {
-    const key = normalizedTopicKey(title);
+    const key = financialAggregateTopicKey(title);
+    if (!key) continue;
     if (key.length < 12) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }

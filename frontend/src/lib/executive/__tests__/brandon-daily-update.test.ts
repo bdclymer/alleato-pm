@@ -710,6 +710,53 @@ describe("executive operating brief priority lanes", () => {
     );
   });
 
+  it("adds a fallback emerging pattern when only one predefined pattern matches", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Port Collective closing moved to mid-July", {
+          summary:
+            "The owner closing date moved and the project team is waiting on external permit timing before execution can proceed.",
+          recommendedAction:
+            "Confirm the revised owner closing date and update the execution plan.",
+          whyItMatters:
+            "The schedule risk is external, so the team needs a clear owner-driven date before committing resources.",
+          project: "25-107 Port Collective",
+          tone: "risk",
+        }),
+        briefItem("Uniqlo vendor drawings are not for construction", {
+          summary:
+            "The current vendor drawing set is marked not for construction and needs approval before field planning.",
+          recommendedAction:
+            "Get the approved drawing set or written direction before advancing field planning.",
+          whyItMatters:
+            "The team cannot rely on unapproved drawings for construction sequencing.",
+          project: "25-109 Uniqlo Phillipsburg NJ",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("Insurance records changed to Auto-Owners", {
+          summary:
+            "Company insurance records changed carrier and certificate details need to stay aligned.",
+          recommendedAction:
+            "Confirm certificate distribution and update shared insurance records.",
+          whyItMatters:
+            "Insurance record drift creates administrative risk across active projects.",
+          project: "Company insurance",
+          tone: "watch",
+        }),
+      ],
+    });
+
+    expect(brief.emergingPatterns?.map((pattern) => pattern.title)).toEqual(
+      expect.arrayContaining([
+        "External dependency management is the main execution risk",
+        "The material signals are concentrated enough to require follow-through",
+      ]),
+    );
+  });
+
   it("supplements low-count synthesis output from source-backed candidates", () => {
     const synthesized = {
       needsBrandon: [],
@@ -772,7 +819,7 @@ describe("executive operating brief priority lanes", () => {
     ).toHaveLength(5);
   });
 
-  it("keeps finance aggregates out of non-finance derived sections", () => {
+  it("keeps finance aggregates out of repeated derived sections", () => {
     const brief = buildExecutiveOperatingBrief({
       needsBrandon: [],
       waitingOnOthers: [
@@ -800,7 +847,10 @@ describe("executive operating brief priority lanes", () => {
     expect(
       brief.peopleAndAccountability.map((entry) => entry.item.title),
     ).not.toContain("$422K in pending COs on hold");
-    expect(brief.cashAndMarginWatch.map((entry) => entry.item.title)).toContain(
+    expect(
+      brief.cashAndMarginWatch.map((entry) => entry.item.title),
+    ).not.toContain("$422K in pending COs on hold");
+    expect(brief.leadershipWatchlist?.join(" ")).not.toContain(
       "$422K in pending COs on hold",
     );
   });
