@@ -16,7 +16,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -50,7 +50,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -72,7 +72,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -116,7 +116,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -184,7 +184,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -254,7 +254,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -299,7 +299,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
@@ -346,7 +346,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_CLIENT_ID
@@ -388,7 +388,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED
@@ -449,7 +449,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -481,7 +481,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -525,7 +525,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       # Slack incoming webhook (set via Render API 2026-06-14). Secondary record.
@@ -556,7 +556,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -601,7 +601,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -644,7 +644,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -687,7 +687,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -738,7 +738,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS

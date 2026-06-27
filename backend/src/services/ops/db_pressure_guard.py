@@ -223,10 +223,20 @@ def enforce_app_db_pressure_guard(job_name: str) -> AppDbPressureSnapshot | None
 
     try:
         snapshot = _fetch_pressure_snapshot(database_url)
-    except Exception as exc:  # noqa: BLE001 - fail closed with the actual connection failure.
-        raise AppDbPressureError(
-            f"App DB pressure guard failed before {job_name}: {exc}"
-        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        message = f"App DB pressure guard could not run for {job_name}: {exc}"
+        if required:
+            raise AppDbPressureError(message) from exc
+        # The guard is a safety check, not a hard dependency. If we cannot even
+        # connect to run it — e.g. the direct DB host (db.<ref>.supabase.co)
+        # became IPv6-only after Supabase's IPv4 deprecation and is unreachable
+        # from this network — failing closed would silently halt ALL background
+        # processing (embedding, task extraction, intelligence compilation).
+        # Degrade to "guard skipped" and let the job run via its normal
+        # REST/pooler data paths. Set APP_DB_PRESSURE_GUARD_REQUIRED=true with a
+        # reachable APP_DATABASE_URL (e.g. the Supavisor pooler) to fail closed.
+        logger.warning("[DBPressureGuard] %s — proceeding without guard", message)
+        return None
 
     reasons: list[str] = []
     diagnostics: list[str] = []
