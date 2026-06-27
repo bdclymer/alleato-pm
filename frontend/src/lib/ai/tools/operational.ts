@@ -6,6 +6,7 @@ import {
 } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
 import { createToolContext, type ToolContext } from "./tool-context";
+import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
 import { createStructuredQueryTools } from "./structured-queries";
 import {
   type ToolTracePayload,
@@ -526,6 +527,7 @@ export function createOperationalTools(
   const supabase = ctx.db;
   const ragSupabase = ctx.rag;
   const guardrails = ctx.guardrails;
+  const repo = createProjectRepo(ctx);
 
   async function requireAdminForCommunications(sourceLabel: string) {
     const scope = await guardrails.getScope();
@@ -831,21 +833,16 @@ export function createOperationalTools(
           );
           if ("error" in resolved) return resolved;
 
-          let rfiQuery = supabase
-            .from("rfis")
-            .select("*")
-            .eq("project_id", resolved.id)
-            .order("created_at", { ascending: false })
-            .limit(200);
-
-          if (status) {
-            rfiQuery = rfiQuery.ilike("status", `%${status}%`);
+          let rfiRows: unknown[];
+          try {
+            rfiRows = await repo.rfisForProject(resolved.id, { status });
+          } catch (rfiError) {
+            return {
+              error: rfiError instanceof Error ? rfiError.message : "RFI lookup failed",
+            };
           }
 
-          const { data: rfiRows, error } = await rfiQuery;
-          if (error) return { error: error.message };
-
-          const rfis = (rfiRows ?? []) as AnyRow[];
+          const rfis = rfiRows as AnyRow[];
           const now = new Date().toISOString().split("T")[0];
 
           // Status breakdown
@@ -855,12 +852,9 @@ export function createOperationalTools(
             statusCounts.set(s, (statusCounts.get(s) ?? 0) + 1);
           });
 
-          // Overdue (open + past due date)
-          const openRfis = rfis.filter(
-            (r) =>
-              (r.status as string) !== "closed" &&
-              (r.status as string) !== "Closed",
-          );
+          // Overdue (open + past due date). Open-status semantics centralized in
+          // ProjectRepo's isOpenRfiStatus so every surface agrees on "open".
+          const openRfis = rfis.filter((r) => isOpenRfiStatus(r.status));
           const overdueRfis = openRfis.filter(
             (r) => r.due_date && (r.due_date as string) < now,
           );
