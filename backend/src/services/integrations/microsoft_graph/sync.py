@@ -430,6 +430,7 @@ def run_graph_sync(
         "outlook": 0,
         "teams": 0,
         "teams_dm": 0,
+        "teams_meetings": 0,
         "onedrive": 0,
         "sharepoint": 0,
         "errors": [],
@@ -628,6 +629,94 @@ def run_graph_sync(
                     items_failed=1,
                     error_message=str(e),
                 )
+
+    # ── Teams Meeting Transcripts + Recordings ────────────────────────────────
+    # Native Teams transcription via Graph — the Fireflies replacement for Teams
+    # meetings. getAllTranscripts/getAllRecordings are OData functions (not
+    # delta-capable), so we watermark by createdDateTime in graph_sync_state, same
+    # as the Teams DM path. Default OFF: requires OnlineMeeting*.Read.All consent +
+    # a Teams application access policy before it can read anything.
+    sync_meeting_transcripts_enabled = (
+        run_teams and os.environ.get("GRAPH_SYNC_MEETING_TRANSCRIPTS", "false").lower() == "true"
+    )
+    if sync_meeting_transcripts_enabled:
+        from .meeting_transcripts import (
+            MeetingAccessPolicyError,
+            sync_meeting_recordings,
+            sync_meeting_transcripts,
+        )
+
+        # Transcripts
+        started_at = datetime.now(timezone.utc)
+        try:
+            resource_id = "tenant:meeting_transcripts"
+            resource_name = "Teams meeting transcripts"
+            since_iso = _get_delta_token(supabase, "teams_meeting_transcript", resource_id)
+            count, new_ts = sync_meeting_transcripts(supabase, since_iso)
+            _save_sync_state(supabase, "teams_meeting_transcript", resource_id, resource_name, new_ts, count)
+            _record_sync_run_safe(
+                supabase,
+                source="teams_meeting_transcript",
+                resource_id=resource_id,
+                resource_name=resource_name,
+                started_at=started_at,
+                status="succeeded",
+                items_seen=count,
+                items_synced=count,
+            )
+            summary["teams_meetings"] += count
+        except MeetingAccessPolicyError as e:
+            err = (
+                "Teams meeting transcript sync skipped — OnlineMeetingTranscript.Read.All "
+                "consent and a Teams application access policy are required: "
+                f"{e}"
+            )
+            logger.error(f"[GraphSync] {err}")
+            summary["errors"].append(err)
+            _record_sync_run_safe(
+                supabase,
+                source="teams_meeting_transcript",
+                resource_id="tenant:meeting_transcripts",
+                resource_name="Teams meeting transcripts",
+                started_at=started_at,
+                status="skipped",
+                error_message=str(e),
+                metadata={"required": "CsApplicationAccessPolicy + OnlineMeetingTranscript.Read.All"},
+            )
+        except Exception as e:
+            err = f"Teams meeting transcript sync failed: {e}"
+            logger.error(f"[GraphSync] {err}", exc_info=True)
+            summary["errors"].append(err)
+            _save_sync_state(
+                supabase, "teams_meeting_transcript", "tenant:meeting_transcripts",
+                "Teams meeting transcripts", "", 0, "error", str(e),
+            )
+
+        # Recordings (best-effort attach; gated by its own toggle)
+        if os.environ.get("GRAPH_SYNC_MEETING_RECORDINGS", "false").lower() == "true":
+            started_at = datetime.now(timezone.utc)
+            try:
+                resource_id = "tenant:meeting_recordings"
+                resource_name = "Teams meeting recordings"
+                since_iso = _get_delta_token(supabase, "teams_meeting_recording", resource_id)
+                count, new_ts = sync_meeting_recordings(supabase, since_iso)
+                _save_sync_state(supabase, "teams_meeting_recording", resource_id, resource_name, new_ts, count)
+                _record_sync_run_safe(
+                    supabase,
+                    source="teams_meeting_recording",
+                    resource_id=resource_id,
+                    resource_name=resource_name,
+                    started_at=started_at,
+                    status="succeeded",
+                    items_seen=count,
+                    items_synced=count,
+                )
+            except MeetingAccessPolicyError as e:
+                logger.error(f"[GraphSync] Teams meeting recording sync skipped — access policy/consent required: {e}")
+                summary["errors"].append(f"Teams meeting recordings skipped: {e}")
+            except Exception as e:
+                logger.error(f"[GraphSync] Teams meeting recording sync failed: {e}", exc_info=True)
+                summary["errors"].append(f"Teams meeting recordings failed: {e}")
 
     # ── OneDrive ─────────────────────────────────────────────────────────────
     # Personal OneDrive sync is disabled by default. Alleato project/company
