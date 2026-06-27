@@ -722,14 +722,10 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
     for index, message in enumerate(rows, start=1):
         sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
         subject = str(message.get("subject") or "(no subject)")
-        bucket = _action_bucket(message)
         lines.append(
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
-        lines.append(f"   Response path: {_short_action_label(message)}.")
-        lines.append(f"   Owner: {_action_owner(message, bucket)}.")
-        lines.append(f"   Evidence: {_message_evidence(message)}")
-        lines.append(f"   If ignored: {_action_risk(message, bucket)}")
+        lines.append(f"   Preview: {_message_evidence(message)}")
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -860,8 +856,16 @@ def _render_bucketed_triage_answer(
         lines.append("Not classified as reply-required from the available evidence")
         if omitted_watch:
             lines.append(f"- {omitted_watch} watch item(s) need awareness only unless they connect to active work.")
+            for message in buckets["Watch"][:3]:
+                sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+                subject = str(message.get("subject") or "(no subject)")
+                lines.append(f"  - Watch: {subject} — {sender}")
         if omitted_noise:
             lines.append(f"- {omitted_noise} noise/no-reply item(s) should not receive a reply from this evidence alone.")
+            for message in buckets["Ignore/noise"][:3]:
+                sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+                subject = str(message.get("subject") or "(no subject)")
+                lines.append(f"  - No reply: {subject} — {sender}")
         lines.append("")
 
     lines.extend(
@@ -912,7 +916,7 @@ def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -
     if omitted_noise:
         lead += f" {omitted_noise} routine/no-reply item(s) were excluded."
     return _render_action_lists(
-        heading=f"Messages that arrived today for {mailbox}:",
+        heading=f"Outlook emails received today that may need attention for {mailbox}:",
         action_needed=action_needed,
         informational=informational,
         lead=lead,
