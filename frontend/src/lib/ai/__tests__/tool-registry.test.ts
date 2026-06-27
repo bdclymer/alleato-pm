@@ -11,6 +11,11 @@ import {
 } from "../tool-registry";
 import type { ToolSet } from "ai";
 import {
+  getRecentEmailsInputSchema,
+  searchEmailsInputSchema,
+  searchTeamsMessagesInputSchema,
+} from "../tool-descriptors";
+import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
   EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
 } from "@/lib/ai-ops/executive-daily-brief-workflow";
@@ -222,6 +227,64 @@ describe("global AI assistant tool registry", () => {
       regressionPrompts: expect.arrayContaining([
         "what insights can be found in the teams messages today?",
       ]),
+    });
+  });
+
+  it("uses descriptor-owned setup for Outlook and Teams source-read tools", () => {
+    const definitions = toolDefinitionsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      allowedToolNames: [
+        "getRecentEmails",
+        "searchEmails",
+        "searchTeamsMessages",
+      ],
+    });
+
+    expect(definitions).toHaveLength(3);
+    expect(
+      definitions.map((definition) => [
+        definition.name,
+        definition.metadata.descriptorOwned,
+        definition.metadata.inputSchemaOwned,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["getRecentEmails", true, true],
+        ["searchEmails", true, true],
+        ["searchTeamsMessages", true, true],
+      ]),
+    );
+    expect(
+      definitions.find((definition) => definition.name === "getRecentEmails")
+        ?.description,
+    ).toContain("Microsoft Graph live inbox first");
+    expect(
+      definitions.find((definition) => definition.name === "searchTeamsMessages")
+        ?.metadata.routingPolicy,
+    ).toMatchObject({
+      emptyResultBehavior: expect.stringContaining(
+        "do not substitute meetings",
+      ),
+    });
+  });
+
+  it("keeps source-read input schemas on the descriptor surface", () => {
+    expect(getRecentEmailsInputSchema.parse({})).toMatchObject({
+      daysBack: 1,
+      direction: "mailbox",
+      timeZone: "America/New_York",
+      groupByThread: true,
+      limit: 50,
+    });
+    expect(searchEmailsInputSchema.parse({ query: "permit delay" })).toEqual({
+      query: "permit delay",
+      matchCount: 8,
+    });
+    expect(
+      searchTeamsMessagesInputSchema.parse({ query: "schedule delay" }),
+    ).toEqual({
+      query: "schedule delay",
+      matchCount: 8,
     });
   });
 

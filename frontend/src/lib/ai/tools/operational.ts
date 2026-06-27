@@ -4,6 +4,14 @@ import {
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
+import {
+  getRecentEmailsDescription,
+  getRecentEmailsInputSchema,
+  searchEmailsDescription,
+  searchEmailsInputSchema,
+  searchTeamsMessagesDescription,
+  searchTeamsMessagesInputSchema,
+} from "@/lib/ai/tool-descriptors";
 import { type ToolGuardrails } from "./guardrails";
 import { createToolContext, type ToolContext } from "./tool-context";
 import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
@@ -3148,63 +3156,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     getRecentEmails: tool({
-      description:
-        "Get a list of Outlook emails received within a specific date range. " +
-        "Use this when the user asks a time-based question about emails: " +
-        "'what emails did I receive today?', 'show me emails from this week', " +
-        "'any emails received yesterday?', 'how many emails came in today?'. " +
-        "This queries the backend Microsoft Graph live inbox first. Synced Outlook intake rows are fallback only — never treat them as live inbox truth. " +
-        "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
-        "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
-        "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +
-        "Always summarize results by thread, not as a raw individual-message dump.",
-      inputSchema: z.object({
-        daysBack: z
-          .number()
-          .optional()
-          .default(1)
-          .describe(
-            "How many days back to look. 0 = today only, 1 = yesterday through now, 7 = last 7 days. Default 1.",
-          ),
-	        mailboxFilter: z
-	          .string()
-	          .optional()
-	          .describe(
-	            "Optional: filter to a specific synced mailbox email address. Use bclymer@alleatogroup.com for Brandon/operator inbox prompts. Omit only for the signed-in user's synced mailbox.",
-	          ),
-        participantEmail: z
-          .string()
-          .optional()
-          .describe(
-            "Optional participant email for questions like emails to Brandon or from Brandon.",
-          ),
-        direction: z
-          .enum(["mailbox", "to", "from", "to_or_from"])
-          .optional()
-          .default("mailbox")
-          .describe(
-            "mailbox = messages in the mailbox; to/from filters by participantEmail. Use 'to' for emails addressed to the person.",
-          ),
-        timeZone: z
-          .string()
-          .optional()
-          .default("America/New_York")
-          .describe(
-            "Business timezone for interpreting 'today'. Default America/New_York.",
-          ),
-        groupByThread: z
-          .boolean()
-          .optional()
-          .default(true)
-          .describe(
-            "Return consolidated conversation groups instead of individual messages. Default true.",
-          ),
-        limit: z
-          .number()
-          .optional()
-          .default(50)
-          .describe("Max thread groups or emails to return. Default 50."),
-      }),
+      description: getRecentEmailsDescription,
+      inputSchema: getRecentEmailsInputSchema,
       execute: withTrace(
         "getRecentEmails",
         options,
@@ -3517,26 +3470,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchEmails: tool({
-      description:
-        "Semantic search across Outlook email content synced from Microsoft 365. " +
-        "Use this when the user asks about a TOPIC in emails — not a date range. " +
-        "Examples: 'any emails about the permit delay?', 'what did we send to the GC about change orders?', " +
-        "'find emails mentioning the subcontractor dispute'. " +
-        "For date-based questions ('what emails today?', 'show me this week's emails'), use getRecentEmails instead. " +
-        "Returns email subject, sender/recipients, date, and relevant content. " +
-        "Always cite results as 'email from [participants] on [date]'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in emails — e.g. 'permit delay notification' or 'invoice dispute with Turner'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of email chunks to return"),
-      }),
+      description: searchEmailsDescription,
+      inputSchema: searchEmailsInputSchema,
       execute: withTrace(
         "searchEmails",
         options,
@@ -3562,26 +3497,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchTeamsMessages: tool({
-      description:
-        "Search Microsoft Teams channel message threads. " +
-        "Use this when the user asks about Teams conversations, " +
-        "channel discussions, or anything communicated in Teams " +
-        "(e.g. 'what did the team say about the schedule in Teams?', " +
-        "'find Teams messages about the subcontractor issue'). " +
-        "Returns channel name, participants, date, and message content. " +
-        "Always cite results as 'Teams message in [channel] on [date]'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in Teams messages — e.g. 'schedule delay discussion' or 'RFI response from Hensel'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of Teams message chunks to return"),
-      }),
+      description: searchTeamsMessagesDescription,
+      inputSchema: searchTeamsMessagesInputSchema,
       execute: withTrace(
         "searchTeamsMessages",
         options,

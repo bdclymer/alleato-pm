@@ -4,6 +4,10 @@ import type {
   ToolDefinition,
   ToolPolicy,
 } from "@/lib/ai-ops/contracts";
+import {
+  assistantSourceReadToolDescriptorByName,
+  registryEntryFromAssistantToolDescriptor,
+} from "@/lib/ai/tool-descriptors";
 
 export type AssistantToolCategory =
   | "source_adapter"
@@ -593,48 +597,6 @@ function assistantReadRoutingPolicy(
   name: string,
 ): AssistantToolRoutingPolicy | undefined {
   switch (name) {
-    case "searchTeamsMessages":
-      return {
-        useWhen: [
-          "User asks about Teams messages, DMs, chats, threads, conversations, or Teams chatter.",
-          "User asks for recent or same-day Teams message insights.",
-        ],
-        doNotUseWhen: [
-          "User asks about Fireflies meetings or meeting transcripts without Teams.",
-          "User asks about Outlook inbox or email triage.",
-        ],
-        preferredFreshness:
-          "Use Teams-specific retrieval that checks live Microsoft Graph first when available, then synced Teams RAG rows.",
-        emptyResultBehavior:
-          "State that Teams retrieval returned no matching rows and do not substitute meetings or emails as if they were Teams results.",
-        citationRule:
-          "Cite as Teams message/conversation with title or channel and date.",
-        regressionPrompts: [
-          "what insights can be found in the teams messages today?",
-          "show me recent Teams chatter about Westfield",
-        ],
-      };
-    case "getRecentEmails":
-    case "searchEmails":
-      return {
-        useWhen: [
-          "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
-          "User asks what important emails came in today or this morning.",
-        ],
-        doNotUseWhen: [
-          "User asks about Teams messages or chats.",
-          "User asks about meeting transcripts or Fireflies meetings.",
-        ],
-        preferredFreshness:
-          "Use live Microsoft Graph Outlook reads for inbox/date triage when available; use synced rows only as an explicit fallback.",
-        emptyResultBehavior:
-          "State that Outlook/email retrieval returned no matching rows or fell back, including the source/freshness caveat.",
-        citationRule: "Cite as Outlook/email with sender, subject, and date.",
-        regressionPrompts: [
-          "what are my most important emails from today?",
-          "anything urgent in my inbox this morning?",
-        ],
-      };
     case "searchMeetingsByTopic":
     case "getMeetingDetails":
     case "getMeetingsByDate":
@@ -805,8 +767,11 @@ const projectToolNames = [
 ] as const;
 
 const projectAssistantTools: AssistantToolRegistryEntry[] =
-  projectToolNames.map((name) =>
-    assistantChatTool({
+  projectToolNames.map((name) => {
+    const descriptor = assistantSourceReadToolDescriptorByName.get(name);
+    if (descriptor) return registryEntryFromAssistantToolDescriptor(descriptor);
+
+    return assistantChatTool({
       name,
       description: `Core project read tool exposed by createProjectTools: ${name}.`,
       owningAdapter: "project_tools",
@@ -837,8 +802,8 @@ const projectAssistantTools: AssistantToolRegistryEntry[] =
       },
       routingPolicy: assistantReadRoutingPolicy(name),
       factory: PROJECT_TOOL_FACTORY,
-    }),
-  );
+    });
+  });
 
 const actionToolNames = [
   "createChangeOrder",
