@@ -2091,7 +2091,12 @@ function PipelineCounts({ status }: { status: SourceSyncStatus }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {PIPELINE_GROUPS.map((group) => {
-        const values = status.pipeline[group.key] ?? {};
+        // pipeline values are usually a Record<string, number> breakdown, but
+        // some entries are scalar counts. Every PIPELINE_GROUPS key is a
+        // breakdown map; narrow defensively so a scalar can never throw here.
+        const raw = status.pipeline[group.key];
+        const values: StatusMap =
+          raw && typeof raw === "object" ? raw : {};
         const entries = orderedPipelineEntries(group.key, values);
         return (
           <div key={group.key} className="space-y-3 rounded-lg bg-muted/25 p-4">
