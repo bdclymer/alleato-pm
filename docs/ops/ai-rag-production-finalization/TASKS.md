@@ -1118,3 +1118,13 @@ Evidence directory:
   - `npm run verify:graph-subscriptions -- --json` passed with `expectedTargetCount=11`, `activeSubscriptionCount=11`, `staleSubscriptionCount=0`, `unconfiguredSubscriptionCount=0`.
   - `npm run verify:microsoft-assistant-health -- --json` passed for `bclymer@alleatogroup.com`.
   - `npm run rag:verify:chunk-integrity` passed with no missing embeddings and no orphan `rag_document_metadata` failures.
+
+### 2026-06-27: Outlook Event-Driven Synthesis Guard Noise Removed
+
+- Closed the remaining non-fatal Outlook sync noise from the previous slice:
+  - Root cause: `synthesize_new_comms_since()` attempted optional L2 Project Intelligence packet refreshes during the Outlook sync even when `ALLOW_PM_APP_FINAL_PROJECTIONS` was intentionally disabled.
+  - The PM final-projection guard correctly blocked writes, but the event-driven synthesizer reported those expected blocks as `errors`.
+  - Prevention: `backend/src/services/intelligence/project_synthesizer.py` now catches `AppDbProjectionError` only around the optional L2 packet refresh and reports `synthesis_packets_skipped` instead. Extraction/card/task errors still remain loud.
+- Runtime proof:
+  - Ran `synthesize_new_comms_since('2026-06-27T03:02:43.762554+00:00', max_projects=5, max_extractions_per_project=1, refresh_intelligence=True)` with final projections disabled.
+  - Result: `synthesis_packets_skipped=5`, `synthesis_packets_written=0`, `errors=[]`.
