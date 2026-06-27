@@ -597,6 +597,7 @@ def _message_evidence(message: dict[str, Any]) -> str:
     body = str(message.get("body_text") or "").replace("\r", " ").replace("\n", " ").strip()
     if not body:
         return "No body preview available."
+    body = re.sub(r"[\u034f\u200b-\u200f\u202a-\u202e\u2060-\u206f]+", " ", body)
     body = re.sub(r"\s+", " ", body)
     sentences = [
         segment.strip()
@@ -722,9 +723,12 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
     for index, message in enumerate(rows, start=1):
         sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
         subject = str(message.get("subject") or "(no subject)")
+        bucket = _action_bucket(message)
         lines.append(
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
+        lines.append(f"   Response path: {_short_action_label(message)}.")
+        lines.append(f"   Why: {_message_reason(message, bucket)}")
         lines.append(f"   Preview: {_message_evidence(message)}")
         lines.append("")
     return "\n".join(lines).strip()

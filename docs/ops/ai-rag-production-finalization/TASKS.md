@@ -1011,6 +1011,9 @@ Evidence directory:
   - make `last five emails` a pure source listing with sender, subject, timestamp, and preview only;
   - change arrived-today heading to explicitly include `Outlook emails received today` and `attention`;
   - name watch/no-reply rows in reply triage without classifying them as reply work.
+- Seventh backend tightening in progress:
+  - add restrained response path/reason to `last five emails` without speculative owner/risk fields;
+  - strip invisible Outlook/marketing padding characters from evidence snippets.
 - Verification:
   - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
   - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;
@@ -1018,6 +1021,7 @@ Evidence directory:
   - local arrived-today smoke confirms GitHub authorization is `Watch` and no draft direction is shown;
   - local smoke confirms morning, arrived-today, and reply-triage output omit speculative owner/draft lines and exclude routine no-reply rows.
   - local smoke confirms pure last-five listing, arrived-today wording, and named non-reply triage rows.
+  - local smoke confirms last-five action labels and cleaned marketing preview text.
   - focused backend pytest is blocked before collection by missing `python-multipart` in the test environment, unrelated to the assistant classifier patch.
 - Do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
 
