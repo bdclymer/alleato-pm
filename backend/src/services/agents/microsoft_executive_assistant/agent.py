@@ -516,6 +516,16 @@ def _likely_reply_needed(message: dict[str, Any]) -> bool:
 def _action_bucket(message: dict[str, Any]) -> str:
     text = _message_text(message)
     subject = str(message.get("subject") or "")
+    if any(
+        token in text
+        for token in (
+            "third-party github application",
+            "github application has been added",
+            "recently authorized to access your account",
+            "application was recently authorized",
+        )
+    ):
+        return "Watch"
     if _is_automated_sender(message):
         if "payment is due" in text or "approaching spend limit" in text:
             return "Watch"
@@ -562,6 +572,16 @@ def _message_reason(message: dict[str, Any], bucket: str) -> str:
         return "This looks like an internal follow-up that needs ownership or routing."
     if "quarantine" in text or "security" in text:
         return "Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident."
+    if any(
+        token in text
+        for token in (
+            "third-party github application",
+            "github application has been added",
+            "recently authorized to access your account",
+            "application was recently authorized",
+        )
+    ):
+        return "Security/account-change notice; verify it only if the GitHub app authorization was unexpected."
     if "approaching spend limit" in text or "payment is due" in text:
         return "Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone."
     if any(
@@ -656,6 +676,16 @@ def _action_risk(message: dict[str, Any], bucket: str) -> str:
         if any(
             token in text
             for token in (
+                "third-party github application",
+                "github application has been added",
+                "recently authorized to access your account",
+                "application was recently authorized",
+            )
+        ):
+            return "Ignoring it is safe only if this GitHub app authorization was expected."
+        if any(
+            token in text
+            for token in (
                 "could not confidently rule out",
                 "could not rule out",
                 "possible electrical trip",
@@ -738,6 +768,7 @@ def _render_action_lists(
     action_needed: list[dict[str, Any]],
     informational: list[dict[str, Any]],
     lead: Optional[str] = None,
+    include_draft_direction: bool = True,
 ) -> str:
     lines = [heading, ""]
     if lead:
@@ -759,7 +790,7 @@ def _render_action_lists(
             lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
-            if bucket in {"Alert now", "Reply", "Delegate"}:
+            if include_draft_direction and bucket in {"Alert now", "Reply", "Delegate"}:
                 lines.append(f"  {_reply_draft_direction(message, bucket)}")
         lines.append("")
 
@@ -902,6 +933,8 @@ def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -
         heading=f"Messages that arrived today for {mailbox}:",
         action_needed=action_needed,
         informational=informational,
+        lead="No confirmed emergency was identified from today's arrivals; reply items, security/watch notices, and informational items are separated below.",
+        include_draft_direction=False,
     )
 
 

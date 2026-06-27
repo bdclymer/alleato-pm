@@ -1000,10 +1000,14 @@ Evidence directory:
   - make ownership wording explicit that ownership is not confirmed by inbox presence alone;
   - enforce same-day filtering for reply-triage prompts;
   - add an explicit no-critical-email lead for urgent triage when no `Alert now` item exists.
+- Fourth backend tightening in progress:
+  - classify GitHub app-authorization/account-change notices as `Watch` instead of generic no-reply noise;
+  - suppress draft-direction copy in arrived-today summaries unless the user asked for drafting.
 - Verification:
   - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
   - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;
   - local renderer smoke confirms morning and reply-triage output shape;
+  - local arrived-today smoke confirms GitHub authorization is `Watch` and no draft direction is shown;
   - focused backend pytest is blocked before collection by missing `python-multipart` in the test environment, unrelated to the assistant classifier patch.
 - Do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
 
