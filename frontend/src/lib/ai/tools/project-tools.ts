@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createToolContext, type ToolContext } from "./tool-context";
+import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
 import { createFinancialTools, isMissingBudgetViewError, fetchBudgetRowsForBriefing } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
@@ -310,6 +311,7 @@ export function createProjectTools(
     createToolContext({ userId: _userId, pinnedProjectId: options.pinnedProjectId });
   const supabase = ctx.db;
   const guardrails = ctx.guardrails;
+  const repo = createProjectRepo(ctx);
 
   // Thread the same ctx into every composed sub-factory so the whole tool tree
   // shares one set of clients per request. acumatica + appHelp take no client.
@@ -522,7 +524,9 @@ export function createProjectTools(
             0,
           );
 
-          const openRfis = rfis.filter((row) => !isClosedStatus(row.status));
+          // Use isOpenRfiStatus (from project-repo) — it excludes both "closed"
+          // and "closed-draft", which isClosedStatus() does not cover.
+          const openRfis = rfis.filter((row) => isOpenRfiStatus(row.status));
           const overdueRfis = openRfis.filter((row) => isDateBeforeToday(row.due_date));
           const scheduleSensitiveRfis = openRfis.filter((row) => {
             const value = `${row.schedule_impact ?? ""} ${row.subject ?? ""}`.toLowerCase();
@@ -1336,8 +1340,10 @@ export function createProjectTools(
           supabase
             .from("rfis")
             .select("*")
-            .eq("project_id", resolvedId)
+            // Open = not closed and not closed-draft (canonical set in project-repo).
             .neq("status", "closed")
+            .neq("status", "closed-draft")
+            .eq("project_id", resolvedId)
             .order("due_date", { ascending: true })
             .limit(20),
           supabase
@@ -1891,19 +1897,21 @@ export function createProjectTools(
         );
 
         const now = new Date().toISOString().split("T")[0];
-        const rfiQuery = supabase
-          .from("rfis")
-          .select("id, number, subject, status, due_date, ball_in_court")
-          .in("project_id", scopedProjectIds)
-          .neq("status", "closed")
-          .lt("due_date", now)
-          .order("due_date", { ascending: true })
-          .limit(10);
-        const { data: rfiRows, error: rfiError } = await rfiQuery;
-        if (rfiError) {
-          sourceErrors.push(`overdue RFI lookup failed: ${rfiError.message}`);
+        // Overdue open RFIs via ProjectRepo — one definition of "open" (excludes
+        // both closed and closed-draft; the inline copy here used to leak closed-draft).
+        let overdueRFIs: AnyRow[] = [];
+        try {
+          overdueRFIs = (await repo.openRfisByDueDate({
+            projectIds: scopedProjectIds,
+            overdueOnly: true,
+            asOf: now,
+            limit: 10,
+          })) as AnyRow[];
+        } catch (rfiError) {
+          sourceErrors.push(
+            `overdue RFI lookup failed: ${rfiError instanceof Error ? rfiError.message : "unknown error"}`,
+          );
         }
-        const overdueRFIs = (rfiRows ?? []) as AnyRow[];
 
         // Query the tasks table directly — these are AI-extracted action items
         // from meetings/emails that have been compiled into trackable records
@@ -2593,8 +2601,9 @@ export function createProjectTools(
               .from("rfis")
               .select("id, number, subject, status, due_date")
               .eq("project_id", project.id)
+              // Open = not closed and not closed-draft (canonical set in project-repo).
               .neq("status", "closed")
-              .neq("status", "Closed")
+              .neq("status", "closed-draft")
               .order("due_date", { ascending: true })
               .limit(10),
             supabase

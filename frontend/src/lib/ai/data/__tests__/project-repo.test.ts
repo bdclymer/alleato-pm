@@ -134,4 +134,12 @@ describe("ProjectRepo.openRfisByDueDate", () => {
     const repo = createProjectRepo(fakeCtx({ data: null, error: { message: "db fail" } }, []));
     await expect(repo.openRfisByDueDate({ projectIds: [1] })).rejects.toThrow("db fail");
   });
+
+  test("empty projectIds returns empty array without error", async () => {
+    const calls: Call[] = [];
+    const repo = createProjectRepo(fakeCtx({ data: [], error: null }, calls));
+    const result = await repo.openRfisByDueDate({ projectIds: [] });
+    expect(result).toEqual([]);
+    expect(calls).toContainEqual({ method: "in", args: ["project_id", []] });
+  });
 });

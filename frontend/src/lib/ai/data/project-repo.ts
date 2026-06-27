@@ -89,10 +89,6 @@ export function createProjectRepo(ctx: ToolContext) {
      * `due_date < asOf` cutoff used by the overdue-RFI alert.
      */
     async openRfisByDueDate(opts: OpenRfiQuery) {
-      if (opts.overdueOnly && !opts.asOf) {
-        throw new Error("openRfisByDueDate: asOf is required when overdueOnly is true");
-      }
-
       let query = db
         .from("rfis")
         .select(OPEN_RFI_COLUMNS)
@@ -103,8 +99,10 @@ export function createProjectRepo(ctx: ToolContext) {
         .limit(opts.limit ?? 20);
 
       if (opts.overdueOnly) {
-        // asOf presence is guaranteed by the guard above
-        query = query.lt("due_date", opts.asOf!);
+        if (!opts.asOf) {
+          throw new Error("openRfisByDueDate: asOf is required when overdueOnly is true");
+        }
+        query = query.lt("due_date", opts.asOf);
       }
 
       const { data, error } = await query;
