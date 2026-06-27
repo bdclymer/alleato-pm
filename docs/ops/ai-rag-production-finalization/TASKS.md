@@ -991,9 +991,14 @@ Evidence directory:
 - Follow-up patch in progress:
   - classify temp-power/electrical-risk thread language as `Watch` instead of `Ignore/noise`;
   - keep Watch/Ignore context in reply-triage answers so the assistant does not imply every visible item needs a reply.
+- Second backend tightening in progress:
+  - exclude routine/no-reply noise from `important emails this morning` answers;
+  - summarize non-reply Watch/Ignore items in reply triage instead of listing them as equal reply work;
+  - add reply draft direction for reply/delegate items without claiming a draft was created.
 - Verification:
   - delegated TypeScript changed-file check and ESLint passed for `frontend/src/app/api/ai-assistant/chat/handler-v2.ts`;
   - backend compile passed for `backend/src/services/agents/microsoft_executive_assistant/agent.py`;
+  - local renderer smoke confirms morning and reply-triage output shape;
   - focused backend pytest is blocked before collection by missing `python-multipart` in the test environment, unrelated to the assistant classifier patch.
 - Do not mark Outlook assistant-consumption proof complete until the production inbox eval passes or has a documented fail-loud blocker.
 

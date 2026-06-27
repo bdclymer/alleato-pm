@@ -588,7 +588,13 @@ def _message_evidence(message: dict[str, Any]) -> str:
     if not body:
         return "No body preview available."
     body = re.sub(r"\s+", " ", body)
-    sentences = [segment.strip() for segment in re.split(r"(?<=[.!?])\s+", body) if segment.strip()]
+    sentences = [
+        segment.strip()
+        for segment in re.split(r"(?<=[.!?])\s+", body)
+        if segment.strip()
+        and "you don't often get email" not in segment.lower()
+        and "this sender is outside your organization" not in segment.lower()
+    ]
     priority_tokens = (
         "can you",
         "please",
@@ -614,9 +620,20 @@ def _message_evidence(message: dict[str, Any]) -> str:
     return (sentences[0] if sentences else body)[:200].strip()
 
 
+def _reply_draft_direction(message: dict[str, Any], bucket: str) -> str:
+    subject = str(message.get("subject") or "this thread").strip() or "this thread"
+    if bucket == "Alert now":
+        return f"Draft direction: acknowledge {subject}, answer the direct ask, and confirm the timing before the sender's stated deadline."
+    if bucket == "Reply":
+        return f"Draft direction: reply briefly to {subject}, confirm what Brandon can do next, and ask one clarifying question if scope or timing is missing."
+    if bucket == "Delegate":
+        return f"Draft direction: route {subject} to the right internal owner and ask them to confirm the next step."
+    return "Draft direction: no reply draft recommended from the available inbox evidence."
+
+
 def _action_owner(message: dict[str, Any], bucket: str) -> str:
     if bucket in {"Alert now", "Reply"}:
-        return "Brandon should reply"
+        return "Likely Brandon should reply; confirm ownership if this belongs to another team member"
     if bucket == "Delegate":
         return "Someone on the Alleato team should pick this up"
     if bucket == "Watch":
@@ -719,8 +736,12 @@ def _render_action_lists(
     heading: str,
     action_needed: list[dict[str, Any]],
     informational: list[dict[str, Any]],
+    lead: Optional[str] = None,
 ) -> str:
     lines = [heading, ""]
+    if lead:
+        lines.append(lead)
+        lines.append("")
 
     if action_needed:
         lines.append("Action needed")
@@ -737,6 +758,8 @@ def _render_action_lists(
             lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
+            if bucket in {"Alert now", "Reply", "Delegate"}:
+                lines.append(f"  {_reply_draft_direction(message, bucket)}")
         lines.append("")
 
     if informational:
@@ -781,8 +804,24 @@ def _render_bucketed_triage_answer(
         bucket = _action_bucket(message)
         buckets[bucket].append(message)
 
+    if include_only_reply_needed:
+        reply_buckets = ["Alert now", "Reply", "Delegate"]
+        omitted_watch = len(buckets["Watch"])
+        omitted_noise = len(buckets["Ignore/noise"])
+        render_buckets = reply_buckets
+    else:
+        omitted_watch = 0
+        omitted_noise = 0
+        render_buckets = ordered_buckets
+
     lines = [heading, ""]
-    for bucket in ordered_buckets:
+    if include_only_reply_needed:
+        lines.append(
+            "No clear emergency was identified in the live inbox read; the items below are the strongest reply candidates, separated from watch/no-reply items."
+        )
+        lines.append("")
+
+    for bucket in render_buckets:
         rows = buckets[bucket]
         if not rows:
             continue
@@ -798,10 +837,20 @@ def _render_bucketed_triage_answer(
             lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
             lines.append(f"  If ignored: {_action_risk(message, bucket)}")
+            if bucket in {"Alert now", "Reply", "Delegate"}:
+                lines.append(f"  {_reply_draft_direction(message, bucket)}")
         lines.append("")
 
     if not any(buckets[bucket] for bucket in ordered_buckets):
         lines.append("No clear action-needed inbox items were identified from the live inbox read.")
+        lines.append("")
+
+    if include_only_reply_needed and (omitted_watch or omitted_noise):
+        lines.append("Not classified as reply-required from the available evidence")
+        if omitted_watch:
+            lines.append(f"- {omitted_watch} watch item(s) need awareness only unless they connect to active work.")
+        if omitted_noise:
+            lines.append(f"- {omitted_noise} noise/no-reply item(s) should not receive a reply from this evidence alone.")
         lines.append("")
 
     lines.extend(
@@ -824,11 +873,18 @@ def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
         )
 
     action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
-    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply", "Delegate"}][:6]
+    informational = [message for message in rows if _action_bucket(message) == "Watch"][:4]
+    omitted_noise = len([message for message in rows if _action_bucket(message) == "Ignore/noise"])
+    lead = (
+        "No clear emergency was identified this morning; this list keeps direct replies and project-risk watch items, and excludes routine/no-reply noise."
+    )
+    if omitted_noise:
+        lead += f" {omitted_noise} routine/no-reply item(s) were excluded from the important list."
     return _render_action_lists(
         heading=f"Important emails this morning for {mailbox}:",
         action_needed=action_needed,
         informational=informational,
+        lead=lead,
     )
 
 
