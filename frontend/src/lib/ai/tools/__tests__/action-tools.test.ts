@@ -509,10 +509,12 @@ describe("createChangeEvent", () => {
         return {
           select: jest.fn(() => ({
             eq: jest.fn().mockResolvedValue({
+              // Statuses drive the closing-insight open count: only CE-009 is open,
+              // so other-open = 1 and the newly created (Open) CE makes 2.
               data: [
-                { number: "001" },
-                { number: "CE-009" },
-                { number: "not-a-number" },
+                { number: "001", status: "Approved", deleted_at: null },
+                { number: "CE-009", status: "Open", deleted_at: null },
+                { number: "not-a-number", status: "Closed", deleted_at: null },
               ],
               error: null,
             }),
@@ -579,7 +581,7 @@ describe("createChangeEvent", () => {
     expect(output).toMatchObject({
       success: true,
       message:
-        'Change request **010 — "Owner-requested lobby finish change"** logged. Do you have any attachments you want to add to this change event?',
+        'Change request **010 — "Owner-requested lobby finish change"** logged. That\'s **2 open change events** on this project now — worth a scan if you\'re tracking exposure. Want to add attachments or open the full form to set line items?',
       record: {
         id: "ce-1",
         project_id: 43,

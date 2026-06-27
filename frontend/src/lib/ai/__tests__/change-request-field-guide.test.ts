@@ -6,22 +6,28 @@ import {
 } from "../change-request-field-guide";
 
 describe("change request field guide", () => {
-  it("documents required, optional, generated, and confirmation fields", () => {
+  it("documents required, recommended, optional, generated, and confirmation fields", () => {
     expect(CHANGE_REQUEST_FIELD_GUIDE.canonicalTool).toBe("createChangeEvent");
     expect(CHANGE_REQUEST_FIELD_GUIDE.aliases).toContain("change request");
     expect(CHANGE_REQUEST_FIELD_GUIDE.requiredFields.map((field) => field.name)).toEqual([
       "projectId",
       "title",
     ]);
-    expect(CHANGE_REQUEST_FIELD_GUIDE.optionalFields.map((field) => field.name)).toEqual([
+    expect(CHANGE_REQUEST_FIELD_GUIDE.recommendedFields.map((field) => field.name)).toEqual([
       "description",
       "type",
       "scope",
+      "expectingRevenue",
+    ]);
+    // Every recommended field must carry a non-empty reason the agent can use to make the case.
+    for (const field of CHANGE_REQUEST_FIELD_GUIDE.recommendedFields) {
+      expect(field.whyItMatters.trim().length).toBeGreaterThan(0);
+    }
+    expect(CHANGE_REQUEST_FIELD_GUIDE.optionalFields.map((field) => field.name)).toEqual([
       "status",
       "reason",
       "origin",
       "originId",
-      "expectingRevenue",
       "lineItemRevenueSource",
       "primeContractId",
     ]);
@@ -41,19 +47,26 @@ describe("change request field guide", () => {
   });
 
   it("renders prompt and tool-description guidance from the same source", () => {
-    expect(renderChangeRequestFieldGuide()).toContain(
-      "Canonical tool: `createChangeEvent`",
+    const fieldGuide = renderChangeRequestFieldGuide();
+    expect(fieldGuide).toContain("Canonical tool: `createChangeEvent`");
+    expect(fieldGuide).toContain("projectId (Project): Numeric Alleato project id");
+    // The recommended tier and its rationale must surface in the rendered guide.
+    expect(fieldGuide).toContain("Recommended");
+    expect(fieldGuide).toContain(
+      CHANGE_REQUEST_FIELD_GUIDE.recommendedFields[0].whyItMatters,
     );
-    expect(renderChangeRequestFieldGuide()).toContain(
-      "projectId (Project): Numeric Alleato project id",
-    );
-    expect(renderChangeRequestToolDescription()).toContain("change request");
-    expect(renderChangeRequestToolDescription()).toContain("projectId and title");
-    expect(renderChangeRequestToolDescription()).toContain("primeContractId");
-    expect(renderChangeRequestToolDescription()).toContain("expectingRevenue");
-    expect(renderChangeRequestToolDescription()).toContain("line items");
-    expect(renderChangeRequestToolDescription()).toContain("ask whether the user has attachments");
-    expect(renderChangeRequestToolDescription()).toContain("confirmed=false first");
+
+    const toolDescription = renderChangeRequestToolDescription();
+    expect(toolDescription).toContain("change request");
+    expect(toolDescription).toContain("projectId and title");
+    expect(toolDescription).toContain("primeContractId");
+    expect(toolDescription).toContain("expectingRevenue");
+    expect(toolDescription).toContain("line items");
+    // Card enforcement + active pursuit of recommended fields are the core of the fix.
+    expect(toolDescription).toContain("confirmed=false first");
+    expect(toolDescription).toContain("form card");
+    expect(toolDescription).toContain("Recommended");
+    expect(toolDescription).toContain("attachments");
   });
 
   it("builds structured review-card metadata from preview fields", () => {

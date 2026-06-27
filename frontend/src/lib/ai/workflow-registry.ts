@@ -5,11 +5,28 @@ export type WorkflowFieldType =
   | "select"
   | "boolean";
 
+/**
+ * Pursuit tier — drives how hard the agent works to fill a field before preview.
+ *   required    → must have a value or the write fails (DB NOT NULL / business rule).
+ *   recommended → agent actively pursues it, leading with `whyItMatters`, before previewing.
+ *   optional    → agent mentions it's available but does not push.
+ *   generated   → system-owned (number, timestamps); agent never asks.
+ */
+export type WorkflowFieldTier =
+  | "required"
+  | "recommended"
+  | "optional"
+  | "generated";
+
 export type WorkflowFieldDefinition = {
   name: string;
   label: string;
   type: WorkflowFieldType;
   required: boolean;
+  /** Pursuit tier. Defaults to required when `required` is true, else optional. */
+  tier?: WorkflowFieldTier;
+  /** One line on the cost of leaving this blank — the agent uses it to make the case. */
+  whyItMatters?: string;
   promptOrder: number;
   description: string;
   placeholder?: string;
@@ -114,6 +131,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Project",
       type: "number",
       required: true,
+      tier: "required",
       promptOrder: 1,
       description: "Numeric Alleato project id. Resolve this before previewing.",
       mapsTo: "change_events.project_id",
@@ -123,6 +141,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Title",
       type: "text",
       required: true,
+      tier: "required",
       promptOrder: 2,
       description: "Short name for the potential change.",
       placeholder: "Owner-requested lobby finish change",
@@ -133,6 +152,9 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Description",
       type: "textarea",
       required: false,
+      tier: "recommended",
+      whyItMatters:
+        "Without a description, whoever prices or approves this CE has to chase you for what actually happened — scope, cost driver, and the field condition. One or two sentences now saves a round-trip later.",
       promptOrder: 3,
       description: "Known scope, cost, schedule, or source context.",
       mapsTo: "change_events.description",
@@ -142,6 +164,9 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Type",
       type: "select",
       required: false,
+      tier: "recommended",
+      whyItMatters:
+        "Type is how change events get grouped, reported, and routed (owner change vs design change vs unforeseen condition). Left as the default it skews the change-management rollups.",
       promptOrder: 4,
       description: "Native change event type. Defaults to Owner Change.",
       defaultValue: "Owner Change",
@@ -153,6 +178,9 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Scope",
       type: "select",
       required: false,
+      tier: "recommended",
+      whyItMatters:
+        "Scope (In/Out/TBD) is the first thing the PM and owner argue about — it decides whether this is billable. Setting it now frames the whole negotiation instead of leaving it as an unreviewed TBD.",
       promptOrder: 5,
       description: "Native change event scope. Defaults to TBD until reviewed.",
       defaultValue: "TBD",
@@ -164,6 +192,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Status",
       type: "select",
       required: false,
+      tier: "optional",
       promptOrder: 6,
       description: "Native change event status. Defaults to Open.",
       defaultValue: "Open",
@@ -175,6 +204,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Reason",
       type: "select",
       required: false,
+      tier: "optional",
       promptOrder: 7,
       description: "Optional reason used by the native change event form.",
       options: CHANGE_REQUEST_REASON_OPTIONS,
@@ -185,6 +215,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Origin",
       type: "select",
       required: false,
+      tier: "optional",
       promptOrder: 8,
       description: "Where the change originated. Defaults to Internal.",
       defaultValue: "Internal",
@@ -196,6 +227,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Origin record",
       type: "text",
       required: false,
+      tier: "optional",
       promptOrder: 9,
       description: "Optional linked source record id for the selected origin.",
       mapsTo: "change_events.origin_id",
@@ -205,6 +237,9 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Expecting revenue",
       type: "boolean",
       required: false,
+      tier: "recommended",
+      whyItMatters:
+        "This flag drives whether the CE flows into revenue forecasting. Get it wrong and the change either silently inflates the forecast or drops out of it — confirm it rather than riding the default.",
       promptOrder: 10,
       description: "Whether revenue is expected from this change.",
       defaultValue: true,
@@ -215,6 +250,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Line item revenue source",
       type: "select",
       required: false,
+      tier: "optional",
       promptOrder: 11,
       description: "Optional line item revenue calculation mode.",
       options: [
@@ -229,6 +265,7 @@ export const CHANGE_REQUEST_WORKFLOW: AssistantCreateWorkflowDefinition = {
       label: "Prime contract",
       type: "text",
       required: false,
+      tier: "optional",
       promptOrder: 12,
       description: "Optional prime contract UUID used as the markup basis.",
       mapsTo: "change_events.prime_contract_id",

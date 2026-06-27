@@ -973,7 +973,7 @@ export function createActionTools(
 
         const { data: existing, error: numberError } = await supabase
           .from("change_events")
-          .select("number")
+          .select("number, status, deleted_at")
           .eq("project_id", draft.projectId);
 
         if (numberError) {
@@ -1033,9 +1033,33 @@ export function createActionTools(
           return failure;
         }
 
+        // Grounded closing insight — reuse the rows already fetched for numbering
+        // (no extra round-trip). Count change events still open on this project,
+        // including the one we just created.
+        const CLOSED_CE_STATUSES = new Set([
+          "Approved",
+          "Rejected",
+          "Closed",
+          "Converted",
+          "Void",
+        ]);
+        const otherOpenCount = (existing ?? []).filter((row) => {
+          if (row.deleted_at) return false;
+          const status = typeof row.status === "string" ? row.status : "";
+          return !CLOSED_CE_STATUSES.has(status);
+        }).length;
+        const newIsOpen = !CLOSED_CE_STATUSES.has(draft.status);
+        const openCount = otherOpenCount + (newIsOpen ? 1 : 0);
+        const insight =
+          openCount > 1
+            ? ` That's **${openCount} open change events** on this project now — worth a scan if you're tracking exposure.`
+            : openCount === 1
+              ? " It's the only change event open on this project right now."
+              : "";
+
         const response = {
           success: true,
-          message: `Change request **${data.number} — "${draft.title}"** logged. Do you have any attachments you want to add to this change event?`,
+          message: `Change request **${data.number} — "${draft.title}"** logged.${insight} Want to add attachments or open the full form to set line items?`,
           record: data,
         };
         await recordWriteAudit({
