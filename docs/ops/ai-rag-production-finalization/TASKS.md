@@ -43,6 +43,10 @@ Completed env/database cleanup proof slice:
 
 - [2026-06-26-ai-rag-env-db-cleanup-proof.md](../tasks/2026-06-26-ai-rag-env-db-cleanup-proof.md)
 
+Completed final env/database cleanup proof slice:
+
+- [2026-06-27-finalize-env-db-cleanup-proof.md](../tasks/2026-06-27-finalize-env-db-cleanup-proof.md)
+
 Completed Outlook legacy mirroring removal slice:
 
 - [2026-06-26-remove-outlook-legacy-mirroring-gates.md](../tasks/2026-06-26-remove-outlook-legacy-mirroring-gates.md)
@@ -164,7 +168,7 @@ Evidence directory:
 - [x] Remove Outlook legacy mirroring gates after raw intake and canonical RAG ownership are proven.
 - [x] Retire the Outlook RAG-to-app incident bridge after canonical Outlook intake repair ownership is proven.
 - [ ] Continue removing archived, duplicate, experimental, deprecated, dead, or unused implementations as additional candidates are proven inactive.
-- [ ] Remove unused environment variables and orphaned database code where safe.
+- [x] Remove unused environment variables and orphaned database code where safe.
 - [ ] Confirm the codebase has one production implementation for every major workflow.
 
 ### Phase 13: Final Production Readiness
@@ -1298,3 +1302,36 @@ Evidence directory:
   - [microsoft-assistant-health-final-bundle-after-scoped-sync-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-bundle-after-scoped-sync-20260627.json)
   - [final-bundle-readback-outlook-fireflies-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/final-bundle-readback-outlook-fireflies-20260627.json)
   - [render-graph-sync-outlook-always-include-env-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/render-graph-sync-outlook-always-include-env-20260627.json)
+
+### 2026-06-27: AAI-737 Final Env And Orphan Database Cleanup Proof Closed
+
+- Removed deprecated provider env keys from Vercel and Render using key-name-only operations:
+  - stale embedding/provider flags;
+  - stale ChatKit public keys;
+  - stale streaming/AI query frontend flags;
+  - stale `RAG_PIPELINE_TYPE` and legacy vector-store env keys.
+- Added a fail-loud provider guardrail:
+  - `scripts/verify/verify_deprecated_provider_env_absent.mjs`
+  - `npm run verify:deprecated-provider-env`
+  - The guard checks Vercel/Render key names and never prints values.
+- Dropped eight proven-dead MAIN database tables:
+  - `messages`
+  - `chats`
+  - `search_documents`
+  - `ai_analysis_jobs`
+  - `ai_models`
+  - `document_executive_summaries`
+  - `documents_rfis_links`
+  - `documents_submittals_links`
+- Retained `document_insights` and marked it `blocked` because the `actionable_insights` view depends on it.
+- Regenerated database inventory and Supabase types after the migration.
+- Verification passed:
+  - `npm run verify:deprecated-provider-env`
+  - `npm run db:migrations:verify-applied -- supabase/migrations/20260627120000_drop_dead_ai_document_tables.sql`
+  - `npm run db:inventory`
+  - `npm run db:inventory -- --check-only`
+  - `npm run db:types`
+  - delegated `frontend: npm run typecheck:changed` twice after JS/package changes.
+- Evidence:
+  - [Task](../tasks/2026-06-27-finalize-env-db-cleanup-proof.md)
+  - [Final proof](../evidence/2026-06-25-ai-rag-production-finalization/env-db-cleanup-final-aai-737.md)

@@ -90,7 +90,7 @@ function generateViaPostgresMeta() {
 function generateTypes() {
   try {
     const generated = generateViaSupabaseCli();
-    return { generated, strategy: "supabase-cli" };
+    return { generated: generated.replace(/\n+$/u, "\n"), strategy: "supabase-cli" };
   } catch (error) {
     const stdout = String(error?.stdout ?? "");
     const stderr = String(error?.stderr ?? "");
@@ -99,7 +99,7 @@ function generateTypes() {
       throw error;
     }
     const generated = generateViaPostgresMeta();
-    return { generated, strategy: "postgres-meta-fallback" };
+    return { generated: generated.replace(/\n+$/u, "\n"), strategy: "postgres-meta-fallback" };
   }
 }
 

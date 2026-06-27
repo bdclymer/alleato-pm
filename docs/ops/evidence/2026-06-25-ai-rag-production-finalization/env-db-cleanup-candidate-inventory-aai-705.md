@@ -23,6 +23,10 @@ inactive or fully replaced.
 | `ENABLE_LEGACY_FIREFLIES_FILE_INGEST` | Env cleanup candidate | AAI-705 found the env referenced only by the disabled `/api/ingest/fireflies` route. AAI-706 proved no remaining live callers and removed the route/env together. | `deleted-by-aai-706` | Superseded by `docs/ops/evidence/2026-06-25-ai-rag-production-finalization/legacy-fireflies-file-ingest-removal-aai-706.md`. |
 | `GRAPH_API_INGESTION_ENABLED` | Env cleanup candidate | Render web service sets it to `false`; `backend/src/services/integrations/microsoft_graph/ingestion_control.py` uses it as a public fail-closed write-heavy Graph ingestion guard. `scripts/verify/verify-render-web-scheduler-disabled.mjs` and live DB incident verifier expect it false on the web service. | `provider-retain` | Retain. It is an active production pressure-guard, not unused config. |
 | `OUTLOOK_SYNC_LEGACY_ATTACHMENTS`, `OUTLOOK_SYNC_LEGACY_LINKS`, `OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS` | Env cleanup candidate | AAI-709 proved Outlook raw intake, intake attachments, and canonical RAG rows are the production owners; no Render schedule reference found for these gates. | `deleted` | Removed from `backend/src/services/integrations/microsoft_graph/outlook.py`; see `outlook-legacy-mirroring-removal-aai-709.md`. |
+| `EMBEDDING_API_KEY`, `EMBEDDING_BASE_URL`, `EMBEDDING_MODEL_CHOICE`, `EMBEDDING_PROVIDER`, `LLM_API_KEY`, `OPENAI_VECTOR_STORE_ID`, `RAG_PIPELINE_TYPE`, ChatKit public/domain keys, stale frontend AI query/streaming flags | Env cleanup candidate | AAI-737 used source/provider proof and key-name-only Vercel/Render readbacks. Current AI provider path is AI Gateway/OpenAI fallback plus RAG Supabase storage gates; these stale keys are not production owners. | `deleted` | Removed from Vercel/Render where present. Guarded by `npm run verify:deprecated-provider-env`. |
+| `SUPABASE_DOCUMENTS_BUCKET`, `SUPABASE_MEETINGS_BUCKET` | Env cleanup candidate | AAI-737 found active references in Outlook attachment intake and Fireflies transcript backfill. | `active-keep` | Retain. These are not unused env keys. |
+| `messages`, `chats`, `search_documents`, `ai_analysis_jobs`, `ai_models`, `document_executive_summaries`, `documents_rfis_links`, `documents_submittals_links` | DB cleanup candidate | AAI-737 proved no active runtime references or inbound dependencies; migration `20260627120000_drop_dead_ai_document_tables.sql` dropped them and DB inventory/types were regenerated afterward. | `deleted` | Dropped from MAIN database and removed from `docs/architecture/tables.yaml`; migration ledger verified. |
+| `document_insights` | DB cleanup candidate | AAI-737 dry-run initially found a hard dependency: view `actionable_insights` depends on `document_insights`. | `blocked` | Retained and marked `blocked` in `docs/architecture/tables.yaml` until the dependent view is retired or migrated. |
 
 ## Commands And Evidence Log
 
@@ -40,3 +44,14 @@ inactive or fully replaced.
   - Proved all eight DB drift candidates have active migrations and/or route/service/tool references.
 - Compact env inventory generated from source references for AI/RAG/provider variables.
   - First classified candidates are fail-closed/provider-retained or migrate-first gates, not safe deletes.
+- AAI-737 final cleanup:
+  - `npm run verify:deprecated-provider-env`
+    - Passed with no deprecated provider env key names found.
+  - `npm run db:migrations:verify-applied -- supabase/migrations/20260627120000_drop_dead_ai_document_tables.sql`
+    - Passed remote migration ledger check for version `20260627120000`.
+  - `npm run db:inventory`
+    - Regenerated inventory after eight table drops.
+  - `npm run db:inventory -- --check-only`
+    - Passed schema drift check with 452 table entries.
+  - `npm run db:types`
+    - Regenerated Supabase types after table drops.

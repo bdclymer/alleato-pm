@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED — DO NOT EDIT BY HAND.**
 > Regenerate with `npm run db:inventory`. Source: `docs/architecture/tables.yaml` + live Supabase stats.
-> Last generated: 2026-06-27T11:41:37.208Z
+> Last generated: 2026-06-27T12:01:45.966Z
 
 This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
 
@@ -19,7 +19,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 
 ## MAIN — PM App database (`lgveqfnpkxvzbnnwuled`)
 
-437 tables · 218 live · 161 dormant · 42 live-empty · 11 dead · 2 active · 2 orphan-mirror · 1 legacy
+429 tables · 218 live · 155 dormant · 42 live-empty · 8 dead · 2 active · 2 orphan-mirror · 1 legacy · 1 blocked
 
 | Table | Domain | Status | Rows | Code refs | Purpose | Notes |
 |---|---|---|---:|---:|---|---|
@@ -63,11 +63,9 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `agent_learnings` | ai | live | 67 | 10 | Durable AI failure-pattern and prevention-prompt memory. Read and upserted by agent-learning-service.ts from thumbs-down feedback, eval failures, and admin fee… | PM APP stores the structured learning record only. Embeddings for retrieval are synced separately into the RAG database and must not be written into this table. |
 | `ai_agent_runs` | ai | live | 0 | 1 | Run history for configured AI agents. Used by admin AI agent drilldowns and operational review. |  |
 | `ai_agents` | ai | live | 20 | 2 | AI agent registry rows for configured assistant agents, approvals, thresholds, and admin-visible agent metadata. |  |
-| `ai_analysis_jobs` | ai | dormant | 0 | 0 | Dormant AI analysis job queue. |  |
 | `ai_feedback_events` | ai | live-empty | 32 | 11 | AI feedback events. Writer wired in feedback-event-service.ts but never triggered. |  |
 | `ai_learning_promotions` | ai | live-empty | 2 | 35 | AI learning promotion records. Writer wired but never triggered. |  |
 | `ai_memories` | ai | live | 62.5k | 12 | Long-term AI assistant memory store. 27,990 rows. Written by ai-memory-service.ts and workspace artifact promotions. |  |
-| `ai_models` | ai | dormant | 0 | 0 | Dormant AI model registry. |  |
 | `ai_operation_events` | ai | live | 49 | 3 | AI Ops event ledger for scheduled/manual AI workflow events, accepted/rejected event state, and run conversion. |  |
 | `ai_retrieval_feedback` | ai | live | 2.2k | 4 | Thumb/score feedback on AI retrieval results. 1,948 rows. Written by feedback-event-service.ts. |  |
 | `ai_retrieval_weights` | ai | dormant | 0 | 6 | Dormant AI retrieval weight tuning table. |  |
@@ -75,17 +73,15 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `ai_skill_usage_events` | ai | live | 0 | 1 | Telemetry ledger for selected Skill Library context attached to assistant responses. |  |
 | `ai_skills` | ai | live | 0 | 6 | Approved Skill Library definitions consumed by assistant surface-specific skill injection. |  |
 | `ai_task_feedback` | ai | dormant | 11 | 8 | Dormant AI task feedback. |  |
-| `ai_tool_write_audits` | ai | dormant | 174 | 0 | Dormant AI tool write audit log. |  |
+| `ai_tool_write_audits` | ai | dormant | 175 | 0 | Dormant AI tool write audit log. |  |
 | `ai_work_run_artifacts` | ai | live | 59 | 2 | Inspectable generated and delivered artifacts for AI workflow runs, including Executive Daily Brief packets, Teams/email payloads, source-health reports, deliv… |  |
 | `ai_work_run_delivery_attempts` | ai | live | 28 | 3 | Per-channel delivery attempt ledger for AI workflow runs, with recipient, status, exact failure code/message, retryability, provider response, and artifact lin… |  |
 | `ai_work_run_sources` | ai | live | 140 | 2 | Evidence/source rows linked to AI workflow runs. |  |
 | `ai_work_run_steps` | ai | live | 227 | 2 | Step-level execution log for canonical AI workflow runs, including source fetch, tool call, synthesis, artifact persistence, delivery, and verification outcome… |  |
 | `ai_work_runs` | ai | live | 50 | 5 | Canonical AI workflow run ledger for Executive Daily Brief and related AI Ops workflows. |  |
 | `chat_history` | ai | live | 4.5k | 39 | AI assistant chat message persistence. 2,908 rows. The live chat store. |  |
-| `chats` | ai | dead | 3 | 0 | Dead schema. No code references. Drop candidate. |  |
-| `conversations` | ai | live | 494 | 17 | AI assistant chat session metadata. 226 rows. Thread/session header for chat_history. |  |
+| `conversations` | ai | live | 495 | 17 | AI assistant chat session metadata. 226 rows. Thread/session header for chat_history. |  |
 | `memories` | ai | live | 90 | 4 | Per-session AI conversation summaries with 3072-dim embeddings, used for cross-session recall. Written by conversation-memory.ts (embedAndStoreMemory, memory_t… |  |
-| `messages` | ai | dead | 32 | 0 | Dead schema. No code references. Drop candidate. |  |
 | `notes` | ai | dead | 0 | 3 | Dead schema. No code references. Drop candidate. |  |
 | `app_roles` | auth | dormant | 0 | 0 | Dormant role definitions. |  |
 | `billing_invitations` | auth | dormant | 0 | 0 | Dormant billing/invite infrastructure. |  |
@@ -126,16 +122,13 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `daily_log_photos` | documents | live | 0 | 2 | Photo metadata written by the Site Scribe daily-log flow. Stores uploaded image records plus pairing back to the generated daily log and note context. | This is not the old project photos feature. The active writer is /api/projects/[projectId]/daily-log/site-scribe, which replaces rows for a daily log on regene… |
 | `daily_logs_project_photos_links` | documents | live-empty | 0 | 0 | Link table between daily logs and project photos. Feature shipped, never adopted. |  |
 | `document_attribution_candidates` | documents | live | 13.2k | 10 | Low-confidence project attribution review queue. 13,233 rows. Written by compiler when project confidence < 0.70. No review UI yet. | Known gap: no review UI exists. Items accumulate without resolution. |
-| `document_executive_summaries` | documents | dormant | 0 | 0 | Dormant document executive summaries. |  |
 | `document_group_access` | documents | dormant | 0 | 0 | Dormant per-group document access control. |  |
-| `document_insights` | documents | dormant | 0 | 0 | Dormant document insights table. |  |
+| `document_insights` | documents | blocked | 0 | 0 | Dormant document insights table, but retained because the actionable_insights view depends on it. Do not drop until the view is retired or migrated. |  |
 | `document_metadata` | documents | live | 40.8k | 199 | Primary document catalog. 36,511 rows. Dual-written with RAG.rag_document_metadata on every ingestion. Full business metadata including project_id, source_type… | Always written alongside rag_document_metadata via upsert_document_metadata() — never write to one without the other. document_type for onedrive/sharepoint/mic… |
 | `document_page_intelligence` | documents | live | 663 | 10 | Per-page AI vision extraction for drawings and PDFs. Written by backend OCR/vision processing and read by drawing intelligence, submittal required-package dete… | Keyed by document_metadata_id + page_number. Stores AI summaries plus raw extraction; service role writes, authenticated users can read. Do not replace with do… |
 | `document_rows` | documents | live | 13.1k | 5 | Structured document rows loaded by ETL outside the repo. 12,354 rows. Read by AI tools/structured-queries.ts. |  |
 | `document_type_taxonomy` | documents | live | 42 | 4 | Lookup table for document_metadata.document_type values (Pattern C). TODO: expand metadata, identify writers/readers. |  |
 | `document_user_access` | documents | dormant | 0 | 0 | Dormant per-user document access control. |  |
-| `documents_rfis_links` | documents | dormant | 0 | 0 | Dormant document to RFI links. |  |
-| `documents_submittals_links` | documents | dormant | 0 | 0 | Dormant document to submittal links. |  |
 | `drawing_areas` | documents | live | 1 | 5 | Drawing area definitions. 1 row. Admin-only. |  |
 | `drawing_change_history` | documents | live | 13 | 6 | Change history for drawing publish/obsolete actions. 11 rows. |  |
 | `drawing_downloads` | documents | live | 1.5k | 4 | Download audit log for drawings. 1,400 rows. |  |
@@ -157,7 +150,6 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `project_documents_v2` | documents | live | 14 | 0 | Successor to project_documents (Pattern C migration). Project ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `purchase_order_documents` | documents | live | 3 | 0 | Pattern C junction: purchase orders ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `rfi_documents` | documents | live | 0 | 0 | Pattern C junction: RFIs ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
-| `search_documents` | documents | dead | 4 | 0 | Scratch table. 4 rows. No code references. Drop candidate. |  |
 | `sop_backlog` | documents | live | 1 | 3 | SAIS structured backlog for missing or lifecycle-managed accounting/finance SOP requirements. Placeholder records exist before a real SOP file is uploaded, the… | Do not create fake document_metadata rows for missing SOPs. Placeholder backlog rows are requirements, not uploaded files; AI retrieval must distinguish them f… |
 | `spec_drawing_links` | documents | live-empty | 0 | 3 | Junction between specification sections and drawings. Used by document-intelligence tooling to answer which drawings cover a spec section and which submittal p… | Links specifications.id to drawings.id with link_method and confidence. Even when empty, the table is part of the finalized spec/drawing/submittal coverage mod… |
 | `specification_area_sections` | documents | dormant | 0 | 5 | Dormant specification area sections. |  |
@@ -207,13 +199,13 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `budget_views` | financial | live | 26 | 11 | UI column-layout state for budget views. 63 rows. |  |
 | `change_event_approvals` | financial | dormant | 0 | 4 | Dormant change event approval workflow. |  |
 | `change_event_documents` | financial | live | 6 | 0 | Pattern C junction between change events and document_metadata. Created during attachment backfill; 2 rows. |  |
-| `change_event_history` | financial | live | 81 | 8 | Hand-rolled audit log for change events. 43 rows. Written at multiple change-event API call sites. |  |
+| `change_event_history` | financial | live | 82 | 8 | Hand-rolled audit log for change events. 43 rows. Written at multiple change-event API call sites. |  |
 | `change_event_line_items` | financial | live | 54 | 17 | Line-item detail per change event. 54 rows. |  |
 | `change_event_pco_links` | financial | dormant | 9 | 19 | Dormant change event to PCO links. |  |
 | `change_event_related_items` | financial | dormant | 4 | 4 | Dormant change event related items. |  |
 | `change_event_rfq_responses` | financial | live | 1 | 8 | Vendor responses to change event RFQs. 1 row. |  |
 | `change_event_rfqs` | financial | live | 3 | 16 | RFQs sent from a change event to vendors. 6 rows. |  |
-| `change_events` | financial | live | 63 | 69 | Project-level change events. 77 rows. Neutral upstream object that can generate RFQs and link to PCOs/CCOs. |  |
+| `change_events` | financial | live | 64 | 69 | Project-level change events. 77 rows. Neutral upstream object that can generate RFQs and link to PCOs/CCOs. |  |
 | `change_events_documents_links` | financial | dormant | 0 | 0 | Dormant change event to document links. |  |
 | `change_orders` | financial | dead | 5 | 3 | Generic change order table. Dead — all CO data lives in contract_change_orders and prime_contract_change_orders. |  |
 | `change_workflow_comments` | financial | dormant | 0 | 0 | Dormant change workflow comments. |  |
@@ -315,11 +307,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `optimization_rules` | fm-asrs | dormant | 0 | 0 | Dormant generic optimization rules. |  |
 | `__drizzle_migrations` | infrastructure | live | 1 | 0 | Drizzle ORM migration ledger. Tracks applied migrations. |  |
 | `_prisma_migrations` | infrastructure | legacy | 1 | 0 | Prisma migration ledger from prior ORM. Kept for historical record; Supabase migrations are authoritative. |  |
-| `db_audit_log` | infrastructure | live | 41.2k | 1 | Central audit log for all key business entity tables. Populated by fn_audit_log_generic trigger (trg_audit_log) on 37 tables covering projects, financial, cont… | Query this table to answer 'who changed X and when' questions. Filter by table_name + record_id for per-record history. changed_by is null for service-role/cro… |
+| `db_audit_log` | infrastructure | live | 41.3k | 1 | Central audit log for all key business entity tables. Populated by fn_audit_log_generic trigger (trg_audit_log) on 37 tables covering projects, financial, cont… | Query this table to answer 'who changed X and when' questions. Filter by table_name + record_id for per-record history. changed_by is null for service-role/cro… |
 | `briefing_runs` | intelligence | dormant | 0 | 0 | Dormant briefing run tracker. |  |
 | `daily_recaps` | intelligence | live | 98 | 12 | Executive briefing packet store. Executive Daily Brief generation now writes canonical AI Ops run linkage through ai_work_run_id. | Legacy mechanism, but still actively generated for Executive Daily Brief. ai_work_run_id is the canonical generation run pointer; ai_work_runs.daily_recap_id r… |
 | `executive_briefing_follow_ups` | intelligence | live | 665 | 8 | Follow-up actions from executive briefings. 108 rows. |  |
-| `initiative_cards` | intelligence | live | 14 | 14 | Strategic initiative cards. 8 rows. Separate from insight_cards. |  |
+| `initiative_cards` | intelligence | live | 10 | 14 | Strategic initiative cards. 8 rows. Separate from insight_cards. |  |
 | `insight_card_evidence` | intelligence | live | 21.2k | 16 | Links insight cards to their source documents. 6,185 rows. FK to document_metadata/source_documents. |  |
 | `insight_card_targets` | intelligence | live | 10.2k | 3 | Links insight cards to intelligence targets with is_primary flag. 5,990 rows. |  |
 | `insight_cards` | intelligence | live | 11.4k | 33 | Durable extracted signals from the intelligence pipeline. 5,991 rows. Created by promote_signal_candidate. Can be acknowledged, snoozed, or manually created. |  |
