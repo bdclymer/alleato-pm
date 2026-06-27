@@ -24,8 +24,17 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createServiceClient } from "@/lib/supabase/service";
-import { fetchWithGuardrails, WRITE_POLICY } from "@/lib/fetch-with-guardrails";
+import { sendProactiveTeamsDM } from "@/lib/bot/teams-proactive";
+import { OWNER_BRIEFING_RECIPIENTS } from "@/lib/executive/owner-briefing-recipients";
 import { logger } from "@/lib/logger";
+
+/**
+ * Who receives the triage digest. The learning-system operator, not the full
+ * owner-briefing list — Brandon doesn't need triage internals. Resolved against
+ * the authoritative `OWNER_BRIEFING_RECIPIENTS` registry so the Teams user id
+ * isn't re-hardcoded here.
+ */
+const TRIAGE_DIGEST_OPERATOR_EMAIL = "mharrison@alleatogroup.com";
 import {
   decideTriageAction,
   DEFAULT_TRIAGE_CONFIG,
@@ -241,97 +250,60 @@ export async function runAutonomousTriage(
   return result;
 }
 
+function formatTriageDigest(digest: TriageRunResult): string {
+  const lines = [
+    `**AI Learning ${digest.dryRun ? "Triage — dry run" : "Autonomous Triage"}**`,
+    `Scanned ${digest.scanned} eligible candidate${digest.scanned === 1 ? "" : "s"}.`,
+    `- Promoted to active: ${digest.promoted}`,
+    `- Archived as noise: ${digest.archived}`,
+    `- Kept for human review: ${digest.kept}`,
+    ...(digest.scoringFailed ? [`- Scoring errors: ${digest.scoringFailed}`] : []),
+    `- Candidates remaining: ${digest.remainingCandidates}`,
+    `- Promotions awaiting your review: ${digest.pendingHumanPromotions}`,
+  ];
+  if (digest.promotedTitles.length > 0) {
+    lines.push("", "Promoted:");
+    lines.push(...digest.promotedTitles.slice(0, 8).map((title) => `- ${title}`));
+  }
+  if (digest.remainingCandidates > 0 || digest.pendingHumanPromotions > 0) {
+    lines.push("", "Review the rest at /learning-feedback.");
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Deliver the digest via the bot proactive-DM path (same one the daily owner
+ * briefing uses) to the learning-system operator. There is no Power Automate
+ * webhook in this app — Teams delivery is the bot. Noise-gated: a silent
+ * scheduled no-op run (nothing promoted/archived, no errors) sends nothing; a
+ * dry run always sends so a manual preview is visible. Failure-isolated.
+ */
 async function sendTriageDigestToTeams(
   digest: TriageRunResult,
 ): Promise<{ ok: boolean }> {
-  const webhookUrl = process.env.TEAMS_FEEDBACK_WEBHOOK_URL?.trim();
-  if (!webhookUrl) return { ok: false };
-  try {
-    if (new URL(webhookUrl).protocol !== "https:") return { ok: false };
-  } catch {
+  const hadActivity =
+    digest.promoted + digest.archived + digest.scoringFailed > 0;
+  if (!digest.dryRun && !hadActivity) {
+    return { ok: true };
+  }
+
+  const operator = OWNER_BRIEFING_RECIPIENTS.find(
+    (r) => r.email.toLowerCase() === TRIAGE_DIGEST_OPERATOR_EMAIL,
+  );
+  if (!operator) {
+    logger.warn({
+      msg: "[autonomous-triage] no digest operator configured",
+      data: { email: TRIAGE_DIGEST_OPERATOR_EMAIL },
+    });
     return { ok: false };
   }
 
-  const facts = [
-    { title: "Promoted to active", value: String(digest.promoted) },
-    { title: "Archived as noise", value: String(digest.archived) },
-    { title: "Kept for human review", value: String(digest.kept) },
-    { title: "Scoring errors", value: String(digest.scoringFailed) },
-    { title: "Candidates remaining", value: String(digest.remainingCandidates) },
-    {
-      title: "Promotions awaiting human review",
-      value: String(digest.pendingHumanPromotions),
-    },
-  ];
-
-  const body: Array<Record<string, unknown>> = [
-    {
-      type: "TextBlock",
-      size: "Large",
-      weight: "Bolder",
-      text: digest.dryRun
-        ? "AI Learning Triage (dry run)"
-        : "AI Learning Autonomous Triage",
-      color: "Accent",
-    },
-    {
-      type: "TextBlock",
-      text: `Scanned ${digest.scanned} stuck candidate learning${digest.scanned === 1 ? "" : "s"}.`,
-      isSubtle: true,
-      wrap: true,
-    },
-    { type: "FactSet", facts },
-  ];
-
-  if (digest.promotedTitles.length > 0) {
-    body.push({
-      type: "TextBlock",
-      weight: "Bolder",
-      text: "Promoted",
-      wrap: true,
-    });
-    for (const title of digest.promotedTitles.slice(0, 8)) {
-      body.push({ type: "TextBlock", text: `• ${title}`, wrap: true, size: "Small" });
-    }
-  }
-
-  if (digest.remainingCandidates > 0) {
-    body.push({
-      type: "TextBlock",
-      text: "Review the rest in the AI Learning admin panel.",
-      isSubtle: true,
-      wrap: true,
-      size: "Small",
-    });
-  }
-
-  const payload = {
-    type: "message",
-    attachments: [
-      {
-        contentType: "application/vnd.microsoft.card.adaptive",
-        content: {
-          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-          type: "AdaptiveCard",
-          version: "1.4",
-          body,
-        },
-      },
-    ],
-  };
-
   try {
-    const response = await fetchWithGuardrails(webhookUrl, {
-      method: "POST",
-      requestId: "autonomous-triage",
-      where: "autonomous-triage/teams-webhook",
-      dependency: "teams-webhook",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-      timeoutMs: WRITE_POLICY.timeoutMs,
-      retries: 0,
-    });
-    return { ok: response.ok };
+    const result = await sendProactiveTeamsDM(
+      operator.supabaseUserId,
+      formatTriageDigest(digest),
+    );
+    return { ok: result.sent };
   } catch (error) {
     logger.warn({
       msg: "[autonomous-triage] Teams digest delivery failed",
