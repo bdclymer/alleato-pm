@@ -18,7 +18,7 @@ import {
 } from "ai";
 import { type NextRequest } from "next/server";
 import OpenAI from "openai";
-import { createClient as createAuthClient } from "@/lib/supabase/server";
+import { createClient as createAuthClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
@@ -137,21 +137,15 @@ const SYSTEM_PROMPT = `You are an expert Procore construction software assistant
 export const POST = withApiGuardrails(
   "/api/procore-docs/chat#POST",
   async ({ request }) => {
-  const authSupabase = await createAuthClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await authSupabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (authError || !user) {
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/procore-docs/chat#POST",
       message: "Unauthorized Procore docs chat request.",
       status: 401,
       severity: "medium",
-      details: authError ? { reason: authError.message } : undefined,
-      cause: authError ?? undefined,
     });
   }
 

@@ -6,7 +6,7 @@ import {
   recordSubmittalWorkflowResponse,
   submittalWorkflowResponseStatusSchema,
 } from "@/lib/submittals/workflow-response-service";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const WHERE =
@@ -20,9 +20,7 @@ const postBodySchema = z.object({
 
 async function requireUser() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({

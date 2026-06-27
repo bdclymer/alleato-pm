@@ -24,8 +24,8 @@ import {
 } from "@/lib/executive/executive-briefing-workflow";
 import { clampDailyBriefWindowDays } from "@/lib/executive/daily-brief";
 import {
-  buildExecutiveOperatingBrief,
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
+  hydrateExecutiveOperatingBrief,
   type BrandonBriefItem,
   type ExecutiveOperatingBrief,
   type ExecutiveOperatingBriefRiskItem,
@@ -224,7 +224,9 @@ function buildActionQueue(params: {
   return entries.sort((a, b) => {
     const rankDelta = actionQueueRank(a.section) - actionQueueRank(b.section);
     if (rankDelta !== 0) return rankDelta;
-    if (isUnlinkedProject(a.item.project) !== isUnlinkedProject(b.item.project)) {
+    if (
+      isUnlinkedProject(a.item.project) !== isUnlinkedProject(b.item.project)
+    ) {
       return isUnlinkedProject(a.item.project) ? -1 : 1;
     }
     return normalizeProjectLabel(a.item.project).localeCompare(
@@ -483,7 +485,9 @@ function ShortItemList({
           className="grid gap-2 py-3 text-sm leading-6 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.6fr)]"
         >
           <div>
-            <div className="font-medium text-foreground">{entry.item.title}</div>
+            <div className="font-medium text-foreground">
+              {entry.item.title}
+            </div>
             <div className="text-xs text-muted-foreground">
               {entry.item.project}
               {entry.owner ? ` · Owner: ${entry.owner}` : ""}
@@ -559,7 +563,9 @@ function RiskTable({
             </thead>
             <tbody className="divide-y divide-border/70">
               {items.map((entry) => (
-                <tr key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}>
+                <tr
+                  key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}
+                >
                   <td className="py-3 pr-4 align-top text-muted-foreground">
                     {entry.item.project}
                   </td>
@@ -610,11 +616,7 @@ function WaitingSection({ brief }: { brief: ExecutiveOperatingBrief }) {
   );
 }
 
-function BusinessSignalsSection({
-  brief,
-}: {
-  brief: ExecutiveOperatingBrief;
-}) {
+function BusinessSignalsSection({ brief }: { brief: ExecutiveOperatingBrief }) {
   return (
     <section className="space-y-4">
       <SectionDivider title="Important Business Signals" />
@@ -633,6 +635,131 @@ function BusinessSignalsSection({
   );
 }
 
+function BusinessHealthSection({ brief }: { brief: ExecutiveOperatingBrief }) {
+  const items = brief.businessHealth ?? [];
+  if (items.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Business Health" />
+      <div className="divide-y divide-border/70">
+        {items.map((item) => (
+          <div
+            key={item.area}
+            className="grid gap-2 py-3 text-sm leading-6 md:grid-cols-[140px_96px_1fr]"
+          >
+            <div className="font-medium text-foreground">{item.area}</div>
+            <div className="capitalize text-muted-foreground">
+              {item.status}
+            </div>
+            <div className="text-foreground">{item.summary}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EmergingPatternsSection({
+  brief,
+}: {
+  brief: ExecutiveOperatingBrief;
+}) {
+  const patterns = brief.emergingPatterns ?? [];
+  if (patterns.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Emerging Patterns" count={patterns.length} />
+      <div className="divide-y divide-border/70">
+        {patterns.map((pattern) => (
+          <article key={pattern.title} className="space-y-2 py-4 first:pt-0">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span className="font-medium uppercase text-foreground">
+                {pattern.trend}
+              </span>
+            </div>
+            <div className="text-sm font-semibold text-foreground">
+              {pattern.title}
+            </div>
+            <p className="text-sm leading-6 text-foreground">
+              {pattern.significance}
+            </p>
+            <ul className="space-y-1 text-sm leading-6 text-muted-foreground">
+              {pattern.evidence.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StrategicRisksSection({ brief }: { brief: ExecutiveOperatingBrief }) {
+  const risks = brief.strategicRisks ?? [];
+  if (risks.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Strategic Risks" count={risks.length} />
+      <div className="overflow-hidden border-y border-border/70">
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs text-muted-foreground">
+            <tr className="border-b border-border/70">
+              <th className="py-2 pr-4 font-medium">Risk</th>
+              <th className="py-2 pr-4 font-medium">Likelihood</th>
+              <th className="py-2 pr-4 font-medium">Impact</th>
+              <th className="py-2 font-medium">Next action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/70">
+            {risks.map((risk) => (
+              <tr key={risk.title}>
+                <td className="py-3 pr-4 align-top font-medium text-foreground">
+                  {risk.title}
+                </td>
+                <td className="py-3 pr-4 align-top capitalize text-muted-foreground">
+                  {risk.likelihood}
+                </td>
+                <td className="py-3 pr-4 align-top text-muted-foreground">
+                  {risk.impact}
+                </td>
+                <td className="py-3 align-top text-muted-foreground">
+                  {risk.nextAction}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function PlainLineSection({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[] | undefined;
+}) {
+  const lines = items ?? [];
+  if (lines.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <SectionDivider title={title} count={lines.length} />
+      <ul className="space-y-2 text-sm leading-6 text-foreground">
+        {lines.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function RecommendedMovesSection({
   brief,
 }: {
@@ -640,7 +767,10 @@ function RecommendedMovesSection({
 }) {
   return (
     <section className="space-y-4">
-      <SectionDivider title="Recommended Moves" count={brief.recommendedMoves.length} />
+      <SectionDivider
+        title="Recommended Moves"
+        count={brief.recommendedMoves.length}
+      />
       <ol className="space-y-2 text-sm leading-6 text-foreground">
         {brief.recommendedMoves.map((move, index) => (
           <li key={`${move}-${index}`} className="flex gap-3">
@@ -855,8 +985,7 @@ export default async function ExecutiveDailyInsightsPage({
   ]);
   const { draft, staleFollowUps, fingerprintMap } = dashboard;
   const packet = draft.packet;
-  const operatingBrief =
-    packet.operatingBrief ?? buildExecutiveOperatingBrief(packet.sections);
+  const operatingBrief = hydrateExecutiveOperatingBrief(packet);
   const sectionEntries = [
     ...packet.sections.needsBrandon.map((item) => ({
       section: "needsBrandon" as const,
@@ -884,8 +1013,8 @@ export default async function ExecutiveDailyInsightsPage({
     await loadExecutiveActionContext({
       items: actionQueueEntries.map((entry) => entry.item),
     });
-  const projectIssueEntries: ExecutiveProjectIssueEntry[] = actionQueueEntries.map(
-    (entry) => {
+  const projectIssueEntries: ExecutiveProjectIssueEntry[] =
+    actionQueueEntries.map((entry) => {
       const item = entry.item;
       const relatedTasks = item.sourceId
         ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
@@ -904,8 +1033,7 @@ export default async function ExecutiveDailyInsightsPage({
         projectHref: projectHrefFromItem(item),
         currentProjectId: projectIdFromItem(item),
       };
-    },
-  );
+    });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
 
   return (
@@ -935,6 +1063,21 @@ export default async function ExecutiveDailyInsightsPage({
         <div className="space-y-8">
           <ExecutiveBriefStartHere brief={operatingBrief} />
           <TopExecutiveFocusSection brief={operatingBrief} />
+          <BusinessHealthSection brief={operatingBrief} />
+          <EmergingPatternsSection brief={operatingBrief} />
+          <StrategicRisksSection brief={operatingBrief} />
+          <PlainLineSection
+            title="Opportunities"
+            items={operatingBrief.opportunities}
+          />
+          <PlainLineSection
+            title="Leadership Watchlist"
+            items={operatingBrief.leadershipWatchlist}
+          />
+          <PlainLineSection
+            title="AI Chief of Staff Insights"
+            items={operatingBrief.chiefOfStaffInsights}
+          />
           <AdditionalMaterialItemsSection brief={operatingBrief} />
           <RiskTable
             title="Project Risk Radar"
@@ -969,7 +1112,10 @@ export default async function ExecutiveDailyInsightsPage({
               />
             </section>
           ) : null}
-          <SectionDivider title="Tasking Surface" count={projectIssueEntries.length} />
+          <SectionDivider
+            title="Tasking Surface"
+            count={projectIssueEntries.length}
+          />
           <ExecutiveProjectIssueList
             entries={projectIssueEntries}
             employees={employees}

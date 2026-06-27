@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import type { ContactTableRow } from "@/features/contacts/directory-contacts-table-definition";
 
 const CONTACT_SELECT = `
@@ -155,12 +155,9 @@ export const GET = withApiGuardrails(
   "directory/contacts/table#GET",
   async ({ request }) => {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "directory/contacts/table#GET",

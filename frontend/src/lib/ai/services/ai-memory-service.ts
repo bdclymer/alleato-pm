@@ -14,7 +14,10 @@
  */
 
 import OpenAI from "openai";
-import { createServiceClient, createRagServiceClient } from "@/lib/supabase/service";
+import {
+  createServiceClient,
+  createRagServiceClient,
+} from "@/lib/supabase/service";
 import type { Json } from "@/types/database.types";
 import {
   getOpenAICompatibleClientConfig,
@@ -30,8 +33,10 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export type MemoryType = "fact" | "preference" | "lesson" | "commitment" | "context";
-export type MemorySource = "conversation" | "extraction" | "meeting_ingest" | "manual";
+export type MemoryType =
+  "fact" | "preference" | "lesson" | "commitment" | "context";
+export type MemorySource =
+  "conversation" | "extraction" | "meeting_ingest" | "manual";
 export type MemoryVisibility = "private" | "team";
 
 export interface AiMemory {
@@ -56,6 +61,36 @@ export interface AiMemory {
 const AI_MEMORY_CHUNKS_TABLE = "document_chunks";
 const MEMORY_RECALL_LOOKBACK_DAYS = 183;
 const MEMORY_RECALL_LOOKBACK_MS = MEMORY_RECALL_LOOKBACK_DAYS * 86_400_000;
+
+function memoryMetadataString(
+  metadata: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function memoryMetadataNumber(
+  metadata: Record<string, unknown>,
+  key: string,
+): number | null {
+  const value = metadata[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function memoryReferencePath(memoryId: string): string {
+  return `/settings/memory?memoryId=${encodeURIComponent(memoryId)}`;
+}
+
+function memoryTitle(metadata: Record<string, unknown>): string {
+  const type = memoryMetadataString(metadata, "type");
+  return type ? `AI memory: ${type}` : "AI memory";
+}
 
 // ---------------------------------------------------------------------------
 // Lazy OpenAI client
@@ -88,6 +123,45 @@ async function syncMemoryChunkToAiDb(
 ): Promise<void> {
   const vec = await embed(content);
   const ragClient = createRagServiceClient();
+  const projectId = memoryMetadataNumber(metadata, "project_id");
+  const source = memoryMetadataString(metadata, "source") ?? "ai_memory";
+  const meetingId = memoryMetadataString(metadata, "meeting_id");
+  const referencePath = memoryReferencePath(memoryId);
+
+  const { error: metadataError } = await ragClient
+    .from("rag_document_metadata")
+    .upsert(
+      {
+        id: memoryId,
+        app_document_id: memoryId,
+        project_id: projectId,
+        source: "ai_memory",
+        source_system: "ai_memory",
+        source_item_id: memoryId,
+        title: memoryTitle(metadata),
+        type: "ai_memory",
+        category: "AI Memory",
+        source_web_url: referencePath,
+        url: referencePath,
+        content,
+        content_length: content.length,
+        parsing_status: "complete",
+        embedding_status: "embedded",
+        processing_metadata: {
+          memory_id: memoryId,
+          source,
+          meeting_id: meetingId,
+        } as Json,
+        source_metadata: metadata as Json,
+        last_content_loaded_at: new Date().toISOString(),
+        last_indexed_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+  if (metadataError) {
+    throw new Error(`Memory metadata sync failed: ${metadataError.message}`);
+  }
+
   const { error } = await ragClient.from(AI_MEMORY_CHUNKS_TABLE).upsert(
     {
       chunk_id: `ai_memory_${memoryId}`,
@@ -193,7 +267,9 @@ export async function writeMemory(
       .limit(1);
 
     if (duplicateError) {
-      return { error: `Duplicate memory check failed: ${duplicateError.message}` };
+      return {
+        error: `Duplicate memory check failed: ${duplicateError.message}`,
+      };
     }
 
     if (dupRows && dupRows.length > 0) {
@@ -210,8 +286,12 @@ export async function writeMemory(
 
       if (updateError) return { error: updateError.message };
       await syncMemoryChunkToAiDb(dup.id, params.content, {
-        user_id: params.userId, type: params.type, project_id: params.projectId ?? null,
-        meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
+        user_id: params.userId,
+        type: params.type,
+        project_id: params.projectId ?? null,
+        meeting_id: params.meetingId ?? null,
+        source: params.source ?? "conversation",
+        visibility: params.visibility ?? "private",
       });
       const notificationDecision = await recordMemoryNotificationDecision({
         memoryId: dup.id,
@@ -241,7 +321,9 @@ export async function writeMemory(
         .eq("id", safeProjectId)
         .maybeSingle();
       if (!projectRow) {
-        console.warn(`[ai-memory-service] project_id ${safeProjectId} not found — saving memory without project link`);
+        console.warn(
+          `[ai-memory-service] project_id ${safeProjectId} not found — saving memory without project link`,
+        );
         safeProjectId = null;
       }
     }
@@ -269,13 +351,23 @@ export async function writeMemory(
     // Sync embedding to AI Database so the memory is searchable immediately.
     try {
       await syncMemoryChunkToAiDb(memoryId, params.content, {
-        user_id: params.userId, type: params.type, project_id: safeProjectId,
-        meeting_id: params.meetingId ?? null, visibility: params.visibility ?? "private",
+        user_id: params.userId,
+        type: params.type,
+        project_id: safeProjectId,
+        meeting_id: params.meetingId ?? null,
+        source: params.source ?? "conversation",
+        visibility: params.visibility ?? "private",
       });
     } catch (syncError) {
-      await supabase.from("ai_memories").update({ is_active: false }).eq("id", memoryId);
+      await supabase
+        .from("ai_memories")
+        .update({ is_active: false })
+        .eq("id", memoryId);
       return {
-        error: syncError instanceof Error ? syncError.message : "Memory vector sync failed",
+        error:
+          syncError instanceof Error
+            ? syncError.message
+            : "Memory vector sync failed",
       };
     }
 
@@ -317,7 +409,9 @@ async function bridgeCommitmentToInsight(params: {
 
   // Resolve project_id → intelligence_targets.id. Without an active target we
   // cannot write a card; skip silently rather than failing the memory write.
-  const targetMap = await resolveTargetIdsForProjects(supabase, [params.projectId]);
+  const targetMap = await resolveTargetIdsForProjects(supabase, [
+    params.projectId,
+  ]);
   const targetId = targetMap.get(params.projectId);
   if (!targetId) {
     return;
@@ -336,7 +430,9 @@ async function bridgeCommitmentToInsight(params: {
     .limit(1);
 
   if (existingError) {
-    throw new Error(`Failed to check commitment insight duplicate: ${existingError.message}`);
+    throw new Error(
+      `Failed to check commitment insight duplicate: ${existingError.message}`,
+    );
   }
 
   if (existing && existing.length > 0) return;
@@ -365,7 +461,9 @@ async function bridgeCommitmentToInsight(params: {
   });
 
   if (insertError) {
-    throw new Error(`Failed to create commitment insight from memory: ${insertError.message}`);
+    throw new Error(
+      `Failed to create commitment insight from memory: ${insertError.message}`,
+    );
   }
 }
 
@@ -394,19 +492,23 @@ export async function searchMemories(params: {
     if (!chunks || chunks.length === 0) return [];
 
     // Hydrate full memory records from PM APP using document_id = memory.id
-    const memoryIds = (chunks as Array<{ document_id: string; similarity: number }>)
-      .map((c) => c.document_id);
+    const memoryIds = (
+      chunks as Array<{ document_id: string; similarity: number }>
+    ).map((c) => c.document_id);
     const similarityMap = new Map(
-      (chunks as Array<{ document_id: string; similarity: number }>).map((c) => [
-        c.document_id,
-        c.similarity,
-      ]),
+      (chunks as Array<{ document_id: string; similarity: number }>).map(
+        (c) => [c.document_id, c.similarity],
+      ),
     );
 
-    const recallCutoff = new Date(Date.now() - MEMORY_RECALL_LOOKBACK_MS).toISOString();
+    const recallCutoff = new Date(
+      Date.now() - MEMORY_RECALL_LOOKBACK_MS,
+    ).toISOString();
     let q = supabase
       .from("ai_memories")
-      .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
+      .select(
+        "id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at",
+      )
       .in("id", memoryIds)
       .eq("is_active", true)
       .gte("created_at", recallCutoff)
@@ -418,11 +520,15 @@ export async function searchMemories(params: {
     }
 
     const { data: memories, error: memError } = await q;
-    if (memError) throw new Error(`Memory hydration failed: ${memError.message}`);
+    if (memError)
+      throw new Error(`Memory hydration failed: ${memError.message}`);
     if (!memories) return [];
 
     const results = rankMemoriesForRecall(
-      memories.map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 })) as AiMemory[],
+      memories.map((m) => ({
+        ...m,
+        similarity: similarityMap.get(m.id) ?? 0,
+      })) as AiMemory[],
       { projectId: params.projectId },
     );
 
@@ -430,13 +536,15 @@ export async function searchMemories(params: {
       void supabase
         .rpc("touch_ai_memories", { memory_ids: results.map((m) => m.id) })
         .then(({ error: touchError }) => {
-          if (touchError) console.error("[ai-memory-service] touch failed:", touchError);
+          if (touchError)
+            console.error("[ai-memory-service] touch failed:", touchError);
         });
     }
 
     return results;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown memory search error";
+    const message =
+      error instanceof Error ? error.message : "Unknown memory search error";
     throw new Error(message);
   }
 }
@@ -463,12 +571,18 @@ async function searchTeamMemories(params: {
     if (!chunks || chunks.length === 0) return [];
 
     const memoryIds = chunks.map((chunk) => chunk.document_id);
-    const similarityMap = new Map(chunks.map((chunk) => [chunk.document_id, chunk.similarity]));
+    const similarityMap = new Map(
+      chunks.map((chunk) => [chunk.document_id, chunk.similarity]),
+    );
 
-    const recallCutoff = new Date(Date.now() - MEMORY_RECALL_LOOKBACK_MS).toISOString();
+    const recallCutoff = new Date(
+      Date.now() - MEMORY_RECALL_LOOKBACK_MS,
+    ).toISOString();
     let query = supabase
       .from("ai_memories")
-      .select("id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at")
+      .select(
+        "id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at",
+      )
       .in("id", memoryIds)
       .eq("visibility", "team")
       .eq("is_active", true)
@@ -483,11 +597,17 @@ async function searchTeamMemories(params: {
     }
     if (!data) return [];
     return rankMemoriesForRecall(
-      data.map((m) => ({ ...m, similarity: similarityMap.get(m.id) ?? 0 })) as AiMemory[],
+      data.map((m) => ({
+        ...m,
+        similarity: similarityMap.get(m.id) ?? 0,
+      })) as AiMemory[],
       { projectId: params.projectId },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown team memory search error";
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unknown team memory search error";
     throw new Error(message);
   }
 }
@@ -564,8 +684,10 @@ export async function getUserMemories(
 
   if (opts?.type) query = query.eq("type", opts.type);
 
-  const { data, count, error } = await query
-    .range(opts?.offset ?? 0, (opts?.offset ?? 0) + (opts?.limit ?? 50) - 1);
+  const { data, count, error } = await query.range(
+    opts?.offset ?? 0,
+    (opts?.offset ?? 0) + (opts?.limit ?? 50) - 1,
+  );
 
   if (error || !data) return { memories: [], total: 0 };
   return { memories: data as unknown as AiMemory[], total: count ?? 0 };
@@ -589,7 +711,10 @@ export async function deleteMemory(
   } catch (chunkError) {
     return {
       success: false,
-      error: chunkError instanceof Error ? chunkError.message : "Memory vector delete failed",
+      error:
+        chunkError instanceof Error
+          ? chunkError.message
+          : "Memory vector delete failed",
     };
   }
   return { success: true };
@@ -628,12 +753,16 @@ export async function updateMemoryContent(
         type: data.type,
         project_id: data.project_id,
         meeting_id: data.meeting_id,
+        source: "manual",
         visibility: data.visibility ?? "private",
       });
     } catch (chunkError) {
       return {
         success: false,
-        error: chunkError instanceof Error ? chunkError.message : "Memory vector sync failed",
+        error:
+          chunkError instanceof Error
+            ? chunkError.message
+            : "Memory vector sync failed",
       };
     }
   }
@@ -682,7 +811,9 @@ export function scoreMemoryForRecall(
 ): { score: number; reason: string } {
   const freshness = freshnessScore(memory.created_at);
   const projectMatch =
-    options.projectId !== undefined && memory.project_id === options.projectId ? 1 : 0;
+    options.projectId !== undefined && memory.project_id === options.projectId
+      ? 1
+      : 0;
   const globalProjectContext = memory.project_id === null ? 0.25 : 0;
   const similarity = memory.similarity ?? 0;
   const importance = memory.importance ?? 0;
@@ -696,7 +827,11 @@ export function scoreMemoryForRecall(
     score,
     reason: [
       `freshness=${freshness.toFixed(2)}`,
-      projectMatch ? "project=selected" : memory.project_id === null ? "project=global" : "project=other",
+      projectMatch
+        ? "project=selected"
+        : memory.project_id === null
+          ? "project=global"
+          : "project=other",
       `similarity=${similarity.toFixed(2)}`,
       `importance=${importance.toFixed(2)}`,
     ].join("; "),
@@ -730,7 +865,11 @@ export function buildMemoryContextBlock(
   relevantMemories: AiMemory[],
   teamMemories: AiMemory[] = [],
 ): string | null {
-  const payload = buildMemoryContextPayload(preferences, relevantMemories, teamMemories);
+  const payload = buildMemoryContextPayload(
+    preferences,
+    relevantMemories,
+    teamMemories,
+  );
   return payload.block;
 }
 
@@ -819,27 +958,33 @@ export async function getMemoriesForSession(params: {
   team: AiMemory[];
   errors: string[];
 }> {
-  const [preferencesResult, relevantResult, teamResult] = await Promise.allSettled([
-    getUserPreferences(params.userId),
-    searchMemories({
-      userId: params.userId,
-      query: params.firstMessage,
-      projectId: params.projectId,
-      matchCount: 6,
-      matchThreshold: 0.5,
-    }),
-    searchTeamMemories({
-      query: params.firstMessage,
-      projectId: params.projectId,
-      matchCount: 4,
-    }),
-  ]);
+  const [preferencesResult, relevantResult, teamResult] =
+    await Promise.allSettled([
+      getUserPreferences(params.userId),
+      searchMemories({
+        userId: params.userId,
+        query: params.firstMessage,
+        projectId: params.projectId,
+        matchCount: 6,
+        matchThreshold: 0.5,
+      }),
+      searchTeamMemories({
+        query: params.firstMessage,
+        projectId: params.projectId,
+        matchCount: 4,
+      }),
+    ]);
 
   const errors: string[] = [];
-  const unwrap = (label: string, result: PromiseSettledResult<AiMemory[]>): AiMemory[] => {
+  const unwrap = (
+    label: string,
+    result: PromiseSettledResult<AiMemory[]>,
+  ): AiMemory[] => {
     if (result.status === "fulfilled") return result.value;
     const message =
-      result.reason instanceof Error ? result.reason.message : String(result.reason);
+      result.reason instanceof Error
+        ? result.reason.message
+        : String(result.reason);
     errors.push(`${label}: ${message}`);
     return [];
   };

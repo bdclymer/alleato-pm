@@ -10,7 +10,7 @@ import {
   buildSubmittalWorkflowResponseRows,
   buildSubmittalWorkflowStepRows,
 } from "@/lib/submittals/create-workflow";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -198,12 +198,9 @@ export const POST = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals#POST", message: "Authentication required." });
     }
 

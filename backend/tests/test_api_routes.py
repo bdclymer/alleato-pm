@@ -43,10 +43,10 @@ class TestProjectsEndpoints:
     def test_get_project_success(self, client, mock_supabase_store, sample_project_data):
         mock_supabase_store.get_project.return_value = sample_project_data
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
         r = client.get("/api/projects/1")
         assert r.status_code == 200
         assert r.json()["project"]["name"] == "Test Project"
+        assert "insights" not in r.json()
 
     def test_get_project_not_found(self, client, mock_supabase_store):
         mock_supabase_store.get_project.return_value = None
@@ -70,12 +70,12 @@ class TestChatEndpoint:
         mock_supabase_store.search_chunks_by_keyword.return_value = []
         mock_supabase_store.fetch_recent_chunks.return_value = []
         mock_supabase_store.list_tasks.return_value = []
-        mock_supabase_store.list_insights.return_value = []
         mock_supabase_store.get_project.return_value = None
         r = client.post("/api/chat", json={"message": "hello"})
         assert r.status_code == 200
         data = r.json()
         assert "reply" in data
+        assert "insights" not in data
 
 
 class TestIngestionEndpoint:

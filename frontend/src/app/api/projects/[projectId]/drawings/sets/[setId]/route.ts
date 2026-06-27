@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingSetService } from "@/services/DrawingSetService";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -14,12 +14,9 @@ export const PATCH = withApiGuardrails<{ projectId: string; setId: string }>(
   "projects/[projectId]/drawings/sets/[setId]#PATCH",
   async ({ request, params }) => {
   const { setId } = await params;
-  const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets/[setId]#PATCH", message: "Authentication required." });
   }
@@ -55,12 +52,9 @@ export const POST = withApiGuardrails<{ projectId: string; setId: string }>(
   "projects/[projectId]/drawings/sets/[setId]#POST",
   async ({ request, params }) => {
   const { setId } = await params;
-  const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets/[setId]#POST", message: "Authentication required." });
   }

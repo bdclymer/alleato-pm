@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // Default values used when no settings row exists yet for a project.
@@ -33,10 +33,8 @@ const UPDATABLE_FIELDS = [
 
 async function requireUser() {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const authError = null as Error | null;
   if (authError) {
     return {
       supabase,

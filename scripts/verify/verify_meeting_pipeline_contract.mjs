@@ -33,9 +33,9 @@ requireContains("Meeting Notes", "Parser must create a fallback speaker/segment 
 requireContains("LLM returned no segments", "Parser must detect empty LLM segmentation results.");
 requireContains("created fallback meeting-notes segment", "Parser must fall back instead of letting embedder fail with no segments.");
 requireContains("Segment LLM failed", "Parser must fall back when AI Gateway returns non-JSON segmentation text.");
-requireContains('provider["name"] != "AI Gateway"', "AI Gateway chat calls must not send unsupported response_format payloads.");
+requireContains('provider_path != "vercel_gateway"', "AI Gateway chat calls must not send unsupported response_format payloads.");
 requireContains("Structured extraction returned non-JSON", "Extractor must not fail the whole meeting pipeline when structured JSON extraction is unavailable.");
-requireContains('"error_message": None', "Successful meeting pipeline completion must clear stale job error_message values.");
+requireContains("error_message=None", "Successful meeting pipeline completion must clear stale job error_message values.");
 
 if (failures.length > 0) {
   console.error("Meeting pipeline contract: FAIL");

@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { GET, PUT } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/permissions-guard", () => ({
   requirePermission: jest.fn(),
@@ -38,6 +41,10 @@ function buildUpsertQuery(response: { data: unknown; error: unknown }) {
 describe("/api/projects/[projectId]/submittals/settings", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     requirePermissionMock.mockResolvedValue({
       denied: false,
       userId: "user-1",

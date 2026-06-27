@@ -10,7 +10,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 interface ExportParams {
   format: "csv" | "excel" | "pdf";
@@ -125,12 +125,9 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/export#POST", message: "Authentication required." });
     }
 

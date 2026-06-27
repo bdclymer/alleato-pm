@@ -22,6 +22,7 @@ const files = {
   acumaticaTools: "frontend/src/lib/ai/tools/acumatica.ts",
   actionTools: "frontend/src/lib/ai/tools/action-tools.ts",
   mcpTools: "frontend/src/lib/ai/tools/mcp-tools.ts",
+  toolDescriptors: "frontend/src/lib/ai/tool-descriptors.ts",
   architectureDoc: "docs/architecture/AI-DATA-PIPELINE-RAG-PRODUCTION-ARCHITECTURE.md",
   providerConfig: "frontend/src/lib/ai/provider-config.ts",
   webTools: "frontend/src/lib/ai/tools/web-search.ts",
@@ -217,6 +218,7 @@ const providers = read(files.providers);
 const providerConfig = read(files.providerConfig);
 const actionTools = read(files.actionTools);
 const mcpTools = readIfExists(files.mcpTools);
+const toolDescriptors = read(files.toolDescriptors);
 const operationalTools = read(files.operationalTools);
 const architectureDoc = read(files.architectureDoc);
 
@@ -326,10 +328,14 @@ const hasLiveAiSdkMcp =
   mcpTools.includes("EXCALIDRAW_MCP_ALLOWED_TOOLS") &&
   mcpTools.includes("AI_ASSISTANT_DISABLE_EXCALIDRAW_MCP") &&
   mcpTools.includes("AI_ASSISTANT_DISABLE_SUPABASE_MCP") &&
-  mcpTools.includes("isReadOnlyMcpTool");
+  mcpTools.includes("assistantMcpToolDescriptor") &&
+  toolDescriptors.includes("DANGEROUS_MCP_TOOL_PATTERNS") &&
+  toolDescriptors.includes("generic_read_only") &&
+  toolDescriptors.includes("allowlisted_artifact_write") &&
+  toolDescriptors.includes("descriptorOwned");
 warnCondition(
   !hasPackage(frontendPackage, "@ai-sdk/mcp") || hasLiveAiSdkMcp,
-  "live /ai-assistant has @ai-sdk/mcp installed but does not discover, merge, trace, and close AI SDK MCP tools",
+  "live /ai-assistant has @ai-sdk/mcp installed but does not discover, merge, trace, close, and descriptor-gate AI SDK MCP tools",
 );
 
 const usesToolLoopAgent =

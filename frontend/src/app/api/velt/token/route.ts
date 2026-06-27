@@ -1,14 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { fetchWithGuardrails, WRITE_POLICY } from "@/lib/fetch-with-guardrails";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

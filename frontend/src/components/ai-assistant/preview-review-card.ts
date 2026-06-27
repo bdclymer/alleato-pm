@@ -24,13 +24,26 @@ export type PreviewReviewGroup = {
   fields: PreviewReviewField[];
 };
 
-export function getPreviewReviewGroups(
+export type PreviewReviewNotice = {
+  tone: "info" | "warning";
+  text: string;
+};
+
+export type PreviewReviewCard = {
+  title: string | null;
+  subtitle: string | null;
+  groups: PreviewReviewGroup[];
+  notices: PreviewReviewNotice[];
+};
+
+export function getPreviewReviewCard(
   preview: Record<string, unknown> | null,
-): PreviewReviewGroup[] {
+): PreviewReviewCard {
   const reviewCard = asObject(preview?.reviewCard);
   const groups = Array.isArray(reviewCard.groups) ? reviewCard.groups : [];
+  const notices = Array.isArray(reviewCard.notices) ? reviewCard.notices : [];
 
-  return groups
+  const reviewGroups = groups
     .map((group) => {
       const groupRecord = asObject(group);
       const fields = Array.isArray(groupRecord.fields)
@@ -60,4 +73,27 @@ export function getPreviewReviewGroups(
       };
     })
     .filter((group) => group.fields.length > 0);
+
+  return {
+    title: toStringValue(reviewCard.title),
+    subtitle: toStringValue(reviewCard.subtitle),
+    groups: reviewGroups,
+    notices: notices.flatMap((notice) => {
+      const noticeRecord = asObject(notice);
+      const text = toStringValue(noticeRecord.text);
+      if (!text) return [];
+      return [
+        {
+          tone: noticeRecord.tone === "warning" ? "warning" : "info",
+          text,
+        },
+      ];
+    }),
+  };
+}
+
+export function getPreviewReviewGroups(
+  preview: Record<string, unknown> | null,
+): PreviewReviewGroup[] {
+  return getPreviewReviewCard(preview).groups;
 }

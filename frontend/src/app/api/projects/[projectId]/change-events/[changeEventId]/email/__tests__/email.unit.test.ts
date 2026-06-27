@@ -95,6 +95,7 @@ const mockSupabase = {
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn().mockResolvedValue(mockSupabase),
+  getApiRouteUser: jest.fn().mockResolvedValue({ id: "user-1", email: "test@example.com" }),
 }));
 
 function createServiceTable(table: string) {

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Modal,
   ModalContent,
@@ -55,6 +54,7 @@ interface ConversationSidebarProps {
   onNewChat: () => void;
   onRename: (sessionId: string, title: string) => void;
   onDelete: (sessionId: string) => void;
+  onTogglePin: (sessionId: string, isPinned: boolean) => void;
 }
 
 type ConversationGroup = {
@@ -94,24 +94,30 @@ function getConversationGroupLabel(dateStr: string | null): string {
 function groupConversations(
   conversations: RagConversation[],
 ): ConversationGroup[] {
+  const pinned = conversations.filter((conversation) => conversation.is_pinned);
+
   const ORDER = ["Today", "Yesterday", "Previous 7 days", "Previous 30 days", "Older"];
   const groups = new Map<string, RagConversation[]>();
 
-  conversations.forEach((conversation) => {
-    const label = getConversationGroupLabel(
-      conversation.last_message_at || conversation.created_at,
-    );
-    const existing = groups.get(label) ?? [];
-    existing.push(conversation);
-    groups.set(label, existing);
-  });
+  conversations
+    .filter((conversation) => !conversation.is_pinned)
+    .forEach((conversation) => {
+      const label = getConversationGroupLabel(
+        conversation.last_message_at || conversation.created_at,
+      );
+      const existing = groups.get(label) ?? [];
+      existing.push(conversation);
+      groups.set(label, existing);
+    });
 
-  return ORDER
-    .map((label) => ({
-      label,
-      conversations: groups.get(label) ?? [],
-    }))
-    .filter((group) => group.conversations.length > 0);
+  const dateGroups = ORDER.map((label) => ({
+    label,
+    conversations: groups.get(label) ?? [],
+  })).filter((group) => group.conversations.length > 0);
+
+  return pinned.length > 0
+    ? [{ label: "Pinned", conversations: pinned }, ...dateGroups]
+    : dateGroups;
 }
 
 function ConversationRow({
@@ -120,12 +126,14 @@ function ConversationRow({
   onSelect,
   onRename,
   onDelete,
+  onTogglePin,
 }: {
   conversation: RagConversation;
   isActive: boolean;
   onSelect: () => void;
   onRename: (conversation: RagConversation) => void;
   onDelete: (conversation: RagConversation) => void;
+  onTogglePin: (conversation: RagConversation) => void;
 }) {
   return (
     <div
@@ -145,12 +153,18 @@ function ConversationRow({
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
       )}
     >
-      <span className="block w-full truncate text-[13px] leading-5">
+      <span className="min-w-0 flex-1 truncate text-[13px] leading-5">
         {conversation.title || "New conversation"}
       </span>
 
-      {/* Absolute-positioned hover actions — overlays end of text, matching ChatGPT pattern */}
-      <div className="absolute right-0 flex items-center opacity-0 transition-opacity group-hover:opacity-100">
+      {/* Absolute-positioned hover actions — overlays end of text, matching ChatGPT pattern.
+          Pinned rows keep the actions visible so the pin state is obvious and reversible. */}
+      <div
+        className={cn(
+          "absolute right-0 flex items-center transition-opacity group-hover:opacity-100",
+          conversation.is_pinned ? "opacity-100" : "opacity-0",
+        )}
+      >
         {/* Gradient fade so text doesn't hard-clip under buttons */}
         <div
           className={cn(
@@ -168,11 +182,24 @@ function ConversationRow({
             type="button"
             size="icon"
             variant="ghost"
-            className="h-6 w-6 rounded-md text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground"
-            onClick={(e) => e.stopPropagation()}
-            title="Pin conversation"
+            className={cn(
+              "h-6 w-6 rounded-md hover:bg-transparent",
+              conversation.is_pinned
+                ? "text-primary hover:text-primary"
+                : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin(conversation);
+            }}
+            title={conversation.is_pinned ? "Unpin conversation" : "Pin conversation"}
           >
-            <PinIcon className="h-3.5 w-3.5" />
+            <PinIcon
+              className={cn("h-3.5 w-3.5", conversation.is_pinned && "fill-current")}
+            />
+            <span className="sr-only">
+              {conversation.is_pinned ? "Unpin conversation" : "Pin conversation"}
+            </span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -226,6 +253,7 @@ export function ConversationSidebar({
   onNewChat,
   onRename,
   onDelete,
+  onTogglePin,
 }: ConversationSidebarProps) {
   const [conversationToRename, setConversationToRename] =
     useState<RagConversation | null>(null);
@@ -282,7 +310,10 @@ export function ConversationSidebar({
               </div>
             </SheetHeader>
 
-            <ScrollArea className="flex-1">
+            {/* Native scroll container — NOT Radix ScrollArea. Its viewport wraps
+                content in a `display:table` div that shrink-to-fits to the widest
+                row, which breaks `truncate` and lets long titles run off the panel. */}
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="px-2 pb-4">
                 {isLoading ? (
                   <div className="space-y-0.5 px-2 pt-1">
@@ -311,6 +342,12 @@ export function ConversationSidebar({
                             }}
                             onRename={openRenameDialog}
                             onDelete={setConversationToDelete}
+                            onTogglePin={(conversation) =>
+                              onTogglePin(
+                                conversation.session_id,
+                                !conversation.is_pinned,
+                              )
+                            }
                           />
                         ))}
                       </div>
@@ -324,7 +361,7 @@ export function ConversationSidebar({
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

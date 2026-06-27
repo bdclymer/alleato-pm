@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const requestSchema = z.object({
   change_event_ids: z.array(z.string().uuid()).min(1),
@@ -32,12 +32,9 @@ export const POST = withApiGuardrails(
     const body = requestSchema.parse(await request.json());
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/commitment-options#POST", message: "Authentication required." });
     }
 

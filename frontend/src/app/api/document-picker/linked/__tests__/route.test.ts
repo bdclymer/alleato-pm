@@ -9,6 +9,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn().mockResolvedValue({ id: "user-1" }),
 }));
 
 jest.mock("@/lib/supabase/service", () => ({

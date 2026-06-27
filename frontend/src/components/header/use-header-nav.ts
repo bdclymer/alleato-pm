@@ -63,6 +63,8 @@ interface UseHeaderNavReturn {
   handleProjectSelect: (projectId: number) => void;
 }
 
+const COMPANY_HOME_LABEL = "Company";
+
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
   projects: "projects",
@@ -227,7 +229,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
       if (matchingTool) return matchingTool.name;
     }
 
-    return "Projects";
+    return COMPANY_HOME_LABEL;
   }, [pathname]);
 
   // Determine which header group contains the active tool
@@ -373,8 +375,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[1] === "runs" &&
       /^[0-9a-f-]{36}$/i.test(segments[2]);
 
-    // Always start with Projects
-    crumbs.push({ label: "Projects", href: "/" });
+    // Always start with the company-level home label.
+    crumbs.push({ label: COMPANY_HOME_LABEL, href: "/" });
 
     segments.forEach((segment, index) => {
       if (skippedIndexes.has(index)) return;

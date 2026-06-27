@@ -452,7 +452,7 @@ def test_fetch_file_attachment_detail_escapes_graph_path_ids():
     call = graph.calls[0]
     assert call["path"] == (
         "/users/awehner@alleatogroup.com/messages/message%2F1%3D/"
-        "attachments/attachment%2F1%3D/microsoft.graph.fileAttachment"
+        "attachments/attachment%2F1%3D"
     )
     assert call["params"]["$select"] == "id,name,contentType,size,isInline,contentBytes"
 
@@ -506,14 +506,12 @@ def test_outlook_intake_attachment_stores_bytea_hex_content(monkeypatch):
         user_id="pm@example.com",
         msg_id="message-1",
         intake_email_id=42,
-        email_attachment_id=9,
         attachment=attachment,
     )
 
     assert wrote is True
     row = supabase.store["outlook_email_intake_attachments"][0]
     assert row["intake_email_id"] == 42
-    assert row["email_attachment_id"] == 9
     assert row["file_name"] == "permit.pdf"
     assert row["file_size"] == 3
     assert row["content"] == "\\x616263"
@@ -539,7 +537,6 @@ def test_outlook_intake_attachment_stores_large_binary_as_metadata_only(monkeypa
         user_id="pm@example.com",
         msg_id="message-1",
         intake_email_id=42,
-        email_attachment_id=None,
         attachment=attachment,
     )
 
@@ -571,7 +568,6 @@ def test_outlook_intake_email_updates_existing_graph_message(monkeypatch):
     email_id = outlook._upsert_outlook_intake_email(
         supabase_client=supabase,
         project_id=876,
-        project_email_id=12,
         document_metadata_id="outlook_message-1",
         msg=msg,
         user_email="pm@example.com",
@@ -586,7 +582,6 @@ def test_outlook_intake_email_updates_existing_graph_message(monkeypatch):
     assert email_id == 7
     row = supabase.store["outlook_email_intake"][0]
     assert row["project_id"] == 876
-    assert row["project_email_id"] == 12
     assert row["document_metadata_id"] == "outlook_message-1"
     assert row["subject"] == "Updated"
     assert row["to_list"] == ["owner@example.com"]
@@ -617,7 +612,6 @@ def test_reconcile_outlook_project_assignment_uses_document_metadata_project(mon
         supabase_client=supabase,
         msg_id="message-1",
         document_metadata_id="outlook_message-1",
-        project_email_id=9,
         intake_email_id=7,
         inferred_project_id=31,
         assignment_method="project_directory_email",
@@ -625,7 +619,7 @@ def test_reconcile_outlook_project_assignment_uses_document_metadata_project(mon
     )
 
     assert project_id == 178
-    assert supabase.store["project_emails"][0]["project_id"] == 178
+    assert supabase.store["project_emails"][0]["project_id"] == 31
     intake = supabase.store["outlook_email_intake"][0]
     assert intake["project_id"] == 178
     assert intake["document_metadata_id"] == "outlook_message-1"

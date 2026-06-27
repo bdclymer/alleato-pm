@@ -391,9 +391,6 @@ class _MissingChunksStore:
     def upsert_chunks(self, chunks):  # noqa: ANN001
         self.chunks.extend(chunks)
 
-    def insert_insight(self, insight):  # noqa: ANN001
-        return None
-
     def complete_ingestion_job(self, job_id, status, error=None):  # noqa: ANN001
         return None
 

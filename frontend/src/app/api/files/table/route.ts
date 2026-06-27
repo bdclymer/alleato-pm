@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import {
@@ -151,13 +151,9 @@ function applyServerSort<
 }
 
 export const GET = withApiGuardrails("files/table#GET", async ({ request }) => {
-  const authClient = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await authClient.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (authError || !user) {
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "files/table#GET",

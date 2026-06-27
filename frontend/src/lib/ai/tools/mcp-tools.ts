@@ -1,5 +1,9 @@
 import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
+import {
+  assistantMcpToolDescriptor,
+  type AssistantMcpToolDescriptor,
+} from "@/lib/ai/tool-descriptors";
 
 type McpServerConfig = {
   name: string;
@@ -24,34 +28,6 @@ const EXCALIDRAW_MCP_ALLOWED_TOOLS = [
   "export_to_excalidraw",
   "save_checkpoint",
   "read_checkpoint",
-];
-
-const READONLY_TOOL_PATTERNS = [
-  /^get/i,
-  /^list/i,
-  /^read/i,
-  /^search/i,
-  /^query/i,
-  /^retrieve/i,
-  /^find/i,
-  /^lookup/i,
-];
-
-const DANGEROUS_TOOL_PATTERNS = [
-  /apply/i,
-  /create/i,
-  /delete/i,
-  /drop/i,
-  /execute[_-]?sql/i,
-  /insert/i,
-  /migration/i,
-  /mutate/i,
-  /remove/i,
-  /run[_-]?sql/i,
-  /truncate/i,
-  /update/i,
-  /upsert/i,
-  /write/i,
 ];
 
 function parseJsonServerConfig(): McpServerConfig[] {
@@ -135,27 +111,37 @@ function getConfiguredMcpServers(): McpServerConfig[] {
   return servers;
 }
 
-function isReadOnlyMcpTool(toolName: string): boolean {
-  if (DANGEROUS_TOOL_PATTERNS.some((pattern) => pattern.test(toolName))) {
-    return false;
-  }
-  return READONLY_TOOL_PATTERNS.some((pattern) => pattern.test(toolName));
+function descriptorForMcpTool(
+  server: McpServerConfig,
+  toolName: string,
+): AssistantMcpToolDescriptor {
+  return assistantMcpToolDescriptor({
+    serverName: server.name,
+    toolName,
+    allowedTools: server.allowedTools,
+  });
 }
 
 function shouldEnableMcpTool(server: McpServerConfig, toolName: string): boolean {
-  if (server.allowedTools) {
-    return server.allowedTools.includes(toolName);
-  }
-
-  return isReadOnlyMcpTool(toolName);
+  return descriptorForMcpTool(server, toolName).enabled;
 }
 
 function prefixMcpTools(server: McpServerConfig, tools: ToolSet): ToolSet {
   return Object.fromEntries(
-    Object.entries(tools)
-      .filter(([toolName]) => shouldEnableMcpTool(server, toolName))
-      .map(([toolName, tool]) => [`mcp_${server.name}_${toolName}`, tool]),
+    Object.entries(tools).flatMap(([toolName, tool]) => {
+      const descriptor = descriptorForMcpTool(server, toolName);
+      return descriptor.enabled ? [[descriptor.prefixedName, tool]] : [];
+    }),
   ) as ToolSet;
+}
+
+function describeMcpToolExposure(
+  server: McpServerConfig,
+  tools: ToolSet,
+): AssistantMcpToolDescriptor[] {
+  return Object.keys(tools).map((toolName) =>
+    descriptorForMcpTool(server, toolName),
+  );
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
@@ -212,6 +198,10 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
         `${server.name} MCP tool discovery`,
       );
       const safeTools = prefixMcpTools(server, discoveredTools as ToolSet);
+      const descriptors = describeMcpToolExposure(
+        server,
+        discoveredTools as ToolSet,
+      );
       Object.assign(tools, safeTools);
 
       trace.push({
@@ -224,6 +214,12 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
           discoveredToolCount: Object.keys(discoveredTools).length,
           enabledToolCount: Object.keys(safeTools).length,
           enabledTools: Object.keys(safeTools),
+          enabledToolDescriptors: descriptors.filter(
+            (descriptor) => descriptor.enabled,
+          ),
+          deniedToolDescriptors: descriptors.filter(
+            (descriptor) => !descriptor.enabled,
+          ),
           allowedTools: server.allowedTools,
         },
         timestamp: new Date().toISOString(),
@@ -255,6 +251,8 @@ export async function createAiAssistantMcpTools(): Promise<McpToolBundle> {
 export const mcpToolPolicyForTests = {
   EXCALIDRAW_MCP_ALLOWED_TOOLS,
   getConfiguredMcpServers,
+  descriptorForMcpTool,
+  describeMcpToolExposure,
   prefixMcpTools,
   shouldEnableMcpTool,
 };

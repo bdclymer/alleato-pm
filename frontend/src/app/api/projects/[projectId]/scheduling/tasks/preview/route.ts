@@ -5,7 +5,7 @@ import {
   normalizeScheduleRows,
   type ScheduleImportPreview,
 } from "@/lib/scheduling/schedule-import-preview";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
@@ -110,13 +110,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/scheduling/tasks/preview#POST",
   async ({ request, params }) => {
     const { projectId } = await params;
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/scheduling/tasks/preview#POST",

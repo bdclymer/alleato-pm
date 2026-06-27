@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const createDocumentSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -141,12 +141,9 @@ export const GET = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents#GET", message: "Authentication required." });
     }
 
@@ -202,12 +199,9 @@ export const POST = withApiGuardrails(
     const numericProjectId = Number(projectId);
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents#POST", message: "Authentication required." });
     }
 

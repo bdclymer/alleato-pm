@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ALL_GRANULAR_FLAGS, type GranularFlag } from "@/lib/permissions-shared";
 import { z } from "zod";
@@ -23,9 +23,7 @@ const RemoveGranularOverrideBody = z.object({
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
   }

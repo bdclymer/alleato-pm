@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -242,16 +242,12 @@ function emptyDay(date: string): DailySyncRow {
 }
 
 export const GET = withApiGuardrails(WHERE, async ({ request }) => {
-  const supabase = await createClient();
   const appSupabase = createServiceClient();
   const ragSupabase = createRagServiceClient();
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (userError || !user) {
+  if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

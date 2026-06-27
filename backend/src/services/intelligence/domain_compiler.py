@@ -287,7 +287,50 @@ def _build_synthesis_prompt(target: Dict[str, Any], docs: List[Dict[str, Any]]) 
     )
 
 
-def _call_synthesis(prompt: str) -> Dict[str, Any]:
+def _fetch_active_learnings(
+    supabase: Any, surface: str, limit: int = 5
+) -> List[Dict[str, Any]]:
+    """Active agent_learnings scope-tagged to a surface — the read seam that
+    closes the human-feedback loop for non-chat generators. Mirrors the
+    frontend `getSurfaceScopedLearnings`: exact scope_tags match, NOT embeddings.
+    Failure-isolated: a learning fetch must never block synthesis.
+    """
+    try:
+        response = (
+            supabase.table("agent_learnings")
+            .select("title, prevention_prompt")
+            .eq("status", "active")
+            .contains("scope_tags", [surface])
+            .order("confidence", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return _rows(response)
+    except Exception as exc:  # noqa: BLE001 - never block synthesis on this
+        logger.warning("[domain_compiler] learning fetch failed: %s", exc)
+        return []
+
+
+def _format_learnings_block(learnings: List[Dict[str, Any]]) -> str:
+    """Render learnings as a prevention block appended to the system prompt."""
+    prompts = [
+        (item.get("prevention_prompt") or "").strip()
+        for item in learnings
+        if (item.get("prevention_prompt") or "").strip()
+    ]
+    if not prompts:
+        return ""
+    lines = [
+        "",
+        "",
+        "LEARNED CORRECTIONS (from human feedback on prior insight cards — "
+        "apply these as hard constraints):",
+    ]
+    lines.extend(f"- {prompt}" for prompt in prompts)
+    return "\n".join(lines)
+
+
+def _call_synthesis(prompt: str, learnings_block: str = "") -> Dict[str, Any]:
     """Call the LLM and return parsed JSON.
 
     AI Gateway does not currently accept `response_format` for all models, so we
@@ -299,7 +342,7 @@ def _call_synthesis(prompt: str) -> Dict[str, Any]:
     response = client.chat.completions.create(
         model=model_id,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT + learnings_block},
             {
                 "role": "user",
                 "content": prompt
@@ -626,7 +669,19 @@ def compile_domain_packet(
 
     docs_by_id: Dict[str, Dict[str, Any]] = {d["id"]: d for d in docs}
 
-    synthesis = _call_synthesis(_build_synthesis_prompt(target, docs))
+    # Close the feedback loop: inject active learnings from human thumbs-down on
+    # prior insight cards so the model avoids previously-flagged mistakes.
+    learnings = _fetch_active_learnings(supabase, "insight_card")
+    learnings_block = _format_learnings_block(learnings)
+    if learnings:
+        logger.info(
+            "[domain_compiler] injected %d learned correction(s) into synthesis",
+            len(learnings),
+        )
+
+    synthesis = _call_synthesis(
+        _build_synthesis_prompt(target, docs), learnings_block=learnings_block
+    )
     findings = synthesis.get("findings") or []
     if not isinstance(findings, list):
         findings = []

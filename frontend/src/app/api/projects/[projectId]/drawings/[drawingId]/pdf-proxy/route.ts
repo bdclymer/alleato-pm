@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
@@ -22,10 +22,9 @@ function reportPdfProxySignedUrlFailure(details: Record<string, unknown>) {
 export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
   "projects/[projectId]/drawings/[drawingId]/pdf-proxy#GET",
   async ({ request, params }) => {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (authError || !user) {
+  if (!user) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

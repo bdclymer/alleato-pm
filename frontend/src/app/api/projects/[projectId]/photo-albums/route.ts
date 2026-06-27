@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -41,11 +41,8 @@ export const POST = withApiGuardrails(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photo-albums#POST", message: "Authentication required." });
     }
 

@@ -25,6 +25,12 @@ describe("intent router", () => {
     }
   });
 
+  it("does not classify owner must-do briefing prompts as app help", () => {
+    const intent = classifyAssistantIntent("What are Brandon's must-do items today?");
+
+    expect(intent).not.toBe("app_help");
+  });
+
   it("preserves exact source lookup prompts", () => {
     const intent = classifyAssistantIntent("What source evidence supports that?");
 
@@ -207,6 +213,43 @@ describe("intent router", () => {
       expect(classifyAssistantIntent("What are my open tasks?")).toBe("task_followup");
       expect(classifyAssistantIntent("Show me my action items")).toBe("task_followup");
       expect(classifyAssistantIntent("What's on my plate this week?")).toBe("task_followup");
+    });
+  });
+
+  describe("change_event_write intent routing", () => {
+    it.each([
+      "Create a change request from the emails about the electrical room mini split.",
+      "Draft a change event from the latest Teams messages about the permit delay.",
+      "Log a potential change event using the project context on this page.",
+      "Use the evidence on this project to create a change request for the added split system.",
+      "Find the source first, then draft the change event.",
+      "Convert this scope issue into a change request.",
+      "Help me create a change request for the Playmakers project. Ask for any missing required fields, use available project evidence where possible, and preview the change request before anything is submitted.",
+    ])("classifies mixed evidence/create prompt as change_event_write: %s", (prompt) => {
+      const intent = classifyAssistantIntent(prompt, { selectedProjectId: 25125 });
+      expect(intent).toBe("change_event_write");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    });
+
+    it("keeps Playmakers-style field follow-up questions in the create workflow", () => {
+      const intent = classifyAssistantIntent(
+        "CR-9299-0030 the title is Design Updates and it's an owner change. How do I know for expecting revenue?",
+        { selectedProjectId: 1067 },
+      );
+
+      expect(intent).toBe("change_event_write");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    });
+
+    it.each([
+      "Show me the emails about the sprinkler change.",
+      "Pull up the Teams messages about the potential change.",
+      "What source evidence supports that change event?",
+      "What's the revenue source for this change event?",
+    ])("keeps read-only change/source prompt out of change_event_write: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt, { selectedProjectId: 25125 })).not.toBe(
+        "change_event_write",
+      );
     });
   });
 

@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
@@ -11,8 +11,8 @@ export const GET = withApiGuardrails(
     // Use authenticated client — table_metadata requires a logged-in user.
     // OWASP A01:2021 - Broken Access Control: removed unauthenticated service client.
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "table-metadata#GET", message: "Authentication required." });
     }
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const OptionalString = z.string().trim().min(1).nullish();
 const CompanyContextUpsertSchema = z.object({
@@ -20,12 +20,9 @@ const CompanyContextUpsertSchema = z.object({
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (authError || !user) {
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where,

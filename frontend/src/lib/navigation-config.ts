@@ -113,11 +113,11 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "AI-powered project guidance",
   },
   {
-    name: "Projects",
+    name: "Company",
     path: "",
     requiresProject: false,
     icon: Briefcase,
-    description: "All projects",
+    description: "Company home",
   },
   {
     name: "Company Directory",
@@ -190,6 +190,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Clock,
     description: "All change events across projects",
+  },
+  {
+    name: "Potential Change Orders",
+    path: "potential-change-orders",
+    requiresProject: false,
+    icon: Receipt,
+    description: "AI-surfaced change-order signals to review",
   },
 ];
 
@@ -421,7 +428,7 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory", "Alleato AI", "Admin Dashboard"],
+    toolNames: ["Company", "Company Directory", "Alleato AI", "Admin Dashboard"],
   },
   {
     label: "Work",
@@ -435,12 +442,12 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "Financial",
-    toolNames: ["Estimates", "Prime Contracts", "Change Events"],
+    toolNames: ["Estimates", "Prime Contracts", "Change Events", "Potential Change Orders"],
   },
 ];
 
 export const coreTools: NavigationTool[] = [
-  { name: "Projects", path: "", icon: Briefcase, requiresProject: false },
+  { name: "Company", path: "", icon: Briefcase, requiresProject: false },
   { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
   { name: "Home", path: "home", icon: Home, requiresProject: true },
   { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
@@ -941,7 +948,7 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Bot,
     description: "Assistant turns with traces and write status",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Feedback Inbox",
@@ -949,7 +956,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: MessageCircle,
     description: "User feedback and requests",
-    adminOnly: true,
   },
   {
     name: "Product Board",

@@ -37,7 +37,7 @@ from ..supabase_helpers import (
     get_rag_write_client,
     get_supabase_client,
 )
-from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
+from ..ops.db_pressure_guard import AppDbProjectionError, enforce_pm_app_final_projection_guard
 from ..pipeline import llm
 from ..pipeline.extractor import _fetch_project_state, _upsert_task
 from ..pipeline.source_processing import SourceProcessingContext, record_source_processing_status
@@ -858,6 +858,7 @@ def synthesize_new_comms_since(
     summary: Dict[str, Any] = {
         "since": since, "projects": len(project_ids), "emails": 0, "teams": 0,
         "cards_written": 0, "tasks_written": 0, "synthesis_packets_written": 0,
+        "synthesis_packets_skipped": 0,
         "pm_projection_rows": {}, "errors": [],
     }
     for pid in project_ids:
@@ -893,6 +894,13 @@ def synthesize_new_comms_since(
                 sres = refresh_project_intelligence(pid)
                 if sres.get("packet_id") and not sres.get("skipped_no_new_docs"):
                     summary["synthesis_packets_written"] += 1
+            except AppDbProjectionError as exc:
+                logger.info(
+                    "[ProjectSynthesizer] event-driven L2 synthesis skipped for %s: %s",
+                    pid,
+                    exc,
+                )
+                summary["synthesis_packets_skipped"] += 1
             except Exception as exc:  # noqa: BLE001 — synthesis must not abort the rest
                 logger.error("[ProjectSynthesizer] event-driven L2 synthesis failed for %s: %s", pid, exc, exc_info=True)
                 summary["errors"].append({"project_id": pid, "stage": "synthesis", "error": str(exc)})

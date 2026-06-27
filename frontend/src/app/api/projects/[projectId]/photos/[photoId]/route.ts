@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 interface RouteParams {
   params: Promise<{ projectId: string; photoId: string }>;
@@ -72,12 +72,9 @@ export const PUT = withApiGuardrails(
     const supabase = await createClient();
     const body = await request.json();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/[photoId]#PUT", message: "Authentication required." });
     }
 
@@ -119,12 +116,9 @@ export const DELETE = withApiGuardrails(
     const supabase = await createClient();
     const permanent = new URL(request.url).searchParams.get("permanent") === "true";
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/[photoId]#DELETE", message: "Authentication required." });
     }
 

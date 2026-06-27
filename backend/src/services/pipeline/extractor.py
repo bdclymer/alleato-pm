@@ -4,9 +4,9 @@ Stage 3 – Structured data extraction.
 Reads segments from ``meeting_segments``, collects raw decisions/risks/tasks,
 then calls the LLM to normalize, deduplicate, and identify opportunities.
 
-Stores the enriched, embedded results in the ``insights`` table (type column
-distinguishes 'decision' / 'risk' / 'opportunity') and the ``tasks`` table,
-then marks the job as ``done``.
+Stores tasks in the ``tasks`` table and routes decisions, risks, opportunities,
+and general insights through ``source_signal_candidates`` into packet-first
+``insight_cards``. Then marks the job as ``done``.
 """
 from __future__ import annotations
 
@@ -692,8 +692,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             persisted_task_count += 1
     # Route decisions / risks / opportunities into the packet-first intelligence
     # layer (insight_cards) via the same candidate -> promotion path the Teams
-    # compiler uses. Replaces the deprecated no-op _upsert_insight writer so
-    # full-transcript meeting intelligence becomes durable, deduped cards.
+    # compiler uses so full-transcript meeting intelligence becomes durable,
+    # deduped cards.
     signal_result = (
         _safe_promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
         if is_meeting
@@ -726,28 +726,6 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "signalProjectionStatus": signal_result.get("projection_status"),
         "signalProjectionError": signal_result.get("projection_error"),
     }
-
-
-# ---------------------------------------------------------------------------
-# Upsert helpers
-# ---------------------------------------------------------------------------
-
-def _upsert_insight(
-    client,
-    insight_type: str,
-    item: "DecisionItem | RiskItem | OpportunityItem",
-    metadata_id: str,
-    details: Dict[str, Any] | None = None,
-) -> None:
-    """DEPRECATED: legacy Pipeline A writer for the `insights` table.
-
-    Pipeline B (insight_cards via promote_signal_candidate) replaced this in the
-    2026-05-15 migration; live call sites now use ``_promote_meeting_signals``.
-    Kept as a no-op only so any stale importer does not error. Remove after the
-    stability window.
-    """
-    _ = client, insight_type, item, metadata_id, details  # noqa: F841
-    return None
 
 
 def _meeting_signal_key(*parts: Any) -> str:

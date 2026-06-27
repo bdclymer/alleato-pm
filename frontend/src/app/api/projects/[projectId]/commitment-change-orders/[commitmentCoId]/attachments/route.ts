@@ -7,7 +7,7 @@ import {
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 async function verifyCommitmentChangeOrder(
@@ -42,8 +42,8 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments#GET", message: "Authentication required." });
     }
 
@@ -86,9 +86,9 @@ export const POST = withApiGuardrails(
 
     const supabase = await createClient();
     const serviceClient = createServiceClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments#POST", message: "Authentication required." });
     }
 

@@ -71,11 +71,13 @@ These are not referenced by package scripts, provider schedules, or live routes 
   - Documented in `backend/README.md`.
   - No package/provider/live route reference found.
 - `backend/src/scripts/backfill_contextual_embeddings.py`
-  - Referenced by `backend/src/services/pipeline/contextualize.py`.
-  - Still tied to the contextual retrieval pilot; do not delete until contextual retrieval is either finalized or explicitly retired.
+  - Retired by AAI-734 after contextual retrieval was explicitly retired.
+  - Production retrieval remains the finalized `search_document_chunks` baseline /
+    hybrid path.
 - `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py`
-  - Referenced by architecture and handoff docs as the RAG-to-app-catalog bridge for Outlook promotion repair.
-  - Keep until a replacement bridge/repair command is documented.
+  - Retired by AAI-732 after the replacement owner was proven:
+    `backfill_outlook_intake_rag_documents()` plus
+    `SupabaseRagStore.upsert_document_metadata()`.
 
 ## Deletion Decision
 
@@ -85,7 +87,7 @@ Reason:
 
 - Active production import/route proof exists for core retrieval helpers.
 - Admin eval route proof exists for the old `rag_eval*` scripts.
-- Remaining manual/dev-only scripts require workflow replacement or documentation cleanup first.
+- Remaining manual/dev-only scripts require workflow replacement or documentation cleanup first. The contextual retrieval pilot is no longer remaining work after AAI-734.
 
 ## Guardrails Now Covering This
 

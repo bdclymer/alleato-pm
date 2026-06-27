@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CompanyService } from "@/services/companyService";
 import { PermissionService } from "@/services/permissionService";
@@ -21,11 +21,8 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#GET", message: "Authentication required." });
     }
 
@@ -96,11 +93,8 @@ export const PATCH = withApiGuardrails(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#PATCH", message: "Authentication required." });
     }
 
@@ -193,11 +187,8 @@ export const DELETE = withApiGuardrails(
     const supabase = await createClient();
 
     // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#DELETE", message: "Authentication required." });
     }
 

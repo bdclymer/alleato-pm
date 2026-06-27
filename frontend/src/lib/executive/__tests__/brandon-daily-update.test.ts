@@ -7,6 +7,8 @@ import {
   executiveBriefSourceSelectionSummary,
   getHitDateAnchor,
   getRecencyAnchor,
+  ensureExecutiveBriefSourceBreadth,
+  hydrateExecutiveOperatingBrief,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
   shouldSuppressDailyBriefGenericItem,
@@ -507,6 +509,298 @@ describe("executive operating brief priority lanes", () => {
     for (const line of brief.startHere) {
       expect(line).not.toMatch(LEAK);
     }
+  });
+
+  it("builds chief-of-staff sections from cross-meeting signals", () => {
+    const sections = {
+      needsBrandon: [
+        briefItem("VP onboarding decisions are still open", {
+          summary:
+            "The team needs reporting structure, office assignment, equipment, and org chart placement before onboarding.",
+          recommendedAction:
+            "Finalize the VP reporting structure and office plan before July 8.",
+          whyItMatters:
+            "Unclear onboarding decisions are already creating internal speculation before the new VP starts.",
+          tone: "watch",
+          project: "Company operations",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Utility confirmation is still pending", {
+          summary:
+            "Telephone utility removal depends on owner IT confirmation before field work proceeds.",
+          recommendedAction:
+            "Get written owner IT confirmation on the abandoned telephone utilities.",
+          whyItMatters:
+            "If the utility status is wrong, the field team can run into a preventable removal issue.",
+          tone: "risk",
+          project: "Ace Hardware Champaign",
+        }),
+        briefItem("Sprinkler material delivery is not confirmed", {
+          summary:
+            "The rack installation sequence depends on subcontractor material delivery and permit approval.",
+          recommendedAction:
+            "Confirm permit timing and sprinkler material delivery before the next coordination call.",
+          whyItMatters:
+            "External partner timing can slip the rack install even if Alleato is ready.",
+          tone: "risk",
+          project: "Superior Beverage",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("Building Connected workflow is becoming standard", {
+          summary:
+            "Estimating is standardizing bid package creation, proposal storage, and bidder follow-up.",
+          recommendedAction:
+            "Document the Building Connected workflow so another estimator can run it without tribal knowledge.",
+          whyItMatters:
+            "A repeatable estimating workflow reduces missed scope before construction begins.",
+          tone: "good",
+          project: "Union Collective",
+        }),
+        briefItem("Accounting WIP workflow is being standardized", {
+          summary:
+            "Accounting is standardizing WIP reviews, reconciliation, payroll import, and reporting cadence.",
+          recommendedAction:
+            "Turn the WIP workflow into a monthly close checklist.",
+          whyItMatters:
+            "Repeatable financial reporting reduces the amount Brandon has to personally interpret each month.",
+          tone: "good",
+          project: "Company finance",
+        }),
+      ],
+    };
+    const brief = buildExecutiveOperatingBrief(sections);
+
+    expect(brief.businessHealth?.map((item) => item.area)).toEqual([
+      "Projects",
+      "Finance",
+      "Operations",
+      "People",
+      "Technology",
+    ]);
+    expect(brief.emergingPatterns?.map((pattern) => pattern.title)).toEqual(
+      expect.arrayContaining([
+        "External dependency management is the main execution risk",
+        "Alleato is standardizing its operating system",
+      ]),
+    );
+    expect(brief.strategicRisks?.[0]).toEqual(
+      expect.objectContaining({
+        likelihood: expect.stringMatching(/low|medium|high/),
+        nextAction: expect.any(String),
+      }),
+    );
+    expect(brief.opportunities).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("written operating standard"),
+      ]),
+    );
+    expect(brief.leadershipWatchlist?.length).toBeGreaterThan(0);
+    expect(brief.chiefOfStaffInsights?.join(" ")).toMatch(
+      /pattern-level|system design|external dependency/i,
+    );
+  });
+
+  it("hydrates stale stored operating briefs with missing chief-of-staff fields", () => {
+    const sections = {
+      needsBrandon: [
+        briefItem("VP onboarding decisions are still open", {
+          summary:
+            "The team needs reporting structure, office assignment, equipment, and org chart placement before onboarding.",
+          recommendedAction:
+            "Finalize the VP reporting structure and office plan before July 8.",
+          project: "Company operations",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Utility confirmation is still pending", {
+          summary:
+            "Telephone utility removal depends on owner IT confirmation before field work proceeds.",
+          recommendedAction:
+            "Get written owner IT confirmation on the abandoned telephone utilities.",
+          tone: "risk",
+          project: "Ace Hardware Champaign",
+        }),
+        briefItem("Sprinkler material delivery is not confirmed", {
+          summary:
+            "The rack installation sequence depends on subcontractor material delivery and permit approval.",
+          recommendedAction:
+            "Confirm permit timing and sprinkler material delivery before the next coordination call.",
+          tone: "risk",
+          project: "Superior Beverage",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("Accounting WIP workflow is being standardized", {
+          summary:
+            "Accounting is standardizing WIP reviews, reconciliation, payroll import, and reporting cadence.",
+          recommendedAction:
+            "Turn the WIP workflow into a monthly close checklist.",
+          tone: "good",
+          project: "Company finance",
+        }),
+      ],
+    };
+    const fullBrief = buildExecutiveOperatingBrief(sections);
+    const {
+      businessHealth: _businessHealth,
+      emergingPatterns: _emergingPatterns,
+      strategicRisks: _strategicRisks,
+      opportunities: _opportunities,
+      leadershipWatchlist: _leadershipWatchlist,
+      chiefOfStaffInsights: _chiefOfStaffInsights,
+      ...staleStoredBrief
+    } = fullBrief;
+
+    const hydrated = hydrateExecutiveOperatingBrief({
+      sections,
+      operatingBrief: staleStoredBrief,
+    });
+
+    expect(hydrated.startHere).toEqual(staleStoredBrief.startHere);
+    expect(hydrated.businessHealth?.length).toBeGreaterThan(0);
+    expect(hydrated.emergingPatterns?.length).toBeGreaterThan(0);
+    expect(hydrated.strategicRisks?.length).toBeGreaterThan(0);
+    expect(hydrated.chiefOfStaffInsights?.join(" ")).toMatch(
+      /pattern-level|external dependency/i,
+    );
+  });
+
+  it("keeps an emerging pattern for mixed project and finance signals", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Door swaps, asphalt work, drywall repairs, and an electrical panel move need contract scope and approval clarity.",
+          recommendedAction:
+            "Send Goodwill one list that marks each item as approved, pending, or covered by contract.",
+          whyItMatters:
+            "Without owner approval clarity, the project team cannot create the right change event or close the scope risk.",
+          project: "26-105 Goodwill Pioneer PKWY",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          summary:
+            "Nine projects have on-hold change orders totaling $422K in pending revenue.",
+          recommendedAction:
+            "Review the on-hold change orders and assign a next step for each one.",
+          whyItMatters:
+            "The pending revenue remains exposed until accounting and project managers close the approval loop.",
+          project: "Multiple (9 projects)",
+          tone: "watch",
+        }),
+      ],
+    });
+
+    expect(brief.emergingPatterns?.[0]).toEqual(
+      expect.objectContaining({
+        title:
+          "Approval and revenue follow-through are the current operating constraint",
+        evidence: expect.arrayContaining([
+          expect.stringContaining("Goodwill added work"),
+          expect.stringContaining("$422K in pending COs"),
+        ]),
+      }),
+    );
+  });
+
+  it("supplements low-count synthesis output from source-backed candidates", () => {
+    const synthesized = {
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          project: "26-105 Goodwill Pioneer PKWY",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          project: "Multiple (9 projects)",
+        }),
+      ],
+    };
+    const sourceCandidates = {
+      needsBrandon: [
+        briefItem("Union Collective owner decision is due", {
+          project: "26-119 Union Collective",
+          tone: "risk",
+        }),
+      ],
+      waitingOnOthers: [
+        briefItem("Exol Morrisville permit response is waiting", {
+          project: "26-116 Exol Morrisville",
+        }),
+        ...synthesized.waitingOnOthers,
+      ],
+      importantUpdates: [
+        briefItem("Goodwill Washington closeout is progressing", {
+          project: "26-106 Goodwill Washington",
+        }),
+        briefItem("Alleato finance WIP review needs a checklist", {
+          project: "Alleato Finance",
+        }),
+        ...synthesized.importantUpdates,
+      ],
+    };
+
+    const broadened = ensureExecutiveBriefSourceBreadth(
+      synthesized,
+      sourceCandidates,
+      { minItems: 5, minProjectLabels: 4 },
+    );
+
+    expect(
+      new Set(
+        [
+          ...broadened.needsBrandon,
+          ...broadened.waitingOnOthers,
+          ...broadened.importantUpdates,
+        ].map((item) => item.project),
+      ).size,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      [
+        ...broadened.needsBrandon,
+        ...broadened.waitingOnOthers,
+        ...broadened.importantUpdates,
+      ],
+    ).toHaveLength(5);
+  });
+
+  it("keeps finance aggregates out of non-finance derived sections", () => {
+    const brief = buildExecutiveOperatingBrief({
+      needsBrandon: [],
+      waitingOnOthers: [
+        briefItem("Goodwill added work still needs approval clarity", {
+          summary:
+            "Owner approval is still needed before the team can close the change-event scope.",
+          project: "26-105 Goodwill Pioneer PKWY",
+          tone: "risk",
+        }),
+      ],
+      importantUpdates: [
+        briefItem("$422K in pending COs on hold", {
+          summary:
+            "Nine projects have on-hold change orders totaling $422K in pending revenue.",
+          sourceDetail: "Acumatica ERP - Change Order Report",
+          project: "Multiple (9 projects)",
+          tone: "watch",
+        }),
+      ],
+    });
+
+    expect(
+      brief.projectRiskRadar.map((entry) => entry.item.title),
+    ).not.toContain("$422K in pending COs on hold");
+    expect(
+      brief.peopleAndAccountability.map((entry) => entry.item.title),
+    ).not.toContain("$422K in pending COs on hold");
+    expect(brief.cashAndMarginWatch.map((entry) => entry.item.title)).toContain(
+      "$422K in pending COs on hold",
+    );
   });
 });
 

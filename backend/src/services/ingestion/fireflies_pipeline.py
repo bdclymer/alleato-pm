@@ -532,16 +532,6 @@ class FirefliesIngestionPipeline:
             # and priority inference. The old duplicate writes to `ai_tasks` and
             # `project_tasks` have been removed as part of table consolidation.
 
-            if effective_project_id and parsed.summary:
-                insight = {
-                    "project_id": effective_project_id,
-                    "summary": parsed.summary[:512],
-                    "detail": {"source_document_id": document_id},
-                    "severity": "info",
-                    "source_document_ids": [document_id],
-                }
-                self.store.insert_insight(insight)
-
             # Extract team-scoped AI memories from this meeting.
             # Operational failures (network/API) are best-effort and don't block
             # ingestion. Structural code bugs (NameError/AttributeError/etc.) mean

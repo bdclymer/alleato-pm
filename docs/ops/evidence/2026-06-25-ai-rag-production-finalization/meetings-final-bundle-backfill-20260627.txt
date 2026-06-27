@@ -1,0 +1,7 @@
+
+> alleato-procore@0.1.0 rag:backfill:meeting-chunks
+> node scripts/backfill-recent-meeting-chunks.mjs --days=14 --limit=100
+
+Recent meetings missing chunks: 3
+Inserted chunks: 1, failed meetings: 0Inserted chunks: 2, failed meetings: 0Inserted chunks: 3, failed meetings: 0
+Done. Inserted chunks: 3. Failed meetings: 0.

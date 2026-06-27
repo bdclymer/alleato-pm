@@ -4,6 +4,10 @@ import type {
   ToolDefinition,
   ToolPolicy,
 } from "@/lib/ai-ops/contracts";
+import {
+  assistantToolDescriptorByName,
+  registryEntryFromAssistantToolDescriptor,
+} from "@/lib/ai/tool-descriptors";
 
 export type AssistantToolCategory =
   | "source_adapter"
@@ -593,122 +597,6 @@ function assistantReadRoutingPolicy(
   name: string,
 ): AssistantToolRoutingPolicy | undefined {
   switch (name) {
-    case "searchTeamsMessages":
-      return {
-        useWhen: [
-          "User asks about Teams messages, DMs, chats, threads, conversations, or Teams chatter.",
-          "User asks for recent or same-day Teams message insights.",
-        ],
-        doNotUseWhen: [
-          "User asks about Fireflies meetings or meeting transcripts without Teams.",
-          "User asks about Outlook inbox or email triage.",
-        ],
-        preferredFreshness:
-          "Use Teams-specific retrieval that checks live Microsoft Graph first when available, then synced Teams RAG rows.",
-        emptyResultBehavior:
-          "State that Teams retrieval returned no matching rows and do not substitute meetings or emails as if they were Teams results.",
-        citationRule:
-          "Cite as Teams message/conversation with title or channel and date.",
-        regressionPrompts: [
-          "what insights can be found in the teams messages today?",
-          "show me recent Teams chatter about Westfield",
-        ],
-      };
-    case "getRecentEmails":
-    case "searchEmails":
-      return {
-        useWhen: [
-          "User asks about Outlook, inbox, mail, email, received messages, replies, unread items, or email triage.",
-          "User asks what important emails came in today or this morning.",
-        ],
-        doNotUseWhen: [
-          "User asks about Teams messages or chats.",
-          "User asks about meeting transcripts or Fireflies meetings.",
-        ],
-        preferredFreshness:
-          "Use live Microsoft Graph Outlook reads for inbox/date triage when available; use synced rows only as an explicit fallback.",
-        emptyResultBehavior:
-          "State that Outlook/email retrieval returned no matching rows or fell back, including the source/freshness caveat.",
-        citationRule: "Cite as Outlook/email with sender, subject, and date.",
-        regressionPrompts: [
-          "what are my most important emails from today?",
-          "anything urgent in my inbox this morning?",
-        ],
-      };
-    case "searchMeetingsByTopic":
-    case "getMeetingDetails":
-    case "getMeetingsByDate":
-      return {
-        useWhen: [
-          "User asks what was discussed, decided, raised, or assigned in meetings.",
-          "User asks for Fireflies, meeting transcripts, OACs, huddles, or meeting intelligence.",
-        ],
-        doNotUseWhen: [
-          "User asks specifically for Teams messages, chats, or DMs.",
-          "User asks specifically for Outlook inbox or email results.",
-        ],
-        preferredFreshness:
-          "Use date-aware meeting retrieval for today/yesterday/specific dates; use semantic meeting search for topical historical questions.",
-        emptyResultBehavior:
-          "State that meeting retrieval returned no matching rows and do not fill the gap with Teams/email unless the user requested cross-source context.",
-        citationRule: "Cite as Fireflies/meeting with meeting title and date.",
-        regressionPrompts: [
-          "what meetings were held today?",
-          "what did the Westfield OAC decide?",
-        ],
-      };
-    case "semanticSearch":
-    case "searchExternalDocuments":
-    case "searchDocuments":
-    case "findProjectDocuments":
-      return {
-        useWhen: [
-          "User asks to search across documents, RAG chunks, OneDrive/SharePoint files, specs, drawings, or broad unstructured evidence.",
-          "User asks a cross-source investigation spanning more than one source family.",
-        ],
-        doNotUseWhen: [
-          "A narrower source-specific path exists for same-day Teams, Outlook inbox, or meeting-date questions.",
-          "User asks for structured project/accounting rows rather than unstructured evidence.",
-        ],
-        preferredFreshness:
-          "Use source-specific live/structured retrieval before broad semantic search when the user names one current communication source.",
-        emptyResultBehavior:
-          "State that document/RAG search returned no matching passages and identify the queried source scope.",
-        citationRule:
-          "Cite as document/RAG result with title, source type, and date when available.",
-        regressionPrompts: [
-          "search documents for the insurance requirement",
-          "research the emails, Teams, and meetings to see where this started",
-        ],
-      };
-    case "getAcumaticaProjectBudget":
-    case "getAcumaticaProjectList":
-    case "getAPAgingReport":
-    case "getARAgingReport":
-    case "getCashPositionReport":
-    case "getVendorSpendReport":
-    case "getRecentBills":
-    case "getRecentInvoices":
-    case "getPurchaseOrderSummary":
-      return {
-        useWhen: [
-          "User asks about Acumatica, accounting, AP/AR aging, cash, vendor spend, bills, invoices, purchase orders, or project budget from accounting data.",
-        ],
-        doNotUseWhen: [
-          "User asks for meeting/email/Teams commentary about financial issues rather than accounting rows.",
-          "User asks for Procore budget line workflow state rather than Acumatica truth.",
-        ],
-        preferredFreshness:
-          "Use the structured Acumatica tool or sync-health-aware accounting source before interpreting communication evidence.",
-        emptyResultBehavior:
-          "State that Acumatica/accounting retrieval returned no rows or is stale, and do not invent financial totals.",
-        citationRule:
-          "Cite as Acumatica/accounting data with report/entity name and as-of time when available.",
-        regressionPrompts: [
-          "pull current AR aging from Acumatica",
-          "which vendors have we spent the most with this year?",
-        ],
-      };
     case "getProjectBriefingSnapshot":
     case "getCommitmentsOverview":
     case "getChangeOrderDetails":
@@ -805,8 +693,11 @@ const projectToolNames = [
 ] as const;
 
 const projectAssistantTools: AssistantToolRegistryEntry[] =
-  projectToolNames.map((name) =>
-    assistantChatTool({
+  projectToolNames.map((name) => {
+    const descriptor = assistantToolDescriptorByName.get(name);
+    if (descriptor) return registryEntryFromAssistantToolDescriptor(descriptor);
+
+    return assistantChatTool({
       name,
       description: `Core project read tool exposed by createProjectTools: ${name}.`,
       owningAdapter: "project_tools",
@@ -837,8 +728,8 @@ const projectAssistantTools: AssistantToolRegistryEntry[] =
       },
       routingPolicy: assistantReadRoutingPolicy(name),
       factory: PROJECT_TOOL_FACTORY,
-    }),
-  );
+    });
+  });
 
 const actionToolNames = [
   "createChangeOrder",
@@ -912,6 +803,9 @@ const nonProjectScopedActionTools = new Set([
 
 const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(
   (name) => {
+    const descriptor = assistantToolDescriptorByName.get(name);
+    if (descriptor) return registryEntryFromAssistantToolDescriptor(descriptor);
+
     const isDelivery = deliveryActionTools.has(name);
     return assistantChatTool({
       name,

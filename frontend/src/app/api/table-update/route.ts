@@ -4,7 +4,7 @@ import {
   selectRuntimeTableRow,
   updateRuntimeTableRow,
 } from "@/lib/supabase/runtime-table";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { NextResponse } from "next/server";
 
@@ -59,8 +59,8 @@ export const POST = withApiGuardrails(
   async ({ request }) => {
   
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "table-update#POST", message: "Authentication required." });
     }
 

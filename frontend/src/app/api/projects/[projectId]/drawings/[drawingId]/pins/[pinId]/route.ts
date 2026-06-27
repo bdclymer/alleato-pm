@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -13,8 +13,7 @@ type Params = { params: Promise<{ projectId: string; drawingId: string; pinId: s
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/drawings/[drawingId]/pins/[pinId]#DELETE",
   async ({ request, params }) => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/pins/[pinId]#DELETE", message: "Authentication required." });
 
   const { pinId } = await params;

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { Company } from "@/app/api/types";
 import { z } from "zod";
@@ -28,11 +28,8 @@ const CompanyResponseSchema = z.object({
 
 export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/companies#GET",
@@ -91,11 +88,8 @@ export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) =
 
 export const POST = withApiGuardrails("/api/companies#POST", async ({ request }) => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/companies#POST",

@@ -8,7 +8,6 @@ export default function AnalyticsPage() {
     <PageShell
       variant="dashboard"
       title="Platform Analytics"
-      description="User logins, activity, app error trends, AI engagement, and sync health — live platform visibility for administrators."
     >
       <PlatformAnalyticsPanel />
     </PageShell>

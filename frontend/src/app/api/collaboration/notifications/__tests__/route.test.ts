@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 
+import { createActionTools } from "@/lib/ai/tools/action-tools";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { GET, PATCH } from "../route";
+
+jest.mock("@/lib/ai/tools/action-tools", () => ({
+  createActionTools: jest.fn(),
+}));
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
@@ -13,6 +18,9 @@ const createClientMock = createClient as jest.MockedFunction<
 >;
 const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
   typeof getApiRouteUser
+>;
+const createActionToolsMock = createActionTools as jest.MockedFunction<
+  typeof createActionTools
 >;
 
 type QueryResult = {
@@ -221,5 +229,102 @@ describe("/api/collaboration/notifications", () => {
     for (const call of supabase.calls) {
       expect(call.filters).toContainEqual(["user_id", "user-1"]);
     }
+  });
+
+  it("confirms an AI change-event approval through the write tool", async () => {
+    const execute = jest.fn().mockResolvedValue({
+      success: true,
+      record: { id: "ce-1", number: "017", title: "Electrical room mini split" },
+    });
+    createActionToolsMock.mockReturnValue({
+      createChangeEvent: { execute },
+    } as never);
+    const supabase = new SupabaseMock({
+      "collaboration_notifications.select": [
+        {
+          data: {
+            project_id: 25125,
+            entity_type: "change_events",
+            metadata: {
+              eventType: "ai_change_event_awaiting_approval",
+              eventKey: "change-event-key",
+              preview: {
+                table: "change_events",
+                fields: {
+                  project_id: 25125,
+                  title: "Electrical room mini split",
+                  description: "Added split system in electrical room.",
+                  scope: "TBD",
+                  type: "Owner Change",
+                  status: "Open",
+                  origin: "Emails",
+                  expecting_revenue: true,
+                  line_item_revenue_source: "Enter manually",
+                },
+              },
+            },
+          },
+        },
+      ],
+      "collaboration_notifications.update": [{ data: null }],
+    });
+    createClientMock.mockResolvedValue(supabase as never);
+
+    const response = await PATCH(
+      new NextRequest("http://localhost/api/collaboration/notifications", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "confirm-ai-change-event",
+          id: "11111111-1111-4111-8111-111111111111",
+          review: {
+            checkedIds: ["generated-fields"],
+            checkedLabels: ["Generated fields match the intended record."],
+          },
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(createActionToolsMock).toHaveBeenCalledWith("user-1", {
+      pinnedProjectId: 25125,
+    });
+    expect(execute).toHaveBeenCalledWith(
+      {
+        projectId: 25125,
+        title: "Electrical room mini split",
+        description: "Added split system in electrical room.",
+        scope: "TBD",
+        type: "Owner Change",
+        status: "Open",
+        reason: undefined,
+        origin: "Emails",
+        expectingRevenue: true,
+        lineItemRevenueSource: "Enter manually",
+        confirmed: true,
+        idempotencyKey: "change-event-key",
+      },
+      expect.objectContaining({
+        toolCallId: "ai-approval-11111111-1111-4111-8111-111111111111",
+      }),
+    );
+    expect(supabase.calls.at(-1)).toMatchObject({
+      table: "collaboration_notifications",
+      operation: "update",
+    });
+    expect(supabase.calls.at(-1)?.filters).toContainEqual(["user_id", "user-1"]);
+    expect(supabase.calls.at(-1)?.payload).toMatchObject({
+      entity_id: "ce-1",
+      metadata: {
+        confirmation: {
+          toolName: "createChangeEvent",
+          recordId: "ce-1",
+          idempotencyKey: "change-event-key",
+        },
+        review: {
+          checkedIds: ["generated-fields"],
+        },
+      },
+    });
   });
 });

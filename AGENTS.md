@@ -589,7 +589,9 @@ npm run dev                    # frontend + backend concurrently
 npm run dev:frontend           # Next.js only (port 3000)
 npm run db:types               # regenerate Supabase types + schema FK map
 npm run db:types:check         # verify generated Supabase types are current
+npm run db:push                # apply Supabase migrations, then regenerate types
 npm run db:migrations:verify-clean # verify local/remote Supabase migration ledger
+npm run check:routes           # verify no dynamic route conflicts
 npm run validate:runtime-config # validate required runtime configuration
 npm run quality:predeploy      # full predeploy quality gate
 npm run verify:postdeploy      # post-deploy verification checks
@@ -604,8 +606,6 @@ npm run worker-status -- <YYYY-MM-DD> # summarize orchestration handoff status
 npm run build                  # production build
 npm run quality                # typecheck + lint
 npm run quality:fix            # typecheck + lint with auto-fix
-npm run db:types               # generate Supabase types
-npm run check:routes           # verify no dynamic route conflicts
 ```
 
 ## Drawing OCR Commands
@@ -620,12 +620,16 @@ curl -X POST "https://alleato-backend-rbnj.onrender.com/api/admin/documents/ocr-
 
 OCR status lives on `document_metadata.status`: `no_text` -> `raw_ingested` for full OCR, `ocr_partial` when the page cap is hit but text is still embedded, and `ocr_failed` for failures that require a manual reset to `no_text` before retry. Reference: `docs/architecture/OCR-PIPELINE.md`.
 
+Script ownership source of truth: `scripts/README.md`. Root-level legacy script inventory: `scripts/ROOT-SCRIPTS.md`. New supported tooling should live under an owner folder in `scripts/` and be exposed through `package.json` when intended for routine use.
+
 ## Testing Commands
 
 ```bash
 # From repo root (default browser verification path)
 npm run verify:browser           # agent-browser run with screenshots + video + markdown summary
 npm run verify:browser:cleanup   # remove agent-browser artifacts older than 48h
+npm run verify:api:contracts     # API smoke contract verification
+npm run test:route-guardrails    # unit coverage for route guardrail enforcement
 
 # From frontend/ directory
 npm run test                   # Playwright E2E (headless)
@@ -633,6 +637,8 @@ npm run test:headed            # Playwright with browser visible
 npm run test:ui                # Playwright UI mode
 npm run test:unit              # Jest unit tests
 npm run test:unit:watch        # Jest watch mode
+npm run test:auth              # refresh/check saved Playwright auth session
+npm run test:trace             # Playwright run with trace capture
 
 # Run a specific Playwright spec
 npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed

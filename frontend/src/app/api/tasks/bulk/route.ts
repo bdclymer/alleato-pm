@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import type { Json } from "@/types/database.types";
@@ -101,12 +101,9 @@ export const PATCH = withApiGuardrails(
   "tasks/bulk#PATCH",
   async ({ request }) => {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/bulk#PATCH", message: "Authentication required." });
     }
 
@@ -186,12 +183,9 @@ export const DELETE = withApiGuardrails(
   async ({ request }) => {
   
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/bulk#DELETE", message: "Authentication required." });
     }
 

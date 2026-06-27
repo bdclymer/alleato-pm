@@ -134,7 +134,15 @@ export const SourceSyncStatusSchema = z.object({
   generatedAt: z.string(),
   thresholds: z.record(z.string(), z.number()),
   sources: z.array(SourceHealthSchema),
-  pipeline: z.record(z.string(), z.record(z.string(), z.number())),
+  // `pipeline` is a diagnostic breakdown block. Most entries are
+  // `Record<string, number>` (e.g. documentMetadataBySource), but the backend
+  // also emits scalar counts (e.g. `unconfiguredGraphSubscriptions: number`).
+  // Accept both so a single additive diagnostic field can never 500 the entire
+  // RAG health page again (see status route SCHEMA_MISMATCH incident 2026-06-27).
+  pipeline: z.record(
+    z.string(),
+    z.union([z.record(z.string(), z.number()), z.number()]),
+  ),
   alerts: z.array(SourceSyncAlertSchema),
   recentRuns: z.array(SourceSyncRunSchema),
   stuckItems: z.array(SourceSyncStuckItemSchema),

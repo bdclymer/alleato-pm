@@ -233,6 +233,105 @@ async function orphanMetadataExamples(client, whereSql) {
   return rows;
 }
 
+async function repairOrphanMetadata(client, whereSql) {
+  const chunkWhereSql = whereSql.replace(/\bupdated_at\b/g, "c.updated_at");
+  const wherePrefix = chunkWhereSql ? `${chunkWhereSql} and` : "where";
+  const { rows } = await client.query(`
+    with orphan_docs as (
+      select c.document_id,
+             min(c.source_type) as source_type,
+             min(c.created_at) as created_at,
+             max(c.updated_at) as updated_at,
+             string_agg(c.text, E'\n\n' order by c.chunk_index) as content,
+             max(c.content_hash) as content_hash,
+             max(nullif(c.metadata->>'title', '')) as title,
+             max(nullif(c.metadata->>'file_date', '')) as file_date,
+             max(nullif(c.metadata->>'project_id', '')) as project_id_text,
+             jsonb_object_agg(c.chunk_index::text, coalesce(c.metadata, '{}'::jsonb)) as chunk_metadata
+      from public.document_chunks c
+      left join public.rag_document_metadata m on m.id = c.document_id
+      ${wherePrefix} c.source_type = any($1::text[])
+        and m.id is null
+      group by c.document_id
+    )
+    insert into public.rag_document_metadata (
+      id,
+      app_document_id,
+      project_id,
+      source,
+      source_system,
+      source_item_id,
+      title,
+      type,
+      category,
+      content,
+      raw_text,
+      content_hash,
+      content_length,
+      parsing_status,
+      embedding_status,
+      processing_metadata,
+      source_metadata,
+      last_synced_at,
+      last_content_loaded_at,
+      last_indexed_at,
+      created_at,
+      updated_at
+    )
+    select document_id,
+           document_id,
+           case when project_id_text ~ '^[0-9]+$' then project_id_text::int else null end,
+           case
+             when source_type like 'meeting%' then 'fireflies'
+             when source_type = 'email' then 'outlook'
+             when source_type = 'vision_page_summary' then 'document_vision'
+             else source_type
+           end,
+           case
+             when source_type like 'meeting%' then 'fireflies'
+             when source_type = 'email' then 'outlook'
+             else source_type
+           end,
+           document_id,
+           coalesce(title, document_id),
+           case
+             when source_type in ('meeting_summary', 'meeting_transcript', 'meeting_segment_summary') then 'meeting'
+             when source_type = 'vision_page_summary' then 'vision_page_summary'
+             else source_type
+           end,
+           case
+             when source_type like 'meeting%' then 'meeting'
+             when source_type = 'email' then 'email'
+             else 'document'
+           end,
+           content,
+           content,
+           content_hash,
+           length(coalesce(content, '')),
+           'complete',
+           'embedded',
+           jsonb_build_object(
+             'repair_source', 'verify_rag_chunk_integrity',
+             'repair_reason', 'document_chunks existed without rag_document_metadata',
+             'repaired_at', now()
+           ),
+           jsonb_build_object(
+             'source_type', source_type,
+             'file_date', file_date,
+             'chunk_metadata', chunk_metadata
+           ),
+           updated_at,
+           updated_at,
+           updated_at,
+           created_at,
+           now()
+    from orphan_docs
+    on conflict (id) do nothing
+    returning id, source_system, type, category
+  `, [metadataRequiredSourceTypes]);
+  return rows;
+}
+
 async function main() {
   loadEnvFile(path.join(repoRoot, ".env"));
   loadEnvFile(path.join(repoRoot, "frontend/.env.local"));
@@ -240,12 +339,18 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const days = Number(args.get("days") || 0);
   const strictIndexes = args.get("strict-indexes") === "true";
+  const repairOrphans = args.get("repair-orphan-metadata") === "true";
   const whereSql = Number.isFinite(days) && days > 0
     ? `where updated_at >= now() - interval '${Math.floor(days)} days'`
     : "";
 
   const client = await connect();
   try {
+    if (repairOrphans) {
+      const repaired = await repairOrphanMetadata(client, whereSql);
+      console.log(`Repaired orphan rag_document_metadata rows: ${fmt(repaired.length)}`);
+    }
+
     const summary = await sourceSummary(client, whereSql);
     const fatal = await patternCounts(client, fatalPatterns, whereSql);
     const suspicious = await patternCounts(client, suspiciousPatterns, whereSql);

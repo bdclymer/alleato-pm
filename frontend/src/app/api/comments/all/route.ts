@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { DEFAULT_POLICY, fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -69,10 +69,7 @@ function normalize(documentId: string, annotation: VeltAnnotation): AllCommentIt
 }
 
 export async function GET(_req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

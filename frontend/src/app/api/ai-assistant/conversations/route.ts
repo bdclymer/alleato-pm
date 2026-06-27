@@ -21,9 +21,10 @@ export const GET = withApiGuardrails(
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("conversations")
-    .select("session_id, title, last_message_at, created_at, metadata")
+    .select("session_id, title, last_message_at, created_at, metadata, is_pinned")
     .eq("user_id", user.id)
     .or("is_archived.is.null,is_archived.eq.false")
+    .order("is_pinned", { ascending: false })
     .order("last_message_at", { ascending: false, nullsFirst: false });
 
   if (error) {
@@ -64,7 +65,7 @@ export const POST = withApiGuardrails(
           ? body.metadata
           : {},
     })
-    .select("session_id, title, last_message_at, created_at, metadata")
+    .select("session_id, title, last_message_at, created_at, metadata, is_pinned")
     .single();
 
   if (error) {

@@ -154,9 +154,14 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
     if max_tokens:
         kwargs["max_tokens"] = max_tokens
 
-    logger.info("[LLM] Calling %s (json=%s)", CHAT_MODEL, json_mode)
-    if json_mode:
+    provider_path = get_ai_provider_path()
+    logger.info("[LLM] Calling %s via %s (json=%s)", CHAT_MODEL, provider_path, json_mode)
+    if json_mode and provider_path != "vercel_gateway":
         kwargs["response_format"] = {"type": "json_object"}
+    elif json_mode:
+        logger.info(
+            "[LLM] Skipping response_format=json_object for AI Gateway; enforcing JSON through prompt contract."
+        )
 
     try:
         response = retry_ai_call(

@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[id]/budget/lines/[lineId]/history - Get change history for a budget line item
@@ -30,12 +30,9 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
     const supabase = await createClient();
 
     // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized - please log in" },
         { status: 401 },

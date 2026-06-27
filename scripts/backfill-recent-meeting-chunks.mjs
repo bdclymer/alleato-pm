@@ -174,6 +174,40 @@ async function restUpsert(baseUrl, key, path, records, { timeoutMs = 120_000 } =
   }
 }
 
+function buildRagMetadataRow(row, baseText, sourceType) {
+  const contentHash = hashContent(baseText);
+  return {
+    id: row.id,
+    app_document_id: row.id,
+    project_id: row.project_id ?? null,
+    source: "fireflies",
+    source_system: "fireflies",
+    source_item_id: row.fireflies_id || row.id,
+    fireflies_id: row.fireflies_id || row.id,
+    title: row.title || "Untitled Meeting",
+    type: sourceType === "meeting_transcript" ? "meeting_transcript" : "meeting",
+    category: "meeting",
+    content: baseText,
+    raw_text: baseText,
+    content_hash: contentHash,
+    content_length: baseText.length,
+    parsing_status: "complete",
+    embedding_status: "embedded",
+    source_metadata: {
+      file_date: row.date ?? row.captured_at ?? row.created_at ?? null,
+      participants_array: row.participants_array ?? [],
+      backfill_source: "backfill-recent-meeting-chunks",
+    },
+    processing_metadata: {
+      ingest_path: "backfill-recent-meeting-chunks",
+      repair_guardrail: "writes rag_document_metadata before document_chunks",
+    },
+    last_synced_at: new Date().toISOString(),
+    last_content_loaded_at: new Date().toISOString(),
+    last_indexed_at: new Date().toISOString(),
+  };
+}
+
 async function fetchRestCandidates() {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   const rows = await restSelect(
@@ -237,6 +271,8 @@ async function processRows(rows, insertRecords) {
     });
     const embeddings = await embed(embeddingTexts);
 
+    const sourceType = baseText.includes("## Transcript") ? "meeting_transcript" : "meeting_summary";
+    const metadataRecord = buildRagMetadataRow(row, baseText, sourceType);
     const records = chunks.map((chunk, index) => {
       const contentHash = hashContent(chunk);
       return {
@@ -255,11 +291,11 @@ async function processRows(rows, insertRecords) {
         },
         content_hash: contentHash,
         embedding: JSON.stringify(embeddings[index]),
-        source_type: baseText.includes("## Transcript") ? "meeting_transcript" : "meeting_summary",
+        source_type: sourceType,
       };
     });
 
-    await insertRecords(records);
+    await insertRecords(records, [metadataRecord]);
     inserted += records.length;
     process.stdout.write(`\rInserted chunks: ${inserted}, failed meetings: ${failed}`);
   }
@@ -282,7 +318,8 @@ async function runRestFallback(originalError) {
   const existingChunkDocumentIds = await fetchExistingChunkDocumentIdsViaRest(candidates);
   const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
 
-  await processRows(rows, async (records) => {
+  await processRows(rows, async (records, metadataRecords) => {
+    await restUpsert(ragRestUrl, ragRestKey, "rag_document_metadata?on_conflict=id", metadataRecords);
     await restUpsert(ragRestUrl, ragRestKey, "document_chunks?on_conflict=chunk_id", records);
   });
 }
@@ -311,7 +348,31 @@ try {
   const existingChunkDocumentIds = new Set(existingChunkRows.map((row) => String(row.document_id)));
   const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
 
-  await processRows(rows, async (records) => {
+  await processRows(rows, async (records, metadataRecords) => {
+    await ragSql`
+      insert into public.rag_document_metadata ${ragSql(metadataRecords)}
+      on conflict (id) do update set
+        project_id = coalesce(excluded.project_id, public.rag_document_metadata.project_id),
+        source = excluded.source,
+        source_system = excluded.source_system,
+        source_item_id = excluded.source_item_id,
+        fireflies_id = excluded.fireflies_id,
+        title = excluded.title,
+        type = excluded.type,
+        category = excluded.category,
+        content = excluded.content,
+        raw_text = excluded.raw_text,
+        content_hash = excluded.content_hash,
+        content_length = excluded.content_length,
+        parsing_status = excluded.parsing_status,
+        embedding_status = excluded.embedding_status,
+        source_metadata = public.rag_document_metadata.source_metadata || excluded.source_metadata,
+        processing_metadata = public.rag_document_metadata.processing_metadata || excluded.processing_metadata,
+        last_synced_at = excluded.last_synced_at,
+        last_content_loaded_at = excluded.last_content_loaded_at,
+        last_indexed_at = excluded.last_indexed_at,
+        updated_at = now()
+    `;
     await ragSql`
       insert into public.document_chunks ${ragSql(records)}
       on conflict (chunk_id) do update set

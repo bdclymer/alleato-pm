@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { logEvent } from "@/lib/guardrails/observability";
@@ -32,9 +32,8 @@ interface NotificationWithId extends NotificationData {
  * POST: Receive notification from monitoring scripts
  */
 export const POST = withApiGuardrails("/api/monitoring/notify#POST", async ({ request, requestId }) => {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/monitoring/notify#POST",
@@ -87,9 +86,8 @@ export const POST = withApiGuardrails("/api/monitoring/notify#POST", async ({ re
  * GET: Retrieve recent notifications
  */
 export const GET = withApiGuardrails("/api/monitoring/notify#GET", async () => {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where: "/api/monitoring/notify#GET",

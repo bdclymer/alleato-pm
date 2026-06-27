@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 function getSourceDocumentUrl(doc: { source_web_url?: string | null; url?: string | null }) {
   const sourceUrl = doc.source_web_url ?? doc.url;
@@ -24,12 +24,9 @@ export const GET = withApiGuardrails(
   "knowledge/signed-url#GET",
   async ({ request }) => {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "knowledge/signed-url#GET",

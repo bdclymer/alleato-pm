@@ -140,6 +140,17 @@ def alternate_provider_path(provider_path: str) -> Optional[str]:
     return None
 
 
+# Reuse one OpenAI client (and its httpx connection pool) per
+# (provider_path, api_key, base_url). Constructing a fresh client on every
+# embedding/LLM call opened a new connection pool each time and never closed it,
+# leaking sockets/file descriptors under load — which surfaced as
+# `httpx.ReadError/WriteError: [Errno 35] Resource temporarily unavailable`
+# (EAGAIN) and stale-connection RemoteProtocolError during heavy Fireflies/Graph
+# embedding batches. Keying on api_key means a rotated key still yields a fresh
+# client rather than reusing a stale one.
+_CLIENT_CACHE: dict[tuple[str, str, str], object] = {}
+
+
 def get_openai_client(force_path: Optional[str] = None):
     """Return an OpenAI-compatible client for the configured backend provider.
 
@@ -149,6 +160,9 @@ def get_openai_client(force_path: Optional[str] = None):
     Pass ``force_path`` ('openai' | 'vercel_gateway') to bypass the configured
     routing — used by embedding failover to reach the healthy provider when the
     primary one has hit an auth/credit wall.
+
+    The client is cached and reused so concurrent callers share one bounded
+    connection pool instead of leaking a new pool per call.
     """
     from openai import OpenAI
 
@@ -159,14 +173,25 @@ def get_openai_client(force_path: Optional[str] = None):
             raise RuntimeError(
                 "AI_GATEWAY_API_KEY is required when AI_PROVIDER_PATH=vercel_gateway."
             )
-        return OpenAI(api_key=api_key, base_url=AI_GATEWAY_BASE_URL)
+        base_url = AI_GATEWAY_BASE_URL
+    else:
+        api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+        if not api_key:
+            raise RuntimeError(
+                "OPENAI_API_KEY is required when AI_PROVIDER_PATH=openai or AI_GATEWAY_API_KEY is unavailable."
+            )
+        base_url = ""
 
-    api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
-    if not api_key:
-        raise RuntimeError(
-            "OPENAI_API_KEY is required when AI_PROVIDER_PATH=openai or AI_GATEWAY_API_KEY is unavailable."
+    cache_key = (provider_path, api_key, base_url)
+    client = _CLIENT_CACHE.get(cache_key)
+    if client is None:
+        client = (
+            OpenAI(api_key=api_key, base_url=base_url)
+            if base_url
+            else OpenAI(api_key=api_key)
         )
-    return OpenAI(api_key=api_key)
+        _CLIENT_CACHE[cache_key] = client
+    return client
 
 
 def retry_ai_call(

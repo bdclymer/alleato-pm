@@ -4,11 +4,14 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import { NextRequest } from "next/server";
 
 import { POST } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 const createClientMock = createClient as jest.MockedFunction<
   typeof createClient
@@ -93,6 +96,10 @@ describe("project document route POST", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 

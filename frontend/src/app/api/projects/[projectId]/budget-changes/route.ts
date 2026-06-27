@@ -2,7 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const createBudgetChangeSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -87,9 +87,7 @@ export const POST = withApiGuardrails(
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     const number = await generateNextBcNumber(numericProjectId);
 

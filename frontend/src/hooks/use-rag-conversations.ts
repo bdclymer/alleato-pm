@@ -10,6 +10,7 @@ export interface RagConversation {
   last_message_at: string | null;
   created_at: string | null;
   metadata: Record<string, unknown> | null;
+  is_pinned: boolean;
 }
 
 const QUERY_KEY = ["rag-conversations"];
@@ -70,6 +71,46 @@ export function useRenameConversation() {
     },
     onError: (err: Error) => {
       toast.error(err.message);
+    },
+  });
+}
+
+export function useTogglePinConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      isPinned,
+    }: {
+      sessionId: string;
+      isPinned: boolean;
+    }) =>
+      apiFetch(`/api/ai-assistant/conversations/${sessionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_pinned: isPinned }),
+      }),
+    onMutate: async ({ sessionId, isPinned }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous =
+        queryClient.getQueryData<RagConversation[]>(QUERY_KEY);
+      queryClient.setQueryData<RagConversation[]>(QUERY_KEY, (current) =>
+        (current ?? []).map((conversation) =>
+          conversation.session_id === sessionId
+            ? { ...conversation, is_pinned: isPinned }
+            : conversation,
+        ),
+      );
+      return { previous };
+    },
+    onError: (err: Error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEY, context.previous);
+      }
+      toast.error(err.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 }

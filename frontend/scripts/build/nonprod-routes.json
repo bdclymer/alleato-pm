@@ -13,6 +13,7 @@
     "src/app/(admin)/testing/runs/[runId]/page.tsx",
     "src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx",
     "src/app/(admin)/dev/table-generator/page.tsx",
+    "src/app/auth/ai-change-event-preview-card/page.tsx",
     "src/app/api/dev-panel/annotations/route.ts",
     "src/app/api/dev-panel/comments/[feature]/route.ts",
     "src/app/api/dev-panel/feedback/[feature]/route.ts",

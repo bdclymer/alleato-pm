@@ -1,0 +1,23 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T05-02-53-708Z-409e073e
+
+[1/5] realworld-last-five-emails … ✓ pass (14208ms, 1 tools)
+[2/5] realworld-urgent-inbox … ✓ pass (8561ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✓ pass (13113ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✓ pass (22556ms, 1 tools)
+[5/5] realworld-email-reply-triage … ✓ pass (14644ms, 1 tools)
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T05-02-53-708Z-409e073e/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T05-02-53-708Z-409e073e/summary.md
+Pass: 5/5

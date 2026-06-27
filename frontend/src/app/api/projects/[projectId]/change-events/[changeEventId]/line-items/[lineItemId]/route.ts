@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { updateLineItemSchema } from '../../../validation';
 import { ZodError } from 'zod';
@@ -107,8 +107,8 @@ export const PATCH = withApiGuardrails(
     const body = await request.json();
 
     // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#PATCH", message: "Authentication required." });
     }
 
@@ -284,8 +284,8 @@ export const DELETE = withApiGuardrails(
     const supabase = await createClient();
 
     // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 

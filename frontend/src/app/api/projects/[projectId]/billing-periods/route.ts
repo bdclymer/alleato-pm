@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 type RouteContext = { params: Promise<{ projectId: string }> };
@@ -15,12 +15,9 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const { projectId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/billing-periods#GET", message: "Authentication required." });
     }
 
@@ -64,12 +61,9 @@ export const POST = withApiGuardrails(
     const supabase = await createClient();
     const { projectId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/billing-periods#POST", message: "Authentication required." });
     }
 

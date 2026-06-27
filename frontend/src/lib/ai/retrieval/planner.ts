@@ -211,15 +211,6 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     };
   }
 
-  if (intent === "app_help") {
-    return {
-      intent,
-      responseFormat: "app_help",
-      sources: { appExpert: { question: message } },
-      reason: "app_help_intent",
-    };
-  }
-
   const executiveDeepAgentIntent = detectExecutiveDeepAgentIntent(
     message,
     selectedProjectId,
@@ -231,6 +222,31 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       sources: {},
       selectedProjectId,
       reason: "executive_deep_agent_broad_operator_question",
+    };
+  }
+
+  if (intent === "app_help") {
+    return {
+      intent,
+      responseFormat: "app_help",
+      sources: { appExpert: { question: message } },
+      reason: "app_help_intent",
+    };
+  }
+
+  if (intent === "change_event_write") {
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {
+        ...projectOperatingContextSources(selectedProjectId),
+        semanticVectorSearch: { query: message },
+      },
+      preconsult: detectPreconsult(message),
+      selectedProjectId,
+      reason: selectedProjectId
+        ? "project_context_change_event_write_request"
+        : "change_event_write_request",
     };
   }
 

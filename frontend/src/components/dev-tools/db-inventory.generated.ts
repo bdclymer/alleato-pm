@@ -1,12 +1,13 @@
 // AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
-// Generated: 2026-06-26T10:11:28.999Z
+// Generated: 2026-06-27T12:01:45.966Z
 
 import inventoryJson from "./db-inventory.generated.json";
 
 export type DbInventoryStatus =
   | "active"
+  | "blocked"
   | "dead"
   | "dormant"
   | "legacy"

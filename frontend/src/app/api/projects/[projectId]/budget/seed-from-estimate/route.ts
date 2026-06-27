@@ -19,7 +19,7 @@ import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { activateBudgetCodes, BudgetCodeActivationError, type BudgetCodeActivationRow } from "@/lib/estimates/activate-budget-codes";
 import { getBudgetLineAmountPolicy } from "@/lib/budget/new-line-amount-policy";
 import type { Database } from "@/types/database.types";
@@ -71,11 +71,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(WHERE, async ({ req
   const { estimateId, mergeStrategy } = parsed.data;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 

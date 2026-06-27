@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
 
@@ -73,9 +73,8 @@ async function extractMetadata(html: string) {
 export const GET = withApiGuardrails(
   "og/fetch#GET",
   async ({ request }) => {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "og/fetch#GET", message: "Authentication required." });
   }
 

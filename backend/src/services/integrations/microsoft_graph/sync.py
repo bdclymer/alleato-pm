@@ -11,7 +11,7 @@ from typing import Any, Optional
 from supabase import Client
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
-from .outlook import sync_outlook_emails
+from .outlook import refresh_outlook_intake_vectorization_statuses, sync_outlook_emails
 from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
@@ -110,6 +110,7 @@ def _limit_sync_users(
     users: list[str],
     env_key: str,
     default_limit: int,
+    always_include_env_key: str | None = None,
 ) -> list[str]:
     """Pick a bounded, stalest-first slice of users for expensive per-user syncs."""
     if not users:
@@ -142,13 +143,24 @@ def _limit_sync_users(
     except Exception as exc:
         logger.warning("[GraphSync] Could not load %s sync state for user limiting: %s", source, exc)
 
-    return sorted(
-        users,
+    normalized_users = {email.lower(): email for email in users}
+    always_include: list[str] = []
+    if always_include_env_key:
+        for raw_email in os.environ.get(always_include_env_key, "").split(","):
+            email = raw_email.strip().lower()
+            if email and email in normalized_users and normalized_users[email] not in always_include:
+                always_include.append(normalized_users[email])
+
+    remaining_users = [email for email in users if email not in always_include]
+    stale_sorted_remaining = sorted(
+        remaining_users,
         key=lambda email: (
             last_sync_by_resource.get(email) or "",
             email,
         ),
-    )[:limit]
+    )
+    remaining_slots = max(0, limit - len(always_include))
+    return (always_include + stale_sorted_remaining[:remaining_slots])[:limit]
 
 
 def _bounded_int_env(name: str, default_limit: int, minimum: int = 1, maximum: int = 100) -> int:
@@ -458,6 +470,7 @@ def run_graph_sync(
             users=user_emails,
             env_key="OUTLOOK_SYNC_MAX_USERS",
             default_limit=1,
+            always_include_env_key="OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS",
         )
         summary["outlook_users_selected"] = user_emails
 
@@ -776,6 +789,25 @@ def run_graph_sync(
             summary["embed"] = {"error": str(e)}
     else:
         summary["embed"] = {"status": "skipped", "reason": "run_embedding=false"}
+
+    if sync_emails and run_embedding:
+        vectorization_results: dict[str, Any] = {}
+        for user_email in summary.get("outlook_users_selected") or []:
+            try:
+                vectorization_results[user_email] = refresh_outlook_intake_vectorization_statuses(
+                    mailbox_user_id=user_email,
+                    limit=max(embed_limit * 3, 25),
+                    since=sync_started_at.isoformat(),
+                )
+            except Exception as exc:
+                logger.warning(
+                    "[GraphSync] Outlook vectorization status refresh failed for %s: %s",
+                    user_email,
+                    exc,
+                    exc_info=True,
+                )
+                vectorization_results[user_email] = {"error": str(exc)}
+        summary["outlook_vectorization_status"] = vectorization_results
 
     # ── OCR fallback for scanned PDFs (no_text → raw_ingested or ocr_partial) ─
     # Runs after the first embed pass so newly-OCR'd docs can be embedded

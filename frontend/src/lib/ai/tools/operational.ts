@@ -4,8 +4,25 @@ import {
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
+import {
+  getMeetingDetailsDescription,
+  getMeetingDetailsInputSchema,
+  getRecentEmailsDescription,
+  getRecentEmailsInputSchema,
+  searchEmailsDescription,
+  searchEmailsInputSchema,
+  searchExternalDocumentsDescription,
+  searchExternalDocumentsInputSchema,
+  searchMeetingsByTopicDescription,
+  searchMeetingsByTopicInputSchema,
+  searchTeamsMessagesDescription,
+  searchTeamsMessagesInputSchema,
+  semanticSearchDescription,
+  semanticSearchInputSchema,
+} from "@/lib/ai/tool-descriptors";
 import { type ToolGuardrails } from "./guardrails";
 import { createToolContext, type ToolContext } from "./tool-context";
+import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
 import { createStructuredQueryTools } from "./structured-queries";
 import {
   type ToolTracePayload,
@@ -526,6 +543,7 @@ export function createOperationalTools(
   const supabase = ctx.db;
   const ragSupabase = ctx.rag;
   const guardrails = ctx.guardrails;
+  const repo = createProjectRepo(ctx);
 
   async function requireAdminForCommunications(sourceLabel: string) {
     const scope = await guardrails.getScope();
@@ -831,21 +849,16 @@ export function createOperationalTools(
           );
           if ("error" in resolved) return resolved;
 
-          let rfiQuery = supabase
-            .from("rfis")
-            .select("*")
-            .eq("project_id", resolved.id)
-            .order("created_at", { ascending: false })
-            .limit(200);
-
-          if (status) {
-            rfiQuery = rfiQuery.ilike("status", `%${status}%`);
+          let rfiRows: unknown[];
+          try {
+            rfiRows = await repo.rfisForProject(resolved.id, { status });
+          } catch (rfiError) {
+            return {
+              error: rfiError instanceof Error ? rfiError.message : "RFI lookup failed",
+            };
           }
 
-          const { data: rfiRows, error } = await rfiQuery;
-          if (error) return { error: error.message };
-
-          const rfis = (rfiRows ?? []) as AnyRow[];
+          const rfis = rfiRows as AnyRow[];
           const now = new Date().toISOString().split("T")[0];
 
           // Status breakdown
@@ -855,12 +868,9 @@ export function createOperationalTools(
             statusCounts.set(s, (statusCounts.get(s) ?? 0) + 1);
           });
 
-          // Overdue (open + past due date)
-          const openRfis = rfis.filter(
-            (r) =>
-              (r.status as string) !== "closed" &&
-              (r.status as string) !== "Closed",
-          );
+          // Overdue (open + past due date). Open-status semantics centralized in
+          // ProjectRepo's isOpenRfiStatus so every surface agrees on "open".
+          const openRfis = rfis.filter((r) => isOpenRfiStatus(r.status));
           const overdueRfis = openRfis.filter(
             (r) => r.due_date && (r.due_date as string) < now,
           );
@@ -884,11 +894,10 @@ export function createOperationalTools(
               r.schedule_impact !== "no",
           );
 
-          // Average days open for closed RFIs
+          // Average days open for closed RFIs (uses canonical predicate so closed-draft
+          // is counted as closed, matching what every other surface does).
           const closedRfis = rfis.filter(
-            (r) =>
-              (r.status as string) === "closed" ||
-              (r.status as string) === "Closed",
+            (r) => typeof r.status === "string" && !isOpenRfiStatus(r.status),
           );
           let avgDaysToClose = 0;
           if (closedRfis.length > 0) {
@@ -1210,11 +1219,7 @@ export function createOperationalTools(
             const fins = finByProject.get(pid) ?? [];
             const ces = ceByProject.get(pid) ?? [];
 
-            const openRfis = rfis.filter(
-              (r) =>
-                (r.status as string) !== "closed" &&
-                (r.status as string) !== "Closed",
-            );
+            const openRfis = rfis.filter((r) => isOpenRfiStatus(r.status));
             const overdueRfis = openRfis.filter(
               (r) => r.due_date && (r.due_date as string) < now,
             );
@@ -1454,49 +1459,8 @@ export function createOperationalTools(
     // 9. Semantic Search (unified document_chunks + insights + knowledge base)
     // -----------------------------------------------------------------------
     semanticSearch: tool({
-      description:
-        "Search across ALL project knowledge using semantic similarity: " +
-        "meeting transcripts (full chunked transcripts, segment summaries, meeting summaries), " +
-        "emails, Teams messages, OneDrive documents, insights (decisions/risks/opportunities), " +
-        "company knowledge base entries (lessons learned, pricing intel, vendor intel), " +
-        "and other indexed content. " +
-        "Uses unified document_chunks table (24K+ chunks) + insights + knowledge base. " +
-        "Works CROSS-PROJECT by default — no project filter needed. " +
-        "Optionally filter by project name or ID, or by source type. Use when " +
-        "the user asks a broad question that could span multiple data types, " +
-        "or when keyword search isn't finding results.",
-      inputSchema: z.object({
-        query: z.string().describe("Natural language search query"),
-        projectId: z
-          .number()
-          .optional()
-          .describe(
-            "Optional project ID filter. When provided, non-matching document chunks are excluded.",
-          ),
-        projectName: z
-          .string()
-          .optional()
-          .describe(
-            "Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(10)
-          .describe("Number of results to return"),
-        threshold: z
-          .number()
-          .optional()
-          .default(0.3)
-          .describe("Minimum similarity threshold (0-1)"),
-        skipRerank: z
-          .boolean()
-          .optional()
-          .default(false)
-          .describe(
-            "Skip the LLM reranker when the caller needs fast deterministic retrieval.",
-          ),
-      }),
+      description: semanticSearchDescription,
+      inputSchema: semanticSearchInputSchema,
       execute: withTrace(
         "semanticSearch",
         options,
@@ -2232,33 +2196,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchMeetingsByTopic: tool({
-      description:
-        "Search for meetings about a specific topic across ALL projects. " +
-        "Returns enriched results with speaker quotes, decisions, risks, " +
-        "and action items from meeting digests and segments. " +
-        "Use this when the user asks 'find meetings about X' or " +
-        "'what have we discussed about Y'. Works cross-project by default. " +
-        "Combines keyword search AND semantic search for best coverage.",
-      inputSchema: z.object({
-        topic: z
-          .string()
-          .describe(
-            "The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')",
-          ),
-        projectId: z
-          .number()
-          .optional()
-          .describe("Optional project ID to filter by"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Optional project name to filter by (e.g. 'Uniqlo')"),
-        maxResults: z
-          .number()
-          .optional()
-          .default(10)
-          .describe("Max meetings to return"),
-      }),
+      description: searchMeetingsByTopicDescription,
+      inputSchema: searchMeetingsByTopicInputSchema,
       execute: withTrace(
         "searchMeetingsByTopic",
         options,
@@ -2425,27 +2364,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     getMeetingDetails: tool({
-      description:
-        "Get the FULL details of a specific meeting including its digest, " +
-        "segments with speaker discussion topics, decisions, risks, and " +
-        "action items. Provide EITHER meetingId (exact DB id from a prior search) " +
-        "OR meetingTitle (the meeting name — will be looked up automatically). " +
-        "NEVER guess or construct a meetingId from a date or title string. " +
-        "If you only know the title, pass meetingTitle and the ID will be resolved.",
-      inputSchema: z.object({
-        meetingId: z
-          .string()
-          .optional()
-          .describe(
-            "The exact meeting ID from document_metadata.id — only use this if you got it from a prior searchMeetingsByTopic or getMeetingsByDate call",
-          ),
-        meetingTitle: z
-          .string()
-          .optional()
-          .describe(
-            "The meeting title to search for — use this when you know the name but not the ID",
-          ),
-      }),
+      description: getMeetingDetailsDescription,
+      inputSchema: getMeetingDetailsInputSchema,
       execute: withTrace(
         "getMeetingDetails",
         options,
@@ -3159,63 +3079,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     getRecentEmails: tool({
-      description:
-        "Get a list of Outlook emails received within a specific date range. " +
-        "Use this when the user asks a time-based question about emails: " +
-        "'what emails did I receive today?', 'show me emails from this week', " +
-        "'any emails received yesterday?', 'how many emails came in today?'. " +
-        "This queries the backend Microsoft Graph live inbox first. Synced Outlook intake rows are fallback only — never treat them as live inbox truth. " +
-        "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
-        "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
-        "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +
-        "Always summarize results by thread, not as a raw individual-message dump.",
-      inputSchema: z.object({
-        daysBack: z
-          .number()
-          .optional()
-          .default(1)
-          .describe(
-            "How many days back to look. 0 = today only, 1 = yesterday through now, 7 = last 7 days. Default 1.",
-          ),
-	        mailboxFilter: z
-	          .string()
-	          .optional()
-	          .describe(
-	            "Optional: filter to a specific synced mailbox email address. Use bclymer@alleatogroup.com for Brandon/operator inbox prompts. Omit only for the signed-in user's synced mailbox.",
-	          ),
-        participantEmail: z
-          .string()
-          .optional()
-          .describe(
-            "Optional participant email for questions like emails to Brandon or from Brandon.",
-          ),
-        direction: z
-          .enum(["mailbox", "to", "from", "to_or_from"])
-          .optional()
-          .default("mailbox")
-          .describe(
-            "mailbox = messages in the mailbox; to/from filters by participantEmail. Use 'to' for emails addressed to the person.",
-          ),
-        timeZone: z
-          .string()
-          .optional()
-          .default("America/New_York")
-          .describe(
-            "Business timezone for interpreting 'today'. Default America/New_York.",
-          ),
-        groupByThread: z
-          .boolean()
-          .optional()
-          .default(true)
-          .describe(
-            "Return consolidated conversation groups instead of individual messages. Default true.",
-          ),
-        limit: z
-          .number()
-          .optional()
-          .default(50)
-          .describe("Max thread groups or emails to return. Default 50."),
-      }),
+      description: getRecentEmailsDescription,
+      inputSchema: getRecentEmailsInputSchema,
       execute: withTrace(
         "getRecentEmails",
         options,
@@ -3528,26 +3393,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchEmails: tool({
-      description:
-        "Semantic search across Outlook email content synced from Microsoft 365. " +
-        "Use this when the user asks about a TOPIC in emails — not a date range. " +
-        "Examples: 'any emails about the permit delay?', 'what did we send to the GC about change orders?', " +
-        "'find emails mentioning the subcontractor dispute'. " +
-        "For date-based questions ('what emails today?', 'show me this week's emails'), use getRecentEmails instead. " +
-        "Returns email subject, sender/recipients, date, and relevant content. " +
-        "Always cite results as 'email from [participants] on [date]'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in emails — e.g. 'permit delay notification' or 'invoice dispute with Turner'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of email chunks to return"),
-      }),
+      description: searchEmailsDescription,
+      inputSchema: searchEmailsInputSchema,
       execute: withTrace(
         "searchEmails",
         options,
@@ -3573,26 +3420,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchTeamsMessages: tool({
-      description:
-        "Search Microsoft Teams channel message threads. " +
-        "Use this when the user asks about Teams conversations, " +
-        "channel discussions, or anything communicated in Teams " +
-        "(e.g. 'what did the team say about the schedule in Teams?', " +
-        "'find Teams messages about the subcontractor issue'). " +
-        "Returns channel name, participants, date, and message content. " +
-        "Always cite results as 'Teams message in [channel] on [date]'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in Teams messages — e.g. 'schedule delay discussion' or 'RFI response from Hensel'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of Teams message chunks to return"),
-      }),
+      description: searchTeamsMessagesDescription,
+      inputSchema: searchTeamsMessagesInputSchema,
       execute: withTrace(
         "searchTeamsMessages",
         options,
@@ -3618,25 +3447,8 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
 
     searchExternalDocuments: tool({
-      description:
-        "Search OneDrive files and uploaded project documents (PDFs, Word docs, spreadsheets, etc.). " +
-        "Use this when the user asks about specific documents, reports, specs, or files " +
-        "(e.g. 'find the geotechnical report', 'what does the contract say about liquidated damages?', " +
-        "'search the RFP document for insurance requirements'). " +
-        "Distinct from meeting transcripts — this searches files and documents. " +
-        "Always cite results as 'document: [title] ([date if available])'.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe(
-            "What to search for in documents — e.g. 'liquidated damages clause' or 'geotechnical boring results'",
-          ),
-        matchCount: z
-          .number()
-          .optional()
-          .default(8)
-          .describe("Number of document chunks to return"),
-      }),
+      description: searchExternalDocumentsDescription,
+      inputSchema: searchExternalDocumentsInputSchema,
       execute: withTrace(
         "searchExternalDocuments",
         options,

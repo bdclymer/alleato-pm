@@ -3,12 +3,12 @@ import { z } from "zod";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-interface RouteParams {
-  params: Promise<{ personId: string }>;
-}
+type RouteParams = {
+  personId: string;
+};
 
 const ProjectAccessBody = z.object({
   project_id: z.coerce.number().int().positive(),
@@ -39,9 +39,7 @@ function getProjectIds(body: z.infer<typeof ProjectAccessPostBody>) {
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
   if (!user) {
     throw new GuardrailError({
@@ -142,11 +140,11 @@ async function assertProjectTemplate(templateId: string, where: string) {
   return template;
 }
 
-export const POST = withApiGuardrails(
+export const POST = withApiGuardrails<RouteParams>(
   "permissions/users/[personId]/project-access#POST",
-  async ({ request, params }: { request: Request } & RouteParams) => {
+  async ({ request, params }) => {
     await requireAdmin("permissions/users/[personId]/project-access#POST");
-    const { personId } = await params;
+    const { personId } = params;
     const parsed = ProjectAccessPostBody.safeParse(await request.json());
 
     if (!parsed.success) {
@@ -193,11 +191,11 @@ export const POST = withApiGuardrails(
   },
 );
 
-export const DELETE = withApiGuardrails(
+export const DELETE = withApiGuardrails<RouteParams>(
   "permissions/users/[personId]/project-access#DELETE",
-  async ({ request, params }: { request: Request } & RouteParams) => {
+  async ({ request, params }) => {
     await requireAdmin("permissions/users/[personId]/project-access#DELETE");
-    const { personId } = await params;
+    const { personId } = params;
     const parsed = ProjectAccessBody.pick({ project_id: true }).safeParse(await request.json());
 
     if (!parsed.success) {

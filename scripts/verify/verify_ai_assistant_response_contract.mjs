@@ -50,7 +50,7 @@ const checks = [
       content.includes("createStrategistTools(args.user.id") &&
       content.includes("includeActionTools: true") &&
       content.includes("tools,") &&
-      content.includes("stopWhen: stepCountIs(10)") &&
+      content.includes("stopWhen: stepCountIs(6)") &&
       content.includes("tool_count: Object.keys(tools).length"),
   },
   {

@@ -279,7 +279,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Project details with tasks and insights",
+            "description": "Project details with open tasks",
             "content": {
               "application/json": {
                 "schema": {
@@ -292,12 +292,6 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/Task"
-                      }
-                    },
-                    "insights": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Insight"
                       }
                     }
                   }
@@ -509,12 +503,6 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/Task"
-                      }
-                    },
-                    "insights": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Insight"
                       }
                     }
                   }
@@ -1223,45 +1211,6 @@
           },
           "project_id": {
             "type": "integer"
-          }
-        }
-      },
-      "Insight": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "risk",
-              "decision",
-              "opportunity",
-              "blocker"
-            ]
-          },
-          "summary": {
-            "type": "string"
-          },
-          "details": {
-            "type": "string"
-          },
-          "impact": {
-            "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high",
-              "critical"
-            ]
-          },
-          "project_id": {
-            "type": "integer"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

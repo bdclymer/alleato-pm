@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
@@ -25,9 +25,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid reviewStatus" }, { status: 400 });
     }
 
-    const authClient = await createClient();
-    const { data: auth } = await authClient.auth.getUser();
-    const reviewer = auth.user?.email ?? auth.user?.id ?? null;
+    const user = await getApiRouteUser();
+    const reviewer = user?.email ?? user?.id ?? null;
 
     const supabase = createServiceClient();
     const { error } = await supabase

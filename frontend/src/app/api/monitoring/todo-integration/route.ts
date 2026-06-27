@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { z } from "zod";
 
 /**
@@ -55,9 +55,8 @@ export const GET = withApiGuardrails(
   "monitoring/todo-integration#GET",
   async () => {
   
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#GET", message: "Authentication required." });
     }
     const projectRoot = process.cwd().replace("/frontend", "");
@@ -80,9 +79,8 @@ export const POST = withApiGuardrails(
   "monitoring/todo-integration#POST",
   async ({ request }) => {
   
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#POST", message: "Authentication required." });
     }
     const body = await parseJsonBody(

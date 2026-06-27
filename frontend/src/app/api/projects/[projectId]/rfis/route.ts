@@ -7,7 +7,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { notifyRfiOpened } from "@/lib/rfi/rfi-notify";
@@ -146,9 +146,7 @@ export const POST = withApiGuardrails(
     const body = await request.json();
 
     // Auth check
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis#POST", message: "Authentication required." });
     }

@@ -6,7 +6,7 @@ import {
 } from "@/lib/documents/pattern-c-attachments";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const DELETE = withApiGuardrails(
@@ -19,8 +19,8 @@ export const DELETE = withApiGuardrails(
     };
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]#DELETE",
@@ -53,8 +53,8 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/attachments/[attachmentId]#GET",

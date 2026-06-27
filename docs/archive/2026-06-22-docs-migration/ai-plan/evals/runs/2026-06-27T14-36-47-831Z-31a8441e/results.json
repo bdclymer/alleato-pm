@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-06-27T14:36:53.535Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "bundle": null,
+  "filter": null,
+  "totalCases": 1,
+  "passed": 1,
+  "failed": 0,
+  "warningCount": 0,
+  "backendDeepAgentMemoryCandidateCount": 0,
+  "judge": {
+    "enabled": false,
+    "model": "openai/gpt-5.4-mini",
+    "judgedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "averageScore": null
+  },
+  "slowestCases": [
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "durationMs": 5141,
+      "status": "pass",
+      "warnings": []
+    }
+  ],
+  "toolCoverage": {
+    "backendDeepAgentExecutiveBriefing": 1,
+    "sourceSpecificRagRetrieval": 1
+  },
+  "intentDistribution": {
+    "source_lookup": 1
+  },
+  "results": [
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "prompt": "Did Brandon say anything about billing in recent meetings that I need to remember?",
+      "selectedProjectId": null,
+      "sessionId": "36e618c6-f2f8-48de-b533-17afdb118d19",
+      "sessionLabel": "eval-2026-06-27T14-36-47-831Z-31a8441e-source-lookup-meetings",
+      "startedAt": "2026-06-27T14:36:47.938Z",
+      "finishedAt": "2026-06-27T14:36:53.534Z",
+      "durationMs": 5141,
+      "httpStatus": 200,
+      "streamError": null,
+      "streamEventCount": 8,
+      "persistedFound": true,
+      "score": {
+        "status": "pass",
+        "failures": [],
+        "warnings": [],
+        "observations": [
+          "tools fired: backendDeepAgentExecutiveBriefing, sourceSpecificRagRetrieval"
+        ],
+        "toolNames": [
+          "backendDeepAgentExecutiveBriefing",
+          "sourceSpecificRagRetrieval"
+        ],
+        "familiesHit": [
+          "project",
+          "financial",
+          "risk",
+          "meetings",
+          "actions",
+          "task_management",
+          "source_health"
+        ],
+        "finalTextLength": 6277,
+        "finalText": "I treated this as a source lookup, not a project status report.\n\n**Recent Meetings**\n\n1. **Ice Cream Shop Equipment Review** — 2026-06-26\n   # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiew... [Source: 01KW1PP717RNHRDV56RJZF614P]\n2. **Quarterly Meeting Brainstorm** — 2026-06-25\n   # Quarterly Meeting Brainstorm **Date:** 6/25/2026, 3:00:00 PM **Duration:** 1 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com,jgaona@alleatogroup.com, mcalcetero@alleatogroup.com, jgaona@alleatogroup.com ## Summary - **Insurance Policy Update:** Shift from Cincinnati t... [Source: 01KVV1ZXBWSG077B23VWVA0F7V]\n3. **Weekly Touch Base** — 2026-06-22\n   # Weekly Touch Base **Date:** 6/22/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** dfranklin@alleatogroup.com,njepson@alleatogroup.com,acannon@alleatogroup.com,kgreen@alleatogroup.com,mamico@alleatogroup.com,nbrimie@alleatogroup.com,ctragesser@alleatogroup.com,rrapean@alleatogroup.com,cgi... [Source: 01KV6SR4SQX64Y5X86XP4J265Q]\n4. **AlleatoGroup Virtual Meeting** — 2026-06-17\n   # AlleatoGroup Virtual Meeting **Date:** 6/17/2026, 5:30:00 PM **Duration:** 0 minutes **Participants:** sustainergy@sustainergy.coop,dfranklin@alleatogroup.com,loie@sustainergy.coop,acannon@alleatogroup.com, dfranklin@alleatogroup.com, loie@sustainergy.coop, acannon@alleatogroup.com ## Summary - **... [Source: 01KVB36BX0AWWXRG42VPQ0PPAA]\n5. **Goodwill Weekly OAC Meeting** — 2026-06-16\n   # Goodwill Weekly OAC Meeting **Date:** 6/16/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** njepson@alleatogroup.com,amulder@goodwillindy.org,bclymer@alleatogroup.com,jdawson@alleatogroup.com,bryce.clendenning@goodwillindy.org,fireflies@alleatogroup.com,ctragesser@alleatogroup.com,tinman... [Source: 01KTNFDNB0FSP7TXHB8X6HTKNP]\n6. **Salary and PTO review** — 2026-06-15\n   # Salary and PTO review **Date:** 6/15/2026, 3:00:00 PM **Duration:** 0 minutes **Participants:** aortiz@alleatogroup.com,mcalcetero@alleatogroup.com, mcalcetero@alleatogroup.com ## Summary - **PTO Policy:** Short appointments don’t need PTO; full/half days off count. Staff must notify HR and manage... [Source: 01KV5SMW8XBE46AR2AYRTFXAXV]\n7. **How to write commitments Job Planner** — 2026-06-12\n   # How to write commitments Job Planner **Date:** 6/12/2026, 5:45:00 PM **Duration:** 0 minutes **Participants:** dsatterfield@alleatogroup.com,acannon@alleatogroup.com,fireflies@alleatogroup.com, acannon@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Commitment Process:** Standard workf... [Source: 01KTYF2KMQ3VHQX96HW3DANVNC]\n8. **Dustin Interview- VP Role** — 2026-06-12\n   # Dustin Interview- VP Role **Date:** 6/12/2026, 1:00:00 PM **Duration:** 0 minutes **Participants:** jgaona@alleatogroup.com,fireflies@alleatogroup.com, fireflies@alleatogroup.com ## Summary - **Leadership Experience:** 17+ years leading a contracting firm, managing culture, operations, marketing,... [Source: 01KTSDHMWZK41424ATS0563A71]\n9. **Schedule Review** — 2026-06-03\n   # Schedule Review **Date:** 6/3/2026, 5:00:00 PM **Duration:** 1 minutes **Participants:** dsatterfield@alleatogroup.com,bwright@alleatogroup.com,phollingsworth@alleatogroup.com, dsatterfield@alleatogroup.com, bwright@alleatogroup.com ## Summary - **Scope Clarification:** Resolved discrepancies betw... [Source: 01KT72NMHWWNEN5CJWKXQ61NJT]\n10. **Weekly OPS (Estimators)** — 2026-06-02\n   # Weekly OPS (Estimators) **Date:** 6/2/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** mcalcetero@alleatogroup.com,bclymer@alleatogroup.com,bwright@alleatogroup.com,jdawson@alleatogroup.com,eandrade@alleatogroup.com,jrichardson@alleatogroup.com,fireflies@alleatogroup.com,dfranklin@alleat... [Source: 01KSQ8GCSF9XESN5NDRF5FBE2Z]\n\n**Meeting Insights**\n- Decisions: Additionally, height standardization for countertops was agreed upon, along with ADA-compliant drop-down areas on both order and pickup sides. ## Short Summary The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter. ## Keywords Goodwill Retail, Ace Champagne, Union Collective, Construction progress, Permitting, Office remodel The team discussed the steady progress of various construction and remodeling projects, highlighting the completion of submissions for the Isurgeons remodel and the Goodwill Retail design, along with a budget increase approved for the latter.\n- Follow-ups: # Ice Cream Shop Equipment Review **Date:** 6/26/2026, 6:30:00 PM **Duration:** 0 minutes **Participants:** jerome.daksiewicz@dkgrar.com,g@damngoodinteriors.com,m@damngoodinteriors.com,acannon@alleatogroup.com,e@damngoodinteriors.com,dfranklin@alleatogroup.com,dstewart@fgschaefer.com, jerome.daksiewicz@dkgrar.com, g@damngoodinteriors.com, m@damngoodinteriors.com, e@damngoodinteriors.com, dfranklin@alleatogroup.com, dstewart@fgschaefer.com ## Summary - **CAD File Coordination:** Melissa’s team will send updated CAD drawings today; Daniel’s team to revise by Monday to avoid duplication and speed layout finalization. - **Menu Wall Space:** Limited wall space due to large windows; lowering/removing storage rack considered to increase menu visibility without hurting equipment space. Andrew committed to confirming display case specifications to ensure accurate millwork drawings, while concerns about limited wall space for menu visibility due to large windows were addressed.\n- Risks: - **Brooksville Road Permit:** Resubmitted, feedback expected within 5-10 days; follow-up call planned if delayed.\n\n**Observability**\n- Source checked: Recent meeting transcripts in Supabase document_metadata/document_chunks-backed source index.\n- Pulled 10 row(s) from Recent meeting transcripts; answer titles/dates are copied from Supabase rows.\n\n**Next Step**\n- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only.",
+        "backendDeepAgentMemory": {
+          "candidateCount": 0,
+          "candidates": []
+        },
+        "skillUsage": {
+          "totalSelected": 0,
+          "selectionSurface": null,
+          "skills": []
+        },
+        "latencyBudget": {
+          "warnDurationMs": 30000,
+          "maxDurationMs": 75000,
+          "durationMs": 5141
+        }
+      },
+      "expectedToolNames": [
+        "sourceSpecificRagRetrieval"
+      ],
+      "expectedToolFamilies": [
+        "meetings"
+      ]
+    }
+  ]
+}

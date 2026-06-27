@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import {
@@ -29,11 +29,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/drawings/upload-url#POST",
   async ({ request, params }) => {
     const { projectId } = await params;
-    const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
@@ -21,10 +21,8 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
+    const authError = null as Error | null;
 
     if (authError) {
       throw new GuardrailError({

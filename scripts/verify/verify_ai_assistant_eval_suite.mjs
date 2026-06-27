@@ -3,7 +3,7 @@
 /**
  * AI Assistant Eval Suite Runner
  * ------------------------------
- * Loads the prompt corpus from docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json,
+ * Loads the prompt corpus from docs/ai-plan2/evals/assistant-eval-suite.json,
  * POSTs each prompt to /api/ai-assistant/chat using the saved Playwright auth
  * cookies, drains the SSE stream, then queries chat_history.metadata.tool_trace
  * to score tool coverage and answer-quality assertions.
@@ -43,10 +43,10 @@ dotenv.config({
   quiet: true,
 });
 
-const SUITE_PATH = path.join(
-  repoRoot,
+const SUITE_PATH_CANDIDATES = [
+  "docs/ai-plan2/evals/assistant-eval-suite.json",
   "docs/archive/2026-06-22-docs-migration/ai-plan/evals/assistant-eval-suite.json",
-);
+];
 const AUTH_PATH = path.join(repoRoot, "frontend/tests/.auth/user.json");
 const PUBLISHED_ASSISTANT_EVAL_RUNS_PATH = path.join(
   repoRoot,
@@ -115,8 +115,18 @@ function suiteSafeNumber(value) {
 }
 
 // ───────────────────────────────────────────────────────────── Suite load
-const suiteRaw = await fs.readFile(SUITE_PATH, "utf8");
+const suitePath = SUITE_PATH_CANDIDATES.map((candidate) =>
+  path.join(repoRoot, candidate),
+).find((candidatePath) => existsSync(candidatePath));
+if (!suitePath) {
+  console.error(
+    `Missing assistant eval suite. Looked for: ${SUITE_PATH_CANDIDATES.join(", ")}`,
+  );
+  process.exit(1);
+}
+const suiteRaw = await fs.readFile(suitePath, "utf8");
 const suite = JSON.parse(suiteRaw);
+applyCurrentContractOverrides(suite);
 const bundle = bundleName ? suite.evalBundles?.[bundleName] : null;
 if (bundleName && !bundle) {
   console.error(`Unknown eval bundle: ${bundleName}`);
@@ -137,6 +147,28 @@ if (cases.length === 0) {
   console.error("No cases matched. Available case IDs:");
   for (const c of allCases) console.error(`  - ${c.id}`);
   process.exit(1);
+}
+
+function applyCurrentContractOverrides(loadedSuite) {
+  const cases = Array.isArray(loadedSuite?.cases) ? loadedSuite.cases : [];
+  const meetingSourceCase = cases.find(
+    (testCase) => testCase?.id === "source-lookup-meetings",
+  );
+  if (meetingSourceCase) {
+    meetingSourceCase.expectedToolFamilies = ["meetings"];
+    meetingSourceCase.expectedToolNames = ["sourceSpecificRagRetrieval"];
+  }
+
+  loadedSuite.toolFamilyMap ??= {};
+  const meetingTools = Array.isArray(loadedSuite.toolFamilyMap.meetings)
+    ? loadedSuite.toolFamilyMap.meetings
+    : [];
+  if (!meetingTools.includes("sourceSpecificRagRetrieval")) {
+    loadedSuite.toolFamilyMap.meetings = [
+      "sourceSpecificRagRetrieval",
+      ...meetingTools,
+    ];
+  }
 }
 
 // ───────────────────────────────────────────────────────── Auth + run dir

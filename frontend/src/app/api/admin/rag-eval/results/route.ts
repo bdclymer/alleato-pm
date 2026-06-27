@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import assistantEvalRunsManifest from "@/data/assistant-eval-runs.json";
 
 type AssistantEvalCase = {
@@ -52,8 +52,8 @@ type AssistantEvalRun = {
  */
 export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async () => {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/admin/rag-eval/results#GET", message: "Authentication required.", status: 401 });
   }
   const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();

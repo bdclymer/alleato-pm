@@ -207,8 +207,10 @@ services:
         sync: false
       - key: MICROSOFT_SYNC_USERS
         sync: false
+      - key: OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS
+        value: bclymer@alleatogroup.com
       - key: OUTLOOK_SYNC_MAX_USERS
-        value: "1"
+        value: "2"
       - key: SHAREPOINT_SYNC_MAX_FOLDERS
         value: "2"
       - key: GRAPH_SYNC_ENABLED
@@ -412,7 +414,9 @@ services:
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
-        value: "true"
+        value: "false"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED
+        value: "false"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
         value: "true"
       - key: NOTIFICATION_SERVICE_KEY
@@ -832,7 +836,9 @@ services:
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
-        value: "true"
+        value: "false"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX_MUTATIONS_ENABLED
+        value: "false"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
         value: "true"
       - key: MICROSOFT_CLIENT_ID

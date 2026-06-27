@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const ruleTypes = ["title_keyword", "keyword", "phrase", "email", "domain"] as const;
@@ -36,12 +36,9 @@ function normalizePattern(pattern: string) {
 
 async function requireAdmin(where: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
 
-  if (userError || !user) {
+  if (!user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",
       where,

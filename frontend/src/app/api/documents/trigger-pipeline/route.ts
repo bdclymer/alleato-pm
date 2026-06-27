@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createRagServiceClient } from "@/lib/supabase/service";
 
 type PipelinePhase = "parse" | "embed" | "extract";
@@ -9,12 +9,8 @@ type PipelinePhase = "parse" | "embed" | "extract";
 export const POST = withApiGuardrails(
   "documents/trigger-pipeline#POST",
   async ({ request }) => {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "documents/trigger-pipeline#POST",
@@ -140,12 +136,8 @@ export const POST = withApiGuardrails(
 export const GET = withApiGuardrails(
   "documents/trigger-pipeline#GET",
   async () => {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "documents/trigger-pipeline#GET",

@@ -9,7 +9,7 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { sendEmail } from "@/lib/email/send";
 import { shouldSendSubmittalDistributionEmail } from "@/lib/submittals/distribution-email-settings";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
@@ -34,12 +34,9 @@ export const POST = withApiGuardrails(
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/distribute#POST", message: "Authentication required." });
     }
 

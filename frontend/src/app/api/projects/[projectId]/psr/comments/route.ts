@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireDeveloperApi } from "@/lib/auth/require-developer";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // ---------------------------------------------------------------------------
@@ -86,9 +86,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getApiRouteUser();
 
     let body: { month?: string; section?: string; body?: string };
     try {

@@ -48,6 +48,7 @@ import {
   isPersonalTaskRegisterRequest,
 } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { preserveActionToolTraceOutput } from "@/lib/ai/action-tool-trace";
 import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
@@ -85,6 +86,7 @@ import {
 } from "@/lib/ai/services/marketing-service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createChatHistoryWriter } from "./chat-history-writer";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
   isDeepAgentsStrategistModelId,
@@ -778,6 +780,17 @@ function buildLiveToolTrace(
   }) as Record<string, unknown> | undefined;
   const error = asString(trace.error);
 
+  const summarizedOutput = {
+    source: output.source ?? microsoftLiveTrace?.source ?? asRecord(microsoftLiveTrace?.output).source ?? null,
+    count: output.count ?? null,
+    summary: output.summary ?? null,
+    error: output.error ?? error ?? null,
+    orchestrator: response.orchestrator ?? null,
+    mode: response.mode ?? null,
+    actionCount: Array.isArray(response.actions) ? response.actions.length : null,
+    toolTrace: responseToolTrace,
+  };
+
   return {
     tool,
     toolName: tool,
@@ -789,16 +802,10 @@ function buildLiveToolTrace(
     output:
       trace.output === undefined
         ? undefined
-        : {
-            source: output.source ?? microsoftLiveTrace?.source ?? asRecord(microsoftLiveTrace?.output).source ?? null,
-            count: output.count ?? null,
-            summary: output.summary ?? null,
-            error: output.error ?? error ?? null,
-            orchestrator: response.orchestrator ?? null,
-            mode: response.mode ?? null,
-            actionCount: Array.isArray(response.actions) ? response.actions.length : null,
-            toolTrace: responseToolTrace,
-          },
+        : preserveActionToolTraceOutput({
+            rawOutput: trace.output,
+            summarizedOutput,
+          }),
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
   };
@@ -1862,16 +1869,40 @@ function buildAnswerDebugMetadata(params: {
   };
 }
 
-function shouldUseDirectRecentTeamsFastPath(params: {
+function shouldUseDirectSourceSpecificFastPath(params: {
   plan: ReturnType<typeof planRetrieval>;
   retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
 }): boolean {
   return (
     params.plan.responseFormat === "source_specific_rag" &&
-    params.plan.sources.sourceSpecificRag?.kind === "recent_teams_discussions" &&
+    (
+      params.plan.sources.sourceSpecificRag?.kind === "recent_teams_discussions" ||
+      params.plan.sources.sourceSpecificRag?.kind === "recent_meetings" ||
+      params.plan.sources.sourceSpecificRag?.kind === "meetings_on_date"
+    ) &&
     typeof params.retrievalCtx.sourceSpecificRagAnswer?.content === "string" &&
     params.retrievalCtx.sourceSpecificRagAnswer.content.trim().length > 0
   );
+}
+
+function directSourceSpecificResponseLabel(
+  kind: NonNullable<
+    ReturnType<typeof planRetrieval>["sources"]["sourceSpecificRag"]
+  >["kind"],
+): string {
+  if (kind === "recent_teams_discussions") return "source-specific-recent-teams";
+  if (kind === "meetings_on_date") return "source-specific-meetings-on-date";
+  return "source-specific-recent-meetings";
+}
+
+function directSourceSpecificStatusMessage(
+  kind: NonNullable<
+    ReturnType<typeof planRetrieval>["sources"]["sourceSpecificRag"]
+  >["kind"],
+): string {
+  return kind === "recent_teams_discussions"
+    ? "Recent Teams source answer returned"
+    : "Meeting source answer returned";
 }
 
 async function persistDirectDeepAgentResponse(params: {
@@ -2124,6 +2155,12 @@ async function tryWriteProjectPacketFastPath(params: {
 }
 
 async function runChatV2(args: HandlerArgs): Promise<Response> {
+  // One persistence seam for every chat_history write this request makes —
+  // centralizes the row shape and the loud-failure contract (see chat-history-writer).
+  const chatHistory = createChatHistoryWriter(args.supabase, {
+    sessionId: args.sessionId,
+    userId: args.user.id,
+  });
   const lastUserMessage = [...args.messages]
     .reverse()
     .find((m) => m.role === "user");
@@ -2984,22 +3021,15 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (lastUserContent.trim()) {
-        const { error } = await args.supabase.from("chat_history").insert({
-          session_id: args.sessionId,
-          user_id: args.user.id,
-          role: "user",
-          content: lastUserContent,
-          metadata: {
+        await chatHistory.persistOrThrow(
+          "user",
+          lastUserContent,
+          {
             architecture: "retrieval-planner-v2",
             client_message_id: lastUserMessage?.id ?? null,
           },
-        });
-
-        if (error) {
-          throw new Error(
-            `Persisting the user message failed: ${error.message}`,
-          );
-        }
+          "user message",
+        );
       }
 
       if (isMicrosoftSpecialistDelegationPlan(plan.reason)) {
@@ -3081,7 +3111,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             writeTextResponse(
               writer,
               "strategist-microsoft-executive-assistant",
-              inboxWidget!.summary,
+              content,
             );
           } else {
             writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
@@ -3091,7 +3121,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "assistant",
-            content: inboxWidget ? inboxWidget.summary : content,
+            content,
             metadata: {
               architecture: "retrieval-planner-v2",
               delegated_orchestrator: "microsoft-executive-assistant",
@@ -4071,7 +4101,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         }
       }
 
-      if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx })) {
+      if (shouldUseDirectSourceSpecificFastPath({ plan, retrievalCtx })) {
+        const sourceSpecificKind =
+          plan.sources.sourceSpecificRag?.kind ?? "recent_meetings";
         const sourceAnswer = sanitizeDirectSourceSpecificAnswer(
           retrievalCtx.sourceSpecificRagAnswer?.content ?? "",
         );
@@ -4099,12 +4131,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           sessionId: args.sessionId,
           userId: args.user.id,
           content,
-          responseLabel: "source-specific-recent-teams",
+          responseLabel: directSourceSpecificResponseLabel(sourceSpecificKind),
           sourceDebug,
           trace: {
             input: lastUserContent,
             intent: plan.intent,
-            modelId: "retrieval-planner-v2-direct-recent-teams",
+            modelId: `retrieval-planner-v2-direct-${sourceSpecificKind}`,
             selectedProjectId: args.selectedProjectId ?? null,
             toolTrace,
           },
@@ -4131,7 +4163,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         responseAlreadyPersisted = true;
         writeTextResponse(
           writer,
-          "strategist-direct-recent-teams",
+          `strategist-direct-${sourceSpecificKind}`,
           content,
         );
         writer.write({
@@ -4139,7 +4171,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           id: "strategist-status",
           data: {
             stage: "complete",
-            message: "Recent Teams source answer returned",
+            message: directSourceSpecificStatusMessage(sourceSpecificKind),
             status: "success",
             timestamp: new Date().toISOString(),
           },

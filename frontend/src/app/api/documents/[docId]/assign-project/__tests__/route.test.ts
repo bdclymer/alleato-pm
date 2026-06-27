@@ -1,10 +1,13 @@
 import { NextRequest } from "next/server";
 import { PATCH } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 const createClientMock = createClient as jest.Mock;
 
@@ -19,6 +22,10 @@ function makePatchRequest(body: Record<string, unknown>): NextRequest {
 describe("documents assign-project PATCH route", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
   });

@@ -1,16 +1,13 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export async function requireAdmin(where: string): Promise<void> {
   // Use the user client only for the auth check (proves the session is valid).
   // Use the service client for the profile lookup so RLS on user_profiles
   // cannot block the check itself.
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const userError = null as Error | null;
 
   if (userError || !user) {
     throw new GuardrailError({

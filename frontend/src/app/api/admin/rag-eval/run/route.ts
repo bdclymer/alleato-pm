@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 /**
  * POST /api/admin/rag-eval/run
@@ -18,7 +18,8 @@ const RagEvalRequestSchema = z.object({
 export const POST = withApiGuardrails("/api/admin/rag-eval/run#POST", async ({ request }) => {
   // OWASP A01:2021 - Broken Access Control: require authenticated admin
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
+  const authError = null as Error | null;
   if (authError || !user) {
     throw new GuardrailError({
       code: "AUTH_EXPIRED",

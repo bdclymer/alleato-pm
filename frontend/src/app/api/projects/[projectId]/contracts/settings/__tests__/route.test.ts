@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 import { GET, PUT } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
+  getApiRouteUser: jest.fn(),
   createClient: jest.fn(),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 jest.mock("@/lib/permissions-guard", () => ({
   requirePermission: jest.fn(),
@@ -25,6 +28,10 @@ const buildQuery = (response: { data: unknown; error: unknown }) => ({
 describe("/api/projects/[projectId]/contracts/settings", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     // Grant permission by default for all PUT tests
     requirePermissionMock.mockResolvedValue({ denied: false, userId: "user-1", personId: "person-1" } as Awaited<ReturnType<typeof requirePermission>>);
   });

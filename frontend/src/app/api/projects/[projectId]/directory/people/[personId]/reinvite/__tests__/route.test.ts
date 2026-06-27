@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { POST } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const permissionServiceMock = {
   hasPermission: jest.fn(),
@@ -14,6 +14,8 @@ jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
   getApiRouteUser: jest.fn().mockResolvedValue(null),
 }));
+
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 const createClientMock = createClient as jest.Mock;
 
@@ -30,6 +32,10 @@ describe("Directory reinvite route", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockImplementation(async () => {
+      const client = await createClientMock();
+      return (await client.auth.getUser()).data.user ?? null;
+    });
     supabaseMock = {
       auth: {
         getUser: jest.fn().mockResolvedValue({

@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 const WHERE = "projects/[projectId]/estimates/[estimateId]/scope-items/[scopeItemId]";
 type Params = { projectId: string; estimateId: string; scopeItemId: string };
@@ -14,8 +14,8 @@ export const PATCH = withApiGuardrails<Params>(WHERE + "#PATCH", async ({ reques
   const { estimateId, scopeItemId } = await params;
   const supabase = await createClient();
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 
@@ -49,8 +49,8 @@ export const DELETE = withApiGuardrails<Params>(WHERE + "#DELETE", async ({ para
   const { estimateId, scopeItemId } = await params;
   const supabase = await createClient();
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
   }
 

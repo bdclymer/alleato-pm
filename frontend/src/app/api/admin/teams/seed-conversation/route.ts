@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
 // Teams Bot Framework default service URL for North America / AMER region.
@@ -100,10 +100,7 @@ function encodeThreadId(conversationId: string, serviceUrl: string): string {
 
 export const POST = withApiGuardrails("admin/teams/seed-conversation#POST", async ({ request }): Promise<Response> => {
   // Auth: require active session
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

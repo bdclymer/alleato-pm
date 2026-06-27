@@ -120,7 +120,8 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
     Stages:
       1. Parser    — parse markdown, LLM segmentation → meeting_segments
       2. Embedder  — chunk + embed → document_chunks, document_metadata.summary_embedding
-      3. Extractor — structured extraction → insights (decisions/risks/opportunities), tasks
+      3. Extractor — structured extraction → source signal candidates,
+         packet-first insight cards, tasks
 
     The digest stage (formerly Stage 4) was removed. Fireflies provides a high-quality
     summary natively in document_metadata.summary; the LLM digest was redundant.

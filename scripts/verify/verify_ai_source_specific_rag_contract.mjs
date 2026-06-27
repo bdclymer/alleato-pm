@@ -36,9 +36,11 @@ const requiredFragments = [
   "detectSourceLookupRecentTeamsRequest",
   "buildSourceSpecificRagAnswer",
   "sourceSpecificRagRetrieval",
-  "shouldUseDirectRecentTeamsFastPath",
+  "shouldUseDirectSourceSpecificFastPath",
   "direct-source-specific-rag",
   "source-specific-recent-teams",
+  "source-specific-recent-meetings",
+  "Meeting source answer returned",
   "groupTeamsRows",
   "conversation/day bucket",
   "teams rag",
@@ -101,7 +103,7 @@ if (!executorOrderingOk) {
   failures.push("retrieval executor must prefetch source-specific RAG into retrieval context before model synthesis");
 }
 
-const directTeamsFastPathIndex = handler.indexOf("if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx }))");
+const directTeamsFastPathIndex = handler.indexOf("if (shouldUseDirectSourceSpecificFastPath({ plan, retrievalCtx }))");
 const streamTextIndex = handler.indexOf(
   "streamText",
   Math.max(directTeamsFastPathIndex, 0),

@@ -1,0 +1,80 @@
+/Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[Outlook] Inbox delta token failed for bclymer@alleatogroup.com; retrying full folder delta.
+[Graph] Delta fetch capped at pages=3 items=30 for /users/bclymer@alleatogroup.com/mailFolders/Inbox/messages/delta?$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,bodyPreview,body,categories,importance,hasAttachments,webLink,internetMessageId,conversationId,internetMessageHeaders&$top=50&$filter=receivedDateTime ge 2026-05-20T00:00:00Z; preserving prior delta token=False
+[Outlook] Limiting bclymer@alleatogroup.com mailbox sync to 25/31 delta items. Raise OUTLOOK_SYNC_MAX_MESSAGES_PER_MAILBOX for a deliberate backlog drain.
+{
+  "status": "complete",
+  "total_synced": 17,
+  "outlook": 17,
+  "teams": 0,
+  "teams_dm": 0,
+  "onedrive": 0,
+  "sharepoint": 0,
+  "errors": [],
+  "phases": {
+    "source_sync": "enabled",
+    "embedding": "enabled",
+    "ocr": "enabled",
+    "attachment_promotion": "enabled"
+  },
+  "outlook_users_selected": [
+    "bclymer@alleatogroup.com"
+  ],
+  "embed": {
+    "embedded": 1,
+    "skipped": 0,
+    "skipped_disabled": 9,
+    "total_chunks": 1,
+    "errors": 0,
+    "by_category": {
+      "email": 1
+    }
+  },
+  "outlook_vectorization_status": {
+    "bclymer@alleatogroup.com": {
+      "scanned": 0,
+      "updated": 0,
+      "failed": 0,
+      "statuses": {},
+      "errors": []
+    }
+  },
+  "ocr": {
+    "status": "ok",
+    "seen": 0,
+    "ocr_full": 0,
+    "ocr_partial": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "embed_attachments": {
+    "embedded": 0,
+    "errors": 0
+  },
+  "embed_fireflies": {
+    "embedded": 0,
+    "errors": 0
+  },
+  "attachment_promotion": {
+    "seen": 0,
+    "promoted": 0,
+    "skipped": 0,
+    "review_needed": 0,
+    "failed": 0,
+    "failures": []
+  },
+  "intelligence_extraction": {
+    "since": "2026-06-27T10:46:11.092428+00:00",
+    "projects": 0,
+    "emails": 0,
+    "teams": 0,
+    "cards_written": 0,
+    "tasks_written": 0,
+    "synthesis_packets_written": 0,
+    "synthesis_packets_skipped": 0,
+    "pm_projection_rows": {},
+    "errors": []
+  },
+  "phase": "outlook"
+}

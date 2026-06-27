@@ -34,7 +34,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient, createClientWithToken } from '@/lib/supabase/server'
+import { createClient, createClientWithToken, getApiRouteUser } from '@/lib/supabase/server'
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from 'next/server'
 import { createChangeEventSchema, changeEventQuerySchema } from './validation'
@@ -649,20 +649,20 @@ export const POST = withApiGuardrails(
     const { client: supabase, token } = await getSupabaseClient(request)
     const body = await request.json()
 
-    // Get current user - pass token directly if available
-    const { data: { user }, error: authError } = token
-      ? await supabase.auth.getUser(token)
-      : await supabase.auth.getUser()
+    // Get current user. With an explicit bearer token (e.g. Playwright) validate
+    // it directly; otherwise decode the cookie JWT in-process — no Supabase Auth
+    // network call, so it can't trip the parallel-refresh session-revocation race.
+    const user = token
+      ? (await supabase.auth.getUser(token)).data.user
+      : await getApiRouteUser();
 
-    if (authError || !user) {
+    if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
         where: "projects/[projectId]/change-events#POST",
         message: "Unauthorized change event creation request.",
         status: 401,
         severity: "medium",
-        details: authError?.message ? { reason: authError.message } : undefined,
-        cause: authError ?? undefined,
       });
     }
 

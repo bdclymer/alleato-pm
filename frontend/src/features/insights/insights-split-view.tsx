@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   AlertTriangle,
   Clock,
   Calendar,
+  FilePlus2,
   User,
   Building2,
   Target,
@@ -17,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
+import { AiFeedbackControl } from "@/components/ai/ai-feedback-control";
 import { cn } from "@/lib/utils";
 import type { InsightRow } from "./insights-types";
 import { SEVERITY_VARIANT_MAP, STATUS_VARIANT_MAP } from "./insights-types";
@@ -69,16 +72,25 @@ function InsightDetail({
             {item.title}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onOpenFull}
-          className="shrink-0 gap-1.5"
-        >
-          <ArrowUpRight className="h-3.5 w-3.5" />
-          Full view
-        </Button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <AiFeedbackControl
+            surface="insight_card"
+            subjectType={item.type}
+            subjectId={item.id}
+            projectId={item.projectId}
+            contentText={[item.title, item.why_it_matters].filter(Boolean).join(" ")}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onOpenFull}
+            className="gap-1.5"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5" />
+            Full view
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
@@ -150,6 +162,16 @@ function InsightDetail({
               {item.next_action}
             </p>
           </div>
+        )}
+
+        {/* Convert a change-management signal into a tracked change event */}
+        {item.type === "change_management" && item.projectId != null && (
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/${item.projectId}/change-events/new`}>
+              <FilePlus2 className="h-3.5 w-3.5" />
+              Create change event
+            </Link>
+          </Button>
         )}
 
         {/* Meta fields */}

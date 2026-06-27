@@ -203,6 +203,11 @@ export function useCollaborationNotifications(
       mutate({ action: "mark-reviewed", id, review }),
     [mutate],
   );
+  const confirmAiChangeEvent = useCallback(
+    (id: string, review?: NotificationReviewPayload) =>
+      mutate({ action: "confirm-ai-change-event", id, review }),
+    [mutate],
+  );
   const markAllAsRead = useCallback(
     () => mutate({ action: "mark-all-read" }),
     [mutate],
@@ -226,6 +231,7 @@ export function useCollaborationNotifications(
     fetchMore,
     markAsRead,
     markReviewed,
+    confirmAiChangeEvent,
     markAllAsRead,
     deleteNotification,
     deleteAll,

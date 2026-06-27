@@ -4,13 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Activity,
-  ArrowUpRight,
   CheckCircle2,
   RefreshCw,
   Shield,
   ThumbsDown,
   ThumbsUp,
-  Users,
   XCircle,
   Zap,
 } from "lucide-react";
@@ -64,29 +62,20 @@ interface ErrorSeries {
   low: number;
 }
 
+interface PagePerformance {
+  pagePath: string;
+  errors24h: number;
+  errors7d: number;
+  errors30d: number;
+  lastSeenAt: string;
+}
+
 interface SyncStatus {
   sync_type: string;
   status: string | null;
   last_successful_sync_at: string | null;
   last_sync_at: string | null;
   error_message: string | null;
-}
-
-interface RecentLogin {
-  authUserId: string;
-  lastLoginAt: string | null;
-  email: string | null;
-  fullName: string | null;
-  isAdmin: boolean;
-}
-
-interface ActivityItem {
-  type: "feedback" | "error";
-  id: string;
-  title: string;
-  subtitle: string;
-  severity: string;
-  timestamp: string;
 }
 
 interface AnalyticsData {
@@ -96,7 +85,6 @@ interface AnalyticsData {
     active: number;
     admins: number;
     newLast7d: number;
-    recentLogins: RecentLogin[];
   };
   errors: {
     last24h: ErrorWindow;
@@ -104,6 +92,7 @@ interface AnalyticsData {
     last30d: ErrorWindow;
     topGroups: ErrorGroup[];
     series: ErrorSeries[];
+    pagePerformance: PagePerformance[];
   };
   ai: {
     events30d: number;
@@ -114,7 +103,6 @@ interface AnalyticsData {
   };
   sync: { statuses: SyncStatus[] };
   feedback: { recentCount7d: number; recent: unknown[] };
-  activityFeed: ActivityItem[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -138,13 +126,6 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  critical: "text-destructive",
-  high: "text-orange-500",
-  medium: "text-yellow-500",
-  low: "text-muted-foreground",
-};
-
 const SEVERITY_BG: Record<string, string> = {
   critical: "bg-destructive/10 text-destructive",
   high: "bg-orange-500/10 text-orange-600",
@@ -165,11 +146,6 @@ const SYNC_STATUS_ICON: Record<string, React.ReactNode> = {
 function LoadingState() {
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-lg" />
-        ))}
-      </div>
       <Skeleton className="h-48 rounded-lg" />
       <div className="grid gap-6 lg:grid-cols-2">
         <Skeleton className="h-64 rounded-lg" />
@@ -199,64 +175,6 @@ function SyncRow({ s }: { s: SyncStatus }) {
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-function LoginRow({ login }: { login: RecentLogin }) {
-  const initials = login.fullName
-    ? login.fullName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
-    : (login.email?.[0] ?? "?").toUpperCase();
-
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-        {initials}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-foreground">
-          {login.fullName ?? login.email ?? "Unknown"}
-        </p>
-        {login.fullName && (
-          <p className="truncate text-[11px] text-muted-foreground">{login.email}</p>
-        )}
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {login.isAdmin && (
-          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-            admin
-          </span>
-        )}
-        <span className="text-[11px] text-muted-foreground">{formatTime(login.lastLoginAt)}</span>
-      </div>
-    </div>
-  );
-}
-
-function ActivityRow({ item }: { item: ActivityItem }) {
-  const Icon = item.type === "error" ? AlertTriangle : ArrowUpRight;
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div
-        className={cn(
-          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
-          item.type === "error" ? "bg-destructive/10" : "bg-muted",
-        )}
-      >
-        <Icon
-          className={cn(
-            "h-3 w-3",
-            item.type === "error" ? SEVERITY_COLOR[item.severity] ?? "text-destructive" : "text-muted-foreground",
-          )}
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs text-foreground">{item.title}</p>
-        {item.subtitle && (
-          <p className="truncate text-[11px] text-muted-foreground">{item.subtitle}</p>
-        )}
-      </div>
-      <span className="shrink-0 text-[11px] text-muted-foreground">{formatTime(item.timestamp)}</span>
     </div>
   );
 }
@@ -325,7 +243,7 @@ export function PlatformAnalyticsPanel() {
     );
   }
 
-  const { users, errors, ai, sync, activityFeed } = data;
+  const { errors, ai, sync } = data;
 
   const aiSatisfaction =
     ai.thumbsUp + ai.thumbsDown > 0
@@ -346,58 +264,52 @@ export function PlatformAnalyticsPanel() {
         </Button>
       </div>
 
-      {/* ── Users KPIs ──────────────────────────────────────────────────── */}
-      <section>
-        <SectionRuleHeading icon={<Users className="h-4 w-4" />} label="User Activity" />
-        <KpiRow
-          metrics={[
-            { label: "Total Users", value: users.total.toString(), size: "medium" },
-            { label: "Active Users", value: users.active.toString(), size: "medium" },
-            {
-              label: "Admins",
-              value: users.admins.toString(),
-              size: "medium",
-            },
-            {
-              label: "New (7 days)",
-              value: users.newLast7d.toString(),
-              size: "medium",
-              delta: users.newLast7d > 0
-                ? { value: `+${users.newLast7d}`, positive: true }
-                : undefined,
-            },
-          ]}
-        />
+      {/* ── Page Performance ─────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <SectionRuleHeading label="Page Performance" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-border/60 text-muted-foreground">
+              <tr>
+                <th className="px-0 py-2 font-medium">Page</th>
+                <th className="px-3 py-2 text-right font-medium">24h errors</th>
+                <th className="px-3 py-2 text-right font-medium">7d errors</th>
+                <th className="px-3 py-2 text-right font-medium">30d errors</th>
+                <th className="px-0 py-2 text-right font-medium">Last seen</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {errors.pagePerformance.length === 0 ? (
+                <tr>
+                  <td className="py-6 text-center text-muted-foreground" colSpan={5}>
+                    No page error signals in the last 30 days.
+                  </td>
+                </tr>
+              ) : (
+                errors.pagePerformance.map((page) => (
+                  <tr key={page.pagePath}>
+                    <td className="max-w-0 truncate px-0 py-2 font-medium text-foreground">
+                      {page.pagePath}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                      {page.errors24h}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                      {page.errors7d}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                      {page.errors30d}
+                    </td>
+                    <td className="px-0 py-2 text-right text-muted-foreground">
+                      {formatTime(page.lastSeenAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
-
-      {/* ── Recent Logins + Activity Feed ───────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section>
-          <SectionRuleHeading label="Recent Logins" />
-          <div className="divide-y divide-border/50">
-            {users.recentLogins.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">No login data available.</p>
-            ) : (
-              users.recentLogins.map((login) => (
-                <LoginRow key={login.authUserId} login={login} />
-              ))
-            )}
-          </div>
-        </section>
-
-        <section>
-          <SectionRuleHeading label="Recent Activity" />
-          <div className="divide-y divide-border/50">
-            {activityFeed.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">No recent activity.</p>
-            ) : (
-              activityFeed.map((item) => (
-                <ActivityRow key={`${item.type}-${item.id}`} item={item} />
-              ))
-            )}
-          </div>
-        </section>
-      </div>
 
       {/* ── Error KPIs ──────────────────────────────────────────────────── */}
       <section>

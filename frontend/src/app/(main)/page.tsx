@@ -1066,12 +1066,12 @@ export default function PortfolioPage() {
     <>
       <VeltFeedbackComments
         documentId="homepage-projects"
-        documentName="Projects"
+        documentName="Company"
         showSidebar={false}
       />
       <UnifiedTablePage
       header={{
-        title: "Projects",
+        title: "Company",
         description: "All projects across your organization",
         mobileActionsInline: true,
         actions: (

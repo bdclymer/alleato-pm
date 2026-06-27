@@ -2276,64 +2276,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ai_analysis_jobs: {
-        Row: {
-          completed_at: string | null
-          confidence_metrics: Json | null
-          config: Json | null
-          created_at: string | null
-          error_message: string | null
-          id: string
-          input_data: Json | null
-          job_type: string
-          model_version: string | null
-          processing_time_ms: number | null
-          results: Json | null
-          started_at: string | null
-          status: string | null
-          submittal_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          confidence_metrics?: Json | null
-          config?: Json | null
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          input_data?: Json | null
-          job_type: string
-          model_version?: string | null
-          processing_time_ms?: number | null
-          results?: Json | null
-          started_at?: string | null
-          status?: string | null
-          submittal_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          confidence_metrics?: Json | null
-          config?: Json | null
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          input_data?: Json | null
-          job_type?: string
-          model_version?: string | null
-          processing_time_ms?: number | null
-          results?: Json | null
-          started_at?: string | null
-          status?: string | null
-          submittal_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_analysis_jobs_submittal_id_fkey"
-            columns: ["submittal_id"]
-            referencedRelation: "submittals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ai_feedback_events: {
         Row: {
           after_snapshot: Json
@@ -2708,45 +2650,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      ai_models: {
-        Row: {
-          config: Json | null
-          created_at: string | null
-          deployment_date: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          model_type: string
-          name: string
-          performance_metrics: Json | null
-          version: string
-        }
-        Insert: {
-          config?: Json | null
-          created_at?: string | null
-          deployment_date?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          model_type: string
-          name: string
-          performance_metrics?: Json | null
-          version: string
-        }
-        Update: {
-          config?: Json | null
-          created_at?: string | null
-          deployment_date?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          model_type?: string
-          name?: string
-          performance_metrics?: Json | null
-          version?: string
-        }
-        Relationships: []
       }
       ai_operation_events: {
         Row: {
@@ -7439,18 +7342,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chats: {
-        Row: {
-          id: string
-        }
-        Insert: {
-          id: string
-        }
-        Update: {
-          id?: string
-        }
-        Relationships: []
-      }
       collaboration_comments: {
         Row: {
           author_id: string
@@ -9028,6 +8919,7 @@ export type Database = {
         Row: {
           created_at: string | null
           is_archived: boolean | null
+          is_pinned: boolean
           last_message_at: string | null
           metadata: Json | null
           session_id: string
@@ -9037,6 +8929,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           is_archived?: boolean | null
+          is_pinned?: boolean
           last_message_at?: string | null
           metadata?: Json | null
           session_id: string
@@ -9046,6 +8939,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           is_archived?: boolean | null
+          is_pinned?: boolean
           last_message_at?: string | null
           metadata?: Json | null
           session_id?: string
@@ -10900,81 +10794,6 @@ export type Database = {
           },
         ]
       }
-      document_executive_summaries: {
-        Row: {
-          budget_discussions: Json | null
-          competitive_intel: Json | null
-          confidence_average: number | null
-          cost_implications: number | null
-          created_at: string | null
-          critical_deadlines: Json | null
-          critical_path_items: number | null
-          decisions_made: Json | null
-          delay_risks: Json | null
-          document_id: string
-          executive_summary: string
-          financial_decisions_count: number | null
-          id: number
-          performance_issues: Json | null
-          project_id: number | null
-          relationship_changes: Json | null
-          revenue_impact: number | null
-          stakeholder_feedback_count: number | null
-          strategic_pivots: Json | null
-          timeline_concerns_count: number | null
-          total_insights: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          budget_discussions?: Json | null
-          competitive_intel?: Json | null
-          confidence_average?: number | null
-          cost_implications?: number | null
-          created_at?: string | null
-          critical_deadlines?: Json | null
-          critical_path_items?: number | null
-          decisions_made?: Json | null
-          delay_risks?: Json | null
-          document_id: string
-          executive_summary: string
-          financial_decisions_count?: number | null
-          id?: number
-          performance_issues?: Json | null
-          project_id?: number | null
-          relationship_changes?: Json | null
-          revenue_impact?: number | null
-          stakeholder_feedback_count?: number | null
-          strategic_pivots?: Json | null
-          timeline_concerns_count?: number | null
-          total_insights?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          budget_discussions?: Json | null
-          competitive_intel?: Json | null
-          confidence_average?: number | null
-          cost_implications?: number | null
-          created_at?: string | null
-          critical_deadlines?: Json | null
-          critical_path_items?: number | null
-          decisions_made?: Json | null
-          delay_risks?: Json | null
-          document_id?: string
-          executive_summary?: string
-          financial_decisions_count?: number | null
-          id?: number
-          performance_issues?: Json | null
-          project_id?: number | null
-          relationship_changes?: Json | null
-          revenue_impact?: number | null
-          stakeholder_feedback_count?: number | null
-          strategic_pivots?: Json | null
-          timeline_concerns_count?: number | null
-          total_insights?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       document_group_access: {
         Row: {
           access_level: string
@@ -11724,170 +11543,6 @@ export type Database = {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
             referencedRelation: "vw_friday_participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents_rfis_links: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          link_type: string
-          note: string | null
-          project_document_id: number
-          project_id: number
-          rfi_id: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          link_type?: string
-          note?: string | null
-          project_document_id: number
-          project_id: number
-          rfi_id: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          link_type?: string
-          note?: string | null
-          project_document_id?: number
-          project_id?: number
-          rfi_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_rfis_links_project_document_id_fkey"
-            columns: ["project_document_id"]
-            referencedRelation: "project_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_rfis_links_rfi_id_fkey"
-            columns: ["rfi_id"]
-            referencedRelation: "rfis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents_submittals_links: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          link_type: string
-          note: string | null
-          project_document_id: number
-          project_id: number
-          submittal_id: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          link_type?: string
-          note?: string | null
-          project_document_id: number
-          project_id: number
-          submittal_id: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          link_type?: string
-          note?: string | null
-          project_document_id?: number
-          project_id?: number
-          submittal_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_submittals_links_project_document_id_fkey"
-            columns: ["project_document_id"]
-            referencedRelation: "project_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_project_id_fkey"
-            columns: ["project_id"]
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_submittals_links_submittal_id_fkey"
-            columns: ["submittal_id"]
-            referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
         ]
@@ -17715,40 +17370,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      messages: {
-        Row: {
-          computed_session_user_id: string | null
-          created_at: string | null
-          id: number
-          message: Json
-          message_data: string | null
-          session_id: string
-        }
-        Insert: {
-          computed_session_user_id?: string | null
-          created_at?: string | null
-          id?: never
-          message: Json
-          message_data?: string | null
-          session_id: string
-        }
-        Update: {
-          computed_session_user_id?: string | null
-          created_at?: string | null
-          id?: never
-          message?: Json
-          message_data?: string | null
-          session_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_session_id_fkey"
-            columns: ["session_id"]
-            referencedRelation: "conversations"
-            referencedColumns: ["session_id"]
-          },
-        ]
       }
       nods_page: {
         Row: {
@@ -27319,43 +26940,6 @@ export type Database = {
           },
         ]
       }
-      search_documents: {
-        Row: {
-          content: string
-          created_at: string
-          embedding: unknown
-          id: string
-          project_sync_id: string
-          source_id: number
-          source_type: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          embedding: unknown
-          id?: string
-          project_sync_id: string
-          source_id: number
-          source_type: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          embedding?: unknown
-          id?: string
-          project_sync_id?: string
-          source_id?: number
-          source_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "search_documents_project_sync_id_fkey"
-            columns: ["project_sync_id"]
-            referencedRelation: "projects_sync"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sop_backlog: {
         Row: {
           business_area: string
@@ -31588,6 +31172,146 @@ export type Database = {
             foreignKeyName: "tool_form_fields_tool_id_fkey"
             columns: ["tool_id"]
             referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_doc_assets: {
+        Row: {
+          alt_text: string | null
+          asset_type: string
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          id: string
+          metadata: Json
+          mime_type: string
+          step_order: number
+          storage_bucket: string
+          storage_path: string
+          training_doc_id: string
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string | null
+          asset_type?: string
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          id?: string
+          metadata?: Json
+          mime_type: string
+          step_order?: number
+          storage_bucket?: string
+          storage_path: string
+          training_doc_id: string
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string | null
+          asset_type?: string
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          id?: string
+          metadata?: Json
+          mime_type?: string
+          step_order?: number
+          storage_bucket?: string
+          storage_path?: string
+          training_doc_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_doc_assets_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_assets_training_doc_id_fkey"
+            columns: ["training_doc_id"]
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_docs: {
+        Row: {
+          audience: string
+          body_markdown: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_publish_error: string | null
+          last_published_at: string | null
+          metadata: Json
+          published_doc_path: string | null
+          review_notes: string | null
+          slug: string
+          source_route: string | null
+          status: string
+          summary: string | null
+          target_collection: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audience?: string
+          body_markdown?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_publish_error?: string | null
+          last_published_at?: string | null
+          metadata?: Json
+          published_doc_path?: string | null
+          review_notes?: string | null
+          slug: string
+          source_route?: string | null
+          status?: string
+          summary?: string | null
+          target_collection?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audience?: string
+          body_markdown?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_publish_error?: string | null
+          last_published_at?: string | null
+          metadata?: Json
+          published_doc_path?: string | null
+          review_notes?: string | null
+          slug?: string
+          source_route?: string | null
+          status?: string
+          summary?: string | null
+          target_collection?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_docs_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_docs_updated_by_fkey"
+            columns: ["updated_by"]
+            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -36762,11 +36486,7 @@ export type Database = {
       commitment_type: "subcontract" | "purchase_order" | "service_order"
       company_type: "vendor" | "subcontractor" | "owner" | "architect" | "other"
       contract_status:
-        | "draft"
-        | "pending"
-        | "executed"
-        | "closed"
-        | "terminated"
+        "draft" | "pending" | "executed" | "closed" | "terminated"
       contract_type: "prime_contract" | "commitment"
       erp_sync_status: "pending" | "synced" | "failed" | "resyncing"
       invoice_status:
@@ -36794,25 +36514,12 @@ export type Database = {
       issue_status: "Open" | "In Progress" | "Resolved" | "Pending Verification"
       payment_status: "received" | "void"
       prime_contract_co_status:
-        | "draft"
-        | "pending"
-        | "approved"
-        | "rejected"
-        | "void"
+        "draft" | "pending" | "approved" | "rejected" | "void"
       prime_contract_sov_status: "draft" | "approved" | "locked"
       prime_contract_status:
-        | "draft"
-        | "approved"
-        | "complete"
-        | "void"
-        | "closed"
-        | "not_ready"
+        "draft" | "approved" | "complete" | "void" | "closed" | "not_ready"
       prime_contract_status_v2:
-        | "draft"
-        | "out_for_signature"
-        | "approved"
-        | "complete"
-        | "terminated"
+        "draft" | "out_for_signature" | "approved" | "complete" | "terminated"
       project_status: "active" | "inactive" | "complete"
       task_status: "todo" | "doing" | "review" | "done"
     }
@@ -36830,12 +36537,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36857,13 +36564,12 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36882,13 +36588,12 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36907,13 +36612,12 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36926,11 +36630,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

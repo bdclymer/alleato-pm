@@ -1700,42 +1700,10 @@ tables:
     db: MAIN
     domain: documents
     owner: unknown
-    status: dormant
-    purpose: "Dormant document insights table."
-    relatedTables: []
-
-  - name: document_executive_summaries
-    db: MAIN
-    domain: documents
-    owner: unknown
-    status: dormant
-    purpose: "Dormant document executive summaries."
-    relatedTables: []
-
-  - name: documents_rfis_links
-    db: MAIN
-    domain: documents
-    owner: unknown
-    status: dormant
-    purpose: "Dormant document to RFI links."
-    relatedTables: []
-
-  - name: documents_submittals_links
-    db: MAIN
-    domain: documents
-    owner: unknown
-    status: dormant
-    purpose: "Dormant document to submittal links."
-    relatedTables: []
-
-  - name: search_documents
-    db: MAIN
-    domain: documents
-    owner: unknown
-    status: dead
-    purpose: "Scratch table. 4 rows. No code references. Drop candidate."
-    cleanupPriority: low
-    relatedTables: []
+    status: blocked
+    purpose: "Dormant document insights table, but retained because the actionable_insights view depends on it. Do not drop until the view is retired or migrated."
+    relatedTables:
+      - actionable_insights
 
   # ─── Drawings ────────────────────────────────────────────
 
@@ -1996,24 +1964,6 @@ tables:
     purpose: "AI assistant chat session metadata. 226 rows. Thread/session header for chat_history."
     relatedTables:
       - chat_history
-
-  - name: chats
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: messages
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dead
-    purpose: "Dead schema. No code references. Drop candidate."
-    cleanupPriority: high
-    relatedTables: []
 
   - name: notes
     db: MAIN
@@ -2379,22 +2329,6 @@ tables:
     owner: unknown
     status: dormant
     purpose: "Dormant AI task feedback."
-    relatedTables: []
-
-  - name: ai_analysis_jobs
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dormant
-    purpose: "Dormant AI analysis job queue."
-    relatedTables: []
-
-  - name: ai_models
-    db: MAIN
-    domain: ai
-    owner: unknown
-    status: dormant
-    purpose: "Dormant AI model registry."
     relatedTables: []
 
   - name: ai_tool_write_audits
@@ -3312,6 +3246,24 @@ tables:
     status: dormant
     purpose: "Dormant knowledge base page sections. No code references."
     relatedTables: []
+
+  - name: training_docs
+    db: MAIN
+    domain: support
+    owner: unknown
+    status: dormant
+    purpose: "Training document records present in MAIN. No code references found during AAI-732 DB inventory drift repair."
+    relatedTables:
+      - training_doc_assets
+
+  - name: training_doc_assets
+    db: MAIN
+    domain: support
+    owner: unknown
+    status: dormant
+    purpose: "Assets attached to training_docs. No code references found during AAI-732 DB inventory drift repair."
+    relatedTables:
+      - training_docs
 
 # ─────────────────────────────────────────────────────────
   # DOMAIN: TEST / ADMIN / DEV INFRASTRUCTURE

@@ -68,7 +68,7 @@ filled in. If any item cannot be completed, change `Status` to
 
 | Check | Command / artifact | Result | Notes |
 | --- | --- | --- | --- |
-| Candidate inventory | docs/ops/evidence/2026-06-25-ai-rag-production-finalization/legacy-cleanup-candidate-inventory-aai-703.md | Complete | Classified two scripts as `delete`, one as `migrate-first`, one as `manual/dev-only`, and five local admin eval scripts as `active-keep`. |
+| Candidate inventory | docs/ops/evidence/2026-06-25-ai-rag-production-finalization/legacy-cleanup-candidate-inventory-aai-703.md | Complete | Initial slice classified two scripts as `delete`, one as `migrate-first`, one as `manual/dev-only`, and five local admin eval scripts as `active-keep`; AAI-734 later retired the contextual retrieval `migrate-first` pilot. |
 | Import/route proof | `rg -n "eval_graph_sync|eval_mine_emails" backend frontend scripts docs package.json render.yaml ...` | Pass | After deletion, only `scripts/verify/verify_ai_chat_architecture.mjs` and AAI evidence files reference the removed script names. |
 | Provider proof | `rg ... render.yaml`; candidate inventory | Pass | Deleted scripts had no Render/package/provider schedule references. No provider changes required. |
 | DB inventory refresh | `npm run db:inventory` | Blocked by unrelated schema inventory drift | Generator connected to MAIN and RAG DBs, then failed because `document_page_intelligence`, `idea_items`, `rfi_response_tokens`, `rfi_responses`, `spec_drawing_links`, `submittal_ai_review_checks`, `submittal_ai_review_runs`, and `submittal_project_settings` are missing from `docs/architecture/tables.yaml`. Stale deleted-file reference objects were removed manually from the generated JSON. |
@@ -93,8 +93,8 @@ filled in. If any item cannot be completed, change `Status` to
 - The checkout contains unrelated dirty frontend files; this slice must stage and publish only AAI-703-owned files.
 - The broad `docs/` tree is ignored by Git; task/evidence files must be force-added when publishing.
 - `npm run db:inventory` is blocked by unrelated `tables.yaml` schema drift, so the generated inventory could not be fully regenerated in this slice.
-- `backend/src/scripts/backfill_contextual_embeddings.py` remains `migrate-first` until contextual retrieval is finalized or explicitly retired.
-- `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py` remains a documented manual repair bridge until a replacement workflow exists.
+- `backend/src/scripts/backfill_contextual_embeddings.py` was retired in AAI-734 after contextual retrieval was explicitly retired.
+- `backend/src/scripts/backfill_outlook_rag_metadata_to_app_documents.py` was retired in AAI-732 after `backfill_outlook_intake_rag_documents()` and `SupabaseRagStore.upsert_document_metadata()` were proven as the replacement repair owner.
 
 ## Final Status
 

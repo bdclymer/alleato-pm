@@ -14,6 +14,7 @@ import {
   useCreateConversation,
   useRenameConversation,
   useDeleteConversation,
+  useTogglePinConversation,
 } from "@/hooks/use-rag-conversations";
 import { useChatSessionMessages } from "@/hooks/use-chat-session-messages";
 import {
@@ -30,6 +31,10 @@ import { PanelLeftOpenIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import { shouldSyncInitialMessages } from "./chat-message-sync";
+import {
+  formatChatError,
+  isChatTransportLoadFailure,
+} from "./rag-chat-errors";
 import type { MemoryUsage } from "./memory-usage-disclosure";
 import type { SkillUsage } from "./skill-usage-disclosure";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
@@ -40,14 +45,6 @@ type StrategistLiveStatus = {
   status: "loading" | "success" | "warning" | "error";
   timestamp?: string;
 };
-
-function formatChatError(error: Error): string {
-  const message = error.message?.trim();
-  if (!message) {
-    return "The assistant request failed before a response was returned.";
-  }
-  return `The assistant request failed before a response was returned: ${message}`;
-}
 
 function isStrategistLiveStatus(value: unknown): value is StrategistLiveStatus {
   if (!value || typeof value !== "object") return false;
@@ -121,6 +118,7 @@ export function ChatWithSession({
   selectedProjectIdRef.current = selectedProjectId;
   const selectedModelRef = useRef(selectedModel);
   selectedModelRef.current = selectedModel;
+  const lastSubmittedMessageRef = useRef("");
 
   // Tracks whether to skip the next initialMessages → setMessages sync.
   // Set true in onFinish so that the post-stream DB reload doesn't replace
@@ -159,8 +157,18 @@ export function ChatWithSession({
     }),
     onFinish: () => {
       skipNextMessagesSync.current = true;
+      lastSubmittedMessageRef.current = "";
       setLiveStatus(null);
       onFinishMessage(sessionIdRef.current);
+    },
+    onError: (chatError) => {
+      setLiveStatus(null);
+      if (isChatTransportLoadFailure(chatError)) {
+        const lastSubmittedMessage = lastSubmittedMessageRef.current.trim();
+        if (lastSubmittedMessage) {
+          setInput((current) => current || lastSubmittedMessage);
+        }
+      }
     },
     onData: (part) => {
       if (part.type !== "data-status") return;
@@ -228,6 +236,7 @@ export function ChatWithSession({
   const handleSubmit = useCallback(
     (message: string, files?: FileUIPart[]) => {
       if (!message.trim() || isStreaming) return;
+      lastSubmittedMessageRef.current = message;
       sendMessage({ text: message, files });
       setInput("");
     },
@@ -316,6 +325,7 @@ export function RagChatPage() {
   const createConversation = useCreateConversation();
   const renameConversation = useRenameConversation();
   const deleteConversation = useDeleteConversation();
+  const togglePinConversation = useTogglePinConversation();
 
   // Load messages when session changes
   useEffect(() => {
@@ -416,6 +426,13 @@ export function RagChatPage() {
     [deleteConversation, activeSessionId, setActiveSession],
   );
 
+  const handleTogglePin = useCallback(
+    (sessionId: string, isPinned: boolean) => {
+      togglePinConversation.mutate({ sessionId, isPinned });
+    },
+    [togglePinConversation],
+  );
+
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
     async (message: string, files?: FileUIPart[]) => {
@@ -449,6 +466,7 @@ export function RagChatPage() {
         onNewChat={handleNewChat}
         onRename={handleRename}
         onDelete={handleDelete}
+        onTogglePin={handleTogglePin}
       />
       <div className="fixed left-4 top-20 z-30 md:left-20">
         <Tooltip>
