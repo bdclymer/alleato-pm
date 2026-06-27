@@ -46,7 +46,6 @@ import {
 
   MapIcon,
 
-  MessageSquare,
 
   Eye,
 
@@ -143,6 +142,13 @@ const sections: AdminMenuSection[] = [
             route: "/feedback-inbox",
             description: "Client feedback, issues, comments, and triage assignments.",
             icon: Inbox,
+          },
+          {
+            label: "Learning & Feedback",
+            href: "/learning-feedback",
+            route: "/learning-feedback",
+            description: "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
+            icon: Brain,
           },
           {
             label: "Annotation Inbox",
@@ -276,13 +282,6 @@ const sections: AdminMenuSection[] = [
             icon: LineChart,
           },
           {
-            label: "AI Chat History",
-            href: "/ai-chat-history",
-            route: "/ai-chat-history",
-            description: "Browse past assistant conversations and transcripts.",
-            icon: MessageSquare,
-          },
-          {
             label: "AI Work Runs",
             href: "/ai-work-runs",
             route: "/ai-work-runs",
@@ -400,7 +399,7 @@ const sections: AdminMenuSection[] = [
     ],
   },
   {
-    title: "Knowledge Pipeline",
+    title: "RAG Pipeline",
     description: "The RAG ingestion pipeline that feeds the assistant — health, sync, metadata, and attribution.",
     groups: [
       {
