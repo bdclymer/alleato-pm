@@ -13,13 +13,17 @@ import type { ToolSet } from "ai";
 import {
   createChangeOrderInputSchema,
   createChangeEventInputSchema,
+  createCommitmentInputSchema,
   createGeneratedTaskInputSchema,
+  createMeetingNoteInputSchema,
   createProjectCompanyInputSchema,
   createProjectContactInputSchema,
   createRFIInputSchema,
+  createSubmittalInputSchema,
   createTaskInputSchema,
   deleteGeneratedTaskInputSchema,
   flagProjectRiskInputSchema,
+  generateProjectSummaryInputSchema,
   findProjectDocumentsInputSchema,
   getAcumaticaProjectBudgetInputSchema,
   getAcumaticaProjectListInputSchema,
@@ -39,6 +43,7 @@ import {
   searchTeamsMessagesInputSchema,
   semanticSearchInputSchema,
   getVendorSpendReportInputSchema,
+  logDailyReportInputSchema,
   updateGeneratedTaskInputSchema,
   updateProjectStatusInputSchema,
   updateRFIStatusInputSchema,
@@ -439,10 +444,15 @@ describe("global AI assistant tool registry", () => {
         "createProjectContact",
         "flagProjectRisk",
         "updateRFIStatus",
+        "createMeetingNote",
+        "createSubmittal",
+        "logDailyReport",
+        "generateProjectSummary",
+        "createCommitment",
       ],
     });
 
-    expect(definitions).toHaveLength(12);
+    expect(definitions).toHaveLength(17);
     expect(
       definitions.map((definition) => [
         definition.name,
@@ -556,6 +566,51 @@ describe("global AI assistant tool registry", () => {
         ],
         [
           "updateRFIStatus",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createMeetingNote",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createSubmittal",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "logDailyReport",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "generateProjectSummary",
+          true,
+          true,
+          true,
+          true,
+          expect.objectContaining({ ledgerRequired: true }),
+          ["write"],
+        ],
+        [
+          "createCommitment",
           true,
           true,
           true,
@@ -778,6 +833,66 @@ describe("global AI assistant tool registry", () => {
       projectId: 101,
       rfiNumber: 12,
       newStatus: "answered",
+      confirmed: false,
+    });
+    expect(
+      createMeetingNoteInputSchema.parse({
+        projectId: 101,
+        title: "OAC Meeting",
+        date: "2026-06-27",
+        summary: "Discussed schedule recovery.",
+      }),
+    ).toEqual({
+      projectId: 101,
+      title: "OAC Meeting",
+      date: "2026-06-27",
+      summary: "Discussed schedule recovery.",
+      confirmed: false,
+    });
+    expect(
+      createSubmittalInputSchema.parse({
+        projectId: 101,
+        title: "Structural Steel Shop Drawings",
+      }),
+    ).toEqual({
+      projectId: 101,
+      title: "Structural Steel Shop Drawings",
+      submittedBy: "TBD",
+      status: "Draft",
+      confirmed: false,
+    });
+    expect(
+      logDailyReportInputSchema.parse({
+        projectId: 101,
+      }),
+    ).toMatchObject({
+      projectId: 101,
+      confirmed: false,
+    });
+    expect(
+      logDailyReportInputSchema.parse({
+        projectId: 101,
+      }).logDate,
+    ).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(
+      generateProjectSummaryInputSchema.parse({
+        projectName: "Westfield",
+      }),
+    ).toEqual({
+      projectName: "Westfield",
+      confirmed: false,
+    });
+    expect(
+      createCommitmentInputSchema.parse({
+        projectId: 101,
+        type: "subcontract",
+        title: "Electrical Rough-In",
+      }),
+    ).toEqual({
+      projectId: 101,
+      type: "subcontract",
+      title: "Electrical Rough-In",
+      status: "Draft",
       confirmed: false,
     });
   });

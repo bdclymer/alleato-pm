@@ -42,26 +42,37 @@ import {
   buildChangeRequestReviewCard,
 } from "@/lib/ai/change-request-field-guide";
 import {
+  commitmentLineItemSchema,
   createChangeOrderDescription,
   createChangeOrderInputSchema,
   createChangeEventDescription,
   createChangeEventInputSchema,
+  createCommitmentDescription,
+  createCommitmentInputSchema,
   createGeneratedTaskDescription,
   createGeneratedTaskInputSchema,
+  createMeetingNoteDescription,
+  createMeetingNoteInputSchema,
   createProjectCompanyDescription,
   createProjectCompanyInputSchema,
   createProjectContactDescription,
   createProjectContactInputSchema,
   createRFIDescription,
   createRFIInputSchema,
+  createSubmittalDescription,
+  createSubmittalInputSchema,
   createTaskDescription,
   createTaskInputSchema,
   deleteGeneratedTaskDescription,
   deleteGeneratedTaskInputSchema,
   flagProjectRiskDescription,
   flagProjectRiskInputSchema,
+  generateProjectSummaryDescription,
+  generateProjectSummaryInputSchema,
   generatedTaskPrioritySchema,
   generatedTaskStatusSchema,
+  logDailyReportDescription,
+  logDailyReportInputSchema,
   projectCompanyTypeSchema,
   updateGeneratedTaskDescription,
   updateGeneratedTaskInputSchema,
@@ -110,16 +121,6 @@ const outlookInviteAttendeeSchema = z.object({
 const outlookMailRecipientSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
-});
-
-const commitmentLineItemSchema = z.object({
-  budgetCode: z.string().optional(),
-  description: z.string().describe("SOV line item description"),
-  amount: z.number().describe("Line item amount in dollars"),
-  quantity: z.number().optional(),
-  unitCost: z.number().optional(),
-  uom: z.string().optional(),
-  retainagePercent: z.number().optional(),
 });
 
 const BRANDON_EMAIL_VOICE_PROFILE = {
@@ -2366,22 +2367,8 @@ export function createActionTools(
     // -------------------------------------------------------------------------
 
     createMeetingNote: tool({
-      description:
-        "Log notes from a meeting into the project record. Use when the user says " +
-        "'log notes from today's meeting', 'record what we discussed', or " +
-        "'save meeting notes for [project]'. Can pre-fill from Fireflies context if available. " +
-        "Always preview before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        title: z.string().describe("Meeting title, e.g. 'OAC Meeting — March 2026'"),
-        date: z.string().describe("ISO date string, e.g. '2026-03-23'"),
-        summary: z.string().describe("Summary of what was discussed"),
-        actionItems: z.string().optional().describe("Comma-separated action items from the meeting"),
-        participants: z.string().optional().describe("Comma-separated list of attendees"),
-        durationMinutes: z.number().optional().describe("Meeting duration in minutes"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: createMeetingNoteDescription,
+      inputSchema: createMeetingNoteInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createMeetingNote", options, async (input) => {
         const { projectId, title, date, summary, actionItems, participants, durationMinutes, confirmed } = input;
@@ -2453,37 +2440,8 @@ export function createActionTools(
     }),
 
     createSubmittal: tool({
-      description:
-        "Create a new submittal. Use when the user says 'create a submittal for [spec section]', " +
-        "'log a submittal', or 'we need to submit [material/equipment]'. " +
-        "Always preview before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        title: z.string().describe("Submittal title, e.g. 'Structural Steel Shop Drawings'"),
-        specSection: z.string().optional().describe("Spec section number, e.g. '05 12 00'"),
-        dueDate: z.string().optional().describe("ISO due date"),
-        submittedBy: z.string().default("TBD").describe("Subcontractor or party submitting"),
-        // Must match the submittals_status_check DB constraint. The old enum
-        // used "pending"/"revise_resubmit" (neither allowed), so every insert
-        // failed the check constraint. Default "Draft" mirrors the real
-        // submittals create API.
-        status: z
-          .enum([
-            "Draft",
-            "Open",
-            "Distributed",
-            "Closed",
-            "submitted",
-            "under_review",
-            "requires_revision",
-            "approved",
-            "rejected",
-            "superseded",
-          ])
-          .default("Draft"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: createSubmittalDescription,
+      inputSchema: createSubmittalInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createSubmittal", options, async (input) => {
         const { projectId, title, specSection, dueDate, submittedBy, status, confirmed } = input;
@@ -2572,21 +2530,8 @@ export function createActionTools(
     }),
 
     logDailyReport: tool({
-      description:
-        "Create a daily log entry for a project. Use when the user says " +
-        "'log today's daily report', 'record site activity for [date]', or " +
-        "'add a daily log entry'. Weather conditions and notes are stored as JSON. " +
-        "Always preview before writing.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID"),
-        logDate: z.string().describe("ISO date, e.g. '2026-03-23'").default(new Date().toISOString().split("T")[0]),
-        weather: z.string().optional().describe("Weather description, e.g. 'Clear, 72°F'"),
-        crewCount: z.number().optional().describe("Total workers on site"),
-        workPerformed: z.string().optional().describe("Summary of work performed"),
-        notes: z.string().optional().describe("Additional notes or observations"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: logDailyReportDescription,
+      inputSchema: logDailyReportInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("logDailyReport", options, async (input) => {
         const { projectId, logDate, weather, crewCount, workPerformed, notes, confirmed } = input;
@@ -2659,17 +2604,8 @@ export function createActionTools(
     // -------------------------------------------------------------------------
 
     generateProjectSummary: tool({
-      description:
-        "Generate a comprehensive project status summary by pulling budget, schedule, " +
-        "RFI, change order, and meeting data — then synthesizing it into a stored document. " +
-        "Use when the user says 'give me a status summary', 'project report', or " +
-        "'what's the status of [project]'. This creates a reusable document, not just a chat response.",
-      inputSchema: z.object({
-        projectId: z.number().optional().describe("Project ID (provide this OR projectName)"),
-        projectName: z.string().optional().describe("Project name (fuzzy match)"),
-        confirmed: z.boolean().default(false),
-        idempotencyKey: z.string().optional(),
-      }),
+      description: generateProjectSummaryDescription,
+      inputSchema: generateProjectSummaryInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("generateProjectSummary", options, async (input) => {
         const { projectId, projectName, confirmed } = input;
@@ -3099,55 +3035,8 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
     // -------------------------------------------------------------------------
 
     createCommitment: tool({
-      description:
-        "Create a new commitment — either a subcontract (for labor/trade work) or a " +
-        "purchase order (for materials or equipment). Use when the user says " +
-        "'create a subcontract', 'add a PO', 'set up a commitment with [vendor]', " +
-        "or describes awarding work to a subcontractor or supplier. " +
-        "Always show a preview and ask for confirmation before writing. " +
-        "If projectId is unknown, call getPortfolioOverview first.",
-      inputSchema: z.object({
-        projectId: z.number().describe("Project ID — required"),
-        type: z
-          .enum(["subcontract", "purchase_order"])
-          .describe(
-            "Type of commitment: 'subcontract' for labor/trade work, 'purchase_order' for materials/equipment",
-          ),
-        title: z.string().describe("Commitment title, e.g. 'Electrical Work' or 'Structural Steel Supply'"),
-        vendorName: z
-          .string()
-          .optional()
-          .describe("Vendor or subcontractor company name — used to look up contract_company_id"),
-        contractNumber: z
-          .string()
-          .optional()
-          .describe("Contract number — auto-generated (SC-001 or PO-001) if not provided"),
-        status: z
-          .enum(["Draft", "Out for Bid", "Out for Signature", "Approved", "Complete", "Terminated", "Void"])
-          .default("Draft")
-          .describe("Initial status — defaults to Draft"),
-        description: z.string().optional().describe("Scope description"),
-        startDate: z.string().optional().describe("ISO start date, e.g. '2026-04-01'"),
-        estimatedCompletionDate: z.string().optional().describe("ISO estimated completion date"),
-        defaultRetainagePercent: z
-          .number()
-          .optional()
-          .describe("Default retainage percentage, e.g. 10 for 10%"),
-        lineItems: z
-          .array(commitmentLineItemSchema)
-          .optional()
-          .describe(
-            "Optional SOV line items to create with the commitment after confirmation",
-          ),
-        confirmed: z
-          .boolean()
-          .default(false)
-          .describe("Set to true only after user confirms the preview"),
-        idempotencyKey: z
-          .string()
-          .optional()
-          .describe("Optional idempotency key to prevent duplicate writes"),
-      }),
+      description: createCommitmentDescription,
+      inputSchema: createCommitmentInputSchema,
       needsApproval: needsConfirmedWriteApproval,
       execute: withWriteTrace("createCommitment", options, async (input) => {
         const {
