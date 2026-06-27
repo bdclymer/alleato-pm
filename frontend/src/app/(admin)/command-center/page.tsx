@@ -658,7 +658,7 @@ export default function CommandCenterPage() {
       </div>
 
       {/* Board */}
-      <div className="flex-1 w-full max-w-screen-2xl mx-auto overflow-x-auto flex">
+      <div className="flex-1 w-full overflow-hidden flex">
         {isLoading ? (
           <div className="flex items-center justify-center flex-1 text-muted-foreground">
             Loading command center...
@@ -670,7 +670,7 @@ export default function CommandCenterPage() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex h-full min-w-fit flex-1">
+            <div className="flex h-full flex-1">
               {COLUMNS.map((col) => (
                 <KanbanColumn
                   key={col.id}
