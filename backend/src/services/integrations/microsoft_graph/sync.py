@@ -110,6 +110,7 @@ def _limit_sync_users(
     users: list[str],
     env_key: str,
     default_limit: int,
+    always_include_env_key: str | None = None,
 ) -> list[str]:
     """Pick a bounded, stalest-first slice of users for expensive per-user syncs."""
     if not users:
@@ -142,13 +143,24 @@ def _limit_sync_users(
     except Exception as exc:
         logger.warning("[GraphSync] Could not load %s sync state for user limiting: %s", source, exc)
 
-    return sorted(
-        users,
+    normalized_users = {email.lower(): email for email in users}
+    always_include: list[str] = []
+    if always_include_env_key:
+        for raw_email in os.environ.get(always_include_env_key, "").split(","):
+            email = raw_email.strip().lower()
+            if email and email in normalized_users and normalized_users[email] not in always_include:
+                always_include.append(normalized_users[email])
+
+    remaining_users = [email for email in users if email not in always_include]
+    stale_sorted_remaining = sorted(
+        remaining_users,
         key=lambda email: (
             last_sync_by_resource.get(email) or "",
             email,
         ),
-    )[:limit]
+    )
+    remaining_slots = max(0, limit - len(always_include))
+    return (always_include + stale_sorted_remaining[:remaining_slots])[:limit]
 
 
 def _bounded_int_env(name: str, default_limit: int, minimum: int = 1, maximum: int = 100) -> int:
@@ -458,6 +470,7 @@ def run_graph_sync(
             users=user_emails,
             env_key="OUTLOOK_SYNC_MAX_USERS",
             default_limit=1,
+            always_include_env_key="OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS",
         )
         summary["outlook_users_selected"] = user_emails
 

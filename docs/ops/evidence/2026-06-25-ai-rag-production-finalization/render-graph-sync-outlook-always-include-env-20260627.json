@@ -1,0 +1,24 @@
+{
+  "env": [
+    {
+      "key": "OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS",
+      "value": "bclymer@alleatogroup.com"
+    },
+    {
+      "key": "OUTLOOK_SYNC_MAX_USERS",
+      "value": "2"
+    },
+    {
+      "key": "MICROSOFT_SYNC_USERS",
+      "count": 11,
+      "first": "bclymer@alleatogroup.com",
+      "includes_bclymer": true
+    }
+  ],
+  "trigger": {
+    "path": "/run",
+    "ok": false,
+    "status": 404,
+    "body": "404 page not found\n"
+  }
+}

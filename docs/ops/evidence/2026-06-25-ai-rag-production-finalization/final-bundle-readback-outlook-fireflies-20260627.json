@@ -1,0 +1,611 @@
+{
+  "outlook_latest": {
+    "ok": true,
+    "status": 200,
+    "body": [
+      {
+        "id": 3730,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-27T06:57:58+00:00",
+        "subject": "Microsoft 365 security: You have messages in quarantine",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "non_project:system_admin"
+      },
+      {
+        "id": 3652,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-27T02:42:57+00:00",
+        "subject": "Re: Maintenance needed Westfield ",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "existing_document"
+      },
+      {
+        "id": 3653,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-27T01:01:25+00:00",
+        "subject": "Re: TAG 6/22/26: Solar Array – Temp Power Install",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      },
+      {
+        "id": 3654,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T23:41:21+00:00",
+        "subject": "871200 is your Vercel log in code",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      },
+      {
+        "id": 3655,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T22:18:10+00:00",
+        "subject": "Siemens copy invoice - ALLEATO LLC (4433,0030670174)",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "non_project:finance_admin"
+      },
+      {
+        "id": 3656,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T22:16:34+00:00",
+        "subject": "Invoice 1509 from JobPlanner.com - Alleato, added users.",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "non_project:finance_admin"
+      },
+      {
+        "id": 3657,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T21:51:56+00:00",
+        "subject": "Ace Hardware Estimate",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      },
+      {
+        "id": 3658,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T21:48:26+00:00",
+        "subject": "Re: Civil & Landscape Dwgs - Union ",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      },
+      {
+        "id": 3659,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T20:53:51+00:00",
+        "subject": "Re: Civil & Landscape Dwgs - Union ",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      },
+      {
+        "id": 3660,
+        "mailbox_user_id": "bclymer@alleatogroup.com",
+        "received_at": "2026-06-26T20:53:10+00:00",
+        "subject": "Re: Incorrect PTO ",
+        "vectorization_status": "pending",
+        "vectorization_chunk_count": 0,
+        "assignment_method": "unassigned"
+      }
+    ]
+  },
+  "graph_sync_state": {
+    "ok": true,
+    "status": 200,
+    "body": [
+      {
+        "source": "outlook_email",
+        "resource_id": "bclymer@alleatogroup.com",
+        "last_sync_at": "2026-06-27T10:52:28.979962+00:00",
+        "sync_status": "success",
+        "items_synced": 19,
+        "error_message": null,
+        "updated_at": "2026-05-18T17:24:36.767+00:00"
+      }
+    ]
+  },
+  "fireflies_jobs": {
+    "ok": true,
+    "status": 200,
+    "body": [
+      {
+        "id": "e7c47534-c69c-4adb-a83a-da459de7b4d5",
+        "metadata_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "stage": "done",
+        "error_message": null,
+        "updated_at": "2026-06-26T19:43:09.251066+00:00"
+      },
+      {
+        "id": "22cb6e39-ccd3-487c-b3b3-37354de32f0f",
+        "metadata_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "stage": "done",
+        "error_message": null,
+        "updated_at": "2026-06-26T19:13:14.241812+00:00"
+      },
+      {
+        "id": "d2c99f47-77b5-4cd6-9409-baa2790d52ec",
+        "metadata_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "stage": "done",
+        "error_message": null,
+        "updated_at": "2026-06-26T15:53:06.913732+00:00"
+      }
+    ]
+  },
+  "fireflies_chunks": {
+    "ok": true,
+    "status": 200,
+    "body": [
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_meeting_summary_-1_0",
+        "source_type": "meeting_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_7_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_0_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_8_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_1_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_9_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_2_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_3_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_section_gist_-2_2",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_4_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_5_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_12_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_6_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_10_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_11_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_13_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_segment_summary_14_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_section_summary_-2_0",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KVRH6WXDAZS5GZMVRXE5K78N",
+        "chunk_id": "01KVRH6WXDAZS5GZMVRXE5K78N__ff_section_short_summary_-2_1",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_document_chunk_2_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_17_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_document_chunk_4_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_meeting_summary_-1_0",
+        "source_type": "meeting_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_2_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_13_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_14_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_section_gist_-2_2",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_document_chunk_0_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_6_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_18_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_document_chunk_3_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_7_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_20_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_8_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_11_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_document_chunk_1_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_16_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_0_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_10_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_22_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_1_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_12_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_section_summary_-2_0",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_3_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_4_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_5_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_15_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_9_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_21_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_19_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_segment_summary_23_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KVXDZXXRSPQKMN1FW229Z85Y",
+        "chunk_id": "01KVXDZXXRSPQKMN1FW229Z85Y__ff_section_short_summary_-2_1",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_0_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_document_chunk_1_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_meeting_summary_-1_0",
+        "source_type": "meeting_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_2_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_18_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_32_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_document_chunk_0_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_24_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_8_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_1_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_5_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_document_chunk_2_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_26_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_19_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_17_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_22_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_31_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_document_chunk_3_0",
+        "source_type": "document"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_23_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_3_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_9_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_4_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_16_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_6_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_7_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_12_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_15_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_10_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_13_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_27_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_11_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_14_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_28_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_20_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_section_summary_-2_0",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_21_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_25_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_29_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_segment_summary_30_0",
+        "source_type": "meeting_segment_summary"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_section_gist_-2_2",
+        "source_type": "meeting_section"
+      },
+      {
+        "document_id": "01KW0H8HM194XAXZJJK4799JSH",
+        "chunk_id": "01KW0H8HM194XAXZJJK4799JSH__ff_section_short_summary_-2_1",
+        "source_type": "meeting_section"
+      }
+    ]
+  }
+}

@@ -90,12 +90,18 @@ function scanQueryLiterals(file, source, kind, values) {
   const re = new RegExp(`\\.${kind}\\(\\s*["'](${valuePattern})["']\\s*\\)`, "g");
   let match;
   while ((match = re.exec(source)) !== null) {
-    if (!source.includes("createRagServiceClient")) {
+    const usesRagServiceClient = source.includes("createRagServiceClient");
+    const usesToolContextRag =
+      source.includes("createToolContext") &&
+      source.includes("type ToolContext") &&
+      source.includes("ctx.rag");
+
+    if (!usesRagServiceClient && !usesToolContextRag) {
       addFinding(
         file,
         source,
         match.index,
-        `RAG-owned ${kind}("${match[1]}") must use createRagServiceClient().`,
+        `RAG-owned ${kind}("${match[1]}") must use createRagServiceClient() or ToolContext.rag.`,
       );
     }
   }

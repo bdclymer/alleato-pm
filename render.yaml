@@ -207,8 +207,10 @@ services:
         sync: false
       - key: MICROSOFT_SYNC_USERS
         sync: false
+      - key: OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS
+        value: bclymer@alleatogroup.com
       - key: OUTLOOK_SYNC_MAX_USERS
-        value: "1"
+        value: "2"
       - key: SHAREPOINT_SYNC_MAX_FOLDERS
         value: "2"
       - key: GRAPH_SYNC_ENABLED

@@ -251,6 +251,30 @@ def test_limit_sync_users_selects_stalest_slice(monkeypatch):
     assert selected == ["never@example.com", "older@example.com"]
 
 
+def test_limit_sync_users_always_includes_critical_mailbox(monkeypatch):
+    monkeypatch.setenv("OUTLOOK_SYNC_MAX_USERS", "2")
+    monkeypatch.setenv("OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS", "bclymer@alleatogroup.com")
+    rag_supabase = _FakeStateSupabase(
+        [
+            {"resource_id": "bclymer@alleatogroup.com", "last_sync_at": "2026-05-13T23:00:00Z"},
+            {"resource_id": "older@example.com", "last_sync_at": "2026-05-13T20:00:00Z"},
+            {"resource_id": "newer@example.com", "last_sync_at": "2026-05-13T22:00:00Z"},
+        ]
+    )
+    monkeypatch.setattr(sync, "_get_graph_sync_state_read_client", lambda: rag_supabase)
+
+    selected = sync._limit_sync_users(
+        _FakeSupabase(),
+        source="outlook_email",
+        users=["newer@example.com", "older@example.com", "bclymer@alleatogroup.com"],
+        env_key="OUTLOOK_SYNC_MAX_USERS",
+        default_limit=1,
+        always_include_env_key="OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS",
+    )
+
+    assert selected == ["bclymer@alleatogroup.com", "older@example.com"]
+
+
 def test_outlook_persisted_count_uses_raw_intake_rows(monkeypatch):
     rag_supabase = _MutableStateSupabase(
         {

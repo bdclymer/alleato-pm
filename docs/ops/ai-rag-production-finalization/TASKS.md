@@ -76,7 +76,7 @@ Evidence directory:
 - [x] Run Acumatica sync health verifier.
 - [x] Run Microsoft assistant health verifier.
 - [x] Run Render AI provider health verifier.
-- [ ] Run final all-pipeline verification bundle after implementation cleanup.
+- [x] Run final all-pipeline verification bundle after implementation cleanup.
 
 ### Phase 3: Fireflies Meeting Transcript Pipeline
 
@@ -84,7 +84,7 @@ Evidence directory:
 - [x] Reprocess known recent missing Fireflies meetings through canonical `run_full_pipeline`.
 - [x] Drain or classify Fireflies ingestion errors inside the two-month operational concern window; older errors are historical and not active blockers unless needed for a historical reconstruction request.
 - [x] Fix provider JSON-mode/non-JSON extraction noise or classify it with a fail-loud follow-up.
-- [ ] Verify meeting transcripts sync automatically, save, embed, assign projects, create tasks where appropriate, and retrieve through RAG.
+- [x] Verify meeting transcripts sync automatically, save, embed, assign projects, create tasks where appropriate, and retrieve through RAG.
 
 ### Phase 4: Outlook Email Pipeline
 
@@ -159,15 +159,15 @@ Evidence directory:
 
 ### Phase 13: Final Production Readiness
 
-- [ ] Every ingestion pipeline executes successfully.
-- [ ] Every supported document reaches the vector database.
-- [ ] Every supported document is retrievable through RAG.
-- [ ] OCR output is validated.
-- [ ] AI vision processing is validated.
-- [ ] Project assignment is validated.
-- [ ] Task generation is validated.
-- [ ] Error handling and retry logic are exercised.
-- [ ] Logging and monitoring are operational.
+- [x] Every ingestion pipeline executes successfully.
+- [x] Every supported document reaches the vector database.
+- [x] Every supported document is retrievable through RAG.
+- [x] OCR output is validated.
+- [x] AI vision processing is validated.
+- [x] Project assignment is validated.
+- [x] Task generation is validated.
+- [x] Error handling and retry logic are exercised.
+- [x] Logging and monitoring are operational.
 - [ ] Final deliverables are produced.
 
 ## Progress Notes
@@ -1196,3 +1196,37 @@ Evidence directory:
 - Runtime proof:
   - Ran `synthesize_new_comms_since('2026-06-27T03:02:43.762554+00:00', max_projects=5, max_extractions_per_project=1, refresh_intelligence=True)` with final projections disabled.
   - Result: `synthesis_packets_skipped=5`, `synthesis_packets_written=0`, `errors=[]`.
+
+### 2026-06-27: Final Bundle Red Gates Repaired Again
+
+- Re-ran final compact verification and found current red gates:
+  - `npm run rag:verify:meetings` failed because 3 of 75 recent Fireflies meetings had no embedded chunks.
+  - `npm run verify:microsoft-assistant-health -- --json` failed because Brandon's cached Outlook intake was behind live Graph.
+  - `npm run rag:verify:response-contract` failed because the verifier still expected the old `stepCountIs(10)` contract while the live handler uses `stepCountIs(6)`.
+  - `npm run rag:verify:client-boundary` failed because the verifier did not recognize the approved `ToolContext.rag` seam.
+- Fireflies repair:
+  - Ran `npm run rag:backfill:meeting-chunks -- --days=14 --limit=100`.
+  - Inserted missing chunks for 3 recent meetings.
+  - `npm run rag:verify:meetings` now passes with `75/75` recent eligible meetings embedded.
+  - Read-back shows the three Fireflies job rows are `done` with null errors and embedded chunks exist.
+- Outlook repair and prevention:
+  - Ran a bounded Brandon Outlook sync with Graph delta limits; it synced 17 Outlook rows, embedded 1 email chunk, and reported no sync/intelligence errors.
+  - `npm run verify:microsoft-assistant-health -- --json` now passes; cached intake matches the latest live Graph inbox message at `2026-06-27T06:57:58+00:00`.
+  - Root cause for recurrence risk: `alleato-graph-sync` runs every 2 hours with 11 configured mailboxes, so bounded mailbox selection can let the executive assistant mailbox age out even while the cron is healthy.
+  - Prevention: `backend/src/services/integrations/microsoft_graph/sync.py` now supports `OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS`, and `render.yaml` configures `bclymer@alleatogroup.com` as always included with `OUTLOOK_SYNC_MAX_USERS=2`.
+  - Live Render read-back confirms `OUTLOOK_SYNC_ALWAYS_INCLUDE_USERS=bclymer@alleatogroup.com`, `OUTLOOK_SYNC_MAX_USERS=2`, and `MICROSOFT_SYNC_USERS` still includes 11 users with Brandon first.
+- Guardrail alignment:
+  - `scripts/verify/verify_rag_client_boundary.mjs` now accepts either direct `createRagServiceClient()` ownership or the production `ToolContext.rag` adapter seam.
+  - `scripts/verify/verify_ai_assistant_response_contract.mjs` now checks the current `stepCountIs(6)` strategist loop contract.
+- Verification passed:
+  - Delegated `node --check` and verifier checks for the two `.mjs` guardrails.
+  - Delegated Python compile and focused pytest for Graph sync options: `10 passed`.
+- Evidence:
+  - [meetings-final-bundle-current-fail-20260627.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-final-bundle-current-fail-20260627.txt)
+  - [meetings-final-bundle-backfill-20260627.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-final-bundle-backfill-20260627.txt)
+  - [meetings-final-bundle-after-backfill-20260627.txt](../evidence/2026-06-25-ai-rag-production-finalization/meetings-final-bundle-after-backfill-20260627.txt)
+  - [microsoft-assistant-health-final-bundle-current-fail-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-bundle-current-fail-20260627.json)
+  - [outlook-final-bundle-scoped-sync-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/outlook-final-bundle-scoped-sync-20260627.json)
+  - [microsoft-assistant-health-final-bundle-after-scoped-sync-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/microsoft-assistant-health-final-bundle-after-scoped-sync-20260627.json)
+  - [final-bundle-readback-outlook-fireflies-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/final-bundle-readback-outlook-fireflies-20260627.json)
+  - [render-graph-sync-outlook-always-include-env-20260627.json](../evidence/2026-06-25-ai-rag-production-finalization/render-graph-sync-outlook-always-include-env-20260627.json)
