@@ -3,6 +3,7 @@
 Status: Authoritative target architecture
 Owner: Alleato AI
 Created: 2026-06-25
+Last reviewed: 2026-06-26
 Applies to: Fireflies, Microsoft Graph, SharePoint, uploaded documents, Acumatica, embeddings, RAG retrieval, Project Intelligence, and AI assistants
 
 This document defines the final production setup for Alleato's AI data pipeline and RAG system. It is the source of truth for implementation, cleanup, verification, and future changes.
@@ -25,6 +26,25 @@ The system has one production architecture:
 | AI/RAG | `fqcvmfqldlewvbsuxdvz` | Source ingestion state, raw communication intake, RAG document metadata, vector chunks, embedding state, pipeline/model usage, source health and alert ledgers |
 
 RAG-owned tables live in the AI/RAG database. Product-facing projections live in the PM App database. Cross-database duplication is allowed only as an explicit bridge/projection with a source key and idempotency contract.
+
+## Runtime Configuration Guardrails
+
+Production surfaces that read RAG-owned tables must use explicit AI/RAG database configuration. They must not silently fall back to the PM App database when RAG configuration is missing.
+
+Required production runtime variables:
+
+- `RAG_SUPABASE_URL`
+- `RAG_SUPABASE_SERVICE_ROLE_KEY` or an explicitly approved equivalent service key
+- `RAG_DATABASE_READS_ENABLED=true` for runtime surfaces that read from the AI/RAG database
+
+Fail-loud requirements:
+
+- Startup/runtime validation must fail when a production RAG reader is missing required RAG database configuration.
+- Source-specific clients such as Outlook intake readers must construct clients from `RAG_SUPABASE_URL` and RAG service credentials only.
+- A missing or disabled RAG read path must return a degraded or error state, not an empty dataset that looks authoritative.
+- Provider env repair must be verified by provider readback, deployment status, and a production API/browser proof against the user-facing surface.
+
+The June 2026 Outlook incident is the canonical failure mode this guardrail prevents: production Vercel env was missing RAG Supabase variables, so Outlook UI reads fell back to the PM App Supabase project and rendered an empty inbox while `outlook_email_intake` rows existed in the AI/RAG database.
 
 ## Final Trigger Strategy
 
@@ -101,6 +121,14 @@ Key tables:
 
 - AI/RAG: `outlook_email_intake`, `outlook_email_intake_attachments`, `rag_document_metadata`, `document_chunks`, `graph_sync_state`, `source_sync_runs`, `source_processing_jobs`, `pipeline_model_usage`
 - PM App: `document_metadata` bridge rows where product UI needs them, `project_emails`, `tasks`, `insight_card_evidence`, `intelligence_packets`
+
+Product projection rules:
+
+- `outlook_email_intake` is the production source for synced Outlook messages and current Outlook inbox/project views.
+- `project_emails` is allowed only for app-authored/composed email workflow rows, drafts, and explicit product projections with source keys.
+- Project email views must read live Outlook rows from `outlook_email_intake` for `source=outlook` and combine app-composed rows with Outlook intake rows for `source=all`.
+- Old edit, delete, summarize, and task endpoints scoped to `project_emails` must not mutate live Outlook intake rows.
+- Attachment state for Outlook rows must come from `outlook_email_intake_attachments`; PM App attachment joins are valid only for PM App email records.
 
 Embedding eligibility:
 
