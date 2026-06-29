@@ -199,20 +199,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="password"
-                    className="text-xs tracking-widest uppercase text-muted-foreground"
-                  >
-                    Password
-                  </Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
-                  >
-                    Forgot?
-                  </Link>
-                </div>
+                <Label
+                  htmlFor="password"
+                  className="text-xs tracking-widest uppercase text-muted-foreground"
+                >
+                  Password
+                </Label>
                 <PasswordInput
                   id="password"
                   placeholder="Enter your password"
@@ -241,14 +233,13 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                 </Button>
               </div>
 
-              {/* Sign up */}
+              {/* Forgot password */}
               <p className="text-sm text-center text-muted-foreground pt-1">
-                Don&apos;t have an account?{" "}
                 <Link
-                  href="/auth/sign-up"
+                  href="/auth/forgot-password"
                   className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
-                  Sign up
+                  Forgot your password?
                 </Link>
               </p>
             </form>
