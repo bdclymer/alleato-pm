@@ -62,6 +62,7 @@ module.exports = {
       // Thin delegation pages: the page exists only to extract URL params and pass them to
       // a feature component that already owns its own PageShell. Adding a second PageShell
       // here would create nested shells.
+      '(admin)/training-docs/page.tsx',
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',

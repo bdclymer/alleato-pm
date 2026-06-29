@@ -35,7 +35,28 @@ export const PATCH = withApiGuardrails(
       });
     }
 
-    const normalized = normalizeTrainingDocInput(body);
+    const existingDoc = await getTrainingDoc(service, docId);
+    if (!existingDoc) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: WHERE_PATCH,
+        message: "Training doc not found.",
+        status: 404,
+      });
+    }
+
+    const normalized = normalizeTrainingDocInput({
+      title: body.title ?? existingDoc.title,
+      slug: body.slug ?? existingDoc.slug,
+      summary: body.summary ?? existingDoc.summary,
+      body_markdown: body.body_markdown ?? existingDoc.body_markdown,
+      audience: body.audience ?? existingDoc.audience,
+      status: body.status ?? existingDoc.status,
+      source_route: body.source_route ?? existingDoc.source_route,
+      review_notes: body.review_notes ?? existingDoc.review_notes,
+      target_collection:
+        body.target_collection ?? existingDoc.target_collection,
+    });
     const { data, error } = await service
       .from("training_docs")
       .update({
