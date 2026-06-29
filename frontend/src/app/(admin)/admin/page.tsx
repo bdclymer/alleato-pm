@@ -394,6 +394,13 @@ const sections: AdminMenuSection[] = [
             description: "Architecture overview of data sources, models, tools, and learning.",
             icon: BookOpen,
           },
+          {
+            label: "Training Docs",
+            href: "/training-docs",
+            route: "/training-docs",
+            description: "Draft and publish reviewed workflow manuals.",
+            icon: BookOpen,
+          },
         ],
       },
     ],

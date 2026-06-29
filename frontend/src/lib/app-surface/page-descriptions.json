@@ -176,6 +176,7 @@
     "/table-pages/[table]/[recordId]": "View and edit a single database record with inline form and field visibility controls",
     "/table-pages/[table]/new": "Create a new record in a database table with auto-generated form fields and validation",
     "/task-training": "Admin page to review and manage good vs bad task generation feedback for AI model training",
+    "/training-docs": "Admin editor for drafting, reviewing, and publishing training SOPs to the docs site",
     "/tasks": "Task inbox for viewing and managing all generated and assigned tasks with filtering",
     "/team-chat": "Team communication and chat interface for project collaboration and messaging",
     "/test-matrix": "Manual test runner with pass/fail marking, notes, screenshots, and keyboard shortcuts",
