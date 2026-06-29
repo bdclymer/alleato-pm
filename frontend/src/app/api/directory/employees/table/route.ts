@@ -89,7 +89,7 @@ export const GET = withApiGuardrails(
       150,
     );
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
+    const status = searchParams.get("status") || "active";
     const businessUnit = searchParams.get("business_unit") || "";
     const sort = searchParams.get("sort") || "full_name:asc";
 
@@ -102,9 +102,7 @@ export const GET = withApiGuardrails(
       .select(EMPLOYEE_SELECT, { count: "exact" })
       .ilike("company", `%${ALLEATO_COMPANY}%`);
 
-    if (status) {
-      query = query.eq("status", status);
-    }
+    query = query.eq("status", status);
 
     if (businessUnit) {
       query = query.eq("business_unit", businessUnit);
