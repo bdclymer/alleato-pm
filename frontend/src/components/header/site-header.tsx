@@ -156,9 +156,9 @@ export function SiteHeader() {
       segments.length >= 3 &&
       segments[0] === "user-management" &&
       segments[1] === "users" &&
-      /^[0-9a-f-]{36}$/i.test(segments[2])
+      segments[2]
     ) {
-      return segments[2];
+      return decodeURIComponent(segments[2]);
     }
 
     return null;
@@ -420,7 +420,9 @@ function MobileNavOverlay({
     // Only the single Admin Dashboard link; other internal admin tools are
     // reachable from that page.
     ...(isDeveloper
-      ? developerCompanyAdminTools.filter((tool) => tool.name === "Admin Dashboard")
+      ? developerCompanyAdminTools.filter(
+          (tool) => tool.name === "Admin Dashboard",
+        )
       : []),
   ];
   const companyTools = filterToolsByPermission(
@@ -474,10 +476,7 @@ function MobileNavOverlay({
               {group.label}
             </p>
             <div className="flex flex-col items-center gap-5 w-full">
-              {group.tools.map((tool) => {
-                const isDisabled =
-                  (tool.requiresProject && !projectId) ||
-                  !group.visibleTools.includes(tool);
+              {group.visibleTools.map((tool) => {
                 const href = buildToolUrl(
                   tool.path,
                   projectId,
@@ -488,20 +487,12 @@ function MobileNavOverlay({
                   <Link
                     key={`${tool.path}:${tool.name}`}
                     href={href}
-                    onClick={(e) => {
-                      if (isDisabled) {
-                        e.preventDefault();
-                        return;
-                      }
-                      onClose();
-                    }}
+                    onClick={onClose}
                     className={cn(
                       "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                      isDisabled
-                        ? "pointer-events-none opacity-30"
-                        : isActive
-                          ? "text-foreground font-semibold"
-                          : "text-foreground/85",
+                      isActive
+                        ? "text-foreground font-semibold"
+                        : "text-foreground/85",
                     )}
                   >
                     {tool.name}
@@ -516,8 +507,7 @@ function MobileNavOverlay({
             Company Tools
           </p>
           <div className="flex w-full flex-col items-center gap-5">
-            {companyToolList.map((tool) => {
-              const isDisabled = !companyTools.includes(tool);
+            {companyTools.map((tool) => {
               const href = buildToolUrl(
                 tool.path,
                 projectId,
@@ -528,20 +518,12 @@ function MobileNavOverlay({
                 <Link
                   key={`${tool.path}:${tool.name}`}
                   href={href}
-                  onClick={(e) => {
-                    if (isDisabled) {
-                      e.preventDefault();
-                      return;
-                    }
-                    onClose();
-                  }}
+                  onClick={onClose}
                   className={cn(
                     "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                    isDisabled
-                      ? "pointer-events-none opacity-30"
-                      : isActive
-                        ? "font-semibold text-foreground"
-                        : "text-foreground/85",
+                    isActive
+                      ? "font-semibold text-foreground"
+                      : "text-foreground/85",
                   )}
                 >
                   {tool.name}
@@ -831,7 +813,6 @@ function CompanyToolsPanel({
   // link lives at the end of the "Company" section; other internal admin tools
   // are reachable from the Admin Dashboard page itself.
   const sections = companyWideToolSections;
-  const allTools = [...tools, ...adminTools];
   const allVisibleTools = [...visibleTools, ...visibleAdminTools];
 
   return (
@@ -843,20 +824,17 @@ function CompanyToolsPanel({
               {section.label}
             </p>
             {section.toolNames.map((toolName) => {
-              const tool = allTools.find(
+              const tool = allVisibleTools.find(
                 (candidate) => candidate.name === toolName,
               );
               if (!tool) return null;
-              // Owner-only tools are hidden outright (not greyed) when the
-              // current user isn't the owner — they never reach visibleTools.
-              if (tool.ownerOnly && !allVisibleTools.includes(tool)) return null;
               return (
                 <ToolItem
                   key={`${tool.path}:${tool.name}`}
                   tool={tool}
                   projectId={projectId}
                   isActive={tool.name === activeToolName}
-                  isDisabled={!allVisibleTools.includes(tool)}
+                  isDisabled={false}
                   onClose={onClose}
                 />
               );
@@ -889,10 +867,8 @@ function ToolsGroup({
           {group.label}
         </p>
         {group.subGroups.map((subGroup) => {
-          const subTools = group.tools.filter(
-            (tool) =>
-              subGroup.toolNames.includes(tool.name) &&
-              (!tool.developerOnly || visibleTools.includes(tool)),
+          const subTools = visibleTools.filter((tool) =>
+            subGroup.toolNames.includes(tool.name),
           );
           return (
             <div key={subGroup.label} className="mb-3 last:mb-0">
@@ -905,10 +881,7 @@ function ToolsGroup({
                   tool={tool}
                   projectId={projectId}
                   isActive={tool.name === activeToolName}
-                  isDisabled={
-                    (tool.requiresProject && !projectId) ||
-                    !visibleTools.includes(tool)
-                  }
+                  isDisabled={false}
                   onClose={onClose}
                 />
               ))}
@@ -925,21 +898,16 @@ function ToolsGroup({
       <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {group.label}
       </p>
-      {group.tools
-        .filter((tool) => !tool.developerOnly || visibleTools.includes(tool))
-        .map((tool) => (
-          <ToolItem
-            key={`${tool.path}:${tool.name}`}
-            tool={tool}
-            projectId={projectId}
-            isActive={tool.name === activeToolName}
-            isDisabled={
-              (tool.requiresProject && !projectId) ||
-              !visibleTools.includes(tool)
-            }
-            onClose={onClose}
-          />
-        ))}
+      {visibleTools.map((tool) => (
+        <ToolItem
+          key={`${tool.path}:${tool.name}`}
+          tool={tool}
+          projectId={projectId}
+          isActive={tool.name === activeToolName}
+          isDisabled={false}
+          onClose={onClose}
+        />
+      ))}
     </div>
   );
 }

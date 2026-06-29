@@ -108,9 +108,7 @@ export function HeaderMobileMenu({
                 isAppAdmin,
                 userType
               );
-              const renderedTools = group.tools.filter(
-                (tool) => !tool.developerOnly || visibleTools.includes(tool)
-              );
+              const renderedTools = visibleTools;
 
               return (
                 <div key={group.id}>
@@ -125,27 +123,16 @@ export function HeaderMobileMenu({
                         tool.requiresProject
                       );
                       const isActive = tool.name === activeToolName;
-                      const isDisabled =
-                        (tool.requiresProject && !projectId) ||
-                        !visibleTools.includes(tool);
                       const Icon = tool.icon;
 
                       return (
                         <Link
                           key={tool.name}
                           href={href}
-                          onClick={(e) => {
-                            if (isDisabled) {
-                              e.preventDefault();
-                            } else {
-                              closeMenu();
-                            }
-                          }}
+                          onClick={closeMenu}
                           className={cn(
                             "flex items-center gap-4 px-4 py-3.5 text-base transition-colors",
-                            isDisabled
-                              ? "opacity-40 cursor-not-allowed"
-                              : "hover:bg-muted active:bg-muted/80",
+                            "hover:bg-muted active:bg-muted/80",
                             isActive && "bg-muted font-medium"
                           )}
                         >

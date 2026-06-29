@@ -1718,7 +1718,9 @@ export function UnifiedTablePage<T>({
         toast.error("Cell update issue", {
           id: "unified-table-cell-update",
           description:
-            "The edited cell was restored because the save request did not complete.",
+            error instanceof Error
+              ? error.message
+              : "The edited cell was restored because the save request did not complete.",
         });
       } finally {
         setEditingCell(null);
@@ -2404,9 +2406,7 @@ export function UnifiedTablePage<T>({
                                       )}
                                     >
                                       <span
-                                        className={
-                                          TABLE_HEADER_LABEL_CLASSNAME
-                                        }
+                                        className={TABLE_HEADER_LABEL_CLASSNAME}
                                       >
                                         {column.label}
                                       </span>
@@ -3089,8 +3089,14 @@ export function UnifiedTablePage<T>({
                       <div className="absolute left-0 top-0 h-full w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
                     </div>
                   )}
-                  <div className={cn("flex-1 flex flex-col min-h-0 pl-4 pr-4", sidePanel.contentClassName)}>
-                    {sidePanel.onClose && sidePanel.showCloseButton !== false ? (
+                  <div
+                    className={cn(
+                      "flex-1 flex flex-col min-h-0 pl-4 pr-4",
+                      sidePanel.contentClassName,
+                    )}
+                  >
+                    {sidePanel.onClose &&
+                    sidePanel.showCloseButton !== false ? (
                       <div className="flex h-10 shrink-0 items-center justify-end border-b border-border/60">
                         <Button
                           variant="ghost"

@@ -45,11 +45,11 @@ import {
   developerCompanyAdminTools,
   buildToolUrl,
   extractProjectId,
-  OWNER_EMAIL,
+  filterToolsByPermission,
   type NavigationTool,
   type SidebarNavGroup,
 } from "@/lib/navigation-config"
-import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
+import { useProjectPermissions } from "@/hooks/use-project-permissions"
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile"
 import { ProjectSelector } from "@/components/header/project-selector"
 import { useHeaderNav } from "@/components/header/use-header-nav"
@@ -316,21 +316,18 @@ function ExpandedNavGroup({
 }
 
 function ExpandedCompanyWideTools({
-  tools,
   visibleTools,
   projectId,
   pathname,
   onBack,
   projectSelector,
 }: {
-  tools: NavigationTool[]
   visibleTools: NavigationTool[]
   projectId: number | null
   pathname: string
   onBack: () => void
   projectSelector?: React.ReactNode
 }) {
-  const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
   // Only the named Company-wide sections render. The single Admin Dashboard
   // link lives at the end of the "Company" section; other internal admin tools
   // are reachable from the Admin Dashboard page itself.
@@ -358,10 +355,8 @@ function ExpandedCompanyWideTools({
       )}
       {sections.map((section) => {
         const sectionTools = section.toolNames
-          .map((toolName) => tools.find((tool) => tool.name === toolName))
+          .map((toolName) => visibleTools.find((tool) => tool.name === toolName))
           .filter((tool): tool is NavigationTool => Boolean(tool))
-          // Owner-only tools are hidden outright (not greyed) for non-owners.
-          .filter((tool) => !tool.ownerOnly || visibleToolSet.has(tool))
 
         if (sectionTools.length === 0) return null
 
@@ -382,14 +377,11 @@ function ExpandedCompanyWideTools({
                   !isExternal &&
                   (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
                 const Icon = tool.icon
-                const isDisabled = !visibleToolSet.has(tool)
                 const linkClass = cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
-                  isDisabled
-                    ? "pointer-events-none opacity-30"
-                    : isActive
-                      ? "font-medium text-sidebar-foreground"
-                      : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  isActive
+                    ? "font-medium text-sidebar-foreground"
+                    : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                 )
 
                 return isExternal ? (
@@ -553,22 +545,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Filter tools by permission
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {
-      return tools.filter((tool) => {
-        if (tool.ownerOnly && user?.email !== OWNER_EMAIL) return false
-        if (tool.onlyWithoutProject && projectId) return false;
-        if (tool.requiresProject && !projectId) return false
-        if (tool.developerOnly && !isDeveloper) return false
-        if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
-        // Subcontractor-only tools: only show for subcontractors
-        if (tool.subcontractorOnly && !isSubcontractor) return false
-        // Hide subcontractor-only tools from non-subcontractors (already handled above)
-        if (tool.module && projectId) {
-          return hasModulePermission(permissions, tool.module, tool.requiredPermission || "read")
-        }
-        return true
-      })
+      return filterToolsByPermission(
+        tools,
+        projectId,
+        permissions,
+        isAppAdmin,
+        userType,
+        isDeveloper,
+        user?.email ?? null,
+        {
+          isAdmin: currentUserProfile?.isAdmin,
+          isDeveloper,
+          role: currentUserProfile?.role,
+          title: currentUserProfile?.title,
+          userType,
+        },
+      )
     },
-    [projectId, permissions, isAppAdmin, userType, isSubcontractor, isDeveloper, user?.email]
+    [
+      currentUserProfile?.isAdmin,
+      currentUserProfile?.role,
+      currentUserProfile?.title,
+      isAppAdmin,
+      isDeveloper,
+      permissions,
+      projectId,
+      user?.email,
+      userType,
+    ]
   )
 
   // Check if a group has any active child
@@ -618,12 +622,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   )
 
   // Collapsible section state for project-scoped sidebar groups.
-  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(() => {
-    const initialProjectId = extractProjectId(pathname ?? "")
-    return initialProjectId
-      ? new Set(["project"])
-      : new Set(["project"])
-  })
+  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(new Set())
+  const initializedGroupKeyRef = React.useRef<string | null>(null)
+  const filteredGroupKey = React.useMemo(
+    () => filteredGroups.map((group) => group.id).join("|"),
+    [filteredGroups]
+  )
 
   const toggleGroup = React.useCallback((groupId: string) => {
     setOpenGroupIds((prev) => {
@@ -633,6 +637,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return next
     })
   }, [])
+
+  // Default every visible section open once the permission-filtered nav is known.
+  // User collapse choices are preserved until the set of visible groups changes.
+  React.useEffect(() => {
+    if (!filteredGroupKey || initializedGroupKeyRef.current === filteredGroupKey) return
+
+    initializedGroupKeyRef.current = filteredGroupKey
+    setOpenGroupIds(new Set(filteredGroups.map((group) => group.id)))
+  }, [filteredGroups, filteredGroupKey])
 
   // Auto-expand the group that contains the active route
   React.useEffect(() => {
@@ -783,7 +796,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="flex flex-col">
             {showCompanyWideTools ? (
               <ExpandedCompanyWideTools
-                tools={companyWideTools}
                 visibleTools={visibleCompanyWideTools}
                 projectId={projectId}
                 pathname={pathname}

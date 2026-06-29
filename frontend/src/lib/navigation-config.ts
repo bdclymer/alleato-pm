@@ -40,6 +40,10 @@ import {
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
 import { OWNER_EMAIL } from "@/lib/auth/owner";
+import {
+  canAccessUserManagement,
+  type UserManagementAccessProfile,
+} from "@/lib/auth/user-management-access.shared";
 
 /**
  * The single owner of the workspace. Tools flagged `ownerOnly` are visible only
@@ -75,6 +79,8 @@ export interface NavigationTool {
   requiredPermission?: "read" | "write" | "admin";
   /** If true, only visible to app admins or developers. */
   adminOnly?: boolean;
+  /** Named access policy for admin-adjacent tools that allow role/title access. */
+  accessPolicy?: "userManagement";
   /** If true, only visible to users with the developer role. */
   developerOnly?: boolean;
   /** If true, only visible to users with user_type === "subcontractor". */
@@ -134,6 +140,7 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: UserCog,
     description: "Users, roles, and permission templates",
     adminOnly: true,
+    accessPolicy: "userManagement",
   },
   {
     name: "Meetings",
@@ -148,13 +155,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Company task board",
-  },
-  {
-    name: "Manpower",
-    path: "manpower",
-    requiresProject: false,
-    icon: Users,
-    description: "Cross-project staffing plan",
   },
   {
     name: "Knowledge Base",
@@ -255,6 +255,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Brain,
     description: "Task extraction and learning review",
+    developerOnly: true,
+  },
+  {
+    name: "Training Docs",
+    path: "training-docs",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Draft and publish reviewed workflow manuals",
     developerOnly: true,
   },
   {
@@ -387,6 +395,14 @@ export const developmentTools: HeaderNavigationTool[] = [
     ownerOnly: true,
   },
   {
+    name: "Training Docs",
+    path: "training-docs",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Draft and publish reviewed workflow manuals",
+    ownerOnly: true,
+  },
+  {
     name: "Knowledge Sources",
     path: "knowledge/manage",
     requiresProject: false,
@@ -428,58 +444,202 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Company", "Company Directory", "Alleato AI", "Admin Dashboard"],
-  },
-  {
-    label: "Work",
     toolNames: [
-      "Meetings",
-      "Tasks",
-      "Manpower",
-      "Knowledge Base",
-      "Documentation",
+      "Company",
+      "Company Directory",
+      "User Management",
+      "Alleato AI",
+      "Admin Dashboard",
     ],
   },
   {
+    label: "Work",
+    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documentation"],
+  },
+  {
     label: "Financial",
-    toolNames: ["Estimates", "Prime Contracts", "Change Events", "Potential Change Orders"],
+    toolNames: [
+      "Estimates",
+      "Prime Contracts",
+      "Change Events",
+      "Potential Change Orders",
+    ],
   },
 ];
 
 export const coreTools: NavigationTool[] = [
   { name: "Company", path: "", icon: Briefcase, requiresProject: false },
-  { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
+  {
+    name: "Company Directory",
+    path: "directory/companies",
+    icon: Building2,
+    requiresProject: false,
+    module: "directory",
+  },
   { name: "Home", path: "home", icon: Home, requiresProject: true },
-  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
-  { name: "Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
-  { name: "Tables Directory", path: "tables-directory", icon: Table, requiresProject: false, adminOnly: true },
+  {
+    name: "Documents",
+    path: "documents",
+    icon: FolderOpen,
+    requiresProject: true,
+    module: "documents",
+  },
+  {
+    name: "Directory",
+    path: "directory",
+    icon: Users,
+    requiresProject: true,
+    module: "directory",
+  },
+  {
+    name: "Tables Directory",
+    path: "tables-directory",
+    icon: Table,
+    requiresProject: false,
+    adminOnly: true,
+  },
 ];
 
 export const projectManagementTools: NavigationTool[] = [
-  { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" },
-  { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents", developerOnly: true },
+  {
+    name: "Schedule",
+    path: "schedule",
+    icon: Calendar,
+    requiresProject: true,
+    module: "schedule",
+  },
+  {
+    name: "Progress Reports",
+    path: "progress-reports",
+    icon: FileText,
+    requiresProject: true,
+    module: "documents",
+    developerOnly: true,
+  },
   { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
   { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
-  { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
-  { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" },
-  { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" },
-  { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" },
-  { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" },
-  { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" },
-  { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" },
-  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+  {
+    name: "Punch List",
+    path: "punch-list",
+    icon: CheckCircle,
+    requiresProject: true,
+  },
+  {
+    name: "RFIs",
+    path: "rfis",
+    icon: MessageCircle,
+    requiresProject: true,
+    module: "rfis",
+  },
+  {
+    name: "Submittals",
+    path: "submittals",
+    icon: Package,
+    requiresProject: true,
+    module: "submittals",
+  },
+  {
+    name: "Transmittals",
+    path: "transmittals",
+    icon: Mail,
+    requiresProject: true,
+    module: "documents",
+  },
+  {
+    name: "Photos",
+    path: "photos",
+    icon: Camera,
+    requiresProject: true,
+    module: "documents",
+  },
+  {
+    name: "Drawings",
+    path: "drawings",
+    icon: FileImage,
+    requiresProject: true,
+    module: "documents",
+  },
+  {
+    name: "Specifications",
+    path: "specifications",
+    icon: BookOpen,
+    requiresProject: true,
+    module: "documents",
+  },
+  {
+    name: "Documents",
+    path: "documents",
+    icon: FolderOpen,
+    requiresProject: true,
+    module: "documents",
+  },
 ];
 
 export const financialManagementTools: NavigationTool[] = [
-  { name: "Estimates", path: "estimates", icon: ClipboardList, requiresProject: true, module: "budget" },
-  { name: "Budget", path: "budget", icon: TrendingUp, requiresProject: true, module: "budget" },
-  { name: "Prime Contracts", path: "prime-contracts", icon: FileText, requiresProject: true, module: "contracts" },
-  { name: "Commitments", path: "commitments", icon: Hammer, requiresProject: true, module: "contracts" },
-  { name: "Change Orders", path: "change-orders", icon: ClipboardList, requiresProject: true, module: "change_orders" },
-  { name: "Change Events", path: "change-events", icon: Clock, requiresProject: true, module: "change_orders" },
-  { name: "Direct Costs", path: "direct-costs", icon: DollarSign, requiresProject: true, module: "budget" },
-  { name: "Invoicing", path: "invoices", icon: Receipt, requiresProject: true, module: "contracts" },
-  { name: "Project Status Report", path: "project-status-report", icon: ClipboardList, requiresProject: true, module: "budget", developerOnly: true },
+  {
+    name: "Estimates",
+    path: "estimates",
+    icon: ClipboardList,
+    requiresProject: true,
+    module: "budget",
+  },
+  {
+    name: "Budget",
+    path: "budget",
+    icon: TrendingUp,
+    requiresProject: true,
+    module: "budget",
+  },
+  {
+    name: "Prime Contracts",
+    path: "prime-contracts",
+    icon: FileText,
+    requiresProject: true,
+    module: "contracts",
+  },
+  {
+    name: "Commitments",
+    path: "commitments",
+    icon: Hammer,
+    requiresProject: true,
+    module: "contracts",
+  },
+  {
+    name: "Change Orders",
+    path: "change-orders",
+    icon: ClipboardList,
+    requiresProject: true,
+    module: "change_orders",
+  },
+  {
+    name: "Change Events",
+    path: "change-events",
+    icon: Clock,
+    requiresProject: true,
+    module: "change_orders",
+  },
+  {
+    name: "Direct Costs",
+    path: "direct-costs",
+    icon: DollarSign,
+    requiresProject: true,
+    module: "budget",
+  },
+  {
+    name: "Invoicing",
+    path: "invoices",
+    icon: Receipt,
+    requiresProject: true,
+    module: "contracts",
+  },
+  {
+    name: "Project Status Report",
+    path: "project-status-report",
+    icon: ClipboardList,
+    requiresProject: true,
+    module: "budget",
+    developerOnly: true,
+  },
 ];
 
 /**
@@ -487,31 +647,161 @@ export const financialManagementTools: NavigationTool[] = [
  * These replace the full Financial/Operations nav for subcontractors.
  */
 export const subcontractorTools: NavigationTool[] = [
-  { name: "My Work", path: "my-work", icon: Home, requiresProject: true, subcontractorOnly: true },
-  { name: "My Schedule of Values", path: "commitments", icon: ClipboardList, requiresProject: true, subcontractorOnly: true, module: "contracts" },
-  { name: "Submit Invoice", path: "invoicing/subcontractor/new", icon: Receipt, requiresProject: true, subcontractorOnly: true, module: "contracts" },
-  { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, subcontractorOnly: true, module: "rfis" },
-  { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, subcontractorOnly: true, module: "submittals" },
-  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, subcontractorOnly: true, module: "documents" },
+  {
+    name: "My Work",
+    path: "my-work",
+    icon: Home,
+    requiresProject: true,
+    subcontractorOnly: true,
+  },
+  {
+    name: "My Schedule of Values",
+    path: "commitments",
+    icon: ClipboardList,
+    requiresProject: true,
+    subcontractorOnly: true,
+    module: "contracts",
+  },
+  {
+    name: "Submit Invoice",
+    path: "invoicing/subcontractor/new",
+    icon: Receipt,
+    requiresProject: true,
+    subcontractorOnly: true,
+    module: "contracts",
+  },
+  {
+    name: "RFIs",
+    path: "rfis",
+    icon: MessageCircle,
+    requiresProject: true,
+    subcontractorOnly: true,
+    module: "rfis",
+  },
+  {
+    name: "Submittals",
+    path: "submittals",
+    icon: Package,
+    requiresProject: true,
+    subcontractorOnly: true,
+    module: "submittals",
+  },
+  {
+    name: "Documents",
+    path: "documents",
+    icon: FolderOpen,
+    requiresProject: true,
+    subcontractorOnly: true,
+    module: "documents",
+  },
 ];
 
 export const adminTools: NavigationTool[] = [
-  { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
-  { name: "Operations Readiness", path: "/operations-readiness", icon: CheckCircle, requiresProject: false, adminOnly: true },
-  { name: "Database Inventory", path: "/database-inventory", icon: Table, requiresProject: false, adminOnly: true },
-  { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
-  { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
-  { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
-  { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
-  { name: "AI Learning Promotions", path: "/ai/learning-promotions", icon: Sparkles, requiresProject: false, adminOnly: true },
-  { name: "AI Skills Admin", path: "/ai/admin/skills", icon: Shield, requiresProject: false, adminOnly: true },
-  { name: "Project Attribution", path: "/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
-  { name: "Task Training", path: "/task-training", icon: Brain, requiresProject: false, adminOnly: true },
-  { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
-  { name: "Deep Research Archive", path: "/deep-research", icon: BookOpen, requiresProject: false, adminOnly: true },
+  {
+    name: "Actions",
+    path: "/actions",
+    icon: Wrench,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Operations Readiness",
+    path: "/operations-readiness",
+    icon: CheckCircle,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Database Inventory",
+    path: "/database-inventory",
+    icon: Table,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "What's New",
+    path: "/updates",
+    icon: TrendingUp,
+    requiresProject: false,
+  },
+  {
+    name: "Documentation",
+    path: "/docs",
+    icon: MessageCircle,
+    requiresProject: false,
+  },
+  {
+    name: "Procore Docs",
+    path: "/procore-docs",
+    icon: BookOpen,
+    requiresProject: false,
+  },
+  {
+    name: "Document Pipeline",
+    path: "/admin/documents/pipeline",
+    icon: FolderOpen,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "AI Learning Promotions",
+    path: "/ai/learning-promotions",
+    icon: Sparkles,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "AI Skills Admin",
+    path: "/ai/admin/skills",
+    icon: Shield,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Project Attribution",
+    path: "/project-attribution",
+    icon: Brain,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Task Training",
+    path: "/task-training",
+    icon: Brain,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Training Docs",
+    path: "/training-docs",
+    icon: BookOpen,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Knowledge Sources",
+    path: "/knowledge/manage",
+    icon: BookOpen,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Deep Research Archive",
+    path: "/deep-research",
+    icon: BookOpen,
+    requiresProject: false,
+    adminOnly: true,
+  },
   // AI SDK DevTools — only visible in development (http://localhost:4983)
   ...(process.env.NODE_ENV === "development"
-    ? [{ name: "AI DevTools", path: "http://localhost:4983", icon: Bug, requiresProject: false } as NavigationTool]
+    ? [
+        {
+          name: "AI DevTools",
+          path: "http://localhost:4983",
+          icon: Bug,
+          requiresProject: false,
+        } as NavigationTool,
+      ]
     : []),
 ];
 
@@ -519,7 +809,7 @@ export const adminTools: NavigationTool[] = [
 export const buildToolUrl = (
   toolPath: string,
   projectId: number | null,
-  requiresProject: boolean = true
+  requiresProject: boolean = true,
 ): string => {
   // External links (docs site, dev tools) are absolute — return as-is.
   if (toolPath.startsWith("http")) {
@@ -532,10 +822,7 @@ export const buildToolUrl = (
 };
 
 // Helper function to check if a path is currently active
-export const isActivePath = (
-  pathname: string,
-  toolPath: string
-): boolean => {
+export const isActivePath = (pathname: string, toolPath: string): boolean => {
   const segments = pathname?.split("/").filter(Boolean) ?? [];
   if (segments.length >= 2 && /^\d+$/.test(segments[0])) {
     return segments[1] === toolPath.split("/")[0];
@@ -562,6 +849,7 @@ export function filterToolsByPermission<T extends NavigationTool>(
   userType: string | null,
   isDeveloper = userType === "developer",
   userEmail: string | null = null,
+  accessProfile: UserManagementAccessProfile = {},
 ): T[] {
   return tools.filter((tool) => {
     // Owner-only tools are hidden everywhere unless the caller supplies the
@@ -572,14 +860,30 @@ export function filterToolsByPermission<T extends NavigationTool>(
     if (tool.requiresProject && !projectId) return false;
     // Developer-only tools: only site developers can see experimental/internal report surfaces.
     if (tool.developerOnly && !isDeveloper) return false;
-    // Admin-only tools: only for app admins or developers
-    if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false;
+    // Admin-only tools: only for app admins/developers, except named policies
+    // that deliberately allow role/title based access.
+    if (
+      tool.adminOnly &&
+      !isAppAdmin &&
+      userType !== "developer" &&
+      !(
+        tool.accessPolicy === "userManagement" &&
+        canAccessUserManagement({
+          ...accessProfile,
+          isAdmin: accessProfile.isAdmin ?? isAppAdmin,
+          isDeveloper: accessProfile.isDeveloper ?? isDeveloper,
+          userType: accessProfile.userType ?? userType,
+        })
+      )
+    ) {
+      return false;
+    }
     // Module-gated tools: check user has required permission
     if (tool.module && projectId) {
       return hasModulePermission(
         permissions,
         tool.module,
-        tool.requiredPermission || "read"
+        tool.requiredPermission || "read",
       );
     }
     return true;
@@ -612,9 +916,20 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     tools: [
       { name: "Home", path: "home", icon: Home, requiresProject: true },
       { name: "Alleato AI", path: "ai", icon: Bot, requiresProject: false },
-      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
-      { name: "Project Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
-      { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" as PermissionModule },
+      {
+        name: "Project Directory",
+        path: "directory",
+        icon: Users,
+        requiresProject: true,
+        module: "directory" as PermissionModule,
+      },
+      {
+        name: "Company Directory",
+        path: "directory/companies",
+        icon: Building2,
+        requiresProject: false,
+        module: "directory" as PermissionModule,
+      },
     ],
   },
   {
@@ -628,14 +943,66 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Operations",
     icon: ClipboardList,
     tools: [
-      { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" as PermissionModule },
-      { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
-      { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
-      { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
-      { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" as PermissionModule },
-      { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" as PermissionModule },
-      { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" as PermissionModule, ownerOnly: true },
+      {
+        name: "Schedule",
+        path: "schedule",
+        icon: Calendar,
+        requiresProject: true,
+        module: "schedule" as PermissionModule,
+      },
+      {
+        name: "Meetings",
+        path: "meetings",
+        icon: Users,
+        requiresProject: true,
+      },
+      {
+        name: "Daily Log",
+        path: "daily-log",
+        icon: Clock,
+        requiresProject: true,
+      },
+      {
+        name: "Punch List",
+        path: "punch-list",
+        icon: CheckCircle,
+        requiresProject: true,
+      },
+      {
+        name: "Project Tasks",
+        path: "tasks",
+        icon: CheckCircle,
+        requiresProject: true,
+      },
+      {
+        name: "RFIs",
+        path: "rfis",
+        icon: MessageCircle,
+        requiresProject: true,
+        module: "rfis" as PermissionModule,
+      },
+      {
+        name: "Submittals",
+        path: "submittals",
+        icon: Package,
+        requiresProject: true,
+        module: "submittals" as PermissionModule,
+      },
+      {
+        name: "Transmittals",
+        path: "transmittals",
+        icon: Mail,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+      },
+      {
+        name: "Emails",
+        path: "emails",
+        icon: Mail,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+        ownerOnly: true,
+      },
     ],
   },
   {
@@ -643,11 +1010,42 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Documents",
     icon: FolderOpen,
     tools: [
-      { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule, developerOnly: true },
+      {
+        name: "Photos",
+        path: "photos",
+        icon: Camera,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+      },
+      {
+        name: "Drawings",
+        path: "drawings",
+        icon: FileImage,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+      },
+      {
+        name: "Specifications",
+        path: "specifications",
+        icon: BookOpen,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+      },
+      {
+        name: "Documents",
+        path: "documents",
+        icon: FolderOpen,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+      },
+      {
+        name: "Progress Reports",
+        path: "progress-reports",
+        icon: FileText,
+        requiresProject: true,
+        module: "documents" as PermissionModule,
+        developerOnly: true,
+      },
     ],
   },
 ];
@@ -736,7 +1134,15 @@ export const headerNavGroups: HeaderNavGroup[] = [
       },
     ],
     subGroups: [
-      { label: "Budgeting", toolNames: ["Estimates", "Budget", "Direct Costs", "Project Status Report"] },
+      {
+        label: "Budgeting",
+        toolNames: [
+          "Estimates",
+          "Budget",
+          "Direct Costs",
+          "Project Status Report",
+        ],
+      },
       {
         label: "Contracts",
         toolNames: ["Prime Contracts", "Commitments", "Invoicing"],
@@ -988,6 +1394,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     adminOnly: true,
   },
   {
+    name: "Training Docs",
+    path: "/training-docs",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Reviewed workflow manuals",
+    adminOnly: true,
+  },
+  {
     name: "Project Attribution",
     path: "/admin/project-attribution",
     requiresProject: false,
@@ -1016,11 +1430,11 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
 // Helper to find which header group contains the active tool
 export function getActiveGroupId(
   toolPath: string,
-  groups: HeaderNavGroup[]
+  groups: HeaderNavGroup[],
 ): string | null {
   for (const group of groups) {
     const match = group.tools.find(
-      (tool) => tool.path === toolPath || toolPath.startsWith(tool.path + "/")
+      (tool) => tool.path === toolPath || toolPath.startsWith(tool.path + "/"),
     );
     if (match) return group.id;
   }

@@ -244,6 +244,46 @@ describe("navigation config", () => {
     }
   });
 
+  it("allows User Management for configured project leadership roles", () => {
+    const userManagementTools = companyWideHeaderTools.filter(
+      (tool) => tool.name === "User Management",
+    );
+
+    for (const title of ["Senior Project Manager", "Project Manager", "Superintendent"]) {
+      const tools = filterToolsByPermission(
+        userManagementTools,
+        null,
+        {},
+        false,
+        "employee",
+        false,
+        null,
+        { title },
+      );
+
+      expect(tools.some((tool) => tool.name === "User Management")).toBe(true);
+    }
+  });
+
+  it("keeps User Management hidden from unrelated non-admin roles", () => {
+    const userManagementTools = companyWideHeaderTools.filter(
+      (tool) => tool.name === "User Management",
+    );
+
+    const tools = filterToolsByPermission(
+      userManagementTools,
+      null,
+      {},
+      false,
+      "employee",
+      false,
+      null,
+      { title: "Project Engineer" },
+    );
+
+    expect(tools).toHaveLength(0);
+  });
+
   it("keeps removed company-wide surfaces out of company navigation", () => {
     const removedToolNames = ["Assignment Inbox", "Teams Conversations", "Teams Messages"];
     const removedPaths = ["assignment-inbox", "teams-conversations", "files"];

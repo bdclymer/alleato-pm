@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   getPermissionTemplates,
@@ -97,22 +97,7 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "permissions/templates#POST",
   async ({ request }) => {
-  
-    const supabase = await createClient();
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/templates#POST", message: "Authentication required." });
-    }
-
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!profile?.is_admin) {
-      throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/templates#POST", message: "Access denied." });
-    }
+    await requireUserManagementAccess("permissions/templates#POST");
 
     const body = await request.json();
     const { name, description, rules_json, granular_flags, scope } = body;

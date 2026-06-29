@@ -1,30 +1,142 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import { createServiceClient } from "@/lib/supabase/service";
 
 async function requireAdmin(where: string) {
-  const supabase = await createClient();
-  const user = await getApiRouteUser();
-
-  if (!user) {
-    throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
-  }
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.is_admin) {
-    throw new GuardrailError({ code: "FORBIDDEN", where, message: "Access denied." });
-  }
-
-  return user;
+  return requireUserManagementAccess(where);
 }
+
+const PatchUserBody = z
+  .object({
+    first_name: z.string().trim().min(1).optional(),
+    last_name: z.string().trim().optional(),
+    email: z.string().trim().email().optional(),
+    person_type: z.string().trim().min(1).optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one editable user field is required.",
+  });
+
+export const PATCH = withApiGuardrails(
+  "permissions/users/[personId]#PATCH",
+  async ({ request, params }) => {
+    await requireAdmin("permissions/users/[personId]#PATCH");
+    const { personId } = await params;
+    const parsed = PatchUserBody.safeParse(await request.json());
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid user update." },
+        { status: 400 },
+      );
+    }
+
+    const service = createServiceClient();
+    const { data: person, error: personError } = await service
+      .from("people")
+      .select("id, auth_user_id, first_name, last_name, email")
+      .eq("id", personId)
+      .maybeSingle();
+
+    if (personError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users/[personId]#PATCH:load-person",
+        message: "Failed to load user.",
+        details: personError,
+      });
+    }
+
+    if (!person) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: "permissions/users/[personId]#PATCH",
+        message: "User not found.",
+        status: 404,
+      });
+    }
+
+    const updates = {
+      ...parsed.data,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await service
+      .from("people")
+      .update(updates)
+      .eq("id", personId);
+
+    if (updateError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users/[personId]#PATCH:update-person",
+        message: "Failed to update user.",
+        details: updateError,
+      });
+    }
+
+    if (person.auth_user_id) {
+      const firstName = parsed.data.first_name ?? person.first_name ?? "";
+      const lastName = parsed.data.last_name ?? person.last_name ?? "";
+      const profileUpdates: Record<string, string> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (
+        parsed.data.first_name !== undefined ||
+        parsed.data.last_name !== undefined
+      ) {
+        profileUpdates.full_name =
+          [firstName, lastName].filter(Boolean).join(" ") ||
+          parsed.data.email ||
+          person.email ||
+          "";
+      }
+
+      if (parsed.data.email) {
+        profileUpdates.email = parsed.data.email;
+      }
+
+      if (Object.keys(profileUpdates).length > 1) {
+        const { error: profileError } = await service
+          .from("user_profiles")
+          .update(profileUpdates)
+          .eq("id", person.auth_user_id);
+
+        if (profileError) {
+          throw new GuardrailError({
+            code: "UPSTREAM_FAILURE",
+            where: "permissions/users/[personId]#PATCH:update-profile",
+            message: "Failed to update the user profile.",
+            details: profileError,
+          });
+        }
+      }
+
+      if (parsed.data.email && parsed.data.email !== person.email) {
+        const { error: authError } = await service.auth.admin.updateUserById(
+          person.auth_user_id,
+          { email: parsed.data.email },
+        );
+
+        if (authError) {
+          throw new GuardrailError({
+            code: "UPSTREAM_FAILURE",
+            where: "permissions/users/[personId]#PATCH:update-auth-email",
+            message: "Failed to update the authentication email.",
+            details: authError,
+          });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  },
+);
 
 export const DELETE = withApiGuardrails(
   "permissions/users/[personId]#DELETE",
