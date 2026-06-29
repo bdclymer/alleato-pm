@@ -128,6 +128,18 @@ describe("navigation config", () => {
     expect(tools.some((tool) => tool.name === "Project Intelligence")).toBe(false);
   });
 
+  it("keeps project admin out of project navigation", () => {
+    const projectNavTools = [
+      ...coreTools,
+      ...adminTools,
+      ...headerNavGroups.flatMap((group) => group.tools),
+    ];
+
+    expect(
+      projectNavTools.filter((tool) => tool.path === "admin" && tool.requiresProject === true),
+    ).toHaveLength(0);
+  });
+
   it("shows developer-only report tools to developers with module access", () => {
     const tools = filterToolsByPermission(
       [...projectManagementTools, ...financialManagementTools],

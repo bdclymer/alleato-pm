@@ -453,7 +453,6 @@ export const coreTools: NavigationTool[] = [
   { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
   { name: "Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
   { name: "Tables Directory", path: "tables-directory", icon: Table, requiresProject: false, adminOnly: true },
-  { name: "Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
 ];
 
 export const projectManagementTools: NavigationTool[] = [
@@ -616,7 +615,6 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
       { name: "Project Tasks", path: "tasks", icon: CheckCircle, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" as PermissionModule },
-      { name: "Project Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
     ],
   },
   {
@@ -971,14 +969,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: MessageCircle,
     description: "Agentation annotation triage",
-    adminOnly: true,
-  },
-  {
-    name: "Admin Panel",
-    path: "admin",
-    requiresProject: true,
-    icon: Shield,
-    description: "Project administration",
     adminOnly: true,
   },
   {
