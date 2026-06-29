@@ -18,6 +18,7 @@ import type { TrainingDocWithAssets } from "@/lib/training-docs/types";
 
 export const trainingDocColumns = [
   { id: "title", label: "Title", alwaysVisible: true },
+  { id: "training_page", label: "Training Page", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "audience", label: "Audience", defaultVisible: true },
   { id: "source_route", label: "Source Route", defaultVisible: true },
@@ -26,6 +27,8 @@ export const trainingDocColumns = [
   { id: "assets", label: "Screenshots", defaultVisible: true },
   { id: "published", label: "Published", defaultVisible: true },
 ] as const;
+
+const DOCS_SITE_ORIGIN = "https://alleato-os-docs.vercel.app";
 
 export const trainingDocDefaultVisibleColumns = trainingDocColumns
   .filter((column) => column.defaultVisible || column.alwaysVisible)
@@ -87,9 +90,23 @@ export function buildTrainingDocTableColumns(
       sortValue: (doc) => doc.title,
       csvValue: (doc) => doc.title,
     },
+    {
+      ...trainingDocColumns[1],
+      render: (doc) => (
+        <CellLink
+          value={doc.published_doc_path ? "Open" : null}
+          href={getTrainingPageUrl(doc.published_doc_path)}
+          emptyLabel="-"
+          external
+        />
+      ),
+      sortable: true,
+      sortValue: (doc) => doc.published_doc_path ?? "",
+      csvValue: (doc) => getTrainingPageUrl(doc.published_doc_path) ?? "",
+    },
     editableSelectColumn(
       {
-        ...trainingDocColumns[1],
+        ...trainingDocColumns[2],
         render: (doc) => (
           <CellStatus value={formatTrainingDocValue(doc.status)} />
         ),
@@ -108,7 +125,7 @@ export function buildTrainingDocTableColumns(
     ),
     editableSelectColumn(
       {
-        ...trainingDocColumns[2],
+        ...trainingDocColumns[3],
         render: (doc) => (
           <CellText value={formatTrainingDocValue(doc.audience)} />
         ),
@@ -127,7 +144,7 @@ export function buildTrainingDocTableColumns(
     ),
     editableTextColumn(
       {
-        ...trainingDocColumns[3],
+        ...trainingDocColumns[4],
         render: (doc) => <CellText value={doc.source_route} emptyLabel="-" />,
         sortable: true,
         sortValue: (doc) => doc.source_route ?? "",
@@ -141,7 +158,7 @@ export function buildTrainingDocTableColumns(
     ),
     editableTextColumn(
       {
-        ...trainingDocColumns[4],
+        ...trainingDocColumns[5],
         render: (doc) => (
           <CellText value={doc.summary} emptyLabel="-" className="max-w-md" />
         ),
@@ -157,7 +174,7 @@ export function buildTrainingDocTableColumns(
     ),
     editableTextColumn(
       {
-        ...trainingDocColumns[5],
+        ...trainingDocColumns[6],
         render: (doc) => (
           <CellText
             value={doc.body_markdown}
@@ -176,7 +193,7 @@ export function buildTrainingDocTableColumns(
       },
     ),
     {
-      ...trainingDocColumns[6],
+      ...trainingDocColumns[7],
       render: (doc) => <CellNumber value={doc.assets.length} />,
       sortable: true,
       sortValue: (doc) => doc.assets.length,
@@ -184,7 +201,7 @@ export function buildTrainingDocTableColumns(
       align: "right",
     },
     {
-      ...trainingDocColumns[7],
+      ...trainingDocColumns[8],
       render: (doc) => (
         <CellText value={formatDate(doc.last_published_at)} emptyLabel="-" />
       ),
@@ -209,4 +226,10 @@ function formatDate(value: string | null): string | null {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function getTrainingPageUrl(publishedDocPath: string | null): string | null {
+  if (!publishedDocPath) return null;
+  const routePath = publishedDocPath.replace(/\.mdx$/, "");
+  return `${DOCS_SITE_ORIGIN}/${routePath}`;
 }
