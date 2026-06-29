@@ -289,16 +289,6 @@ export function LoginPageV3({ redirectTo }: LoginPageV3Props) {
                   {isLoading ? "Signing in…" : "Sign in"}
                 </Button>
               </div>
-
-              <p className="text-sm text-center text-muted-foreground pt-1">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href="/auth/sign-up"
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
-                >
-                  Sign up
-                </Link>
-              </p>
             </form>
           </motion.div>
 
