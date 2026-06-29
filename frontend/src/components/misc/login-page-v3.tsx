@@ -255,20 +255,12 @@ export function LoginPageV3({ redirectTo }: LoginPageV3Props) {
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="password-v3"
-                    className="text-xs tracking-widest uppercase text-muted-foreground"
-                  >
-                    Password
-                  </Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
-                  >
-                    Forgot?
-                  </Link>
-                </div>
+                <Label
+                  htmlFor="password-v3"
+                  className="text-xs tracking-widest uppercase text-muted-foreground"
+                >
+                  Password
+                </Label>
                 <PasswordInput
                   id="password-v3"
                   placeholder="Enter your password"
@@ -289,6 +281,15 @@ export function LoginPageV3({ redirectTo }: LoginPageV3Props) {
                   {isLoading ? "Signing in…" : "Sign in"}
                 </Button>
               </div>
+
+              <p className="text-sm text-center text-muted-foreground pt-1">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </p>
             </form>
           </motion.div>
 
