@@ -1,4 +1,4 @@
-import { AppKnowledgeBasePage } from "@/features/knowledge/knowledge-base-page";
+import { AppTrainingDocsPage } from "@/features/knowledge/app-training-docs-page";
 import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
 import { listPublishedTrainingDocs } from "@/lib/training-docs/server";
@@ -14,7 +14,7 @@ export default async function KnowledgeAppPage() {
       showHeader={false}
       contentClassName="max-w-screen-2xl"
     >
-      <AppKnowledgeBasePage trainingDocs={trainingDocs} withShell={false} />
+      <AppTrainingDocsPage trainingDocs={trainingDocs} />
     </PageShell>
   );
 }

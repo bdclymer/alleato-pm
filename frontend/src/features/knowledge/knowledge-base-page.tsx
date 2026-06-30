@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Bot,
   BookOpen,
   Briefcase,
   Building2,
@@ -27,14 +26,7 @@ import {
 } from "@/hooks/use-knowledge-documents";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { apiFetch } from "@/lib/api-client";
-import { getPublishedTrainingDocUrl } from "@/lib/training-docs/constants";
-import type { PublishedTrainingDoc } from "@/lib/training-docs/docs-site";
 import { cn } from "@/lib/utils";
-import {
-  APP_KNOWLEDGE_TOOL_CATEGORIES,
-  getAppKnowledgeToolHref,
-  getTrainingDocsForToolCategory,
-} from "./app-knowledge";
 
 const COMPANY_CATEGORY_ORDER = [
   "Company Policies",
@@ -163,83 +155,6 @@ export function KnowledgeBasePage() {
       sourceListNoun="sources"
       title="Alleato Knowledge Base"
       topBarLabel="Knowledge"
-    />
-  );
-}
-
-export function AppKnowledgeBasePage({
-  activeCategorySlug,
-  trainingDocs,
-  withShell = true,
-}: {
-  activeCategorySlug?: string;
-  trainingDocs: PublishedTrainingDoc[];
-  withShell?: boolean;
-}) {
-  const { profile } = useCurrentUserProfile();
-
-  const categories = React.useMemo<KnowledgeCategoryConfig[]>(
-    () =>
-      APP_KNOWLEDGE_TOOL_CATEGORIES.map((category) => ({
-        id: category.slug,
-        label: category.title,
-        description: category.description,
-        icon: <BookOpen className="h-4 w-4" />,
-        href: getAppKnowledgeToolHref(category),
-      })),
-    [],
-  );
-
-  const items = React.useMemo<KnowledgeSourceItem[]>(
-    () =>
-      APP_KNOWLEDGE_TOOL_CATEGORIES.flatMap((category) =>
-        getTrainingDocsForToolCategory(trainingDocs, category).flatMap((doc) => {
-          const href = getPublishedTrainingDocUrl(doc.publishedDocPath);
-          if (!href) return [];
-
-          return {
-            id: doc.slug,
-            categoryId: category.slug,
-            title: doc.title,
-            description:
-              doc.summary?.trim() ||
-              "Training doc published from the Alleato review workflow.",
-            meta: [
-              doc.sourceRoute,
-              doc.lastPublishedAt
-                ? new Date(doc.lastPublishedAt).toLocaleDateString()
-                : null,
-            ]
-              .filter(Boolean)
-              .join(" · "),
-            href,
-          };
-        }),
-      ),
-    [trainingDocs],
-  );
-
-  return (
-    <KnowledgeBrowsePage
-      actionHref={profile?.isAdmin === true ? "/training-docs" : null}
-      actionIcon={<Bot className="h-4 w-4" />}
-      actionLabel="Create training doc"
-      activeCategoryId={activeCategorySlug}
-      categories={categories}
-      emptyDescription="Published training docs will appear here after review."
-      emptyTitle="No published training docs yet"
-      eyebrow="App training"
-      isAdmin={profile?.isAdmin === true}
-      isLoading={false}
-      items={items}
-      modeLabel="App"
-      navLabel="All tools"
-      searchPlaceholder="Search app training..."
-      showCategoriesWhenEmpty
-      sourceListNoun="training docs"
-      title="App Knowledge Base"
-      topBarLabel="Knowledge"
-      withShell={withShell}
     />
   );
 }

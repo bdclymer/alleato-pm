@@ -3,7 +3,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { AppKnowledgeBasePage, KnowledgeBasePage } from "../knowledge-base-page";
+import { AppTrainingDocsPage } from "../app-training-docs-page";
+import { KnowledgeBasePage } from "../knowledge-base-page";
 
 jest.mock("@/components/layout", () => ({
   PageShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -136,9 +137,9 @@ describe("KnowledgeBasePage", () => {
     expect(screen.queryByText("Subcontract template")).not.toBeInTheDocument();
   });
 
-  it("renders app knowledge with the same topic layout and tool category links", () => {
+  it("renders app training docs in a docs-site style layout", () => {
     render(
-      <AppKnowledgeBasePage
+      <AppTrainingDocsPage
         trainingDocs={[
           {
             title: "Budget Setup",
@@ -157,13 +158,16 @@ describe("KnowledgeBasePage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "App Knowledge Base" }),
+      screen.getByRole("heading", { name: "Training Docs" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Knowledge topics" }),
+      screen.getByRole("navigation", { name: "Training doc tools" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("Search app training..."),
+      screen.getByRole("navigation", { name: "On this page" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search..."),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Budget/ })[0]).toHaveAttribute(
       "href",
@@ -173,13 +177,13 @@ describe("KnowledgeBasePage", () => {
       screen.getAllByRole("link", { name: /Create training doc/ })[0],
     ).toHaveAttribute("href", "/training-docs");
     expect(
-      screen.queryByRole("heading", { name: "Training Docs" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Company Knowledge" }),
+    ).toHaveAttribute("href", "/knowledge/company");
   });
 
-  it("lists published training docs on the selected app tool category page", () => {
+  it("lists published training docs on the selected docs-style tool page", () => {
     render(
-      <AppKnowledgeBasePage
+      <AppTrainingDocsPage
         activeCategorySlug="budget"
         trainingDocs={[
           {
@@ -211,14 +215,16 @@ describe("KnowledgeBasePage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Budget Training Docs" }),
+      screen.getByRole("heading", { name: "Budget" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Budget training docs" }),
+      screen.getByRole("heading", { name: "Published training docs" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Budget Setup")).toBeInTheDocument();
     expect(screen.queryByText("Meeting Prep")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Open/ })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: /Budget Setup/ }),
+    ).toHaveAttribute(
       "href",
       "https://alleato-os-docs.vercel.app/project-management-tools/training-docs/budget-setup",
     );

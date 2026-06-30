@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { PageShell } from "@/components/layout";
 import { getAppKnowledgeToolCategory } from "@/features/knowledge/app-knowledge";
-import { AppKnowledgeBasePage } from "@/features/knowledge/knowledge-base-page";
+import { AppTrainingDocsPage } from "@/features/knowledge/app-training-docs-page";
 import { createServiceClient } from "@/lib/supabase/service";
 import { listPublishedTrainingDocs } from "@/lib/training-docs/server";
 
@@ -25,10 +25,9 @@ export default async function KnowledgeAppToolCategoryPage({
       showHeader={false}
       contentClassName="max-w-screen-2xl"
     >
-      <AppKnowledgeBasePage
+      <AppTrainingDocsPage
         activeCategorySlug={category.slug}
         trainingDocs={trainingDocs}
-        withShell={false}
       />
     </PageShell>
   );
