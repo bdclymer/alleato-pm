@@ -97,3 +97,31 @@ export function getPreviewReviewGroups(
 ): PreviewReviewGroup[] {
   return getPreviewReviewCard(preview).groups;
 }
+
+/**
+ * Mirror of the chat-area tool-preview extraction: a non-empty preview object,
+ * but only when the tool output declares `action: "preview"`. A confirmed write
+ * returns a record (not a preview), so it yields null here.
+ */
+export function getActionToolPreview(
+  output: unknown,
+): Record<string, unknown> | null {
+  const out = asObject(output);
+  if (out.action !== "preview") return null;
+  const preview = asObject(out.preview);
+  return Object.keys(preview).length > 0 ? preview : null;
+}
+
+type ToolPartLike = { approval?: unknown; output?: unknown };
+
+/**
+ * True when a tool part must render its own generative-UI preview card even
+ * though it is NOT approval-gated. The AI SDK only attaches `approval` on a
+ * confirmed:true call, so a confirmed:false PREVIEW (e.g. createChangeEvent)
+ * carries no approval — and historically got dropped to a bare "Analysis Step"
+ * label when it rode alongside other tool calls. This predicate is the guard:
+ * a preview part with no approval still gets a card.
+ */
+export function isStandalonePreviewCardPart(part: ToolPartLike): boolean {
+  return !part.approval && getActionToolPreview(part.output) !== null;
+}
