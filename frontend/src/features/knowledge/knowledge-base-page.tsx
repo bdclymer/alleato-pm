@@ -78,7 +78,7 @@ const PAGE_SECTIONS = [
   { id: "topics", label: "Topics" },
 ] as const;
 
-interface KnowledgeCategoryConfig {
+export interface KnowledgeCategoryConfig {
   id: string;
   label: string;
   description: string;
@@ -86,7 +86,7 @@ interface KnowledgeCategoryConfig {
   href?: string;
 }
 
-interface KnowledgeSourceItem {
+export interface KnowledgeSourceItem {
   id: string;
   categoryId: string;
   title: string;
@@ -159,7 +159,7 @@ export function KnowledgeBasePage() {
   );
 }
 
-function KnowledgeBrowsePage({
+export function KnowledgeBrowsePage({
   actionHref,
   actionIcon,
   actionLabel,
@@ -320,6 +320,7 @@ function KnowledgeBrowsePage({
           activeCategoryId={selectedCategoryId}
           categories={visibleCategories}
           counts={categoryCounts}
+          headingLabel={modeLabel === "Product" ? "Product" : modeLabel}
           navLabel={navLabel}
           totalCount={items.length}
           onSelect={setSelectedCategoryId}
@@ -464,6 +465,7 @@ function KnowledgeTopicNav({
   activeCategoryId,
   categories,
   counts,
+  headingLabel,
   navLabel,
   totalCount,
   onSelect,
@@ -471,6 +473,7 @@ function KnowledgeTopicNav({
   activeCategoryId: string | null;
   categories: readonly KnowledgeCategoryConfig[];
   counts: Record<string, number>;
+  headingLabel: string;
   navLabel: string;
   totalCount: number;
   onSelect: (categoryId: string | null) => void;
@@ -479,7 +482,7 @@ function KnowledgeTopicNav({
     <aside className="hidden lg:block">
       <nav aria-label="Knowledge topics" className="sticky top-6 space-y-6">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-foreground">Product</p>
+          <p className="text-sm font-semibold text-foreground">{headingLabel}</p>
           <TopicButton
             label={navLabel}
             count={totalCount}

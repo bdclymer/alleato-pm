@@ -61,6 +61,11 @@ import {
   type EmailViewMode,
 } from "@/features/emails/email-view-switcher";
 import { EmailFilterPopover } from "@/features/emails/email-filter-popover";
+import {
+  buildMailboxPriorityTabs,
+  countMailboxEmailsByPriority,
+  normalizeMailboxPriorityFilter,
+} from "@/features/emails/mailbox-priority-tabs";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
 const EMAIL_STATUS_OPTIONS = [
@@ -90,6 +95,7 @@ interface EmailClientTab {
   isActive?: boolean;
   testId?: string;
   countTestId?: string;
+  compact?: boolean;
 }
 
 interface EmailsClientProps {
@@ -141,7 +147,6 @@ export function EmailsClient({
         },
       ]
     : undefined;
-  const tabs = navigationTabs ?? outlookTabs;
   const title = isMailboxReviewMode
     ? "Emails Feedback"
     : isOutlook
@@ -369,8 +374,35 @@ export function EmailsClient({
   const sentAtFromFilter = activeFilters.sent_at_from as string | undefined;
   const sentAtToFilter = activeFilters.sent_at_to as string | undefined;
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
+  const priorityFilter = normalizeMailboxPriorityFilter(
+    searchParams.get("priority"),
+  );
+  const mailboxPriorityCounts = React.useMemo(
+    () => countMailboxEmailsByPriority(emails),
+    [emails],
+  );
+  const mailboxPriorityTabs = React.useMemo(
+    () =>
+      isMailboxReviewMode
+        ? buildMailboxPriorityTabs({
+            pathname,
+            searchParams: new URLSearchParams(searchParams.toString()),
+            counts: mailboxPriorityCounts,
+            activePriority: priorityFilter,
+          })
+        : null,
+    [isMailboxReviewMode, mailboxPriorityCounts, pathname, priorityFilter, searchParams],
+  );
+  const tabs = mailboxPriorityTabs ?? navigationTabs ?? outlookTabs;
 
   const filteredEmails = emails.filter((email) => {
+    if (
+      isMailboxReviewMode &&
+      priorityFilter !== "all" &&
+      email.assistant_priority !== priorityFilter
+    ) {
+      return false;
+    }
     if (isMerged && sourceFilter !== "all") {
       const outlook = isOutlookSourced(email);
       if (sourceFilter === "outlook" && !outlook) return false;
@@ -769,6 +801,9 @@ export function EmailsClient({
           isLoading={isLoading}
           error={fetchError ?? undefined}
           title={title}
+          description={
+            isMailboxReviewMode ? mailboxCoverageDescription : description
+          }
           tabs={tabs ?? []}
           searchValue={tableState.searchInput}
           onSearchChange={tableState.setSearchInput}
