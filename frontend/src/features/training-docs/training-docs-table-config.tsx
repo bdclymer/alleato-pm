@@ -11,6 +11,7 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import {
+  getPublishedTrainingDocUrl,
   TRAINING_DOC_AUDIENCES,
   TRAINING_DOC_STATUSES,
 } from "@/lib/training-docs/constants";
@@ -93,14 +94,14 @@ export function buildTrainingDocTableColumns(
       ...trainingDocColumns[1],
       render: (doc) => (
         <CellLink
-          value="Open"
-          href={`/training-docs/${doc.id}/preview`}
+          value={doc.published_doc_path ? "Open" : null}
+          href={getPublishedTrainingDocUrl(doc.published_doc_path)}
           emptyLabel="-"
         />
       ),
       sortable: true,
       sortValue: (doc) => doc.published_doc_path ?? "",
-      csvValue: (doc) => `/training-docs/${doc.id}/preview`,
+      csvValue: (doc) => getPublishedTrainingDocUrl(doc.published_doc_path) ?? "",
     },
     editableSelectColumn(
       {

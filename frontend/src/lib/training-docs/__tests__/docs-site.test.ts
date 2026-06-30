@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { expect, test } from "@jest/globals";
 
+import { getPublishedTrainingDocUrl } from "../constants";
 import {
   publishTrainingDocToDocsSite,
   renderTrainingDocMdx,
@@ -38,6 +39,17 @@ test("renderTrainingDocMdx includes screenshots and review notes", () => {
     /!\[Change request form\]\(\/images\/training-docs\/create-change-request\/step-1\.png\)/,
   );
   expect(mdx).toMatch(/## Review Notes/);
+});
+
+test("getPublishedTrainingDocUrl builds docs-site article URLs from publish paths", () => {
+  expect(
+    getPublishedTrainingDocUrl(
+      "project-management-tools/training-docs/create-project.mdx",
+    ),
+  ).toBe(
+    "https://alleato-os-docs.vercel.app/project-management-tools/training-docs/create-project",
+  );
+  expect(getPublishedTrainingDocUrl(null)).toBeNull();
 });
 
 test("renderTrainingDocMdx renders generated steps with their screenshots", () => {

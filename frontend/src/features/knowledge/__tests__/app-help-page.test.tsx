@@ -98,4 +98,41 @@ describe("AppHelpPage", () => {
         ),
     ).toBe(true);
   });
+
+  it("renders published training docs as their own category", () => {
+    render(
+      <AppHelpPage
+        trainingDocs={[
+          {
+            title: "Training Docs Verification",
+            slug: "training-docs-verification",
+            summary: "Verifies the training docs workflow.",
+            audience: "internal",
+            status: "published",
+            sourceRoute: "/training-docs",
+            publishedDocPath:
+              "project-management-tools/training-docs/training-docs-verification.mdx",
+            lastPublishedAt: "2026-06-27T02:45:48.293+00:00",
+          },
+        ]}
+      />,
+    );
+
+    const trainingSection = screen.getByRole("region", {
+      name: "Training Docs",
+    });
+    expect(
+      within(trainingSection).getByRole("heading", {
+        name: "Training Docs",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(trainingSection).getByRole("link", {
+        name: /Training Docs Verification/,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://alleato-os-docs.vercel.app/project-management-tools/training-docs/training-docs-verification",
+    );
+  });
 });

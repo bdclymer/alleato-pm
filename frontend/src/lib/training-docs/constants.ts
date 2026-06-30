@@ -26,6 +26,15 @@ export const TRAINING_DOC_NAV_PAGE =
   "project-management-tools/training-docs/index";
 export const TRAINING_DOC_IMAGE_ROOT = "images/training-docs";
 export const TRAINING_DOC_STORAGE_BUCKET = "documents";
+export const TRAINING_DOCS_SITE_ORIGIN = "https://alleato-os-docs.vercel.app";
+
+export function getPublishedTrainingDocUrl(
+  publishedDocPath: string | null,
+): string | null {
+  if (!publishedDocPath) return null;
+  const routePath = publishedDocPath.replace(/\.mdx$/i, "");
+  return `${TRAINING_DOCS_SITE_ORIGIN}/${routePath}`;
+}
 
 export function slugifyTrainingDoc(value: string): string {
   return value
