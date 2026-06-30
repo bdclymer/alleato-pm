@@ -14,6 +14,10 @@ import { EmailListPanel } from "./email-list-panel";
 import { EmailReadingPane } from "./email-reading-pane";
 import { cleanEmailBody } from "./email-body";
 import { DetailField } from "@/components/ds/DetailField";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useProjects, type Project } from "@/hooks/use-projects";
 
 export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments" | "reviewed";
 
@@ -33,7 +37,13 @@ export interface ReviewedEmail {
   webLink: string | null;
   reviewOutcome: string;
   reviewerNote: string | null;
+  draftBody: string | null;
   assistantReason: string | null;
+  feedbackProvidedAt: string | null;
+  projectAssignmentFeedback: {
+    status: "correct" | "incorrect" | "unreviewed";
+    correctedProjectId: number | null;
+  };
   reviewedAt: string;
   starred: boolean;
   tags: string[];
@@ -170,25 +180,83 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
   });
 }
 
-const OUTCOME_LABEL: Record<string, string> = {
-  draft_copied: "Draft copied",
-  draft_edited: "Draft edited & copied",
-  delegated: "Delegated",
-  watched: "Watching",
-  skipped: "Skipped",
-  marked_no_action: "No action",
-};
+const REVIEW_OUTCOME_OPTIONS = [
+  { value: "draft_copied", label: "Draft copied" },
+  { value: "draft_edited", label: "Draft edited & copied" },
+  { value: "delegated", label: "Delegated" },
+  { value: "watched", label: "Watching" },
+  { value: "skipped", label: "Skipped" },
+  { value: "marked_no_action", label: "No action" },
+];
 
-const OUTCOME_CLASS: Record<string, string> = {
-  draft_copied: "bg-primary/10 text-primary",
-  draft_edited: "bg-primary/10 text-primary",
-  delegated: "bg-warning-subtle text-warning",
-  watched: "bg-info-subtle text-info",
-  skipped: "bg-muted text-muted-foreground",
-  marked_no_action: "bg-muted text-muted-foreground",
-};
+const PROJECT_ASSIGNMENT_STATUS_OPTIONS = [
+  { value: "unreviewed", label: "Not reviewed" },
+  { value: "correct", label: "Correct" },
+  { value: "incorrect", label: "Incorrect" },
+] as const;
 
-function ReviewedReadingPane({ reviewed }: { reviewed: ReviewedEmail | null }) {
+const UNASSIGNED_PROJECT_VALUE = "__unassigned__";
+
+function cleanEditableText(value: string | null | undefined): string {
+  return value ?? "";
+}
+
+function ReviewedReadingPane({
+  reviewed,
+  isSaving,
+  projects,
+  onSave,
+}: {
+  reviewed: ReviewedEmail | null;
+  isSaving: boolean;
+  projects: Project[];
+  onSave: (
+    reviewed: ReviewedEmail,
+    updates: {
+      reviewOutcome: string;
+      reviewerNote: string | null;
+      draftBody: string | null;
+      projectAssignment: {
+        status: "correct" | "incorrect" | "unreviewed";
+        correctedProjectId: number | null;
+      };
+    },
+  ) => Promise<void>;
+}) {
+  const [reviewOutcome, setReviewOutcome] = React.useState("");
+  const [reviewerNote, setReviewerNote] = React.useState("");
+  const [draftBody, setDraftBody] = React.useState("");
+  const [projectAssignmentStatus, setProjectAssignmentStatus] =
+    React.useState<"correct" | "incorrect" | "unreviewed">("unreviewed");
+  const [correctedProjectValue, setCorrectedProjectValue] =
+    React.useState(UNASSIGNED_PROJECT_VALUE);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setReviewOutcome(reviewed?.reviewOutcome ?? "skipped");
+    setReviewerNote(cleanEditableText(reviewed?.reviewerNote));
+    setDraftBody(cleanEditableText(reviewed?.draftBody));
+    setProjectAssignmentStatus(
+      reviewed?.projectAssignmentFeedback.status ?? "unreviewed",
+    );
+    setCorrectedProjectValue(
+      reviewed?.projectAssignmentFeedback.correctedProjectId
+        ? String(reviewed.projectAssignmentFeedback.correctedProjectId)
+        : reviewed?.project?.id
+          ? String(reviewed.project.id)
+          : UNASSIGNED_PROJECT_VALUE,
+    );
+    setSaveError(null);
+  }, [
+    reviewed?.reviewId,
+    reviewed?.reviewOutcome,
+    reviewed?.reviewerNote,
+    reviewed?.draftBody,
+    reviewed?.projectAssignmentFeedback.status,
+    reviewed?.projectAssignmentFeedback.correctedProjectId,
+    reviewed?.project?.id,
+  ]);
+
   if (!reviewed) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground/50">
@@ -197,12 +265,51 @@ function ReviewedReadingPane({ reviewed }: { reviewed: ReviewedEmail | null }) {
     );
   }
 
-  const outcomeLabel = OUTCOME_LABEL[reviewed.reviewOutcome] ?? reviewed.reviewOutcome;
-  const outcomeClass = OUTCOME_CLASS[reviewed.reviewOutcome] ?? "bg-muted text-muted-foreground";
   const reviewedDate = format(new Date(reviewed.reviewedAt), "MMM d, yyyy 'at' h:mm a");
   const receivedDate = reviewed.receivedAt
     ? format(new Date(reviewed.receivedAt), "MMM d, yyyy 'at' h:mm a")
     : null;
+  const normalizedReviewerNote = reviewerNote.trim() || null;
+  const normalizedDraftBody = draftBody.trim() || null;
+  const correctedProjectId =
+    correctedProjectValue === UNASSIGNED_PROJECT_VALUE
+      ? null
+      : Number.parseInt(correctedProjectValue, 10);
+  const normalizedProjectAssignment = {
+    status: projectAssignmentStatus,
+    correctedProjectId:
+      Number.isInteger(correctedProjectId) && correctedProjectId > 0
+        ? correctedProjectId
+        : null,
+  };
+  const hasChanges =
+    reviewOutcome !== reviewed.reviewOutcome ||
+    normalizedReviewerNote !== (reviewed.reviewerNote ?? null) ||
+    normalizedDraftBody !== (reviewed.draftBody ?? null) ||
+    normalizedProjectAssignment.status !== reviewed.projectAssignmentFeedback.status ||
+    normalizedProjectAssignment.correctedProjectId !==
+      reviewed.projectAssignmentFeedback.correctedProjectId;
+  const feedbackSavedLabel = reviewed.feedbackProvidedAt
+    ? `Feedback saved ${format(new Date(reviewed.feedbackProvidedAt), "MMM d, h:mm a")}`
+    : "No feedback saved yet";
+
+  async function handleSave() {
+    setSaveError(null);
+    try {
+      await onSave(reviewed, {
+        reviewOutcome,
+        reviewerNote: normalizedReviewerNote,
+        draftBody: normalizedDraftBody,
+        projectAssignment: normalizedProjectAssignment,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not save the reviewed email feedback.";
+      setSaveError(message);
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -233,20 +340,106 @@ function ReviewedReadingPane({ reviewed }: { reviewed: ReviewedEmail | null }) {
 
         {/* Review outcome */}
         <div className="pt-3 border-t border-border/30 space-y-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center text-[11px] px-2 py-1 rounded font-medium ${outcomeClass}`}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">{feedbackSavedLabel}</span>
+            <Button
+              type="button"
+              size="sm"
+              className="h-8"
+              disabled={!hasChanges || isSaving}
+              onClick={() => {
+                void handleSave();
+              }}
             >
-              {outcomeLabel}
-            </span>
-            <span className="text-xs text-muted-foreground">{reviewedDate}</span>
+              {isSaving ? "Saving" : "Save"}
+            </Button>
           </div>
-          {reviewed.reviewerNote && (
-            <p className="text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded">
-              {reviewed.reviewerNote}
-            </p>
+          <DetailField label="Outcome">
+            <Select value={reviewOutcome} onValueChange={setReviewOutcome}>
+              <SelectTrigger className="h-8 max-w-xs">
+                <SelectValue aria-label="Review outcome" />
+              </SelectTrigger>
+              <SelectContent>
+                {REVIEW_OUTCOME_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DetailField>
+          <DetailField label="Project">
+            <div className="flex flex-col gap-2">
+              <div className="text-sm text-foreground">
+                {reviewed.project
+                  ? reviewed.project.projectNumber
+                    ? `${reviewed.project.projectNumber} - ${reviewed.project.name ?? ""}`
+                    : reviewed.project.name ?? `Project ${reviewed.project.id}`
+                  : "Unassigned"}
+              </div>
+              <Select
+                value={projectAssignmentStatus}
+                onValueChange={(value) =>
+                  setProjectAssignmentStatus(
+                    value as "correct" | "incorrect" | "unreviewed",
+                  )
+                }
+              >
+                <SelectTrigger className="h-8 max-w-xs">
+                  <SelectValue aria-label="Project assignment feedback" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROJECT_ASSIGNMENT_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {projectAssignmentStatus === "incorrect" && (
+                <Select
+                  value={correctedProjectValue}
+                  onValueChange={setCorrectedProjectValue}
+                >
+                  <SelectTrigger className="h-8 max-w-md">
+                    <SelectValue aria-label="Correct project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED_PROJECT_VALUE}>
+                      Unassigned
+                    </SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={String(project.id)}>
+                        {project.project_number
+                          ? `${project.project_number} - ${project.name ?? "Unnamed Project"}`
+                          : project.name ?? `Project ${project.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </DetailField>
+          <DetailField label="Feedback">
+            <Textarea
+              value={reviewerNote}
+              onChange={(event) => setReviewerNote(event.target.value)}
+              placeholder="Add what the assistant should learn from this email."
+              className="min-h-20 resize-y"
+            />
+          </DetailField>
+          <DetailField label="Draft">
+            <Textarea
+              value={draftBody}
+              onChange={(event) => setDraftBody(event.target.value)}
+              placeholder="Paste or revise the draft response Brandon wanted."
+              className="min-h-32 resize-y font-mono text-xs"
+            />
+          </DetailField>
+          {saveError && (
+            <p className="text-xs text-destructive">{saveError}</p>
           )}
-          {reviewed.assistantReason && !reviewed.reviewerNote && (
+          {reviewed.assistantReason && (
             <p className="text-xs text-muted-foreground">
               AI suggested: {reviewed.assistantReason}
             </p>
@@ -296,6 +489,7 @@ export function EmailInboxClient({
   initialTab?: InboxTab;
 } = {}) {
   const queryClient = useQueryClient();
+  const { projects } = useProjects({ limit: 500 });
   const [activeTab, setActiveTab] = React.useState<InboxTab>(initialTab);
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
@@ -488,6 +682,73 @@ export function EmailInboxClient({
     },
   });
 
+  const reviewedUpdateMutation = useMutation({
+    mutationFn: ({
+      reviewed,
+      reviewOutcome,
+      reviewerNote,
+      draftBody,
+      projectAssignment,
+    }: {
+      reviewed: ReviewedEmail;
+      reviewOutcome: string;
+      reviewerNote: string | null;
+      draftBody: string | null;
+      projectAssignment: {
+        status: "correct" | "incorrect" | "unreviewed";
+        correctedProjectId: number | null;
+      };
+    }) =>
+      apiFetch<Pick<
+        ReviewedEmail,
+        | "reviewId"
+        | "id"
+        | "reviewOutcome"
+        | "reviewerNote"
+        | "draftBody"
+        | "feedbackProvidedAt"
+        | "projectAssignmentFeedback"
+      >>(
+        "/api/email-inbox/reviewed",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reviewId: reviewed.reviewId,
+            reviewOutcome,
+            reviewerNote,
+            draftBody,
+            projectAssignment,
+          }),
+        },
+      ),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<ReviewedEmail[]>(["email-inbox", "reviewed"], (old) => {
+        if (!old) return old;
+        return old.map((email) =>
+          email.reviewId === updated.reviewId
+            ? {
+                ...email,
+                reviewOutcome: updated.reviewOutcome,
+                reviewerNote: updated.reviewerNote,
+                draftBody: updated.draftBody,
+                feedbackProvidedAt: updated.feedbackProvidedAt,
+                projectAssignmentFeedback: updated.projectAssignmentFeedback,
+              }
+            : email,
+        );
+      });
+      toast.success("Feedback saved");
+    },
+    onError: (error) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not save reviewed email feedback.";
+      toast.error(message);
+    },
+  });
+
   function handleTabChange(tab: InboxTab) {
     setActiveTab(tab);
     setSelectedId(null);
@@ -526,7 +787,17 @@ export function EmailInboxClient({
       {/* Right panel — flexible */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {isReviewedTab ? (
-          <ReviewedReadingPane reviewed={selectedReviewed} />
+          <ReviewedReadingPane
+            reviewed={selectedReviewed}
+            isSaving={reviewedUpdateMutation.isPending}
+            projects={projects}
+            onSave={(reviewed, updates) =>
+              reviewedUpdateMutation.mutateAsync({
+                reviewed,
+                ...updates,
+              })
+            }
+          />
         ) : (
           <EmailReadingPane
             email={selectedEmail}

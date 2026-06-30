@@ -16,15 +16,13 @@ describe("outlook draft feedback access contract", () => {
     expect(pageSource).not.toContain("requireAdmin");
   });
 
-  it("keeps the training page read-only and connected to the canonical Emails surface", () => {
+  it("keeps the training page on the shared Emails layout scoped to Brandon's mailbox", () => {
     const pageSource = readFileSync(join(routeDir, "page.tsx"), "utf8");
 
     expect(pageSource).toContain("EmailsClient");
-    expect(pageSource).toContain('detailsPanelMode="assistant-feedback"');
-    expect(pageSource).toContain('scope="global"');
     expect(pageSource).toContain('source="outlook"');
-    expect(pageSource).toContain('mailboxUserId={BRANDON_MAILBOX_USER_ID}');
-    expect(pageSource).toContain("bclymer@alleatogroup.com");
+    expect(pageSource).toContain("mailboxUserId={BRANDON_MAILBOX}");
+    expect(pageSource).not.toContain("EmailInboxClient");
     expect(pageSource).not.toContain("PageShell");
     expect(pageSource).not.toContain("<table");
     expect(pageSource).not.toContain("outlook_email_assistant_reviews");

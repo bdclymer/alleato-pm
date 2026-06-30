@@ -2,6 +2,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import {
   Ban,
+  Circle,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -30,6 +31,7 @@ import {
   TruncatedCell,
 } from "@/components/tables/unified";
 import type { ProjectEmail } from "@/hooks/use-emails";
+import { cn } from "@/lib/utils";
 
 export const emailColumns: ColumnConfig[] = [
   { id: "subject", label: "Subject", alwaysVisible: true },
@@ -135,6 +137,30 @@ function sortValueForDate(value: string | null | undefined): number {
   if (!value) return 0;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function priorityDotClass(priority: ProjectEmail["assistant_priority"]): string {
+  switch (priority) {
+    case "urgent":
+      return "fill-red-500 text-red-500";
+    case "high":
+      return "fill-orange-500 text-orange-500";
+    case "normal":
+      return "fill-blue-500 text-blue-500";
+    case "low":
+      return "fill-slate-300 text-slate-300";
+    default:
+      return "fill-muted-foreground/30 text-muted-foreground/30";
+  }
+}
+
+function priorityLabel(priority: ProjectEmail["assistant_priority"]): string {
+  if (!priority) return "Priority not assigned";
+  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
+}
+
+function hasAssistantDraft(email: ProjectEmail): boolean {
+  return Boolean(email.assistant_review?.draftBody?.trim());
 }
 
 // The date a message is ordered and displayed by: received time for inbound
@@ -312,6 +338,10 @@ export function renderEmailCard(
   item: ProjectEmail,
   onClick: (email: ProjectEmail) => void,
 ): ReactElement {
+  const senderName = item.from_name || item.from_email || "Unknown sender";
+  const senderEmail = item.from_email && item.from_email !== senderName ? item.from_email : null;
+  const hasDraft = hasAssistantDraft(item);
+
   return (
     <div
       className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -320,14 +350,24 @@ export function renderEmailCard(
       <div className="flex items-start justify-between mb-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
+            <Circle
+              className={cn("h-2.5 w-2.5 shrink-0", priorityDotClass(item.assistant_priority))}
+              aria-label={priorityLabel(item.assistant_priority)}
+            />
             {item.is_starred && (
               <Star className="h-3.5 w-3.5 shrink-0 fill-current text-status-warning" />
             )}
             {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="font-medium truncate">{item.subject || "No Subject"}</h3>
+            {hasDraft ? (
+              <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
+                Draft
+              </span>
+            ) : null}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {item.from_name || item.from_email || "Unknown sender"}
+          <p className="truncate text-xs text-muted-foreground mt-0.5">
+            <span className="text-foreground/80">{senderName}</span>
+            {senderEmail ? <span className="ml-1">{senderEmail}</span> : null}
           </p>
         </div>
         <StatusBadge status={item.status} />
@@ -347,6 +387,10 @@ export function renderEmailList(
   item: ProjectEmail,
   onClick: (email: ProjectEmail) => void,
 ): ReactElement {
+  const senderName = item.from_name || item.from_email || "Unknown";
+  const senderEmail = item.from_email && item.from_email !== senderName ? item.from_email : null;
+  const hasDraft = hasAssistantDraft(item);
+
   return (
     <div className="rounded-md">
       <div
@@ -361,13 +405,24 @@ export function renderEmailList(
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
+              <Circle
+                className={cn("h-2.5 w-2.5 shrink-0", priorityDotClass(item.assistant_priority))}
+                aria-label={priorityLabel(item.assistant_priority)}
+              />
               <p className="text-sm font-medium truncate">{item.subject || "No Subject"}</p>
+              {hasDraft ? (
+                <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
+                  Draft
+                </span>
+              ) : null}
               {item.has_attachments && (
                 <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
               )}
             </div>
             <p className="truncate text-xs text-muted-foreground">
-              {item.from_name || item.from_email || "Unknown"} &rarr;{" "}
+              <span className="text-foreground/80">{senderName}</span>
+              {senderEmail ? <span className="ml-1">{senderEmail}</span> : null}
+              {" "}&rarr;{" "}
               {formatRecipients(item.to_list)}
             </p>
           </div>

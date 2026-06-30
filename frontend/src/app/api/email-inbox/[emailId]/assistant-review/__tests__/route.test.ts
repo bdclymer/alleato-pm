@@ -36,6 +36,7 @@ interface QueryBuilderMock {
   eq: jest.Mock;
   is: jest.Mock;
   insert: jest.Mock;
+  update: jest.Mock;
   maybeSingle: jest.Mock;
   single: jest.Mock;
 }
@@ -46,6 +47,7 @@ function createQueryBuilder(result: QueryResult): QueryBuilderMock {
     eq: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
     insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
     maybeSingle: jest.fn().mockResolvedValue(result),
     single: jest.fn().mockResolvedValue(result),
   };
@@ -130,6 +132,84 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
         reviewer_id: "reviewer-user",
         assistant_action: "reply",
         review_outcome: "draft_copied",
+        source_metadata: expect.objectContaining({
+          feedbackProvidedAt: expect.any(String),
+          feedbackProvidedBy: "bclymer@alleatogroup.com",
+        }),
+      }),
+    );
+  });
+
+  it("records incorrect project feedback and updates the intake assignment when creating feedback", async () => {
+    const profileBuilder = createQueryBuilder({
+      data: { is_admin: false },
+      error: null,
+    });
+    const emailBuilder = createQueryBuilder({
+      data: {
+        id: 42,
+        graph_message_id: "graph-42",
+        mailbox_user_id: "bclymer@alleatogroup.com",
+      },
+      error: null,
+    });
+    const assignmentBuilder = createQueryBuilder({
+      data: null,
+      error: null,
+    });
+    const reviewBuilder = createQueryBuilder({
+      data: {
+        id: "review-1",
+        intake_email_id: 42,
+        review_outcome: "skipped",
+        created_at: "2026-06-17T05:45:00.000Z",
+      },
+      error: null,
+    });
+    const supabase = {
+      from: jest.fn((table: string) => {
+        if (table === "user_profiles") return profileBuilder;
+        if (table === "outlook_email_assistant_reviews") return reviewBuilder;
+        throw new Error(`Unexpected app table: ${table}`);
+      }),
+    };
+    const intake = {
+      from: jest.fn((table: string) => {
+        if (table === "outlook_email_intake") return emailBuilder;
+        throw new Error(`Unexpected intake table: ${table}`);
+      }),
+    };
+
+    emailBuilder.update.mockReturnValue(assignmentBuilder);
+    createClientMock.mockResolvedValue(
+      supabase as Awaited<ReturnType<typeof createClient>>,
+    );
+    createOutlookIntakeServiceClientMock.mockReturnValue(intake as never);
+
+    const response = await POST(
+      request({
+        assistantAction: "watch",
+        assistantPriority: "normal",
+        reviewOutcome: "skipped",
+        projectAssignment: {
+          status: "incorrect",
+          correctedProjectId: 25125,
+        },
+      }),
+      { params: Promise.resolve({ emailId: "42" }) },
+    );
+
+    expect(response.status).toBe(201);
+    expect(emailBuilder.update).toHaveBeenCalledWith({ project_id: 25125 });
+    expect(assignmentBuilder.eq).toHaveBeenCalledWith("id", 42);
+    expect(reviewBuilder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source_metadata: expect.objectContaining({
+          projectAssignmentFeedback: {
+            status: "incorrect",
+            correctedProjectId: 25125,
+          },
+        }),
       }),
     );
   });

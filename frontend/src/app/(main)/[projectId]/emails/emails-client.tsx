@@ -52,6 +52,7 @@ import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importanc
 import { MarkAsJunkDialog } from "@/features/emails/mark-as-junk-dialog";
 import {
   EmailReadingPanel,
+  EmailTrainingFeedbackPanel,
   ProjectEmailsWorkspace,
 } from "@/features/emails/project-emails-workspace";
 import {
@@ -91,17 +92,15 @@ interface EmailClientTab {
 }
 
 interface EmailsClientProps {
-  detailsPanelMode?: "default" | "assistant-feedback";
   embedded?: boolean;
-  mailboxUserId?: string;
   navigationTabs?: EmailClientTab[];
   projectId?: number;
+  mailboxUserId?: string;
   scope?: "project" | "global";
   source?: EmailSource;
 }
 
 export function EmailsClient({
-  detailsPanelMode = "default",
   projectId,
   mailboxUserId,
   navigationTabs,
@@ -192,6 +191,7 @@ export function EmailsClient({
     data: emails = [],
     isLoading,
     error: fetchError,
+    refetch: refetchEmails,
   } = activeQuery;
   const deleteEmail = useDeleteEmail(projectId ?? 0);
 
@@ -731,7 +731,10 @@ export function EmailsClient({
           sortBy={tableState.sortBy ?? undefined}
           sortDirection={tableState.sortDirection}
           onSortChange={handleSortChange}
-          detailsPanelMode={detailsPanelMode}
+          draftFeedbackMode={Boolean(mailboxUserId)}
+          onDraftFeedbackSaved={() => {
+            void refetchEmails();
+          }}
           viewSwitcher={
             <EmailViewSwitcher
               value={emailView}
@@ -949,29 +952,44 @@ export function EmailsClient({
           selectedEmail
             ? {
                 content: (
-                  <EmailReadingPanel
-                    email={selectedEmail}
-                    canCompose={!noWriteActions}
-                    canEditEmail={canEditEmail(selectedEmail)}
-                    canDelete={canDeleteEmail(selectedEmail)}
-                    canProjectEmailActions={!isOutlookSourced(selectedEmail)}
-                    onCompose={() => {
-                      setEditingEmail(null);
-                      setComposeOpen(true);
-                    }}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteIntent}
-                    importanceFeedback={
-                      importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
-                    }
-                    onImportanceRecorded={handleImportanceRecorded}
-                    className="h-full"
-                  />
+                  mailboxUserId ? (
+                    <EmailTrainingFeedbackPanel
+                      selectedEmail={selectedEmail}
+                      onSaved={() => {
+                        void refetchEmails();
+                      }}
+                      className="h-full"
+                    />
+                  ) : (
+                    <EmailReadingPanel
+                      email={selectedEmail}
+                      canCompose={!noWriteActions}
+                      canEditEmail={canEditEmail(selectedEmail)}
+                      canDelete={canDeleteEmail(selectedEmail)}
+                      canProjectEmailActions={!isOutlookSourced(selectedEmail)}
+                      onCompose={() => {
+                        setEditingEmail(null);
+                        setComposeOpen(true);
+                      }}
+                      onEdit={handleEdit}
+                      onDelete={handleDeleteIntent}
+                      importanceFeedback={
+                        importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
+                      }
+                      onImportanceRecorded={handleImportanceRecorded}
+                      className="h-full"
+                    />
+                  )
                 ),
                 variant: "wide",
-                defaultWidth: 560,
-                minWidth: 440,
-                storageKey: isGlobal ? "global-email-detail" : "project-email-detail",
+                defaultWidth: mailboxUserId ? 720 : 560,
+                minWidth: mailboxUserId ? 520 : 440,
+                maxWidth: mailboxUserId ? 980 : undefined,
+                storageKey: mailboxUserId
+                  ? "global-email-feedback-detail"
+                  : isGlobal
+                    ? "global-email-detail"
+                    : "project-email-detail",
                 contentClassName: "pl-0 pr-0",
                 showCloseButton: false,
                 onClose: () => setSelectedEmail(null),

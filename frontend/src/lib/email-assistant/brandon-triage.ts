@@ -21,6 +21,7 @@ export interface BrandonEmailAssistantDecision {
   owner: string;
   risk: string;
   evidence: string;
+  rulesApplied: string[];
 }
 
 const BRANDON_EMAIL = "bclymer@alleatogroup.com";
@@ -117,6 +118,37 @@ function isRecipient(list: string[] | null, target: string): boolean {
   return (list ?? []).some((entry) => normalizeEmail(entry).includes(target));
 }
 
+function buildRulesApplied({
+  internalSender,
+  sentDirectlyToBrandon,
+  copiedToBrandon,
+  automated,
+  asksForAction,
+  timeSensitive,
+  businessRisk,
+  hasAttachment,
+}: {
+  internalSender: boolean;
+  sentDirectlyToBrandon: boolean;
+  copiedToBrandon: boolean;
+  automated: boolean;
+  asksForAction: boolean;
+  timeSensitive: boolean;
+  businessRisk: boolean;
+  hasAttachment: boolean;
+}): string[] {
+  const rules: string[] = [];
+  rules.push(internalSender ? "Internal sender" : "External sender");
+  if (sentDirectlyToBrandon) rules.push("Sent to Brandon");
+  if (copiedToBrandon) rules.push("Brandon copied");
+  if (asksForAction) rules.push("Action language");
+  if (timeSensitive) rules.push("Deadline language");
+  if (businessRisk) rules.push("Project/risk terms");
+  if (hasAttachment) rules.push("Attachment present");
+  if (automated) rules.push("Automated/no-reply pattern");
+  return rules;
+}
+
 export function deriveBrandonEmailAssistantDecision(
   input: BrandonEmailTriageInput,
 ): BrandonEmailAssistantDecision {
@@ -134,6 +166,16 @@ export function deriveBrandonEmailAssistantDecision(
   const timeSensitive = includesAny(text, DEADLINE_TOKENS);
   const businessRisk = includesAny(text, RISK_TOKENS);
   const hasAttachment = input.hasAttachments === true;
+  const rulesApplied = buildRulesApplied({
+    internalSender,
+    sentDirectlyToBrandon,
+    copiedToBrandon,
+    automated,
+    asksForAction,
+    timeSensitive,
+    businessRisk,
+    hasAttachment,
+  });
 
   let score = 0;
   if (sentDirectlyToBrandon) score += 25;
@@ -154,6 +196,7 @@ export function deriveBrandonEmailAssistantDecision(
       owner: "No action",
       risk: "Low",
       evidence: excerpt(`${subject}. ${bodyText}`),
+      rulesApplied,
     };
   }
 
@@ -171,6 +214,7 @@ export function deriveBrandonEmailAssistantDecision(
       owner: "Brandon",
       risk: businessRisk ? "Business decision or project risk in thread." : "Relationship follow-up.",
       evidence: excerpt(`${subject}. ${bodyText}`),
+      rulesApplied,
     };
   }
 
@@ -183,6 +227,7 @@ export function deriveBrandonEmailAssistantDecision(
       owner: "Alleato team",
       risk: businessRisk ? "Operational or financial item can stall if unowned." : "Internal follow-up can stall.",
       evidence: excerpt(`${subject}. ${bodyText}`),
+      rulesApplied,
     };
   }
 
@@ -197,6 +242,7 @@ export function deriveBrandonEmailAssistantDecision(
       owner: "Assistant review",
       risk: businessRisk ? "Potential missed commitment." : "Context may matter later.",
       evidence: excerpt(`${subject}. ${bodyText}`),
+      rulesApplied,
     };
   }
 
@@ -208,5 +254,6 @@ export function deriveBrandonEmailAssistantDecision(
     owner: "No action",
     risk: "Low",
     evidence: excerpt(`${subject}. ${bodyText}`),
+    rulesApplied,
   };
 }

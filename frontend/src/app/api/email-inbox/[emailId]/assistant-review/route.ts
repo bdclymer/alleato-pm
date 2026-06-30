@@ -11,6 +11,10 @@ import type { Database, Json } from "@/types/database.types";
 type AssistantReviewInsert =
   Database["public"]["Tables"]["outlook_email_assistant_reviews"]["Insert"];
 
+function nullableProjectId(value: number | null | undefined): number | null {
+  return Number.isInteger(value) && value && value > 0 ? value : null;
+}
+
 export const POST = withApiGuardrails<{ emailId: string }>(
   "email-inbox/[emailId]/assistant-review#POST",
   async ({ request, params }) => {
@@ -77,6 +81,29 @@ export const POST = withApiGuardrails<{ emailId: string }>(
       });
     }
 
+    const now = new Date().toISOString();
+    const projectAssignmentFeedback = parsed.projectAssignment
+      ? {
+          status: parsed.projectAssignment.status,
+          correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
+        }
+      : undefined;
+
+    if (parsed.projectAssignment?.status === "incorrect") {
+      const { error: assignmentError } = await intakeService
+        .from("outlook_email_intake")
+        .update({ project_id: projectAssignmentFeedback?.correctedProjectId ?? null })
+        .eq("id", email.id);
+
+      if (assignmentError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "email-inbox/[emailId]/assistant-review#POST",
+          message: `Failed to update corrected email project assignment: ${assignmentError.message}`,
+        });
+      }
+    }
+
     const insert: AssistantReviewInsert = {
       intake_email_id: email.id,
       graph_message_id: email.graph_message_id,
@@ -93,7 +120,12 @@ export const POST = withApiGuardrails<{ emailId: string }>(
       assistant_owner: parsed.assistantOwner ?? null,
       assistant_risk: parsed.assistantRisk ?? null,
       assistant_evidence: parsed.assistantEvidence ?? null,
-      source_metadata: (parsed.sourceMetadata ?? {}) as Json,
+      source_metadata: {
+        ...(parsed.sourceMetadata ?? {}),
+        feedbackProvidedAt: now,
+        feedbackProvidedBy: user.email ?? user.id,
+        ...(projectAssignmentFeedback ? { projectAssignmentFeedback } : {}),
+      } as Json,
     };
 
     const { data: review, error: insertError } = await supabase

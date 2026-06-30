@@ -97,6 +97,30 @@ describe("/api/emails", () => {
     const projectQuery = queryBuilder([
       { id: 876, name: "Exol Morrisville", project_number: "876" },
     ]);
+    const reviewQuery = queryBuilder([
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        intake_email_id: 3577,
+        assistant_action: "reply",
+        assistant_priority: "high",
+        assistant_score: 79,
+        assistant_reason: "External sender needs Brandon response.",
+        assistant_owner: "Brandon",
+        assistant_risk: "Relationship follow-up.",
+        assistant_evidence: "Re: Exol Morrisville PA. Live intake body",
+        review_outcome: "draft_edited",
+        reviewer_note: "Tighter.",
+        draft_body: "Thanks, I can confirm.",
+        source_metadata: {
+          feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+          projectAssignmentFeedback: {
+            status: "correct",
+            correctedProjectId: null,
+          },
+        },
+        created_at: "2026-06-30T08:59:00.000Z",
+      },
+    ]);
     const supabase = {
       from: jest.fn((table: string) => {
         if (table === "user_profiles") return profileBuilder(true);
@@ -113,6 +137,7 @@ describe("/api/emails", () => {
     const service = {
       from: jest.fn((table: string) => {
         if (table === "projects") return projectQuery;
+        if (table === "outlook_email_assistant_reviews") return reviewQuery;
         throw new Error(`Unexpected service table: ${table}`);
       }),
     };
@@ -138,6 +163,25 @@ describe("/api/emails", () => {
         id: 876,
         name: "Exol Morrisville",
         project_number: "876",
+      },
+      assistant_action: "reply",
+      assistant_priority: "high",
+      assistant_score: 79,
+      assistant_rules_applied: expect.arrayContaining([
+        "External sender",
+        "Sent to Brandon",
+        "Attachment present",
+      ]),
+      assistant_review: {
+        reviewId: "11111111-1111-4111-8111-111111111111",
+        reviewOutcome: "draft_edited",
+        reviewerNote: "Tighter.",
+        draftBody: "Thanks, I can confirm.",
+        feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+        projectAssignmentFeedback: {
+          status: "correct",
+          correctedProjectId: null,
+        },
       },
     });
     expect(intake.from).toHaveBeenCalledWith("outlook_email_intake");
@@ -174,7 +218,7 @@ describe("/api/emails", () => {
     expect(intakeQuery.is).not.toHaveBeenCalledWith("conversation_id", null);
   });
 
-  it("can scope the live Outlook feed to Brandon's mailbox", async () => {
+  it("lets admins scope the shared email feed to Brandon's mailbox", async () => {
     const intakeQuery = queryBuilder([]);
     const supabase = {
       from: jest.fn((table: string) => {
@@ -194,7 +238,7 @@ describe("/api/emails", () => {
     createOutlookIntakeServiceClientMock.mockReturnValue(intake as never);
 
     const response = await GET(
-      request("/api/emails?source=outlook&mailbox_user_id=bclymer@alleatogroup.com"),
+      request("/api/emails?source=outlook&mailboxUserId=bclymer@alleatogroup.com"),
     );
 
     expect(response.status).toBe(200);
@@ -202,5 +246,36 @@ describe("/api/emails", () => {
       "mailbox_user_id",
       "bclymer@alleatogroup.com",
     );
+  });
+
+  it("blocks non-admins from reading a different mailbox through the shared feed", async () => {
+    getApiRouteUserMock.mockResolvedValue({
+      id: "regular-user",
+      email: "other@alleatogroup.com",
+    });
+    const intakeQuery = queryBuilder([]);
+    const supabase = {
+      from: jest.fn((table: string) => {
+        if (table === "user_profiles") return profileBuilder(false);
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    };
+    const intake = {
+      from: jest.fn((table: string) => {
+        if (table === "outlook_email_intake") return intakeQuery;
+        throw new Error(`Unexpected intake table: ${table}`);
+      }),
+    };
+    createClientMock.mockResolvedValue(
+      supabase as Awaited<ReturnType<typeof createClient>>,
+    );
+    createOutlookIntakeServiceClientMock.mockReturnValue(intake as never);
+
+    const response = await GET(
+      request("/api/emails?source=outlook&mailboxUserId=bclymer@alleatogroup.com"),
+    );
+
+    expect(response.status).toBe(403);
+    expect(intakeQuery.eq).not.toHaveBeenCalled();
   });
 });

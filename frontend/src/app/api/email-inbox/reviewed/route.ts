@@ -1,13 +1,19 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { withApiGuardrails } from "@/lib/guardrails/api";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   createOutlookIntakeServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
+import {
+  BrandonReviewOutcomeSchema,
+  ProjectAssignmentFeedbackSchema,
+} from "@/lib/email-assistant/brandon-review";
+import type { Database, Json } from "@/types/database.types";
 
 interface ProjectRow {
   id: number;
@@ -17,6 +23,47 @@ interface ProjectRow {
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return Boolean(v) && typeof v === "object" && !Array.isArray(v);
+}
+
+function nullableTrimmed(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function nullableProjectId(value: number | null | undefined): number | null {
+  return Number.isInteger(value) && value && value > 0 ? value : null;
+}
+
+const ReviewedEmailUpdateSchema = z.object({
+  reviewId: z.string().uuid(),
+  reviewOutcome: BrandonReviewOutcomeSchema,
+  reviewerNote: z.string().max(1_000).nullable().optional(),
+  draftBody: z.string().max(20_000).nullable().optional(),
+  projectAssignment: ProjectAssignmentFeedbackSchema.optional(),
+});
+
+type AssistantReviewUpdate =
+  Database["public"]["Tables"]["outlook_email_assistant_reviews"]["Update"];
+
+function parseProjectAssignmentFeedback(value: unknown): {
+  status: "correct" | "incorrect" | "unreviewed";
+  correctedProjectId: number | null;
+} {
+  if (!isRecord(value)) {
+    return { status: "unreviewed", correctedProjectId: null };
+  }
+
+  const status =
+    value.status === "correct" || value.status === "incorrect"
+      ? value.status
+      : "unreviewed";
+  const correctedProjectId =
+    typeof value.correctedProjectId === "number" &&
+    Number.isInteger(value.correctedProjectId)
+      ? value.correctedProjectId
+      : null;
+
+  return { status, correctedProjectId };
 }
 
 export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
@@ -39,23 +86,31 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.is_admin) {
+  const isAdmin = profile?.is_admin === true;
+
+  if (!isAdmin && !user.email) {
     throw new GuardrailError({
       code: "FORBIDDEN",
       where: "email-inbox/reviewed#GET",
-      message: "Admin access required.",
+      message: "Email address is required to load reviewed mailbox feedback.",
       status: 403,
     });
   }
 
   // Fetch reviews from PM APP, most recent first
-  const { data: reviews, error: reviewError } = await appService
+  let reviewQuery = appService
     .from("outlook_email_assistant_reviews")
     .select(
-      "id, intake_email_id, review_outcome, reviewer_note, assistant_reason, created_at, graph_message_id",
+      "id, intake_email_id, review_outcome, reviewer_note, draft_body, assistant_reason, created_at, graph_message_id, mailbox_user_id, source_metadata",
     )
     .order("created_at", { ascending: false })
     .limit(200);
+
+  if (!isAdmin) {
+    reviewQuery = reviewQuery.eq("mailbox_user_id", user.email);
+  }
+
+  const { data: reviews, error: reviewError } = await reviewQuery;
 
   if (reviewError) {
     throw new GuardrailError({
@@ -117,6 +172,9 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
       ? email.source_metadata
       : {};
     const inbox = isRecord(sourceMeta._inbox) ? sourceMeta._inbox : {};
+    const reviewMeta = isRecord(review.source_metadata)
+      ? review.source_metadata
+      : {};
 
     const project = email?.project_id
       ? projectsById.get(email.project_id) ?? null
@@ -135,7 +193,15 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
       webLink: email?.web_link ?? null,
       reviewOutcome: review.review_outcome,
       reviewerNote: review.reviewer_note ?? null,
+      draftBody: review.draft_body ?? null,
       assistantReason: review.assistant_reason ?? null,
+      feedbackProvidedAt:
+        typeof reviewMeta.feedbackProvidedAt === "string"
+          ? reviewMeta.feedbackProvidedAt
+          : null,
+      projectAssignmentFeedback: parseProjectAssignmentFeedback(
+        reviewMeta.projectAssignmentFeedback,
+      ),
       reviewedAt: review.created_at,
       starred: (inbox.starred as boolean) ?? false,
       tags: (inbox.tags as string[]) ?? [],
@@ -150,4 +216,139 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
   });
 
   return NextResponse.json(enriched);
+});
+
+export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ request }) => {
+  const supabase = await createClient();
+  const appService = createServiceClient();
+  const intakeService = createOutlookIntakeServiceClient();
+  const user = await getApiRouteUser();
+
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "email-inbox/reviewed#PATCH",
+      message: "Authentication required.",
+    });
+  }
+
+  const parsed = await parseJsonBody(
+    request,
+    ReviewedEmailUpdateSchema,
+    "email-inbox/reviewed#PATCH",
+  );
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const isAdmin = profile?.is_admin === true;
+
+  const { data: existingReview, error: existingError } = await appService
+    .from("outlook_email_assistant_reviews")
+    .select("id, mailbox_user_id, intake_email_id, source_metadata")
+    .eq("id", parsed.reviewId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "email-inbox/reviewed#PATCH",
+      message: existingError.message,
+    });
+  }
+
+  if (!existingReview) {
+    throw new GuardrailError({
+      code: "NOT_FOUND",
+      where: "email-inbox/reviewed#PATCH",
+      message: "Reviewed email feedback was not found.",
+      status: 404,
+    });
+  }
+
+  if (!isAdmin && existingReview.mailbox_user_id !== user.email) {
+    throw new GuardrailError({
+      code: "FORBIDDEN",
+      where: "email-inbox/reviewed#PATCH",
+      message: "Not authorized to edit this reviewed email feedback.",
+      status: 403,
+    });
+  }
+
+  const existingMetadata = isRecord(existingReview.source_metadata)
+    ? existingReview.source_metadata
+    : {};
+  const now = new Date().toISOString();
+  const projectAssignmentFeedback = parsed.projectAssignment
+    ? {
+        status: parsed.projectAssignment.status,
+        correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
+      }
+    : parseProjectAssignmentFeedback(existingMetadata.projectAssignmentFeedback);
+
+  const update: AssistantReviewUpdate = {
+    review_outcome: parsed.reviewOutcome,
+    reviewer_note: nullableTrimmed(parsed.reviewerNote),
+    draft_body: nullableTrimmed(parsed.draftBody),
+    source_metadata: {
+      ...existingMetadata,
+      feedbackProvidedAt: now,
+      feedbackProvidedBy: user.email ?? user.id,
+      projectAssignmentFeedback,
+    } as Json,
+    updated_at: now,
+  };
+
+  if (parsed.projectAssignment?.status === "incorrect") {
+    const { error: assignmentError } = await intakeService
+      .from("outlook_email_intake")
+      .update({ project_id: projectAssignmentFeedback.correctedProjectId })
+      .eq("id", existingReview.intake_email_id);
+
+    if (assignmentError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "email-inbox/reviewed#PATCH",
+        message: `Failed to update corrected email project assignment: ${assignmentError.message}`,
+      });
+    }
+  }
+
+  const { data: updatedReview, error: updateError } = await appService
+    .from("outlook_email_assistant_reviews")
+    .update(update)
+    .eq("id", parsed.reviewId)
+    .select("id, intake_email_id, review_outcome, reviewer_note, draft_body, source_metadata, updated_at")
+    .single();
+
+  if (updateError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "email-inbox/reviewed#PATCH",
+      message: updateError.message,
+    });
+  }
+
+  const updatedMetadata = isRecord(updatedReview.source_metadata)
+    ? updatedReview.source_metadata
+    : {};
+
+  return NextResponse.json({
+    reviewId: updatedReview.id,
+    id: updatedReview.intake_email_id,
+    reviewOutcome: updatedReview.review_outcome,
+    reviewerNote: updatedReview.reviewer_note ?? null,
+    draftBody: updatedReview.draft_body ?? null,
+    feedbackProvidedAt:
+      typeof updatedMetadata.feedbackProvidedAt === "string"
+        ? updatedMetadata.feedbackProvidedAt
+        : null,
+    projectAssignmentFeedback: parseProjectAssignmentFeedback(
+      updatedMetadata.projectAssignmentFeedback,
+    ),
+    updatedAt: updatedReview.updated_at,
+  });
 });

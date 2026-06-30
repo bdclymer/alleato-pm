@@ -40,24 +40,25 @@ export interface ProjectEmail {
   graph_message_id?: string | null;
   mailbox_user_id?: string | null;
   conversation_id?: string | null;
-}
-
-export interface EmailAssistantReviewState {
-  id: string;
-  intakeEmailId: number;
-  graphMessageId: string;
-  mailboxUserId: string;
-  assistantAction: string;
-  assistantPriority: string;
-  assistantScore: number | null;
-  assistantReason: string | null;
-  assistantOwner: string | null;
-  assistantRisk: string | null;
-  assistantEvidence: string | null;
-  reviewOutcome: string;
-  reviewerNote: string | null;
-  draftBody: string | null;
-  createdAt: string;
+  assistant_action?: "reply" | "delegate" | "watch" | "ignore" | null;
+  assistant_priority?: "urgent" | "high" | "normal" | "low" | null;
+  assistant_score?: number | null;
+  assistant_reason?: string | null;
+  assistant_owner?: string | null;
+  assistant_risk?: string | null;
+  assistant_evidence?: string | null;
+  assistant_rules_applied?: string[] | null;
+  assistant_review?: {
+    reviewId: string;
+    reviewOutcome: "draft_copied" | "draft_edited" | "skipped" | "delegated" | "watched" | "marked_no_action";
+    reviewerNote: string | null;
+    draftBody: string | null;
+    feedbackProvidedAt: string | null;
+    projectAssignmentFeedback: {
+      status: "correct" | "incorrect" | "unreviewed";
+      correctedProjectId: number | null;
+    };
+  } | null;
 }
 
 /**
@@ -95,7 +96,9 @@ export type UpdateEmailInput = Partial<CreateEmailInput>;
 export type EmailSource = "app" | "outlook" | "all";
 
 export const emailKeys = {
-  global: (status?: string, source?: EmailSource, mailboxUserId?: string) =>
+  global: (status?: string, source?: EmailSource) =>
+    ["emails", "global", status, source] as const,
+  globalMailbox: (status?: string, source?: EmailSource, mailboxUserId?: string) =>
     ["emails", "global", status, source, mailboxUserId] as const,
   all: (projectId: number) => ["emails", projectId] as const,
   list: (projectId: number, status?: string, source?: EmailSource) =>
@@ -113,11 +116,11 @@ export function useAllEmails(
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (source !== "all") params.set("source", source);
-  if (mailboxUserId) params.set("mailbox_user_id", mailboxUserId);
+  if (mailboxUserId) params.set("mailboxUserId", mailboxUserId);
   const queryString = params.toString();
 
   return useQuery<ProjectEmail[]>({
-    queryKey: emailKeys.global(status, source, mailboxUserId),
+    queryKey: emailKeys.globalMailbox(status, source, mailboxUserId),
     queryFn: ({ signal }) =>
       apiFetch<ProjectEmail[]>(
         `/api/emails${queryString ? `?${queryString}` : ""}`,

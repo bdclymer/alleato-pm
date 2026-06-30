@@ -11,6 +11,21 @@ export const BrandonReviewOutcomeSchema = z.enum([
 
 export type BrandonReviewOutcome = z.infer<typeof BrandonReviewOutcomeSchema>;
 
+export const ProjectAssignmentFeedbackSchema = z
+  .object({
+    status: z.enum(["correct", "incorrect", "unreviewed"]),
+    correctedProjectId: z.number().int().positive().nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.status === "incorrect" && value.correctedProjectId === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["correctedProjectId"],
+        message: "Correct project is required when marking assignment incorrect.",
+      });
+    }
+  });
+
 export const BrandonAssistantReviewPayloadSchema = z
   .object({
     assistantAction: z.enum(["reply", "delegate", "watch", "ignore"]),
@@ -24,6 +39,7 @@ export const BrandonAssistantReviewPayloadSchema = z
     assistantRisk: z.string().trim().max(1_000).nullable().optional(),
     assistantEvidence: z.string().trim().max(1_000).nullable().optional(),
     sourceMetadata: z.record(z.string(), z.unknown()).optional(),
+    projectAssignment: ProjectAssignmentFeedbackSchema.optional(),
   })
   .superRefine((value, ctx) => {
     const draftRequired =
