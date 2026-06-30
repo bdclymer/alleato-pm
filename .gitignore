@@ -150,3 +150,7 @@ scripts/playwright-crawl/outputs/
 scripts/visual-audit/output/
 /docs/ai-plan/evals/runs/
 /alleato-ai
+
+# eve agent framework build artifacts
+.eve/
+.output/
