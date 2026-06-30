@@ -1,6 +1,6 @@
 # Task: App training create commitment training doc
 
-Status: Blocked/Deferred
+Status: In Progress
 Owner: Codex
 Created: 2026-06-30
 Linear Issue: Not created - available Linear connector exposes comments only, not issue creation.
@@ -22,7 +22,9 @@ of hand-written screenshot documentation.
 - [x] Verify the app training-doc URL is available in the `/knowledge/app` route tree.
 - [x] Add a reusable Playwright tutorial recorder.
 - [x] Add a `commitments/create-commitment` workflow using seeded demo data.
-- [ ] Generate video, screenshots, Markdown, and `manifest.json` from one workflow.
+- [x] Generate video, screenshots, Markdown, and `manifest.json` from one workflow.
+- [x] Publish generated Playwright artifacts back into `/knowledge/app`.
+- [x] Render generated tutorial video as a first-class training-doc asset.
 - [x] Render published training docs inside `/knowledge/app` instead of relying on an external docs-site link.
 
 ## Implementation Checklist
@@ -44,7 +46,9 @@ of hand-written screenshot documentation.
 - [x] App route registration returns through auth middleware for `/knowledge/app/commitments/create-a-commitment`.
 - [x] `/knowledge/app` data path includes the doc under Commitments.
 - [x] Tutorial CLI loads and validates arguments.
-- [ ] Recorder can run against an authenticated local/prod browser state or records the auth blocker clearly.
+- [x] Recorder can run against an authenticated production browser state or records the auth/project-access blocker clearly.
+- [x] Supabase migration ledger verifies the `video` training-doc asset type is applied.
+- [x] Generated doc read-back shows one video asset and seven screenshot assets.
 
 ## Evidence
 
@@ -62,6 +66,10 @@ of hand-written screenshot documentation.
 | App route registration | `curl -I -L --max-time 20 http://localhost:3001/knowledge/app/commitments/create-a-commitment` | Pass | Local route redirects through auth middleware to `/auth/login?callbackUrl=%2Fknowledge%2Fapp%2Fcommitments%2Fcreate-a-commitment`, proving the app route is registered. Authenticated content proof still requires valid browser session. |
 | Targeted lint | `./node_modules/.bin/eslint src/features/knowledge/app-training-docs-page.tsx src/features/knowledge/app-training-doc-page.tsx src/app/(main)/knowledge/app/[toolCategory]/[docSlug]/page.tsx src/lib/training-docs/server.ts` | Pass | In-app training doc renderer and route pass focused lint. |
 | Changed type debt | `npm run typecheck:changed` | Pass | No new `any` type debt detected. |
+| Recorder bad-auth guard | `npm run tutorial:capture -- docs/tutorials/commitments/create-commitment.workflow.ts --base-url https://projects.alleatogroup.com --storage-state frontend/tests/.auth/user.json --output-dir docs/tutorials/commitments/generated/create-commitment-prod` before project access fix | Pass | Capture failed loudly on `/access-denied?reason=no-project-access` instead of publishing bad screenshots. |
+| Project access seed | Service-role read-back for `test1@mail.com`, `users_auth`, and `project_directory_memberships` on project `1034` | Pass | User `test1@mail.com` maps to person `34b16b53-b28c-4ff7-ae31-1bd331eba1f0` and active membership `1e8020fb-c20b-4324-a76b-840f15e41c32`. |
+| Video asset migration | `npm run db:migrations:verify-applied -- supabase/migrations/20260630193000_allow_training_doc_video_assets.sql` | Pass | Remote ledger includes `20260630193000`; constraint allows `screenshot`, `image`, and `video`. |
+| Generated artifact publish | `npx tsx scripts/tutorials/publish-tutorial.ts docs/tutorials/commitments/generated/create-commitment-prod/manifest.json --app-tool-category Commitments --source-route /1034/commitments/new --title "Create a Commitment"` | Pass | Existing doc row `3d31860c-e917-49ea-9487-31d964586428` is `published` with app path `/knowledge/app/commitments/create-a-commitment`, 7 screenshot assets, 1 video asset, and 7 steps. |
 
 ## Failure / Prevention
 

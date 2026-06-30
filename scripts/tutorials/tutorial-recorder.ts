@@ -114,11 +114,37 @@ export class TutorialRecorder {
     return true;
   }
 
+  async requireFillByLabel(label: string | RegExp, value: string) {
+    if (await this.fillByLabel(label, value)) return;
+    throw new Error(`Required tutorial field was not found for label: ${label.toString()}`);
+  }
+
   async clickByRole(name: string | RegExp) {
     const button = this.page.getByRole("button", { name }).first();
     if (!(await button.count())) return false;
     await button.click();
     return true;
+  }
+
+  async requireUrl(pattern: string | RegExp, stepTitle: string) {
+    const currentUrl = this.page.url();
+    const matches =
+      typeof pattern === "string"
+        ? currentUrl.includes(pattern)
+        : pattern.test(currentUrl);
+
+    if (!matches) {
+      throw new Error(
+        [
+          `Tutorial step "${stepTitle}" landed on the wrong screen.`,
+          `Current URL: ${currentUrl}`,
+          `Expected URL pattern: ${pattern.toString()}`,
+          "Cause: the workflow navigation, route guard, or seeded access data did not reach the intended screen.",
+          "Detection gap: tutorial capture previously accepted screenshots from the wrong page.",
+          "Prevention: each workflow step must assert the expected route before capture.",
+        ].join(" "),
+      );
+    }
   }
 
   async selectFirstComboboxOption(label?: string | RegExp) {
@@ -147,7 +173,7 @@ export class TutorialRecorder {
   async step(options: TutorialStepOptions, action: () => Promise<void>) {
     await action();
     await this.waitForStability();
-    this.assertNotLoginPage(options.title);
+    this.assertValidWorkflowPage(options.title);
     const screenshotMode = options.screenshot?.mode ?? "viewport";
     const fileName = `${String(this.steps.length + 1).padStart(2, "0")}-${slugify(options.title)}.png`;
     const screenshotPath = path.join(this.screenshotsDir, fileName);
@@ -245,7 +271,7 @@ export class TutorialRecorder {
     await this.page.waitForTimeout(300);
   }
 
-  private assertNotLoginPage(stepTitle: string) {
+  private assertValidWorkflowPage(stepTitle: string) {
     const url = new URL(this.page.url());
     if (url.pathname.startsWith("/auth/login")) {
       throw new Error(
@@ -255,6 +281,18 @@ export class TutorialRecorder {
           "Cause: the provided Playwright storage state is missing, expired, or scoped to the wrong host.",
           "Detection gap: tutorial capture previously accepted login-page screenshots as successful workflow artifacts.",
           "Prevention: refresh the storage state for the same --base-url before running the tutorial.",
+        ].join(" "),
+      );
+    }
+
+    if (url.pathname.startsWith("/access-denied")) {
+      throw new Error(
+        [
+          `Tutorial step "${stepTitle}" redirected to access denied.`,
+          `Current URL: ${url.pathname}${url.search}`,
+          "Cause: the authenticated tutorial user does not have access to the target project or tool.",
+          "Detection gap: tutorial capture previously accepted access-denied screenshots as successful workflow artifacts.",
+          "Prevention: seed and read back project membership for the tutorial user before running the workflow.",
         ].join(" "),
       );
     }
@@ -287,14 +325,17 @@ export async function runTutorial(
     await recorder.init();
     await definition.workflow({ data, page, tutorial: recorder });
 
+    const emptyVideo = { mp4Path: null, webmPath: null };
+    let artifacts = await recorder.writeArtifacts(emptyVideo);
+
     await context.close();
     context = null;
     const webmPath = video ? await video.path() : null;
 
     const finalVideo = webmPath
       ? await finalizeVideo(webmPath, path.join(options.outputDir, "videos", `${definition.slug}.webm`))
-      : { mp4Path: null, webmPath: null };
-    const artifacts = await recorder.writeArtifacts(finalVideo);
+      : emptyVideo;
+    artifacts = await recorder.writeArtifacts(finalVideo);
     return { ...artifacts, video: finalVideo };
   } finally {
     if (context) await context.close().catch(() => undefined);

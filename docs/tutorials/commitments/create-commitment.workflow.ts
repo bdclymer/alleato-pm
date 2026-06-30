@@ -47,6 +47,7 @@ export default defineTutorial<CreateCommitmentData>({
       },
       async () => {
         await page.goto(commitmentRoute);
+        await tutorial.requireUrl(commitmentRoute, "Open Commitments");
       },
     );
 
@@ -69,6 +70,7 @@ export default defineTutorial<CreateCommitmentData>({
         } else {
           await page.goto(createRoute);
         }
+        await tutorial.requireUrl(/\/commitments\/new/, "Start a new commitment");
       },
     );
 
@@ -82,8 +84,8 @@ export default defineTutorial<CreateCommitmentData>({
         calloutSelector: 'form, [name="title"], [name="contract_number"]',
       },
       async () => {
-        await tutorial.fillByLabel(/^title/i, data.commitmentTitle);
-        await tutorial.fillByLabel(/contract #|contract number|number/i, data.contractNumber);
+        await tutorial.requireFillByLabel(/^title/i, data.commitmentTitle);
+        await tutorial.requireFillByLabel(/contract #|contract number|number/i, data.contractNumber);
         await tutorial.selectFirstComboboxOption(/company|vendor/i);
         await tutorial.fillByLabel(/retainage|retention/i, data.retainage);
         await tutorial.fillByLabel(/description|scope/i, data.description);
