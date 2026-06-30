@@ -7,7 +7,6 @@ interface CliOptions {
   baseUrl: string;
   headed: boolean;
   outputDir?: string;
-  recordVideo: boolean;
   storageState?: string;
   workflowPath?: string;
 }
@@ -16,7 +15,6 @@ function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     baseUrl: process.env.TUTORIAL_BASE_URL ?? "http://localhost:3001",
     headed: false,
-    recordVideo: true,
     storageState: process.env.TUTORIAL_STORAGE_STATE,
   };
 
@@ -30,8 +28,6 @@ function parseArgs(argv: string[]): CliOptions {
       options.baseUrl = requireValue(argv, ++index, arg);
     } else if (arg === "--headed") {
       options.headed = true;
-    } else if (arg === "--no-video") {
-      options.recordVideo = false;
     } else if (arg === "--output-dir") {
       options.outputDir = requireValue(argv, ++index, arg);
     } else if (arg === "--storage-state") {
@@ -64,9 +60,8 @@ function printHelp() {
 Options:
   --base-url <url>        App origin. Default: TUTORIAL_BASE_URL or http://localhost:3001
   --storage-state <file>  Playwright storage state JSON for authenticated routes
-  --output-dir <dir>      Output directory. Default: workflow file directory
+  --output-dir <dir>      Output directory. Default: docs/tutorials/{module}/{tutorial}
   --headed                Run browser headed
-  --no-video              Disable Playwright video recording
 `);
 }
 
@@ -81,7 +76,10 @@ async function main() {
     throw new Error(`Workflow did not export a tutorial definition: ${workflowPath}`);
   }
 
-  const outputDir = path.resolve(options.outputDir ?? path.dirname(workflowPath));
+  const outputDir = path.resolve(
+    options.outputDir ??
+      path.join(process.cwd(), "docs", "tutorials", definition.module, definition.slug),
+  );
   if (definition.dataPath) {
     definition.dataPath = path.resolve(path.dirname(workflowPath), definition.dataPath);
   }
@@ -90,7 +88,6 @@ async function main() {
     baseUrl: options.baseUrl,
     headed: options.headed,
     outputDir,
-    recordVideo: options.recordVideo,
     storageState: options.storageState,
   });
 

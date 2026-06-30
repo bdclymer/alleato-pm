@@ -20,10 +20,6 @@ export function AppTrainingDocPage({
   const sortedSteps = doc.steps
     .slice()
     .sort((left, right) => left.step_order - right.step_order);
-  const videoAsset = doc.assets
-    .slice()
-    .sort((left, right) => left.step_order - right.step_order)
-    .find((asset) => asset.asset_type === "video" && asset.signed_url);
 
   return (
     <div className="min-h-[calc(100vh-6rem)] bg-background text-foreground">
@@ -45,11 +41,6 @@ export function AppTrainingDocPage({
               {sortedSteps.length ? (
                 <a href="#steps" className="block text-muted-foreground hover:text-primary">
                   Steps
-                </a>
-              ) : null}
-              {videoAsset ? (
-                <a href="#video" className="block text-muted-foreground hover:text-primary">
-                  Video
                 </a>
               ) : null}
             </div>
@@ -92,24 +83,6 @@ export function AppTrainingDocPage({
             <section id="details" className="space-y-5">
               <SectionRuleHeading label="Details" />
               <ManualMarkdown markdown={bodyMarkdown} />
-            </section>
-          ) : null}
-
-          {videoAsset?.signed_url ? (
-            <section id="video" className="space-y-5">
-              <SectionRuleHeading label="Video" />
-              <video
-                controls
-                preload="metadata"
-                className="aspect-video w-full rounded-md border border-border bg-foreground"
-              >
-                <source src={videoAsset.signed_url} type={videoAsset.mime_type} />
-              </video>
-              {videoAsset.caption ? (
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {videoAsset.caption}
-                </p>
-              ) : null}
             </section>
           ) : null}
 

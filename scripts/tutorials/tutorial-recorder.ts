@@ -1,7 +1,6 @@
-import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
@@ -51,7 +50,6 @@ export interface TutorialRunOptions {
   baseUrl: string;
   headed: boolean;
   outputDir: string;
-  recordVideo: boolean;
   storageState?: string;
 }
 
@@ -72,6 +70,7 @@ export function defineTutorial<TData extends TutorialSeedData>(
 }
 
 export class TutorialRecorder {
+  private readonly baseUrl: string;
   private readonly definition: TutorialDefinition;
   private readonly outputDir: string;
   private readonly page: Page;
@@ -80,13 +79,16 @@ export class TutorialRecorder {
 
   constructor({
     definition,
+    baseUrl,
     outputDir,
     page,
   }: {
     definition: TutorialDefinition;
+    baseUrl: string;
     outputDir: string;
     page: Page;
   }) {
+    this.baseUrl = baseUrl;
     this.definition = definition;
     this.outputDir = outputDir;
     this.page = page;
@@ -95,14 +97,13 @@ export class TutorialRecorder {
 
   async init() {
     await mkdir(this.screenshotsDir, { recursive: true });
-    await mkdir(path.join(this.outputDir, "videos"), { recursive: true });
     await this.installMaskStyle();
   }
 
   async goto(route: string) {
     const url = route.startsWith("http")
       ? route
-      : new URL(route, this.page.url() === "about:blank" ? "http://localhost" : this.page.url()).toString();
+      : new URL(route, this.page.url() === "about:blank" ? this.baseUrl : this.page.url()).toString();
     await this.page.goto(url, { waitUntil: "domcontentloaded" });
     await this.waitForStability();
   }
@@ -203,7 +204,7 @@ export class TutorialRecorder {
     });
   }
 
-  async writeArtifacts(video: { mp4Path: string | null; webmPath: string | null }) {
+  async writeArtifacts() {
     const markdownPath = path.join(this.outputDir, `${this.definition.slug}.md`);
     const manifestPath = path.join(this.outputDir, "manifest.json");
     const manifest = {
@@ -213,11 +214,10 @@ export class TutorialRecorder {
       slug: this.definition.slug,
       description: this.definition.description,
       generatedAt: new Date().toISOString(),
-      video,
       steps: this.steps,
     };
 
-    await writeFile(markdownPath, renderMarkdown(this.definition, this.steps, video), "utf8");
+    await writeFile(markdownPath, renderMarkdown(this.definition, this.steps), "utf8");
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
     return { manifestPath, markdownPath };
@@ -313,78 +313,39 @@ export async function runTutorial(
     browser = await chromium.launch({ headless: !options.headed });
     context = await browser.newContext({
       baseURL: options.baseUrl,
-      recordVideo: options.recordVideo
-        ? { dir: path.join(options.outputDir, "videos"), size: { width: 1440, height: 1000 } }
-        : undefined,
       storageState: options.storageState && existsSync(options.storageState) ? options.storageState : undefined,
       viewport: { width: 1440, height: 1000 },
     });
     const page = await context.newPage();
-    const video = page.video();
-    const recorder = new TutorialRecorder({ definition, outputDir: options.outputDir, page });
+    page.setDefaultTimeout(5_000);
+    page.setDefaultNavigationTimeout(15_000);
+    const recorder = new TutorialRecorder({
+      definition,
+      baseUrl: options.baseUrl,
+      outputDir: options.outputDir,
+      page,
+    });
     await recorder.init();
     await definition.workflow({ data, page, tutorial: recorder });
 
-    const emptyVideo = { mp4Path: null, webmPath: null };
-    let artifacts = await recorder.writeArtifacts(emptyVideo);
-
+    const artifacts = await recorder.writeArtifacts();
     await context.close();
     context = null;
-    const webmPath = video ? await video.path() : null;
-
-    const finalVideo = webmPath
-      ? await finalizeVideo(webmPath, path.join(options.outputDir, "videos", `${definition.slug}.webm`))
-      : emptyVideo;
-    artifacts = await recorder.writeArtifacts(finalVideo);
-    return { ...artifacts, video: finalVideo };
+    return artifacts;
   } finally {
     if (context) await context.close().catch(() => undefined);
     if (browser) await browser.close().catch(() => undefined);
   }
 }
 
-async function finalizeVideo(tempWebmPath: string, finalWebmPath: string) {
-  await mkdir(path.dirname(finalWebmPath), { recursive: true });
-  await rename(tempWebmPath, finalWebmPath).catch(async () => {
-    const bytes = await readFile(tempWebmPath);
-    await writeFile(finalWebmPath, bytes);
-  });
-
-  const finalMp4Path = finalWebmPath.replace(/\.webm$/i, ".mp4");
-  const ffmpeg = spawnSync("ffmpeg", [
-    "-y",
-    "-i",
-    finalWebmPath,
-    "-movflags",
-    "faststart",
-    "-pix_fmt",
-    "yuv420p",
-    finalMp4Path,
-  ], { encoding: "utf8" });
-
-  return {
-    mp4Path: ffmpeg.status === 0 ? path.relative(path.dirname(path.dirname(finalWebmPath)), finalMp4Path) : null,
-    webmPath: path.relative(path.dirname(path.dirname(finalWebmPath)), finalWebmPath),
-  };
-}
-
 function renderMarkdown(
   definition: TutorialDefinition,
   steps: CapturedStep[],
-  video: { mp4Path: string | null; webmPath: string | null },
 ) {
-  const videoLine = video.mp4Path
-    ? `Video: [${path.basename(video.mp4Path)}](${video.mp4Path})`
-    : video.webmPath
-      ? `Video: [${path.basename(video.webmPath)}](${video.webmPath})`
-      : "Video: not recorded";
-
   return [
     `# ${definition.title}`,
     "",
     definition.description,
-    "",
-    videoLine,
     "",
     ...steps.flatMap((step, index) => [
       `## ${index + 1}. ${step.title}`,

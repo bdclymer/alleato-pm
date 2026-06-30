@@ -28,10 +28,6 @@ interface TutorialManifest {
   slug: string;
   description: string;
   generatedAt: string;
-  video: {
-    mp4Path: string | null;
-    webmPath: string | null;
-  };
   steps: ManifestStep[];
 }
 
@@ -207,38 +203,6 @@ async function main() {
 
   await insertSteps(service, doc.id, manifest, screenshotAssets.map((asset) => asset.id));
 
-  const videoPath = manifest.video.mp4Path ?? manifest.video.webmPath;
-  if (videoPath) {
-    const absoluteVideoPath = path.join(outputDir, videoPath);
-    const fileName = path.basename(videoPath);
-    const mimeType = videoPath.endsWith(".mp4") ? "video/mp4" : "video/webm";
-    const storagePath = `training-docs/${doc.id}/generated/${generatedAtSlug}/videos/${fileName}`;
-    await uploadAsset(service, absoluteVideoPath, storagePath, "application/octet-stream");
-
-    const { error: videoError } = await service
-      .from("training_doc_assets")
-      .insert({
-        training_doc_id: doc.id,
-        storage_bucket: "documents",
-        storage_path: storagePath,
-        file_name: fileName,
-        mime_type: mimeType,
-        asset_type: "video",
-        caption: `${title} tutorial recording`,
-        alt_text: `${title} tutorial recording`,
-        step_order: 0,
-        metadata: {
-          generatedBy: "playwright-tutorial-recorder",
-          generatedAt: manifest.generatedAt,
-          sourceManifest: path.relative(repoRoot, manifestPath),
-        },
-      });
-
-    if (videoError) {
-      throw new Error(`Failed to create video asset: ${videoError.message}`);
-    }
-  }
-
   const { data: readBack, error: readBackError } = await service
     .from("training_docs")
     .select("id, slug, status, published_doc_path, metadata, training_doc_steps(id), training_doc_assets(id, asset_type)")
@@ -284,7 +248,6 @@ function stripGeneratedMarkdown(markdown: string) {
     .split("\n")
     .filter((line) => !line.startsWith("![") && !line.startsWith("Callout selector:") && !line.startsWith("Source screen:"))
     .join("\n")
-    .replace(/^Video:.*$/m, "")
     .trim();
 }
 

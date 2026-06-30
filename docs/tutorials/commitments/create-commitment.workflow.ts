@@ -26,7 +26,7 @@ export default defineTutorial<CreateCommitmentData>({
   module: "commitments",
   slug: "create-commitment",
   description:
-    "Create a subcontract or purchase order commitment from seeded demo data, recording the workflow as video, screenshots, Markdown, and manifest data.",
+    "Create a subcontract or purchase order commitment from seeded demo data, recording the workflow as screenshots, Markdown, and manifest data.",
   dataPath: "./create-commitment.data.json",
   maskSelectors: [
     '[data-sensitive="true"]',
@@ -46,7 +46,7 @@ export default defineTutorial<CreateCommitmentData>({
         calloutSelector: 'a[href$="/commitments"], button:has-text("Create")',
       },
       async () => {
-        await page.goto(commitmentRoute);
+        await tutorial.goto(commitmentRoute);
         await tutorial.requireUrl(commitmentRoute, "Open Commitments");
       },
     );
@@ -65,10 +65,10 @@ export default defineTutorial<CreateCommitmentData>({
         if (await createButton.isVisible().catch(() => false)) {
           await createButton.click();
           await page.getByText(/subcontract|purchase order/i).first().click().catch(async () => {
-            await page.goto(createRoute);
+            await tutorial.goto(createRoute);
           });
         } else {
-          await page.goto(createRoute);
+          await tutorial.goto(createRoute);
         }
         await tutorial.requireUrl(/\/commitments\/new/, "Start a new commitment");
       },
