@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import type { DateRange } from "react-day-picker";
 import {
   Brain,
+  CalendarRange,
   CheckCircle2,
   RefreshCw,
   Sparkles,
@@ -14,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { KpiRow, type KpiBlockProps } from "@/components/ds/kpi";
+import { DateRangePicker } from "@/components/ds/date-range-picker";
 import { DataTable, type TableColumn } from "@/components/ds/data-table";
 import { ErrorState } from "@/components/ds/error-state";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -21,6 +24,7 @@ import { SectionRuleHeading } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,10 +76,13 @@ interface HealthData {
   };
   sourceCoverage: {
     days: number;
+    from: string;
+    to: string;
+    preset: "1d" | "3d" | "7d" | "14d" | "custom";
     rows: {
       family: string;
       label: string;
-      sourceRows14d: number;
+      sourceRowsInRange: number;
       docsWithEmbeddedChunks: number;
       terminalUnembeddable: number;
       actionableMissingEmbeddings: number;
@@ -92,6 +99,8 @@ interface HealthData {
   };
   flags: { sampleTruncated: boolean; sampleSize: number };
 }
+
+type CoveragePreset = "1d" | "3d" | "7d" | "14d" | "custom";
 
 // ── Local helpers ──────────────────────────────────────────────────────────────
 
@@ -119,6 +128,19 @@ function formatCompact(n: number): string {
 function formatPercent(value: number | null): string {
   if (value === null) return "n/a";
   return `${formatNumber(value * 100, 1)}%`;
+}
+
+function toDateInputValue(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDateLabel(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00.000Z`));
 }
 
 function satisfactionRatio(up: number, down: number): { value: string; positive: boolean } {
@@ -205,21 +227,50 @@ export function AiSystemHealthPanel() {
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [coveragePreset, setCoveragePreset] = useState<CoveragePreset>("14d");
+  const [customCoverageRange, setCustomCoverageRange] = useState<DateRange | undefined>();
 
   const load = useCallback(async () => {
+    const params = new URLSearchParams();
+
+    if (coveragePreset === "custom") {
+      if (!customCoverageRange?.from || !customCoverageRange?.to) {
+        return;
+      }
+      params.set("coverageFrom", toDateInputValue(customCoverageRange.from));
+      params.set("coverageTo", toDateInputValue(customCoverageRange.to));
+    } else {
+      params.set("coverageWindowDays", coveragePreset.replace("d", ""));
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const result = await apiFetch<HealthData>("/api/admin/ai-system-health");
+      const result = await apiFetch<HealthData>(`/api/admin/ai-system-health?${params.toString()}`);
       setData(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load AI health data.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [coveragePreset, customCoverageRange]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const applyCoveragePreset = useCallback((value: string) => {
+    if (!value) return;
+    const preset = value as CoveragePreset;
+    startTransition(() => {
+      setCoveragePreset(preset);
+    });
+  }, []);
+
+  const handleCustomCoverageChange = useCallback((range: DateRange | undefined) => {
+    setCustomCoverageRange(range);
+    startTransition(() => {
+      setCoveragePreset("custom");
+    });
+  }, []);
 
   if (loading) {
     return (
@@ -343,7 +394,7 @@ export function AiSystemHealthPanel() {
       render: (row) => (
         <span className={cn(row.actionableMissingEmbeddings > 0 && "text-destructive")}>
           {formatNumber(row.docsWithEmbeddedChunks, 0)}/
-          {formatNumber(row.sourceRows14d - row.terminalUnembeddable, 0)}
+          {formatNumber(row.sourceRowsInRange - row.terminalUnembeddable, 0)}
         </span>
       ),
     },
@@ -367,6 +418,9 @@ export function AiSystemHealthPanel() {
     },
   ];
   const sourceCoverageRows = sourceCoverage.rows.map((row) => ({ ...row, id: row.family }));
+  const sourceCoverageLabel = sourceCoverage.preset === "custom"
+    ? `${formatDateLabel(sourceCoverage.from.slice(0, 10))} - ${formatDateLabel(sourceCoverage.to.slice(0, 10))}`
+    : `${sourceCoverage.days}d`;
 
   return (
     <div className="space-y-8">
@@ -507,12 +561,44 @@ export function AiSystemHealthPanel() {
       </div>
 
       <div>
-        <SectionRuleHeading label={`Source embedding coverage · ${sourceCoverage.days}d`} />
+        <SectionRuleHeading
+          label={`Source embedding coverage · ${sourceCoverageLabel}`}
+          actions={(
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <ToggleGroup
+                type="single"
+                value={coveragePreset}
+                onValueChange={applyCoveragePreset}
+                variant="outline"
+                size="sm"
+                spacing="none"
+              >
+                <ToggleGroupItem value="1d" aria-label="1 day">1d</ToggleGroupItem>
+                <ToggleGroupItem value="3d" aria-label="3 days">3d</ToggleGroupItem>
+                <ToggleGroupItem value="7d" aria-label="7 days">7d</ToggleGroupItem>
+                <ToggleGroupItem value="14d" aria-label="14 days">14d</ToggleGroupItem>
+                <ToggleGroupItem value="custom" aria-label="Custom dates">Custom</ToggleGroupItem>
+              </ToggleGroup>
+              <DateRangePicker
+                value={customCoverageRange}
+                onChange={handleCustomCoverageChange}
+                className="h-8 w-64"
+                placeholder="Custom dates"
+              />
+            </div>
+          )}
+        />
         <DataTable
           columns={sourceCoverageColumns}
           rows={sourceCoverageRows}
           emptyMessage="No source coverage rows found."
         />
+        {coveragePreset === "custom" && (!customCoverageRange?.from || !customCoverageRange?.to) && (
+          <p className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <CalendarRange className="h-3.5 w-3.5" />
+            Select a start and end date to load custom source coverage.
+          </p>
+        )}
       </div>
     </div>
   );

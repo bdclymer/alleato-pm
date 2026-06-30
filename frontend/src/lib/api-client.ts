@@ -62,9 +62,42 @@ export class ApiError extends Error {
 
 const browserGetRequestsInFlight = new Map<string, Promise<unknown>>();
 
+function extractOpaqueStructuredMessage(value: string): string | undefined {
+  const trimmed = value.trim();
+  const messageMatch = trimmed.match(/['"]message['"]\s*:\s*['"]([^'"]+)['"]/i);
+  if (!messageMatch?.[1]) return undefined;
+
+  const codeMatch = trimmed.match(/['"]code['"]\s*:\s*['"]?(\d{3,})['"]?/i);
+  return codeMatch?.[1]
+    ? `${messageMatch[1]} (code ${codeMatch[1]})`
+    : messageMatch[1];
+}
+
+function sanitizeErrorString(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const structuredMessage = extractOpaqueStructuredMessage(trimmed);
+  if (structuredMessage) return structuredMessage;
+
+  const lower = trimmed.toLowerCase();
+  const looksLikeHtmlDump =
+    lower.includes("<!doctype html") ||
+    lower.includes("<html") ||
+    lower.includes("cloudflare ray id") ||
+    lower.includes("performance & security by cloudflare") ||
+    lower.includes("error code 522");
+
+  if (looksLikeHtmlDump) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
 function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undefined {
   if (typeof details === "string" && details.trim()) {
-    return details.trim();
+    return sanitizeErrorString(details);
   }
 
   if (Array.isArray(details)) {
@@ -84,6 +117,21 @@ function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undef
 
   if (details && typeof details === "object") {
     const objectDetails = details as Record<string, unknown>;
+    if (typeof objectDetails.message === "string") {
+      const message = sanitizeErrorString(objectDetails.message);
+      if (message) return message;
+    }
+
+    if (typeof objectDetails.error === "string") {
+      const message = sanitizeErrorString(objectDetails.error);
+      if (message) return message;
+    }
+
+    if (typeof objectDetails.details === "string") {
+      const message = sanitizeErrorString(objectDetails.details);
+      if (message) return message;
+    }
+
     const fieldErrors = objectDetails.fieldErrors;
     if (fieldErrors && typeof fieldErrors === "object") {
       const joined = Object.entries(fieldErrors as Record<string, unknown>)
@@ -116,7 +164,12 @@ function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undef
 }
 
 function getApiErrorMessage(status: number, body: ApiErrorBody): string {
-  const raw = `${body.error ?? ""} ${body.error_message ?? ""} ${body.message ?? ""}`.toLowerCase();
+  const normalizedError = typeof body.error === "string" ? sanitizeErrorString(body.error) : undefined;
+  const normalizedErrorMessage =
+    typeof body.error_message === "string" ? sanitizeErrorString(body.error_message) : undefined;
+  const normalizedMessage = typeof body.message === "string" ? sanitizeErrorString(body.message) : undefined;
+
+  const raw = `${normalizedError ?? body.error ?? ""} ${normalizedErrorMessage ?? body.error_message ?? ""} ${normalizedMessage ?? body.message ?? ""}`.toLowerCase();
   if (
     status === 413 ||
     raw.includes("request entity too large") ||
@@ -128,9 +181,9 @@ function getApiErrorMessage(status: number, body: ApiErrorBody): string {
 
   return (
     stringifyErrorDetails(body.details) ||
-    body.error_message ||
-    body.error ||
-    body.message ||
+    normalizedErrorMessage ||
+    normalizedError ||
+    normalizedMessage ||
     `Request failed (HTTP ${status})`
   );
 }
