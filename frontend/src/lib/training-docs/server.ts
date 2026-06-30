@@ -13,6 +13,7 @@ import {
 import type {
   TrainingDocAsset,
   TrainingDocRecord,
+  TrainingDocStep,
   TrainingDocWithAssets,
 } from "./types";
 
@@ -90,6 +91,7 @@ export async function listTrainingDocs(
 
   const docIds = (docs ?? []).map((doc) => doc.id);
   let assets: TrainingDocAsset[] = [];
+  let steps: Omit<TrainingDocStep, "screenshot_asset">[] = [];
   if (docIds.length > 0) {
     const { data: assetRows, error: assetsError } = await service
       .from("training_doc_assets")
@@ -114,18 +116,48 @@ export async function listTrainingDocs(
         ),
       })),
     );
+
+    const { data: stepRows, error: stepsError } = await service
+      .from("training_doc_steps")
+      .select("*")
+      .in("training_doc_id", docIds)
+      .order("step_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (stepsError) {
+      throw new Error(
+        `Failed to load training doc steps: ${stepsError.message}`,
+      );
+    }
+
+    steps = (stepRows ?? []) as Omit<TrainingDocStep, "screenshot_asset">[];
   }
 
   const assetsByDocId = new Map<string, TrainingDocAsset[]>();
+  const assetsById = new Map<string, TrainingDocAsset>();
   for (const asset of assets) {
     const current = assetsByDocId.get(asset.training_doc_id) ?? [];
     current.push(asset);
     assetsByDocId.set(asset.training_doc_id, current);
+    assetsById.set(asset.id, asset);
+  }
+
+  const stepsByDocId = new Map<string, TrainingDocStep[]>();
+  for (const step of steps) {
+    const current = stepsByDocId.get(step.training_doc_id) ?? [];
+    current.push({
+      ...step,
+      screenshot_asset: step.screenshot_asset_id
+        ? (assetsById.get(step.screenshot_asset_id) ?? null)
+        : null,
+    });
+    stepsByDocId.set(step.training_doc_id, current);
   }
 
   return (docs ?? []).map((doc) => ({
     ...(doc as TrainingDocRecord),
     assets: assetsByDocId.get(doc.id) ?? [],
+    steps: stepsByDocId.get(doc.id) ?? [],
   }));
 }
 

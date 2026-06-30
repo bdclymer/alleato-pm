@@ -31240,6 +31240,70 @@ export type Database = {
           },
         ]
       }
+      training_doc_steps: {
+        Row: {
+          action_metadata: Json
+          created_at: string
+          created_by: string | null
+          expected_result: string | null
+          id: string
+          instruction_markdown: string
+          screenshot_asset_id: string | null
+          source_url: string | null
+          step_order: number
+          title: string
+          training_doc_id: string
+          updated_at: string
+        }
+        Insert: {
+          action_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          expected_result?: string | null
+          id?: string
+          instruction_markdown?: string
+          screenshot_asset_id?: string | null
+          source_url?: string | null
+          step_order?: number
+          title: string
+          training_doc_id: string
+          updated_at?: string
+        }
+        Update: {
+          action_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          expected_result?: string | null
+          id?: string
+          instruction_markdown?: string
+          screenshot_asset_id?: string | null
+          source_url?: string | null
+          step_order?: number
+          title?: string
+          training_doc_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_doc_steps_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_steps_screenshot_asset_id_fkey"
+            columns: ["screenshot_asset_id"]
+            referencedRelation: "training_doc_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_steps_training_doc_id_fkey"
+            columns: ["training_doc_id"]
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_docs: {
         Row: {
           audience: string

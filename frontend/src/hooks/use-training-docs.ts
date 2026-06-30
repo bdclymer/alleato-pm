@@ -171,3 +171,24 @@ export function usePublishTrainingDoc() {
     onError: (error: Error) => toast.error(error.message),
   });
 }
+
+export function useGenerateTrainingDoc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ docId, route }: { docId: string; route?: string | null }) =>
+      apiFetch<{
+        doc: TrainingDocWithAssets;
+        generated: { route: string; stepCount: number };
+      }>(`/api/admin/training-docs/${docId}/generate`, {
+        method: "POST",
+        body: JSON.stringify({ route }),
+      }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: trainingDocKeys.all });
+      toast.success(
+        `AI generated ${result.generated.stepCount} screenshot-backed steps`,
+      );
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}

@@ -25,6 +25,7 @@ export const trainingDocColumns = [
   { id: "summary", label: "Summary", defaultVisible: true },
   { id: "body_markdown", label: "Article Markdown" },
   { id: "assets", label: "Screenshots", defaultVisible: true },
+  { id: "steps", label: "Steps", defaultVisible: true },
   { id: "published", label: "Published", defaultVisible: true },
 ] as const;
 
@@ -202,6 +203,14 @@ export function buildTrainingDocTableColumns(
     },
     {
       ...trainingDocColumns[8],
+      render: (doc) => <CellNumber value={doc.steps.length} />,
+      sortable: true,
+      sortValue: (doc) => doc.steps.length,
+      csvValue: (doc) => String(doc.steps.length),
+      align: "right",
+    },
+    {
+      ...trainingDocColumns[9],
       render: (doc) => (
         <CellText value={formatDate(doc.last_published_at)} emptyLabel="-" />
       ),

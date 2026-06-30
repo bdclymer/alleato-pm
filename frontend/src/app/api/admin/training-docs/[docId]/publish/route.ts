@@ -42,8 +42,17 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
 
   try {
     const docsRoot = resolveDocsSiteRoot();
+    const stepScreenshotAssetIds = new Set(
+      doc.steps
+        .map((step) => step.screenshot_asset_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+    const sourceAssets =
+      stepScreenshotAssetIds.size > 0
+        ? doc.assets.filter((asset) => stepScreenshotAssetIds.has(asset.id))
+        : doc.assets;
     const assets = await Promise.all(
-      doc.assets.map(async (asset) => {
+      sourceAssets.map(async (asset) => {
         const { data, error } = await service.storage
           .from(asset.storage_bucket)
           .download(asset.storage_path);
@@ -63,6 +72,29 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
         };
       }),
     );
+    const publishAssetsById = new Map(
+      sourceAssets.map((asset, index) => [asset.id, assets[index]]),
+    );
+    const steps = doc.steps.map((step) => {
+      const screenshot = step.screenshot_asset_id
+        ? (publishAssetsById.get(step.screenshot_asset_id) ?? null)
+        : null;
+
+      return {
+        title: step.title,
+        instructionMarkdown: step.instruction_markdown,
+        expectedResult: step.expected_result,
+        sourceUrl: step.source_url,
+        stepOrder: step.step_order,
+        screenshot: screenshot
+          ? {
+              fileName: screenshot.fileName,
+              caption: screenshot.caption,
+              altText: screenshot.altText,
+            }
+          : null,
+      };
+    });
 
     const existingPublished = await listPublishedTrainingDocs(service);
     const withoutCurrent = existingPublished.filter(
@@ -92,6 +124,7 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
         bodyMarkdown: doc.body_markdown,
         targetCollection: doc.target_collection,
         assets,
+        steps,
       },
       [...withoutCurrent, currentRecord],
     );

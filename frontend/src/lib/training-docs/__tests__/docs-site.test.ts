@@ -40,6 +40,55 @@ test("renderTrainingDocMdx includes screenshots and review notes", () => {
   expect(mdx).toMatch(/## Review Notes/);
 });
 
+test("renderTrainingDocMdx renders generated steps with their screenshots", () => {
+  const mdx = renderTrainingDocMdx({
+    title: "Create a Project",
+    slug: "create-a-project",
+    summary: "How to create a project.",
+    audience: "internal",
+    status: "approved",
+    sourceRoute: "/create-project",
+    reviewNotes: null,
+    bodyMarkdown:
+      "## Purpose\n\nUse this workflow to start a new project.\n\n## Steps\n\n1. Legacy manual step.\n\n## Quality Check\n\nConfirm the project appears.",
+    assets: [
+      {
+        fileName: "step-1.png",
+        caption: "Create project screen",
+        altText: "Create project form",
+        stepOrder: 0,
+        bytes: new TextEncoder().encode("png"),
+      },
+    ],
+    steps: [
+      {
+        title: "Open Create Project",
+        instructionMarkdown: "Navigate to the create project workflow.",
+        expectedResult: "The create project form is visible.",
+        sourceUrl: "http://localhost:3001/create-project",
+        stepOrder: 0,
+        screenshot: {
+          fileName: "step-1.png",
+          caption: "Create project screen",
+          altText: "Create project form",
+        },
+      },
+    ],
+  });
+
+  expect(mdx).toMatch(/## Steps/);
+  expect(mdx).toMatch(/### Step 1: Open Create Project/);
+  expect(mdx).toMatch(/Navigate to the create project workflow\./);
+  expect(mdx).toMatch(/## Purpose/);
+  expect(mdx).toMatch(/## Quality Check/);
+  expect(mdx).not.toMatch(/Legacy manual step/);
+  expect(mdx).toMatch(
+    /!\[Create project form\]\(\/images\/training-docs\/create-a-project\/step-1\.png\)/,
+  );
+  expect(mdx).toMatch(/Expected result: The create project form is visible\./);
+  expect(mdx).not.toMatch(/## Screenshots/);
+});
+
 test("publishTrainingDocToDocsSite writes the page, index, assets, and docs nav entry", async () => {
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), "training-docs-"));
   const docsRoot = path.join(tmpRoot, "apps", "docs");

@@ -19,6 +19,19 @@ export interface TrainingDocAssetPublishInput {
   bytes: Uint8Array;
 }
 
+export interface TrainingDocStepPublishInput {
+  title: string;
+  instructionMarkdown: string;
+  expectedResult: string | null;
+  sourceUrl: string | null;
+  stepOrder: number;
+  screenshot: {
+    fileName: string;
+    caption: string | null;
+    altText: string | null;
+  } | null;
+}
+
 export interface TrainingDocPublishInput {
   title: string;
   slug: string;
@@ -30,6 +43,7 @@ export interface TrainingDocPublishInput {
   bodyMarkdown: string;
   targetCollection?: string | null;
   assets: TrainingDocAssetPublishInput[];
+  steps?: TrainingDocStepPublishInput[];
 }
 
 export interface PublishedTrainingDoc {
@@ -110,31 +124,74 @@ export function renderTrainingDocMdx(input: TrainingDocPublishInput): string {
     ? `related_routes:\n  - ${input.sourceRoute.trim()}\n`
     : "related_routes: []\n";
 
-  const assetSection = input.assets.length
+  const sortedSteps = (input.steps ?? [])
+    .slice()
+    .sort((left, right) => left.stepOrder - right.stepOrder);
+  const stepSection = sortedSteps.length
     ? [
-        "## Screenshots",
+        "## Steps",
         "",
-        ...input.assets
-          .sort((left, right) => left.stepOrder - right.stepOrder)
-          .flatMap((asset) => {
-            const imagePath = `/${TRAINING_DOC_IMAGE_ROOT}/${slug}/${asset.fileName}`;
+        ...sortedSteps.flatMap((step, index) => {
+          const lines = [
+            `### Step ${index + 1}: ${step.title.trim()}`,
+            "",
+            step.instructionMarkdown.trim(),
+          ];
+
+          if (step.screenshot) {
+            const imagePath = `/${TRAINING_DOC_IMAGE_ROOT}/${slug}/${step.screenshot.fileName}`;
             const altText =
-              asset.altText?.trim() || asset.caption?.trim() || pageTitle;
-            const lines = [`![${altText}](${imagePath})`];
-            if (asset.caption?.trim()) {
-              lines.push("", `_${asset.caption.trim()}_`);
+              step.screenshot.altText?.trim() ||
+              step.screenshot.caption?.trim() ||
+              step.title.trim();
+            lines.push("", `![${altText}](${imagePath})`);
+            if (step.screenshot.caption?.trim()) {
+              lines.push("", `_${step.screenshot.caption.trim()}_`);
             }
-            lines.push("");
-            return lines;
-          }),
+          }
+
+          if (step.expectedResult?.trim()) {
+            lines.push("", `Expected result: ${step.expectedResult.trim()}`);
+          }
+
+          if (step.sourceUrl?.trim()) {
+            lines.push("", `Source screen: \`${step.sourceUrl.trim()}\``);
+          }
+
+          lines.push("");
+          return lines;
+        }),
       ].join("\n")
     : "";
+
+  const assetSection =
+    !stepSection && input.assets.length
+      ? [
+          "## Screenshots",
+          "",
+          ...input.assets
+            .sort((left, right) => left.stepOrder - right.stepOrder)
+            .flatMap((asset) => {
+              const imagePath = `/${TRAINING_DOC_IMAGE_ROOT}/${slug}/${asset.fileName}`;
+              const altText =
+                asset.altText?.trim() || asset.caption?.trim() || pageTitle;
+              const lines = [`![${altText}](${imagePath})`];
+              if (asset.caption?.trim()) {
+                lines.push("", `_${asset.caption.trim()}_`);
+              }
+              lines.push("");
+              return lines;
+            }),
+        ].join("\n")
+      : "";
 
   const notesSection = input.reviewNotes?.trim()
     ? `\n## Review Notes\n\n${input.reviewNotes.trim()}\n`
     : "";
 
-  const body = input.bodyMarkdown.trim();
+  const body = stepSection
+    ? stripLegacyStepsSection(input.bodyMarkdown).trim()
+    : input.bodyMarkdown.trim();
 
   return [
     "---",
@@ -158,6 +215,7 @@ export function renderTrainingDocMdx(input: TrainingDocPublishInput): string {
     description,
     "",
     body,
+    stepSection ? `\n${stepSection}` : "",
     assetSection ? `\n${assetSection}` : "",
     notesSection,
   ]
@@ -214,6 +272,10 @@ export function renderTrainingDocsIndex(docs: PublishedTrainingDoc[]): string {
     entries || "No published training docs yet.",
     "",
   ].join("\n");
+}
+
+function stripLegacyStepsSection(markdown: string): string {
+  return markdown.replace(/\n?## Steps\n[\s\S]*?(?=\n##\s|$)/, "\n").trim();
 }
 
 export async function ensureTrainingDocsNav(docsRoot: string): Promise<void> {

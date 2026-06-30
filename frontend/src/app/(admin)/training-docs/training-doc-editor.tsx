@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { ExternalLink, FileImage, Save, Trash2, Upload } from "lucide-react";
+import {
+  Bot,
+  ExternalLink,
+  FileImage,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import { EmptyState, StatusText } from "@/components/ds";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -27,6 +34,7 @@ import type {
 import {
   useDeleteTrainingDoc,
   useDeleteTrainingDocAsset,
+  useGenerateTrainingDoc,
   usePublishTrainingDoc,
   useUpdateTrainingDoc,
   useUpdateTrainingDocAsset,
@@ -94,6 +102,7 @@ export function TrainingDocEditor({
   const updateAsset = useUpdateTrainingDocAsset();
   const deleteAsset = useDeleteTrainingDocAsset();
   const publishDoc = usePublishTrainingDoc();
+  const generateDoc = useGenerateTrainingDoc();
 
   const [form, setForm] = React.useState<DocFormState>(() => toFormState(doc));
   const [assetDrafts, setAssetDrafts] = React.useState<AssetDraftState>(() =>
@@ -125,6 +134,16 @@ export function TrainingDocEditor({
       await handleSave();
     }
     await publishDoc.mutateAsync(doc.id);
+  }
+
+  async function handleGenerate() {
+    if (isDirty) {
+      await handleSave();
+    }
+    await generateDoc.mutateAsync({
+      docId: doc.id,
+      route: form.source_route,
+    });
   }
 
   async function handleUploadFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -181,6 +200,14 @@ export function TrainingDocEditor({
             >
               <Save className="h-4 w-4" />
               Save
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={generateDoc.isPending || !form.source_route.trim()}
+            >
+              <Bot className="h-4 w-4" />
+              Generate with AI
             </Button>
             <Button onClick={handlePublish} disabled={publishDoc.isPending}>
               <ExternalLink className="h-4 w-4" />
@@ -286,6 +313,74 @@ export function TrainingDocEditor({
       </section>
 
       <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">
+              Generated Steps
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              AI browser capture owns the step order and screenshots.
+            </p>
+          </div>
+        </div>
+
+        {doc.steps.length === 0 ? (
+          <EmptyState
+            icon={<Bot className="h-5 w-5" />}
+            title="No generated steps yet"
+            description="Add a source route, then generate the training flow with AI browser capture."
+          />
+        ) : (
+          <div className="divide-y">
+            {doc.steps
+              .slice()
+              .sort((left, right) => left.step_order - right.step_order)
+              .map((step, index) => (
+                <div
+                  key={step.id}
+                  className="grid gap-4 py-5 first:pt-0 md:grid-cols-[minmax(0,1fr)_18rem]"
+                >
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">
+                      Step {index + 1}: {step.title}
+                    </div>
+                    <div className="whitespace-pre-line text-sm text-foreground">
+                      {step.instruction_markdown}
+                    </div>
+                    {step.expected_result ? (
+                      <div className="text-sm text-muted-foreground">
+                        Expected result: {step.expected_result}
+                      </div>
+                    ) : null}
+                    {step.source_url ? (
+                      <div className="font-mono text-xs text-muted-foreground">
+                        {step.source_url}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="overflow-hidden rounded-md border bg-muted/20">
+                    {step.screenshot_asset?.signed_url ? (
+                      <img
+                        src={step.screenshot_asset.signed_url}
+                        alt={
+                          step.screenshot_asset.alt_text ??
+                          step.screenshot_asset.file_name
+                        }
+                        className="h-44 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-44 items-center justify-center text-xs text-muted-foreground">
+                        Screenshot unavailable
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4">
         <h3 className="text-base font-semibold text-foreground">Content</h3>
         <Field label="Summary">
           <Textarea
@@ -349,7 +444,7 @@ export function TrainingDocEditor({
           <EmptyState
             icon={<FileImage className="h-5 w-5" />}
             title="No screenshots yet"
-            description="Upload screenshots now or later. Publish still works without them, but screenshot-backed SOPs are the target workflow."
+            description="AI generation captures screenshots automatically. Manual upload is only a review fallback."
           />
         ) : (
           <div className="space-y-6">

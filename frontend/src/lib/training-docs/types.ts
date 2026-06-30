@@ -20,6 +20,22 @@ export interface TrainingDocAsset {
   signed_url: string | null;
 }
 
+export interface TrainingDocStep {
+  id: string;
+  training_doc_id: string;
+  screenshot_asset_id: string | null;
+  created_by: string | null;
+  step_order: number;
+  title: string;
+  instruction_markdown: string;
+  expected_result: string | null;
+  source_url: string | null;
+  action_metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  screenshot_asset: TrainingDocAsset | null;
+}
+
 export interface TrainingDocRecord {
   id: string;
   created_at: string;
@@ -43,4 +59,5 @@ export interface TrainingDocRecord {
 
 export interface TrainingDocWithAssets extends TrainingDocRecord {
   assets: TrainingDocAsset[];
+  steps: TrainingDocStep[];
 }
