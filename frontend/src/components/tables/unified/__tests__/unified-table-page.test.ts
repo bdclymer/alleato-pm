@@ -31,7 +31,7 @@ describe("UnifiedTablePage header labels", () => {
     ).toBe(false);
   });
 
-  it("keeps split views filling the shell-owned workspace without fixed viewport math", () => {
+  it("keeps split views on a flex-fill, overflow-contained layout contract", () => {
     expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("h-full");
     expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("min-h-0");
     expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("flex-1");

@@ -33,21 +33,25 @@ describe("SiteFooter shell contract", () => {
     expect(mainElementSource(source)).not.toContain("<SiteFooter");
   });
 
-  it("keeps table workspaces footerless so split views can fill the viewport", () => {
+  it("keeps table workspaces footerless so split views can fill the app height", () => {
     const source = readSource("app/(tables)/layout.tsx");
 
     expect(source).not.toContain("<SiteFooter");
     expect(source).not.toContain("components/layout/site-footer");
+    expect(source).toContain("h-svh overflow-hidden");
+    expect(source).toContain("flex min-h-0 min-w-0 flex-1 flex-col");
   });
 
-  it("suppresses the footer on full-height split workspaces outside the table shell", () => {
+  it("suppresses footers for full-height split routes in other app shells", () => {
     const adminSource = readSource("app/(admin)/admin-layout-client.tsx");
     const mainSource = readSource("app/(main)/layout.tsx");
 
     expect(adminSource).toContain('pathname === "/outlook-draft-feedback"');
+    expect(adminSource).toContain("{!hideFooter && <SiteFooter />}");
     expect(mainSource).toContain("isFullHeightWorkspace");
     expect(mainSource).toContain("\\/tasks");
     expect(mainSource).toContain("!isFullHeightWorkspace");
+    expect(mainSource).toContain("flex min-h-0 min-w-0 flex-1 flex-col overflow-auto");
   });
 
   it("keeps the shared footer independent from page-content centering hacks", () => {
@@ -55,7 +59,7 @@ describe("SiteFooter shell contract", () => {
 
     expect(source).toContain("data-shell-footer");
     expect(source).not.toContain("mt-auto");
-    expect(source).not.toContain("className=\"contents\"");
+    expect(source).not.toContain('className="contents"');
   });
 
   it("keeps the layout barrel pointed at the canonical SiteFooter", () => {
