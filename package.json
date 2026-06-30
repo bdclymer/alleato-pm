@@ -10,6 +10,8 @@
     "build": "pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend run build",
     "start": "cd frontend && npm start",
     "install:all": "npm install && cd frontend && npm install",
+    "eve": "PATH=\"$(brew --prefix node@24)/bin:$PATH\" eve",
+    "eve:dev": "PATH=\"$(brew --prefix node@24)/bin:$PATH\" eve dev",
     "test": "npm run test:frontend && npm run test:backend",
     "test:frontend": "cd frontend && npm run test:unit",
     "test:backend": "cd backend && pytest",
@@ -207,7 +209,10 @@
     "ai": "^6.0.134",
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
-    "resend": "^6.9.1"
+    "resend": "^6.9.1",
+    "@vercel/connect": "0.2.2",
+    "eve": "^0.17.1",
+    "zod": "4.4.3"
   },
   "main": ".lintstagedrc.js",
   "directories": {
@@ -224,5 +229,8 @@
     "url": "https://github.com/MeganHarrison/alleato-pm/issues"
   },
   "homepage": "https://github.com/MeganHarrison/alleato-pm#readme",
-  "description": ""
+  "description": "",
+  "engines": {
+    "node": "24.x"
+  }
 }
