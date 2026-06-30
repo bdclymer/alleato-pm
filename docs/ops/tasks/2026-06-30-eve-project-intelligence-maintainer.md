@@ -103,12 +103,13 @@ filled in. If any item cannot be completed, change `Status` to
 | Linear kickoff | Linear AAI-774 | Pass | Issue created before implementation. |
 | Linear progress update | AAI-774 comment `b80c55ef-e67c-471e-851a-831ecfb6d393` | Pass | Implementation evidence and DB verification blocker posted. |
 | Package install | `npm install` in `agents/project-intelligence-maintainer` | Pass | Default shell Node 22 emitted Eve engine warning; verification used bundled Node 24.14.0. |
-| Typecheck | `./node_modules/.bin/tsc --noEmit` | Pass | Package TypeScript compiled cleanly. |
-| Eve discovery | `PATH=/Users/meganharrison/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH npx eve info` | Pass | Nested layout discovered with 0 errors and 0 warnings. |
-| Eve evals | `PATH=/Users/meganharrison/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH npx eve eval --max-concurrency 1 --timeout 120000` | Pass | 5/5 evals passed; 14/14 gates passed. |
+| Typecheck | `npm run typecheck` from `agents/project-intelligence-maintainer` | Pass | Package TypeScript compiled cleanly on 2026-06-30 after deterministic eval fixture patch. |
+| Eve discovery | `PATH="/opt/homebrew/opt/node@24/bin:$PATH" ./node_modules/.bin/eve info` | Pass | Nested layout discovered with 0 errors and 0 warnings. |
+| Eve evals | `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval` | Pass | Deterministic fixture evals passed 5/5; 14/14 gates passed; completed in 1.2s. |
+| Eve live eval path | `PATH="/opt/homebrew/opt/node@24/bin:$PATH" EVE_PROJECT_INTELLIGENCE_MOCK_MODEL=true ./node_modules/.bin/eve eval --timeout 60000 --max-concurrency 1` | Superseded | Direct live/default eval attempt was stopped after hanging; package `npm run eval` now uses deterministic fixtures and `npm run eval:live` is explicit. |
 | Live-path guard | `npm run rag:verify:project-intelligence-live-paths` | Pass | Guard repaired to validate required terms against maintained architecture source, not moved stubs. |
-| Source lifecycle read-back | `npm run rag:verify:source-lifecycle` | Blocked | App DB connection failed: `code=XX000 (ECHECKOUTTIMEOUT) unable to check out connection from the pool after 15000ms in Session mode`. |
-| Packet evidence read-proof | `npm run rag:verify:project-intelligence-read-proof` | Blocked | App DB connection failed: `code=08006 Failed to connect to database: {:error, :timeout}`. Verifier now reports compact blocker instead of raw pg stack. |
+| Source lifecycle read-back | `npm run rag:verify:source-lifecycle` | Fail | DB read-back works; live data is degraded: Fireflies project-disposition coverage `0.875 < 0.9`, Fireflies embedded coverage `0.636 < 0.9`, and no current Project Intelligence packets are fresh enough (`newest_current_packet=2026-06-27T12:05:18.842Z`). |
+| Packet evidence read-proof | `npm run rag:verify:project-intelligence-read-proof` | Pass | Verifier returned `{ ok: true, family: "fireflies", lookbackDays: 1, checked: 0, failures: [] }` and now exits cleanly after releasing pg clients. |
 
 ## Risks / Gaps
 
@@ -116,13 +117,18 @@ filled in. If any item cannot be completed, change `Status` to
   until Slack/Linear delivery is wired.
 - Full project typecheck/build is intentionally not run in the main thread per
   repo long-running verification rules.
-- Live DB-backed read-back is blocked by app DB checkout timeout. Cause:
-  Supabase/Postgres app DB connection checkout did not complete within 15s.
-  Detection gap: target/evidence health cannot be proved while the app DB is
-  unreachable. Prevention: the Eve tools and read-proof verifier now return
-  structured `blocked` results instead of raw errors. Owner: app DB connectivity
-  / Supabase pooler path. Next action: rerun source lifecycle and read-proof
-  verifiers after DB checkout recovers.
+- Default shell Node is 22.17.1, but Eve requires Node 24. Local verification
+  must run with `PATH="/opt/homebrew/opt/node@24/bin:$PATH"` or an equivalent
+  Node 24 runtime.
+- Live DB-backed read-back is reachable again, but source lifecycle health is
+  degraded. Cause: recent Fireflies project-disposition and embedding coverage
+  are below threshold, and current Project Intelligence packets are stale.
+  Detection gap: a package-only eval can pass while live source freshness is
+  unhealthy. Prevention: keep `npm run rag:verify:source-lifecycle` in the
+  maintainer closeout and block "healthy" claims on real degraded coverage.
+  Owner: source lifecycle/project assignment/vectorization/packet refresh path.
+  Next action: repair source lifecycle coverage and refresh current packets,
+  then rerun the verifier.
 
 ## Final Status
 

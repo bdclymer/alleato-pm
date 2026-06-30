@@ -66,6 +66,9 @@ const ragPool = new pg.Pool({
   max: 1,
 });
 
+let appClient;
+let ragClient;
+
 async function connectOrFail(pool, label) {
   try {
     return await pool.connect();
@@ -83,8 +86,8 @@ async function connectOrFail(pool, label) {
 }
 
 try {
-  const appClient = await connectOrFail(appPool, "App database");
-  const ragClient = await connectOrFail(ragPool, "RAG database");
+  appClient = await connectOrFail(appPool, "App database");
+  ragClient = await connectOrFail(ragPool, "RAG database");
 
   const { rows: sourceRows } = await appClient.query(
     `
@@ -184,5 +187,7 @@ try {
   }
   console.log(JSON.stringify(summary, null, 2));
 } finally {
+  appClient?.release();
+  ragClient?.release();
   await Promise.all([appPool.end(), ragPool.end()]);
 }

@@ -6,15 +6,15 @@
 2) Task ID: `docs/ops/tasks/2026-06-30-eve-project-intelligence-maintainer.md`
 3) Linear issue: AAI-774
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-774/implement-eve-project-intelligence-maintainer
-5) Current status: Implemented; verification partial because live app DB checkout is timing out.
+5) Current status: Implemented locally on main; verification partial because live source lifecycle health is degraded.
 6) Files changed (absolute paths): `/Users/meganharrison/Documents/alleato-pm/agents/project-intelligence-maintainer/**`; `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_project_intelligence_live_paths.mjs`; `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_project_intelligence_read_proof.mjs`; `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-30-eve-project-intelligence-maintainer.md`; `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-30-S100-eve-project-intelligence-maintainer.md`
-7) Commands run and outcome (pass/fail counts): `npm install` pass with Node engine warning under default Node 22; `./node_modules/.bin/tsc --noEmit` pass; `PATH=/Users/meganharrison/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH npx eve info` pass; `PATH=/Users/meganharrison/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH npx eve eval --max-concurrency 1 --timeout 120000` pass 5/5; `npm run rag:verify:project-intelligence-live-paths` pass after guard repair; `npm run rag:verify:source-lifecycle` fail due app DB checkout timeout; `npm run rag:verify:project-intelligence-read-proof` fail due app DB timeout, now compact/structured.
+7) Commands run and outcome (pass/fail counts): `npm install` pass with Node engine warning under default Node 22; `npm run typecheck` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run info` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval` pass 5/5 and 14/14 gates after deterministic fixture patch; `npm run rag:verify:project-intelligence-live-paths` pass; `npm run rag:verify:source-lifecycle` fail on live degraded data; `npm run rag:verify:project-intelligence-read-proof` pass and exits cleanly.
 8) Evidence artifacts (screenshot/video/report/log paths): Eve eval artifacts under `agents/project-intelligence-maintainer/.eve/evals/` (ignored local runtime output); command summaries recorded in this handoff.
 9) Top 3 findings:
 - Eve package compiles/discovers cleanly and evals pass 5/5 with read-only, approval-gated, and compact-output behaviors covered.
 - Project Intelligence live-path guard had stale required-term pointers to moved docs stubs; it now validates required backend terms against the maintained architecture source while keeping moved stubs as existence checks.
-- App DB checkout timeout blocks live source lifecycle and read-proof verification; `verify_project_intelligence_read_proof.mjs` now fails loudly with a compact blocker instead of a raw pg stack.
-10) Recommended next action (one line): Re-run the DB-backed verifiers when app DB checkout recovers, then wire real Slack/Linear schedule delivery if desired.
+- Live source lifecycle verification is failing on real health data: Fireflies project-disposition coverage is `0.875 < 0.9`, Fireflies embedded chunk coverage is `0.636 < 0.9`, and no current Project Intelligence packets are fresh enough.
+10) Recommended next action (one line): Repair source lifecycle coverage/current packet freshness, rerun `npm run rag:verify:source-lifecycle`, then wire real Slack/Linear schedule delivery if desired.
 11) Handoff file path: `docs/ops/handoffs/2026-06-30-S100-eve-project-intelligence-maintainer.md`
 12) Migration ledger evidence: N/A - implementation should avoid a migration unless persistent Eve run history becomes required.
 
@@ -26,9 +26,11 @@
 
 ## Current Status
 
-Implementation is complete for the isolated Eve package on branch `codex/eve-agent`. The package maintains Project Intelligence health, source coverage, stale packet detection, and approval-gated refreshes. It does not migrate Ask Alleato chat and does not duplicate the packet compiler.
+Implementation is complete for the isolated Eve package and has been cherry-picked onto local main. The package maintains Project Intelligence health, source coverage, stale packet detection, and approval-gated refreshes. It does not migrate Ask Alleato chat and does not duplicate the packet compiler.
 
-Live DB-backed verification remains blocked by app DB checkout timeout. This is an external verification blocker, not a package compile/eval blocker.
+Deterministic Eve evals now run through `npm run eval`, which sets `EVE_PROJECT_INTELLIGENCE_MOCK_MODEL=true` and uses fixture reports for read-only maintainer checks. Live model/tool evals remain available as `npm run eval:live`.
+
+Live DB-backed verification is reachable. Source lifecycle verification remains failing on current production-like data. This is a live data/processing health blocker, not a package compile/eval blocker.
 
 ## Implementation Plan
 
@@ -153,8 +155,8 @@ Run narrow checks in the main thread:
 ```bash
 cd /Users/meganharrison/Documents/alleato-pm/agents/project-intelligence-maintainer
 npm install
-npx eve info
-npx eve eval
+PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run info
+PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval
 ```
 
 Run direct comparison checks from repo root:

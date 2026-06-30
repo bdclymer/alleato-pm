@@ -20,9 +20,13 @@ synthesis or compiler code.
 ```bash
 cd /Users/meganharrison/Documents/alleato-pm/agents/project-intelligence-maintainer
 npm install
-npx eve info
-npx eve eval
+PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run info
+PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval
 ```
+
+`npm run eval` uses deterministic Eve fixtures and does not touch the app DB.
+Use `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval:live` only when
+you intentionally want the live model and live tool path.
 
 Direct comparison checks from the repo root:
 
