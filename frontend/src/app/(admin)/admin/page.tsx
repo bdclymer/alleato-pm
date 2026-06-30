@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  AlertTriangle,
   ArrowLeftRight,
   BarChart3,
   BookOpen,
@@ -11,21 +10,16 @@ import {
   Building2,
   CheckCircle2,
   ClipboardCheck,
-  Code2,
-  Database,
+  Eye,
   FileSearch,
   FileText,
   FlaskConical,
-  HardHat,
   Inbox,
   LayoutDashboard,
   LineChart,
   ListChecks,
   MapIcon,
-  Eye,
-  Palette,
   PanelTop,
-  Route,
   Shield,
   Sparkles,
   Table2,
@@ -74,12 +68,12 @@ type AdminMenuSection = {
 
 const sections: AdminMenuSection[] = [
   {
-    title: "Operations",
+    title: "Planning",
     description:
-      "Day-to-day platform operations, planning, feedback queues, manual actions, and releases.",
+      "Command center, feedback triage, product planning, and agent annotation queue.",
     groups: [
       {
-        title: "Operations",
+        title: "Planning",
         items: [
           {
             label: "Command Center",
@@ -90,13 +84,6 @@ const sections: AdminMenuSection[] = [
             icon: LayoutDashboard,
           },
           {
-            label: "Product Board",
-            href: "/product-board",
-            route: "/product-board",
-            description: "Product ideas, status, and planning board.",
-            icon: PanelTop,
-          },
-          {
             label: "Feedback Inbox",
             href: "/feedback-inbox",
             route: "/feedback-inbox",
@@ -105,12 +92,11 @@ const sections: AdminMenuSection[] = [
             icon: Inbox,
           },
           {
-            label: "Learning & Feedback",
-            href: "/learning-feedback",
-            route: "/learning-feedback",
-            description:
-              "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
-            icon: Brain,
+            label: "Product Board",
+            href: "/product-board",
+            route: "/product-board",
+            description: "Product ideas, status, and planning board.",
+            icon: PanelTop,
           },
           {
             label: "Annotation Inbox",
@@ -154,12 +140,120 @@ const sections: AdminMenuSection[] = [
     ],
   },
   {
-    title: "Access & Settings",
+    title: "AI Feedback and Learning",
+    description:
+      "Review queues and training surfaces that improve the assistant over time.",
+    groups: [
+      {
+        title: "AI Feedback and Learning",
+        items: [
+          {
+            label: "Feedback Inbox",
+            href: "/feedback-inbox",
+            route: "/feedback-inbox",
+            description:
+              "Client feedback, issues, comments, and triage assignments.",
+            icon: Inbox,
+          },
+          {
+            label: "Learning & Feedback",
+            href: "/learning-feedback",
+            route: "/learning-feedback",
+            description:
+              "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
+            icon: Brain,
+          },
+          {
+            label: "Task Training",
+            href: "/task-training",
+            route: "/task-training",
+            description:
+              "Review task feedback examples that train extraction behavior.",
+            icon: ClipboardCheck,
+          },
+          {
+            label: "Outlook Draft Feedback",
+            href: "/outlook-draft-feedback",
+            route: "/outlook-draft-feedback",
+            description:
+              "Review feedback on AI-generated Outlook email drafts.",
+            icon: Inbox,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "AI Stats",
+    description:
+      "Monitor what the assistant is doing — conversations, runs, evaluations, and outputs.",
+    groups: [
+      {
+        title: "AI Stats",
+        items: [
+          {
+            label: "AI System Health",
+            href: "/ai-system-health",
+            route: "/ai-system-health",
+            description:
+              "Conversations, tokens, spend, satisfaction, model mix, and self-learning loop on one screen.",
+            icon: LineChart,
+          },
+          {
+            label: "AI Work Runs",
+            href: "/ai-work-runs",
+            route: "/ai-work-runs",
+            description: "Background AI job runs, status, and output.",
+            icon: Activity,
+          },
+          {
+            label: "AI Prompt Diagnostics",
+            href: "/ai-prompt-diagnostics",
+            route: "/ai-prompt-diagnostics",
+            description:
+              "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
+            icon: Terminal,
+          },
+          {
+            label: "Intelligence Packets",
+            href: "/intelligence-packets",
+            route: "/intelligence-packets",
+            description: "Compiled project intelligence packets and versions.",
+            icon: BrainCircuit,
+          },
+          {
+            label: "Deep Research Archive",
+            href: "/deep-research",
+            route: "/deep-research",
+            description: "Archived deep-research reports and runs.",
+            icon: FileSearch,
+          },
+          {
+            label: "Assistant Eval Runs",
+            href: "/eval-runs",
+            route: "/eval-runs",
+            description: "Assistant evaluation runs and scored results.",
+            icon: FlaskConical,
+          },
+          {
+            label: "AI Learning Promotions",
+            href: "/ai/learning-promotions",
+            route: "/ai/learning-promotions",
+            description:
+              "Approve retrieval-learning candidates and monitor promotion history.",
+            icon: Sparkles,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Access and Settings",
     description:
       "People, permissions, company configuration, route access, and admin verification.",
     groups: [
       {
-        title: "Access & Settings",
+        title: "Access and Settings",
         items: [
           {
             label: "User Management",
@@ -202,12 +296,12 @@ const sections: AdminMenuSection[] = [
     ],
   },
   {
-    title: "AI Workspaces",
+    title: "AI Features",
     description:
-      "The surfaces where people actually use the assistant and its output.",
+      "The surfaces where people use the assistant, plus agent and skill configuration.",
     groups: [
       {
-        title: "AI Workspaces",
+        title: "AI Features",
         items: [
           {
             label: "AI",
@@ -231,117 +325,6 @@ const sections: AdminMenuSection[] = [
             icon: BrainCircuit,
             badge: "Project scoped",
           },
-        ],
-      },
-    ],
-  },
-  {
-    title: "AI Observability",
-    description:
-      "Monitor what the assistant is doing — conversations, runs, prompts, and outputs.",
-    groups: [
-      {
-        title: "AI Observability",
-        items: [
-          {
-            label: "AI System Health",
-            href: "/ai-system-health",
-            route: "/ai-system-health",
-            description:
-              "Conversations, tokens, spend, satisfaction, model mix, and self-learning loop on one screen.",
-            icon: LineChart,
-          },
-          {
-            label: "AI Work Runs",
-            href: "/ai-work-runs",
-            route: "/ai-work-runs",
-            description: "Background AI job runs, status, and output.",
-            icon: Activity,
-          },
-          {
-            label: "AI Prompt Diagnostics",
-            href: "/ai-prompt-diagnostics",
-            route: "/ai-prompt-diagnostics",
-            description:
-              "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
-            icon: Terminal,
-          },
-          {
-            label: "Intelligence Packets",
-            href: "/intelligence-packets",
-            route: "/intelligence-packets",
-            description: "Compiled project intelligence packets and versions.",
-            icon: BrainCircuit,
-          },
-          {
-            label: "Deep Research Archive",
-            href: "/deep-research",
-            route: "/deep-research",
-            description: "Archived deep-research reports and runs.",
-            icon: FileSearch,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "AI Quality & Learning",
-    description:
-      "Evaluate answer quality and review the feedback that trains the assistant.",
-    groups: [
-      {
-        title: "AI Quality & Learning",
-        items: [
-          {
-            label: "Assistant Eval Runs",
-            href: "/eval-runs",
-            route: "/eval-runs",
-            description: "Assistant evaluation runs and scored results.",
-            icon: FlaskConical,
-          },
-          {
-            label: "RAG Eval",
-            href: "/rag-eval",
-            route: "/rag-eval",
-            description: "Evaluate retrieval quality and answer grounding.",
-            icon: BarChart3,
-          },
-          {
-            label: "AI Learning Promotions",
-            href: "/ai/learning-promotions",
-            route: "/ai/learning-promotions",
-            description:
-              "Approve retrieval-learning candidates and monitor promotion history.",
-            icon: Sparkles,
-          },
-          {
-            label: "Task Training",
-            href: "/task-training",
-            route: "/task-training",
-            description:
-              "Review task feedback examples that train extraction behavior.",
-            icon: ClipboardCheck,
-          },
-          {
-            label: "Outlook Draft Feedback",
-            href: "/outlook-draft-feedback",
-            route: "/outlook-draft-feedback",
-            description:
-              "Review feedback on AI-generated Outlook email drafts.",
-            icon: Inbox,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "AI Configuration & Docs",
-    description:
-      "Agent and skill setup, plus architecture and roadmap reference.",
-    groups: [
-      {
-        title: "AI Configuration & Docs",
-        items: [
           {
             label: "AI Agents",
             href: "/ai/admin/agents",
@@ -387,10 +370,10 @@ const sections: AdminMenuSection[] = [
   {
     title: "RAG Pipeline",
     description:
-      "The RAG ingestion pipeline that feeds the assistant — health, sync, metadata, and attribution.",
+      "The RAG ingestion pipeline that feeds the assistant — health, sync, evaluation, metadata, and attribution.",
     groups: [
       {
-        title: "Knowledge Pipeline",
+        title: "RAG Pipeline",
         items: [
           {
             label: "RAG Health",
@@ -429,6 +412,13 @@ const sections: AdminMenuSection[] = [
             description:
               "Review unmatched source documents and approve project attribution.",
             icon: FileSearch,
+          },
+          {
+            label: "RAG Eval",
+            href: "/rag-eval",
+            route: "/rag-eval",
+            description: "Evaluate retrieval quality and answer grounding.",
+            icon: BarChart3,
           },
         ],
       },
@@ -540,217 +530,6 @@ const sections: AdminMenuSection[] = [
       },
     ],
   },
-  {
-    title: "Database & APIs",
-    description:
-      "Database catalog, table explorers, generated table pages, audit log, and API documentation.",
-    groups: [
-      {
-        title: "Database & APIs",
-        items: [
-          {
-            label: "Database Inventory",
-            href: "/database-inventory",
-            route: "/database-inventory",
-            description:
-              "Full MAIN + RAG table inventory with purpose, gotchas, owners, and live counts.",
-            icon: Database,
-            badge: "Developer",
-          },
-          {
-            label: "Tables Directory",
-            href: "/tables-directory",
-            route: "/tables-directory",
-            description: "Directory of known table-backed product surfaces.",
-            icon: Table2,
-            badge: "Developer",
-          },
-          {
-            label: "DB Audit Log",
-            href: "/db-audit-log",
-            route: "/db-audit-log",
-            description: "Database write audit trail and change history.",
-            icon: Database,
-            badge: "Developer",
-          },
-          {
-            label: "Projects Table Demo",
-            href: "/projects-table-demo",
-            route: "/projects-table-demo",
-            description: "Projects table demo and table-pattern reference.",
-            icon: Table2,
-            badge: "Developer",
-          },
-          {
-            label: "Table Generator",
-            href: "/dev/table-generator",
-            route: "/dev/table-generator",
-            description: "Generate table pages from schema metadata.",
-            icon: Code2,
-            badge: "Developer",
-          },
-          {
-            label: "API Docs",
-            href: "/api-docs",
-            route: "/api-docs",
-            description: "Interactive backend API documentation.",
-            icon: Terminal,
-            badge: "Developer",
-          },
-          {
-            label: "Redoc",
-            href: "/redoc",
-            route: "/redoc",
-            description: "Alternate API documentation reader.",
-            icon: BookOpen,
-            badge: "Developer",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "QA & Testing",
-    description:
-      "Quality dashboards, test matrices, run history, cases, PRP status, and runtime errors.",
-    groups: [
-      {
-        title: "QA & Testing",
-        items: [
-          {
-            label: "Testing",
-            href: "/testing",
-            route: "/testing",
-            description: "Main testing dashboard.",
-            icon: FlaskConical,
-          },
-          {
-            label: "Testing Runs",
-            href: "/testing/runs",
-            route: "/testing/runs",
-            description: "Run history and verification artifacts.",
-            icon: Activity,
-          },
-          {
-            label: "Testing Parity",
-            href: "/testing/parity",
-            route: "/testing/parity",
-            description: "Parity coverage tracking.",
-            icon: CheckCircle2,
-          },
-          {
-            label: "Test Matrix",
-            href: "/test-matrix",
-            route: "/test-matrix",
-            description: "Feature and workflow coverage matrix.",
-            icon: ListChecks,
-          },
-          {
-            label: "Test Cases",
-            href: "/test-cases",
-            route: "/test-cases",
-            description: "Test case catalog and tool mapping.",
-            icon: ClipboardCheck,
-          },
-          {
-            label: "PRP Status",
-            href: "/prp-status",
-            route: "/prp-status",
-            description: "PRP pipeline and implementation status.",
-            icon: Route,
-          },
-          {
-            label: "Runtime Errors",
-            href: "/errors",
-            route: "/errors",
-            description:
-              "Grouped app errors, review state, and Linear escalation.",
-            icon: AlertTriangle,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Product Resources",
-    description:
-      "Construction references, tool tracking, and crawled support documentation.",
-    groups: [
-      {
-        title: "Product Resources",
-        items: [
-          {
-            label: "Tools",
-            href: "/tools",
-            route: "/tools",
-            description: "Alleato tool inventory organized by category.",
-            icon: Wrench,
-          },
-          {
-            label: "PC Tools",
-            href: "/procore-tools",
-            route: "/procore-tools",
-            description: "PC tool inventory and implementation status.",
-            icon: HardHat,
-          },
-          {
-            label: "PC Docs",
-            href: "/procore-docs",
-            route: "/procore-docs",
-            description: "Internal PC docs browser.",
-            icon: BookOpen,
-          },
-          {
-            label: "Support Articles",
-            href: "/support-articles",
-            route: "/support-articles",
-            description: "Crawled support article index.",
-            icon: FileText,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Design System",
-    description:
-      "Design-system inspection, migration notes, UI drift, and experimental explorations.",
-    groups: [
-      {
-        title: "Design System",
-        items: [
-          {
-            label: "Design",
-            href: "/design",
-            route: "/design",
-            description: "Live component gallery and design-system examples.",
-            icon: Palette,
-          },
-          {
-            label: "Design System Update",
-            href: "/design-system-update",
-            route: "/design-system-update",
-            description: "Design-system update and migration notes.",
-            icon: Palette,
-          },
-          {
-            label: "Design Violations",
-            href: "/design-violations",
-            route: "/design-violations",
-            description: "Flagged UI issues and design drift.",
-            icon: AlertTriangle,
-          },
-          {
-            label: "Design Ideas",
-            href: "/design-ideas",
-            route: "/design-ideas",
-            description: "Experimental design explorations.",
-            icon: Sparkles,
-          },
-        ],
-      },
-    ],
-  },
 ];
 
 const totalPages = sections.reduce(
@@ -769,7 +548,7 @@ export default function AdminDashboardPage() {
     <PageShell
       variant="dashboard"
       title="Admin Dashboard"
-      description={`Directory of ${totalPages} internal pages across operations, access, AI, accounting, database, QA, and design.`}
+      description={`Directory of ${totalPages} internal pages across planning, AI, access, accounting, and the RAG pipeline.`}
     >
       <Tabs defaultValue="directory" className="gap-6">
         <TabsList variant="line">
