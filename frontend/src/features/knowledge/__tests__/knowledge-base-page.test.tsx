@@ -188,6 +188,8 @@ describe("KnowledgeBasePage", () => {
       screen.getByRole("button", { name: "Open knowledge menu" }).parentElement
         ?.parentElement,
     ).not.toHaveClass("border-b");
+    expect(screen.queryByText("App Training")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Company Knowledge" })).not.toBeInTheDocument();
   });
 
   it("opens the mobile training docs menu", async () => {
@@ -251,7 +253,7 @@ describe("KnowledgeBasePage", () => {
       screen.getByRole("link", { name: /Budget Setup/ }),
     ).toHaveAttribute(
       "href",
-      "/knowledge/app/budget/budget-setup",
+      "https://alleato-os-docs.vercel.app/project-management-tools/training-docs/budget-setup",
     );
   });
 });

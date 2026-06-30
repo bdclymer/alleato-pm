@@ -152,6 +152,7 @@ export function KnowledgeBasePage() {
       items={items}
       modeLabel="Product"
       navLabel="All knowledge"
+      overviewDescription="Search approved internal sources, browse by topic, and open the documents Ask Alleato can cite when it answers operational questions."
       searchPlaceholder="Search knowledge..."
       showCategoriesWhenEmpty={false}
       sourceListNoun="sources"
@@ -175,6 +176,7 @@ export function KnowledgeBrowsePage({
   items,
   modeLabel,
   navLabel,
+  overviewDescription,
   searchPlaceholder,
   showCategoriesWhenEmpty = false,
   sourceListNoun,
@@ -195,6 +197,7 @@ export function KnowledgeBrowsePage({
   items: readonly KnowledgeSourceItem[];
   modeLabel: string;
   navLabel: string;
+  overviewDescription: string;
   searchPlaceholder: string;
   showCategoriesWhenEmpty?: boolean;
   sourceListNoun: string;
@@ -351,7 +354,7 @@ export function KnowledgeBrowsePage({
               <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                 {selectedCategory
                   ? selectedCategory.description
-                  : "Search approved internal sources, browse by topic, and open the documents Ask Alleato can cite when it answers operational questions."}
+                  : overviewDescription}
               </p>
             </div>
           </section>
