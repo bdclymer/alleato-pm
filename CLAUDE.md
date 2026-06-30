@@ -336,28 +336,43 @@ After any deep research session, save a new snapshot to the memory directory fol
 
 ## Git Workflow
 
-**General work** (refactors, features, infrastructure): commit directly to `main`, push to `origin/main`.
+**This app is live in production. `main` is production and is protected — never commit
+directly to `main`, and never push straight to it.** Every change is tested on a preview
+deployment before it merges.
 
-**GitHub issue fixes**: use a branch + PR so the fix is reviewable and traceable to the issue.
+**Branch per task.** Start every task from fresh `main` on its own short-lived branch,
+push it, test on the Vercel **preview deployment** Vercel auto-builds for the branch/PR,
+then open a PR and merge to `main` (the merge is what deploys to production).
 
 ```bash
-# 1. Create branch
-git checkout -b fix/issue-{number}-{short-slug}
+# 1. Start from latest main
+git checkout main && git pull
 
-# 2. Fix, commit
+# 2. New branch (feat/ for features & general work, fix/ for bug fixes)
+git checkout -b feat/{short-slug}            # or fix/issue-{number}-{short-slug}
+
+# 3. Work, commit
 git add <files>
-git commit -m "fix: <description>"
+git commit -m "feat: <description>"
 
-# 3. Push + open PR
-git push -u origin fix/issue-{number}-{short-slug}
-gh pr create --title "fix: <description>" --body "Closes #{number}" --base main
+# 4. Push + open PR (push triggers a Vercel preview deploy)
+git push -u origin feat/{short-slug}
+gh pr create --title "feat: <description>" --base main --body "<what/why + test plan>"
+
+# 5. Test the preview URL, get review, merge to main, then delete the branch
 ```
 
-Branch naming: `fix/issue-{number}-{slug}` (e.g. `fix/issue-427-direct-costs-panel`).
-PR body must contain `Closes #{number}` so GitHub auto-closes the issue on merge.
-After PR is merged, delete the branch.
+Branch naming: `feat/{slug}` for features/refactors/infra, `fix/issue-{number}-{slug}` for
+GitHub-issue fixes (e.g. `fix/issue-427-direct-costs-panel`). For issue fixes, the PR body
+must contain `Closes #{number}` so GitHub auto-closes the issue on merge.
 
-**Never** push a `fix/issue-*` branch to main directly — the PR is the record.
+**Keep branches short-lived and delete them after merge** — do not let a long-lived
+`develop`/staging branch drift behind `main`. Drift causes painful multi-file merge
+conflicts (and is what motivated this workflow). If a branch must live a while, merge
+`main` into it frequently (daily-ish), never let it fall many commits behind.
+
+**Never** commit to `main` directly or push a feature/fix branch onto `main` — the PR +
+preview deploy is the record and the safety gate.
 
 ---
 
