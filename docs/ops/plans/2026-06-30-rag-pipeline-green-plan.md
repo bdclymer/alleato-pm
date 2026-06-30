@@ -24,8 +24,9 @@ As of 2026-06-30 17:59 UTC:
 - Source lifecycle: green.
 - Meeting vectorization: green.
 - Source-specific retrieval contract: green.
-- Provider runway: blocked because AI Gateway balance is `$4.8289`, below the
-  `$5.00` safe floor.
+- Provider runway: green with warning. AI Gateway balance is `$4.8289`, below
+  the `$5.00` warning floor and above the `$1.00` hard floor. Direct OpenAI is
+  also configured.
 
 ## Operating Model
 
@@ -46,6 +47,8 @@ As of 2026-06-30 17:59 UTC:
   - insufficient quota
   - rate-limit/transport failure
   - AI Gateway credits below `AI_GATEWAY_MIN_CREDITS_USD`
+- AI Gateway credits below `AI_GATEWAY_WARN_CREDITS_USD` are a warning, not a
+  hard pipeline failure.
 - `alleato-source-rag-health` must fail and alert on source lifecycle criticals.
 - `alleato-pipeline-alert` must page when a watched source has repeated failed
   runs and no success in the dark window.
@@ -57,7 +60,8 @@ As of 2026-06-30 17:59 UTC:
 When a gate fails, repair in this order:
 
 1. Provider runway:
-   - Top up/configure AI Gateway autorecharge.
+   - If below the warning floor, top up/configure AI Gateway autorecharge.
+   - If below the hard floor, treat provider health as down.
    - Rerun `npm run rag:verify:render-ai`.
 2. Source lifecycle:
    - Run `npm run rag:backfill:source-lifecycle -- --days 2 --source-limit 1500`.
@@ -88,6 +92,6 @@ Every RAG task must record:
 
 - Do not build a second RAG store.
 - Do not treat meeting vectorization as the whole pipeline.
-- Do not lower the AI Gateway credit floor just to make a check pass.
+- Do not collapse the AI Gateway warning floor into a hard failure.
 - Do not call a one-token provider probe sufficient for provider runway.
 - Do not answer user questions as if sources are fresh when any green gate fails.

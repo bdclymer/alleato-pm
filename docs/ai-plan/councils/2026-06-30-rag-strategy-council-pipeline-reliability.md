@@ -19,7 +19,7 @@ RAG system is called green.
 | Source lifecycle verifier | `npm run rag:verify:source-lifecycle` | Recent Fireflies/Teams/Outlook/SharePoint lifecycle, embeddings, packets, and evidence are passing now. | Output is large; must be summarized into the operating plan. |
 | Meeting vectorization verifier | `npm run rag:verify:meetings` | 69/69 recent meetings have embedded chunks and retrieval probe works. | Meeting-only; not sufficient alone. |
 | Source-specific verifier | `npm run rag:verify:source-specific` | Exact source lookup contract passes. | Contract-level, not full live chat proof. |
-| Provider runway verifier | `npm run rag:verify:render-ai` | Backend is configured, but AI Gateway balance is `$4.8289`, below `$5.00` floor. | Available tools cannot top up billing. |
+| Provider runway verifier | `npm run rag:verify:render-ai` | Backend is configured. AI Gateway balance is `$4.8289`, below the `$5.00` warning floor and above the `$1.00` hard floor. | Direct OpenAI is also configured. |
 | Backend cron | `backend/src/services/health/ai_provider_health.py` | Cron catches total provider outages but not low-credit runway. | Needs credit-floor check. |
 | Render cron config | `render.yaml` | Multiple RAG health jobs exist, but they are fragmented. | Need one green operating plan. |
 
@@ -150,15 +150,15 @@ Confidence: High.
 
 ## Fail-Loud And Recurrence Guardrails
 
-- Cause: Provider runway can fall below the safe floor while one-token probes still succeed.
+- Cause: Provider runway can fall below a warning floor while one-token probes still succeed.
 - Detection gap: Backend provider cron did not check AI Gateway credit balance.
 - Prevention step: Add AI Gateway credit-floor check to backend cron and keep `rag:verify:render-ai` in closeout.
-- Fail-loud behavior: Low credits return `status=down`, `reason=low_credits`, exit non-zero, and alert configured channels.
+- Fail-loud behavior: Credits below the hard floor return `status=down`, `reason=low_credits`, exit non-zero, and alert configured channels. Credits below the warning floor remain green with an explicit warning.
 
 ## Open Questions
 
 - Who owns AI Gateway autorecharge/top-up in the provider billing UI?
-- Should the safe floor be raised from `$5` after observing daily burn?
+- Should the warning floor be raised from `$5` after observing daily burn?
 - Should low-credit alerts create a Linear issue automatically after Eve runtime delivery is configured?
 
 ## Recommended Next Step

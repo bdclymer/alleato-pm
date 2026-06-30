@@ -48,7 +48,8 @@ logger = logging.getLogger(__name__)
 # so a quota failure here proves a quota failure everywhere.
 AI_PROVIDER_HEALTH_MODEL = os.getenv("AI_PROVIDER_HEALTH_MODEL", "gpt-4o-mini")
 PROBE_TIMEOUT_SECONDS = int(os.getenv("AI_PROVIDER_HEALTH_TIMEOUT_SECONDS", "20"))
-AI_GATEWAY_MIN_CREDITS_USD = float(os.getenv("AI_GATEWAY_MIN_CREDITS_USD", "5"))
+AI_GATEWAY_MIN_CREDITS_USD = float(os.getenv("AI_GATEWAY_MIN_CREDITS_USD", "1"))
+AI_GATEWAY_WARN_CREDITS_USD = float(os.getenv("AI_GATEWAY_WARN_CREDITS_USD", "5"))
 
 
 def _classify_exception(exc: Exception) -> dict[str, Any]:
@@ -155,6 +156,7 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
             "http_status": 200,
             "detail": None,
             "gateway_credits": credit_result.get("gateway_credits") if credit_result else None,
+            "warnings": credit_result.get("warnings", []) if credit_result else [],
         }
     except Exception as exc:  # noqa: BLE001 — health check must classify, not crash
         verdict = _classify_exception(exc)
@@ -224,6 +226,7 @@ def _check_ai_gateway_credit_floor() -> dict[str, Any]:
         "balance": balance,
         "total_used": payload.get("total_used") if isinstance(payload, dict) else None,
         "floor": AI_GATEWAY_MIN_CREDITS_USD,
+        "warning_floor": AI_GATEWAY_WARN_CREDITS_USD,
     }
     if balance < AI_GATEWAY_MIN_CREDITS_USD:
         return {
@@ -231,13 +234,22 @@ def _check_ai_gateway_credit_floor() -> dict[str, Any]:
             "reason": "low_credits",
             "http_status": 402,
             "detail": (
-                f"AI Gateway credits are below the safe floor: "
+                f"AI Gateway credits are below the hard floor: "
                 f"balance=${balance:.4f}, floor=${AI_GATEWAY_MIN_CREDITS_USD:.2f}"
             ),
             "gateway_credits": gateway_credits,
         }
 
-    return {"status": "ok", "gateway_credits": gateway_credits}
+    warnings = []
+    if balance < AI_GATEWAY_WARN_CREDITS_USD:
+        warnings.append(
+            (
+                f"AI Gateway credits are below the warning floor: "
+                f"balance=${balance:.4f}, warning=${AI_GATEWAY_WARN_CREDITS_USD:.2f}"
+            )
+        )
+
+    return {"status": "ok", "gateway_credits": gateway_credits, "warnings": warnings}
 
 
 _REASON_MESSAGE = {
@@ -258,7 +270,7 @@ _REASON_MESSAGE = {
     "connection": "Could not reach api.openai.com from the backend (network/timeout).",
     "missing_key": "OPENAI_API_KEY is not set on the backend service.",
     "low_credits": (
-        "AI Gateway credits are below the configured safe floor. Top up or "
+        "AI Gateway credits are below the configured hard floor. Top up or "
         "enable autorecharge before backend extraction, embeddings, and packet "
         "compilation start failing."
     ),
