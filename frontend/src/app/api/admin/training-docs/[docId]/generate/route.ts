@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { chromium } from "playwright";
+import type { Page } from "playwright";
 import { z } from "zod";
 
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
@@ -71,6 +72,7 @@ export const POST = withApiGuardrails(
         origin,
         targetRoute,
         cookieHeader,
+        fallbackTitle: doc.title,
       });
     } catch (error) {
       throw new GuardrailError({
@@ -245,10 +247,12 @@ async function captureTrainingSteps({
   origin,
   targetRoute,
   cookieHeader,
+  fallbackTitle,
 }: {
   origin: string;
   targetRoute: string;
   cookieHeader: string;
+  fallbackTitle: string;
 }): Promise<CapturedStep[]> {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -262,8 +266,26 @@ async function captureTrainingSteps({
       waitUntil: "domcontentloaded",
       timeout: 45_000,
     });
+    await installTrainingCaptureOverlayHider(page);
     await page
       .waitForLoadState("networkidle", { timeout: 10_000 })
+      .catch(() => undefined);
+    await page
+      .waitForFunction(
+        () => {
+          const clean = (value: string | null | undefined) =>
+            (value ?? "").replace(/\s+/g, " ").trim();
+          const title = clean(document.querySelector("h1")?.textContent);
+          const labelCount = document.querySelectorAll("label").length;
+          const inputCount = document.querySelectorAll(
+            "input, textarea, [role='combobox']",
+          ).length;
+
+          return Boolean(title) && (labelCount > 0 || inputCount > 0);
+        },
+        null,
+        { timeout: 15_000 },
+      )
       .catch(() => undefined);
 
     if (new URL(page.url()).pathname.startsWith("/auth/login")) {
@@ -291,6 +313,7 @@ async function captureTrainingSteps({
       return {
         title:
           clean(document.querySelector("h1")?.textContent) ||
+          fallbackTitle ||
           clean(document.title) ||
           "Workflow",
         labels,
@@ -311,6 +334,7 @@ async function captureTrainingSteps({
           : Math.round((maxScroll * index) / (capturePlans.length - 1));
       await page.evaluate((y) => window.scrollTo(0, y), scrollY);
       await page.waitForTimeout(350);
+      await hideTrainingCaptureOverlays(page);
       steps.push({
         ...plan,
         screenshot: await page.screenshot({
@@ -324,6 +348,63 @@ async function captureTrainingSteps({
   } finally {
     await browser.close();
   }
+}
+
+async function installTrainingCaptureOverlayHider(page: Page) {
+  await page.addStyleTag({
+    content: `
+      [data-sonner-toaster],
+      [data-radix-toast-viewport],
+      [data-admin-feedback-root],
+      [data-velt-root],
+      [class*="Velt"],
+      [class*="velt"],
+      [class*="styles-module__toolbar"],
+      [class*="styles-module__fixedMarkersLayer"],
+      .cdk-overlay-container,
+      .global-ai-widget-launcher,
+      nextjs-portal,
+      .__nextjs-toast,
+      .__nextjs-build-watcher,
+      .__nextjs-error-overlay {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    `,
+  });
+}
+
+async function hideTrainingCaptureOverlays(page: Page) {
+  await page.evaluate(() => {
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    for (const element of Array.from(document.body.querySelectorAll("*"))) {
+      const style = window.getComputedStyle(element);
+      if (style.position !== "fixed" && style.position !== "sticky") continue;
+
+      const rect = element.getBoundingClientRect();
+      const nearBottom = rect.bottom > viewportHeight - 180;
+      const nearLeft = rect.left < 220;
+      const nearRight = rect.right > viewportWidth - 220;
+      const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
+      const className = element.getAttribute("class") ?? "";
+      const isInternalChrome =
+        /\b(issue|feedback|debug|error|toast|annotations)\b/i.test(text) ||
+        /velt|feedback|sonner|toast|nextjs|global-ai-widget|styles-module/i.test(
+          className,
+        );
+
+      if (nearBottom && (nearLeft || nearRight) && isInternalChrome) {
+        (element as HTMLElement).style.setProperty(
+          "display",
+          "none",
+          "important",
+        );
+      }
+    }
+  });
 }
 
 function buildCapturePlans(
