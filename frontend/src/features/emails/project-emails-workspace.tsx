@@ -2075,10 +2075,10 @@ export function EmailTrainingFeedbackPanel({
               )}
               <div className="pt-1">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Evidence
+                  Why This Was Flagged
                 </div>
                 <p className="mt-1 text-[13px] leading-5 text-foreground">
-                  {selectedEmail.assistant_evidence ?? "No evidence captured for this message."}
+                  {selectedEmail.assistant_evidence ?? "No decision basis captured for this message."}
                 </p>
               </div>
             </div>

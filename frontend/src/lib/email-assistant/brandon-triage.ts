@@ -100,8 +100,25 @@ function includesAny(text: string, tokens: string[]): boolean {
   return tokens.some((token) => text.includes(token));
 }
 
+function cleanEvidenceText(text: string): string {
+  const withoutHeaderLines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line) return false;
+      return !/^(subject|date|from|to|cc|bcc|sent|received):\s/i.test(line);
+    })
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return withoutHeaderLines
+    .replace(/\s(?:Subject|Date|From|To|Cc|Bcc|Sent|Received):\s.+$/, "")
+    .trim();
+}
+
 function excerpt(text: string): string {
-  const normalized = text.replace(/\s+/g, " ").trim();
+  const normalized = cleanEvidenceText(text);
   if (!normalized) return "Subject and sender metadata only.";
   return normalized.length > 140 ? `${normalized.slice(0, 137)}...` : normalized;
 }
@@ -195,7 +212,7 @@ export function deriveBrandonEmailAssistantDecision(
       reason: "Automated or broadcast message with no clear Brandon action.",
       owner: "No action",
       risk: "Low",
-      evidence: excerpt(`${subject}. ${bodyText}`),
+      evidence: excerpt(`${subject}\n${bodyText}`),
       rulesApplied,
     };
   }
@@ -213,7 +230,7 @@ export function deriveBrandonEmailAssistantDecision(
         : "External sender is asking Brandon for a response.",
       owner: "Brandon",
       risk: businessRisk ? "Business decision or project risk in thread." : "Relationship follow-up.",
-      evidence: excerpt(`${subject}. ${bodyText}`),
+      evidence: excerpt(`${subject}\n${bodyText}`),
       rulesApplied,
     };
   }
@@ -226,7 +243,7 @@ export function deriveBrandonEmailAssistantDecision(
       reason: "Internal message needs routing, approval, or a clear owner.",
       owner: "Alleato team",
       risk: businessRisk ? "Operational or financial item can stall if unowned." : "Internal follow-up can stall.",
-      evidence: excerpt(`${subject}. ${bodyText}`),
+      evidence: excerpt(`${subject}\n${bodyText}`),
       rulesApplied,
     };
   }
@@ -241,7 +258,7 @@ export function deriveBrandonEmailAssistantDecision(
         : "Worth monitoring but not enough evidence for a Brandon reply.",
       owner: "Assistant review",
       risk: businessRisk ? "Potential missed commitment." : "Context may matter later.",
-      evidence: excerpt(`${subject}. ${bodyText}`),
+      evidence: excerpt(`${subject}\n${bodyText}`),
       rulesApplied,
     };
   }
@@ -253,7 +270,7 @@ export function deriveBrandonEmailAssistantDecision(
     reason: "No clear ask, risk, or next action detected.",
     owner: "No action",
     risk: "Low",
-    evidence: excerpt(`${subject}. ${bodyText}`),
+    evidence: excerpt(`${subject}\n${bodyText}`),
     rulesApplied,
   };
 }
