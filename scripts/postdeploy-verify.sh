@@ -30,5 +30,7 @@ check_status "Protected route auth check" "401" "GET" "/api/projects"
 check_status "Cron auth check" "401" "POST" "/api/cron/daily-flags"
 check_status "Monitoring route auth check" "401" "GET" "/api/monitoring/notify"
 
-echo "Post-deploy verification passed."
+echo "== Render Provider Env Verification =="
+RENDER_ENV_STRICT=true node scripts/verify/verify_deep_agents_docs_wiki_render_env.mjs
 
+echo "Post-deploy verification passed."
