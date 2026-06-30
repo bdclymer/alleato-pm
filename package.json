@@ -98,6 +98,7 @@
     "docs:verify:ai-agent-tools": "node scripts/verify/verify_ai_agent_tools_docs.mjs",
     "docs:verify:skills": "node scripts/verify/verify_skills_docs.mjs",
     "docs:generate-app-expert": "node scripts/docs/generate-app-expert-artifacts.mjs",
+    "tutorial:capture": "npx tsx scripts/tutorials/run-tutorial.ts",
     "lint:md": "markdownlint-cli2",
     "lint:md:fix": "markdownlint-cli2 --fix",
     "cache:verify": "npx tsx scripts/verify-cache-setup.ts",

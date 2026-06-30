@@ -4,10 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Bot,
-  ChevronRight,
-  ExternalLink,
   List,
-  Menu,
   MoreVertical,
   Search,
   X,
@@ -17,7 +14,6 @@ import { SectionRuleHeading } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
-import { getPublishedTrainingDocUrl } from "@/lib/training-docs/constants";
 import type { PublishedTrainingDoc } from "@/lib/training-docs/docs-site";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +21,7 @@ import {
   getAppKnowledgeToolHref,
   getTrainingDocsForToolCategory,
 } from "./app-knowledge";
+import { KnowledgeMobileContextBar } from "./knowledge-mobile-context-bar";
 
 export function AppTrainingDocsPage({
   activeCategorySlug,
@@ -100,8 +97,11 @@ export function AppTrainingDocsPage({
         search={search}
         onSearchChange={setSearch}
       />
-      <MobileBreadcrumb
-        activeCategoryTitle={activeCategory?.title}
+      <KnowledgeMobileContextBar
+        className="-mt-6"
+        currentLabel={activeCategory?.title ?? "Training Docs"}
+        menuLabel="Open training docs menu"
+        rootLabel="App Training"
         onOpenMenu={() => setMobileNavOpen(true)}
       />
       <MobileNavDrawer
@@ -112,7 +112,7 @@ export function AppTrainingDocsPage({
         onClose={() => setMobileNavOpen(false)}
       />
 
-      <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 py-10 lg:grid-cols-[18rem_minmax(0,52rem)_16rem] lg:px-10 xl:gap-14">
+      <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 pb-10 pt-6 lg:grid-cols-[18rem_minmax(0,52rem)_16rem] lg:px-10 lg:pt-10 xl:gap-14">
         <DocsSidebar
           activeCategorySlug={activeCategorySlug}
           categories={visibleCategories}
@@ -133,12 +133,22 @@ export function AppTrainingDocsPage({
           </header>
 
           {activeCategory ? (
-            <TrainingDocList docs={selectedDocs} title="Published training docs" />
-          ) : (
-            <ToolCategoryIndex
-              categories={visibleCategories}
-              counts={categoryCounts}
+            <TrainingDocList
+              docs={selectedDocs}
+              title="Published training docs"
+              toolCategorySlug={activeCategory.slug}
             />
+          ) : (
+            <>
+              <TrainingDocList
+                docs={trainingDocs}
+                title="Published training docs"
+              />
+              <ToolCategoryIndex
+                categories={visibleCategories}
+                counts={categoryCounts}
+              />
+            </>
           )}
 
           {isAdmin ? (
@@ -241,38 +251,6 @@ function DocsHeader({
         </nav>
       </div>
     </header>
-  );
-}
-
-function MobileBreadcrumb({
-  activeCategoryTitle,
-  onOpenMenu,
-}: {
-  activeCategoryTitle?: string;
-  onOpenMenu: () => void;
-}) {
-  return (
-    <div className="lg:hidden">
-      <div className="flex h-20 items-center gap-4 px-6">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Open training docs menu"
-          onClick={onOpenMenu}
-          className="text-muted-foreground"
-        >
-          <Menu className="h-7 w-7" />
-        </Button>
-        <div className="flex min-w-0 items-center gap-3 text-lg">
-          <span className="truncate text-muted-foreground">App Training</span>
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <span className="truncate font-semibold text-foreground">
-            {activeCategoryTitle ?? "Training Docs"}
-          </span>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -463,9 +441,11 @@ function ToolCategoryIndex({
 function TrainingDocList({
   docs,
   title,
+  toolCategorySlug,
 }: {
   docs: PublishedTrainingDoc[];
   title: string;
+  toolCategorySlug?: string;
 }) {
   return (
     <section id="published-docs" className="space-y-5">
@@ -477,19 +457,24 @@ function TrainingDocList({
       ) : (
         <div className="divide-y divide-border">
           {docs.map((doc) => {
-            const href = getPublishedTrainingDocUrl(doc.publishedDocPath);
+            const resolvedCategorySlug =
+              toolCategorySlug ??
+              APP_KNOWLEDGE_TOOL_CATEGORIES.find(
+                (category) =>
+                  getTrainingDocsForToolCategory([doc], category).length > 0,
+              )?.slug;
+            const href = resolvedCategorySlug
+              ? `/knowledge/app/${resolvedCategorySlug}/${doc.slug}`
+              : "#";
             return (
               <Link
                 key={doc.slug}
                 href={href ?? "#"}
-                target={href ? "_blank" : undefined}
-                rel={href ? "noreferrer" : undefined}
                 className="group flex flex-col gap-2 py-4 transition-colors sm:flex-row sm:items-start sm:justify-between"
               >
                 <span className="space-y-1">
-                  <span className="flex items-center gap-2 text-base font-semibold text-foreground group-hover:text-primary">
+                  <span className="text-base font-semibold text-foreground group-hover:text-primary">
                     {doc.title}
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
                   </span>
                   <span className="block max-w-3xl text-sm leading-6 text-muted-foreground">
                     {doc.summary?.trim() ||

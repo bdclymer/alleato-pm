@@ -189,6 +189,21 @@ export async function getTrainingDoc(
   return docs.find((doc) => doc.id === docId) ?? null;
 }
 
+export async function getPublishedTrainingDocBySlug(
+  service: ServiceClient,
+  slug: string,
+): Promise<TrainingDocWithAssets | null> {
+  const docs = await listTrainingDocs(service);
+  return (
+    docs.find(
+      (doc) =>
+        doc.slug === slug &&
+        doc.status === "published" &&
+        Boolean(doc.published_doc_path),
+    ) ?? null
+  );
+}
+
 export async function listPublishedTrainingDocs(service: ServiceClient) {
   const { data, error } = await service
     .from("training_docs")

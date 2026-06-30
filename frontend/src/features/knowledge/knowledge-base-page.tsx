@@ -26,6 +26,7 @@ import {
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { KnowledgeMobileContextBar } from "./knowledge-mobile-context-bar";
 
 const COMPANY_CATEGORY_ORDER = [
   "Company Policies",
@@ -307,6 +308,11 @@ function KnowledgeBrowsePage({
         searchPlaceholder={searchPlaceholder}
         topBarLabel={topBarLabel}
         onSearchChange={setSearch}
+      />
+      <KnowledgeMobileContextBar
+        className={withShell ? "-mt-6" : undefined}
+        currentLabel={selectedCategory ? `${selectedCategory.label} Training Docs` : title}
+        rootLabel={modeLabel === "Product" ? "Company Knowledge" : modeLabel}
       />
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-16">
