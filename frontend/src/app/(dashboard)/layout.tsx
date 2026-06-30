@@ -30,8 +30,8 @@ export default function DashboardLayout({
             >
               <div className="flex-1">{children}</div>
             </main>
-            <SiteFooter />
           </div>
+          <SiteFooter />
         </CreateProjectDevConfigProvider>
       </SidebarInset>
     </SidebarProvider>

@@ -28,8 +28,8 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
           >
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
           </main>
-          {!hideFooter && <SiteFooter />}
         </div>
+        {!hideFooter && <SiteFooter />}
       </SidebarInset>
     </SidebarProvider>
   );

@@ -43,8 +43,8 @@ export default async function DeveloperLayout({
           >
             <div className="flex-1">{children}</div>
           </main>
-          <SiteFooter />
         </div>
+        <SiteFooter />
       </SidebarInset>
     </SidebarProvider>
   );

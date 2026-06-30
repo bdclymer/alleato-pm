@@ -102,20 +102,20 @@ export default function MainLayout({
               >
                 <React.Fragment key="route-content">{children}</React.Fragment>
               </main>
-              {!isDrawingViewer && !isFullHeightWorkspace && (
-                isAiAssistant ? (
-                  <div key="site-footer-desktop" className="hidden md:contents">
-                    <SiteFooter key="site-footer" />
-                  </div>
-                ) : (
-                  <SiteFooter key="site-footer" />
-                )
-              )}
               {shouldMountDeferredPanels && isProcoreReferenceOpen && (
                 <ProcoreReferencePanel key="procore-reference-panel" />
               )}
             </div>
           </div>
+          {!isDrawingViewer && !isFullHeightWorkspace && (
+            isAiAssistant ? (
+              <div key="site-footer-desktop" className="hidden md:contents">
+                <SiteFooter key="site-footer" />
+              </div>
+            ) : (
+              <SiteFooter key="site-footer" />
+            )
+          )}
         </CreateProjectDevConfigProvider>
         <Overlays key="floating-overlays" />
       </SidebarInset>
