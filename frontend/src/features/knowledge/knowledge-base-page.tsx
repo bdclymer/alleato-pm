@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpen,
@@ -14,6 +15,7 @@ import {
   Settings,
   Shield,
   Users,
+  X,
 } from "lucide-react";
 
 import { Button, EmptyState } from "@/components/ds";
@@ -201,6 +203,7 @@ export function KnowledgeBrowsePage({
   withShell?: boolean;
 }) {
   const [search, setSearch] = React.useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(
     activeCategoryId ?? null,
   );
@@ -313,6 +316,18 @@ export function KnowledgeBrowsePage({
         className={withShell ? "-mt-6" : undefined}
         currentLabel={selectedCategory ? `${selectedCategory.label} Training Docs` : title}
         rootLabel={modeLabel === "Product" ? "Company Knowledge" : modeLabel}
+        onOpenMenu={() => setMobileMenuOpen(true)}
+      />
+      <KnowledgeMobileDrawer
+        activeCategoryId={selectedCategoryId}
+        categories={visibleCategories}
+        counts={categoryCounts}
+        headingLabel={modeLabel === "Product" ? "Company Knowledge" : modeLabel}
+        isOpen={mobileMenuOpen}
+        navLabel={navLabel}
+        totalCount={items.length}
+        onClose={() => setMobileMenuOpen(false)}
+        onSelect={setSelectedCategoryId}
       />
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-16">
@@ -340,15 +355,6 @@ export function KnowledgeBrowsePage({
               </p>
             </div>
           </section>
-
-          <MobileTopicNav
-            activeCategoryId={selectedCategoryId}
-            categories={visibleCategories}
-            counts={categoryCounts}
-            navLabel={navLabel}
-            totalCount={items.length}
-            onSelect={setSelectedCategoryId}
-          />
 
           {isLoading ? (
             <KnowledgeDocsSkeleton />
@@ -424,13 +430,13 @@ function DocsTopBar({
   onSearchChange: (value: string) => void;
 }) {
   return (
-    <header className="flex flex-col gap-4 pb-4 md:flex-row md:items-center md:justify-between">
+    <header className="hidden flex-col gap-4 pb-4 lg:flex lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <BookOpen className="h-4 w-4 text-primary" />
           {topBarLabel}
         </div>
-        <nav aria-label="Knowledge views" className="hidden items-center gap-5 text-sm md:flex">
+        <nav aria-label="Knowledge views" className="hidden items-center gap-5 text-sm lg:flex">
           <span className="font-medium text-foreground">{modeLabel}</span>
           <Link href="/knowledge/manage" className="text-muted-foreground hover:text-foreground">
             Sources
@@ -506,40 +512,82 @@ function KnowledgeTopicNav({
   );
 }
 
-function MobileTopicNav({
+function KnowledgeMobileDrawer({
   activeCategoryId,
   categories,
   counts,
+  headingLabel,
+  isOpen,
   navLabel,
   totalCount,
+  onClose,
   onSelect,
 }: {
   activeCategoryId: string | null;
   categories: readonly KnowledgeCategoryConfig[];
   counts: Record<string, number>;
+  headingLabel: string;
+  isOpen: boolean;
   navLabel: string;
   totalCount: number;
+  onClose: () => void;
   onSelect: (categoryId: string | null) => void;
 }) {
+  if (!isOpen) return null;
+
   return (
-    <nav aria-label="Knowledge topic shortcuts" className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
-      <TopicPill
-        label={navLabel}
-        count={totalCount}
-        isActive={activeCategoryId === null}
-        onClick={() => onSelect(null)}
-      />
-      {categories.map((category) => (
-        <TopicPill
-          key={category.id}
-          href={category.href}
-          label={category.label}
-          count={counts[category.id] ?? 0}
-          isActive={activeCategoryId === category.id}
-          onClick={() => onSelect(category.id)}
-        />
-      ))}
-    </nav>
+    <div className="fixed inset-0 z-50 flex lg:hidden">
+      <aside className="h-full w-10/12 max-w-sm overflow-y-auto bg-background px-6 py-8 shadow-sm">
+        <div className="mb-8 space-y-8">
+          <Image
+            src="/Alleato-Group-Logo_Dark.png"
+            alt="Alleato"
+            width={104}
+            height={23}
+            priority
+            className="h-auto w-28 dark:invert"
+            style={{ height: "auto" }}
+          />
+          <div className="text-sm font-semibold text-foreground">{headingLabel}</div>
+        </div>
+        <nav aria-label="Mobile knowledge topics" className="space-y-2 text-lg">
+          <MobileTopicLink
+            label={navLabel}
+            count={totalCount}
+            isActive={activeCategoryId === null}
+            onClick={() => {
+              onSelect(null);
+              onClose();
+            }}
+          />
+          {categories.map((category) => (
+            <MobileTopicLink
+              key={category.id}
+              href={category.href}
+              label={category.label}
+              count={counts[category.id] ?? 0}
+              isActive={activeCategoryId === category.id}
+              onClick={() => {
+                onSelect(category.id);
+                onClose();
+              }}
+            />
+          ))}
+        </nav>
+      </aside>
+      <div className="relative min-w-16 flex-1 bg-foreground/20 backdrop-blur-[2px]">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Close knowledge menu"
+          onClick={onClose}
+          className="absolute right-4 top-8 h-12 w-12 rounded-full bg-background text-muted-foreground shadow-sm"
+        >
+          <X className="h-6 w-6" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -590,7 +638,7 @@ function TopicButton({
   );
 }
 
-function TopicPill({
+function MobileTopicLink({
   label,
   count,
   isActive,
@@ -604,10 +652,10 @@ function TopicPill({
   href?: string;
 }) {
   const className = cn(
-    "inline-flex h-auto min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-sm transition-colors",
+    "flex min-h-12 items-start justify-between gap-3 rounded-md px-4 py-3 text-left transition-colors",
     isActive
       ? "bg-primary/10 font-medium text-primary"
-      : "bg-muted/60 text-muted-foreground hover:text-foreground",
+      : "text-muted-foreground hover:bg-muted hover:text-foreground",
   );
 
   const content = (
@@ -626,7 +674,7 @@ function TopicPill({
   }
 
   return (
-    <Button type="button" variant="ghost" onClick={onClick} className={className}>
+    <Button type="button" variant="ghost" onClick={onClick} className={cn(className, "h-auto w-full")}>
       {content}
     </Button>
   );

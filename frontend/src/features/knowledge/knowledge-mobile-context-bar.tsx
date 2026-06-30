@@ -19,8 +19,8 @@ export function KnowledgeMobileContextBar({
   rootLabel: string;
 }) {
   return (
-    <div className={cn("lg:hidden", className)}>
-      <div className="flex min-h-14 items-center gap-3 px-4 py-2">
+    <div className={cn("border-y border-border/60 bg-background lg:hidden", className)}>
+      <div className="flex min-h-16 items-center gap-3 px-4 py-2">
         {onOpenMenu ? (
           <Button
             type="button"
