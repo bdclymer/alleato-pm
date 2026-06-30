@@ -135,7 +135,11 @@ export function EmailsClient({
       ]
     : undefined;
   const tabs = navigationTabs ?? outlookTabs;
-  const title = isOutlook ? "Outlook Emails" : "Emails";
+  const title = isMailboxReviewMode
+    ? "Emails Feedback"
+    : isOutlook
+      ? "Outlook Emails"
+      : "Emails";
   const description = isOutlook
     ? isGlobal
       ? "All Microsoft Outlook emails synced across projects."
@@ -734,6 +738,7 @@ export function EmailsClient({
           emails={sortedEmails}
           isLoading={isLoading}
           error={fetchError ?? undefined}
+          title={title}
           tabs={tabs ?? []}
           searchValue={tableState.searchInput}
           onSearchChange={tableState.setSearchInput}

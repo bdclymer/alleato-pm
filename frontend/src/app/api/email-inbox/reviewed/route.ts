@@ -45,6 +45,17 @@ const ReviewedEmailUpdateSchema = z.object({
   reviewerNote: z.string().max(1_000).nullable().optional(),
   draftBody: z.string().max(20_000).nullable().optional(),
   projectAssignment: ProjectAssignmentFeedbackSchema.optional(),
+  fieldFeedback: z
+    .object({
+      action: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      priority: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      category: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      project: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      owner: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      reason: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      score: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+    })
+    .optional(),
 });
 
 type AssistantReviewUpdate =
@@ -69,6 +80,24 @@ function parseProjectAssignmentFeedback(value: unknown): {
       : null;
 
   return { status, correctedProjectId };
+}
+
+function parseFieldFeedback(value: unknown) {
+  const record = isRecord(value) ? value : {};
+  const parseVerdict = (field: string) =>
+    record[field] === "correct" || record[field] === "incorrect"
+      ? record[field]
+      : "unreviewed";
+
+  return {
+    action: parseVerdict("action"),
+    priority: parseVerdict("priority"),
+    category: parseVerdict("category"),
+    project: parseVerdict("project"),
+    owner: parseVerdict("owner"),
+    reason: parseVerdict("reason"),
+    score: parseVerdict("score"),
+  };
 }
 
 export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
@@ -210,6 +239,7 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
         typeof reviewMeta.feedbackProvidedAt === "string"
           ? reviewMeta.feedbackProvidedAt
           : null,
+      fieldFeedback: parseFieldFeedback(reviewMeta.fieldFeedback),
       projectAssignmentFeedback: parseProjectAssignmentFeedback(
         reviewMeta.projectAssignmentFeedback,
       ),
@@ -299,6 +329,9 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
         correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
       }
     : parseProjectAssignmentFeedback(existingMetadata.projectAssignmentFeedback);
+  const fieldFeedback = parseFieldFeedback(
+    parsed.fieldFeedback ?? existingMetadata.fieldFeedback,
+  );
   const sandboxCategory =
     parsed.assistantCategory === undefined
       ? nullableTrimmed(
@@ -319,6 +352,7 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
       feedbackProvidedAt: now,
       feedbackProvidedBy: user.email ?? user.id,
       sandboxCategory,
+      fieldFeedback,
       projectAssignmentFeedback,
     } as Json,
     updated_at: now,
@@ -374,6 +408,7 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
       typeof updatedMetadata.feedbackProvidedAt === "string"
         ? updatedMetadata.feedbackProvidedAt
         : null,
+    fieldFeedback: parseFieldFeedback(updatedMetadata.fieldFeedback),
     projectAssignmentFeedback: parseProjectAssignmentFeedback(
       updatedMetadata.projectAssignmentFeedback,
     ),

@@ -44,6 +44,22 @@ export const ProjectAssignmentFeedbackSchema = z
     }
   });
 
+export const AssistantFieldVerdictSchema = z.enum([
+  "correct",
+  "incorrect",
+  "unreviewed",
+]);
+
+export const AssistantFieldFeedbackSchema = z.object({
+  action: AssistantFieldVerdictSchema.optional(),
+  priority: AssistantFieldVerdictSchema.optional(),
+  category: AssistantFieldVerdictSchema.optional(),
+  project: AssistantFieldVerdictSchema.optional(),
+  owner: AssistantFieldVerdictSchema.optional(),
+  reason: AssistantFieldVerdictSchema.optional(),
+  score: AssistantFieldVerdictSchema.optional(),
+});
+
 export const BrandonAssistantReviewPayloadSchema = z
   .object({
     assistantAction: z.enum(["reply", "delegate", "watch", "ignore"]),
@@ -59,6 +75,7 @@ export const BrandonAssistantReviewPayloadSchema = z
     assistantEvidence: z.string().trim().max(1_000).nullable().optional(),
     sourceMetadata: z.record(z.string(), z.unknown()).optional(),
     projectAssignment: ProjectAssignmentFeedbackSchema.optional(),
+    fieldFeedback: AssistantFieldFeedbackSchema.optional(),
   })
   .superRefine((value, ctx) => {
     const draftRequired =

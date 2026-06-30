@@ -15,6 +15,36 @@ function nullableProjectId(value: number | null | undefined): number | null {
   return Number.isInteger(value) && value && value > 0 ? value : null;
 }
 
+function normalizeFieldFeedback(value: Record<string, unknown> | undefined) {
+  return {
+    action: value?.action === "correct" || value?.action === "incorrect" ? value.action : "unreviewed",
+    priority:
+      value?.priority === "correct" || value?.priority === "incorrect"
+        ? value.priority
+        : "unreviewed",
+    category:
+      value?.category === "correct" || value?.category === "incorrect"
+        ? value.category
+        : "unreviewed",
+    project:
+      value?.project === "correct" || value?.project === "incorrect"
+        ? value.project
+        : "unreviewed",
+    owner:
+      value?.owner === "correct" || value?.owner === "incorrect"
+        ? value.owner
+        : "unreviewed",
+    reason:
+      value?.reason === "correct" || value?.reason === "incorrect"
+        ? value.reason
+        : "unreviewed",
+    score:
+      value?.score === "correct" || value?.score === "incorrect"
+        ? value.score
+        : "unreviewed",
+  };
+}
+
 export const POST = withApiGuardrails<{ emailId: string }>(
   "email-inbox/[emailId]/assistant-review#POST",
   async ({ request, params }) => {
@@ -125,6 +155,7 @@ export const POST = withApiGuardrails<{ emailId: string }>(
         feedbackProvidedAt: now,
         feedbackProvidedBy: user.email ?? user.id,
         sandboxCategory: parsed.assistantCategory ?? null,
+        fieldFeedback: normalizeFieldFeedback(parsed.fieldFeedback),
         ...(projectAssignmentFeedback ? { projectAssignmentFeedback } : {}),
       } as Json,
     };

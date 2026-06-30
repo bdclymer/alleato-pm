@@ -56,6 +56,15 @@ export interface ProjectEmail {
     draftBody: string | null;
     assistantCategory: string | null;
     feedbackProvidedAt: string | null;
+    fieldFeedback: {
+      action: "correct" | "incorrect" | "unreviewed";
+      priority: "correct" | "incorrect" | "unreviewed";
+      category: "correct" | "incorrect" | "unreviewed";
+      project: "correct" | "incorrect" | "unreviewed";
+      owner: "correct" | "incorrect" | "unreviewed";
+      reason: "correct" | "incorrect" | "unreviewed";
+      score: "correct" | "incorrect" | "unreviewed";
+    };
     projectAssignmentFeedback: {
       status: "correct" | "incorrect" | "unreviewed";
       correctedProjectId: number | null;

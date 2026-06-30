@@ -12,7 +12,7 @@ const BRANDON_MAILBOX = "bclymer@alleatogroup.com";
 
 export default function OutlookDraftFeedbackPage() {
   return (
-    <div className="-mt-2 flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <Suspense>
         <EmailsClient
           scope="global"

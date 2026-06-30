@@ -89,6 +89,27 @@ function nullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function parseFieldFeedback(value: unknown) {
+  const record =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const parseVerdict = (field: string) =>
+    record[field] === "correct" || record[field] === "incorrect"
+      ? record[field]
+      : "unreviewed";
+
+  return {
+    action: parseVerdict("action"),
+    priority: parseVerdict("priority"),
+    category: parseVerdict("category"),
+    project: parseVerdict("project"),
+    owner: parseVerdict("owner"),
+    reason: parseVerdict("reason"),
+    score: parseVerdict("score"),
+  };
+}
+
 function defaultAssistantCategory(action: string | null | undefined): string | null {
   switch (action) {
     case "reply":
@@ -293,6 +314,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
                 typeof reviewMetadata.feedbackProvidedAt === "string"
                   ? reviewMetadata.feedbackProvidedAt
                   : null,
+              fieldFeedback: parseFieldFeedback(reviewMetadata.fieldFeedback),
               projectAssignmentFeedback: parseProjectAssignmentFeedback(
                 reviewMetadata.projectAssignmentFeedback,
               ),

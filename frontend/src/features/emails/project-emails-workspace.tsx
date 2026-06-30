@@ -22,7 +22,32 @@ import {
   StarFilledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { ArrowUpDown, Check, Download, Flag, FolderOpen, Gauge, ImageIcon, ListTodo, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, Search, ShieldAlert, Sparkles, Star, StarOff, User, type LucideIcon } from "lucide-react";
+import {
+  ArrowUpDown,
+  Check,
+  CheckCheck,
+  Download,
+  Flag,
+  FolderOpen,
+  Gauge,
+  ImageIcon,
+  ListTodo,
+  Loader2,
+  MessageSquareText,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Paperclip,
+  Plus,
+  Search,
+  Sparkles,
+  Star,
+  StarOff,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -49,12 +74,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SplitPage, useSplitPage } from "@/components/ui/split-page";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
@@ -101,6 +136,7 @@ interface ProjectEmailsWorkspaceProps {
   emails: ProjectEmail[];
   isLoading: boolean;
   error?: Error | null;
+  title?: string;
   tabs: WorkspaceTab[];
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -178,13 +214,36 @@ const ATTACHMENT_TYPES = [
 // direction) pair understood by the shared email table sort state. Newest-first
 // is the default so the most recent message is always at the top.
 const EMAIL_SORT_OPTIONS = [
-  { value: "date_desc", label: "Newest first", sortBy: "sent_at", direction: "desc" as const },
-  { value: "date_asc", label: "Oldest first", sortBy: "sent_at", direction: "asc" as const },
-  { value: "sender_asc", label: "Sender A–Z", sortBy: "from_name", direction: "asc" as const },
-  { value: "subject_asc", label: "Subject A–Z", sortBy: "subject", direction: "asc" as const },
+  {
+    value: "date_desc",
+    label: "Newest first",
+    sortBy: "sent_at",
+    direction: "desc" as const,
+  },
+  {
+    value: "date_asc",
+    label: "Oldest first",
+    sortBy: "sent_at",
+    direction: "asc" as const,
+  },
+  {
+    value: "sender_asc",
+    label: "Sender A–Z",
+    sortBy: "from_name",
+    direction: "asc" as const,
+  },
+  {
+    value: "subject_asc",
+    label: "Subject A–Z",
+    sortBy: "subject",
+    direction: "asc" as const,
+  },
 ];
 
-function sortSelectionValue(sortBy?: string, direction?: "asc" | "desc"): string {
+function sortSelectionValue(
+  sortBy?: string,
+  direction?: "asc" | "desc",
+): string {
   const match = EMAIL_SORT_OPTIONS.find(
     (option) => option.sortBy === sortBy && option.direction === direction,
   );
@@ -226,11 +285,17 @@ function SortPopover({
             }}
             className={cn(
               "flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-muted",
-              current === option.value ? "font-medium text-foreground" : "text-muted-foreground",
+              current === option.value
+                ? "font-medium text-foreground"
+                : "text-muted-foreground",
             )}
           >
-            {current === option.value && <CheckIcon className="h-3.5 w-3.5 shrink-0" />}
-            <span className={cn(current !== option.value && "pl-[1.375rem]")}>{option.label}</span>
+            {current === option.value && (
+              <CheckIcon className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span className={cn(current !== option.value && "pl-[1.375rem]")}>
+              {option.label}
+            </span>
           </button>
         ))}
       </PopoverContent>
@@ -288,12 +353,20 @@ function formatRecipientLine(recipients: string[] | null | undefined): string {
 }
 
 function plainTextBody(email: ProjectEmail): string {
-  const source = email.body_text?.trim() || email.body?.trim() || email.body_html?.trim() || "";
+  const source =
+    email.body_text?.trim() ||
+    email.body?.trim() ||
+    email.body_html?.trim() ||
+    "";
   return latestReadableMessage(source);
 }
 
 function emailBodyBlocks(email: ProjectEmail): EmailContentBlock[] {
-  const source = email.body_text?.trim() || email.body?.trim() || email.body_html?.trim() || "";
+  const source =
+    email.body_text?.trim() ||
+    email.body?.trim() ||
+    email.body_html?.trim() ||
+    "";
   return buildEmailContentBlocks(source);
 }
 
@@ -306,7 +379,9 @@ function suggestedTaskTitle(email: ProjectEmail): string {
 function suggestedTaskDescription(email: ProjectEmail): string {
   const sender = email.from_name || email.from_email || "Unknown sender";
   const recipients = formatRecipientLine(email.to_list);
-  const timestamp = formatMetaDate(email.received_at || email.sent_at || email.created_at);
+  const timestamp = formatMetaDate(
+    email.received_at || email.sent_at || email.created_at,
+  );
   const body = plainTextBody(email).replace(/\s+/g, " ").trim();
   const excerpt = body.length > 1200 ? `${body.slice(0, 1197)}...` : body;
 
@@ -320,9 +395,12 @@ function suggestedTaskDescription(email: ProjectEmail): string {
   ].join("\n");
 }
 
-function projectLabel(project: ProjectEmail["project"] | null | undefined): string | null {
+function projectLabel(
+  project: ProjectEmail["project"] | null | undefined,
+): string | null {
   if (!project) return null;
-  if (project.project_number && project.name) return `${project.project_number} - ${project.name}`;
+  if (project.project_number && project.name)
+    return `${project.project_number} - ${project.name}`;
   return project.name || project.project_number || `Project ${project.id}`;
 }
 
@@ -358,17 +436,29 @@ function loadEmailWorkspaceLayout(): EmailWorkspaceLayoutPreference {
   if (typeof window === "undefined") return fallback;
 
   try {
-    const stored = window.localStorage.getItem(EMAIL_WORKSPACE_LAYOUT_STORAGE_KEY);
+    const stored = window.localStorage.getItem(
+      EMAIL_WORKSPACE_LAYOUT_STORAGE_KEY,
+    );
     if (!stored) return fallback;
-    const parsed = JSON.parse(stored) as Partial<EmailWorkspaceLayoutPreference>;
+    const parsed = JSON.parse(
+      stored,
+    ) as Partial<EmailWorkspaceLayoutPreference>;
     return {
       leftWidth:
         typeof parsed.leftWidth === "number"
-          ? clampNumber(parsed.leftWidth, EMAIL_WORKSPACE_LEFT_MIN, EMAIL_WORKSPACE_LEFT_MAX)
+          ? clampNumber(
+              parsed.leftWidth,
+              EMAIL_WORKSPACE_LEFT_MIN,
+              EMAIL_WORKSPACE_LEFT_MAX,
+            )
           : fallback.leftWidth,
       rightWidth:
         typeof parsed.rightWidth === "number"
-          ? clampNumber(parsed.rightWidth, EMAIL_WORKSPACE_RIGHT_MIN, EMAIL_WORKSPACE_RIGHT_MAX)
+          ? clampNumber(
+              parsed.rightWidth,
+              EMAIL_WORKSPACE_RIGHT_MIN,
+              EMAIL_WORKSPACE_RIGHT_MAX,
+            )
           : fallback.rightWidth,
       leftCollapsed:
         typeof parsed.leftCollapsed === "boolean"
@@ -433,7 +523,9 @@ function formatBytes(value: number | null): string {
   return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-function buildAttachmentTypeOptions(attachments: EmailAttachmentRecord[]): string[] {
+function buildAttachmentTypeOptions(
+  attachments: EmailAttachmentRecord[],
+): string[] {
   const defaults = [...ATTACHMENT_TYPES];
   const known = new Set(defaults.map((value) => value.toLowerCase()));
   const custom = attachments
@@ -456,7 +548,9 @@ function previewText(email: ProjectEmail): string {
   return body || "No message preview yet.";
 }
 
-function priorityDotClass(priority: ProjectEmail["assistant_priority"]): string {
+function priorityDotClass(
+  priority: ProjectEmail["assistant_priority"],
+): string {
   switch (priority) {
     case "urgent":
       return "bg-red-500";
@@ -493,10 +587,13 @@ function resolvePrimaryContact(email: ProjectEmail): {
   linkLabel: string | null;
 } {
   const isReceived = email.status === "Received";
-  const recipients = (email.to_list ?? []).map((recipient) => recipient.trim()).filter(Boolean);
+  const recipients = (email.to_list ?? [])
+    .map((recipient) => recipient.trim())
+    .filter(Boolean);
 
   if (isReceived) {
-    const displayName = email.from_name?.trim() || email.from_email?.trim() || "Project sender";
+    const displayName =
+      email.from_name?.trim() || email.from_email?.trim() || "Project sender";
 
     return {
       displayName,
@@ -523,7 +620,8 @@ export function buildContextItems(email: ProjectEmail): Array<{
     {
       icon: <EnvelopeClosedIcon className="h-4 w-4" />,
       label: "From",
-      value: email.from_email?.trim() || email.from_name?.trim() || "Not provided",
+      value:
+        email.from_email?.trim() || email.from_name?.trim() || "Not provided",
     },
     {
       icon: <PaperPlaneIcon className="h-4 w-4" />,
@@ -538,7 +636,9 @@ export function buildContextItems(email: ProjectEmail): Array<{
     {
       icon: <ClockIcon className="h-4 w-4" />,
       label: email.status === "Received" ? "Received" : "Sent",
-      value: formatLongTimestamp(email.received_at || email.sent_at || email.created_at),
+      value: formatLongTimestamp(
+        email.received_at || email.sent_at || email.created_at,
+      ),
     },
   ];
 }
@@ -554,7 +654,6 @@ function InboxRow({
 }) {
   const { onClose } = useSplitPage();
   const senderName = email.from_name || email.from_email || "Unknown sender";
-  const senderEmail = email.from_email && email.from_email !== senderName ? email.from_email : null;
   const hasDraft = hasAssistantDraft(email);
 
   return (
@@ -566,31 +665,25 @@ function InboxRow({
       }}
       variant="ghost"
       className={cn(
-        "group h-auto min-w-0 w-full max-w-full justify-start overflow-hidden rounded-none border-l-2 px-3 py-2 text-left whitespace-normal transition-colors duration-200",
+        "group h-auto min-w-0 w-full max-w-full justify-start overflow-hidden rounded-none border-l-2 px-3 py-2.5 text-left whitespace-normal transition-colors duration-200",
         isActive
           ? "border-primary bg-accent/60"
           : "border-transparent hover:bg-accent/50",
       )}
     >
-      <div className="min-w-0 w-full max-w-full flex-1 overflow-hidden space-y-0.5">
+      <div className="min-w-0 w-full max-w-full flex-1 overflow-hidden space-y-1">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0 truncate text-xs leading-4 text-foreground">
-            <span className="font-semibold">{senderName}</span>
-            {senderEmail ? (
-              <span className="ml-1 font-normal text-muted-foreground">{senderEmail}</span>
-            ) : null}
+          <div className="min-w-0 truncate text-[12px] font-medium leading-4 text-foreground">
+            {senderName}
           </div>
           <div className="whitespace-nowrap text-[11px] font-medium tabular-nums text-foreground/60">
-            {formatPaneTimestamp(email.received_at || email.sent_at || email.created_at)}
+            {formatPaneTimestamp(
+              email.received_at || email.sent_at || email.created_at,
+            )}
           </div>
         </div>
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span
-            className={cn("h-2 w-2 shrink-0 rounded-full", priorityDotClass(email.assistant_priority))}
-            title={priorityLabel(email.assistant_priority)}
-            aria-label={priorityLabel(email.assistant_priority)}
-          />
-          <p className="min-w-0 truncate text-xs font-medium leading-4 text-foreground">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="min-w-0 flex-1 truncate text-[12px] font-medium leading-4 text-foreground">
             {email.subject || "Untitled email"}
           </p>
           {hasDraft ? (
@@ -633,10 +726,13 @@ function ProjectAssignmentPopover({
 
     setSaving(true);
     try {
-      await apiFetch<ProjectEmail>(`/api/projects/${email.project_id}/emails/${email.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ project_id: nextProjectId }),
-      });
+      await apiFetch<ProjectEmail>(
+        `/api/projects/${email.project_id}/emails/${email.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ project_id: nextProjectId }),
+        },
+      );
       setOpen(false);
       router.push(`/${nextProjectId}/emails`);
       router.refresh();
@@ -684,7 +780,9 @@ function ProjectAssignmentPopover({
         <Command>
           <CommandInput placeholder="Search projects..." />
           <CommandList>
-            <CommandEmpty>{isLoading ? "Loading..." : "No projects found."}</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? "Loading..." : "No projects found."}
+            </CommandEmpty>
             <CommandGroup>
               {projects.map((project) => (
                 <CommandItem
@@ -695,7 +793,9 @@ function ProjectAssignmentPopover({
                   <CheckIcon
                     className={cn(
                       "mr-2 h-3.5 w-3.5",
-                      project.id === email.project_id ? "opacity-100" : "opacity-0",
+                      project.id === email.project_id
+                        ? "opacity-100"
+                        : "opacity-0",
                     )}
                   />
                   <span className="truncate">
@@ -765,7 +865,14 @@ function AttachmentTypePopover({
           disabled={saving}
           className="h-7 justify-between gap-1 rounded-full px-2.5 text-[11px] font-medium shadow-none"
         >
-          <span className={cn("truncate", attachment.attachmentType ? "text-foreground" : "text-muted-foreground")}>
+          <span
+            className={cn(
+              "truncate",
+              attachment.attachmentType
+                ? "text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
             {attachment.attachmentType ?? "Set type"}
           </span>
           {saving ? (
@@ -775,7 +882,11 @@ function AttachmentTypePopover({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start" onOpenAutoFocus={(event) => event.preventDefault()}>
+      <PopoverContent
+        className="w-64 p-0"
+        align="start"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <Command shouldFilter>
           <CommandInput
             placeholder="Search or create type..."
@@ -786,19 +897,37 @@ function AttachmentTypePopover({
             <CommandEmpty>No matching types.</CommandEmpty>
             <CommandGroup>
               {attachment.attachmentType ? (
-                <CommandItem value="__clear__" onSelect={() => void handleChange("__clear__")} className="text-muted-foreground">
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => void handleChange("__clear__")}
+                  className="text-muted-foreground"
+                >
                   Clear type
                 </CommandItem>
               ) : null}
               {trimmedSearch && !hasExactMatch ? (
-                <CommandItem value={`create ${trimmedSearch}`} onSelect={() => void handleChange(trimmedSearch)}>
+                <CommandItem
+                  value={`create ${trimmedSearch}`}
+                  onSelect={() => void handleChange(trimmedSearch)}
+                >
                   <Plus className="mr-2 h-3.5 w-3.5" />
                   Create "{trimmedSearch}"
                 </CommandItem>
               ) : null}
               {availableTypes.map((type) => (
-                <CommandItem key={type} value={type} onSelect={() => void handleChange(type)}>
-                  <Check className={cn("mr-2 h-3.5 w-3.5", attachment.attachmentType === type ? "opacity-100" : "opacity-0")} />
+                <CommandItem
+                  key={type}
+                  value={type}
+                  onSelect={() => void handleChange(type)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-3.5 w-3.5",
+                      attachment.attachmentType === type
+                        ? "opacity-100"
+                        : "opacity-0",
+                    )}
+                  />
                   <span className="truncate">{type}</span>
                 </CommandItem>
               ))}
@@ -823,10 +952,17 @@ function AttachmentPreviewModal({
 }) {
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent size="xl" className="h-full max-h-screen max-w-5xl overflow-hidden p-0">
+      <ModalContent
+        size="xl"
+        className="h-full max-h-screen max-w-5xl overflow-hidden p-0"
+      >
         <ModalHeader className="border-b border-border/70 px-6 py-4">
-          <ModalTitle>{attachment?.fileName ?? "Attachment preview"}</ModalTitle>
-          <ModalDescription>{attachment?.contentType || "Attachment preview"}</ModalDescription>
+          <ModalTitle>
+            {attachment?.fileName ?? "Attachment preview"}
+          </ModalTitle>
+          <ModalDescription>
+            {attachment?.contentType || "Attachment preview"}
+          </ModalDescription>
         </ModalHeader>
         {attachment ? (
           <div className="h-full min-h-0 bg-muted/20">
@@ -842,8 +978,16 @@ function AttachmentPreviewModal({
               <div className="h-full overflow-auto p-6">
                 <PdfDocument
                   file={previewUrl(projectId, attachment.id)}
-                  loading={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading preview...</div>}
-                  error={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Preview failed to load.</div>}
+                  loading={
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      Loading preview...
+                    </div>
+                  }
+                  error={
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      Preview failed to load.
+                    </div>
+                  }
                   className="mx-auto flex w-fit flex-col gap-4"
                 >
                   <PdfPage
@@ -989,16 +1133,25 @@ export function EmailReadingPanel({
 }: EmailReadingPanelProps) {
   const router = useRouter();
   const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
-  const [importanceSignal, setImportanceSignal] = React.useState<"important" | "not_important" | null>(null);
+  const [importanceSignal, setImportanceSignal] = React.useState<
+    "important" | "not_important" | null
+  >(null);
   const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState("");
   const [taskDescription, setTaskDescription] = React.useState("");
-  const [taskPriority, setTaskPriority] = React.useState<"high" | "medium" | "low">("medium");
-  const [taskStatus, setTaskStatus] = React.useState<"open" | "in_progress" | "blocked">("open");
+  const [taskPriority, setTaskPriority] = React.useState<
+    "high" | "medium" | "low"
+  >("medium");
+  const [taskStatus, setTaskStatus] = React.useState<
+    "open" | "in_progress" | "blocked"
+  >("open");
   const [taskDueDate, setTaskDueDate] = React.useState("");
   const [isCreatingTask, setIsCreatingTask] = React.useState(false);
-  const [previewAttachment, setPreviewAttachment] = React.useState<EmailAttachmentRecord | null>(null);
-  const [attachmentOverrides, setAttachmentOverrides] = React.useState<Record<number, string | null>>({});
+  const [previewAttachment, setPreviewAttachment] =
+    React.useState<EmailAttachmentRecord | null>(null);
+  const [attachmentOverrides, setAttachmentOverrides] = React.useState<
+    Record<number, string | null>
+  >({});
   const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [summary, setSummary] = React.useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = React.useState(false);
@@ -1050,7 +1203,10 @@ export function EmailReadingPanel({
 
   const handleAttachmentTypeUpdate = React.useCallback(
     (attachmentId: number, nextType: string | null) => {
-      setAttachmentOverrides((current) => ({ ...current, [attachmentId]: nextType }));
+      setAttachmentOverrides((current) => ({
+        ...current,
+        [attachmentId]: nextType,
+      }));
     },
     [],
   );
@@ -1062,7 +1218,9 @@ export function EmailReadingPanel({
   }, [email?.id]);
 
   React.useEffect(() => {
-    setDesktopActionsSlot(document.getElementById("email-details-actions-slot"));
+    setDesktopActionsSlot(
+      document.getElementById("email-details-actions-slot"),
+    );
   }, [email?.id]);
 
   const handleSummarize = React.useCallback(async () => {
@@ -1110,16 +1268,19 @@ export function EmailReadingPanel({
 
     setIsCreatingTask(true);
     try {
-      await apiFetch(`/api/projects/${email.project_id}/emails/${email.id}/tasks`, {
-        method: "POST",
-        body: JSON.stringify({
-          title: trimmedTitle,
-          description: trimmedDescription,
-          dueDate: taskDueDate || null,
-          priority: taskPriority,
-          status: taskStatus,
-        }),
-      });
+      await apiFetch(
+        `/api/projects/${email.project_id}/emails/${email.id}/tasks`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            title: trimmedTitle,
+            description: trimmedDescription,
+            dueDate: taskDueDate || null,
+            priority: taskPriority,
+            status: taskStatus,
+          }),
+        },
+      );
       setCreateTaskOpen(false);
       toast.success("Task created from email.");
       router.refresh();
@@ -1134,7 +1295,15 @@ export function EmailReadingPanel({
     } finally {
       setIsCreatingTask(false);
     }
-  }, [router, email, taskDescription, taskDueDate, taskPriority, taskStatus, taskTitle]);
+  }, [
+    router,
+    email,
+    taskDescription,
+    taskDueDate,
+    taskPriority,
+    taskStatus,
+    taskTitle,
+  ]);
 
   return (
     <>
@@ -1149,7 +1318,7 @@ export function EmailReadingPanel({
             className={cn("flex h-full flex-col", className)}
             style={{ minHeight: "30rem" }}
           >
-            <div className="border-b border-border/70 px-8 py-4 xl:px-10">
+            <div className="px-8 py-4 xl:px-10">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-start justify-between gap-4">
@@ -1158,25 +1327,30 @@ export function EmailReadingPanel({
                     </div>
                     <span className="shrink-0 whitespace-nowrap text-right text-[12px] text-muted-foreground">
                       {formatMetaDate(
-                        email.received_at ||
-                          email.sent_at ||
-                          email.created_at,
+                        email.received_at || email.sent_at || email.created_at,
                       )}
                     </span>
                   </div>
                   <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)] sm:gap-x-3">
                     <span className="font-medium text-foreground/75">From</span>
                     <span className="min-w-0 truncate text-foreground">
-                      <span className="font-medium">{email.from_name || "Unknown sender"}</span>
+                      <span className="font-medium">
+                        {email.from_name || "Unknown sender"}
+                      </span>
                       {email.from_email ? `  ${email.from_email}` : ""}
                     </span>
                     <span className="font-medium text-foreground/75">To</span>
                     <span className="min-w-0 truncate text-foreground">
                       {formatRecipientLine(email.to_list)}
                     </span>
-                    <span className="font-medium text-foreground/75">Project</span>
+                    <span className="font-medium text-foreground/75">
+                      Project
+                    </span>
                     {canProjectEmailActions ? (
-                      <ProjectAssignmentPopover email={email} variant="toolbar" />
+                      <ProjectAssignmentPopover
+                        email={email}
+                        variant="toolbar"
+                      />
                     ) : (
                       <span className="min-w-0 truncate text-foreground">
                         {projectLabel(email.project) ?? "No project assigned"}
@@ -1229,7 +1403,9 @@ export function EmailReadingPanel({
             {summaryOpen ? (
               <InfoAlert
                 role="status"
-                icon={<Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />}
+                icon={
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                }
                 className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-8 py-3 text-muted-foreground [&>div]:flex-1 xl:px-10"
               >
                 <div className="flex w-full items-start gap-2">
@@ -1261,7 +1437,10 @@ export function EmailReadingPanel({
                 <div className="space-y-4 text-[14px] leading-6 text-foreground [overflow-wrap:anywhere]">
                   {selectedBody ? (
                     selectedBodyBlocks.map((block) => {
-                      if (block.kind === "metadata" || block.kind === "quote-header") {
+                      if (
+                        block.kind === "metadata" ||
+                        block.kind === "quote-header"
+                      ) {
                         return null;
                       }
 
@@ -1279,7 +1458,10 @@ export function EmailReadingPanel({
                       return (
                         <div key={block.id} className="space-y-3">
                           {block.lines.map((line) => (
-                            <p key={`${block.id}-${line}`} className="whitespace-pre-wrap break-words">
+                            <p
+                              key={`${block.id}-${line}`}
+                              className="whitespace-pre-wrap break-words"
+                            >
                               {line}
                             </p>
                           ))}
@@ -1287,7 +1469,9 @@ export function EmailReadingPanel({
                       );
                     })
                   ) : (
-                    <p className="text-muted-foreground">This draft does not have body copy yet.</p>
+                    <p className="text-muted-foreground">
+                      This draft does not have body copy yet.
+                    </p>
                   )}
                 </div>
 
@@ -1296,7 +1480,9 @@ export function EmailReadingPanel({
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <Paperclip className="h-3.5 w-3.5" />
                       {selectedAttachments.length}{" "}
-                      {selectedAttachments.length === 1 ? "Attachment" : "Attachments"}
+                      {selectedAttachments.length === 1
+                        ? "Attachment"
+                        : "Attachments"}
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       {selectedAttachments.map((attachment) => (
@@ -1312,22 +1498,38 @@ export function EmailReadingPanel({
                             aria-label={`Preview ${attachment.fileName}`}
                             className={cn(
                               "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0 disabled:opacity-100",
-                              isPreviewableAttachment(attachment) && "hover:bg-muted/50",
+                              isPreviewableAttachment(attachment) &&
+                                "hover:bg-muted/50",
                             )}
                           >
                             {isImageAttachment(attachment) ? (
                               <img
-                                src={previewUrl(email.project_id, attachment.id)}
+                                src={previewUrl(
+                                  email.project_id,
+                                  attachment.id,
+                                )}
                                 alt=""
                                 className="h-full w-full object-cover"
                               />
                             ) : isPdfAttachment(attachment) ? (
                               <PdfDocument
-                                file={previewUrl(email.project_id, attachment.id)}
-                                loading={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
-                                error={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
+                                file={previewUrl(
+                                  email.project_id,
+                                  attachment.id,
+                                )}
+                                loading={
+                                  <FileTextIcon className="h-5 w-5 text-muted-foreground" />
+                                }
+                                error={
+                                  <FileTextIcon className="h-5 w-5 text-muted-foreground" />
+                                }
                               >
-                                <PdfPage pageNumber={1} width={160} renderAnnotationLayer={false} renderTextLayer={false} />
+                                <PdfPage
+                                  pageNumber={1}
+                                  width={160}
+                                  renderAnnotationLayer={false}
+                                  renderTextLayer={false}
+                                />
                               </PdfDocument>
                             ) : (
                               <ImageIcon className="h-5 w-5 text-muted-foreground" />
@@ -1355,7 +1557,10 @@ export function EmailReadingPanel({
                               className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
                               onClick={() =>
                                 window.open(
-                                  attachmentUrl(email.project_id, attachment.id),
+                                  attachmentUrl(
+                                    email.project_id,
+                                    attachment.id,
+                                  ),
                                   "_blank",
                                 )
                               }
@@ -1371,9 +1576,15 @@ export function EmailReadingPanel({
                 ) : null}
 
                 <EmailActionControls
-                  onSummarize={canProjectEmailActions ? () => void handleSummarize() : undefined}
+                  onSummarize={
+                    canProjectEmailActions
+                      ? () => void handleSummarize()
+                      : undefined
+                  }
                   onImportanceIntent={handleImportanceIntent}
-                  onCreateTask={canProjectEmailActions ? handleOpenCreateTask : undefined}
+                  onCreateTask={
+                    canProjectEmailActions ? handleOpenCreateTask : undefined
+                  }
                   className="border-t border-border/60 pt-5"
                 />
               </div>
@@ -1385,7 +1596,10 @@ export function EmailReadingPanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={cn("flex h-full items-center justify-center px-8 py-10", className)}
+            className={cn(
+              "flex h-full items-center justify-center px-8 py-10",
+              className,
+            )}
             style={{ minHeight: "30rem" }}
           >
             <div className="max-w-md text-center">
@@ -1396,7 +1610,9 @@ export function EmailReadingPanel({
                 Nothing selected
               </div>
               <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
-                Select a message from the inbox rail{canCompose ? " or start a new draft" : ""}. This center pane is where the thread stays in focus.
+                Select a message from the inbox rail
+                {canCompose ? " or start a new draft" : ""}. This center pane is
+                where the thread stays in focus.
               </p>
               {canCompose && onCompose ? (
                 <Button
@@ -1415,9 +1631,15 @@ export function EmailReadingPanel({
       {email && desktopActionsSlot
         ? createPortal(
             <EmailActionControls
-              onSummarize={canProjectEmailActions ? () => void handleSummarize() : undefined}
+              onSummarize={
+                canProjectEmailActions
+                  ? () => void handleSummarize()
+                  : undefined
+              }
               onImportanceIntent={handleImportanceIntent}
-              onCreateTask={canProjectEmailActions ? handleOpenCreateTask : undefined}
+              onCreateTask={
+                canProjectEmailActions ? handleOpenCreateTask : undefined
+              }
               orientation="column"
             />,
             desktopActionsSlot,
@@ -1458,7 +1680,9 @@ export function EmailReadingPanel({
           </ModalHeader>
           <div className="grid gap-4">
             <div className="grid gap-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Title</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Title
+              </div>
               <Input
                 value={taskTitle}
                 onChange={(event) => setTaskTitle(event.target.value)}
@@ -1467,7 +1691,9 @@ export function EmailReadingPanel({
               />
             </div>
             <div className="grid gap-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Description</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Description
+              </div>
               <Textarea
                 value={taskDescription}
                 onChange={(event) => setTaskDescription(event.target.value)}
@@ -1476,8 +1702,15 @@ export function EmailReadingPanel({
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Priority</div>
-                <Select value={taskPriority} onValueChange={(value) => setTaskPriority(value as typeof taskPriority)}>
+                <div className="text-xs font-medium text-muted-foreground">
+                  Priority
+                </div>
+                <Select
+                  value={taskPriority}
+                  onValueChange={(value) =>
+                    setTaskPriority(value as typeof taskPriority)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1489,8 +1722,15 @@ export function EmailReadingPanel({
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Status</div>
-                <Select value={taskStatus} onValueChange={(value) => setTaskStatus(value as typeof taskStatus)}>
+                <div className="text-xs font-medium text-muted-foreground">
+                  Status
+                </div>
+                <Select
+                  value={taskStatus}
+                  onValueChange={(value) =>
+                    setTaskStatus(value as typeof taskStatus)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1502,7 +1742,9 @@ export function EmailReadingPanel({
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <div className="text-xs font-medium text-muted-foreground">Due date</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  Due date
+                </div>
                 <Input
                   type="date"
                   value={taskDueDate}
@@ -1520,7 +1762,11 @@ export function EmailReadingPanel({
             >
               Cancel
             </Button>
-            <Button type="button" onClick={() => void handleCreateTask()} disabled={isCreatingTask}>
+            <Button
+              type="button"
+              onClick={() => void handleCreateTask()}
+              disabled={isCreatingTask}
+            >
               {isCreatingTask ? "Creating..." : "Create task"}
             </Button>
           </ModalFooter>
@@ -1567,19 +1813,21 @@ function EmailDetailsPanel({
               </div>
             ) : null}
 
-              <div className="space-y-3 pb-6">
+            <div className="space-y-3 pb-6">
               <div className="flex items-start gap-4">
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-14 w-14">
-                      <AvatarFallback className="bg-muted text-sm font-semibold text-foreground">
-                        {getInitials(primaryContact.displayName)}
-                      </AvatarFallback>
-                    </Avatar>
+                  <Avatar className="h-14 w-14">
+                    <AvatarFallback className="bg-muted text-sm font-semibold text-foreground">
+                      {getInitials(primaryContact.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0">
                     <div className="text-xl font-semibold tracking-[-0.02em] break-all text-foreground [overflow-wrap:anywhere]">
                       {primaryContact.displayName}
                     </div>
-                    <div className="mt-1 text-sm text-muted-foreground">{primaryContact.roleLabel}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {primaryContact.roleLabel}
+                    </div>
                     {primaryContact.linkLabel ? (
                       <div className="mt-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">
                         {primaryContact.linkLabel}
@@ -1595,7 +1843,10 @@ function EmailDetailsPanel({
                 Details
               </div>
               {contextItems.map((item) => (
-                <div key={item.label} className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 text-sm">
+                <div
+                  key={item.label}
+                  className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 text-sm"
+                >
                   <div className="inline-flex items-center gap-2 text-muted-foreground">
                     <span className="shrink-0">{item.icon}</span>
                     <span>{item.label}</span>
@@ -1631,8 +1882,11 @@ function EmailDetailsPanel({
                     {selectedEmail.distribution_group}
                   </span>
                 ) : null}
-                {!selectedEmail.related_tool && !selectedEmail.distribution_group ? (
-                  <span className="text-sm text-muted-foreground">No linked workflow metadata yet.</span>
+                {!selectedEmail.related_tool &&
+                !selectedEmail.distribution_group ? (
+                  <span className="text-sm text-muted-foreground">
+                    No linked workflow metadata yet.
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -1663,8 +1917,12 @@ function EmailDetailsPanel({
                 <div key={item.title} className="flex gap-3">
                   <div className="mt-1 text-muted-foreground">{item.icon}</div>
                   <div>
-                    <div className="text-sm font-semibold text-foreground">{item.title}</div>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                    <div className="text-sm font-semibold text-foreground">
+                      {item.title}
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {item.body}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -1679,6 +1937,15 @@ function EmailDetailsPanel({
 type ProjectAssignmentFeedbackStatus = "correct" | "incorrect" | "unreviewed";
 type AssistantReviewAction = "reply" | "delegate" | "watch" | "ignore";
 type AssistantReviewPriority = "urgent" | "high" | "normal" | "low";
+type AssistantFieldVerdict = "correct" | "incorrect" | "unreviewed";
+type AssistantFieldKey =
+  | "action"
+  | "priority"
+  | "category"
+  | "project"
+  | "owner"
+  | "reason"
+  | "score";
 type BrandonReviewOutcome =
   | "draft_copied"
   | "draft_edited"
@@ -1696,14 +1963,20 @@ const REVIEW_OUTCOME_LABELS: Record<BrandonReviewOutcome, string> = {
   marked_no_action: "No action",
 };
 
-const ASSISTANT_ACTION_OPTIONS: { value: AssistantReviewAction; label: string }[] = [
+const ASSISTANT_ACTION_OPTIONS: {
+  value: AssistantReviewAction;
+  label: string;
+}[] = [
   { value: "reply", label: "Reply" },
   { value: "delegate", label: "Delegate" },
   { value: "watch", label: "Watch" },
   { value: "ignore", label: "Ignore" },
 ];
 
-const ASSISTANT_PRIORITY_OPTIONS: { value: AssistantReviewPriority; label: string }[] = [
+const ASSISTANT_PRIORITY_OPTIONS: {
+  value: AssistantReviewPriority;
+  label: string;
+}[] = [
   { value: "urgent", label: "Urgent" },
   { value: "high", label: "High" },
   { value: "normal", label: "Normal" },
@@ -1718,6 +1991,16 @@ const ASSISTANT_CATEGORY_OPTIONS = [
   "No Action",
   "Urgent",
 ] as const;
+
+const DEFAULT_FIELD_FEEDBACK: Record<AssistantFieldKey, AssistantFieldVerdict> = {
+  action: "unreviewed",
+  priority: "unreviewed",
+  category: "unreviewed",
+  project: "unreviewed",
+  owner: "unreviewed",
+  reason: "unreviewed",
+  score: "unreviewed",
+};
 
 function defaultAssistantCategory(email: ProjectEmail): string {
   if (email.assistant_category?.trim()) return email.assistant_category.trim();
@@ -1736,7 +2019,8 @@ function defaultAssistantCategory(email: ProjectEmail): string {
 }
 
 function defaultReviewOutcome(email: ProjectEmail): BrandonReviewOutcome {
-  if (email.assistant_review?.reviewOutcome) return email.assistant_review.reviewOutcome;
+  if (email.assistant_review?.reviewOutcome)
+    return email.assistant_review.reviewOutcome;
   if (email.assistant_review?.draftBody?.trim()) return "draft_edited";
   if (email.assistant_action === "delegate") return "delegated";
   if (email.assistant_action === "watch") return "watched";
@@ -1762,47 +2046,123 @@ function formatFeedbackDate(value: string | null | undefined): string | null {
   }).format(date);
 }
 
-function TrainingField({
-  label,
-  value,
+function ReviewSection({
+  title,
+  defaultOpen = true,
+  accent = false,
+  headerAction,
+  children,
 }: {
-  label: string;
-  value: React.ReactNode;
+  title: string;
+  defaultOpen?: boolean;
+  accent?: boolean;
+  headerAction?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 text-[13px]">
-      <div className="text-muted-foreground">{label}</div>
-      <div className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</div>
-    </div>
+    <Collapsible
+      defaultOpen={defaultOpen}
+      className="rounded-lg border border-border/70 bg-background"
+    >
+      <div className="px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <CollapsibleTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="group flex h-auto min-w-0 flex-1 items-center justify-between gap-3 px-0 py-0 text-left hover:bg-transparent"
+            >
+              <span
+                className={cn(
+                  "text-[13px] font-medium text-foreground",
+                  accent && "text-[hsl(var(--warning-foreground))]",
+                )}
+              >
+                {title}
+              </span>
+              <ChevronDownIcon
+                className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+                aria-hidden
+              />
+            </Button>
+          </CollapsibleTrigger>
+          {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
+        </div>
+      </div>
+      <CollapsibleContent className="px-4 pb-4 pt-0">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
-// Composable icon + value field: the icon is the affordance, the property
-// name is revealed in a tooltip on hover. Used for the AI categorization
-// properties so the panel reads as values, not a wall of labels.
-function IconLabelField({
+function ReviewRow({
   icon: Icon,
   label,
   value,
+  verdict = "unreviewed",
+  onVerdictChange,
+  className,
 }: {
   icon: LucideIcon;
   label: string;
   value: React.ReactNode;
+  verdict?: AssistantFieldVerdict;
+  onVerdictChange?: (next: AssistantFieldVerdict) => void;
+  className?: string;
 }) {
   return (
-    <div className="flex items-start gap-2 text-[13px]">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className="mt-px flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground"
-            aria-label={label}
+    <div
+      className={cn(
+        "flex items-center gap-2 py-1",
+        className,
+      )}
+    >
+      <span
+        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
+        aria-label={label}
+        title={label}
+        aria-hidden
+      >
+        <Icon className="h-3 w-3" />
+      </span>
+      <div className="min-w-0 flex-1 text-[13px] text-muted-foreground">
+        {value}
+      </div>
+      {onVerdictChange ? (
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`${label} correct`}
+            onClick={() => onVerdictChange(verdict === "correct" ? "unreviewed" : "correct")}
+            className={cn(
+              "h-6 w-6 rounded-full border border-transparent text-muted-foreground hover:text-emerald-700",
+              verdict === "correct" &&
+                "!border-emerald-200 !bg-emerald-100 !text-emerald-700 hover:!bg-emerald-100 hover:!text-emerald-700",
+            )}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
-      <div className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</div>
+            <CheckCheck className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`${label} incorrect`}
+            onClick={() =>
+              onVerdictChange(verdict === "incorrect" ? "unreviewed" : "incorrect")
+            }
+            className={cn(
+              "h-6 w-6 rounded-full border border-transparent text-muted-foreground hover:text-red-700",
+              verdict === "incorrect" &&
+                "!border-red-200 !bg-red-100 !text-red-700 hover:!bg-red-100 hover:!text-red-700",
+            )}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1819,44 +2179,65 @@ export function EmailTrainingFeedbackPanel({
   onSaved?: () => void;
 }) {
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 250 });
-  const [assistantAction, setAssistantAction] = React.useState<AssistantReviewAction>("watch");
+  const [assistantAction, setAssistantAction] =
+    React.useState<AssistantReviewAction>("watch");
   const [assistantPriority, setAssistantPriority] =
     React.useState<AssistantReviewPriority>("normal");
   const [assistantCategory, setAssistantCategory] = React.useState("FYI");
-  const [reviewOutcome, setReviewOutcome] = React.useState<BrandonReviewOutcome>("skipped");
+  const [reviewOutcome, setReviewOutcome] =
+    React.useState<BrandonReviewOutcome>("skipped");
   const [draftBody, setDraftBody] = React.useState("");
   const [reviewerNote, setReviewerNote] = React.useState("");
+  const [fieldFeedback, setFieldFeedback] = React.useState<
+    Record<AssistantFieldKey, AssistantFieldVerdict>
+  >(DEFAULT_FIELD_FEEDBACK);
   const [projectStatus, setProjectStatus] =
     React.useState<ProjectAssignmentFeedbackStatus>("unreviewed");
-  const [correctedProjectId, setCorrectedProjectId] = React.useState<number | null>(null);
-  const [feedbackProvidedAt, setFeedbackProvidedAt] = React.useState<string | null>(null);
+  const [correctedProjectId, setCorrectedProjectId] = React.useState<
+    number | null
+  >(null);
+  const [feedbackProvidedAt, setFeedbackProvidedAt] = React.useState<
+    string | null
+  >(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
 
   React.useEffect(() => {
     if (!selectedEmail) return;
-    const assignmentFeedback = selectedEmail.assistant_review?.projectAssignmentFeedback;
+    const assignmentFeedback =
+      selectedEmail.assistant_review?.projectAssignmentFeedback;
     setAssistantAction(selectedEmail.assistant_action ?? "watch");
     setAssistantPriority(selectedEmail.assistant_priority ?? "normal");
     setAssistantCategory(defaultAssistantCategory(selectedEmail));
     setReviewOutcome(defaultReviewOutcome(selectedEmail));
     setDraftBody(selectedEmail.assistant_review?.draftBody ?? "");
     setReviewerNote(selectedEmail.assistant_review?.reviewerNote ?? "");
+    setFieldFeedback(selectedEmail.assistant_review?.fieldFeedback ?? DEFAULT_FIELD_FEEDBACK);
     setProjectStatus(assignmentFeedback?.status ?? "unreviewed");
     setCorrectedProjectId(
       assignmentFeedback?.correctedProjectId ??
-        (typeof selectedEmail.project_id === "number" ? selectedEmail.project_id : null),
+        (typeof selectedEmail.project_id === "number"
+          ? selectedEmail.project_id
+          : null),
     );
-    setFeedbackProvidedAt(selectedEmail.assistant_review?.feedbackProvidedAt ?? null);
+    setFeedbackProvidedAt(
+      selectedEmail.assistant_review?.feedbackProvidedAt ?? null,
+    );
   }, [selectedEmail]);
 
-  const selectedProjectLabel = projectLabel(selectedEmail?.project) ?? "No project assigned";
+  const selectedProjectLabel =
+    projectLabel(selectedEmail?.project) ?? "No project assigned";
   const normalizedScore =
     typeof selectedEmail?.assistant_score === "number"
       ? Math.round(selectedEmail.assistant_score)
       : null;
   const savedLabel = formatFeedbackDate(feedbackProvidedAt);
   const rulesApplied = selectedEmail?.assistant_rules_applied ?? [];
+  const assistantContext = selectedEmail?.assistant_evidence?.trim() ?? "";
+  const hasReviewedField = React.useMemo(
+    () => Object.values(fieldFeedback).some((value) => value !== "unreviewed"),
+    [fieldFeedback],
+  );
 
   async function handleSave() {
     if (!selectedEmail) return;
@@ -1880,6 +2261,7 @@ export function EmailTrainingFeedbackPanel({
         reviewerNote: reviewerNote.trim() || null,
         draftBody: draftBody.trim() || null,
         projectAssignment,
+        fieldFeedback,
       };
 
       if (selectedEmail.assistant_review?.reviewId) {
@@ -1891,20 +2273,23 @@ export function EmailTrainingFeedbackPanel({
           }),
         });
       } else {
-        await apiFetch(`/api/email-inbox/${selectedEmail.id}/assistant-review`, {
-          method: "POST",
-          body: JSON.stringify({
-            assistantAction: selectedEmail.assistant_action ?? "watch",
-            assistantPriority: selectedEmail.assistant_priority ?? "normal",
-            assistantCategory: assistantCategory.trim() || null,
-            assistantScore: selectedEmail.assistant_score ?? null,
-            assistantReason: selectedEmail.assistant_reason ?? null,
-            assistantOwner: selectedEmail.assistant_owner ?? null,
-            assistantRisk: selectedEmail.assistant_risk ?? null,
-            assistantEvidence: selectedEmail.assistant_evidence ?? null,
-            ...commonPayload,
-          }),
-        });
+        await apiFetch(
+          `/api/email-inbox/${selectedEmail.id}/assistant-review`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              assistantAction: selectedEmail.assistant_action ?? "watch",
+              assistantPriority: selectedEmail.assistant_priority ?? "normal",
+              assistantCategory: assistantCategory.trim() || null,
+              assistantScore: selectedEmail.assistant_score ?? null,
+              assistantReason: selectedEmail.assistant_reason ?? null,
+              assistantOwner: selectedEmail.assistant_owner ?? null,
+              assistantRisk: selectedEmail.assistant_risk ?? null,
+              assistantEvidence: selectedEmail.assistant_evidence ?? null,
+              ...commonPayload,
+            }),
+          },
+        );
       }
 
       const now = new Date().toISOString();
@@ -1913,7 +2298,9 @@ export function EmailTrainingFeedbackPanel({
       onSaved?.();
     } catch (error) {
       console.error("Could not save email training feedback.", error);
-      toast.error("Could not save feedback. Check the selected review and try again.");
+      toast.error(
+        "Could not save feedback. Check the selected review and try again.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1951,9 +2338,9 @@ export function EmailTrainingFeedbackPanel({
 
   return (
     <ScrollArea className={cn("h-full", className)}>
-      <div className="px-5 py-5">
+      <div className="bg-muted/20 px-4 py-4">
         {selectedEmail ? (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {onClose ? (
               <div className="flex items-center justify-end 2xl:hidden">
                 <Button
@@ -1970,225 +2357,292 @@ export function EmailTrainingFeedbackPanel({
             ) : null}
 
             <div className="space-y-1 pr-10">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <div className="text-sm font-semibold text-foreground">
                 AI Review
               </div>
               {savedLabel ? (
-                <div className="text-xs text-muted-foreground">Feedback saved {savedLabel}</div>
+                <div className="text-xs text-muted-foreground">{savedLabel}</div>
               ) : (
-                <div className="text-xs text-muted-foreground">No human feedback recorded.</div>
+                <div className="text-xs text-muted-foreground">
+                  No human feedback recorded.
+                </div>
               )}
-              <div className="text-xs leading-5 text-muted-foreground">
-                Records what the assistant would do. Outlook drafts and categories are not changed.
-              </div>
             </div>
 
-            <div className="grid gap-3">
-              <div className="grid gap-2 min-[1500px]:grid-cols-3">
-                <div className="space-y-1.5">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Action
-                  </div>
-                  <Select
-                    value={assistantAction}
-                    onValueChange={(value) => setAssistantAction(value as AssistantReviewAction)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ASSISTANT_ACTION_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Priority
-                  </div>
-                  <Select
-                    value={assistantPriority}
-                    onValueChange={(value) =>
-                      setAssistantPriority(value as AssistantReviewPriority)
+            <div className="space-y-3">
+              <ReviewSection title="AI Classification" accent>
+                <div className="space-y-0.5">
+                  <ReviewRow
+                    icon={ListTodo}
+                    label="Action"
+                    verdict={fieldFeedback.action}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, action: next }))
                     }
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ASSISTANT_PRIORITY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
+                    value={
+                      <Select
+                        value={assistantAction}
+                        onValueChange={(value) =>
+                          setAssistantAction(value as AssistantReviewAction)
+                        }
+                      >
+                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ASSISTANT_ACTION_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    }
+                  />
+                  <ReviewRow
+                    icon={Flag}
+                    label="Priority"
+                    verdict={fieldFeedback.priority}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, priority: next }))
+                    }
+                    value={
+                      <Select
+                        value={assistantPriority}
+                        onValueChange={(value) =>
+                          setAssistantPriority(value as AssistantReviewPriority)
+                        }
+                      >
+                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ASSISTANT_PRIORITY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    }
+                  />
+                  <ReviewRow
+                    icon={FolderOpen}
+                    label="Category"
+                    verdict={fieldFeedback.category}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, category: next }))
+                    }
+                    value={
+                      <Select
+                        value={assistantCategory}
+                        onValueChange={setAssistantCategory}
+                      >
+                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ASSISTANT_CATEGORY_OPTIONS.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    }
+                  />
+                  <ReviewRow
+                    icon={FolderOpen}
+                    label="Project"
+                    verdict={fieldFeedback.project}
+                    onVerdictChange={(next) => {
+                      setFieldFeedback((current) => ({ ...current, project: next }));
+                      setProjectStatus(next);
+                    }}
+                    value={
+                      <div className="space-y-2">
+                        <div>{selectedProjectLabel}</div>
+                        {projectStatus === "incorrect" ? (
+                          <div className="grid gap-2">
+                            <Select
+                              value={
+                                correctedProjectId
+                                  ? String(correctedProjectId)
+                                  : undefined
+                              }
+                              onValueChange={(value) =>
+                                setCorrectedProjectId(Number(value))
+                              }
+                            >
+                              <SelectTrigger className="h-8 text-[13px]">
+                                <SelectValue
+                                  placeholder={
+                                    projectsLoading
+                                      ? "Loading projects..."
+                                      : "Correct project"
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {projects.map((project) => (
+                                  <SelectItem
+                                    key={project.id}
+                                    value={String(project.id)}
+                                  >
+                                    {formatProjectOption(project)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : null}
+                      </div>
+                    }
+                  />
+                  <ReviewRow
+                    icon={User}
+                    label="Owner"
+                    verdict={fieldFeedback.owner}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, owner: next }))
+                    }
+                    value={selectedEmail.assistant_owner ?? "Unknown"}
+                  />
+                  <ReviewRow
+                    icon={MessageSquareText}
+                    label="Reason"
+                    verdict={fieldFeedback.reason}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, reason: next }))
+                    }
+                    value={
+                      selectedEmail.assistant_reason ?? "No reason recorded."
+                    }
+                    className="items-start"
+                  />
+                  <ReviewRow
+                    icon={Gauge}
+                    label="Score"
+                    verdict={fieldFeedback.score}
+                    onVerdictChange={(next) =>
+                      setFieldFeedback((current) => ({ ...current, score: next }))
+                    }
+                    value={normalizedScore ?? "Unknown"}
+                  />
+                </div>
+              </ReviewSection>
+
+              <ReviewSection title="Rules Applied">
+                <div className="space-y-2.5">
+                  {rulesApplied.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {rulesApplied.map((rule) => (
+                        <span
+                          key={rule}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                        >
+                          <Sparkles className="h-3 w-3" aria-hidden />
+                          <span>{rule}</span>
+                        </span>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Category
-                  </div>
-                  <Select value={assistantCategory} onValueChange={setAssistantCategory}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ASSISTANT_CATEGORY_OPTIONS.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-x-4 gap-y-2.5 min-[1500px]:grid-cols-2">
-              <IconLabelField icon={Gauge} label="Score" value={normalizedScore ?? "Unknown"} />
-              <IconLabelField icon={User} label="Owner" value={selectedEmail.assistant_owner ?? "Unknown"} />
-              <IconLabelField icon={ShieldAlert} label="Risk" value={selectedEmail.assistant_risk ?? "Unknown"} />
-              <IconLabelField icon={MessageSquareText} label="Reason" value={selectedEmail.assistant_reason ?? "No reason recorded."} />
-              </div>
-            </div>
-
-            <div className="space-y-2 border-t border-border/70 pt-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Rules Applied
-              </div>
-              {rulesApplied.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {rulesApplied.map((rule) => (
-                    <span
-                      key={rule}
-                      className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground"
-                    >
-                      {rule}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[13px] leading-5 text-muted-foreground">
-                  No rule matches were recorded for this email.
-                </p>
-              )}
-              <div className="pt-1">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Why This Was Flagged
-                </div>
-                <p className="mt-1 text-[13px] leading-5 text-foreground">
-                  {selectedEmail.assistant_evidence ?? "No decision basis captured for this message."}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3 border-t border-border/70 pt-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Project Assigned
-              </div>
-              <TrainingField label="Current" value={selectedProjectLabel} />
-              <div className="grid gap-2 min-[1500px]:grid-cols-2">
-                <Select
-                  value={projectStatus}
-                  onValueChange={(value) =>
-                    setProjectStatus(value as ProjectAssignmentFeedbackStatus)
-                  }
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unreviewed">Not reviewed</SelectItem>
-                    <SelectItem value="correct">Correct</SelectItem>
-                    <SelectItem value="incorrect">Incorrect</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {projectStatus === "incorrect" ? (
-                  <Select
-                    value={correctedProjectId ? String(correctedProjectId) : undefined}
-                    onValueChange={(value) => setCorrectedProjectId(Number(value))}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Correct project"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={String(project.id)}>
-                          {formatProjectOption(project)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="space-y-2 border-t border-border/70 pt-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Draft
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void handleGenerateDraft()}
-                  disabled={isGeneratingDraft}
-                  className="h-8"
-                >
-                  {isGeneratingDraft ? (
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden />
+                    </div>
                   ) : (
-                    <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
+                    <p className="text-[13px] text-muted-foreground">
+                      No rule matches were recorded for this email.
+                    </p>
                   )}
-                  {isGeneratingDraft ? "Generating..." : "Generate draft"}
-                </Button>
-              </div>
-              <Textarea
-                value={draftBody}
-                onChange={(event) => setDraftBody(event.target.value)}
-                placeholder="Draft response"
-                className="min-h-28 resize-y text-sm"
-              />
-            </div>
+                  {assistantContext ? (
+                    <div className="space-y-1">
+                      <div className="text-[11px] font-medium text-muted-foreground">
+                        Context
+                      </div>
+                      <p className="text-[13px] leading-5 text-foreground">
+                        {assistantContext}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </ReviewSection>
 
-            <div className="space-y-3 border-t border-border/70 pt-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Feedback
-              </div>
-              <div className="grid gap-2 min-[1500px]:grid-cols-[minmax(0,1fr)_auto]">
-                <Select
-                  value={reviewOutcome}
-                  onValueChange={(value) => setReviewOutcome(value as BrandonReviewOutcome)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(REVIEW_OUTCOME_LABELS) as BrandonReviewOutcome[]).map((outcome) => (
-                      <SelectItem key={outcome} value={outcome}>
-                        {REVIEW_OUTCOME_LABELS[outcome]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  onClick={() => void handleSave()}
-                  disabled={isSaving}
-                  className="h-9"
-                >
-                  {isSaving ? "Saving..." : "Save feedback"}
-                </Button>
-              </div>
-              <Textarea
-                value={reviewerNote}
-                onChange={(event) => setReviewerNote(event.target.value)}
-                placeholder="Feedback note"
-                className="min-h-20 resize-y text-sm"
-              />
+              <ReviewSection
+                title="Draft Reply"
+                headerAction={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleGenerateDraft()}
+                    disabled={isGeneratingDraft}
+                    className="h-7 text-[12px]"
+                  >
+                    {isGeneratingDraft ? (
+                      <Loader2
+                        className="mr-2 h-3.5 w-3.5 animate-spin"
+                        aria-hidden
+                      />
+                    ) : (
+                      <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
+                    )}
+                    {isGeneratingDraft ? "Generating..." : "Generate"}
+                  </Button>
+                }
+              >
+                <Textarea
+                  value={draftBody}
+                  onChange={(event) => setDraftBody(event.target.value)}
+                  placeholder="Draft response"
+                  className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
+                />
+              </ReviewSection>
+
+              <ReviewSection
+                title="Feedback Notes"
+                headerAction={
+                  <Button
+                    type="button"
+                    onClick={() => void handleSave()}
+                    disabled={isSaving}
+                    size="sm"
+                    className="h-7 text-[12px]"
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                }
+              >
+                <div className="space-y-3">
+                  <Textarea
+                    value={reviewerNote}
+                    onChange={(event) => setReviewerNote(event.target.value)}
+                    placeholder="Add additional notes for AI feedback here."
+                    className="min-h-20 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
+                  />
+                  {hasReviewedField ? (
+                    <div className="grid gap-2 border-t border-border/50 pt-3">
+                      <Select
+                        value={reviewOutcome}
+                        onValueChange={(value) =>
+                          setReviewOutcome(value as BrandonReviewOutcome)
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-[13px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(
+                            Object.keys(
+                              REVIEW_OUTCOME_LABELS,
+                            ) as BrandonReviewOutcome[]
+                          ).map((outcome) => (
+                            <SelectItem key={outcome} value={outcome}>
+                              {REVIEW_OUTCOME_LABELS[outcome]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : null}
+                </div>
+              </ReviewSection>
             </div>
           </div>
         ) : (
@@ -2197,7 +2651,8 @@ export function EmailTrainingFeedbackPanel({
               AI Training
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
-              Select an email to review the AI categorization, draft, rules, and project assignment.
+              Select an email to review the AI categorization, draft, rules, and
+              project assignment.
             </p>
           </div>
         )}
@@ -2210,6 +2665,7 @@ export function ProjectEmailsWorkspace({
   emails,
   isLoading,
   error,
+  title = "Emails",
   tabs,
   searchValue,
   onSearchChange,
@@ -2227,7 +2683,14 @@ export function ProjectEmailsWorkspace({
   onEdit,
   onDelete,
 }: ProjectEmailsWorkspaceProps) {
-  const [selectedEmailId, setSelectedEmailId] = React.useState<number | null>(null);
+  const rightRailDefaultWidth = draftFeedbackMode
+    ? 360
+    : EMAIL_WORKSPACE_RIGHT_DEFAULT;
+  const rightRailMinWidth = draftFeedbackMode ? 320 : EMAIL_WORKSPACE_RIGHT_MIN;
+  const rightRailMaxWidth = draftFeedbackMode ? 420 : EMAIL_WORKSPACE_RIGHT_MAX;
+  const [selectedEmailId, setSelectedEmailId] = React.useState<number | null>(
+    null,
+  );
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(
     () => searchValue.trim().length > 0,
@@ -2235,11 +2698,12 @@ export function ProjectEmailsWorkspace({
   const [layoutPreference, setLayoutPreference] =
     React.useState<EmailWorkspaceLayoutPreference>({
       leftWidth: EMAIL_WORKSPACE_LEFT_DEFAULT,
-      rightWidth: EMAIL_WORKSPACE_RIGHT_DEFAULT,
+      rightWidth: rightRailDefaultWidth,
       leftCollapsed: false,
       rightCollapsed: false,
     });
-  const [isWorkspaceLayoutReady, setIsWorkspaceLayoutReady] = React.useState(false);
+  const [isWorkspaceLayoutReady, setIsWorkspaceLayoutReady] =
+    React.useState(false);
   const workspaceResizeRef = React.useRef<{
     column: EmailWorkspaceColumn;
     startX: number;
@@ -2256,8 +2720,26 @@ export function ProjectEmailsWorkspace({
     setIsWorkspaceLayoutReady(true);
   }, []);
 
+  React.useEffect(() => {
+    setLayoutPreference((current) => {
+      const clampedRightWidth = clampNumber(
+        current.rightWidth,
+        rightRailMinWidth,
+        rightRailMaxWidth,
+      );
+      if (clampedRightWidth === current.rightWidth) return current;
+      const next = { ...current, rightWidth: clampedRightWidth };
+      saveEmailWorkspaceLayout(next);
+      return next;
+    });
+  }, [rightRailMaxWidth, rightRailMinWidth]);
+
   const persistLayoutPreference = React.useCallback(
-    (updater: (current: EmailWorkspaceLayoutPreference) => EmailWorkspaceLayoutPreference) => {
+    (
+      updater: (
+        current: EmailWorkspaceLayoutPreference,
+      ) => EmailWorkspaceLayoutPreference,
+    ) => {
       setLayoutPreference((current) => {
         const next = updater(current);
         saveEmailWorkspaceLayout(next);
@@ -2279,17 +2761,20 @@ export function ProjectEmailsWorkspace({
   );
 
   const handleWorkspaceResizeStart = React.useCallback(
-    (column: EmailWorkspaceColumn) => (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      workspaceResizeRef.current = {
-        column,
-        startX: event.clientX,
-        startWidth:
-          column === "left" ? layoutPreference.leftWidth : layoutPreference.rightWidth,
-      };
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    },
+    (column: EmailWorkspaceColumn) =>
+      (event: React.MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        workspaceResizeRef.current = {
+          column,
+          startX: event.clientX,
+          startWidth:
+            column === "left"
+              ? layoutPreference.leftWidth
+              : layoutPreference.rightWidth,
+        };
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      },
     [layoutPreference.leftWidth, layoutPreference.rightWidth],
   );
 
@@ -2305,11 +2790,11 @@ export function ProjectEmailsWorkspace({
       const min =
         drag.column === "left"
           ? EMAIL_WORKSPACE_LEFT_MIN
-          : EMAIL_WORKSPACE_RIGHT_MIN;
+          : rightRailMinWidth;
       const max =
         drag.column === "left"
           ? EMAIL_WORKSPACE_LEFT_MAX
-          : EMAIL_WORKSPACE_RIGHT_MAX;
+          : rightRailMaxWidth;
       const nextWidth = clampNumber(drag.startWidth + delta, min, max);
 
       setLayoutPreference((current) => {
@@ -2339,7 +2824,7 @@ export function ProjectEmailsWorkspace({
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [layoutPreference]);
+  }, [layoutPreference, rightRailMaxWidth, rightRailMinWidth]);
 
   React.useEffect(() => {
     if (searchValue.trim().length > 0) {
@@ -2359,7 +2844,8 @@ export function ProjectEmailsWorkspace({
     }
 
     setSelectedEmailId((current) => {
-      if (current && visibleEmails.some((email) => email.id === current)) return current;
+      if (current && visibleEmails.some((email) => email.id === current))
+        return current;
       return visibleEmails[0]?.id ?? null;
     });
   }, [visibleEmails]);
@@ -2414,8 +2900,15 @@ export function ProjectEmailsWorkspace({
           <div className="border-b border-border/70 px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <div className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">
-                  Emails
+                <div
+                  className={cn(
+                    "truncate font-semibold text-foreground",
+                    title.length > 12
+                      ? "text-[20px] leading-none tracking-[-0.02em]"
+                      : "text-2xl tracking-[-0.03em]",
+                  )}
+                >
+                  {title}
                 </div>
               </div>
               <div className="flex items-center gap-1 text-muted-foreground">
@@ -2532,7 +3025,10 @@ export function ProjectEmailsWorkspace({
             {isLoading ? (
               <div className="space-y-1 px-0 py-2">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="space-y-3 border-l-2 border-transparent px-5 py-4">
+                  <div
+                    key={index}
+                    className="space-y-3 border-l-2 border-transparent px-5 py-4"
+                  >
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-9 w-9 rounded-full" />
                       <div className="min-w-0 flex-1 space-y-2">
@@ -2547,7 +3043,9 @@ export function ProjectEmailsWorkspace({
             ) : error ? (
               <div className="px-6 py-10">
                 <div className="rounded-3xl border border-red-200 bg-red-50/60 p-5 text-sm text-red-700">
-                  <div className="font-semibold text-red-900">Could not load email</div>
+                  <div className="font-semibold text-red-900">
+                    Could not load email
+                  </div>
                   <p className="mt-2 leading-6">{error.message}</p>
                 </div>
               </div>
@@ -2560,7 +3058,8 @@ export function ProjectEmailsWorkspace({
                   Inbox ready
                 </div>
                 <p className="mt-2 max-w-xs leading-6">
-                  Draft client updates, track incoming messages, and keep project conversations in one quiet workspace.
+                  Draft client updates, track incoming messages, and keep
+                  project conversations in one quiet workspace.
                 </p>
                 {canCompose ? (
                   <Button
@@ -2658,7 +3157,9 @@ export function ProjectEmailsWorkspace({
               } as React.CSSProperties
             }
           >
-            {showAuxiliaryRail && !layoutPreference.rightCollapsed && isWorkspaceLayoutReady ? (
+            {showAuxiliaryRail &&
+            !layoutPreference.rightCollapsed &&
+            isWorkspaceLayoutReady ? (
               <>
                 <div
                   className="group absolute left-0 top-0 z-20 h-full w-2 -translate-x-1 cursor-col-resize select-none"
