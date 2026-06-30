@@ -179,6 +179,25 @@ describe("KnowledgeBasePage", () => {
     expect(
       screen.getByRole("link", { name: "Company Knowledge" }),
     ).toHaveAttribute("href", "/knowledge/company");
+    expect(
+      screen.getByRole("button", { name: "Open training docs menu" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the mobile training docs menu", async () => {
+    const user = userEvent.setup();
+    render(<AppTrainingDocsPage trainingDocs={[]} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Open training docs menu" }),
+    );
+
+    expect(
+      screen.getByRole("navigation", { name: "Mobile training doc tools" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close training docs menu" }),
+    ).toBeInTheDocument();
   });
 
   it("lists published training docs on the selected docs-style tool page", () => {

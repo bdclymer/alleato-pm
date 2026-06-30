@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bot, ExternalLink, List } from "lucide-react";
+import {
+  Bot,
+  ChevronRight,
+  ExternalLink,
+  List,
+  Menu,
+  MoreVertical,
+  Search,
+  X,
+} from "lucide-react";
 
 import { SectionRuleHeading } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
@@ -26,6 +35,7 @@ export function AppTrainingDocsPage({
 }) {
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const isAdmin = profile?.isAdmin === true;
   const activeCategory =
     APP_KNOWLEDGE_TOOL_CATEGORIES.find(
@@ -90,6 +100,17 @@ export function AppTrainingDocsPage({
         search={search}
         onSearchChange={setSearch}
       />
+      <MobileBreadcrumb
+        activeCategoryTitle={activeCategory?.title}
+        onOpenMenu={() => setMobileNavOpen(true)}
+      />
+      <MobileNavDrawer
+        activeCategorySlug={activeCategorySlug}
+        categories={visibleCategories}
+        counts={categoryCounts}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+      />
 
       <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 py-10 lg:grid-cols-[18rem_minmax(0,52rem)_16rem] lg:px-10 xl:gap-14">
         <DocsSidebar
@@ -99,7 +120,7 @@ export function AppTrainingDocsPage({
         />
 
         <main className="min-w-0 space-y-10">
-          <header id="overview" className="space-y-4">
+          <header id="overview" className="space-y-4 pt-4 lg:pt-0">
             <p className="text-sm font-semibold text-primary">App</p>
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-normal text-foreground">
@@ -155,10 +176,10 @@ function DocsHeader({
   return (
     <header className="border-b border-border/70">
       <div className="mx-auto max-w-screen-2xl px-6 lg:px-10">
-        <div className="flex h-16 items-center gap-6">
+        <div className="flex h-24 items-center gap-6 lg:h-16">
           <Link
             href="/knowledge/app"
-            className="flex h-9 w-9 items-center justify-center text-2xl font-semibold tracking-normal text-foreground"
+            className="flex h-12 w-12 items-center justify-center text-4xl font-semibold tracking-normal text-foreground lg:h-9 lg:w-9 lg:text-2xl"
             aria-label="Training docs home"
           >
             A
@@ -172,7 +193,7 @@ function DocsHeader({
               onChange={onSearchChange}
             />
           </div>
-          <nav aria-label="Docs links" className="ml-auto flex items-center gap-5 text-sm">
+          <nav aria-label="Docs links" className="ml-auto hidden items-center gap-5 text-sm lg:flex">
             <Link href="/knowledge/app" className="font-medium text-foreground">
               App
             </Link>
@@ -185,8 +206,26 @@ function DocsHeader({
               </Link>
             ) : null}
           </nav>
+          <div className="ml-auto flex items-center gap-2 text-muted-foreground lg:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Search training docs"
+            >
+              <Search className="h-6 w-6" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="More training doc actions"
+            >
+              <MoreVertical className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
-        <nav aria-label="Documentation sections" className="flex gap-7 text-sm font-medium">
+        <nav aria-label="Documentation sections" className="hidden gap-7 text-sm font-medium lg:flex">
           <Link
             href="/knowledge/app"
             className="border-b-2 border-primary px-0 py-4 text-foreground"
@@ -202,6 +241,141 @@ function DocsHeader({
         </nav>
       </div>
     </header>
+  );
+}
+
+function MobileBreadcrumb({
+  activeCategoryTitle,
+  onOpenMenu,
+}: {
+  activeCategoryTitle?: string;
+  onOpenMenu: () => void;
+}) {
+  return (
+    <div className="border-b border-border/70 lg:hidden">
+      <div className="flex h-20 items-center gap-4 px-6">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Open training docs menu"
+          onClick={onOpenMenu}
+          className="text-muted-foreground"
+        >
+          <Menu className="h-7 w-7" />
+        </Button>
+        <div className="flex min-w-0 items-center gap-3 text-lg">
+          <span className="truncate text-muted-foreground">App Training</span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <span className="truncate font-semibold text-foreground">
+            {activeCategoryTitle ?? "Training Docs"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileNavDrawer({
+  activeCategorySlug,
+  categories,
+  counts,
+  isOpen,
+  onClose,
+}: {
+  activeCategorySlug?: string;
+  categories: typeof APP_KNOWLEDGE_TOOL_CATEGORIES;
+  counts: Record<string, number>;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex bg-black/25 lg:hidden">
+      <aside className="h-full w-10/12 max-w-xl overflow-y-auto bg-background px-6 py-8 shadow-xl">
+        <div className="mb-8 flex items-center justify-between">
+          <Link
+            href="/knowledge/app"
+            className="flex h-12 w-12 items-center justify-center text-4xl font-semibold tracking-normal text-foreground"
+            aria-label="Training docs home"
+            onClick={onClose}
+          >
+            A
+          </Link>
+        </div>
+        <nav aria-label="Mobile training doc tools" className="space-y-6">
+          <div className="rounded-2xl border border-border bg-background px-4 py-3 text-lg text-foreground">
+            App Training
+          </div>
+          <div className="space-y-5">
+            <p className="text-lg font-semibold text-foreground">App Training</p>
+            <div className="space-y-1 text-lg">
+              <MobileNavLink
+                href="/knowledge/app"
+                isActive={!activeCategorySlug}
+                label="All tools"
+                onClose={onClose}
+              />
+              {categories.map((category) => (
+                <MobileNavLink
+                  key={category.slug}
+                  count={counts[category.slug] ?? 0}
+                  href={getAppKnowledgeToolHref(category)}
+                  isActive={activeCategorySlug === category.slug}
+                  label={category.title}
+                  onClose={onClose}
+                />
+              ))}
+            </div>
+          </div>
+        </nav>
+      </aside>
+      <div className="relative min-w-14 flex-1 bg-muted/70">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Close training docs menu"
+          onClick={onClose}
+          className="absolute right-5 top-8 h-12 w-12 rounded-full bg-background text-muted-foreground shadow-sm"
+        >
+          <X className="h-7 w-7" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function MobileNavLink({
+  count,
+  href,
+  isActive,
+  label,
+  onClose,
+}: {
+  count?: number;
+  href: string;
+  isActive: boolean;
+  label: string;
+  onClose: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      className={cn(
+        "flex items-start justify-between gap-3 rounded-2xl px-5 py-3 transition-colors",
+        isActive
+          ? "bg-primary/10 font-semibold text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <span>{label}</span>
+      {typeof count === "number" ? (
+        <span className="text-sm tabular-nums">{count}</span>
+      ) : null}
+    </Link>
   );
 }
 
