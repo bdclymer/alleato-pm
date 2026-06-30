@@ -68,6 +68,58 @@ type AdminMenuSection = {
 
 const sections: AdminMenuSection[] = [
   {
+    title: "AI Feedback and Learning",
+    description:
+      "Review queues and training surfaces that improve the assistant over time.",
+    groups: [
+      {
+        title: "AI Feedback and Learning",
+        items: [
+          {
+            label: "Feedback Inbox",
+            href: "/feedback-inbox",
+            route: "/feedback-inbox",
+            description:
+              "Client feedback, issues, comments, and triage assignments.",
+            icon: Inbox,
+          },
+          {
+            label: "Learning & Feedback",
+            href: "/learning-feedback",
+            route: "/learning-feedback",
+            description:
+              "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
+            icon: Brain,
+          },
+          {
+            label: "Task Training",
+            href: "/task-training",
+            route: "/task-training",
+            description:
+              "Review task feedback examples that train extraction behavior.",
+            icon: ClipboardCheck,
+          },
+          {
+            label: "Outlook Draft Feedback",
+            href: "/outlook-draft-feedback",
+            route: "/outlook-draft-feedback",
+            description:
+              "Review feedback on AI-generated Outlook email drafts.",
+            icon: Inbox,
+          },
+          {
+            label: "AI Learning Promotions",
+            href: "/ai/learning-promotions",
+            route: "/ai/learning-promotions",
+            description:
+              "Approve retrieval-learning candidates and monitor promotion history.",
+            icon: Sparkles,
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "Planning",
     description:
       "Command center, feedback triage, product planning, and agent annotation queue.",
@@ -140,50 +192,6 @@ const sections: AdminMenuSection[] = [
     ],
   },
   {
-    title: "AI Feedback and Learning",
-    description:
-      "Review queues and training surfaces that improve the assistant over time.",
-    groups: [
-      {
-        title: "AI Feedback and Learning",
-        items: [
-          {
-            label: "Feedback Inbox",
-            href: "/feedback-inbox",
-            route: "/feedback-inbox",
-            description:
-              "Client feedback, issues, comments, and triage assignments.",
-            icon: Inbox,
-          },
-          {
-            label: "Learning & Feedback",
-            href: "/learning-feedback",
-            route: "/learning-feedback",
-            description:
-              "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
-            icon: Brain,
-          },
-          {
-            label: "Task Training",
-            href: "/task-training",
-            route: "/task-training",
-            description:
-              "Review task feedback examples that train extraction behavior.",
-            icon: ClipboardCheck,
-          },
-          {
-            label: "Outlook Draft Feedback",
-            href: "/outlook-draft-feedback",
-            route: "/outlook-draft-feedback",
-            description:
-              "Review feedback on AI-generated Outlook email drafts.",
-            icon: Inbox,
-          },
-        ],
-      },
-    ],
-  },
-  {
     title: "AI Stats",
     description:
       "Monitor what the assistant is doing — conversations, runs, evaluations, and outputs.",
@@ -234,14 +242,6 @@ const sections: AdminMenuSection[] = [
             route: "/eval-runs",
             description: "Assistant evaluation runs and scored results.",
             icon: FlaskConical,
-          },
-          {
-            label: "AI Learning Promotions",
-            href: "/ai/learning-promotions",
-            route: "/ai/learning-promotions",
-            description:
-              "Approve retrieval-learning candidates and monitor promotion history.",
-            icon: Sparkles,
           },
         ],
       },

@@ -70,6 +70,7 @@
     "verify:deep-agents-render-env": "node scripts/verify/verify_deep_agents_docs_wiki_render_env.mjs",
     "verify:render-web-scheduler": "node scripts/verify/verify-render-web-scheduler-disabled.mjs",
     "verify:deprecated-provider-env": "node scripts/verify/verify_deprecated_provider_env_absent.mjs",
+    "verify:eve-app-help-agent": "npx tsx scripts/verify/verify_eve_app_help_agent.mjs",
     "verify:microsoft-assistant-health": "node scripts/verify/verify_microsoft_assistant_health.mjs",
     "verify:graph-subscriptions": "node scripts/verify/verify_graph_subscriptions.mjs",
     "verify:app-db-pressure": "python3 scripts/verify/verify_app_db_pressure.py",

@@ -147,6 +147,7 @@ export class TutorialRecorder {
   async step(options: TutorialStepOptions, action: () => Promise<void>) {
     await action();
     await this.waitForStability();
+    this.assertNotLoginPage(options.title);
     const screenshotMode = options.screenshot?.mode ?? "viewport";
     const fileName = `${String(this.steps.length + 1).padStart(2, "0")}-${slugify(options.title)}.png`;
     const screenshotPath = path.join(this.screenshotsDir, fileName);
@@ -242,6 +243,21 @@ export class TutorialRecorder {
     await this.installMaskStyle();
     await this.page.evaluate(() => document.fonts?.ready).catch(() => undefined);
     await this.page.waitForTimeout(300);
+  }
+
+  private assertNotLoginPage(stepTitle: string) {
+    const url = new URL(this.page.url());
+    if (url.pathname.startsWith("/auth/login")) {
+      throw new Error(
+        [
+          `Tutorial step "${stepTitle}" redirected to login.`,
+          `Current URL: ${url.pathname}${url.search}`,
+          "Cause: the provided Playwright storage state is missing, expired, or scoped to the wrong host.",
+          "Detection gap: tutorial capture previously accepted login-page screenshots as successful workflow artifacts.",
+          "Prevention: refresh the storage state for the same --base-url before running the tutorial.",
+        ].join(" "),
+      );
+    }
   }
 }
 
