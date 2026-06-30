@@ -74,7 +74,7 @@ export const CHANGE_REQUEST_FIELD_GUIDE = {
     },
   ],
   previewRule:
-    "Always call createChangeEvent with confirmed=false first. Only write with confirmed=true after the user explicitly confirms the preview.",
+    "Always call createChangeEvent with confirmed=false first. Only write with confirmed=true after the user explicitly confirms the preview. When you call confirmed=false, the tool returns an interactive form card that displays every field — keep your chat reply to a single short line like 'Here's the preview — review and confirm or tell me what to change.' Do NOT restate the field values in prose; the card already shows them, and repeating them is noise.",
 } as const;
 
 type ChangeRequestPreviewFields = {
@@ -300,7 +300,7 @@ export function renderChangeRequestToolDescription() {
     "Required: projectId and title.",
     `Recommended — pursue these before previewing, each with a one-line reason it matters, instead of riding the default: ${recommended}.`,
     `Optional — mention they exist and prefill if given, but do not push: ${optional}, originId.`,
-    "ALWAYS call this tool with confirmed=false first. That returns a preview that renders as an interactive change-event form card the user edits in place — it is the primary UI for this flow, never a substitute text summary. Only call again with confirmed=true after the user explicitly confirms the card.",
+    "ALWAYS call this tool with confirmed=false first. That returns a preview that renders as an interactive change-event form card the user edits in place — it is the primary UI for this flow, never a substitute text summary. On that preview turn keep your chat reply to one short line (e.g. 'Here's the preview — review and confirm or tell me what to change') and do NOT restate the field values in prose; the card already displays them. Only call again with confirmed=true after the user explicitly confirms the card.",
     "The tool generates the change event number and updated_at timestamp; never ask the user for those.",
     "After the write succeeds, do not stop at 'done' — point the user at the next concrete step (attachments, line items in the full form, or a related record) in one sentence.",
   ].join(" ");

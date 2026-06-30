@@ -1,6 +1,8 @@
 import {
+  getActionToolPreview,
   getPreviewReviewCard,
   getPreviewReviewGroups,
+  isStandalonePreviewCardPart,
 } from "../preview-review-card";
 
 describe("getPreviewReviewGroups", () => {
@@ -147,5 +149,46 @@ describe("getPreviewReviewGroups", () => {
         },
       }),
     ).toEqual([]);
+  });
+});
+
+describe("isStandalonePreviewCardPart (preview-card render guard)", () => {
+  const previewOutput = {
+    action: "preview",
+    preview: { table: "change_events", fields: { title: "X" }, reviewCard: {} },
+  };
+
+  it("treats a confirmed:false preview WITHOUT approval as card-worthy", () => {
+    // This is the exact regression: a createChangeEvent preview rides alongside
+    // findProject/semanticSearch, carries no approval, and previously got dropped
+    // to a bare Analysis Step label instead of rendering the form card.
+    expect(
+      isStandalonePreviewCardPart({ approval: undefined, output: previewOutput }),
+    ).toBe(true);
+  });
+
+  it("does not double-render an approval-gated (confirmed:true) part as a preview card", () => {
+    expect(
+      isStandalonePreviewCardPart({
+        approval: { id: "appr_1" },
+        output: previewOutput,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not render a card for a confirmed write that returns a record, not a preview", () => {
+    expect(
+      isStandalonePreviewCardPart({
+        approval: undefined,
+        output: { success: true, record: { id: "ce-1" } },
+      }),
+    ).toBe(false);
+  });
+
+  it("getActionToolPreview only extracts a non-empty preview when action is 'preview'", () => {
+    expect(getActionToolPreview(previewOutput)).toEqual(previewOutput.preview);
+    expect(getActionToolPreview({ action: "preview", preview: {} })).toBeNull();
+    expect(getActionToolPreview({ action: "record" })).toBeNull();
+    expect(getActionToolPreview(null)).toBeNull();
   });
 });

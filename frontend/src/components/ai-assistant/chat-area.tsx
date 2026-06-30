@@ -159,6 +159,7 @@ import {
 } from "@/lib/ai/assistant-suggestion-resolver";
 import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
 import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
+import { isStandalonePreviewCardPart } from "./preview-review-card";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -389,6 +390,13 @@ function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
     // Evidence/source-coverage cards disabled in chat UI per 2026-05-19 —
     // backend still emits them; re-enable by removing this filter.
     if (widget.type === "source_evidence_drawer") return widgets;
+    // Meeting-intelligence aggregate card deactivated in chat UI per 2026-06-26 —
+    // it produced meta-commentary noise ("2 meeting records matched this window",
+    // "Opportunity tracking is not available", "Open the meeting cards with risk
+    // badges first"), crowded out the conversational answer, and its links didn't
+    // open. The agent now answers meeting questions in prose. Backend still emits
+    // the part; re-enable by removing this filter. See docs/design/noise-gate-log.md.
+    if (widget.type === "meeting_intelligence") return widgets;
     widgets.push(widget);
     return widgets;
   }, []);
@@ -2205,6 +2213,33 @@ export function ChatArea({
                                     selectedProjectId={selectedProjectIdProp}
                                     onSubmit={onSubmit}
                                     onEditDraft={onInputChange}
+                                  />
+                                ))}
+                              {/*
+                                Preview cards (e.g. createChangeEvent confirmed:false)
+                                carry NO approval — the AI SDK only gates approval on
+                                confirmed:true. Without this, a preview that rides alongside
+                                other tool calls (findProject/semanticSearch) is shown only
+                                as an "Analysis Step" label and the generative-UI form card
+                                is dropped. Render those preview parts here so the card shows
+                                even when the assistant also emits text.
+                              */}
+                              {toolParts
+                                .filter(
+                                  (part) =>
+                                    !hasAssistantDynamicToolComponent(part) &&
+                                    isStandalonePreviewCardPart(part),
+                                )
+                                .map((part) => (
+                                  <ToolCallItem
+                                    key={`${part.toolCallId}-preview`}
+                                    part={part}
+                                    onApprove={handleToolApprove}
+                                    onEdit={handleToolEdit}
+                                    onRun={handleToolRun}
+                                    onApprovalResponse={onToolApprovalResponse}
+                                    sessionId={sessionId}
+                                    selectedProjectId={selectedProjectIdProp}
                                   />
                                 ))}
                             </div>
