@@ -173,6 +173,9 @@ describe("KnowledgeBasePage", () => {
     expect(
       screen.getByPlaceholderText("Search..."),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Training docs home" }).closest("header"),
+    ).toHaveClass("hidden", "lg:block");
     expect(screen.getAllByRole("link", { name: /Budget/ })[0]).toHaveAttribute(
       "href",
       "/knowledge/app/budget",
@@ -186,6 +189,11 @@ describe("KnowledgeBasePage", () => {
     expect(
       screen.getByRole("button", { name: "Open training docs menu" }),
     ).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("button", { name: "Open training docs menu" })
+        .parentElement?.parentElement,
+    ).not.toHaveClass("border-b");
   });
 
   it("opens the mobile training docs menu", async () => {

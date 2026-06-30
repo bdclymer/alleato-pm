@@ -174,7 +174,7 @@ function DocsHeader({
   onSearchChange: (value: string) => void;
 }) {
   return (
-    <header className="border-b border-border/70">
+    <header className="hidden border-b border-border/70 lg:block">
       <div className="mx-auto max-w-screen-2xl px-6 lg:px-10">
         <div className="flex h-24 items-center gap-6 lg:h-16">
           <Link
@@ -252,7 +252,7 @@ function MobileBreadcrumb({
   onOpenMenu: () => void;
 }) {
   return (
-    <div className="border-b border-border/70 lg:hidden">
+    <div className="lg:hidden">
       <div className="flex h-20 items-center gap-4 px-6">
         <Button
           type="button"
