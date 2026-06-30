@@ -124,6 +124,10 @@ export const TABLE_HEADER_LABEL_CLASSNAME =
 export const TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME = "w-auto lg:hidden";
 export const TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME =
   "hidden min-w-0 justify-end lg:flex";
+export const TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME =
+  "flex h-[calc(100dvh-6rem)] min-h-[calc(100dvh-6rem)] flex-1 min-w-0 overflow-hidden";
+export const TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME =
+  "flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden pb-0";
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -2941,7 +2945,7 @@ export function UnifiedTablePage<T>({
           const SplitView = views?.split;
           if (!SplitView) return null;
           return (
-            <div className="flex flex-1 min-h-0">
+            <div className={TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME}>
               {SplitView({
                 items: rowOrderedItems,
                 getRowId: table.getRowId,
@@ -3031,7 +3035,7 @@ export function UnifiedTablePage<T>({
         padding={containerPadding}
         className={cn(
           "pb-12",
-          canRenderSplitView && "flex flex-col min-h-0",
+          canRenderSplitView && TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
           sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}

@@ -17,6 +17,9 @@ import { DetailField } from "@/components/ds/DetailField";
 
 export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments" | "reviewed";
 
+export const EMAIL_INBOX_SPLIT_VIEW_CLASSNAME =
+  "flex h-[calc(100dvh-6rem)] min-h-[calc(100dvh-6rem)] w-full overflow-hidden bg-background";
+
 export interface ReviewedEmail {
   reviewId: string;
   id: number;
@@ -500,7 +503,7 @@ export function EmailInboxClient({
   return (
     <div
       data-email-inbox-root
-      className="flex h-full min-h-0 w-full overflow-hidden bg-background"
+      className={EMAIL_INBOX_SPLIT_VIEW_CLASSNAME}
     >
       {/* Left panel — fixed width */}
       <div className="w-96 shrink-0 border-r border-border/50 flex flex-col overflow-hidden">
