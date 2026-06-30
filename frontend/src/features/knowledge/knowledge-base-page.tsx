@@ -7,7 +7,6 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
-  ExternalLink,
   FileText,
   HardHat,
   List,
@@ -743,11 +742,6 @@ function KnowledgeSourceList({
       <SectionRuleHeading
         label={title}
         className="mb-0"
-        actions={
-          <span className="text-sm tabular-nums text-muted-foreground">
-            {documents.length}
-          </span>
-        }
       />
 
       {openError && (
@@ -762,42 +756,48 @@ function KnowledgeSourceList({
         </p>
       ) : (
         <div className="divide-y divide-border">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 space-y-1">
-                <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {doc.description}
-                </p>
-                {doc.meta ? (
-                  <p className="truncate text-xs text-muted-foreground">{doc.meta}</p>
-                ) : null}
-              </div>
-              {doc.href ? (
-                <Button asChild variant="ghost" size="sm" className="w-fit gap-1.5">
-                  <Link href={doc.href} target="_blank" rel="noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                    Open
-                  </Link>
-                </Button>
-              ) : (
+          {documents.map((doc) => {
+            const rowClassName =
+              "block w-full py-3 text-left text-foreground transition-colors hover:text-primary";
+            const rowContent = (
+              <p className="truncate text-sm font-medium">{doc.title}</p>
+            );
+
+            if (doc.href) {
+              return (
+                <Link
+                  key={doc.id}
+                  href={doc.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={rowClassName}
+                >
+                  {rowContent}
+                </Link>
+              );
+            }
+
+            if (doc.sourceDoc) {
+              return (
                 <Button
+                  key={doc.id}
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  className="w-fit gap-1.5"
+                  className="h-auto w-full justify-start rounded-none px-0 py-3 text-left text-foreground hover:bg-transparent hover:text-primary disabled:cursor-wait"
                   onClick={() => onOpenDocument(doc)}
                   disabled={openingDocumentId === doc.id}
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  {openingDocumentId === doc.id ? "Opening" : "Open"}
+                  {rowContent}
                 </Button>
-              )}
-            </div>
-          ))}
+              );
+            }
+
+            return (
+              <div key={doc.id} className="py-3">
+                {rowContent}
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

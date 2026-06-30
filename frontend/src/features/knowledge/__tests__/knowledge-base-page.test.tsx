@@ -134,6 +134,10 @@ describe("KnowledgeBasePage", () => {
       screen.getByRole("heading", { name: "Field Operations sources" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Safety orientation")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Safety orientation" })).toBeInTheDocument();
+    expect(screen.queryByText("safety-orientation.pdf")).not.toBeInTheDocument();
+    expect(screen.queryByText(/knowledge_upload/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open" })).not.toBeInTheDocument();
     expect(screen.queryByText("Subcontract template")).not.toBeInTheDocument();
   });
 
