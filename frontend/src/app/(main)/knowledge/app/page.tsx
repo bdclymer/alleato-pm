@@ -12,7 +12,7 @@ export default async function KnowledgeAppPage() {
       variant="detailWide"
       title="App Knowledge Base"
       showHeader={false}
-      contentClassName="max-w-screen-2xl"
+      contentClassName="mx-auto max-w-screen-2xl"
     >
       <AppTrainingDocsPage trainingDocs={trainingDocs} />
     </PageShell>

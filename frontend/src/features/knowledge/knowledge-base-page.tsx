@@ -391,7 +391,7 @@ function KnowledgeBrowsePage({
       variant="detailWide"
       title={title}
       showHeader={false}
-      contentClassName="max-w-screen-2xl"
+      contentClassName="mx-auto max-w-screen-2xl"
     >
       {content}
     </PageShell>

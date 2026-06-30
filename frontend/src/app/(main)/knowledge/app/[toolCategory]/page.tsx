@@ -23,7 +23,7 @@ export default async function KnowledgeAppToolCategoryPage({
       variant="detailWide"
       title={`${category.title} Training Docs`}
       showHeader={false}
-      contentClassName="max-w-screen-2xl"
+      contentClassName="mx-auto max-w-screen-2xl"
     >
       <AppTrainingDocsPage
         activeCategorySlug={category.slug}
