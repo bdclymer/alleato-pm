@@ -106,6 +106,23 @@ export type CreateEmailInput = {
 export type UpdateEmailInput = Partial<CreateEmailInput>;
 export type EmailSource = "app" | "outlook" | "all";
 
+export interface MailboxFeedbackCoverageDay {
+  dateKey: string;
+  label: string;
+  liveCount: number | null;
+  syncedCount: number;
+  reviewedCount: number;
+}
+
+export interface MailboxFeedbackCoverage {
+  mailboxUserId: string;
+  timeZone: string;
+  days: MailboxFeedbackCoverageDay[];
+  liveFetchedAt: string | null;
+  liveTruncated: boolean;
+  liveError: string | null;
+}
+
 export const emailKeys = {
   global: (status?: string, source?: EmailSource) =>
     ["emails", "global", status, source] as const,
@@ -116,6 +133,8 @@ export const emailKeys = {
     ["emails", projectId, "list", status, source] as const,
   detail: (projectId: number, id: string) =>
     ["emails", projectId, "detail", id] as const,
+  feedbackCoverage: (mailboxUserId?: string, timeZone?: string) =>
+    ["emails", "feedback-coverage", mailboxUserId, timeZone] as const,
 };
 
 export function useAllEmails(
@@ -171,6 +190,27 @@ export function useEmail(projectId: number, emailId: string) {
         { signal },
       ),
     enabled: !!projectId && !!emailId,
+  });
+}
+
+export function useMailboxFeedbackCoverage(
+  mailboxUserId?: string,
+  timeZone = "America/New_York",
+) {
+  const params = new URLSearchParams();
+  if (mailboxUserId) params.set("mailboxUserId", mailboxUserId);
+  if (timeZone) params.set("timeZone", timeZone);
+  const queryString = params.toString();
+
+  return useQuery<MailboxFeedbackCoverage>({
+    queryKey: emailKeys.feedbackCoverage(mailboxUserId, timeZone),
+    queryFn: ({ signal }) =>
+      apiFetch<MailboxFeedbackCoverage>(
+        `/api/outlook-draft-feedback/coverage${queryString ? `?${queryString}` : ""}`,
+        { signal },
+      ),
+    enabled: Boolean(mailboxUserId),
+    staleTime: 60_000,
   });
 }
 

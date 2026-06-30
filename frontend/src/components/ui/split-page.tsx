@@ -35,7 +35,13 @@ export interface SplitPageProps {
   secondPaneClassName?: string;
 }
 
-type SplitPageFrameHeight = 'content' | 'viewport';
+type SplitPageFrameHeight = 'content' | 'viewport' | 'fill';
+
+export function getSplitPageFrameHeightClass(height: SplitPageFrameHeight): string {
+  if (height === 'viewport') return 'h-svh';
+  if (height === 'fill') return 'h-full flex-1';
+  return 'h-[calc(100dvh-5rem)]';
+}
 
 export interface SplitPageFrameProps
   extends React.ComponentPropsWithoutRef<'div'> {
@@ -146,7 +152,7 @@ export const SplitPageFrame = React.forwardRef<HTMLDivElement, SplitPageFramePro
       ref={ref}
       className={cn(
         'relative flex min-h-0 w-full flex-col overflow-hidden',
-        height === 'viewport' ? 'h-svh' : 'h-[calc(100dvh-5rem)]',
+        getSplitPageFrameHeightClass(height),
         className,
       )}
       {...props}

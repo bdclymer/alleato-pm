@@ -1,5 +1,6 @@
 import {
   buildContextItems,
+  PROJECT_EMAILS_WORKSPACE_CLASSNAME,
 } from "@/features/emails/project-emails-workspace";
 import type { ProjectEmail } from "@/hooks/use-emails";
 
@@ -67,5 +68,16 @@ describe("buildContextItems", () => {
     expect(items.find((item) => item.label === "Project")?.value).toBe(
       "No project assigned",
     );
+  });
+});
+
+describe("ProjectEmailsWorkspace layout", () => {
+  it("uses a parent-fill split-page contract instead of viewport subtraction", () => {
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).toContain("h-full");
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).toContain("min-h-0");
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).toContain("flex-1");
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).toContain("overflow-hidden");
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).toContain("w-full");
+    expect(PROJECT_EMAILS_WORKSPACE_CLASSNAME).not.toContain("100dvh");
   });
 });

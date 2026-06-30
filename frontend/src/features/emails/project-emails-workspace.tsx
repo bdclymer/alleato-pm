@@ -88,7 +88,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SplitPage, useSplitPage } from "@/components/ui/split-page";
+import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -170,6 +170,9 @@ interface ProjectEmailsWorkspaceProps {
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
 }
+
+export const PROJECT_EMAILS_WORKSPACE_CLASSNAME =
+  "relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background";
 
 interface EmailAttachmentRecord {
   id: number;
@@ -2878,7 +2881,10 @@ export function ProjectEmailsWorkspace({
   }, []);
 
   return (
-    <div className="relative flex h-[calc(100dvh-8.5rem)] min-h-0 w-full flex-col overflow-hidden">
+    <SplitPageFrame
+      height="fill"
+      className={PROJECT_EMAILS_WORKSPACE_CLASSNAME}
+    >
       <SplitPage
         breakpoint="xl"
         defaultIsOpen={!selectedEmail}
@@ -3226,6 +3232,6 @@ export function ProjectEmailsWorkspace({
           ) : null
         }
       />
-    </div>
+    </SplitPageFrame>
   );
 }
