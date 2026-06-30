@@ -14,6 +14,7 @@ const outputRoot =
 const screenshotDir = path.join(outputRoot, "screenshots");
 const baseUrl = (process.env.BASE_URL || "https://projects.alleatogroup.com").replace(/\/$/, "");
 const projectId = process.env.PROJECT_ID || "1034";
+const routeSet = process.env.ROUTE_SET || "product-tools";
 const storageState =
   process.env.STORAGE_STATE ||
   path.join(repoRoot, "frontend/tests/.auth/user.json");
@@ -62,6 +63,40 @@ const skipDynamicNames = new Set([
   "insightId",
   "token",
 ]);
+
+const productToolPrefixes = [
+  "budget",
+  "prime-contracts",
+  "commitments",
+  "change-events",
+  "change-orders",
+  "schedule",
+  "meetings",
+  "daily-log",
+  "punch-list",
+  "rfis",
+  "submittals",
+  "transmittals",
+  "photos",
+  "drawings",
+  "specifications",
+  "documents",
+];
+
+function productTool(route) {
+  const match = route.match(/^\/\[projectId\]\/([^/]+)/);
+  return match?.[1] ?? null;
+}
+
+function routeSetIncludes(item) {
+  if (routeSet === "all") return isApplicationScope(item.scope);
+  if (routeSet !== "product-tools") {
+    throw new Error(`Unsupported ROUTE_SET "${routeSet}". Use "product-tools" or "all".`);
+  }
+
+  const tool = productTool(item.route);
+  return item.scope === "main" && tool !== null && productToolPrefixes.includes(tool);
+}
 
 async function walk(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -209,6 +244,7 @@ async function getContentClip(page) {
 }
 
 async function main() {
+  await fs.rm(screenshotDir, { recursive: true, force: true });
   await fs.mkdir(screenshotDir, { recursive: true });
   const pageFiles = (await walk(appRoot))
     .filter((file) => file.endsWith("/page.tsx"))
@@ -218,13 +254,18 @@ async function main() {
     const route = fileToRoute(file);
     const scope = routeScope(file);
     const substitution = substituteRoute(route);
+    const tool = productTool(route);
     return {
       source: path.relative(repoRoot, file),
       route,
       scope,
-      included: isApplicationScope(scope),
+      included: false,
+      tool,
       ...substitution,
     };
+  });
+  inventory.forEach((item) => {
+    item.included = routeSetIncludes(item);
   });
 
   const targets = inventory.filter((item) => item.included && item.status === "ready");
@@ -256,7 +297,6 @@ async function main() {
     const result = {
       ...item,
       url,
-      screenshot: path.relative(outputRoot, screenshotPath),
       status: "pending",
     };
 
@@ -266,17 +306,20 @@ async function main() {
       await waitForPage(page);
       const finalUrl = page.url();
       const title = await page.title().catch(() => "");
-      const clip = await getContentClip(page).catch(() => ({ x: 0, y: 0, width: 1440, height: 1000 }));
-      await page.screenshot({ path: screenshotPath, clip, fullPage: false });
       result.status = "captured";
       result.httpStatus = response?.status() || null;
       result.finalUrl = finalUrl;
       result.title = title;
-      result.clip = clip;
       if (finalUrl.includes("/auth/login")) result.status = "captured_login_redirect";
       const bodyText = await page.locator("body").innerText({ timeout: 1000 }).catch(() => "");
       if (/access denied/i.test(bodyText)) result.status = "captured_access_denied";
       if (response && response.status() >= 400) result.status = `captured_http_${response.status()}`;
+      if (result.status === "captured" || result.status.startsWith("captured_http_")) {
+        const clip = await getContentClip(page).catch(() => ({ x: 0, y: 0, width: 1440, height: 1000 }));
+        await page.screenshot({ path: screenshotPath, clip, fullPage: false });
+        result.screenshot = path.relative(outputRoot, screenshotPath);
+        result.clip = clip;
+      }
     } catch (error) {
       result.status = "capture_error";
       result.error = error instanceof Error ? error.message.split("\n")[0] : String(error);
@@ -297,6 +340,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     baseUrl,
     projectId,
+    routeSet,
     storageState: path.relative(repoRoot, storageState),
     totalPageRoutes: inventory.length,
     targetRoutes: targets.length,
@@ -314,6 +358,7 @@ async function main() {
       "",
       `Base URL: ${baseUrl}`,
       `Project ID: ${projectId}`,
+      `Route set: ${routeSet}`,
       "",
       "See `manifest.json` for route status, final URL, screenshot path, and skipped dynamic record routes.",
       "",

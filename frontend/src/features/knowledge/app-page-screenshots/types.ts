@@ -13,6 +13,7 @@ export interface AppPageScreenshotResult {
   route: string;
   scope: string;
   included: boolean;
+  tool?: string | null;
   status: ScreenshotStatus;
   urlPath?: string;
   url?: string;
@@ -34,6 +35,7 @@ export interface AppPageScreenshotManifest {
   generatedAt: string;
   baseUrl: string;
   projectId: string;
+  routeSet?: string;
   storageState: string;
   totalPageRoutes: number;
   targetRoutes: number;

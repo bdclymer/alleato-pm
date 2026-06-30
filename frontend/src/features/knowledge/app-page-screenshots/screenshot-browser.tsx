@@ -17,6 +17,7 @@ import type {
 } from "./types";
 
 type FilterId =
+  | "product_tools"
   | "all"
   | "captured"
   | "captured_http_404"
@@ -34,6 +35,11 @@ interface FilterGroup {
 }
 
 const FILTERS: FilterGroup[] = [
+  {
+    id: "product_tools",
+    label: "Product tools",
+    predicate: (item) => Boolean(item.tool),
+  },
   { id: "all", label: "All routes", predicate: () => true },
   { id: "captured", label: "Captured", predicate: (item) => item.status === "captured" },
   {
@@ -230,10 +236,12 @@ export function AppPageScreenshotBrowser({
   items: AppPageScreenshotItem[];
   error: string | null;
 }) {
-  const [activeFilter, setActiveFilter] = React.useState<FilterId>("main");
+  const [activeFilter, setActiveFilter] = React.useState<FilterId>("product_tools");
   const [search, setSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(
-    items.find((item) => item.scope === "main" && item.status === "captured")
+    items.find((item) => item.tool && item.status === "captured")
+      ?.id ??
+      items.find((item) => item.scope === "main" && item.status === "captured")
       ?.id ??
       items.find((item) => item.status === "captured")?.id ??
       items[0]?.id ??
@@ -293,7 +301,7 @@ export function AppPageScreenshotBrowser({
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {manifest
-                  ? `${manifest.totalPageRoutes} routes inventoried · ${manifest.summary.captured ?? 0} captured · ${manifest.summary.captured_http_404 ?? 0} production 404s`
+                  ? `${manifest.routeSet ?? "all"} · ${manifest.targetRoutes} target routes · ${manifest.summary.captured ?? 0} captured · ${manifest.summary.captured_access_denied ?? 0} access denied`
                   : "Screenshot manifest unavailable"}
               </p>
             </div>
