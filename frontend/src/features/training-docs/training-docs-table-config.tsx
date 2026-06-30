@@ -29,8 +29,6 @@ export const trainingDocColumns = [
   { id: "published", label: "Published", defaultVisible: true },
 ] as const;
 
-const DOCS_SITE_ORIGIN = "https://alleato-os-docs.vercel.app";
-
 export const trainingDocDefaultVisibleColumns = trainingDocColumns
   .filter((column) => column.defaultVisible || column.alwaysVisible)
   .map((column) => column.id);
@@ -95,15 +93,14 @@ export function buildTrainingDocTableColumns(
       ...trainingDocColumns[1],
       render: (doc) => (
         <CellLink
-          value={doc.published_doc_path ? "Open" : null}
-          href={getTrainingPageUrl(doc.published_doc_path)}
+          value="Open"
+          href={`/training-docs/${doc.id}/preview`}
           emptyLabel="-"
-          external
         />
       ),
       sortable: true,
       sortValue: (doc) => doc.published_doc_path ?? "",
-      csvValue: (doc) => getTrainingPageUrl(doc.published_doc_path) ?? "",
+      csvValue: (doc) => `/training-docs/${doc.id}/preview`,
     },
     editableSelectColumn(
       {
@@ -235,10 +232,4 @@ function formatDate(value: string | null): string | null {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
-}
-
-function getTrainingPageUrl(publishedDocPath: string | null): string | null {
-  if (!publishedDocPath) return null;
-  const routePath = publishedDocPath.replace(/\.mdx$/, "");
-  return `${DOCS_SITE_ORIGIN}/${routePath}`;
 }
