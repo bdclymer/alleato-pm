@@ -3531,7 +3531,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             ? `Feedback was saved, but follow-up processing failed: ${feedbackSideEffectError}`
             : null,
           tip: type === "feature_request"
-            ? "You can track this on the Product Board at /product-board."
+            ? "You can track this on the Roadmap at /product-board."
             : "You can track this in the Admin Feedback inbox.",
         };
         await recordWriteAudit({
@@ -3547,13 +3547,13 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
     }),
 
     // -------------------------------------------------------------------------
-    // TIER 1 — Add item to Product Board
+    // TIER 1 — Add item to Roadmap
     // -------------------------------------------------------------------------
 
     addBoardItem: tool({
       description:
-        "Add a feature idea, initiative, or product improvement directly to the Product Board " +
-        "kanban. Use when the user says 'add this to the board', 'put this on the product board', " +
+        "Add a feature idea, initiative, or product improvement directly to the Roadmap " +
+        "kanban. Use when the user says 'add this to the board', 'put this on the roadmap', " +
         "'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track " +
         "a product idea with a specific status column. " +
         "Always show a preview and ask for confirmation before writing.",
@@ -3644,7 +3644,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
 
         const response = {
           success: true,
-          message: `**"${title}"** added to the **${board_status.replace(/_/g, " ")}** column on the [Product Board](/product-board).`,
+          message: `**"${title}"** added to the **${board_status.replace(/_/g, " ")}** column on the [Roadmap](/product-board).`,
           itemId,
           board_status,
         };

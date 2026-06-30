@@ -33,9 +33,7 @@ import {
   useAllEmails,
   useDeleteEmail,
   useEmails,
-  useMailboxFeedbackCoverage,
   type EmailSource,
-  type MailboxFeedbackCoverageDay,
   type ProjectEmail,
 } from "@/hooks/use-emails";
 import {
@@ -107,11 +105,6 @@ interface EmailsClientProps {
   source?: EmailSource;
 }
 
-function formatCoverageDay(day: MailboxFeedbackCoverageDay): string {
-  const liveLabel = day.liveCount === null ? "live unavailable" : `${day.liveCount} live`;
-  return `${day.label}: ${liveLabel}, ${day.syncedCount} synced, ${day.reviewedCount} reviewed`;
-}
-
 export function EmailsClient({
   projectId,
   mailboxUserId,
@@ -159,29 +152,6 @@ export function EmailsClient({
     : isGlobal
       ? "Application and Resend emails across projects."
       : undefined;
-  const coverageQuery = useMailboxFeedbackCoverage(
-    isMailboxReviewMode ? mailboxUserId : undefined,
-  );
-  const mailboxCoverageDescription = React.useMemo(() => {
-    if (!isMailboxReviewMode) return null;
-    if (coverageQuery.isLoading) {
-      return "Loading live inbox coverage.";
-    }
-    if (coverageQuery.error || !coverageQuery.data) {
-      return "List shows synced intake rows. Live inbox coverage could not be loaded.";
-    }
-
-    const daySummary = coverageQuery.data.days.map(formatCoverageDay).join(" ");
-    const truncationNote = coverageQuery.data.liveTruncated
-      ? " Live count is capped by the current Graph fetch window."
-      : "";
-    return `List shows synced intake rows, not full inbox truth. ${daySummary}.${truncationNote}`;
-  }, [
-    coverageQuery.data,
-    coverageQuery.error,
-    coverageQuery.isLoading,
-    isMailboxReviewMode,
-  ]);
   // Outlook emails can be bulk-deleted from our system even though they can't be edited
   const noWriteActions = isGlobal || isOutlook;
   const allowBulkDelete = !isGlobal;
@@ -801,9 +771,6 @@ export function EmailsClient({
           isLoading={isLoading}
           error={fetchError ?? undefined}
           title={title}
-          description={
-            isMailboxReviewMode ? mailboxCoverageDescription : description
-          }
           tabs={tabs ?? []}
           searchValue={tableState.searchInput}
           onSearchChange={tableState.setSearchInput}
@@ -901,11 +868,7 @@ export function EmailsClient({
         features={{ enableViews: false }}
         header={{
           title: embedded ? "" : title,
-          description: embedded
-            ? undefined
-            : isMailboxReviewMode
-              ? mailboxCoverageDescription
-              : description,
+          description: embedded ? undefined : description,
           actions: embedded ? undefined : (
             <div className="flex items-center gap-2">
               <EmailViewSwitcher

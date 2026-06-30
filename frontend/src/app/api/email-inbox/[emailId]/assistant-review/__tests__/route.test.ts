@@ -199,6 +199,8 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
         projectAssignment: {
           status: "incorrect",
           correctedProjectId: 25125,
+          reasonSignals: ["subject_line", "sender"],
+          reasonNote: "Sender matched the known project contact.",
         },
       }),
       { params: Promise.resolve({ emailId: "42" }) },
@@ -214,6 +216,8 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,
+            reasonSignals: ["subject_line", "sender"],
+            reasonNote: "Sender matched the known project contact.",
           },
         }),
       }),

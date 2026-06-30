@@ -43,7 +43,7 @@ export const POST = withApiGuardrails("admin/feedback/board/create", async ({ re
       comment: description,
       page_url: "/product-board",
       page_path: "/product-board",
-      page_title: "Product Board",
+      page_title: "Roadmap",
       request_type: "feature_request",
       board_status,
       severity,

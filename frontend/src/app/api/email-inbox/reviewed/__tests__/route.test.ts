@@ -104,6 +104,8 @@ describe("/api/email-inbox/reviewed", () => {
             projectAssignmentFeedback: {
               status: "incorrect",
               correctedProjectId: 25125,
+              reasonSignals: ["message_body"],
+              reasonNote: "The email body named the job directly.",
             },
           },
         },
@@ -170,6 +172,8 @@ describe("/api/email-inbox/reviewed", () => {
         projectAssignmentFeedback: {
           status: "incorrect",
           correctedProjectId: 25125,
+          reasonSignals: ["message_body"],
+          reasonNote: "The email body named the job directly.",
         },
       }),
     ]);
@@ -202,6 +206,8 @@ describe("/api/email-inbox/reviewed", () => {
           projectAssignmentFeedback: {
             status: "unreviewed",
             correctedProjectId: null,
+            reasonSignals: [],
+            reasonNote: null,
           },
         },
         updated_at: "2026-06-30T09:00:00.000Z",
@@ -247,6 +253,8 @@ describe("/api/email-inbox/reviewed", () => {
           projectAssignmentFeedback: {
             status: "unreviewed",
             correctedProjectId: null,
+            reasonSignals: [],
+            reasonNote: null,
           },
         }),
       }),
@@ -294,6 +302,8 @@ describe("/api/email-inbox/reviewed", () => {
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,
+            reasonSignals: ["subject_line", "sender"],
+            reasonNote: "Sender and subject both referenced the project.",
           },
         },
         updated_at: "2026-06-30T09:00:00.000Z",
@@ -329,6 +339,8 @@ describe("/api/email-inbox/reviewed", () => {
         projectAssignment: {
           status: "incorrect",
           correctedProjectId: 25125,
+          reasonSignals: ["subject_line", "sender"],
+          reasonNote: "Sender and subject both referenced the project.",
         },
       }),
     );
@@ -346,6 +358,8 @@ describe("/api/email-inbox/reviewed", () => {
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,
+            reasonSignals: ["subject_line", "sender"],
+            reasonNote: "Sender and subject both referenced the project.",
           },
         }),
       }),
@@ -358,6 +372,8 @@ describe("/api/email-inbox/reviewed", () => {
         projectAssignmentFeedback: {
           status: "incorrect",
           correctedProjectId: 25125,
+          reasonSignals: ["subject_line", "sender"],
+          reasonNote: "Sender and subject both referenced the project.",
         },
       }),
     );

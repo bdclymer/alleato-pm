@@ -1,18 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { SiteHeader } from "@/components/header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const hideFooter =
-    pathname === "/outlook-draft-feedback" ||
-    pathname === "/user-management" ||
-    pathname?.startsWith("/user-management/");
-
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
@@ -29,7 +21,6 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
           </main>
         </div>
-        {!hideFooter && <SiteFooter />}
       </SidebarInset>
     </SidebarProvider>
   );

@@ -67,9 +67,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function parseProjectAssignmentFeedback(value: unknown): {
   status: "correct" | "incorrect" | "unreviewed";
   correctedProjectId: number | null;
+  reasonSignals: Array<
+    | "subject_line"
+    | "sender"
+    | "message_body"
+    | "attachment"
+    | "existing_project_context"
+    | "other"
+  >;
+  reasonNote: string | null;
 } {
   if (!isRecord(value)) {
-    return { status: "unreviewed", correctedProjectId: null };
+    return {
+      status: "unreviewed",
+      correctedProjectId: null,
+      reasonSignals: [],
+      reasonNote: null,
+    };
   }
 
   const status =
@@ -81,8 +95,22 @@ function parseProjectAssignmentFeedback(value: unknown): {
     Number.isInteger(value.correctedProjectId)
       ? value.correctedProjectId
       : null;
+  const reasonSignals = Array.isArray(value.reasonSignals)
+    ? value.reasonSignals.filter((signal) =>
+        signal === "subject_line" ||
+        signal === "sender" ||
+        signal === "message_body" ||
+        signal === "attachment" ||
+        signal === "existing_project_context" ||
+        signal === "other",
+      )
+    : [];
+  const reasonNote =
+    typeof value.reasonNote === "string" && value.reasonNote.trim()
+      ? value.reasonNote.trim()
+      : null;
 
-  return { status, correctedProjectId };
+  return { status, correctedProjectId, reasonSignals, reasonNote };
 }
 
 function nullableString(value: unknown): string | null {
@@ -103,6 +131,7 @@ function parseFieldFeedback(value: unknown) {
     action: parseVerdict("action"),
     priority: parseVerdict("priority"),
     category: parseVerdict("category"),
+    draft: parseVerdict("draft"),
     project: parseVerdict("project"),
     owner: parseVerdict("owner"),
     reason: parseVerdict("reason"),

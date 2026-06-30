@@ -1,0 +1,8 @@
+{
+  "projectId": 1034,
+  "submitWorkflow": false,
+  "title": "Tutorial demo prime PCO",
+  "description": "Priced change against the prime contract for the tutorial walkthrough.",
+  "scheduleImpactDays": "5",
+  "amount": "12000.00"
+}

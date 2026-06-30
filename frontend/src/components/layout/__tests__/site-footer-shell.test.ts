@@ -27,10 +27,11 @@ function mainElementSource(source: string) {
 }
 
 describe("SiteFooter shell contract", () => {
-  it.each(shellFiles)("keeps SiteFooter outside route content in %s", (relativePath) => {
+  it.each(shellFiles)("keeps %s footerless", (relativePath) => {
     const source = readSource(relativePath);
 
     expect(mainElementSource(source)).not.toContain("<SiteFooter");
+    expect(source).not.toContain("<SiteFooter");
   });
 
   it("keeps table workspaces footerless so split views can fill the app height", () => {
@@ -42,15 +43,14 @@ describe("SiteFooter shell contract", () => {
     expect(source).toContain("flex min-h-0 min-w-0 flex-1 flex-col");
   });
 
-  it("suppresses footers for full-height split routes in other app shells", () => {
+  it("removes shared shell footer conditionals from other app shells", () => {
     const adminSource = readSource("app/(admin)/admin-layout-client.tsx");
     const mainSource = readSource("app/(main)/layout.tsx");
 
-    expect(adminSource).toContain('pathname === "/outlook-draft-feedback"');
-    expect(adminSource).toContain("{!hideFooter && <SiteFooter />}");
-    expect(mainSource).toContain("isFullHeightWorkspace");
-    expect(mainSource).toContain("\\/tasks");
-    expect(mainSource).toContain("!isFullHeightWorkspace");
+    expect(adminSource).not.toContain("SiteFooter");
+    expect(adminSource).not.toContain("hideFooter");
+    expect(mainSource).not.toContain("SiteFooter");
+    expect(mainSource).not.toContain("isFullHeightWorkspace");
     expect(mainSource).toContain("flex min-h-0 min-w-0 flex-1 flex-col overflow-auto");
   });
 

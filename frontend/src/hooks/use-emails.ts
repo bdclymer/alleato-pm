@@ -60,15 +60,25 @@ export interface ProjectEmail {
       action: "correct" | "incorrect" | "unreviewed";
       priority: "correct" | "incorrect" | "unreviewed";
       category: "correct" | "incorrect" | "unreviewed";
+      draft: "correct" | "incorrect" | "unreviewed";
       project: "correct" | "incorrect" | "unreviewed";
       owner: "correct" | "incorrect" | "unreviewed";
       reason: "correct" | "incorrect" | "unreviewed";
       score: "correct" | "incorrect" | "unreviewed";
     };
-    projectAssignmentFeedback: {
-      status: "correct" | "incorrect" | "unreviewed";
-      correctedProjectId: number | null;
-    };
+  projectAssignmentFeedback: {
+    status: "correct" | "incorrect" | "unreviewed";
+    correctedProjectId: number | null;
+    reasonSignals: Array<
+      | "subject_line"
+      | "sender"
+      | "message_body"
+      | "attachment"
+      | "existing_project_context"
+      | "other"
+    >;
+    reasonNote: string | null;
+  };
   } | null;
 }
 
@@ -206,7 +216,7 @@ export function useMailboxFeedbackCoverage(
     queryKey: emailKeys.feedbackCoverage(mailboxUserId, timeZone),
     queryFn: ({ signal }) =>
       apiFetch<MailboxFeedbackCoverage>(
-        `/api/outlook-draft-feedback/coverage${queryString ? `?${queryString}` : ""}`,
+        `/api/outlook-draft-feedback/mailbox-stats${queryString ? `?${queryString}` : ""}`,
         { signal },
       ),
     enabled: Boolean(mailboxUserId),

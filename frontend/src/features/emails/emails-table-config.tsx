@@ -3,8 +3,8 @@ import type { ReactElement } from "react";
 import {
   Ban,
   Circle,
+  File,
   MoreHorizontal,
-  Paperclip,
   Pencil,
   Star,
   StarOff,
@@ -262,7 +262,7 @@ export function buildEmailTableColumns(options?: {
       width: 128,
       render: (item) =>
         item.has_attachments ? (
-          <Paperclip className="h-4 w-4 text-muted-foreground" />
+          <File className="h-4 w-4 text-muted-foreground" />
         ) : (
           <CellText value={null} muted />
         ),
@@ -451,7 +451,7 @@ export function renderEmailCard(
       <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
         <span>To: {formatRecipients(item.to_list)}</span>
         <div className="flex items-center gap-2">
-          {item.has_attachments && <Paperclip className="h-3 w-3" />}
+          {item.has_attachments && <File className="h-3 w-3" />}
           <span>{formatDate(emailDisplayDate(item))}</span>
         </div>
       </div>
@@ -492,7 +492,7 @@ export function renderEmailList(
                 </span>
               ) : null}
               {item.has_attachments && (
-                <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <File className="h-3 w-3 shrink-0 text-muted-foreground" />
               )}
             </div>
             <p className="truncate text-xs text-muted-foreground">

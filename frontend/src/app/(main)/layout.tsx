@@ -7,7 +7,6 @@ import { AppSidebar } from "@/components/nav/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { useProject } from "@/contexts/project-context";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -63,12 +62,6 @@ export default function MainLayout({
   const isImmersiveChatPage =
     pathname?.startsWith("/team-chat") || pathname?.startsWith("/comments");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
-  const isAiAssistant =
-    pathname === "/ai" ||
-    pathname?.startsWith("/ai/") ||
-    pathname?.startsWith("/ai-assistant");
-  const isFullHeightWorkspace =
-    /^\/\d+\/tasks(?:\/|$)/.test(pathname ?? "");
   const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
   if (isImmersiveChatPage) {
     return (
@@ -107,15 +100,6 @@ export default function MainLayout({
               )}
             </div>
           </div>
-          {!isDrawingViewer && !isFullHeightWorkspace && (
-            isAiAssistant ? (
-              <div key="site-footer-desktop" className="hidden md:contents">
-                <SiteFooter key="site-footer" />
-              </div>
-            ) : (
-              <SiteFooter key="site-footer" />
-            )
-          )}
         </CreateProjectDevConfigProvider>
         <Overlays key="floating-overlays" />
       </SidebarInset>

@@ -3250,18 +3250,40 @@ tables:
   - name: training_docs
     db: MAIN
     domain: support
-    owner: unknown
-    status: dormant
-    purpose: "Training document records present in MAIN. No code references found during AAI-732 DB inventory drift repair."
+    owner: core
+    status: live
+    purpose: "User-facing training/help articles (one row per task). Powers /training-docs admin UI, /knowledge/app/* viewer, and the publish pipeline to alleato-os-docs. tool_category/tool_module/task_key group by feature; status (planned→draft→in_review→approved→published→archived) tracks writing; qa_status (not_tested|passing|failing|needs_update) tracks QA. Tool grouping also mirrored in metadata.appToolCategory for back-compat."
     relatedTables:
+      - training_doc_steps
+      - training_doc_assets
+      - training_doc_relations
+
+  - name: training_doc_steps
+    db: MAIN
+    domain: support
+    owner: core
+    status: live
+    purpose: "Ordered steps for a training_doc (instruction_markdown, expected_result, action_metadata, source_url). QA-ready; produced by the AI step generator and the Playwright tutorial recorder (scripts/tutorials/)."
+    relatedTables:
+      - training_docs
       - training_doc_assets
 
   - name: training_doc_assets
     db: MAIN
     domain: support
-    owner: unknown
-    status: dormant
-    purpose: "Assets attached to training_docs. No code references found during AAI-732 DB inventory drift repair."
+    owner: core
+    status: live
+    purpose: "Screenshots/images/video attached to a training_doc (asset_type: screenshot|image|video), stored in the documents bucket. Rendered into published MDX."
+    relatedTables:
+      - training_docs
+      - training_doc_steps
+
+  - name: training_doc_relations
+    db: MAIN
+    domain: support
+    owner: core
+    status: live
+    purpose: "Links between training_docs for the training map: relation_type related|prerequisite|next, source_doc_id→target_doc_id. Added 2026-06-30 to let docs link related training. Admin-only RLS."
     relatedTables:
       - training_docs
 

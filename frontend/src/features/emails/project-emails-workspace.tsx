@@ -107,6 +107,7 @@ import {
   type EmailContentBlock,
 } from "@/features/emails/email-thread";
 import { toast } from "sonner";
+import type { ProjectAssignmentReasonSignal } from "@/lib/email-assistant/brandon-review";
 
 const PdfDocument = dynamic(
   async () => {
@@ -1324,7 +1325,7 @@ export function EmailReadingPanel({
             className={cn("flex h-full flex-col", className)}
             style={{ minHeight: "30rem" }}
           >
-            <div className="px-8 py-4 xl:px-10">
+            <div className="px-10 py-5 xl:px-12">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-start justify-between gap-4">
@@ -1412,7 +1413,7 @@ export function EmailReadingPanel({
                 icon={
                   <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 }
-                className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-8 py-3 text-muted-foreground [&>div]:flex-1 xl:px-10"
+                className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-10 py-4 text-muted-foreground [&>div]:flex-1 xl:px-12"
               >
                 <div className="flex w-full items-start gap-2">
                   {summaryLoading ? (
@@ -1439,7 +1440,7 @@ export function EmailReadingPanel({
             ) : null}
 
             <ScrollArea className="flex-1">
-              <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
+              <div className="flex flex-col gap-8 px-10 pb-10 pt-10 xl:px-12">
                 <div className="space-y-4 text-[14px] leading-6 text-foreground [overflow-wrap:anywhere]">
                   {selectedBody ? (
                     selectedBodyBlocks.map((block) => {
@@ -1603,7 +1604,7 @@ export function EmailReadingPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={cn(
-              "flex h-full items-center justify-center px-8 py-10",
+              "flex h-full items-center justify-center px-10 py-12 xl:px-12",
               className,
             )}
             style={{ minHeight: "30rem" }}
@@ -1948,6 +1949,7 @@ type AssistantFieldKey =
   | "action"
   | "priority"
   | "category"
+  | "draft"
   | "project"
   | "owner"
   | "reason"
@@ -1998,10 +2000,23 @@ const ASSISTANT_CATEGORY_OPTIONS = [
   "Urgent",
 ] as const;
 
+const PROJECT_ASSIGNMENT_REASON_OPTIONS: Array<{
+  value: ProjectAssignmentReasonSignal;
+  label: string;
+}> = [
+  { value: "subject_line", label: "Subject line" },
+  { value: "sender", label: "Sender" },
+  { value: "message_body", label: "Message body" },
+  { value: "attachment", label: "Attachment" },
+  { value: "existing_project_context", label: "Existing project context" },
+  { value: "other", label: "Other" },
+];
+
 const DEFAULT_FIELD_FEEDBACK: Record<AssistantFieldKey, AssistantFieldVerdict> = {
   action: "unreviewed",
   priority: "unreviewed",
   category: "unreviewed",
+  draft: "unreviewed",
   project: "unreviewed",
   owner: "unreviewed",
   reason: "unreviewed",
@@ -2136,39 +2151,65 @@ function ReviewRow({
         {value}
       </div>
       {onVerdictChange ? (
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`${label} correct`}
-            onClick={() => onVerdictChange(verdict === "correct" ? "unreviewed" : "correct")}
-            className={cn(
-              "h-6 w-6 rounded-full border border-transparent text-muted-foreground hover:text-emerald-700",
-              verdict === "correct" &&
-                "!border-emerald-200 !bg-emerald-100 !text-emerald-700 hover:!bg-emerald-100 hover:!text-emerald-700",
-            )}
-          >
-            <CheckCheck className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`${label} incorrect`}
-            onClick={() =>
-              onVerdictChange(verdict === "incorrect" ? "unreviewed" : "incorrect")
-            }
-            className={cn(
-              "h-6 w-6 rounded-full border border-transparent text-muted-foreground hover:text-red-700",
-              verdict === "incorrect" &&
-                "!border-red-200 !bg-red-100 !text-red-700 hover:!bg-red-100 hover:!text-red-700",
-            )}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <VerdictButtons
+          label={label}
+          verdict={verdict}
+          onVerdictChange={onVerdictChange}
+        />
       ) : null}
+    </div>
+  );
+}
+
+function VerdictButtons({
+  label,
+  verdict,
+  onVerdictChange,
+  compact = true,
+}: {
+  label: string;
+  verdict: AssistantFieldVerdict;
+  onVerdictChange: (next: AssistantFieldVerdict) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={`${label} correct`}
+        onClick={() =>
+          onVerdictChange(verdict === "correct" ? "unreviewed" : "correct")
+        }
+        className={cn(
+          compact ? "h-6 w-6" : "h-7 w-7",
+          "rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800",
+          verdict !== "correct" && "opacity-75",
+          verdict === "correct" &&
+            "!border-emerald-300 !bg-emerald-100 !text-emerald-800 opacity-100 hover:!bg-emerald-100 hover:!text-emerald-800",
+        )}
+      >
+        <CheckCheck className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={`${label} incorrect`}
+        onClick={() =>
+          onVerdictChange(verdict === "incorrect" ? "unreviewed" : "incorrect")
+        }
+        className={cn(
+          compact ? "h-6 w-6" : "h-7 w-7",
+          "rounded-full border border-red-200/80 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100 hover:text-red-800",
+          verdict !== "incorrect" && "opacity-75",
+          verdict === "incorrect" &&
+            "!border-red-300 !bg-red-100 !text-red-800 opacity-100 hover:!bg-red-100 hover:!text-red-800",
+        )}
+      >
+        <X className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+      </Button>
     </div>
   );
 }
@@ -2202,6 +2243,10 @@ export function EmailTrainingFeedbackPanel({
   const [correctedProjectId, setCorrectedProjectId] = React.useState<
     number | null
   >(null);
+  const [projectReasonSignals, setProjectReasonSignals] = React.useState<
+    ProjectAssignmentReasonSignal[]
+  >([]);
+  const [projectReasonNote, setProjectReasonNote] = React.useState("");
   const [feedbackProvidedAt, setFeedbackProvidedAt] = React.useState<
     string | null
   >(null);
@@ -2226,6 +2271,8 @@ export function EmailTrainingFeedbackPanel({
           ? selectedEmail.project_id
           : null),
     );
+    setProjectReasonSignals(assignmentFeedback?.reasonSignals ?? []);
+    setProjectReasonNote(assignmentFeedback?.reasonNote ?? "");
     setFeedbackProvidedAt(
       selectedEmail.assistant_review?.feedbackProvidedAt ?? null,
     );
@@ -2251,6 +2298,17 @@ export function EmailTrainingFeedbackPanel({
       toast.error("Choose the correct project before saving feedback.");
       return;
     }
+    if (projectStatus !== "unreviewed" && projectReasonSignals.length === 0) {
+      toast.error("Choose at least one reason for how the project was identified.");
+      return;
+    }
+    if (
+      projectReasonSignals.includes("other") &&
+      !projectReasonNote.trim()
+    ) {
+      toast.error("Add a note when using Other for project assignment reasoning.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -2258,6 +2316,9 @@ export function EmailTrainingFeedbackPanel({
         status: projectStatus,
         correctedProjectId:
           projectStatus === "incorrect" ? correctedProjectId : null,
+        reasonSignals: projectStatus === "unreviewed" ? [] : projectReasonSignals,
+        reasonNote:
+          projectStatus === "unreviewed" ? null : projectReasonNote.trim() || null,
       };
       const commonPayload = {
         assistantAction,
@@ -2468,38 +2529,81 @@ export function EmailTrainingFeedbackPanel({
                     value={
                       <div className="space-y-2">
                         <div>{selectedProjectLabel}</div>
-                        {projectStatus === "incorrect" ? (
-                          <div className="grid gap-2">
-                            <Select
-                              value={
-                                correctedProjectId
-                                  ? String(correctedProjectId)
-                                  : undefined
+                        {projectStatus !== "unreviewed" ? (
+                          <div className="grid gap-2.5">
+                            {projectStatus === "incorrect" ? (
+                              <Select
+                                value={
+                                  correctedProjectId
+                                    ? String(correctedProjectId)
+                                    : undefined
+                                }
+                                onValueChange={(value) =>
+                                  setCorrectedProjectId(Number(value))
+                                }
+                              >
+                                <SelectTrigger className="h-8 text-[13px]">
+                                  <SelectValue
+                                    placeholder={
+                                      projectsLoading
+                                        ? "Loading projects..."
+                                        : "Correct project"
+                                    }
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {projects.map((project) => (
+                                    <SelectItem
+                                      key={project.id}
+                                      value={String(project.id)}
+                                    >
+                                      {formatProjectOption(project)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : null}
+                            <div className="space-y-1.5">
+                              <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                How did you know?
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {PROJECT_ASSIGNMENT_REASON_OPTIONS.map((option) => {
+                                  const selected = projectReasonSignals.includes(option.value);
+                                  return (
+                                    <Button
+                                      key={option.value}
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        setProjectReasonSignals((current) =>
+                                          current.includes(option.value)
+                                            ? current.filter((value) => value !== option.value)
+                                            : [...current, option.value],
+                                        )
+                                      }
+                                      className={cn(
+                                        "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
+                                        selected
+                                          ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
+                                          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+                                      )}
+                                    >
+                                      {option.label}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <Textarea
+                              value={projectReasonNote}
+                              onChange={(event) =>
+                                setProjectReasonNote(event.target.value)
                               }
-                              onValueChange={(value) =>
-                                setCorrectedProjectId(Number(value))
-                              }
-                            >
-                              <SelectTrigger className="h-8 text-[13px]">
-                                <SelectValue
-                                  placeholder={
-                                    projectsLoading
-                                      ? "Loading projects..."
-                                      : "Correct project"
-                                  }
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {projects.map((project) => (
-                                  <SelectItem
-                                    key={project.id}
-                                    value={String(project.id)}
-                                  >
-                                    {formatProjectOption(project)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              placeholder="Add context about how you identified the project."
+                              className="min-h-20 resize-y text-[13px] leading-5"
+                            />
                           </div>
                         ) : null}
                       </div>
@@ -2538,59 +2642,40 @@ export function EmailTrainingFeedbackPanel({
                 </div>
               </ReviewSection>
 
-              <ReviewSection title="Rules Applied">
-                <div className="space-y-2.5">
-                  {rulesApplied.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {rulesApplied.map((rule) => (
-                        <span
-                          key={rule}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-                        >
-                          <Sparkles className="h-3 w-3" aria-hidden />
-                          <span>{rule}</span>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-muted-foreground">
-                      No rule matches were recorded for this email.
-                    </p>
-                  )}
-                  {assistantContext ? (
-                    <div className="space-y-1">
-                      <div className="text-[11px] font-medium text-muted-foreground">
-                        Context
-                      </div>
-                      <p className="text-[13px] leading-5 text-foreground">
-                        {assistantContext}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              </ReviewSection>
-
               <ReviewSection
                 title="Draft Reply"
                 headerAction={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void handleGenerateDraft()}
-                    disabled={isGeneratingDraft}
-                    className="h-7 text-[12px]"
-                  >
-                    {isGeneratingDraft ? (
-                      <Loader2
-                        className="mr-2 h-3.5 w-3.5 animate-spin"
-                        aria-hidden
-                      />
-                    ) : (
-                      <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
-                    )}
-                    {isGeneratingDraft ? "Generating..." : "Generate"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <VerdictButtons
+                      label="Draft reply"
+                      verdict={fieldFeedback.draft}
+                      onVerdictChange={(next) =>
+                        setFieldFeedback((current) => ({
+                          ...current,
+                          draft: next,
+                        }))
+                      }
+                      compact={false}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleGenerateDraft()}
+                      disabled={isGeneratingDraft}
+                      className="h-7 text-[12px]"
+                    >
+                      {isGeneratingDraft ? (
+                        <Loader2
+                          className="mr-2 h-3.5 w-3.5 animate-spin"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
+                      )}
+                      {isGeneratingDraft ? "Generating..." : "Generate"}
+                    </Button>
+                  </div>
                 }
               >
                 <Textarea
@@ -2599,6 +2684,33 @@ export function EmailTrainingFeedbackPanel({
                   placeholder="Draft response"
                   className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
                 />
+              </ReviewSection>
+
+              <ReviewSection title="Rules Applied">
+                <div className="space-y-2">
+                  {rulesApplied.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {rulesApplied.map((rule) => (
+                        <span
+                          key={rule}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                        >
+                          <Sparkles className="h-2.5 w-2.5" aria-hidden />
+                          <span>{rule}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">
+                      No rule matches were recorded for this email.
+                    </p>
+                  )}
+                  {assistantContext ? (
+                    <p className="text-[12px] leading-5 text-muted-foreground">
+                      {assistantContext}
+                    </p>
+                  ) : null}
+                </div>
               </ReviewSection>
 
               <ReviewSection

@@ -29,10 +29,25 @@ export const BrandonAssistantPrioritySchema = z.enum([
 
 export type BrandonAssistantPriority = z.infer<typeof BrandonAssistantPrioritySchema>;
 
+export const ProjectAssignmentReasonSignalSchema = z.enum([
+  "subject_line",
+  "sender",
+  "message_body",
+  "attachment",
+  "existing_project_context",
+  "other",
+]);
+
+export type ProjectAssignmentReasonSignal = z.infer<
+  typeof ProjectAssignmentReasonSignalSchema
+>;
+
 export const ProjectAssignmentFeedbackSchema = z
   .object({
     status: z.enum(["correct", "incorrect", "unreviewed"]),
     correctedProjectId: z.number().int().positive().nullable().optional(),
+    reasonSignals: z.array(ProjectAssignmentReasonSignalSchema).optional(),
+    reasonNote: z.string().trim().max(500).nullable().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.status === "incorrect" && value.correctedProjectId === undefined) {
@@ -40,6 +55,25 @@ export const ProjectAssignmentFeedbackSchema = z
         code: "custom",
         path: ["correctedProjectId"],
         message: "Correct project is required when marking assignment incorrect.",
+      });
+    }
+
+    if (value.status !== "unreviewed" && (value.reasonSignals?.length ?? 0) === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reasonSignals"],
+        message: "At least one project assignment reason is required for AI training.",
+      });
+    }
+
+    if (
+      value.reasonSignals?.includes("other") &&
+      !value.reasonNote?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reasonNote"],
+        message: "Add a note when selecting Other for project assignment reasoning.",
       });
     }
   });
@@ -54,6 +88,7 @@ export const AssistantFieldFeedbackSchema = z.object({
   action: AssistantFieldVerdictSchema.optional(),
   priority: AssistantFieldVerdictSchema.optional(),
   category: AssistantFieldVerdictSchema.optional(),
+  draft: AssistantFieldVerdictSchema.optional(),
   project: AssistantFieldVerdictSchema.optional(),
   owner: AssistantFieldVerdictSchema.optional(),
   reason: AssistantFieldVerdictSchema.optional(),

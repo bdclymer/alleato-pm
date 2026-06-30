@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { requireDeveloper } from "@/lib/auth/require-developer";
 
 /**
@@ -44,7 +43,6 @@ export default async function DeveloperLayout({
             <div className="flex-1">{children}</div>
           </main>
         </div>
-        <SiteFooter />
       </SidebarInset>
     </SidebarProvider>
   );

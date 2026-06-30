@@ -920,7 +920,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                 </span>
               </div>
             )}
-            {item.page_title && item.page_title !== "Product Board" && (
+            {item.page_title && item.page_title !== "Roadmap" && (
               <p className="pl-0.5">From {item.page_title}</p>
             )}
             <p className="pl-0.5">{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>

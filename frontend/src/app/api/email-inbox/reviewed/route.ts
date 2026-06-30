@@ -50,6 +50,7 @@ const ReviewedEmailUpdateSchema = z.object({
       action: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
       priority: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
       category: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
+      draft: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
       project: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
       owner: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
       reason: z.enum(["correct", "incorrect", "unreviewed"]).optional(),
@@ -64,9 +65,23 @@ type AssistantReviewUpdate =
 function parseProjectAssignmentFeedback(value: unknown): {
   status: "correct" | "incorrect" | "unreviewed";
   correctedProjectId: number | null;
+  reasonSignals: Array<
+    | "subject_line"
+    | "sender"
+    | "message_body"
+    | "attachment"
+    | "existing_project_context"
+    | "other"
+  >;
+  reasonNote: string | null;
 } {
   if (!isRecord(value)) {
-    return { status: "unreviewed", correctedProjectId: null };
+    return {
+      status: "unreviewed",
+      correctedProjectId: null,
+      reasonSignals: [],
+      reasonNote: null,
+    };
   }
 
   const status =
@@ -78,8 +93,22 @@ function parseProjectAssignmentFeedback(value: unknown): {
     Number.isInteger(value.correctedProjectId)
       ? value.correctedProjectId
       : null;
+  const reasonSignals = Array.isArray(value.reasonSignals)
+    ? value.reasonSignals.filter((signal) =>
+        signal === "subject_line" ||
+        signal === "sender" ||
+        signal === "message_body" ||
+        signal === "attachment" ||
+        signal === "existing_project_context" ||
+        signal === "other",
+      )
+    : [];
+  const reasonNote =
+    typeof value.reasonNote === "string" && value.reasonNote.trim()
+      ? value.reasonNote.trim()
+      : null;
 
-  return { status, correctedProjectId };
+  return { status, correctedProjectId, reasonSignals, reasonNote };
 }
 
 function parseFieldFeedback(value: unknown) {
@@ -93,6 +122,7 @@ function parseFieldFeedback(value: unknown) {
     action: parseVerdict("action"),
     priority: parseVerdict("priority"),
     category: parseVerdict("category"),
+    draft: parseVerdict("draft"),
     project: parseVerdict("project"),
     owner: parseVerdict("owner"),
     reason: parseVerdict("reason"),
@@ -327,6 +357,8 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
     ? {
         status: parsed.projectAssignment.status,
         correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
+        reasonSignals: parsed.projectAssignment.reasonSignals ?? [],
+        reasonNote: nullableTrimmed(parsed.projectAssignment.reasonNote),
       }
     : parseProjectAssignmentFeedback(existingMetadata.projectAssignmentFeedback);
   const fieldFeedback = parseFieldFeedback(

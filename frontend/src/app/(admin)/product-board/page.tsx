@@ -7,7 +7,7 @@ export default function ProductBoardPage() {
   return (
     <PageShell
       variant="dashboard"
-      title="Product Board"
+      title="Roadmap"
       contentClassName="space-y-6 pt-4"
     >
       <div className="min-w-0">

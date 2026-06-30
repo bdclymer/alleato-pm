@@ -37,9 +37,39 @@ describe("BrandonAssistantReviewPayloadSchema", () => {
       ...basePayload,
       assistantAction: "delegate",
       reviewOutcome: "delegated",
+      fieldFeedback: {
+        draft: "incorrect",
+      },
     });
 
     expect(parsed.success).toBe(true);
+  });
+
+  it("accepts explicit draft field feedback", () => {
+    const parsed = BrandonAssistantReviewPayloadSchema.safeParse({
+      ...basePayload,
+      reviewOutcome: "draft_edited",
+      draftBody: "I revised the tone here.",
+      fieldFeedback: {
+        draft: "correct",
+      },
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it("requires structured project-assignment reasons when assignment feedback is reviewed", () => {
+    const parsed = BrandonAssistantReviewPayloadSchema.safeParse({
+      ...basePayload,
+      reviewOutcome: "skipped",
+      projectAssignment: {
+        status: "incorrect",
+        correctedProjectId: 25125,
+      },
+    });
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0]?.path).toEqual(["projectAssignment", "reasonSignals"]);
   });
 
   it("rejects unknown outcomes", () => {

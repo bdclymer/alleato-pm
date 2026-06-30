@@ -15,6 +15,11 @@ function nullableProjectId(value: number | null | undefined): number | null {
   return Number.isInteger(value) && value && value > 0 ? value : null;
 }
 
+function nullableTrimmed(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 function normalizeFieldFeedback(value: Record<string, unknown> | undefined) {
   return {
     action: value?.action === "correct" || value?.action === "incorrect" ? value.action : "unreviewed",
@@ -116,6 +121,8 @@ export const POST = withApiGuardrails<{ emailId: string }>(
       ? {
           status: parsed.projectAssignment.status,
           correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
+          reasonSignals: parsed.projectAssignment.reasonSignals ?? [],
+          reasonNote: nullableTrimmed(parsed.projectAssignment.reasonNote),
         }
       : undefined;
 

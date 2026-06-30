@@ -151,7 +151,7 @@ const sections: AdminMenuSection[] = [
             icon: Inbox,
           },
           {
-            label: "Product Board",
+            label: "Roadmap",
             href: "/product-board",
             route: "/product-board",
             description: "Product ideas, status, and planning board.",

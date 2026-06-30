@@ -114,9 +114,14 @@ describe("/api/emails", () => {
         source_metadata: {
           feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
           sandboxCategory: "Reply Needed",
+          fieldFeedback: {
+            draft: "incorrect",
+          },
           projectAssignmentFeedback: {
             status: "correct",
             correctedProjectId: null,
+            reasonSignals: ["subject_line"],
+            reasonNote: null,
           },
         },
         created_at: "2026-06-30T08:59:00.000Z",
@@ -181,9 +186,14 @@ describe("/api/emails", () => {
         draftBody: "Thanks, I can confirm.",
         assistantCategory: "Reply Needed",
         feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+        fieldFeedback: expect.objectContaining({
+          draft: "incorrect",
+        }),
         projectAssignmentFeedback: {
           status: "correct",
           correctedProjectId: null,
+          reasonSignals: ["subject_line"],
+          reasonNote: null,
         },
       },
     });

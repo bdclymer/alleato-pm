@@ -160,7 +160,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
               )}
 
               {/* Source */}
-              {item.page_title && item.page_title !== "Product Board" && (
+              {item.page_title && item.page_title !== "Roadmap" && (
                 <p className="mt-1 truncate text-[11px] text-muted-foreground/50">
                   from {item.page_title}
                 </p>

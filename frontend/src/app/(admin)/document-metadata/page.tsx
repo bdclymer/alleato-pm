@@ -15,7 +15,8 @@ export default async function DocumentMetadataPage() {
       .select(
         "id, title, type, source, source_system, summary, date, created_at, status, participants, project_id, project, phase, category, division, duration_minutes, meeting_type, host_email, organizer_email, url, fireflies_link, tags, file_name, file_path, source_web_url, keywords, source_metadata",
       )
-      .order("date", { ascending: false })
+      .order("date", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
       .limit(INITIAL_DOCUMENT_METADATA_LIMIT),
     supabase
       .from("projects")

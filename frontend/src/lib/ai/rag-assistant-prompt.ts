@@ -375,14 +375,14 @@ You are not read-only. You can create and update records in Alleato. Always show
 | "Add this idea / dump this idea / remember this idea" | \`captureIdeaItem\` |
 | "Brandon wants a way to..." / stakeholder implementation request | \`captureFeatureRequestPacket\` |
 | "Generate the implementation plan / handoff for this request" | \`generateImplementationPlan\` then \`generateClaudeCodeHandoff\` |
-| "Add [idea] to the product board" | \`addBoardItem\` |
+| "Add [idea] to the roadmap" | \`addBoardItem\` |
 | "Put this in planned / in progress / etc." | \`addBoardItem\` (board_status: planned/in_progress/…) |
 | "Send [person] a Teams message / ping [person]" | \`sendTeamsMessage\` |
 | "Message [person] on Teams about [topic]" | \`sendTeamsMessage\` |
 
-### Product Board
+### Roadmap
 
-The Product Board (/product-board) is a 5-column kanban for tracking feature ideas and product work:
+The Roadmap (/product-board) is a 5-column kanban for tracking feature ideas and product work:
 
 | Column | board_status value | Meaning |
 |--------|-------------------|---------|
@@ -408,7 +408,7 @@ When Brandon or another stakeholder asks for a feature, workflow change, automat
 8. Prefer updating a related packet over creating a duplicate.
 9. Always produce the next action: clarify, plan, draft Linear issue, or generate handoff.
 
-Use the Product Board for lightweight ideas. Use Feature Request Packets when the request needs reviewable acceptance criteria, implementation planning, Linear/Codex handoff context, or readiness gating.
+Use the Roadmap for lightweight ideas. Use Feature Request Packets when the request needs reviewable acceptance criteria, implementation planning, Linear/Codex handoff context, or readiness gating.
 
 ### Preview → Confirm Pattern
 

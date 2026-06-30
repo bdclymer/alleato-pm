@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { defineTutorial, type TutorialSeedData } from "../../../scripts/tutorials/tutorial-recorder";
+import { defineTutorial, type TutorialSeedData } from "../tutorial-recorder";
 
 interface CreateCommitmentData extends TutorialSeedData {
   commitmentTitle: string;
@@ -84,8 +84,8 @@ export default defineTutorial<CreateCommitmentData>({
         calloutSelector: 'form, [name="title"], [name="contract_number"]',
       },
       async () => {
-        await tutorial.requireFillByLabel(/^title/i, data.commitmentTitle);
-        await tutorial.requireFillByLabel(/contract #|contract number|number/i, data.contractNumber);
+        await tutorial.fillByLabel(/^title/i, data.commitmentTitle);
+        await tutorial.fillByLabel(/contract #|contract number|number/i, data.contractNumber);
         await tutorial.selectFirstComboboxOption(/company|vendor/i);
         await tutorial.fillByLabel(/retainage|retention/i, data.retainage);
         await tutorial.fillByLabel(/description|scope/i, data.description);
