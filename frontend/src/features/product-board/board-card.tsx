@@ -17,6 +17,7 @@ import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardItemMeta, BoardLabel } from "./use-board-item";
 import type { CardViewSettings } from "./card-view-settings";
 import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
+import { getLinearIssueLink } from "./linear-issue-link";
 
 type BoardItemWithMeta = BoardItem;
 
@@ -88,7 +89,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
   const links = meta.links ?? [];
   const dueDate = meta.due_date;
   const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
-  const primaryLink = links[0];
+  const primaryLink = getLinearIssueLink(meta) ?? links[0];
 
   const hasFooter =
     (settings.showDueDate && dueDate) ||

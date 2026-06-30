@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, Minus, MessageSquare, Zap } from "lucide-react";
+import { AlertTriangle, ExternalLink, Minus, MessageSquare, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   UnifiedTablePage,
@@ -14,6 +14,7 @@ import { BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/cons
 import { cn } from "@/lib/utils";
 import type { BoardItem } from "./use-product-board";
 import type { BoardItemMeta } from "./use-board-item";
+import { getLinearIssueLink } from "./linear-issue-link";
 
 // ─── Status badge ────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ const columnConfigs = [
   { id: "title",         label: "Title",    alwaysVisible: true },
   { id: "board_status",  label: "Status",   defaultVisible: true },
   { id: "severity",      label: "Priority", defaultVisible: true },
+  { id: "linear_issue",  label: "Linear",   defaultVisible: true },
   { id: "assignee",      label: "Assignee", defaultVisible: true },
   { id: "due_date",      label: "Due Date", defaultVisible: true },
   { id: "comment_count", label: "Comments", defaultVisible: true },
@@ -153,6 +155,30 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
           item.severity ? (SEVERITY_ICONS[item.severity] ?? null) : null,
         sortable: true,
         sortValue: (item) => SEVERITY_ORDER[item.severity ?? "low"] ?? 2,
+      },
+      {
+        id: "linear_issue",
+        label: "Linear",
+        defaultVisible: true,
+        render: (item) => {
+          const issue = getLinearIssueLink((item.metadata as BoardItemMeta | null) ?? {});
+          if (!issue) return null;
+
+          return (
+            <a
+              href={issue.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {issue.label}
+            </a>
+          );
+        },
+        sortable: true,
+        sortValue: (item) =>
+          getLinearIssueLink((item.metadata as BoardItemMeta | null) ?? {})?.label ?? "",
       },
       {
         id: "assignee",

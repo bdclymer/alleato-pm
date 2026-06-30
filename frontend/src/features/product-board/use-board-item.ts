@@ -40,6 +40,8 @@ export interface BoardItemMeta {
   subtasks?: ChecklistItem[];
   prerequisites?: ChecklistItem[];
   docs_url?: string | null;
+  linear_issue_id?: string | null;
+  linear_issue_url?: string | null;
 }
 
 // ── Comments ─────────────────────────────────────────────────────────────────

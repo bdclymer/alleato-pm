@@ -10,6 +10,7 @@ import { BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/cons
 import type { BoardItem } from "./use-product-board";
 import type { BoardItemMeta } from "./use-board-item";
 import { BoardItemDialog } from "./board-item-dialog";
+import { getLinearIssueLink } from "./linear-issue-link";
 
 const STATUS_COLORS: Record<BoardStatus, string> = {
   submitted: "bg-muted text-muted-foreground",
@@ -115,6 +116,9 @@ export function BoardTableView({ items }: BoardTableViewProps) {
               <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
                 Docs
               </th>
+              <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
+                Linear
+              </th>
               <th className="py-2.5 px-4 text-center text-xs font-medium text-muted-foreground">
                 <MessageSquare className="inline h-3.5 w-3.5" />
               </th>
@@ -132,6 +136,7 @@ export function BoardTableView({ items }: BoardTableViewProps) {
               const docsUrl = meta.docs_url;
               const dueDate = meta.due_date;
               const primaryLink = (meta.links ?? [])[0];
+              const linearIssue = getLinearIssueLink(meta);
 
               return (
                 <tr
@@ -200,6 +205,22 @@ export function BoardTableView({ items }: BoardTableViewProps) {
                       >
                         <BookOpen className="h-3 w-3" />
                         Docs
+                      </a>
+                    )}
+                  </td>
+
+                  {/* Linear */}
+                  <td className="py-2.5 px-4">
+                    {linearIssue && (
+                      <a
+                        href={linearIssue.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {linearIssue.label}
                       </a>
                     )}
                   </td>
