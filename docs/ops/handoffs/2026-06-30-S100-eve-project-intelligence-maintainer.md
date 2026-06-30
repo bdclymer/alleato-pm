@@ -6,15 +6,15 @@
 2) Task ID: `docs/ops/tasks/2026-06-30-eve-project-intelligence-maintainer.md`
 3) Linear issue: AAI-774
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-774/implement-eve-project-intelligence-maintainer
-5) Current status: Implemented locally on main; verification partial because live source lifecycle health is degraded.
+5) Current status: Complete and live source lifecycle gate green.
 6) Files changed (absolute paths): `/Users/meganharrison/Documents/alleato-pm/agents/project-intelligence-maintainer/**`; `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_project_intelligence_live_paths.mjs`; `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_project_intelligence_read_proof.mjs`; `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-30-eve-project-intelligence-maintainer.md`; `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-30-S100-eve-project-intelligence-maintainer.md`
-7) Commands run and outcome (pass/fail counts): `npm install` pass with Node engine warning under default Node 22; `npm run typecheck` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run info` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval` pass 5/5 and 14/14 gates after deterministic fixture patch; `npm run rag:verify:project-intelligence-live-paths` pass; `npm run rag:verify:source-lifecycle` fail on live degraded data; `npm run rag:verify:project-intelligence-read-proof` pass and exits cleanly.
+7) Commands run and outcome (pass/fail counts): `npm install` pass with Node engine warning under default Node 22; `npm run typecheck` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run info` pass; `PATH="/opt/homebrew/opt/node@24/bin:$PATH" npm run eval` pass 5/5 and 14/14 gates; `npm run rag:verify:project-intelligence-live-paths` pass; source lifecycle repair/backfills pass; `npm run rag:verify:source-lifecycle` pass at 2026-06-30T17:42:28.544Z; `npm run rag:verify:project-intelligence-read-proof` pass and exits cleanly.
 8) Evidence artifacts (screenshot/video/report/log paths): Eve eval artifacts under `agents/project-intelligence-maintainer/.eve/evals/` (ignored local runtime output); command summaries recorded in this handoff.
 9) Top 3 findings:
 - Eve package compiles/discovers cleanly and evals pass 5/5 with read-only, approval-gated, and compact-output behaviors covered.
 - Project Intelligence live-path guard had stale required-term pointers to moved docs stubs; it now validates required backend terms against the maintained architecture source while keeping moved stubs as existence checks.
-- Live source lifecycle verification is failing on real health data: Fireflies project-disposition coverage is `0.875 < 0.9`, Fireflies embedded chunk coverage is `0.636 < 0.9`, and no current Project Intelligence packets are fresh enough.
-10) Recommended next action (one line): Repair source lifecycle coverage/current packet freshness, rerun `npm run rag:verify:source-lifecycle`, then wire real Slack/Linear schedule delivery if desired.
+- Live source lifecycle verification is green after repairs: Fireflies project-disposition ratio `1.0`, Fireflies embedded ratio `1.0`, packet read-back `current_packets=111`, `fresh_packets=98`.
+10) Recommended next action (one line): Treat Eve maintainer implementation as complete; handle the two latest packet job `JSON could not be generated` failures as a separate reliability follow-up.
 11) Handoff file path: `docs/ops/handoffs/2026-06-30-S100-eve-project-intelligence-maintainer.md`
 12) Migration ledger evidence: N/A - implementation should avoid a migration unless persistent Eve run history becomes required.
 
@@ -30,7 +30,14 @@ Implementation is complete for the isolated Eve package and has been cherry-pick
 
 Deterministic Eve evals now run through `npm run eval`, which sets `EVE_PROJECT_INTELLIGENCE_MOCK_MODEL=true` and uses fixture reports for read-only maintainer checks. Live model/tool evals remain available as `npm run eval:live`.
 
-Live DB-backed verification is reachable. Source lifecycle verification remains failing on current production-like data. This is a live data/processing health blocker, not a package compile/eval blocker.
+Live DB-backed verification is green. Repairs performed in this closeout:
+
+- `npm run rag:backfill:source-lifecycle -- --days 2 --source-limit 1500` wrote 428 lifecycle rows and cleared project-disposition coverage.
+- `RAG_DATABASE_WRITES_ENABLED=true npm run rag:backfill:fireflies-transcript-chunks -- --id=<source_id> --rebuild-existing=true --limit=1` repaired four Fireflies meeting transcript chunk/embedding gaps.
+- Backend `enqueue_packet_refresh` plus `run_intelligence_compiler_batch` refreshed current packets; final read-back showed `current_packets=111`, `fresh_packets=98`, newest current packet `2026-06-30T17:42:00.031Z`.
+- `npm run rag:verify:source-lifecycle` passed with an empty failures array at `2026-06-30T17:42:28.544Z`.
+
+Non-gating note: packet_refresh_jobs still has old failed rows plus two latest failures with `JSON could not be generated`. The gate is green, but those two target-specific compiler failures should be cleaned up separately.
 
 ## Implementation Plan
 

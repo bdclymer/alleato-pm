@@ -130,6 +130,8 @@ interface WorkspaceTab {
   label: string;
   href: string;
   isActive?: boolean;
+  count?: number;
+  compact?: boolean;
 }
 
 interface ProjectEmailsWorkspaceProps {
@@ -137,6 +139,7 @@ interface ProjectEmailsWorkspaceProps {
   isLoading: boolean;
   error?: Error | null;
   title?: string;
+  description?: React.ReactNode;
   tabs: WorkspaceTab[];
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -2669,6 +2672,7 @@ export function ProjectEmailsWorkspace({
   isLoading,
   error,
   title = "Emails",
+  description,
   tabs,
   searchValue,
   onSearchChange,
@@ -2916,6 +2920,11 @@ export function ProjectEmailsWorkspace({
                 >
                   {title}
                 </div>
+                {description ? (
+                  <div className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {description}
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Button
@@ -2970,13 +2979,28 @@ export function ProjectEmailsWorkspace({
                     key={tab.href}
                     href={tab.href}
                     className={cn(
-                      "relative px-3 py-2 text-sm font-medium transition-colors",
+                      "relative transition-colors",
+                      tab.compact
+                        ? "rounded-full px-2.5 py-1 text-[11px] font-medium text-foreground/75 hover:text-foreground/95"
+                        : "px-3 py-2 text-sm font-medium",
                       tab.isActive
                         ? "text-primary"
-                        : "text-foreground/70 hover:text-foreground/90",
+                        : "",
                     )}
                   >
-                    {tab.label}
+                    <span className="inline-flex items-center gap-1.5">
+                      <span>{tab.label}</span>
+                      {typeof tab.count === "number" ? (
+                        <span
+                          className={cn(
+                            "tabular-nums",
+                            tab.compact ? "text-[10px]" : "text-xs",
+                          )}
+                        >
+                          {tab.count}
+                        </span>
+                      ) : null}
+                    </span>
                     <span
                       aria-hidden="true"
                       className={cn(
