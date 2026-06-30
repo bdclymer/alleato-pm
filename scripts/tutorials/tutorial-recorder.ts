@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
@@ -61,6 +61,11 @@ interface CapturedStep {
   screenshotMode: ScreenshotMode;
   sourceUrl: string;
   title: string;
+}
+
+interface CapturedVideo {
+  file: string;
+  mimeType: string;
 }
 
 export function defineTutorial<TData extends TutorialSeedData>(
@@ -205,6 +210,10 @@ export class TutorialRecorder {
   }
 
   async writeArtifacts() {
+    return this.writeArtifactsWithVideo(null);
+  }
+
+  async writeArtifactsWithVideo(video: CapturedVideo | null) {
     const markdownPath = path.join(this.outputDir, `${this.definition.slug}.md`);
     const manifestPath = path.join(this.outputDir, "manifest.json");
     const manifest = {
@@ -214,10 +223,15 @@ export class TutorialRecorder {
       slug: this.definition.slug,
       description: this.definition.description,
       generatedAt: new Date().toISOString(),
+      video,
       steps: this.steps,
     };
 
-    await writeFile(markdownPath, renderMarkdown(this.definition, this.steps), "utf8");
+    await writeFile(
+      markdownPath,
+      renderMarkdown(this.definition, this.steps, video),
+      "utf8",
+    );
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
     return { manifestPath, markdownPath };
@@ -265,10 +279,29 @@ export class TutorialRecorder {
 
   private async waitForStability() {
     await this.page.waitForLoadState("domcontentloaded").catch(() => undefined);
+    // Wait until the route has actually painted real content. In dev, Turbopack
+    // compiles each route on first visit, so the page is blank-white for several
+    // seconds; capturing then yields empty screenshots. Wait for substantial
+    // visible text (and no skeleton/spinner) before proceeding.
+    await this.page
+      .waitForFunction(
+        () => {
+          const body = document.body;
+          if (!body) return false;
+          const text = (body.innerText || "").replace(/\s+/g, "");
+          if (text.length < 120) return false;
+          const loading = document.querySelector(
+            '[data-loading="true"], [aria-busy="true"], .animate-pulse, [data-skeleton]',
+          );
+          return !loading;
+        },
+        { timeout: 30_000 },
+      )
+      .catch(() => undefined);
     await this.page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => undefined);
     await this.installMaskStyle();
     await this.page.evaluate(() => document.fonts?.ready).catch(() => undefined);
-    await this.page.waitForTimeout(300);
+    await this.page.waitForTimeout(600);
   }
 
   private assertValidWorkflowPage(stepTitle: string) {
@@ -310,15 +343,21 @@ export async function runTutorial(
   let context: BrowserContext | null = null;
 
   try {
+    await mkdir(options.outputDir, { recursive: true });
     browser = await chromium.launch({ headless: !options.headed });
     context = await browser.newContext({
       baseURL: options.baseUrl,
+      recordVideo: {
+        dir: options.outputDir,
+        size: { width: 1440, height: 1000 },
+      },
       storageState: options.storageState && existsSync(options.storageState) ? options.storageState : undefined,
       viewport: { width: 1440, height: 1000 },
     });
     const page = await context.newPage();
-    page.setDefaultTimeout(5_000);
-    page.setDefaultNavigationTimeout(15_000);
+    const videoHandle = page.video();
+    page.setDefaultTimeout(15_000);
+    page.setDefaultNavigationTimeout(45_000);
     const recorder = new TutorialRecorder({
       definition,
       baseUrl: options.baseUrl,
@@ -328,7 +367,9 @@ export async function runTutorial(
     await recorder.init();
     await definition.workflow({ data, page, tutorial: recorder });
 
-    const artifacts = await recorder.writeArtifacts();
+    await page.close();
+    const video = await persistRecordedVideo(options.outputDir, videoHandle);
+    const artifacts = await recorder.writeArtifactsWithVideo(video);
     await context.close();
     context = null;
     return artifacts;
@@ -341,12 +382,17 @@ export async function runTutorial(
 function renderMarkdown(
   definition: TutorialDefinition,
   steps: CapturedStep[],
+  video: CapturedVideo | null,
 ) {
   return [
     `# ${definition.title}`,
     "",
     definition.description,
     "",
+    video ? "## Walkthrough Video" : "",
+    video ? "" : "",
+    video ? `[Watch the recorded workflow](${video.file})` : "",
+    video ? "" : "",
     ...steps.flatMap((step, index) => [
       `## ${index + 1}. ${step.title}`,
       "",
@@ -360,6 +406,24 @@ function renderMarkdown(
       "",
     ]),
   ].filter(Boolean).join("\n");
+}
+
+async function persistRecordedVideo(
+  outputDir: string,
+  videoHandle: Awaited<ReturnType<Page["video"]>> | null,
+): Promise<CapturedVideo | null> {
+  if (!videoHandle) return null;
+
+  const sourcePath = await videoHandle.path().catch(() => null);
+  if (!sourcePath) return null;
+
+  const file = "session.webm";
+  const targetPath = path.join(outputDir, file);
+  await copyFile(sourcePath, targetPath);
+  return {
+    file,
+    mimeType: "video/webm",
+  };
 }
 
 function slugify(value: string) {

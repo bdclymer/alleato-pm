@@ -15,6 +15,8 @@ export interface TrainingDocAssetPublishInput {
   fileName: string;
   caption: string | null;
   altText: string | null;
+  assetType?: "screenshot" | "image" | "video";
+  mimeType?: string | null;
   stepOrder: number;
   bytes: Uint8Array;
 }
@@ -124,6 +126,25 @@ export function renderTrainingDocMdx(input: TrainingDocPublishInput): string {
   const sortedSteps = (input.steps ?? [])
     .slice()
     .sort((left, right) => left.stepOrder - right.stepOrder);
+  const videoAssets = input.assets.filter((asset) => asset.assetType === "video");
+  const imageAssets = input.assets.filter((asset) => asset.assetType !== "video");
+  const videoSection = videoAssets.length
+    ? [
+        "## Walkthrough Video",
+        "",
+        ...videoAssets.flatMap((asset) => {
+          const videoPath = `/${TRAINING_DOC_IMAGE_ROOT}/${slug}/${asset.fileName}`;
+          const lines = [
+            `<video controls playsinline preload="metadata" src="${videoPath}"></video>`,
+          ];
+          if (asset.caption?.trim()) {
+            lines.push("", `_${asset.caption.trim()}_`);
+          }
+          lines.push("");
+          return lines;
+        }),
+      ].join("\n")
+    : "";
   const stepSection = sortedSteps.length
     ? [
         "## Steps",
@@ -162,11 +183,11 @@ export function renderTrainingDocMdx(input: TrainingDocPublishInput): string {
     : "";
 
   const assetSection =
-    !stepSection && input.assets.length
+    !stepSection && imageAssets.length
       ? [
           "## Screenshots",
           "",
-          ...input.assets
+          ...imageAssets
             .sort((left, right) => left.stepOrder - right.stepOrder)
             .flatMap((asset) => {
               const imagePath = `/${TRAINING_DOC_IMAGE_ROOT}/${slug}/${asset.fileName}`;
@@ -212,6 +233,7 @@ export function renderTrainingDocMdx(input: TrainingDocPublishInput): string {
     description,
     "",
     body,
+    videoSection ? `\n${videoSection}` : "",
     stepSection ? `\n${stepSection}` : "",
     assetSection ? `\n${assetSection}` : "",
     notesSection,

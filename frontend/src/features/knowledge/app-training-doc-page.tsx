@@ -21,6 +21,9 @@ export function AppTrainingDocPage({
   const sortedSteps = doc.steps
     .slice()
     .sort((left, right) => left.step_order - right.step_order);
+  const walkthroughVideo = doc.assets.find(
+    (asset) => asset.asset_type === "video" || asset.mime_type.startsWith("video/"),
+  );
 
   return (
     <div className="min-h-[calc(100vh-6rem)] bg-background text-foreground">
@@ -37,6 +40,11 @@ export function AppTrainingDocPage({
               {bodyMarkdown.trim() ? (
                 <a href="#details" className="block text-muted-foreground hover:text-primary">
                   Details
+                </a>
+              ) : null}
+              {walkthroughVideo?.signed_url ? (
+                <a href="#walkthrough-video" className="block text-muted-foreground hover:text-primary">
+                  Walkthrough Video
                 </a>
               ) : null}
               {sortedSteps.length ? (
@@ -84,6 +92,30 @@ export function AppTrainingDocPage({
             <section id="details" className="space-y-5">
               <SectionRuleHeading label="Details" />
               <MarkdownRenderer content={bodyMarkdown} />
+            </section>
+          ) : null}
+
+          {walkthroughVideo?.signed_url ? (
+            <section id="walkthrough-video" className="space-y-5">
+              <SectionRuleHeading label="Walkthrough Video" />
+              <figure className="space-y-2">
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full rounded-md border border-border bg-foreground"
+                >
+                  <source
+                    src={walkthroughVideo.signed_url}
+                    type={walkthroughVideo.mime_type}
+                  />
+                </video>
+                {walkthroughVideo.caption ? (
+                  <figcaption className="text-sm text-muted-foreground">
+                    {walkthroughVideo.caption}
+                  </figcaption>
+                ) : null}
+              </figure>
             </section>
           ) : null}
 

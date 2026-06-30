@@ -28,6 +28,10 @@ interface TutorialManifest {
   slug: string;
   description: string;
   generatedAt: string;
+  video?: {
+    file: string;
+    mimeType: string;
+  } | null;
   steps: ManifestStep[];
 }
 
@@ -201,6 +205,41 @@ async function main() {
     screenshotAssets.push(asset);
   }
 
+  if (manifest.video?.file) {
+    const absoluteVideoPath = path.join(outputDir, manifest.video.file);
+    const videoFileName = path.basename(manifest.video.file);
+    const videoStoragePath = `training-docs/${doc.id}/generated/${generatedAtSlug}/video/${videoFileName}`;
+    await uploadAsset(
+      service,
+      absoluteVideoPath,
+      videoStoragePath,
+      manifest.video.mimeType || "video/webm",
+    );
+
+    const { error: videoAssetError } = await service
+      .from("training_doc_assets")
+      .insert({
+        training_doc_id: doc.id,
+        storage_bucket: "documents",
+        storage_path: videoStoragePath,
+        file_name: videoFileName,
+        mime_type: manifest.video.mimeType || "video/webm",
+        asset_type: "video",
+        caption: `${title} walkthrough video`,
+        alt_text: `${title} walkthrough video`,
+        step_order: 0,
+        metadata: {
+          generatedBy: "playwright-tutorial-recorder",
+          generatedAt: manifest.generatedAt,
+          kind: "walkthrough-video",
+        },
+      });
+
+    if (videoAssetError) {
+      throw new Error(`Failed to create walkthrough video asset: ${videoAssetError.message}`);
+    }
+  }
+
   await insertSteps(service, doc.id, manifest, screenshotAssets.map((asset) => asset.id));
 
   const { data: readBack, error: readBackError } = await service
@@ -246,7 +285,14 @@ function stripGeneratedMarkdown(markdown: string) {
   if (!markdown.trim()) return "";
   return markdown
     .split("\n")
-    .filter((line) => !line.startsWith("![") && !line.startsWith("Callout selector:") && !line.startsWith("Source screen:"))
+    .filter(
+      (line) =>
+        !line.startsWith("![") &&
+        !line.startsWith("Callout selector:") &&
+        !line.startsWith("Source screen:") &&
+        !line.startsWith("[Watch the recorded workflow]") &&
+        line.trim() !== "## Walkthrough Video",
+    )
     .join("\n")
     .trim();
 }

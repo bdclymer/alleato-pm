@@ -21,7 +21,7 @@ export const TRAINING_DOC_QA_STATUSES = [
   "needs_update",
 ] as const;
 
-export const TRAINING_DOC_ASSET_TYPES = ["screenshot", "image"] as const;
+export const TRAINING_DOC_ASSET_TYPES = ["screenshot", "image", "video"] as const;
 
 export type TrainingDocAudience = (typeof TRAINING_DOC_AUDIENCES)[number];
 export type TrainingDocStatus = (typeof TRAINING_DOC_STATUSES)[number];

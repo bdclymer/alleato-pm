@@ -26,6 +26,7 @@ test("renderTrainingDocMdx includes screenshots and review notes", () => {
         fileName: "step-1.png",
         caption: "Step one",
         altText: "Change request form",
+        assetType: "screenshot",
         stepOrder: 0,
         bytes: new TextEncoder().encode("png"),
       },
@@ -68,6 +69,7 @@ test("renderTrainingDocMdx renders generated steps with their screenshots", () =
         fileName: "step-1.png",
         caption: "Create project screen",
         altText: "Create project form",
+        assetType: "screenshot",
         stepOrder: 0,
         bytes: new TextEncoder().encode("png"),
       },
@@ -158,6 +160,7 @@ test("publishTrainingDocToDocsSite writes the page, index, assets, and docs nav 
           fileName: "step-1.png",
           caption: "Step one",
           altText: "Change request form",
+          assetType: "screenshot",
           stepOrder: 0,
           bytes: new TextEncoder().encode("png"),
         },
@@ -211,6 +214,37 @@ test("publishTrainingDocToDocsSite writes the page, index, assets, and docs nav 
   expect(JSON.stringify(docsJson)).toMatch(
     /project-management-tools\/training-docs\/index/,
   );
+});
+
+test("renderTrainingDocMdx renders walkthrough video without treating it as an image", () => {
+  const mdx = renderTrainingDocMdx({
+    title: "Create a Commitment",
+    slug: "create-a-commitment",
+    summary: "How to create a commitment.",
+    audience: "internal",
+    status: "approved",
+    sourceRoute: "/1034/commitments/new",
+    reviewNotes: null,
+    bodyMarkdown: "## Purpose\n\nCreate the commitment record.",
+    assets: [
+      {
+        fileName: "session.webm",
+        caption: "Complete recorded walkthrough",
+        altText: "Commitment walkthrough video",
+        assetType: "video",
+        mimeType: "video/webm",
+        stepOrder: 0,
+        bytes: new TextEncoder().encode("webm"),
+      },
+    ],
+    steps: [],
+  });
+
+  expect(mdx).toMatch(/## Walkthrough Video/);
+  expect(mdx).toMatch(
+    /<video controls playsinline preload="metadata" src="\/images\/training-docs\/create-a-commitment\/session\.webm"><\/video>/,
+  );
+  expect(mdx).not.toMatch(/!\[Commitment walkthrough video\]/);
 });
 
 test("publishTrainingDocToDocsSite rejects paths outside the docs site", async () => {

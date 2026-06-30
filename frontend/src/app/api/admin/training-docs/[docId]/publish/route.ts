@@ -48,9 +48,20 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
         .map((step) => step.screenshot_asset_id)
         .filter((id): id is string => Boolean(id)),
     );
+    const videoAssetIds = new Set(
+      doc.assets
+        .filter(
+          (asset) =>
+            asset.asset_type === "video" || asset.mime_type.startsWith("video/"),
+        )
+        .map((asset) => asset.id),
+    );
     const sourceAssets =
-      stepScreenshotAssetIds.size > 0
-        ? doc.assets.filter((asset) => stepScreenshotAssetIds.has(asset.id))
+      stepScreenshotAssetIds.size > 0 || videoAssetIds.size > 0
+        ? doc.assets.filter(
+            (asset) =>
+              stepScreenshotAssetIds.has(asset.id) || videoAssetIds.has(asset.id),
+          )
         : doc.assets;
     const assets = await Promise.all(
       sourceAssets.map(async (asset) => {
@@ -66,8 +77,15 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
 
         return {
           fileName: asset.file_name,
+          assetType:
+            asset.asset_type === "video" || asset.mime_type.startsWith("video/")
+              ? "video"
+              : asset.asset_type === "image"
+                ? "image"
+                : "screenshot",
           caption: asset.caption,
           altText: asset.alt_text,
+          mimeType: asset.mime_type,
           stepOrder: asset.step_order,
           bytes: new Uint8Array(await data.arrayBuffer()),
         };
