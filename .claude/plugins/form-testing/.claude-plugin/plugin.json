@@ -1,0 +1,9 @@
+{
+  "name": "form-testing",
+  "version": "1.0.0",
+  "description": "Automated form discovery and testing agents that inventory every form in a tool, exercise create/edit flows, and report field-level errors.",
+  "author": {
+    "name": "Alleato Group",
+    "email": "support@alleatogroup.com"
+  }
+}

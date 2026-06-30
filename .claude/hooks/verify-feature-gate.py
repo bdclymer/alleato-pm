@@ -41,9 +41,10 @@ import os
 
 def find_active_session() -> str | None:
     """Return the most recently modified verify-output/<feature>/ dir, or None."""
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
     candidate_roots = [
         "verify-output",
-        "/Users/meganharrison/Documents/alleato-pm/verify-output",
+        os.path.join(project_dir, "verify-output"),
     ]
     session_dirs: list[str] = []
     for root in candidate_roots:

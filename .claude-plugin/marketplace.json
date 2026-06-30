@@ -1,0 +1,88 @@
+{
+  "name": "alleato-pm",
+  "owner": {
+    "name": "Alleato Group",
+    "email": "support@alleatogroup.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins bundled with the Alleato PM construction platform — development workflow, code review, design, and form-testing tooling.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "agent-sdk-dev",
+      "source": "./.claude/plugins/agent-sdk-dev",
+      "description": "Claude Agent SDK development plugin."
+    },
+    {
+      "name": "claude-opus-4-5-migration",
+      "source": "./.claude/plugins/claude-opus-4-5-migration",
+      "description": "Migrate code and prompts from Sonnet 4.x and Opus 4.1 to Opus 4.5."
+    },
+    {
+      "name": "code-review",
+      "source": "./.claude/plugins/code-review",
+      "description": "Automated PR code review using multiple specialized agents with confidence-based scoring."
+    },
+    {
+      "name": "commit-commands",
+      "source": "./.claude/plugins/commit-commands",
+      "description": "Git workflow commands for committing, pushing, and creating pull requests."
+    },
+    {
+      "name": "explanatory-output-style",
+      "source": "./.claude/plugins/explanatory-output-style",
+      "description": "Adds educational insights about implementation choices and codebase patterns."
+    },
+    {
+      "name": "feature-dev",
+      "source": "./.claude/plugins/feature-dev",
+      "description": "Comprehensive feature development workflow with agents for exploration, architecture, and review."
+    },
+    {
+      "name": "form-testing",
+      "source": "./.claude/plugins/form-testing",
+      "description": "Automated form discovery and testing agents that exercise create/edit flows and report field-level errors."
+    },
+    {
+      "name": "frontend-design",
+      "source": "./.claude/plugins/frontend-design",
+      "description": "Frontend design skill for UI/UX implementation."
+    },
+    {
+      "name": "hookify",
+      "source": "./.claude/plugins/hookify",
+      "description": "Create hooks to prevent unwanted behaviors by analyzing conversation patterns."
+    },
+    {
+      "name": "learning-output-style",
+      "source": "./.claude/plugins/learning-output-style",
+      "description": "Interactive learning mode that requests meaningful code contributions at decision points."
+    },
+    {
+      "name": "plugin-dev",
+      "source": "./.claude/plugins/plugin-dev",
+      "description": "Toolkit for building Claude Code plugins: creators, a validator, and structure/hook/MCP skills."
+    },
+    {
+      "name": "pr-review-toolkit",
+      "source": "./.claude/plugins/pr-review-toolkit",
+      "description": "PR review agents for comments, tests, error handling, type design, code quality, and simplification."
+    },
+    {
+      "name": "ralph-wiggum",
+      "source": "./.claude/plugins/ralph-wiggum",
+      "description": "Continuous self-referential AI loops for iterative development."
+    },
+    {
+      "name": "security-guidance",
+      "source": "./.claude/plugins/security-guidance",
+      "description": "Security reminder hook warning about command injection, XSS, and unsafe code patterns when editing files."
+    },
+    {
+      "name": "signal-noise-audit",
+      "source": "./.claude/plugins/signal-noise-audit",
+      "description": "Audit and fix visual noise in the UI per the Signal Over Noise principle."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "plugin-dev",
+  "version": "1.0.0",
+  "description": "Toolkit for building Claude Code plugins: agent/command/skill creators, a plugin validator, and skills covering plugin structure, hooks, MCP integration, and settings.",
+  "author": {
+    "name": "Anthropic",
+    "email": "support@anthropic.com"
+  }
+}
