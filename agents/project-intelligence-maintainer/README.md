@@ -61,10 +61,25 @@ human approves the tool call. A repair is not complete until the tool reads back
 
 ## Schedule
 
-`agent/schedules/weekday-maintainer-scan.ts` is a report-only weekday handler
-schedule. It does not mutate data or send notifications in v1. Wire Slack or
-Linear delivery by adding a channel and handing the schedule run to that channel;
-the maintainer tools do not need to change.
+`agent/schedules/weekday-maintainer-scan.ts` runs on weekdays at 13:00 UTC and
+hands the maintainer scan to the Eve Linear Agent Session channel.
+
+Required delivery environment:
+
+```bash
+EVE_PROJECT_INTELLIGENCE_LINEAR_ISSUE_ID=AAI-774
+LINEAR_AGENT_ACCESS_TOKEN=...
+LINEAR_WEBHOOK_SECRET=...
+```
+
+The Linear channel also accepts `LINEAR_ACCESS_TOKEN` or `LINEAR_API_KEY` as an
+access-token fallback, but `LINEAR_AGENT_ACCESS_TOKEN` is preferred because Eve's
+Linear channel posts native Agent Activities.
+
+If any delivery value is missing, the schedule logs a blocked delivery message
+with the missing configuration flags and exits without claiming success. The
+schedule does not mutate Project Intelligence data; repair tools still require
+bounded scope and human approval.
 
 ## Failure contract
 
