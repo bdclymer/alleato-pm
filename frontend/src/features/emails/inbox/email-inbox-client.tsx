@@ -18,7 +18,7 @@ import { DetailField } from "@/components/ds/DetailField";
 export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments" | "reviewed";
 
 export const EMAIL_INBOX_SPLIT_VIEW_CLASSNAME =
-  "flex h-[calc(100dvh-6rem)] min-h-[calc(100dvh-6rem)] w-full overflow-hidden bg-background";
+  "flex h-full min-h-0 flex-1 w-full overflow-hidden bg-background";
 
 export interface ReviewedEmail {
   reviewId: string;

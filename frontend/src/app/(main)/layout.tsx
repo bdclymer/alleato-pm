@@ -67,6 +67,8 @@ export default function MainLayout({
     pathname === "/ai" ||
     pathname?.startsWith("/ai/") ||
     pathname?.startsWith("/ai-assistant");
+  const isFullHeightWorkspace =
+    /^\/\d+\/tasks(?:\/|$)/.test(pathname ?? "");
   const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
   if (isImmersiveChatPage) {
     return (
@@ -88,27 +90,27 @@ export default function MainLayout({
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div
-              className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
+              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
               style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
             >
               {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main
                 id="app-main-content"
                 key="main-content"
-                className="flex flex-1 flex-col min-w-0 min-h-0"
+                className="flex min-h-0 min-w-0 flex-1 flex-col"
                 {...feedbackTargetProps("app.main-content")}
               >
                 <React.Fragment key="route-content">{children}</React.Fragment>
-                {!isDrawingViewer && (
-                  isAiAssistant ? (
-                    <div key="site-footer-desktop" className="hidden md:contents">
-                      <SiteFooter key="site-footer" />
-                    </div>
-                  ) : (
-                    <SiteFooter key="site-footer" />
-                  )
-                )}
               </main>
+              {!isDrawingViewer && !isFullHeightWorkspace && (
+                isAiAssistant ? (
+                  <div key="site-footer-desktop" className="hidden md:contents">
+                    <SiteFooter key="site-footer" />
+                  </div>
+                ) : (
+                  <SiteFooter key="site-footer" />
+                )
+              )}
               {shouldMountDeferredPanels && isProcoreReferenceOpen && (
                 <ProcoreReferencePanel key="procore-reference-panel" />
               )}

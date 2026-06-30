@@ -19,12 +19,16 @@ describe("UnifiedTablePage header labels", () => {
     expect(TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME).not.toContain("sm:flex");
   });
 
-  it("keeps split views on a viewport-height, overflow-contained layout contract", () => {
-    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("h-[calc(100dvh-6rem)]");
-    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("min-h-[calc(100dvh-6rem)]");
+  it("keeps split views on a flex-fill, overflow-contained layout contract", () => {
+    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("h-full");
+    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("min-h-0");
+    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("flex-1");
     expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).toContain("overflow-hidden");
-    expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("h-[calc(100dvh-4rem)]");
+    expect(TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME).not.toContain("100dvh");
+    expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("h-full");
+    expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("min-h-0");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("overflow-hidden");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("pb-0");
+    expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).not.toContain("100dvh");
   });
 });
