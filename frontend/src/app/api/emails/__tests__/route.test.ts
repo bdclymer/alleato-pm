@@ -173,4 +173,34 @@ describe("/api/emails", () => {
     expect(intakeQuery.is).not.toHaveBeenCalledWith("mailbox_user_id", null);
     expect(intakeQuery.is).not.toHaveBeenCalledWith("conversation_id", null);
   });
+
+  it("can scope the live Outlook feed to Brandon's mailbox", async () => {
+    const intakeQuery = queryBuilder([]);
+    const supabase = {
+      from: jest.fn((table: string) => {
+        if (table === "user_profiles") return profileBuilder(true);
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    };
+    const intake = {
+      from: jest.fn((table: string) => {
+        if (table === "outlook_email_intake") return intakeQuery;
+        throw new Error(`Unexpected intake table: ${table}`);
+      }),
+    };
+    createClientMock.mockResolvedValue(
+      supabase as Awaited<ReturnType<typeof createClient>>,
+    );
+    createOutlookIntakeServiceClientMock.mockReturnValue(intake as never);
+
+    const response = await GET(
+      request("/api/emails?source=outlook&mailbox_user_id=bclymer@alleatogroup.com"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(intakeQuery.eq).toHaveBeenCalledWith(
+      "mailbox_user_id",
+      "bclymer@alleatogroup.com",
+    );
+  });
 });

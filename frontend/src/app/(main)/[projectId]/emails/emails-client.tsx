@@ -91,7 +91,9 @@ interface EmailClientTab {
 }
 
 interface EmailsClientProps {
+  detailsPanelMode?: "default" | "assistant-feedback";
   embedded?: boolean;
+  mailboxUserId?: string;
   navigationTabs?: EmailClientTab[];
   projectId?: number;
   scope?: "project" | "global";
@@ -99,7 +101,9 @@ interface EmailsClientProps {
 }
 
 export function EmailsClient({
+  detailsPanelMode = "default",
   projectId,
+  mailboxUserId,
   navigationTabs,
   scope = "project",
   source = "app",
@@ -182,7 +186,7 @@ export function EmailsClient({
   });
 
   const projectEmailsQuery = useEmails(projectId ?? 0, undefined, source);
-  const globalEmailsQuery = useAllEmails(undefined, isGlobal, source);
+  const globalEmailsQuery = useAllEmails(undefined, isGlobal, source, mailboxUserId);
   const activeQuery = isGlobal ? globalEmailsQuery : projectEmailsQuery;
   const {
     data: emails = [],
@@ -727,6 +731,7 @@ export function EmailsClient({
           sortBy={tableState.sortBy ?? undefined}
           sortDirection={tableState.sortDirection}
           onSortChange={handleSortChange}
+          detailsPanelMode={detailsPanelMode}
           viewSwitcher={
             <EmailViewSwitcher
               value={emailView}
