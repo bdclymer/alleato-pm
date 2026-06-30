@@ -70,7 +70,6 @@ export function AppTrainingDocsPage({
         const category = getTrainingDocToolCategory(doc);
         const href = getPublishedTrainingDocUrl(doc.publishedDocPath);
         if (!category || !href) return [];
-
         return {
           id: doc.slug,
           categoryId: category.slug,
@@ -91,7 +90,7 @@ export function AppTrainingDocsPage({
     <KnowledgeBrowsePage
       actionHref={isAdmin ? "/training-docs" : null}
       actionIcon={<Bot className="h-4 w-4" />}
-      actionLabel="Create training doc"
+      actionLabel="Create"
       activeCategoryId={activeCategorySlug}
       categories={categories}
       emptyDescription="Published training docs will appear here after review."

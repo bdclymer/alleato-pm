@@ -141,7 +141,7 @@ describe("KnowledgeBasePage", () => {
     expect(screen.queryByText("Subcontract template")).not.toBeInTheDocument();
   });
 
-  it("renders app training docs in a docs-site style layout", () => {
+  it("renders app training docs with the shared knowledge layout", () => {
     render(
       <AppTrainingDocsPage
         trainingDocs={[
@@ -179,7 +179,7 @@ describe("KnowledgeBasePage", () => {
       "/knowledge/app/budget",
     );
     expect(
-      screen.getAllByRole("link", { name: /Create training doc/ })[0],
+      screen.getAllByRole("link", { name: /Create/ })[0],
     ).toHaveAttribute("href", "/training-docs");
     expect(
       screen.getByRole("button", { name: "Open knowledge menu" }),
