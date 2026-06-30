@@ -1,0 +1,5441 @@
+{
+  "generatedAt": "2026-06-30T21:04:43.323Z",
+  "baseUrl": "https://projects.alleatogroup.com",
+  "projectId": "1034",
+  "storageState": "frontend/tests/.auth/user.json",
+  "totalPageRoutes": 318,
+  "targetRoutes": 252,
+  "summary": {
+    "captured": 241,
+    "captured_http_404": 11,
+    "skipped_dynamic_record": 48,
+    "skipped_unknown_param": 3,
+    "skipped_non_app_scope": 15
+  },
+  "results": [
+    {
+      "source": "frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx",
+      "route": "/procore-tools/[slug]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/procore-tools/overview",
+      "url": "https://projects.alleatogroup.com/procore-tools/overview",
+      "screenshot": "screenshots/001-procore-tools__overview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/(procore)/procore-tools/page.tsx",
+      "route": "/procore-tools",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/procore-tools",
+      "url": "https://projects.alleatogroup.com/procore-tools",
+      "screenshot": "screenshots/002-procore-tools.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx",
+      "route": "/support-articles/[articleId]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/support-articles/overview",
+      "url": "https://projects.alleatogroup.com/support-articles/overview",
+      "screenshot": "screenshots/003-support-articles__overview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/(procore)/support-articles/page.tsx",
+      "route": "/support-articles",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/support-articles",
+      "url": "https://projects.alleatogroup.com/support-articles",
+      "screenshot": "screenshots/004-support-articles.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/ap-invoices/page.tsx",
+      "route": "/accounting/ap-invoices",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/ap-invoices",
+      "url": "https://projects.alleatogroup.com/accounting/ap-invoices",
+      "screenshot": "screenshots/005-accounting__ap-invoices.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/ap-payments/page.tsx",
+      "route": "/accounting/ap-payments",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/ap-payments",
+      "url": "https://projects.alleatogroup.com/accounting/ap-payments",
+      "screenshot": "screenshots/006-accounting__ap-payments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/bills/page.tsx",
+      "route": "/accounting/bills",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/bills",
+      "url": "https://projects.alleatogroup.com/accounting/bills",
+      "screenshot": "screenshots/007-accounting__bills.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/checks/page.tsx",
+      "route": "/accounting/checks",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/checks",
+      "url": "https://projects.alleatogroup.com/accounting/checks",
+      "screenshot": "screenshots/008-accounting__checks.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/finance-spend/page.tsx",
+      "route": "/accounting/finance-spend",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/finance-spend",
+      "url": "https://projects.alleatogroup.com/accounting/finance-spend",
+      "screenshot": "screenshots/009-accounting__finance-spend.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/invoices/page.tsx",
+      "route": "/accounting/invoices",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/invoices",
+      "url": "https://projects.alleatogroup.com/accounting/invoices",
+      "screenshot": "screenshots/010-accounting__invoices.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/page.tsx",
+      "route": "/accounting",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting",
+      "url": "https://projects.alleatogroup.com/accounting",
+      "screenshot": "screenshots/011-accounting.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/payments/page.tsx",
+      "route": "/accounting/payments",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/payments",
+      "url": "https://projects.alleatogroup.com/accounting/payments",
+      "screenshot": "screenshots/012-accounting__payments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/projects/page.tsx",
+      "route": "/accounting/projects",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/projects",
+      "url": "https://projects.alleatogroup.com/accounting/projects",
+      "screenshot": "screenshots/013-accounting__projects.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/reconciliation/page.tsx",
+      "route": "/accounting/reconciliation",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/reconciliation",
+      "url": "https://projects.alleatogroup.com/accounting/reconciliation",
+      "screenshot": "screenshots/014-accounting__reconciliation.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/sop-backlog/page.tsx",
+      "route": "/accounting/sop-backlog",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/sop-backlog",
+      "url": "https://projects.alleatogroup.com/accounting/sop-backlog",
+      "screenshot": "screenshots/015-accounting__sop-backlog.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/wip/page.tsx",
+      "route": "/accounting/wip",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/accounting/wip",
+      "url": "https://projects.alleatogroup.com/accounting/wip",
+      "screenshot": "screenshots/016-accounting__wip.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/actions/page.tsx",
+      "route": "/actions",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/actions",
+      "url": "https://projects.alleatogroup.com/actions",
+      "screenshot": "screenshots/017-actions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/acumatica-sync-logs/page.tsx",
+      "route": "/acumatica-sync-logs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/acumatica-sync-logs",
+      "url": "https://projects.alleatogroup.com/acumatica-sync-logs",
+      "screenshot": "screenshots/018-acumatica-sync-logs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/admin-check/page.tsx",
+      "route": "/admin-check",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/admin-check",
+      "url": "https://projects.alleatogroup.com/admin-check",
+      "screenshot": "screenshots/019-admin-check.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/admin/company-info/page.tsx",
+      "route": "/admin/company-info",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/admin/company-info",
+      "url": "https://projects.alleatogroup.com/admin/company-info",
+      "screenshot": "screenshots/020-admin__company-info.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/admin/page.tsx",
+      "route": "/admin",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/admin",
+      "url": "https://projects.alleatogroup.com/admin",
+      "screenshot": "screenshots/021-admin.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-chat-history/page.tsx",
+      "route": "/ai-chat-history",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-chat-history",
+      "url": "https://projects.alleatogroup.com/ai-chat-history",
+      "screenshot": "screenshots/022-ai-chat-history.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-learning-promotions/page.tsx",
+      "route": "/ai-learning-promotions",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-learning-promotions",
+      "url": "https://projects.alleatogroup.com/ai-learning-promotions",
+      "screenshot": "screenshots/023-ai-learning-promotions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx",
+      "route": "/ai-prompt-diagnostics",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-prompt-diagnostics",
+      "url": "https://projects.alleatogroup.com/ai-prompt-diagnostics",
+      "screenshot": "screenshots/024-ai-prompt-diagnostics.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-skills/page.tsx",
+      "route": "/ai-skills",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-skills",
+      "url": "https://projects.alleatogroup.com/ai-skills",
+      "screenshot": "screenshots/025-ai-skills.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-system-health/page.tsx",
+      "route": "/ai-system-health",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-system-health",
+      "url": "https://projects.alleatogroup.com/ai-system-health",
+      "screenshot": "screenshots/026-ai-system-health.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-vision/page.tsx",
+      "route": "/ai-vision",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-vision",
+      "url": "https://projects.alleatogroup.com/ai-vision",
+      "screenshot": "screenshots/027-ai-vision.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-work-runs/page.tsx",
+      "route": "/ai-work-runs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-work-runs",
+      "url": "https://projects.alleatogroup.com/ai-work-runs",
+      "screenshot": "screenshots/028-ai-work-runs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai/admin/agents/page.tsx",
+      "route": "/ai/admin/agents",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/admin/agents",
+      "url": "https://projects.alleatogroup.com/ai/admin/agents",
+      "screenshot": "screenshots/029-ai__admin__agents.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai/admin/skills/page.tsx",
+      "route": "/ai/admin/skills",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/admin/skills",
+      "url": "https://projects.alleatogroup.com/ai/admin/skills",
+      "screenshot": "screenshots/030-ai__admin__skills.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai/learning-promotions/page.tsx",
+      "route": "/ai/learning-promotions",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/learning-promotions",
+      "url": "https://projects.alleatogroup.com/ai/learning-promotions",
+      "screenshot": "screenshots/031-ai__learning-promotions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/analytics/page.tsx",
+      "route": "/analytics",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/analytics",
+      "url": "https://projects.alleatogroup.com/analytics",
+      "screenshot": "screenshots/032-analytics.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/annotation-inbox/page.tsx",
+      "route": "/annotation-inbox",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/annotation-inbox",
+      "url": "https://projects.alleatogroup.com/annotation-inbox",
+      "screenshot": "screenshots/033-annotation-inbox.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/api-docs/page.tsx",
+      "route": "/api-docs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/api-docs",
+      "url": "https://projects.alleatogroup.com/api-docs",
+      "screenshot": "screenshots/034-api-docs.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/api-docs",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/command-center/page.tsx",
+      "route": "/command-center",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/command-center",
+      "url": "https://projects.alleatogroup.com/command-center",
+      "screenshot": "screenshots/035-command-center.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/database-inventory/page.tsx",
+      "route": "/database-inventory",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/database-inventory",
+      "url": "https://projects.alleatogroup.com/database-inventory",
+      "screenshot": "screenshots/036-database-inventory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/db-audit-log/page.tsx",
+      "route": "/db-audit-log",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/db-audit-log",
+      "url": "https://projects.alleatogroup.com/db-audit-log",
+      "screenshot": "screenshots/037-db-audit-log.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/deep-research/page.tsx",
+      "route": "/deep-research",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/deep-research",
+      "url": "https://projects.alleatogroup.com/deep-research",
+      "screenshot": "screenshots/038-deep-research.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/design-ideas/page.tsx",
+      "route": "/design-ideas",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/design-ideas",
+      "url": "https://projects.alleatogroup.com/design-ideas",
+      "screenshot": "screenshots/039-design-ideas.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/design-system-update/page.tsx",
+      "route": "/design-system-update",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/design-system-update",
+      "url": "https://projects.alleatogroup.com/design-system-update",
+      "screenshot": "screenshots/040-design-system-update.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/design-violations/page.tsx",
+      "route": "/design-violations",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/design-violations",
+      "url": "https://projects.alleatogroup.com/design-violations",
+      "screenshot": "screenshots/041-design-violations.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/design/page.tsx",
+      "route": "/design",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/design",
+      "url": "https://projects.alleatogroup.com/design",
+      "screenshot": "screenshots/042-design.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/dev/table-generator/page.tsx",
+      "route": "/dev/table-generator",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/dev/table-generator",
+      "url": "https://projects.alleatogroup.com/dev/table-generator",
+      "screenshot": "screenshots/043-dev__table-generator.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/dev/table-generator",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/[[...slug]]/page.tsx",
+      "route": "/docs/[[...slug]]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/overview",
+      "url": "https://projects.alleatogroup.com/docs/overview",
+      "screenshot": "screenshots/044-docs__overview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx",
+      "route": "/docs/ai-overview/data-sources",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/data-sources",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/data-sources",
+      "screenshot": "screenshots/045-docs__ai-overview__data-sources.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx",
+      "route": "/docs/ai-overview/learning",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/learning",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/learning",
+      "screenshot": "screenshots/046-docs__ai-overview__learning.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx",
+      "route": "/docs/ai-overview/memory",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/memory",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/memory",
+      "screenshot": "screenshots/047-docs__ai-overview__memory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/models-and-cost/page.tsx",
+      "route": "/docs/ai-overview/models-and-cost",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/models-and-cost",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/models-and-cost",
+      "screenshot": "screenshots/048-docs__ai-overview__models-and-cost.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/page.tsx",
+      "route": "/docs/ai-overview",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview",
+      "screenshot": "screenshots/049-docs__ai-overview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/team/page.tsx",
+      "route": "/docs/ai-overview/team",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/team",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/team",
+      "screenshot": "screenshots/050-docs__ai-overview__team.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/docs/ai-overview/tools/page.tsx",
+      "route": "/docs/ai-overview/tools",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/docs/ai-overview/tools",
+      "url": "https://projects.alleatogroup.com/docs/ai-overview/tools",
+      "screenshot": "screenshots/051-docs__ai-overview__tools.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/document-metadata/page.tsx",
+      "route": "/document-metadata",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/document-metadata",
+      "url": "https://projects.alleatogroup.com/document-metadata",
+      "screenshot": "screenshots/052-document-metadata.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/errors/page.tsx",
+      "route": "/errors",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/errors",
+      "url": "https://projects.alleatogroup.com/errors",
+      "screenshot": "screenshots/053-errors.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/eval-runs/page.tsx",
+      "route": "/eval-runs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/eval-runs",
+      "url": "https://projects.alleatogroup.com/eval-runs",
+      "screenshot": "screenshots/054-eval-runs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "route": "/feedback-inbox",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/feedback-inbox",
+      "url": "https://projects.alleatogroup.com/feedback-inbox",
+      "screenshot": "screenshots/055-feedback-inbox.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/intelligence-packets/page.tsx",
+      "route": "/intelligence-packets",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/intelligence-packets",
+      "url": "https://projects.alleatogroup.com/intelligence-packets",
+      "screenshot": "screenshots/056-intelligence-packets.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/intelligence-vision/page.tsx",
+      "route": "/intelligence-vision",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/intelligence-vision",
+      "url": "https://projects.alleatogroup.com/intelligence-vision",
+      "screenshot": "screenshots/057-intelligence-vision.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/learning-feedback/page.tsx",
+      "route": "/learning-feedback",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/learning-feedback",
+      "url": "https://projects.alleatogroup.com/learning-feedback",
+      "screenshot": "screenshots/058-learning-feedback.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/operations-readiness/page.tsx",
+      "route": "/operations-readiness",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/operations-readiness",
+      "url": "https://projects.alleatogroup.com/operations-readiness",
+      "screenshot": "screenshots/059-operations-readiness.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/outlook-draft-feedback/page.tsx",
+      "route": "/outlook-draft-feedback",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/outlook-draft-feedback",
+      "url": "https://projects.alleatogroup.com/outlook-draft-feedback",
+      "screenshot": "screenshots/060-outlook-draft-feedback.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/permissions/page.tsx",
+      "route": "/permissions",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/permissions",
+      "url": "https://projects.alleatogroup.com/permissions",
+      "screenshot": "screenshots/061-permissions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/permissions/users/[personId]/page.tsx",
+      "route": "/permissions/users/[personId]",
+      "scope": "admin",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "personId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(admin)/pipeline-health/page.tsx",
+      "route": "/pipeline-health",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/pipeline-health",
+      "url": "https://projects.alleatogroup.com/pipeline-health",
+      "screenshot": "screenshots/062-pipeline-health.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx",
+      "route": "/procore-docs/[...slug]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/procore-docs/overview",
+      "url": "https://projects.alleatogroup.com/procore-docs/overview",
+      "screenshot": "screenshots/063-procore-docs__overview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "route": "/procore-docs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/procore-docs",
+      "url": "https://projects.alleatogroup.com/procore-docs",
+      "screenshot": "screenshots/064-procore-docs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/product-board/page.tsx",
+      "route": "/product-board",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/product-board",
+      "url": "https://projects.alleatogroup.com/product-board",
+      "screenshot": "screenshots/065-product-board.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/project-attribution/page.tsx",
+      "route": "/project-attribution",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/project-attribution",
+      "url": "https://projects.alleatogroup.com/project-attribution",
+      "screenshot": "screenshots/066-project-attribution.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/projects-table-demo/page.tsx",
+      "route": "/projects-table-demo",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/projects-table-demo",
+      "url": "https://projects.alleatogroup.com/projects-table-demo",
+      "screenshot": "screenshots/067-projects-table-demo.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/prp-status/page.tsx",
+      "route": "/prp-status",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/prp-status",
+      "url": "https://projects.alleatogroup.com/prp-status",
+      "screenshot": "screenshots/068-prp-status.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/rag-eval/page.tsx",
+      "route": "/rag-eval",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/rag-eval",
+      "url": "https://projects.alleatogroup.com/rag-eval",
+      "screenshot": "screenshots/069-rag-eval.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/rag/page.tsx",
+      "route": "/rag",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/rag",
+      "url": "https://projects.alleatogroup.com/rag",
+      "screenshot": "screenshots/070-rag.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/redoc/page.tsx",
+      "route": "/redoc",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/redoc",
+      "url": "https://projects.alleatogroup.com/redoc",
+      "screenshot": "screenshots/071-redoc.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/redoc",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/site-map/page.tsx",
+      "route": "/site-map",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/site-map",
+      "url": "https://projects.alleatogroup.com/site-map",
+      "screenshot": "screenshots/072-site-map.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/source-sync/page.tsx",
+      "route": "/source-sync",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/source-sync",
+      "url": "https://projects.alleatogroup.com/source-sync",
+      "screenshot": "screenshots/073-source-sync.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/tables-directory/page.tsx",
+      "route": "/tables-directory",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/tables-directory",
+      "url": "https://projects.alleatogroup.com/tables-directory",
+      "screenshot": "screenshots/074-tables-directory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/task-training/page.tsx",
+      "route": "/task-training",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/task-training",
+      "url": "https://projects.alleatogroup.com/task-training",
+      "screenshot": "screenshots/075-task-training.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/template/form-standard/page.tsx",
+      "route": "/template/form-standard",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/template/form-standard",
+      "url": "https://projects.alleatogroup.com/template/form-standard",
+      "screenshot": "screenshots/076-template__form-standard.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/template/form-standard",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/template/form-template/page.tsx",
+      "route": "/template/form-template",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/template/form-template",
+      "url": "https://projects.alleatogroup.com/template/form-template",
+      "screenshot": "screenshots/077-template__form-template.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/template/form-template",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/test-cases/page.tsx",
+      "route": "/test-cases",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/test-cases",
+      "url": "https://projects.alleatogroup.com/test-cases",
+      "screenshot": "screenshots/078-test-cases.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/test-matrix/page.tsx",
+      "route": "/test-matrix",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/test-matrix",
+      "url": "https://projects.alleatogroup.com/test-matrix",
+      "screenshot": "screenshots/079-test-matrix.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx",
+      "route": "/testing/[tool]/cases/[caseId]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing/commitments/cases/1",
+      "url": "https://projects.alleatogroup.com/testing/commitments/cases/1",
+      "screenshot": "screenshots/080-testing__commitments__cases__1.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing/commitments/cases/1",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/[tool]/page.tsx",
+      "route": "/testing/[tool]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/testing/commitments",
+      "url": "https://projects.alleatogroup.com/testing/commitments",
+      "screenshot": "screenshots/081-testing__commitments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=invalid-project",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/page.tsx",
+      "route": "/testing",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing",
+      "url": "https://projects.alleatogroup.com/testing",
+      "screenshot": "screenshots/082-testing.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/parity/page.tsx",
+      "route": "/testing/parity",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing/parity",
+      "url": "https://projects.alleatogroup.com/testing/parity",
+      "screenshot": "screenshots/083-testing__parity.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing/parity",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx",
+      "route": "/testing/runs/[runId]/case/[caseNumber]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing/runs/1/case/1",
+      "url": "https://projects.alleatogroup.com/testing/runs/1/case/1",
+      "screenshot": "screenshots/084-testing__runs__1__case__1.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing/runs/1/case/1",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/runs/[runId]/page.tsx",
+      "route": "/testing/runs/[runId]",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing/runs/1",
+      "url": "https://projects.alleatogroup.com/testing/runs/1",
+      "screenshot": "screenshots/085-testing__runs__1.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing/runs/1",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/testing/runs/page.tsx",
+      "route": "/testing/runs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured_http_404",
+      "urlPath": "/testing/runs",
+      "url": "https://projects.alleatogroup.com/testing/runs",
+      "screenshot": "screenshots/086-testing__runs.png",
+      "httpStatus": 404,
+      "finalUrl": "https://projects.alleatogroup.com/testing/runs",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/tools/page.tsx",
+      "route": "/tools",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/tools",
+      "url": "https://projects.alleatogroup.com/tools",
+      "screenshot": "screenshots/087-tools.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/training-docs/[docId]/page.tsx",
+      "route": "/training-docs/[docId]",
+      "scope": "admin",
+      "included": true,
+      "status": "skipped_unknown_param",
+      "unresolved": [
+        "docId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(admin)/training-docs/[docId]/preview/page.tsx",
+      "route": "/training-docs/[docId]/preview",
+      "scope": "admin",
+      "included": true,
+      "status": "skipped_unknown_param",
+      "unresolved": [
+        "docId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(admin)/training-docs/page.tsx",
+      "route": "/training-docs",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/training-docs",
+      "url": "https://projects.alleatogroup.com/training-docs",
+      "screenshot": "screenshots/088-training-docs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/ui-library/page.tsx",
+      "route": "/ui-library",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ui-library",
+      "url": "https://projects.alleatogroup.com/ui-library",
+      "screenshot": "screenshots/089-ui-library.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/updates/page.tsx",
+      "route": "/updates",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/updates",
+      "url": "https://projects.alleatogroup.com/updates",
+      "screenshot": "screenshots/090-updates.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/user-management/page.tsx",
+      "route": "/user-management",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/user-management",
+      "url": "https://projects.alleatogroup.com/user-management",
+      "screenshot": "screenshots/091-user-management.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx",
+      "route": "/user-management/users/[userSlug]",
+      "scope": "admin",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "userSlug"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(dashboard)/invoice/add/page.tsx",
+      "route": "/invoice/add",
+      "scope": "dashboard",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/invoice/add",
+      "url": "https://projects.alleatogroup.com/invoice/add",
+      "screenshot": "screenshots/092-invoice__add.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/invoice/add",
+      "title": "Invoice Add",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(dashboard)/invoice/edit/page.tsx",
+      "route": "/invoice/edit",
+      "scope": "dashboard",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/invoice/edit",
+      "url": "https://projects.alleatogroup.com/invoice/edit",
+      "screenshot": "screenshots/093-invoice__edit.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/invoice/edit",
+      "title": "Invoice Edit",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(dashboard)/invoice/list/page.tsx",
+      "route": "/invoice/list",
+      "scope": "dashboard",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/invoice/list",
+      "url": "https://projects.alleatogroup.com/invoice/list",
+      "screenshot": "screenshots/094-invoice__list.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/invoice/list",
+      "title": "Invoice List",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(dashboard)/invoice/preview/page.tsx",
+      "route": "/invoice/preview",
+      "scope": "dashboard",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/invoice/preview",
+      "url": "https://projects.alleatogroup.com/invoice/preview",
+      "screenshot": "screenshots/095-invoice__preview.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/invoice/preview",
+      "title": "Invoice Preview",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/admin/page.tsx",
+      "route": "/[projectId]/admin",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/admin",
+      "url": "https://projects.alleatogroup.com/1034/admin",
+      "screenshot": "screenshots/096-1034__admin.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/admin",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/billing-periods/page.tsx",
+      "route": "/[projectId]/billing-periods",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/billing-periods",
+      "url": "https://projects.alleatogroup.com/1034/billing-periods",
+      "screenshot": "screenshots/097-1034__billing-periods.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/billing-periods",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx",
+      "route": "/[projectId]/budget/line-item/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/budget/line-item/new",
+      "url": "https://projects.alleatogroup.com/1034/budget/line-item/new",
+      "screenshot": "screenshots/098-1034__budget__line-item__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/budget/line-item/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/budget/page.tsx",
+      "route": "/[projectId]/budget",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/budget",
+      "url": "https://projects.alleatogroup.com/1034/budget",
+      "screenshot": "screenshots/099-1034__budget.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/budget",
+      "title": "Budget - Project - Test 26-5-14",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/budget/setup/page.tsx",
+      "route": "/[projectId]/budget/setup",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/budget/setup",
+      "url": "https://projects.alleatogroup.com/1034/budget/setup",
+      "screenshot": "screenshots/100-1034__budget__setup.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/budget/setup",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx",
+      "route": "/[projectId]/change-events/[changeEventId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "changeEventId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx",
+      "route": "/[projectId]/change-events/[changeEventId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "changeEventId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-events/new/page.tsx",
+      "route": "/[projectId]/change-events/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-events/new",
+      "url": "https://projects.alleatogroup.com/1034/change-events/new",
+      "screenshot": "screenshots/101-1034__change-events__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/change-events/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+      "route": "/[projectId]/change-events",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-events",
+      "url": "https://projects.alleatogroup.com/1034/change-events",
+      "screenshot": "screenshots/102-1034__change-events.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/change-events",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-management/page.tsx",
+      "route": "/[projectId]/change-management",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-management",
+      "url": "https://projects.alleatogroup.com/1034/change-management",
+      "screenshot": "screenshots/103-1034__change-management.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/change-management",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx",
+      "route": "/[projectId]/change-orders/[changeOrderId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "changeOrderId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx",
+      "route": "/[projectId]/change-orders/commitment/[commitmentCoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "commitmentCoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx",
+      "route": "/[projectId]/change-orders/commitment/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-orders/commitment/new",
+      "url": "https://projects.alleatogroup.com/1034/change-orders/commitment/new",
+      "screenshot": "screenshots/104-1034__change-orders__commitment__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitment-pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx",
+      "route": "/[projectId]/change-orders/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-orders/new",
+      "url": "https://projects.alleatogroup.com/1034/change-orders/new",
+      "screenshot": "screenshots/105-1034__change-orders__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/page.tsx",
+      "route": "/[projectId]/change-orders",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-orders",
+      "url": "https://projects.alleatogroup.com/1034/change-orders",
+      "screenshot": "screenshots/106-1034__change-orders.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/change-orders",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx",
+      "route": "/[projectId]/change-orders/prime/[primeCoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_unknown_param",
+      "unresolved": [
+        "primeCoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx",
+      "route": "/[projectId]/change-orders/prime/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/change-orders/prime/new",
+      "url": "https://projects.alleatogroup.com/1034/change-orders/prime/new",
+      "screenshot": "screenshots/107-1034__change-orders__prime__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx",
+      "route": "/[projectId]/client-dashboard",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/client-dashboard",
+      "url": "https://projects.alleatogroup.com/1034/client-dashboard",
+      "screenshot": "screenshots/108-1034__client-dashboard.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/client-dashboard",
+      "title": "Client Dashboard | Alleato PM",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/[pcoId]/page.tsx",
+      "route": "/[projectId]/commitment-pcos/[pcoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/new/page.tsx",
+      "route": "/[projectId]/commitment-pcos/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitment-pcos/new",
+      "url": "https://projects.alleatogroup.com/1034/commitment-pcos/new",
+      "screenshot": "screenshots/109-1034__commitment-pcos__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitment-pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/page.tsx",
+      "route": "/[projectId]/commitment-pcos",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitment-pcos",
+      "url": "https://projects.alleatogroup.com/1034/commitment-pcos",
+      "screenshot": "screenshots/110-1034__commitment-pcos.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitment-pcos",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx",
+      "route": "/[projectId]/commitments/[commitmentId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "commitmentId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx",
+      "route": "/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "commitmentId",
+        "invoiceId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx",
+      "route": "/[projectId]/commitments/[commitmentId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "commitmentId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx",
+      "route": "/[projectId]/commitments/[commitmentId]/pcos/new",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "commitmentId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx",
+      "route": "/[projectId]/commitments/configure",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitments/configure",
+      "url": "https://projects.alleatogroup.com/1034/commitments/configure",
+      "screenshot": "screenshots/111-1034__commitments__configure.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/configure",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/new/page.tsx",
+      "route": "/[projectId]/commitments/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitments/new",
+      "url": "https://projects.alleatogroup.com/1034/commitments/new",
+      "screenshot": "screenshots/112-1034__commitments__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/page.tsx",
+      "route": "/[projectId]/commitments",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitments",
+      "url": "https://projects.alleatogroup.com/1034/commitments",
+      "screenshot": "screenshots/113-1034__commitments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitments",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx",
+      "route": "/[projectId]/commitments/recycle-bin",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitments/recycle-bin",
+      "url": "https://projects.alleatogroup.com/1034/commitments/recycle-bin",
+      "screenshot": "screenshots/114-1034__commitments__recycle-bin.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitments?tab=recycle-bin",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx",
+      "route": "/[projectId]/commitments/settings",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/commitments/settings",
+      "url": "https://projects.alleatogroup.com/1034/commitments/settings",
+      "screenshot": "screenshots/115-1034__commitments__settings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/settings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx",
+      "route": "/[projectId]/daily-log/[dailyLogId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "dailyLogId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx",
+      "route": "/[projectId]/daily-log/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/daily-log/new",
+      "url": "https://projects.alleatogroup.com/1034/daily-log/new",
+      "screenshot": "screenshots/116-1034__daily-log__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/daily-log/page.tsx",
+      "route": "/[projectId]/daily-log",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/daily-log",
+      "url": "https://projects.alleatogroup.com/1034/daily-log",
+      "screenshot": "screenshots/117-1034__daily-log.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx",
+      "route": "/[projectId]/daily-log/site-scribe",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/daily-log/site-scribe",
+      "url": "https://projects.alleatogroup.com/1034/daily-log/site-scribe",
+      "screenshot": "screenshots/118-1034__daily-log__site-scribe.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log/site-scribe",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx",
+      "route": "/[projectId]/direct-costs/[costId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "costId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx",
+      "route": "/[projectId]/direct-costs/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/direct-costs/new",
+      "url": "https://projects.alleatogroup.com/1034/direct-costs/new",
+      "screenshot": "screenshots/119-1034__direct-costs__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/direct-costs/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/direct-costs/page.tsx",
+      "route": "/[projectId]/direct-costs",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/direct-costs",
+      "url": "https://projects.alleatogroup.com/1034/direct-costs",
+      "screenshot": "screenshots/120-1034__direct-costs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/direct-costs",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/directory/page.tsx",
+      "route": "/[projectId]/directory",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/directory",
+      "url": "https://projects.alleatogroup.com/1034/directory",
+      "screenshot": "screenshots/121-1034__directory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/directory",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx",
+      "route": "/[projectId]/documents/[documentId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "documentId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/documents/page.tsx",
+      "route": "/[projectId]/documents",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/documents",
+      "url": "https://projects.alleatogroup.com/1034/documents",
+      "screenshot": "screenshots/122-1034__documents.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/documents",
+      "title": "Documents",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx",
+      "route": "/[projectId]/drawings/[drawingId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "drawingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx",
+      "route": "/[projectId]/drawings/areas",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings/areas",
+      "url": "https://projects.alleatogroup.com/1034/drawings/areas",
+      "screenshot": "screenshots/123-1034__drawings__areas.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/areas",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/board/page.tsx",
+      "route": "/[projectId]/drawings/board",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings/board",
+      "url": "https://projects.alleatogroup.com/1034/drawings/board",
+      "screenshot": "screenshots/124-1034__drawings__board.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/board",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/page.tsx",
+      "route": "/[projectId]/drawings",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings",
+      "url": "https://projects.alleatogroup.com/1034/drawings",
+      "screenshot": "screenshots/125-1034__drawings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/recycle-bin/page.tsx",
+      "route": "/[projectId]/drawings/recycle-bin",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings/recycle-bin",
+      "url": "https://projects.alleatogroup.com/1034/drawings/recycle-bin",
+      "screenshot": "screenshots/126-1034__drawings__recycle-bin.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/recycle-bin",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx",
+      "route": "/[projectId]/drawings/revisions-report",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings/revisions-report",
+      "url": "https://projects.alleatogroup.com/1034/drawings/revisions-report",
+      "screenshot": "screenshots/127-1034__drawings__revisions-report.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/revisions-report",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx",
+      "route": "/[projectId]/drawings/sets",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/drawings/sets",
+      "url": "https://projects.alleatogroup.com/1034/drawings/sets",
+      "screenshot": "screenshots/128-1034__drawings__sets.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/sets",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx",
+      "route": "/[projectId]/drawings/viewer-v2/[drawingId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "drawingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/viewer-v3/[drawingId]/page.tsx",
+      "route": "/[projectId]/drawings/viewer-v3/[drawingId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "drawingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx",
+      "route": "/[projectId]/drawings/viewer/[drawingId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "drawingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/emails/page.tsx",
+      "route": "/[projectId]/emails",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/emails",
+      "url": "https://projects.alleatogroup.com/1034/emails",
+      "screenshot": "screenshots/129-1034__emails.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=owner-only",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx",
+      "route": "/[projectId]/estimates/[estimateId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "estimateId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx",
+      "route": "/[projectId]/estimates/[estimateId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "estimateId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/estimates/new/page.tsx",
+      "route": "/[projectId]/estimates/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/estimates/new",
+      "url": "https://projects.alleatogroup.com/1034/estimates/new",
+      "screenshot": "screenshots/130-1034__estimates__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/estimates",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/estimates/page.tsx",
+      "route": "/[projectId]/estimates",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/estimates",
+      "url": "https://projects.alleatogroup.com/1034/estimates",
+      "screenshot": "screenshots/131-1034__estimates.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/estimates",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/home/page.tsx",
+      "route": "/[projectId]/home",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/home",
+      "url": "https://projects.alleatogroup.com/1034/home",
+      "screenshot": "screenshots/132-1034__home.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/home",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/hub/page.tsx",
+      "route": "/[projectId]/hub",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/hub",
+      "url": "https://projects.alleatogroup.com/1034/hub",
+      "screenshot": "screenshots/133-1034__hub.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/hub",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/intelligence/page.tsx",
+      "route": "/[projectId]/intelligence",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/intelligence",
+      "url": "https://projects.alleatogroup.com/1034/intelligence",
+      "screenshot": "screenshots/134-1034__intelligence.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/intelligence",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx",
+      "route": "/[projectId]/intelligence/sources/[sourceDocumentId]",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/intelligence/sources/sample",
+      "url": "https://projects.alleatogroup.com/1034/intelligence/sources/sample",
+      "screenshot": "screenshots/135-1034__intelligence__sources__sample.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/intelligence/sources/sample",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoices/new/page.tsx",
+      "route": "/[projectId]/invoices/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoices/new",
+      "url": "https://projects.alleatogroup.com/1034/invoices/new",
+      "screenshot": "screenshots/136-1034__invoices__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx",
+      "route": "/[projectId]/invoices/owner/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoices/owner/new",
+      "url": "https://projects.alleatogroup.com/1034/invoices/owner/new",
+      "screenshot": "screenshots/137-1034__invoices__owner__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices/new?tab=owner",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoices/page.tsx",
+      "route": "/[projectId]/invoices",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoices",
+      "url": "https://projects.alleatogroup.com/1034/invoices",
+      "screenshot": "screenshots/138-1034__invoices.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
+      "route": "/[projectId]/invoicing/[invoiceId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "invoiceId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx",
+      "route": "/[projectId]/invoicing/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoicing/new",
+      "url": "https://projects.alleatogroup.com/1034/invoicing/new",
+      "screenshot": "screenshots/139-1034__invoicing__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices/new?tab=owner",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/page.tsx",
+      "route": "/[projectId]/invoicing",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoicing",
+      "url": "https://projects.alleatogroup.com/1034/invoicing",
+      "screenshot": "screenshots/140-1034__invoicing.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx",
+      "route": "/[projectId]/invoicing/subcontractor/[invoiceId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "invoiceId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx",
+      "route": "/[projectId]/invoicing/subcontractor/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoicing/subcontractor/new",
+      "url": "https://projects.alleatogroup.com/1034/invoicing/subcontractor/new",
+      "screenshot": "screenshots/141-1034__invoicing__subcontractor__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoicing/subcontractor/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx",
+      "route": "/[projectId]/invoicing/subcontractor",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/invoicing/subcontractor",
+      "url": "https://projects.alleatogroup.com/1034/invoicing/subcontractor",
+      "screenshot": "screenshots/142-1034__invoicing__subcontractor.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/invoices?tab=subcontractor",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx",
+      "route": "/[projectId]/meetings/[meetingId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "meetingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx",
+      "route": "/[projectId]/meetings/[meetingId]/prep",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "meetingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/page.tsx",
+      "route": "/[projectId]/meetings",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/meetings",
+      "url": "https://projects.alleatogroup.com/1034/meetings",
+      "screenshot": "screenshots/143-1034__meetings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/meetings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx",
+      "route": "/[projectId]/meetings/schedule",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/meetings/schedule",
+      "url": "https://projects.alleatogroup.com/1034/meetings/schedule",
+      "screenshot": "screenshots/144-1034__meetings__schedule.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/meetings/schedule",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/my-work/page.tsx",
+      "route": "/[projectId]/my-work",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/my-work",
+      "url": "https://projects.alleatogroup.com/1034/my-work",
+      "screenshot": "screenshots/145-1034__my-work.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/my-work",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx",
+      "route": "/[projectId]/pcos/[pcoId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx",
+      "route": "/[projectId]/pcos/[pcoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/pcos/new/page.tsx",
+      "route": "/[projectId]/pcos/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/pcos/new",
+      "url": "https://projects.alleatogroup.com/1034/pcos/new",
+      "screenshot": "screenshots/146-1034__pcos__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/pcos/page.tsx",
+      "route": "/[projectId]/pcos",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/pcos",
+      "url": "https://projects.alleatogroup.com/1034/pcos",
+      "screenshot": "screenshots/147-1034__pcos.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/pcos",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/permissions/page.tsx",
+      "route": "/[projectId]/permissions",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/permissions",
+      "url": "https://projects.alleatogroup.com/1034/permissions",
+      "screenshot": "screenshots/148-1034__permissions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/user-management",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/photos/page.tsx",
+      "route": "/[projectId]/photos",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/photos",
+      "url": "https://projects.alleatogroup.com/1034/photos",
+      "screenshot": "screenshots/149-1034__photos.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/photos",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx",
+      "route": "/[projectId]/prime-contract-pcos/[pcoId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx",
+      "route": "/[projectId]/prime-contract-pcos/[pcoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx",
+      "route": "/[projectId]/prime-contract-pcos/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contract-pcos/new",
+      "url": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
+      "screenshot": "screenshots/150-1034__prime-contract-pcos__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx",
+      "route": "/[projectId]/prime-contract-pcos",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contract-pcos",
+      "url": "https://projects.alleatogroup.com/1034/prime-contract-pcos",
+      "screenshot": "screenshots/151-1034__prime-contract-pcos.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId",
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId",
+        "pcoId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId",
+        "invoiceId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]/invoices/new",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx",
+      "route": "/[projectId]/prime-contracts/[contractId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contractId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx",
+      "route": "/[projectId]/prime-contracts/change-orders",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contracts/change-orders",
+      "url": "https://projects.alleatogroup.com/1034/prime-contracts/change-orders",
+      "screenshot": "screenshots/152-1034__prime-contracts__change-orders.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/change-orders?tab=prime",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx",
+      "route": "/[projectId]/prime-contracts/configure",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contracts/configure",
+      "url": "https://projects.alleatogroup.com/1034/prime-contracts/configure",
+      "screenshot": "screenshots/153-1034__prime-contracts__configure.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts/configure",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx",
+      "route": "/[projectId]/prime-contracts/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contracts/new",
+      "url": "https://projects.alleatogroup.com/1034/prime-contracts/new",
+      "screenshot": "screenshots/154-1034__prime-contracts__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx",
+      "route": "/[projectId]/prime-contracts",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/prime-contracts",
+      "url": "https://projects.alleatogroup.com/1034/prime-contracts",
+      "screenshot": "screenshots/155-1034__prime-contracts.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts",
+      "title": "Prime Contracts - Project - Test 26-5-14",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx",
+      "route": "/[projectId]/progress-reports/[reportId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "reportId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/progress-reports/page.tsx",
+      "route": "/[projectId]/progress-reports",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/progress-reports",
+      "url": "https://projects.alleatogroup.com/1034/progress-reports",
+      "screenshot": "screenshots/156-1034__progress-reports.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/progress-reports",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/project-status-report/page.tsx",
+      "route": "/[projectId]/project-status-report",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/project-status-report",
+      "url": "https://projects.alleatogroup.com/1034/project-status-report",
+      "screenshot": "screenshots/157-1034__project-status-report.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/project-status-report",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx",
+      "route": "/[projectId]/punch-list/[punchItemId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "punchItemId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/punch-list/page.tsx",
+      "route": "/[projectId]/punch-list",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/punch-list",
+      "url": "https://projects.alleatogroup.com/1034/punch-list",
+      "screenshot": "screenshots/158-1034__punch-list.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/punch-list",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/reporting/page.tsx",
+      "route": "/[projectId]/reporting",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/reporting",
+      "url": "https://projects.alleatogroup.com/1034/reporting",
+      "screenshot": "screenshots/159-1034__reporting.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/reporting",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
+      "route": "/[projectId]/rfis/[rfiId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "rfiId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/rfis/new/page.tsx",
+      "route": "/[projectId]/rfis/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/rfis/new",
+      "url": "https://projects.alleatogroup.com/1034/rfis/new",
+      "screenshot": "screenshots/160-1034__rfis__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/rfis/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/rfis/page.tsx",
+      "route": "/[projectId]/rfis",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/rfis",
+      "url": "https://projects.alleatogroup.com/1034/rfis",
+      "screenshot": "screenshots/161-1034__rfis.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/rfis",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/schedule/import/page.tsx",
+      "route": "/[projectId]/schedule/import",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/schedule/import",
+      "url": "https://projects.alleatogroup.com/1034/schedule/import",
+      "screenshot": "screenshots/162-1034__schedule__import.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/schedule/import",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/schedule/page.tsx",
+      "route": "/[projectId]/schedule",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/schedule",
+      "url": "https://projects.alleatogroup.com/1034/schedule",
+      "screenshot": "screenshots/163-1034__schedule.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/schedule",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/setup/page.tsx",
+      "route": "/[projectId]/setup",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/setup",
+      "url": "https://projects.alleatogroup.com/1034/setup",
+      "screenshot": "screenshots/164-1034__setup.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/setup",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/sov/page.tsx",
+      "route": "/[projectId]/sov",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/sov",
+      "url": "https://projects.alleatogroup.com/1034/sov",
+      "screenshot": "screenshots/165-1034__sov.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/sov",
+      "title": "Schedule of Values - Project - Test 26-5-14",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx",
+      "route": "/[projectId]/specifications/[sectionId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "sectionId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/specifications/page.tsx",
+      "route": "/[projectId]/specifications",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/specifications",
+      "url": "https://projects.alleatogroup.com/1034/specifications",
+      "screenshot": "screenshots/166-1034__specifications.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/specifications",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/specifications/settings/page.tsx",
+      "route": "/[projectId]/specifications/settings",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/specifications/settings",
+      "url": "https://projects.alleatogroup.com/1034/specifications/settings",
+      "screenshot": "screenshots/167-1034__specifications__settings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/specifications/settings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx",
+      "route": "/[projectId]/submittals/[submittalId]/edit",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "submittalId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx",
+      "route": "/[projectId]/submittals/[submittalId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "submittalId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/submittals/new/page.tsx",
+      "route": "/[projectId]/submittals/new",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/submittals/new",
+      "url": "https://projects.alleatogroup.com/1034/submittals/new",
+      "screenshot": "screenshots/168-1034__submittals__new.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/submittals/new",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/submittals/page.tsx",
+      "route": "/[projectId]/submittals",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/submittals",
+      "url": "https://projects.alleatogroup.com/1034/submittals",
+      "screenshot": "screenshots/169-1034__submittals.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/submittals",
+      "title": "Submittals - Project - Test 26-5-14",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx",
+      "route": "/[projectId]/tasks/kanban",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/tasks/kanban",
+      "url": "https://projects.alleatogroup.com/1034/tasks/kanban",
+      "screenshot": "screenshots/170-1034__tasks__kanban.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/tasks/kanban",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/tasks/page.tsx",
+      "route": "/[projectId]/tasks",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/tasks",
+      "url": "https://projects.alleatogroup.com/1034/tasks",
+      "screenshot": "screenshots/171-1034__tasks.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/tasks",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/timeline/page.tsx",
+      "route": "/[projectId]/timeline",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/timeline",
+      "url": "https://projects.alleatogroup.com/1034/timeline",
+      "screenshot": "screenshots/172-1034__timeline.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/timeline",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/transmittals/page.tsx",
+      "route": "/[projectId]/transmittals",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/transmittals",
+      "url": "https://projects.alleatogroup.com/1034/transmittals",
+      "screenshot": "screenshots/173-1034__transmittals.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/transmittals",
+      "title": "Transmittals - Project - Test 26-5-14",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/user-management/page.tsx",
+      "route": "/[projectId]/user-management",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/1034/user-management",
+      "url": "https://projects.alleatogroup.com/1034/user-management",
+      "screenshot": "screenshots/174-1034__user-management.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/1034/user-management",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/access-denied/page.tsx",
+      "route": "/access-denied",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/access-denied",
+      "url": "https://projects.alleatogroup.com/access-denied",
+      "screenshot": "screenshots/175-access-denied.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx",
+      "route": "/ai-assistant/feature-requests/[requestId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "requestId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx",
+      "route": "/ai-assistant/feature-requests",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-assistant/feature-requests",
+      "url": "https://projects.alleatogroup.com/ai-assistant/feature-requests",
+      "screenshot": "screenshots/176-ai-assistant__feature-requests.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai-assistant/feature-requests",
+      "title": "Feature Requests | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-assistant/marketing/page.tsx",
+      "route": "/ai-assistant/marketing",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-assistant/marketing",
+      "url": "https://projects.alleatogroup.com/ai-assistant/marketing",
+      "screenshot": "screenshots/177-ai-assistant__marketing.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai-assistant/marketing",
+      "title": "Marketing Calendar | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-assistant/page.tsx",
+      "route": "/ai-assistant",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-assistant",
+      "url": "https://projects.alleatogroup.com/ai-assistant",
+      "screenshot": "screenshots/178-ai-assistant.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai",
+      "title": "AI | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-assistant/teach/page.tsx",
+      "route": "/ai-assistant/teach",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-assistant/teach",
+      "url": "https://projects.alleatogroup.com/ai-assistant/teach",
+      "screenshot": "screenshots/179-ai-assistant__teach.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai/teach",
+      "title": "Teach Alleato | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai-avatar/page.tsx",
+      "route": "/ai-avatar",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai-avatar",
+      "url": "https://projects.alleatogroup.com/ai-avatar",
+      "screenshot": "screenshots/180-ai-avatar.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai-avatar",
+      "title": "AI Avatar | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai/approvals/page.tsx",
+      "route": "/ai/approvals",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/approvals",
+      "url": "https://projects.alleatogroup.com/ai/approvals",
+      "screenshot": "screenshots/181-ai__approvals.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai/approvals",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai/page.tsx",
+      "route": "/ai",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai",
+      "url": "https://projects.alleatogroup.com/ai",
+      "screenshot": "screenshots/182-ai.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai",
+      "title": "AI | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai/profile/page.tsx",
+      "route": "/ai/profile",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/profile",
+      "url": "https://projects.alleatogroup.com/ai/profile",
+      "screenshot": "screenshots/183-ai__profile.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai/profile",
+      "title": "AI Profile | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai/skills/page.tsx",
+      "route": "/ai/skills",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/skills",
+      "url": "https://projects.alleatogroup.com/ai/skills",
+      "screenshot": "screenshots/184-ai__skills.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai/skills",
+      "title": "Skill Library | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ai/teach/page.tsx",
+      "route": "/ai/teach",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ai/teach",
+      "url": "https://projects.alleatogroup.com/ai/teach",
+      "screenshot": "screenshots/185-ai__teach.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ai/teach",
+      "title": "Teach Alleato | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/billing-periods/page.tsx",
+      "route": "/billing-periods",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/billing-periods",
+      "url": "https://projects.alleatogroup.com/billing-periods",
+      "screenshot": "screenshots/186-billing-periods.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/calendar/page.tsx",
+      "route": "/calendar",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/calendar",
+      "url": "https://projects.alleatogroup.com/calendar",
+      "screenshot": "screenshots/187-calendar.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/calendar",
+      "title": "Calendar",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/comments/page.tsx",
+      "route": "/comments",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/comments",
+      "url": "https://projects.alleatogroup.com/comments",
+      "screenshot": "screenshots/188-comments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/comments",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/create-project/page.tsx",
+      "route": "/create-project",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/create-project",
+      "url": "https://projects.alleatogroup.com/create-project",
+      "screenshot": "screenshots/189-create-project.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/create-project",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/demo/page.tsx",
+      "route": "/demo",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/demo",
+      "url": "https://projects.alleatogroup.com/demo",
+      "screenshot": "screenshots/190-demo.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/demo",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/clients/page.tsx",
+      "route": "/directory/clients",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/clients",
+      "url": "https://projects.alleatogroup.com/directory/clients",
+      "screenshot": "screenshots/191-directory__clients.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/clients",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/companies/[companyId]/page.tsx",
+      "route": "/directory/companies/[companyId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "companyId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/companies/page.tsx",
+      "route": "/directory/companies",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/companies",
+      "url": "https://projects.alleatogroup.com/directory/companies",
+      "screenshot": "screenshots/192-directory__companies.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/companies",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx",
+      "route": "/directory/contacts/[contactId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "contactId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/contacts/page.tsx",
+      "route": "/directory/contacts",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/contacts",
+      "url": "https://projects.alleatogroup.com/directory/contacts",
+      "screenshot": "screenshots/193-directory__contacts.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/contacts",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/employees/page.tsx",
+      "route": "/directory/employees",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/employees",
+      "url": "https://projects.alleatogroup.com/directory/employees",
+      "screenshot": "screenshots/194-directory__employees.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/employees",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/groups/page.tsx",
+      "route": "/directory/groups",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/groups",
+      "url": "https://projects.alleatogroup.com/directory/groups",
+      "screenshot": "screenshots/195-directory__groups.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/groups",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/page.tsx",
+      "route": "/directory",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory",
+      "url": "https://projects.alleatogroup.com/directory",
+      "screenshot": "screenshots/196-directory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/companies",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/prospects/page.tsx",
+      "route": "/directory/prospects",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/prospects",
+      "url": "https://projects.alleatogroup.com/directory/prospects",
+      "screenshot": "screenshots/197-directory__prospects.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/prospects",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/vendors/[vendorId]/page.tsx",
+      "route": "/directory/vendors/[vendorId]",
+      "scope": "main",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "vendorId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(main)/directory/vendors/page.tsx",
+      "route": "/directory/vendors",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/directory/vendors",
+      "url": "https://projects.alleatogroup.com/directory/vendors",
+      "screenshot": "screenshots/198-directory__vendors.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/directory/vendors",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/estimates/[type]/page.tsx",
+      "route": "/estimates/[type]",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/estimates/all",
+      "url": "https://projects.alleatogroup.com/estimates/all",
+      "screenshot": "screenshots/199-estimates__all.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/estimates/all",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/executive/capabilities/page.tsx",
+      "route": "/executive/capabilities",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/executive/capabilities",
+      "url": "https://projects.alleatogroup.com/executive/capabilities",
+      "screenshot": "screenshots/200-executive__capabilities.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/executive/capabilities",
+      "title": "Brandon Dashboard | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/executive/intelligence-brief/page.tsx",
+      "route": "/executive/intelligence-brief",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/executive/intelligence-brief",
+      "url": "https://projects.alleatogroup.com/executive/intelligence-brief",
+      "screenshot": "screenshots/201-executive__intelligence-brief.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/executive/intelligence-brief",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/executive/page.tsx",
+      "route": "/executive",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/executive",
+      "url": "https://projects.alleatogroup.com/executive",
+      "screenshot": "screenshots/202-executive.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/executive",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/financial-insights/page.tsx",
+      "route": "/financial-insights",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/financial-insights",
+      "url": "https://projects.alleatogroup.com/financial-insights",
+      "screenshot": "screenshots/203-financial-insights.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/financial-insights",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx",
+      "route": "/fm-global/fm_global_tables",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/fm-global/fm_global_tables",
+      "url": "https://projects.alleatogroup.com/fm-global/fm_global_tables",
+      "screenshot": "screenshots/204-fm-global__fm_global_tables.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/fm-global/fm_global_tables",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/fm-global/page.tsx",
+      "route": "/fm-global",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/fm-global",
+      "url": "https://projects.alleatogroup.com/fm-global",
+      "screenshot": "screenshots/205-fm-global.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/fm-global",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx",
+      "route": "/fm-global/submissions/[submissionId]",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/fm-global/submissions/sample",
+      "url": "https://projects.alleatogroup.com/fm-global/submissions/sample",
+      "screenshot": "screenshots/206-fm-global__submissions__sample.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/fm-global/submissions/sample",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/fm-global/submissions/page.tsx",
+      "route": "/fm-global/submissions",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/fm-global/submissions",
+      "url": "https://projects.alleatogroup.com/fm-global/submissions",
+      "screenshot": "screenshots/207-fm-global__submissions.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/fm-global/submissions",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/home/page.tsx",
+      "route": "/home",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/home",
+      "url": "https://projects.alleatogroup.com/home",
+      "screenshot": "screenshots/208-home.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/home",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/ideas/page.tsx",
+      "route": "/ideas",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/ideas",
+      "url": "https://projects.alleatogroup.com/ideas",
+      "screenshot": "screenshots/209-ideas.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/ideas",
+      "title": "Ideas | Alleato",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/app/[toolCategory]/[docSlug]/page.tsx",
+      "route": "/knowledge/app/[toolCategory]/[docSlug]",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge/app/commitments/create-a-commitment",
+      "url": "https://projects.alleatogroup.com/knowledge/app/commitments/create-a-commitment",
+      "screenshot": "screenshots/210-knowledge__app__commitments__create-a-commitment.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge/app/commitments/create-a-commitment",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/app/[toolCategory]/page.tsx",
+      "route": "/knowledge/app/[toolCategory]",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge/app/commitments",
+      "url": "https://projects.alleatogroup.com/knowledge/app/commitments",
+      "screenshot": "screenshots/211-knowledge__app__commitments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge/app/commitments",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/app/page.tsx",
+      "route": "/knowledge/app",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge/app",
+      "url": "https://projects.alleatogroup.com/knowledge/app",
+      "screenshot": "screenshots/212-knowledge__app.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge/app",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/company/page.tsx",
+      "route": "/knowledge/company",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge/company",
+      "url": "https://projects.alleatogroup.com/knowledge/company",
+      "screenshot": "screenshots/213-knowledge__company.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge/company",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/manage/page.tsx",
+      "route": "/knowledge/manage",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge/manage",
+      "url": "https://projects.alleatogroup.com/knowledge/manage",
+      "screenshot": "screenshots/214-knowledge__manage.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge/manage",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/knowledge/page.tsx",
+      "route": "/knowledge",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/knowledge",
+      "url": "https://projects.alleatogroup.com/knowledge",
+      "screenshot": "screenshots/215-knowledge.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/knowledge",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/manpower/page.tsx",
+      "route": "/manpower",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/manpower",
+      "url": "https://projects.alleatogroup.com/manpower",
+      "screenshot": "screenshots/216-manpower.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/manpower",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/notifications/page.tsx",
+      "route": "/notifications",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/notifications",
+      "url": "https://projects.alleatogroup.com/notifications",
+      "screenshot": "screenshots/217-notifications.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/notifications",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/page.tsx",
+      "route": "/",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/",
+      "url": "https://projects.alleatogroup.com/",
+      "screenshot": "screenshots/218-root.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/pipeline/page.tsx",
+      "route": "/pipeline",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/pipeline",
+      "url": "https://projects.alleatogroup.com/pipeline",
+      "screenshot": "screenshots/219-pipeline.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/pipeline",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/account/page.tsx",
+      "route": "/settings/account",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/account",
+      "url": "https://projects.alleatogroup.com/settings/account",
+      "screenshot": "screenshots/220-settings__account.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/account",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/audit/page.tsx",
+      "route": "/settings/audit",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/audit",
+      "url": "https://projects.alleatogroup.com/settings/audit",
+      "screenshot": "screenshots/221-settings__audit.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/audit",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/memory/page.tsx",
+      "route": "/settings/memory",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/memory",
+      "url": "https://projects.alleatogroup.com/settings/memory",
+      "screenshot": "screenshots/222-settings__memory.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/memory",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/page.tsx",
+      "route": "/settings",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings",
+      "url": "https://projects.alleatogroup.com/settings",
+      "screenshot": "screenshots/223-settings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/profile",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/preferences/page.tsx",
+      "route": "/settings/preferences",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/preferences",
+      "url": "https://projects.alleatogroup.com/settings/preferences",
+      "screenshot": "screenshots/224-settings__preferences.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/profile",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/profile/page.tsx",
+      "route": "/settings/profile",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/profile",
+      "url": "https://projects.alleatogroup.com/settings/profile",
+      "screenshot": "screenshots/225-settings__profile.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/profile",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/settings/security/page.tsx",
+      "route": "/settings/security",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/settings/security",
+      "url": "https://projects.alleatogroup.com/settings/security",
+      "screenshot": "screenshots/226-settings__security.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/settings/security",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/stats/page.tsx",
+      "route": "/stats",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/stats",
+      "url": "https://projects.alleatogroup.com/stats",
+      "screenshot": "screenshots/227-stats.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/stats",
+      "title": "Today's Stats",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(main)/team-chat/page.tsx",
+      "route": "/team-chat",
+      "scope": "main",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/team-chat",
+      "url": "https://projects.alleatogroup.com/team-chat",
+      "screenshot": "screenshots/228-team-chat.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/team-chat",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(public)/fm-global/form/page.tsx",
+      "route": "/fm-global/form",
+      "scope": "public",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/fm-global/form"
+    },
+    {
+      "source": "frontend/src/app/(public)/fm-global/form/submitted/[submissionId]/page.tsx",
+      "route": "/fm-global/form/submitted/[submissionId]",
+      "scope": "public",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/fm-global/form/submitted/sample"
+    },
+    {
+      "source": "frontend/src/app/(tables)/assignment-inbox/page.tsx",
+      "route": "/assignment-inbox",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/assignment-inbox",
+      "url": "https://projects.alleatogroup.com/assignment-inbox",
+      "screenshot": "screenshots/229-assignment-inbox.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=owner-only",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/change-events/page.tsx",
+      "route": "/change-events",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/change-events",
+      "url": "https://projects.alleatogroup.com/change-events",
+      "screenshot": "screenshots/230-change-events.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/change-events",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx",
+      "route": "/daily-briefs/[briefId]",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/daily-briefs/sample",
+      "url": "https://projects.alleatogroup.com/daily-briefs/sample",
+      "screenshot": "screenshots/231-daily-briefs__sample.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/daily-briefs/sample",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/daily-briefs/page.tsx",
+      "route": "/daily-briefs",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/daily-briefs",
+      "url": "https://projects.alleatogroup.com/daily-briefs",
+      "screenshot": "screenshots/232-daily-briefs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/daily-briefs",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx",
+      "route": "/daily-logs/[dailyLogId]",
+      "scope": "tables",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "dailyLogId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(tables)/daily-logs/page.tsx",
+      "route": "/daily-logs",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/daily-logs",
+      "url": "https://projects.alleatogroup.com/daily-logs",
+      "screenshot": "screenshots/233-daily-logs.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/daily-logs",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/daily-reports/page.tsx",
+      "route": "/daily-reports",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/daily-reports",
+      "url": "https://projects.alleatogroup.com/daily-reports",
+      "screenshot": "screenshots/234-daily-reports.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/daily-reports",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/documents/page.tsx",
+      "route": "/documents",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/documents",
+      "url": "https://projects.alleatogroup.com/documents",
+      "screenshot": "screenshots/235-documents.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/documents",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/drawings/page.tsx",
+      "route": "/drawings",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/drawings",
+      "url": "https://projects.alleatogroup.com/drawings",
+      "screenshot": "screenshots/236-drawings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/drawings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/emails/page.tsx",
+      "route": "/emails",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/emails",
+      "url": "https://projects.alleatogroup.com/emails",
+      "screenshot": "screenshots/237-emails.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=owner-only",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/estimates/page.tsx",
+      "route": "/estimates",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/estimates",
+      "url": "https://projects.alleatogroup.com/estimates",
+      "screenshot": "screenshots/238-estimates.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/estimates",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/files/page.tsx",
+      "route": "/files",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/files",
+      "url": "https://projects.alleatogroup.com/files",
+      "screenshot": "screenshots/239-files.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/files",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/insights/[insightId]/page.tsx",
+      "route": "/insights/[insightId]",
+      "scope": "tables",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "insightId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(tables)/insights/page.tsx",
+      "route": "/insights",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/insights",
+      "url": "https://projects.alleatogroup.com/insights",
+      "screenshot": "screenshots/240-insights.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/insights",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/meeting-segments/page.tsx",
+      "route": "/meeting-segments",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/meeting-segments",
+      "url": "https://projects.alleatogroup.com/meeting-segments",
+      "screenshot": "screenshots/241-meeting-segments.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/meeting-segments",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/meetings/[meetingId]/page.tsx",
+      "route": "/meetings/[meetingId]",
+      "scope": "tables",
+      "included": true,
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "meetingId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(tables)/meetings/page.tsx",
+      "route": "/meetings",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/meetings",
+      "url": "https://projects.alleatogroup.com/meetings",
+      "screenshot": "screenshots/242-meetings.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/meetings",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/outlook-intake/page.tsx",
+      "route": "/outlook-intake",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/outlook-intake",
+      "url": "https://projects.alleatogroup.com/outlook-intake",
+      "screenshot": "screenshots/243-outlook-intake.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=owner-only",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/potential-change-orders/page.tsx",
+      "route": "/potential-change-orders",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/potential-change-orders",
+      "url": "https://projects.alleatogroup.com/potential-change-orders",
+      "screenshot": "screenshots/244-potential-change-orders.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/potential-change-orders",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/prime-contracts/page.tsx",
+      "route": "/prime-contracts",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/prime-contracts",
+      "url": "https://projects.alleatogroup.com/prime-contracts",
+      "screenshot": "screenshots/245-prime-contracts.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/prime-contracts",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/progress-reports/page.tsx",
+      "route": "/progress-reports",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/progress-reports",
+      "url": "https://projects.alleatogroup.com/progress-reports",
+      "screenshot": "screenshots/246-progress-reports.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/progress-reports",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/project-documents/page.tsx",
+      "route": "/project-documents",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/project-documents",
+      "url": "https://projects.alleatogroup.com/project-documents",
+      "screenshot": "screenshots/247-project-documents.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/project-documents",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/projects/page.tsx",
+      "route": "/projects",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/projects",
+      "url": "https://projects.alleatogroup.com/projects",
+      "screenshot": "screenshots/248-projects.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/projects",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/tasks/page.tsx",
+      "route": "/tasks",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/tasks",
+      "url": "https://projects.alleatogroup.com/tasks",
+      "screenshot": "screenshots/249-tasks.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/tasks",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx",
+      "route": "/teams-conversations/[sourceDocumentId]",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/teams-conversations/sample",
+      "url": "https://projects.alleatogroup.com/teams-conversations/sample",
+      "screenshot": "screenshots/250-teams-conversations__sample.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/teams-conversations/sample",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/(tables)/teams-conversations/page.tsx",
+      "route": "/teams-conversations",
+      "scope": "tables",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/teams-conversations",
+      "url": "https://projects.alleatogroup.com/teams-conversations",
+      "screenshot": "screenshots/251-teams-conversations.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/teams-conversations",
+      "title": "Teams Messages",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/admin/errors/page.tsx",
+      "route": "/admin/errors",
+      "scope": "admin",
+      "included": true,
+      "status": "captured",
+      "urlPath": "/admin/errors",
+      "url": "https://projects.alleatogroup.com/admin/errors",
+      "screenshot": "screenshots/252-admin__errors.png",
+      "httpStatus": 200,
+      "finalUrl": "https://projects.alleatogroup.com/access-denied?reason=admin-dashboard-allowlist",
+      "title": "Alleato AI - Project Management",
+      "clip": {
+        "x": 56,
+        "y": 0,
+        "width": 1384,
+        "height": 1000
+      }
+    },
+    {
+      "source": "frontend/src/app/auth/ai-change-event-preview-card/page.tsx",
+      "route": "/auth/ai-change-event-preview-card",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/ai-change-event-preview-card"
+    },
+    {
+      "source": "frontend/src/app/auth/ai-widget-gallery/page.tsx",
+      "route": "/auth/ai-widget-gallery",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/ai-widget-gallery"
+    },
+    {
+      "source": "frontend/src/app/auth/confirm/page.tsx",
+      "route": "/auth/confirm",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/confirm"
+    },
+    {
+      "source": "frontend/src/app/auth/error/page.tsx",
+      "route": "/auth/error",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/error"
+    },
+    {
+      "source": "frontend/src/app/auth/forgot-password/page.tsx",
+      "route": "/auth/forgot-password",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/forgot-password"
+    },
+    {
+      "source": "frontend/src/app/auth/login-legacy/page.tsx",
+      "route": "/auth/login-legacy",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/login-legacy"
+    },
+    {
+      "source": "frontend/src/app/auth/login-v2/page.tsx",
+      "route": "/auth/login-v2",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/login-v2"
+    },
+    {
+      "source": "frontend/src/app/auth/login-v3/page.tsx",
+      "route": "/auth/login-v3",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/login-v3"
+    },
+    {
+      "source": "frontend/src/app/auth/login/page.tsx",
+      "route": "/auth/login",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/login"
+    },
+    {
+      "source": "frontend/src/app/auth/sign-up-success/page.tsx",
+      "route": "/auth/sign-up-success",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/sign-up-success"
+    },
+    {
+      "source": "frontend/src/app/auth/sign-up/page.tsx",
+      "route": "/auth/sign-up",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/sign-up"
+    },
+    {
+      "source": "frontend/src/app/auth/update-password/page.tsx",
+      "route": "/auth/update-password",
+      "scope": "auth",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "urlPath": "/auth/update-password"
+    },
+    {
+      "source": "frontend/src/app/respond/rfi/[token]/page.tsx",
+      "route": "/respond/rfi/[token]",
+      "scope": "respond",
+      "included": false,
+      "status": "skipped_non_app_scope",
+      "unresolved": [
+        "token"
+      ]
+    }
+  ]
+}
