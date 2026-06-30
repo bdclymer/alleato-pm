@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
+import { getTrainingDocToolCategory } from "@/features/knowledge/app-knowledge";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
@@ -100,6 +101,7 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
     const withoutCurrent = existingPublished.filter(
       (item) => item.slug !== doc.slug,
     );
+    const appToolCategory = getTrainingDocAppToolCategory(doc.metadata);
     const currentRecord = {
       title: doc.title,
       slug: doc.slug,
@@ -109,7 +111,19 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
       sourceRoute: doc.source_route,
       publishedDocPath: `${doc.target_collection}/${doc.slug}.mdx`,
       lastPublishedAt: new Date().toISOString(),
+      appToolCategory,
     };
+    const resolvedToolCategory = getTrainingDocToolCategory(currentRecord);
+    if (!resolvedToolCategory) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: WHERE_POST,
+        message: "Choose an app tool category before publishing.",
+        status: 400,
+        details:
+          "The training doc has no metadata appToolCategory and its source route does not match a known app knowledge tool.",
+      });
+    }
 
     const result = await publishTrainingDocToDocsSite(
       docsRoot,
@@ -167,6 +181,10 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
       })
       .eq("id", docId);
 
+    if (error instanceof GuardrailError) {
+      throw error;
+    }
+
     throw new GuardrailError({
       code: "UPSTREAM_FAILURE",
       where: WHERE_POST,
@@ -176,3 +194,8 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
     });
   }
 });
+
+function getTrainingDocAppToolCategory(metadata: Record<string, unknown>): string | null {
+  const value = metadata.appToolCategory;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}

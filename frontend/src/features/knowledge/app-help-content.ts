@@ -33,6 +33,19 @@ export function getAppHelpArticleUrl(slug: string) {
 
 export const appHelpToolGroups: AppHelpToolGroup[] = [
   {
+    title: "Projects",
+    description:
+      "Project creation, project setup, and project-level workspace entry points.",
+    articles: [
+      article(
+        "create-a-project",
+        "Create a Project",
+        "Create a new project record and open the project workspace.",
+        ["/create-project", "/projects", "/projects/new"],
+      ),
+    ],
+  },
+  {
     title: "Budget",
     description:
       "Project budget setup, line items, forecasts, and cost-code reference.",
@@ -278,6 +291,19 @@ export const appHelpToolGroups: AppHelpToolGroup[] = [
         "AI Memory",
         "View and manage remembered facts and preferences.",
         ["/settings/memory"],
+      ),
+    ],
+  },
+  {
+    title: "Training Docs",
+    description:
+      "AI-assisted training doc drafting, screenshot capture, review, and publishing.",
+    articles: [
+      article(
+        "training-docs",
+        "Training Docs",
+        "Create, review, and publish app training documentation.",
+        ["/training-docs"],
       ),
     ],
   },

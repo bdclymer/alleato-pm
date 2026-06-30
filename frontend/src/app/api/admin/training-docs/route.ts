@@ -7,6 +7,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   createTrainingDocSchema,
   listTrainingDocs,
+  mergeTrainingDocMetadata,
   normalizeTrainingDocInput,
 } from "@/lib/training-docs/server";
 
@@ -34,6 +35,7 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ request }) => {
     .from("training_docs")
     .insert({
       ...normalized,
+      metadata: mergeTrainingDocMetadata(null, body),
       created_by: userId,
       updated_by: userId,
     })

@@ -13,6 +13,7 @@ import {
 import { EmptyState, StatusText } from "@/components/ds";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
+import { APP_KNOWLEDGE_TOOL_CATEGORIES } from "@/features/knowledge/app-knowledge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -48,6 +49,7 @@ type DocFormState = {
   audience: "internal" | "client" | "subcontractor" | "admin";
   status: "draft" | "in_review" | "approved" | "published" | "archived";
   source_route: string;
+  app_tool_category: string;
   review_notes: string;
   target_collection: string;
   body_markdown: string;
@@ -70,10 +72,16 @@ function toFormState(doc: TrainingDocWithAssets): DocFormState {
     audience: doc.audience,
     status: doc.status,
     source_route: doc.source_route ?? "",
+    app_tool_category: getMetadataString(doc.metadata, "appToolCategory"),
     review_notes: doc.review_notes ?? "",
     target_collection: doc.target_collection,
     body_markdown: doc.body_markdown,
   };
+}
+
+function getMetadataString(metadata: Record<string, unknown>, key: string) {
+  const value = metadata[key];
+  return typeof value === "string" ? value : "";
 }
 
 function toAssetDrafts(assets: TrainingDocAsset[]): AssetDraftState {
@@ -121,6 +129,7 @@ export function TrainingDocEditor({
       id: doc.id,
       ...form,
       slug: normalizeTrainingDocSlug(form.slug, form.title),
+      app_tool_category: form.app_tool_category || null,
     });
   }
 
@@ -259,6 +268,29 @@ export function TrainingDocEditor({
                 {TRAINING_DOC_AUDIENCES.map((audience) => (
                   <SelectItem key={audience} value={audience}>
                     {audience}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Tool category">
+            <Select
+              value={form.app_tool_category || "none"}
+              onValueChange={(value) =>
+                setForm((current) => ({
+                  ...current,
+                  app_tool_category: value === "none" ? "" : value,
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Uncategorized</SelectItem>
+                {APP_KNOWLEDGE_TOOL_CATEGORIES.map((category) => (
+                  <SelectItem key={category.slug} value={category.slug}>
+                    {category.title}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -37,6 +37,7 @@ export function useCreateTrainingDoc() {
       audience?: "internal" | "client" | "subcontractor" | "admin";
       status?: "draft" | "in_review" | "approved" | "published" | "archived";
       source_route?: string | null;
+      app_tool_category?: string | null;
       review_notes?: string | null;
       target_collection?: string;
     }) =>
@@ -64,6 +65,7 @@ export function useUpdateTrainingDoc() {
       audience?: "internal" | "client" | "subcontractor" | "admin";
       status?: "draft" | "in_review" | "approved" | "published" | "archived";
       source_route?: string | null;
+      app_tool_category?: string | null;
       review_notes?: string | null;
       target_collection?: string;
     }) =>

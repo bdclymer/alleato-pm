@@ -6,6 +6,7 @@ import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   getTrainingDoc,
+  mergeTrainingDocMetadata,
   normalizeTrainingDocInput,
   updateTrainingDocSchema,
 } from "@/lib/training-docs/server";
@@ -53,6 +54,9 @@ export const PATCH = withApiGuardrails(
       audience: body.audience ?? existingDoc.audience,
       status: body.status ?? existingDoc.status,
       source_route: body.source_route ?? existingDoc.source_route,
+      app_tool_category:
+        body.app_tool_category ??
+        getTrainingDocMetadataString(existingDoc.metadata, "appToolCategory"),
       review_notes: body.review_notes ?? existingDoc.review_notes,
       target_collection:
         body.target_collection ?? existingDoc.target_collection,
@@ -61,6 +65,7 @@ export const PATCH = withApiGuardrails(
       .from("training_docs")
       .update({
         ...normalized,
+        metadata: mergeTrainingDocMetadata(existingDoc.metadata, body),
         updated_by: userId,
       })
       .eq("id", docId)
@@ -84,6 +89,14 @@ export const PATCH = withApiGuardrails(
     return NextResponse.json({ doc });
   },
 );
+
+function getTrainingDocMetadataString(
+  metadata: Record<string, unknown>,
+  key: string,
+) {
+  const value = metadata[key];
+  return typeof value === "string" ? value : null;
+}
 
 export const DELETE = withApiGuardrails(WHERE_DELETE, async ({ params }) => {
   const { service } = await requireTrainingDocsAdmin(WHERE_DELETE);

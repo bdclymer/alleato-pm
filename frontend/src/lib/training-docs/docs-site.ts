@@ -55,6 +55,7 @@ export interface PublishedTrainingDoc {
   sourceRoute: string | null;
   publishedDocPath: string;
   lastPublishedAt: string | null;
+  appToolCategory: string | null;
 }
 
 const DOCS_JSON_RELATIVE_PATH = "docs.json";
@@ -99,14 +100,10 @@ export function resolveDocsSiteRoot(): string {
   ];
 
   for (const candidate of candidates) {
-    try {
-      const normalized = path.resolve(candidate);
-      const docsJsonPath = path.join(normalized, DOCS_JSON_RELATIVE_PATH);
-      if (existsSync(docsJsonPath)) {
-        return normalized;
-      }
-    } catch {
-      // Ignore partial checkouts and keep probing for a real docs root.
+    const normalized = path.resolve(candidate);
+    const docsJsonPath = path.join(normalized, DOCS_JSON_RELATIVE_PATH);
+    if (existsSync(docsJsonPath)) {
+      return normalized;
     }
   }
 
@@ -375,8 +372,10 @@ export async function publishTrainingDocToDocsSite(
       .filter(Boolean)) {
       existingFiles.add(line);
     }
-  } catch {
-    // First publish or missing manifest.
+  } catch (error) {
+    if (!isNodeErrorCode(error, "ENOENT")) {
+      throw error;
+    }
   }
 
   const nextFiles = new Set<string>();
@@ -417,4 +416,13 @@ export async function publishTrainingDocToDocsSite(
     assetPaths,
     indexPath: TRAINING_DOC_INDEX_PATH,
   };
+}
+
+function isNodeErrorCode(error: unknown, code: string) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === code
+  );
 }

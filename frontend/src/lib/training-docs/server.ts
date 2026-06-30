@@ -27,6 +27,7 @@ export const createTrainingDocSchema = z.object({
   audience: z.enum(TRAINING_DOC_AUDIENCES).default("internal"),
   status: z.enum(TRAINING_DOC_STATUSES).default("draft"),
   source_route: z.string().nullable().optional(),
+  app_tool_category: z.string().nullable().optional(),
   review_notes: z.string().nullable().optional(),
   target_collection: z.string().default(TRAINING_DOC_DEFAULT_COLLECTION),
 });
@@ -54,6 +55,7 @@ export function normalizeTrainingDocInput(input: {
   audience?: string;
   status?: string;
   source_route?: string | null;
+  app_tool_category?: string | null;
   review_notes?: string | null;
   target_collection?: string | null;
 }) {
@@ -75,6 +77,24 @@ export function normalizeTrainingDocInput(input: {
     target_collection:
       input.target_collection?.trim() || TRAINING_DOC_DEFAULT_COLLECTION,
   };
+}
+
+export function mergeTrainingDocMetadata(
+  currentMetadata: Record<string, unknown> | null | undefined,
+  input: { app_tool_category?: string | null },
+) {
+  const metadata = { ...(currentMetadata ?? {}) };
+
+  if ("app_tool_category" in input) {
+    const appToolCategory = input.app_tool_category?.trim();
+    if (appToolCategory) {
+      metadata.appToolCategory = appToolCategory;
+    } else {
+      delete metadata.appToolCategory;
+    }
+  }
+
+  return metadata;
 }
 
 export async function listTrainingDocs(
@@ -173,7 +193,7 @@ export async function listPublishedTrainingDocs(service: ServiceClient) {
   const { data, error } = await service
     .from("training_docs")
     .select(
-      "title, slug, summary, audience, status, source_route, published_doc_path, last_published_at",
+      "title, slug, summary, audience, status, source_route, published_doc_path, last_published_at, metadata",
     )
     .not("published_doc_path", "is", null)
     .order("title", { ascending: true });
@@ -191,7 +211,17 @@ export async function listPublishedTrainingDocs(service: ServiceClient) {
     sourceRoute: row.source_route,
     publishedDocPath: row.published_doc_path!,
     lastPublishedAt: row.last_published_at,
+    appToolCategory: getTrainingDocAppToolCategory(row.metadata),
   }));
+}
+
+function getTrainingDocAppToolCategory(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const value = (metadata as Record<string, unknown>).appToolCategory;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 export async function getTrainingDocAsset(

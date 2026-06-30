@@ -1,4 +1,4 @@
-import { AppHelpPage } from "@/features/knowledge/app-help-page";
+import { AppKnowledgeBasePage } from "@/features/knowledge/knowledge-base-page";
 import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
 import { listPublishedTrainingDocs } from "@/lib/training-docs/server";
@@ -9,12 +9,12 @@ export default async function KnowledgeAppPage() {
   const trainingDocs = await listPublishedTrainingDocs(createServiceClient());
   return (
     <PageShell
-      variant="content"
-      title="How to Use the App"
-      description="Find app instructions by tool."
-      contentClassName="max-w-5xl"
+      variant="detailWide"
+      title="App Knowledge Base"
+      showHeader={false}
+      contentClassName="max-w-screen-2xl"
     >
-      <AppHelpPage trainingDocs={trainingDocs} withShell={false} />
+      <AppKnowledgeBasePage trainingDocs={trainingDocs} withShell={false} />
     </PageShell>
   );
 }
