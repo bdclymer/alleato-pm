@@ -43,10 +43,32 @@ export const emailColumns: ColumnConfig[] = [
   { id: "is_starred", label: "Starred", defaultVisible: true },
 ];
 
+const assistantReviewColumns: ColumnConfig[] = [
+  { id: "assistant_priority", label: "AI Priority", defaultVisible: true },
+  { id: "assistant_category", label: "AI Category", defaultVisible: true },
+  { id: "assistant_action", label: "AI Action", defaultVisible: true },
+  { id: "assistant_draft", label: "AI Draft", defaultVisible: true },
+];
+
 export const globalEmailColumns: ColumnConfig[] = [
   { id: "project", label: "Project", defaultVisible: true },
   ...emailColumns,
 ];
+
+export function buildEmailVisibleColumns(options?: {
+  showProject?: boolean;
+  showAssistantReview?: boolean;
+}): string[] {
+  return [
+    ...(options?.showProject ? ["project"] : []),
+    ...emailDefaultVisibleColumns,
+    ...(options?.showAssistantReview
+      ? assistantReviewColumns
+          .filter((col) => col.defaultVisible !== false)
+          .map((col) => col.id)
+      : []),
+  ];
+}
 
 interface EmailFilterProjectOption {
   id: number;
@@ -163,6 +185,14 @@ function hasAssistantDraft(email: ProjectEmail): boolean {
   return Boolean(email.assistant_review?.draftBody?.trim());
 }
 
+function formatAssistantValue(value: string | null | undefined): string {
+  if (!value) return "-";
+  return value
+    .split("_")
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
 // The date a message is ordered and displayed by: received time for inbound
 // mail, otherwise the sent time, falling back to the row's created time. This
 // keeps the sort key identical to the timestamp shown in every email view.
@@ -187,6 +217,7 @@ function projectLabel(item: ProjectEmail): string {
 
 export function buildEmailTableColumns(options?: {
   showProject?: boolean;
+  showAssistantReview?: boolean;
 }): TableColumn<ProjectEmail>[] {
   const columns: TableColumn<ProjectEmail>[] = [
     {
@@ -250,6 +281,51 @@ export function buildEmailTableColumns(options?: {
       csvValue: (item) => (item.is_starred ? "Yes" : "No"),
       sortValue: (item) => (item.is_starred ? 1 : 0),
     },
+    ...(options?.showAssistantReview
+      ? [
+          {
+            ...assistantReviewColumns[0],
+            width: 118,
+            render: (item) => (
+              <div className="inline-flex items-center gap-1.5 text-sm">
+                <Circle
+                  className={cn(
+                    "h-2.5 w-2.5 shrink-0",
+                    priorityDotClass(item.assistant_priority),
+                  )}
+                  aria-hidden
+                />
+                <span>{formatAssistantValue(item.assistant_priority)}</span>
+              </div>
+            ),
+            csvValue: (item) => formatAssistantValue(item.assistant_priority),
+            sortValue: (item) => item.assistant_priority ?? "",
+          },
+          {
+            ...assistantReviewColumns[1],
+            width: 140,
+            render: (item) => <CellText value={item.assistant_category ?? null} muted />,
+            csvValue: (item) => item.assistant_category ?? "",
+            sortValue: (item) => item.assistant_category ?? "",
+          },
+          {
+            ...assistantReviewColumns[2],
+            width: 120,
+            render: (item) => <CellText value={formatAssistantValue(item.assistant_action)} muted />,
+            csvValue: (item) => formatAssistantValue(item.assistant_action),
+            sortValue: (item) => item.assistant_action ?? "",
+          },
+          {
+            ...assistantReviewColumns[3],
+            width: 96,
+            render: (item) => (
+              <CellText value={hasAssistantDraft(item) ? "Recorded" : "Missing"} muted />
+            ),
+            csvValue: (item) => (hasAssistantDraft(item) ? "Recorded" : "Missing"),
+            sortValue: (item) => (hasAssistantDraft(item) ? 1 : 0),
+          },
+        ]
+      : []),
   ];
 
   if (!options?.showProject) return columns;

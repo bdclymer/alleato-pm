@@ -10,6 +10,8 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 import {
+  BrandonAssistantActionSchema,
+  BrandonAssistantPrioritySchema,
   BrandonReviewOutcomeSchema,
   ProjectAssignmentFeedbackSchema,
 } from "@/lib/email-assistant/brandon-review";
@@ -36,6 +38,9 @@ function nullableProjectId(value: number | null | undefined): number | null {
 
 const ReviewedEmailUpdateSchema = z.object({
   reviewId: z.string().uuid(),
+  assistantAction: BrandonAssistantActionSchema.optional(),
+  assistantPriority: BrandonAssistantPrioritySchema.optional(),
+  assistantCategory: z.string().trim().max(100).nullable().optional(),
   reviewOutcome: BrandonReviewOutcomeSchema,
   reviewerNote: z.string().max(1_000).nullable().optional(),
   draftBody: z.string().max(20_000).nullable().optional(),
@@ -101,7 +106,7 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
   let reviewQuery = appService
     .from("outlook_email_assistant_reviews")
     .select(
-      "id, intake_email_id, review_outcome, reviewer_note, draft_body, assistant_reason, created_at, graph_message_id, mailbox_user_id, source_metadata",
+      "id, intake_email_id, assistant_action, assistant_priority, review_outcome, reviewer_note, draft_body, assistant_reason, created_at, graph_message_id, mailbox_user_id, source_metadata",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -192,8 +197,14 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
       body: email?.body ?? null,
       webLink: email?.web_link ?? null,
       reviewOutcome: review.review_outcome,
+      assistantAction: review.assistant_action ?? null,
+      assistantPriority: review.assistant_priority ?? null,
       reviewerNote: review.reviewer_note ?? null,
       draftBody: review.draft_body ?? null,
+      assistantCategory:
+        typeof reviewMeta.sandboxCategory === "string" && reviewMeta.sandboxCategory.trim()
+          ? reviewMeta.sandboxCategory.trim()
+          : null,
       assistantReason: review.assistant_reason ?? null,
       feedbackProvidedAt:
         typeof reviewMeta.feedbackProvidedAt === "string"
@@ -288,8 +299,18 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
         correctedProjectId: nullableProjectId(parsed.projectAssignment.correctedProjectId),
       }
     : parseProjectAssignmentFeedback(existingMetadata.projectAssignmentFeedback);
+  const sandboxCategory =
+    parsed.assistantCategory === undefined
+      ? nullableTrimmed(
+          typeof existingMetadata.sandboxCategory === "string"
+            ? existingMetadata.sandboxCategory
+            : null,
+        )
+      : nullableTrimmed(parsed.assistantCategory);
 
   const update: AssistantReviewUpdate = {
+    ...(parsed.assistantAction ? { assistant_action: parsed.assistantAction } : {}),
+    ...(parsed.assistantPriority ? { assistant_priority: parsed.assistantPriority } : {}),
     review_outcome: parsed.reviewOutcome,
     reviewer_note: nullableTrimmed(parsed.reviewerNote),
     draft_body: nullableTrimmed(parsed.draftBody),
@@ -297,6 +318,7 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
       ...existingMetadata,
       feedbackProvidedAt: now,
       feedbackProvidedBy: user.email ?? user.id,
+      sandboxCategory,
       projectAssignmentFeedback,
     } as Json,
     updated_at: now,
@@ -321,7 +343,7 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
     .from("outlook_email_assistant_reviews")
     .update(update)
     .eq("id", parsed.reviewId)
-    .select("id, intake_email_id, review_outcome, reviewer_note, draft_body, source_metadata, updated_at")
+    .select("id, intake_email_id, assistant_action, assistant_priority, review_outcome, reviewer_note, draft_body, source_metadata, updated_at")
     .single();
 
   if (updateError) {
@@ -339,9 +361,15 @@ export const PATCH = withApiGuardrails("email-inbox/reviewed#PATCH", async ({ re
   return NextResponse.json({
     reviewId: updatedReview.id,
     id: updatedReview.intake_email_id,
+    assistantAction: updatedReview.assistant_action,
+    assistantPriority: updatedReview.assistant_priority,
     reviewOutcome: updatedReview.review_outcome,
     reviewerNote: updatedReview.reviewer_note ?? null,
     draftBody: updatedReview.draft_body ?? null,
+    assistantCategory:
+      typeof updatedMetadata.sandboxCategory === "string" && updatedMetadata.sandboxCategory.trim()
+        ? updatedMetadata.sandboxCategory.trim()
+        : null,
     feedbackProvidedAt:
       typeof updatedMetadata.feedbackProvidedAt === "string"
         ? updatedMetadata.feedbackProvidedAt

@@ -38,11 +38,10 @@ import {
 } from "@/hooks/use-emails";
 import {
   buildEmailTableColumns,
+  buildEmailVisibleColumns,
   buildEmailFilters,
   emailColumns,
-  emailDefaultVisibleColumns,
   globalEmailColumns,
-  globalEmailDefaultVisibleColumns,
   renderEmailCard,
   renderEmailList,
   renderEmailRowActions,
@@ -113,6 +112,7 @@ export function EmailsClient({
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";
+  const isMailboxReviewMode = Boolean(mailboxUserId);
   const activeTab =
     isOutlook && searchParams.get("tab") === "attachments"
       ? "attachments"
@@ -178,8 +178,14 @@ export function EmailsClient({
       sortBy: "sent_at",
       sortDirection: "desc",
       visibleColumns: isGlobal
-        ? globalEmailDefaultVisibleColumns
-        : emailDefaultVisibleColumns,
+        ? buildEmailVisibleColumns({
+            showProject: true,
+            showAssistantReview: isMailboxReviewMode,
+          })
+        : buildEmailVisibleColumns({
+            showProject: false,
+            showAssistantReview: false,
+          }),
       filters: initialFilters,
     },
   });
@@ -296,10 +302,18 @@ export function EmailsClient({
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
-        isGlobal ? globalEmailDefaultVisibleColumns : emailDefaultVisibleColumns,
+        isGlobal
+          ? buildEmailVisibleColumns({
+              showProject: true,
+              showAssistantReview: isMailboxReviewMode,
+            })
+          : buildEmailVisibleColumns({
+              showProject: false,
+              showAssistantReview: false,
+            }),
       );
     }
-  }, [isGlobal, tableState.visibleColumns.length, tableState.setVisibleColumns]);
+  }, [isGlobal, isMailboxReviewMode, tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
   // Auto-switch to list view on mobile
   React.useEffect(() => {
@@ -370,7 +384,10 @@ export function EmailsClient({
     return fields.some((field) => field.toLowerCase().includes(searchTerm));
   });
 
-  const tableColumns = buildEmailTableColumns({ showProject: isGlobal });
+  const tableColumns = buildEmailTableColumns({
+    showProject: isGlobal,
+    showAssistantReview: isMailboxReviewMode,
+  });
   const sortedEmails = React.useMemo(() => {
     if (!tableState.sortBy) return filteredEmails;
     const sortColumn = tableColumns.find((col) => col.id === tableState.sortBy);
@@ -731,7 +748,7 @@ export function EmailsClient({
           sortBy={tableState.sortBy ?? undefined}
           sortDirection={tableState.sortDirection}
           onSortChange={handleSortChange}
-          draftFeedbackMode={Boolean(mailboxUserId)}
+          draftFeedbackMode={isMailboxReviewMode}
           onDraftFeedbackSaved={() => {
             void refetchEmails();
           }}

@@ -113,6 +113,7 @@ describe("/api/emails", () => {
         draft_body: "Thanks, I can confirm.",
         source_metadata: {
           feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+          sandboxCategory: "Reply Needed",
           projectAssignmentFeedback: {
             status: "correct",
             correctedProjectId: null,
@@ -166,6 +167,7 @@ describe("/api/emails", () => {
       },
       assistant_action: "reply",
       assistant_priority: "high",
+      assistant_category: "Reply Needed",
       assistant_score: 79,
       assistant_rules_applied: expect.arrayContaining([
         "External sender",
@@ -177,6 +179,7 @@ describe("/api/emails", () => {
         reviewOutcome: "draft_edited",
         reviewerNote: "Tighter.",
         draftBody: "Thanks, I can confirm.",
+        assistantCategory: "Reply Needed",
         feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
         projectAssignmentFeedback: {
           status: "correct",

@@ -22,7 +22,7 @@ import {
   StarFilledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { ArrowUpDown, Check, Download, FolderOpen, ImageIcon, ListTodo, Loader2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, Search, Sparkles, Star, StarOff } from "lucide-react";
+import { ArrowUpDown, Check, Download, Flag, FolderOpen, Gauge, ImageIcon, ListTodo, Loader2, MessageSquareText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Plus, Search, ShieldAlert, Sparkles, Star, StarOff, User, type LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -54,6 +54,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { SplitPage, useSplitPage } from "@/components/ui/split-page";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
@@ -1676,6 +1677,8 @@ function EmailDetailsPanel({
 }
 
 type ProjectAssignmentFeedbackStatus = "correct" | "incorrect" | "unreviewed";
+type AssistantReviewAction = "reply" | "delegate" | "watch" | "ignore";
+type AssistantReviewPriority = "urgent" | "high" | "normal" | "low";
 type BrandonReviewOutcome =
   | "draft_copied"
   | "draft_edited"
@@ -1692,6 +1695,45 @@ const REVIEW_OUTCOME_LABELS: Record<BrandonReviewOutcome, string> = {
   watched: "Watched",
   marked_no_action: "No action",
 };
+
+const ASSISTANT_ACTION_OPTIONS: { value: AssistantReviewAction; label: string }[] = [
+  { value: "reply", label: "Reply" },
+  { value: "delegate", label: "Delegate" },
+  { value: "watch", label: "Watch" },
+  { value: "ignore", label: "Ignore" },
+];
+
+const ASSISTANT_PRIORITY_OPTIONS: { value: AssistantReviewPriority; label: string }[] = [
+  { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "normal", label: "Normal" },
+  { value: "low", label: "Low" },
+];
+
+const ASSISTANT_CATEGORY_OPTIONS = [
+  "Reply Needed",
+  "To Delegate",
+  "Watching",
+  "FYI",
+  "No Action",
+  "Urgent",
+] as const;
+
+function defaultAssistantCategory(email: ProjectEmail): string {
+  if (email.assistant_category?.trim()) return email.assistant_category.trim();
+  switch (email.assistant_action) {
+    case "reply":
+      return "Reply Needed";
+    case "delegate":
+      return "To Delegate";
+    case "watch":
+      return "Watching";
+    case "ignore":
+      return "No Action";
+    default:
+      return "FYI";
+  }
+}
 
 function defaultReviewOutcome(email: ProjectEmail): BrandonReviewOutcome {
   if (email.assistant_review?.reviewOutcome) return email.assistant_review.reviewOutcome;
@@ -1735,6 +1777,36 @@ function TrainingField({
   );
 }
 
+// Composable icon + value field: the icon is the affordance, the property
+// name is revealed in a tooltip on hover. Used for the AI categorization
+// properties so the panel reads as values, not a wall of labels.
+function IconLabelField({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2 text-[13px]">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className="mt-px flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground"
+            aria-label={label}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <div className="min-w-0 break-words text-foreground [overflow-wrap:anywhere]">{value}</div>
+    </div>
+  );
+}
+
 export function EmailTrainingFeedbackPanel({
   selectedEmail,
   className,
@@ -1747,6 +1819,10 @@ export function EmailTrainingFeedbackPanel({
   onSaved?: () => void;
 }) {
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 250 });
+  const [assistantAction, setAssistantAction] = React.useState<AssistantReviewAction>("watch");
+  const [assistantPriority, setAssistantPriority] =
+    React.useState<AssistantReviewPriority>("normal");
+  const [assistantCategory, setAssistantCategory] = React.useState("FYI");
   const [reviewOutcome, setReviewOutcome] = React.useState<BrandonReviewOutcome>("skipped");
   const [draftBody, setDraftBody] = React.useState("");
   const [reviewerNote, setReviewerNote] = React.useState("");
@@ -1755,10 +1831,14 @@ export function EmailTrainingFeedbackPanel({
   const [correctedProjectId, setCorrectedProjectId] = React.useState<number | null>(null);
   const [feedbackProvidedAt, setFeedbackProvidedAt] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
 
   React.useEffect(() => {
     if (!selectedEmail) return;
     const assignmentFeedback = selectedEmail.assistant_review?.projectAssignmentFeedback;
+    setAssistantAction(selectedEmail.assistant_action ?? "watch");
+    setAssistantPriority(selectedEmail.assistant_priority ?? "normal");
+    setAssistantCategory(defaultAssistantCategory(selectedEmail));
     setReviewOutcome(defaultReviewOutcome(selectedEmail));
     setDraftBody(selectedEmail.assistant_review?.draftBody ?? "");
     setReviewerNote(selectedEmail.assistant_review?.reviewerNote ?? "");
@@ -1793,6 +1873,9 @@ export function EmailTrainingFeedbackPanel({
           projectStatus === "incorrect" ? correctedProjectId : null,
       };
       const commonPayload = {
+        assistantAction,
+        assistantPriority,
+        assistantCategory: assistantCategory.trim() || null,
         reviewOutcome,
         reviewerNote: reviewerNote.trim() || null,
         draftBody: draftBody.trim() || null,
@@ -1813,6 +1896,7 @@ export function EmailTrainingFeedbackPanel({
           body: JSON.stringify({
             assistantAction: selectedEmail.assistant_action ?? "watch",
             assistantPriority: selectedEmail.assistant_priority ?? "normal",
+            assistantCategory: assistantCategory.trim() || null,
             assistantScore: selectedEmail.assistant_score ?? null,
             assistantReason: selectedEmail.assistant_reason ?? null,
             assistantOwner: selectedEmail.assistant_owner ?? null,
@@ -1832,6 +1916,36 @@ export function EmailTrainingFeedbackPanel({
       toast.error("Could not save feedback. Check the selected review and try again.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleGenerateDraft() {
+    if (!selectedEmail) return;
+
+    setIsGeneratingDraft(true);
+    try {
+      const result = await apiFetch<{ draft: string }>(
+        `/api/email-inbox/${selectedEmail.id}/draft-reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: selectedEmail.subject,
+            fromName: selectedEmail.from_name,
+            fromEmail: selectedEmail.from_email,
+            bodyText: selectedEmail.body_text ?? selectedEmail.body,
+            projectName: selectedEmail.project?.name ?? null,
+            tone: "professional",
+          }),
+        },
+      );
+      setDraftBody(result.draft);
+      toast.success("Sandbox draft generated.");
+    } catch (error) {
+      console.error("Could not generate sandbox email draft.", error);
+      toast.error("Could not generate sandbox draft. Check AI configuration.");
+    } finally {
+      setIsGeneratingDraft(false);
     }
   }
 
@@ -1857,22 +1971,86 @@ export function EmailTrainingFeedbackPanel({
 
             <div className="space-y-1 pr-10">
               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                AI Categorization
+                Sandbox AI Review
               </div>
               {savedLabel ? (
                 <div className="text-xs text-muted-foreground">Feedback saved {savedLabel}</div>
               ) : (
                 <div className="text-xs text-muted-foreground">No human feedback recorded.</div>
               )}
+              <div className="text-xs leading-5 text-muted-foreground">
+                Records what the assistant would do. Outlook drafts and categories are not changed.
+              </div>
             </div>
 
-            <div className="grid gap-x-4 gap-y-2 min-[1500px]:grid-cols-2">
-              <TrainingField label="Action" value={selectedEmail.assistant_action ?? "Not categorized"} />
-              <TrainingField label="Priority" value={selectedEmail.assistant_priority ?? "Unknown"} />
-              <TrainingField label="Score" value={normalizedScore ?? "Unknown"} />
-              <TrainingField label="Owner" value={selectedEmail.assistant_owner ?? "Unknown"} />
-              <TrainingField label="Risk" value={selectedEmail.assistant_risk ?? "Unknown"} />
-              <TrainingField label="Reason" value={selectedEmail.assistant_reason ?? "No reason recorded."} />
+            <div className="grid gap-3">
+              <div className="grid gap-2 min-[1500px]:grid-cols-3">
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Action
+                  </div>
+                  <Select
+                    value={assistantAction}
+                    onValueChange={(value) => setAssistantAction(value as AssistantReviewAction)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ASSISTANT_ACTION_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Priority
+                  </div>
+                  <Select
+                    value={assistantPriority}
+                    onValueChange={(value) =>
+                      setAssistantPriority(value as AssistantReviewPriority)
+                    }
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ASSISTANT_PRIORITY_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Category
+                  </div>
+                  <Select value={assistantCategory} onValueChange={setAssistantCategory}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ASSISTANT_CATEGORY_OPTIONS.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-x-4 gap-y-2.5 min-[1500px]:grid-cols-2">
+              <IconLabelField icon={Gauge} label="Score" value={normalizedScore ?? "Unknown"} />
+              <IconLabelField icon={User} label="Owner" value={selectedEmail.assistant_owner ?? "Unknown"} />
+              <IconLabelField icon={ShieldAlert} label="Risk" value={selectedEmail.assistant_risk ?? "Unknown"} />
+              <IconLabelField icon={MessageSquareText} label="Reason" value={selectedEmail.assistant_reason ?? "No reason recorded."} />
+              </div>
             </div>
 
             <div className="space-y-2 border-t border-border/70 pt-4">
@@ -1948,8 +2126,25 @@ export function EmailTrainingFeedbackPanel({
             </div>
 
             <div className="space-y-2 border-t border-border/70 pt-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Draft
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Draft
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleGenerateDraft()}
+                  disabled={isGeneratingDraft}
+                  className="h-8"
+                >
+                  {isGeneratingDraft ? (
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
+                  )}
+                  {isGeneratingDraft ? "Generating..." : "Generate draft"}
+                </Button>
               </div>
               <Textarea
                 value={draftBody}

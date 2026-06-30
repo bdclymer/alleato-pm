@@ -85,6 +85,25 @@ function parseProjectAssignmentFeedback(value: unknown): {
   return { status, correctedProjectId };
 }
 
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function defaultAssistantCategory(action: string | null | undefined): string | null {
+  switch (action) {
+    case "reply":
+      return "Reply Needed";
+    case "delegate":
+      return "To Delegate";
+    case "watch":
+      return "Watching";
+    case "ignore":
+      return "No Action";
+    default:
+      return null;
+  }
+}
+
 export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   const supabase = await createClient();
   const user = await getApiRouteUser();
@@ -224,6 +243,11 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
       const reviewMetadata = isRecord(latestReview?.source_metadata)
         ? latestReview.source_metadata
         : {};
+      const assistantAction = latestReview?.assistant_action ?? derivedDecision.action;
+      const assistantPriority = latestReview?.assistant_priority ?? derivedDecision.priority;
+      const assistantCategory =
+        nullableString(reviewMetadata.sandboxCategory) ??
+        defaultAssistantCategory(assistantAction);
 
       return {
         id: r.id,
@@ -249,8 +273,9 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
         graph_message_id: r.graph_message_id,
         mailbox_user_id: r.mailbox_user_id,
         conversation_id: r.conversation_id,
-        assistant_action: latestReview?.assistant_action ?? derivedDecision.action,
-        assistant_priority: latestReview?.assistant_priority ?? derivedDecision.priority,
+        assistant_action: assistantAction,
+        assistant_priority: assistantPriority,
+        assistant_category: assistantCategory,
         assistant_score: latestReview?.assistant_score ?? derivedDecision.score,
         assistant_reason: latestReview?.assistant_reason ?? derivedDecision.reason,
         assistant_owner: latestReview?.assistant_owner ?? derivedDecision.owner,
@@ -263,6 +288,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
               reviewOutcome: latestReview.review_outcome,
               reviewerNote: latestReview.reviewer_note ?? null,
               draftBody: latestReview.draft_body ?? null,
+              assistantCategory,
               feedbackProvidedAt:
                 typeof reviewMetadata.feedbackProvidedAt === "string"
                   ? reviewMetadata.feedbackProvidedAt

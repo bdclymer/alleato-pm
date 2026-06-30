@@ -89,6 +89,8 @@ describe("/api/email-inbox/reviewed", () => {
         {
           id: "11111111-1111-4111-8111-111111111111",
           intake_email_id: 42,
+          assistant_action: "reply",
+          assistant_priority: "high",
           review_outcome: "draft_edited",
           reviewer_note: "Make it more direct.",
           draft_body: "Updated draft",
@@ -98,6 +100,7 @@ describe("/api/email-inbox/reviewed", () => {
           mailbox_user_id: "bclymer@alleatogroup.com",
           source_metadata: {
             feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+            sandboxCategory: "Reply Needed",
             projectAssignmentFeedback: {
               status: "incorrect",
               correctedProjectId: 25125,
@@ -158,8 +161,11 @@ describe("/api/email-inbox/reviewed", () => {
       expect.objectContaining({
         reviewId: "11111111-1111-4111-8111-111111111111",
         id: 42,
+        assistantAction: "reply",
+        assistantPriority: "high",
         reviewerNote: "Make it more direct.",
         draftBody: "Updated draft",
+        assistantCategory: "Reply Needed",
         feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
         projectAssignmentFeedback: {
           status: "incorrect",
@@ -185,11 +191,14 @@ describe("/api/email-inbox/reviewed", () => {
       data: {
         id: "11111111-1111-4111-8111-111111111111",
         intake_email_id: 42,
+        assistant_action: "watch",
+        assistant_priority: "normal",
         review_outcome: "skipped",
         reviewer_note: null,
         draft_body: null,
         source_metadata: {
           feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+          sandboxCategory: "FYI",
           projectAssignmentFeedback: {
             status: "unreviewed",
             correctedProjectId: null,
@@ -213,6 +222,9 @@ describe("/api/email-inbox/reviewed", () => {
     const response = await PATCH(
       patchRequest({
         reviewId: "11111111-1111-4111-8111-111111111111",
+        assistantAction: "watch",
+        assistantPriority: "normal",
+        assistantCategory: "FYI",
         reviewOutcome: "skipped",
         reviewerNote: "   ",
         draftBody: "",
@@ -223,12 +235,15 @@ describe("/api/email-inbox/reviewed", () => {
     expect(response.status).toBe(200);
     expect(existingReviewBuilder.update).toHaveBeenCalledWith(
       expect.objectContaining({
+        assistant_action: "watch",
+        assistant_priority: "normal",
         review_outcome: "skipped",
         reviewer_note: null,
         draft_body: null,
         source_metadata: expect.objectContaining({
           feedbackProvidedAt: expect.any(String),
           feedbackProvidedBy: "bclymer@alleatogroup.com",
+          sandboxCategory: "FYI",
           projectAssignmentFeedback: {
             status: "unreviewed",
             correctedProjectId: null,
@@ -239,6 +254,9 @@ describe("/api/email-inbox/reviewed", () => {
     expect(body).toEqual(
       expect.objectContaining({
         reviewId: "11111111-1111-4111-8111-111111111111",
+        assistantAction: "watch",
+        assistantPriority: "normal",
+        assistantCategory: "FYI",
         reviewOutcome: "skipped",
         reviewerNote: null,
         draftBody: null,
@@ -265,11 +283,14 @@ describe("/api/email-inbox/reviewed", () => {
       data: {
         id: "11111111-1111-4111-8111-111111111111",
         intake_email_id: 42,
+        assistant_action: "reply",
+        assistant_priority: "high",
         review_outcome: "draft_edited",
         reviewer_note: "Wrong project.",
         draft_body: "Updated draft",
         source_metadata: {
           feedbackProvidedAt: "2026-06-30T09:00:00.000Z",
+          sandboxCategory: "Reply Needed",
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,
@@ -299,6 +320,9 @@ describe("/api/email-inbox/reviewed", () => {
     const response = await PATCH(
       patchRequest({
         reviewId: "11111111-1111-4111-8111-111111111111",
+        assistantAction: "reply",
+        assistantPriority: "high",
+        assistantCategory: "Reply Needed",
         reviewOutcome: "draft_edited",
         reviewerNote: "Wrong project.",
         draftBody: "Updated draft",
@@ -318,6 +342,7 @@ describe("/api/email-inbox/reviewed", () => {
     expect(existingReviewBuilder.update).toHaveBeenCalledWith(
       expect.objectContaining({
         source_metadata: expect.objectContaining({
+          sandboxCategory: "Reply Needed",
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,
@@ -327,6 +352,9 @@ describe("/api/email-inbox/reviewed", () => {
     );
     expect(body).toEqual(
       expect.objectContaining({
+        assistantAction: "reply",
+        assistantPriority: "high",
+        assistantCategory: "Reply Needed",
         projectAssignmentFeedback: {
           status: "incorrect",
           correctedProjectId: 25125,

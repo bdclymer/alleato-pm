@@ -115,6 +115,7 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
       request({
         assistantAction: "reply",
         assistantPriority: "high",
+        assistantCategory: "Reply Needed",
         assistantScore: 72,
         reviewOutcome: "draft_copied",
         draftBody: "That works. Thank You\nBrandon Clymer",
@@ -131,10 +132,13 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
         mailbox_user_id: "bclymer@alleatogroup.com",
         reviewer_id: "reviewer-user",
         assistant_action: "reply",
+        assistant_priority: "high",
+        draft_body: "That works. Thank You\nBrandon Clymer",
         review_outcome: "draft_copied",
         source_metadata: expect.objectContaining({
           feedbackProvidedAt: expect.any(String),
           feedbackProvidedBy: "bclymer@alleatogroup.com",
+          sandboxCategory: "Reply Needed",
         }),
       }),
     );
@@ -190,6 +194,7 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
       request({
         assistantAction: "watch",
         assistantPriority: "normal",
+        assistantCategory: "Watching",
         reviewOutcome: "skipped",
         projectAssignment: {
           status: "incorrect",
@@ -205,6 +210,7 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
     expect(reviewBuilder.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         source_metadata: expect.objectContaining({
+          sandboxCategory: "Watching",
           projectAssignmentFeedback: {
             status: "incorrect",
             correctedProjectId: 25125,

@@ -124,6 +124,7 @@ export const POST = withApiGuardrails<{ emailId: string }>(
         ...(parsed.sourceMetadata ?? {}),
         feedbackProvidedAt: now,
         feedbackProvidedBy: user.email ?? user.id,
+        sandboxCategory: parsed.assistantCategory ?? null,
         ...(projectAssignmentFeedback ? { projectAssignmentFeedback } : {}),
       } as Json,
     };

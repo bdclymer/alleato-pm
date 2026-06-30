@@ -11,6 +11,24 @@ export const BrandonReviewOutcomeSchema = z.enum([
 
 export type BrandonReviewOutcome = z.infer<typeof BrandonReviewOutcomeSchema>;
 
+export const BrandonAssistantActionSchema = z.enum([
+  "reply",
+  "delegate",
+  "watch",
+  "ignore",
+]);
+
+export type BrandonAssistantAction = z.infer<typeof BrandonAssistantActionSchema>;
+
+export const BrandonAssistantPrioritySchema = z.enum([
+  "urgent",
+  "high",
+  "normal",
+  "low",
+]);
+
+export type BrandonAssistantPriority = z.infer<typeof BrandonAssistantPrioritySchema>;
+
 export const ProjectAssignmentFeedbackSchema = z
   .object({
     status: z.enum(["correct", "incorrect", "unreviewed"]),
@@ -29,7 +47,8 @@ export const ProjectAssignmentFeedbackSchema = z
 export const BrandonAssistantReviewPayloadSchema = z
   .object({
     assistantAction: z.enum(["reply", "delegate", "watch", "ignore"]),
-    assistantPriority: z.enum(["urgent", "high", "normal", "low"]),
+    assistantPriority: BrandonAssistantPrioritySchema,
+    assistantCategory: z.string().trim().max(100).nullable().optional(),
     assistantScore: z.number().finite().min(0).max(200).nullable().optional(),
     reviewOutcome: BrandonReviewOutcomeSchema,
     draftBody: z.string().trim().max(20_000).nullable().optional(),

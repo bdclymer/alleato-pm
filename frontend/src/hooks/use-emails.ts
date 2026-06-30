@@ -42,6 +42,7 @@ export interface ProjectEmail {
   conversation_id?: string | null;
   assistant_action?: "reply" | "delegate" | "watch" | "ignore" | null;
   assistant_priority?: "urgent" | "high" | "normal" | "low" | null;
+  assistant_category?: string | null;
   assistant_score?: number | null;
   assistant_reason?: string | null;
   assistant_owner?: string | null;
@@ -53,6 +54,7 @@ export interface ProjectEmail {
     reviewOutcome: "draft_copied" | "draft_edited" | "skipped" | "delegated" | "watched" | "marked_no_action";
     reviewerNote: string | null;
     draftBody: string | null;
+    assistantCategory: string | null;
     feedbackProvidedAt: string | null;
     projectAssignmentFeedback: {
       status: "correct" | "incorrect" | "unreviewed";
