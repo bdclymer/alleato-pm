@@ -15,6 +15,7 @@ const STATUS_COLORS: Record<BoardStatus, string> = {
   submitted: "bg-muted text-muted-foreground",
   planned: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  leadership_review: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   shipped: "bg-status-success/10 text-status-success",
 };
 
@@ -49,7 +50,8 @@ const STATUS_ORDER: Record<BoardStatus, number> = {
   submitted: 0,
   planned: 1,
   in_progress: 2,
-  shipped: 3,
+  leadership_review: 3,
+  shipped: 4,
 };
 
 const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };

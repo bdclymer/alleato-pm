@@ -208,7 +208,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
-        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
+        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-5">
           {BOARD_STATUSES.map((status) => (
             <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
           ))}

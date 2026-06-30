@@ -3561,15 +3561,16 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         title: z.string().describe("Short, clear title for the board card"),
         description: z.string().describe("Full description — context, goals, acceptance criteria"),
         // Values must match admin_feedback_items_board_status_check
-        // (submitted | planned | in_progress | shipped). 'in_review' was in this
+        // (submitted | planned | in_progress | leadership_review | shipped). 'in_review' was in this
         // enum but the DB CHECK rejects it — picking it failed the write.
         board_status: z
-          .enum(["submitted", "planned", "in_progress", "shipped"])
+          .enum(["submitted", "planned", "in_progress", "leadership_review", "shipped"])
           .default("submitted")
           .describe(
             "Which column to place the card in: " +
             "'submitted' = new idea, " +
             "'planned' = confirmed for roadmap, 'in_progress' = actively being built, " +
+            "'leadership_review' = ready for leadership review, " +
             "'shipped' = done"
           ),
         severity: z

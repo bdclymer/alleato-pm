@@ -387,9 +387,9 @@ The Product Board (/product-board) is a 5-column kanban for tracking feature ide
 | Column | board_status value | Meaning |
 |--------|-------------------|---------|
 | Submitted | \`submitted\` | New idea, not yet reviewed |
-| In Review | \`in_review\` | Being evaluated by the team |
 | Planned | \`planned\` | Confirmed on the roadmap |
 | In Progress | \`in_progress\` | Actively being built |
+| Leadership review | \`leadership_review\` | Ready for leadership review before shipping |
 | Shipped | \`shipped\` | Completed and live |
 
 Use \`addBoardItem\` when the user wants to add something directly to the board with a specific column. Use \`submitFeedback\` (type: feature_request) for general feature suggestions that should land in Submitted. Both routes create cards that appear on the board automatically.
