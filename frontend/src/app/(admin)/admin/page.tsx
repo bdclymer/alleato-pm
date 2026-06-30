@@ -76,6 +76,13 @@ const sections: AdminMenuSection[] = [
         title: "AI Feedback and Learning",
         items: [
           {
+            label: "Pipeline Health",
+            href: "/pipeline-health",
+            route: "/pipeline-health",
+            description: "Ingestion and embedding pipeline health map.",
+            icon: Activity,
+          },
+          {
             label: "Feedback Inbox",
             href: "/feedback-inbox",
             route: "/feedback-inbox",
@@ -381,13 +388,6 @@ const sections: AdminMenuSection[] = [
             route: "/rag",
             description:
               "Pipeline stage funnel, document status, and source-sync alerts on one screen.",
-            icon: Activity,
-          },
-          {
-            label: "Pipeline Health",
-            href: "/pipeline-health",
-            route: "/pipeline-health",
-            description: "Ingestion and embedding pipeline health map.",
             icon: Activity,
           },
           {
