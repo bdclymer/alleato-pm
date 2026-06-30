@@ -1,3 +1,6 @@
+packages:
+  - agent
+
 minimumReleaseAgeExclude:
   - "@ai-sdk/*"
   - "@rolldown/*"
@@ -6,6 +9,8 @@ minimumReleaseAgeExclude:
   - ai
   - experimental-ai-sdk-code-mode
   - eve
+  - httpxy
+  - nf3
   - nitro
   - rolldown
   - workflow

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.13.1",
+  "workspaces": [
+    "agent"
+  ],
   "scripts": {
     "dev": "concurrently --kill-others=false \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "bash scripts/dev/start-frontend-clean.sh",
@@ -212,10 +215,7 @@
     "ai": "^6.0.134",
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
-    "resend": "^6.9.1",
-    "@vercel/connect": "^0.2.2",
-    "eve": "^0.17.1",
-    "zod": "4.4.3"
+    "resend": "^6.9.1"
   },
   "main": ".lintstagedrc.js",
   "directories": {
@@ -232,8 +232,5 @@
     "url": "https://github.com/MeganHarrison/alleato-pm/issues"
   },
   "homepage": "https://github.com/MeganHarrison/alleato-pm#readme",
-  "description": "",
-  "engines": {
-    "node": "24.x"
-  }
+  "description": ""
 }

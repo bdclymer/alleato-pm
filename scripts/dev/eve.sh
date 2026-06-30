@@ -6,8 +6,11 @@
 # install is present we prepend it to PATH. In CI/Linux (where Node 24 is
 # already the default) the brew lookup is skipped and eve runs directly.
 #
-# Usage (via package.json scripts): `pnpm eve <args>` / `pnpm eve:dev`.
+# Usage (via package.json scripts): `npm run eve -- <args>` / `npm run eve:dev`.
 set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+agent_root="$repo_root/agent"
 
 if command -v brew >/dev/null 2>&1; then
   node24_bin="$(brew --prefix node@24 2>/dev/null)/bin"
@@ -16,4 +19,10 @@ if command -v brew >/dev/null 2>&1; then
   fi
 fi
 
-exec pnpm exec eve "$@"
+if [ ! -x "$agent_root/node_modules/.bin/eve" ]; then
+  echo "Eve dependencies are not installed for agent/. Run npm install at the repo root, then retry." >&2
+  exit 1
+fi
+
+cd "$agent_root"
+exec ./node_modules/.bin/eve "$@"
