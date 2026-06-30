@@ -1971,7 +1971,7 @@ export function EmailTrainingFeedbackPanel({
 
             <div className="space-y-1 pr-10">
               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Sandbox AI Review
+                AI Review
               </div>
               {savedLabel ? (
                 <div className="text-xs text-muted-foreground">Feedback saved {savedLabel}</div>
