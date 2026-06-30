@@ -1,6 +1,7 @@
 import type {
   TrainingDocAssetType,
   TrainingDocAudience,
+  TrainingDocQaStatus,
   TrainingDocStatus,
 } from "./constants";
 
@@ -51,6 +52,12 @@ export interface TrainingDocRecord {
   source_route: string | null;
   review_notes: string | null;
   target_collection: string;
+  tool_category: string | null;
+  tool_module: string | null;
+  task_key: string | null;
+  qa_status: TrainingDocQaStatus;
+  qa_last_run_at: string | null;
+  qa_notes: string | null;
   published_doc_path: string | null;
   last_published_at: string | null;
   last_publish_error: string | null;

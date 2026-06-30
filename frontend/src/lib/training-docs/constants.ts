@@ -6,6 +6,7 @@ export const TRAINING_DOC_AUDIENCES = [
 ] as const;
 
 export const TRAINING_DOC_STATUSES = [
+  "planned",
   "draft",
   "in_review",
   "approved",
@@ -13,10 +14,18 @@ export const TRAINING_DOC_STATUSES = [
   "archived",
 ] as const;
 
+export const TRAINING_DOC_QA_STATUSES = [
+  "not_tested",
+  "passing",
+  "failing",
+  "needs_update",
+] as const;
+
 export const TRAINING_DOC_ASSET_TYPES = ["screenshot", "image"] as const;
 
 export type TrainingDocAudience = (typeof TRAINING_DOC_AUDIENCES)[number];
 export type TrainingDocStatus = (typeof TRAINING_DOC_STATUSES)[number];
+export type TrainingDocQaStatus = (typeof TRAINING_DOC_QA_STATUSES)[number];
 export type TrainingDocAssetType = (typeof TRAINING_DOC_ASSET_TYPES)[number];
 
 export const TRAINING_DOC_DEFAULT_COLLECTION =

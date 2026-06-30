@@ -266,6 +266,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     developerOnly: true,
   },
   {
+    name: "Training Map",
+    path: "training-map",
+    requiresProject: false,
+    icon: Compass,
+    description: "Coverage of training docs by tool and QA status",
+    developerOnly: true,
+  },
+  {
     name: "Knowledge Sources",
     path: "knowledge/manage",
     requiresProject: false,
@@ -400,6 +408,14 @@ export const developmentTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "Draft and publish reviewed workflow manuals",
+    ownerOnly: true,
+  },
+  {
+    name: "Training Map",
+    path: "training-map",
+    requiresProject: false,
+    icon: Compass,
+    description: "Coverage of training docs by tool and QA status",
     ownerOnly: true,
   },
   {
@@ -775,6 +791,13 @@ export const adminTools: NavigationTool[] = [
     name: "Training Docs",
     path: "/training-docs",
     icon: BookOpen,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Training Map",
+    path: "/training-map",
+    icon: Compass,
     requiresProject: false,
     adminOnly: true,
   },
@@ -1362,7 +1385,7 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     description: "User feedback and requests",
   },
   {
-    name: "Product Board",
+    name: "Roadmap",
     path: "/product-board",
     requiresProject: false,
     icon: Kanban,
@@ -1399,6 +1422,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "Reviewed workflow manuals",
+    adminOnly: true,
+  },
+  {
+    name: "Training Map",
+    path: "/training-map",
+    requiresProject: false,
+    icon: Compass,
+    description: "Coverage of training docs by tool and QA status",
     adminOnly: true,
   },
   {

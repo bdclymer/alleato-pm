@@ -31315,13 +31315,19 @@ export type Database = {
           last_published_at: string | null
           metadata: Json
           published_doc_path: string | null
+          qa_last_run_at: string | null
+          qa_notes: string | null
+          qa_status: string
           review_notes: string | null
           slug: string
           source_route: string | null
           status: string
           summary: string | null
           target_collection: string
+          task_key: string | null
           title: string
+          tool_category: string | null
+          tool_module: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -31335,13 +31341,19 @@ export type Database = {
           last_published_at?: string | null
           metadata?: Json
           published_doc_path?: string | null
+          qa_last_run_at?: string | null
+          qa_notes?: string | null
+          qa_status?: string
           review_notes?: string | null
           slug: string
           source_route?: string | null
           status?: string
           summary?: string | null
           target_collection?: string
+          task_key?: string | null
           title: string
+          tool_category?: string | null
+          tool_module?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -31355,13 +31367,19 @@ export type Database = {
           last_published_at?: string | null
           metadata?: Json
           published_doc_path?: string | null
+          qa_last_run_at?: string | null
+          qa_notes?: string | null
+          qa_status?: string
           review_notes?: string | null
           slug?: string
           source_route?: string | null
           status?: string
           summary?: string | null
           target_collection?: string
+          task_key?: string | null
           title?: string
+          tool_category?: string | null
+          tool_module?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -31376,6 +31394,55 @@ export type Database = {
             foreignKeyName: "training_docs_updated_by_fkey"
             columns: ["updated_by"]
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_doc_relations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          relation_type: string
+          sort_order: number
+          source_doc_id: string
+          target_doc_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relation_type?: string
+          sort_order?: number
+          source_doc_id: string
+          target_doc_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relation_type?: string
+          sort_order?: number
+          source_doc_id?: string
+          target_doc_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_doc_relations_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_relations_source_doc_id_fkey"
+            columns: ["source_doc_id"]
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_relations_target_doc_id_fkey"
+            columns: ["target_doc_id"]
+            referencedRelation: "training_docs"
             referencedColumns: ["id"]
           },
         ]

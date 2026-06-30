@@ -63,6 +63,7 @@ module.exports = {
       // a feature component that already owns its own PageShell. Adding a second PageShell
       // here would create nested shells.
       '(admin)/training-docs/page.tsx',
+      '(admin)/training-map/page.tsx',
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',
