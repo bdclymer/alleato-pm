@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, UserPlus, ArrowLeft, X } from "lucide-react";
+import { Check, UserPlus, ArrowLeft, X, ChevronsUpDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,10 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -142,6 +140,64 @@ function CreateContactForm({
   const [jobTitle, setJobTitle] = React.useState("");
   const [companyId, setCompanyId] = React.useState<string>("");
   const [saving, setSaving] = React.useState(false);
+  const [companyOpen, setCompanyOpen] = React.useState(false);
+  const [companySearch, setCompanySearch] = React.useState("");
+  const [creatingCompany, setCreatingCompany] = React.useState(false);
+
+  // Companies passed in from the parent, plus any created inline during this
+  // session so the just-added company is immediately selectable.
+  const [extraCompanies, setExtraCompanies] = React.useState<CompanyOption[]>(
+    [],
+  );
+  const allCompanies = React.useMemo(() => {
+    const seen = new Set(companies.map((c) => c.id));
+    return [...companies, ...extraCompanies.filter((c) => !seen.has(c.id))];
+  }, [companies, extraCompanies]);
+  const selectedCompany =
+    allCompanies.find((c) => c.id === companyId) ?? null;
+  const filteredCompanies = React.useMemo(() => {
+    const query = companySearch.trim().toLowerCase();
+    if (!query) return allCompanies;
+    return allCompanies.filter((c) => c.name.toLowerCase().includes(query));
+  }, [allCompanies, companySearch]);
+  // Offer create only when the typed name doesn't already exist (case-insensitive).
+  const canCreateCompany =
+    companySearch.trim().length > 0 &&
+    !allCompanies.some(
+      (c) => c.name.trim().toLowerCase() === companySearch.trim().toLowerCase(),
+    );
+
+  const handleCreateCompany = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Company name is required");
+      return;
+    }
+    setCreatingCompany(true);
+    try {
+      const created = await apiFetch<{ id: string; name: string }>(
+        "/api/companies",
+        {
+          method: "POST",
+          body: JSON.stringify({ name: trimmed }),
+        },
+      );
+      setExtraCompanies((prev) => [
+        { id: created.id, name: created.name },
+        ...prev,
+      ]);
+      setCompanyId(created.id);
+      setCompanySearch("");
+      setCompanyOpen(false);
+      toast.success(`Created ${created.name}`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create company";
+      toast.error(message);
+    } finally {
+      setCreatingCompany(false);
+    }
+  };
 
   const handleCreate = async () => {
     const trimmedFirst = firstName.trim();
@@ -182,18 +238,6 @@ function CreateContactForm({
 
   return (
     <div className="px-6 pb-6">
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        onClick={onCancel}
-        disabled={saving}
-        className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3 w-3" />
-        Back to search
-      </Button>
-
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -255,22 +299,83 @@ function CreateContactForm({
             <Label htmlFor="assign-create-company" className="text-xs font-medium text-muted-foreground">
               Company
             </Label>
-            <Select
-              value={companyId}
-              onValueChange={setCompanyId}
-              disabled={saving}
-            >
-              <SelectTrigger id="assign-create-company" className="h-9">
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="assign-create-company"
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={companyOpen}
+                  disabled={saving || creatingCompany}
+                  className="h-9 w-full justify-between bg-background font-normal"
+                >
+                  <span
+                    className={cn(
+                      "truncate",
+                      !selectedCompany && "text-muted-foreground",
+                    )}
+                  >
+                    {selectedCompany ? selectedCompany.name : "None"}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] p-0"
+                align="start"
+              >
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Search or create company…"
+                    value={companySearch}
+                    onValueChange={setCompanySearch}
+                  />
+                  <CommandList className="max-h-60 overflow-y-auto">
+                    {filteredCompanies.length > 0 && (
+                      <CommandGroup>
+                        {filteredCompanies.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.id}
+                            onSelect={() => {
+                              setCompanyId(c.id);
+                              setCompanyOpen(false);
+                              setCompanySearch("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                companyId === c.id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <span className="truncate">{c.name}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                    {/* Create option is always visible so the path to add a new
+                        company is obvious; enabled only once a new name typed. */}
+                    <CommandGroup>
+                      <CommandItem
+                        value={`__create__${companySearch}`}
+                        disabled={creatingCompany || !canCreateCompany}
+                        onSelect={() => void handleCreateCompany(companySearch)}
+                        className="text-primary"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {creatingCompany
+                          ? "Creating…"
+                          : companySearch.trim()
+                            ? `Create "${companySearch.trim()}"`
+                            : "Type a name to add a new company"}
+                      </CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -552,19 +657,38 @@ export function AssignMemberDialog({
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent
-        size="lg"
+        size="2xl"
         className="flex flex-col overflow-hidden gap-0 p-0 border-border/60"
         style={{ maxHeight: "85vh" }}
       >
-        <ModalHeader className="px-6 pt-6 pb-4 space-y-1">
-          <ModalTitle className="text-lg tracking-tight">
-            Assign members
-          </ModalTitle>
-          <ModalDescription>
-            {role
-              ? `Choose who fills the ${role.role_name} role on this project.`
-              : "Choose who fills this role."}
-          </ModalDescription>
+        <ModalHeader className="px-6 pt-6 pb-4">
+          <div className="flex items-start gap-2">
+            {mode !== "search" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => {
+                  setMode(mode === "create" ? "external" : "search");
+                  setSearch("");
+                }}
+                aria-label="Back"
+                className="-ml-1 mt-0.5 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="space-y-1">
+              <ModalTitle className="text-lg tracking-tight">
+                Assign members
+              </ModalTitle>
+              <ModalDescription>
+                {role
+                  ? `Choose who fills the ${role.role_name} role on this project.`
+                  : "Choose who fills this role."}
+              </ModalDescription>
+            </div>
+          </div>
         </ModalHeader>
 
         {mode === "create" ? (
@@ -575,33 +699,19 @@ export function AssignMemberDialog({
             onCreated={handleCreated}
           />
         ) : (
-          <div className="flex-1 min-h-0 flex flex-col px-6 pb-6">
-            {mode === "external" && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={() => {
-                  setMode("search");
-                  setSearch("");
-                }}
-                className="mb-3 -ml-2 self-start text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Back to Alleato team
-              </Button>
-            )}
-
+          <div className="flex min-h-0 flex-col px-6 pb-6">
             <Command className="overflow-visible" shouldFilter={true}>
-              <CommandInput
-                placeholder={
-                  mode === "external"
-                    ? "Search external contacts…"
-                    : "Search Alleato team…"
-                }
-                value={search}
-                onValueChange={setSearch}
-              />
+              <div className="rounded-md bg-muted/50">
+                <CommandInput
+                  placeholder={
+                    mode === "external"
+                      ? "Search external contacts…"
+                      : "Search Alleato team…"
+                  }
+                  value={search}
+                  onValueChange={setSearch}
+                />
+              </div>
               <CommandList className="mt-2 max-h-80 overflow-y-auto overscroll-contain -mx-1">
                 <CommandEmpty>
                   <div className="px-4 py-6 text-center text-sm text-muted-foreground">
@@ -619,14 +729,13 @@ export function AssignMemberDialog({
                     (person) => {
                       const displayName = getPersonDisplayName(person);
                       const companyName = cleanPersonText(person.company_name);
-                      const jobTitle = cleanPersonText(person.job_title);
-                      const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
+                      const email = cleanPersonText(person.email);
                       const isSelected = selectedIds.includes(person.id);
 
                       return (
                         <CommandItem
                           key={person.id}
-                          value={`${displayName} ${meta}`}
+                          value={`${displayName} ${email} ${companyName}`}
                           onSelect={() => void handleSelect(person.id)}
                           className={cn(
                             "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
@@ -642,17 +751,23 @@ export function AssignMemberDialog({
                                 : "border-muted-foreground/25 bg-transparent",
                             )}
                           >
-                            {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                            {isSelected && (
+                              <Check
+                                className="h-3 w-3 text-primary-foreground"
+                                strokeWidth={3}
+                              />
+                            )}
                           </div>
-                          <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1fr)] items-baseline gap-3">
                             <span className="truncate text-sm text-foreground">
                               {displayName}
                             </span>
-                            {meta && (
-                              <span className="truncate text-xs text-muted-foreground">
-                                {meta}
-                              </span>
-                            )}
+                            <span className="truncate text-xs text-muted-foreground">
+                              {email}
+                            </span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {companyName}
+                            </span>
                           </div>
                         </CommandItem>
                       );

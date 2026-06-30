@@ -214,7 +214,7 @@
     {
       "url": "/[projectId]/drawings/[drawingId]",
       "title": "View in drawing viewer",
-      "description": "The file could not be loaded from storage."
+      "description": "The drawing intelligence endpoint did not return extraction data."
     },
     {
       "url": "/[projectId]/drawings/areas",
@@ -293,7 +293,7 @@
     },
     {
       "url": "/[projectId]/intelligence",
-      "title": "Current project read from sources and database state",
+      "title": "Operating record",
       "description": "AI-powered project intelligence with insights, timeline, and source document references"
     },
     {
@@ -519,7 +519,7 @@
     {
       "url": "/[projectId]/rfis/new",
       "title": "New RFI",
-      "description": "Create a new Request for Information"
+      "description": null
     },
     {
       "url": "/[projectId]/schedule",
@@ -732,6 +732,11 @@
       "description": "A separate live Tavus avatar experience for onboarding and internal experiments."
     },
     {
+      "url": "/ai-chat-history",
+      "title": "AI Chat History",
+      "description": null
+    },
+    {
       "url": "/ai-learning-promotions",
       "title": null,
       "description": "Redirect to /ai/learning-promotions; approve retrieval-learning candidates"
@@ -772,9 +777,19 @@
       "description": "Review Skill Library records by status, scope, owner, reviewer, and usage."
     },
     {
+      "url": "/ai/approvals",
+      "title": "AI approvals",
+      "description": null
+    },
+    {
       "url": "/ai/learning-promotions",
       "title": "AI Learning Promotions",
       "description": "Review candidate learnings before they can become durable assistant behavior, memory, attribution, or retrieval rules."
+    },
+    {
+      "url": "/ai/profile",
+      "title": "AI Profile",
+      "description": "Review what Alleato AI knows about you and where to manage it."
     },
     {
       "url": "/ai/skills",
@@ -878,8 +893,8 @@
     },
     {
       "url": "/comments",
-      "title": "Comments",
-      "description": "Use the annotation button on any page to leave a comment."
+      "title": "Comment details",
+      "description": "Clear search or switch filters."
     },
     {
       "url": "/create-project",
@@ -917,9 +932,19 @@
       "description": "Schema inventory of database tables with row counts, size, and gotchas"
     },
     {
+      "url": "/db-audit-log",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/deep-research",
       "title": "Deep Research Archive",
       "description": "Run an LLM wiki workflow, then refresh this archive."
+    },
+    {
+      "url": "/demo",
+      "title": null,
+      "description": null
     },
     {
       "url": "/design",
@@ -1142,9 +1167,24 @@
       "description": "Admin detail view of an FM Global form submission with matched tables and lead scoring"
     },
     {
+      "url": "/home",
+      "title": "Home",
+      "description": null
+    },
+    {
+      "url": "/ideas",
+      "title": "Ideas could not load",
+      "description": "A quick editable table for ideas, routing status, and next actions."
+    },
+    {
       "url": "/insights",
       "title": null,
       "description": "Table of AI-generated insights from meetings and documents with type, severity, and status filters"
+    },
+    {
+      "url": "/insights/[insightId]",
+      "title": null,
+      "description": null
     },
     {
       "url": "/intelligence-packets",
@@ -1202,11 +1242,6 @@
       "description": "Meeting detail page with transcript, segments, extracted items, and related meetings"
     },
     {
-      "url": "/motion",
-      "title": "Text Effects",
-      "description": "Animated text with various presets"
-    },
-    {
       "url": "/notifications",
       "title": "No notifications",
       "description": "You'll be notified about comments, mentions, and project activity."
@@ -1240,6 +1275,11 @@
       "url": "/pipeline",
       "title": "Document Pipeline",
       "description": "Monitor and manage document processing pipeline"
+    },
+    {
+      "url": "/pipeline-health",
+      "title": "Pipeline health map",
+      "description": "Live view of the ingestion pipeline — each source flows left to right through sync, embed, project attribution, task extraction, and intelligence compilation. Red nodes and dashed edges are where data stops flowing."
     },
     {
       "url": "/prime-contracts",
@@ -1315,6 +1355,11 @@
       "url": "/redoc",
       "title": "ReDoc API Reference",
       "description": "Explore auth flows, schema details, and every frontend/backend endpoint in one place."
+    },
+    {
+      "url": "/respond/rfi/[token]",
+      "title": null,
+      "description": null
     },
     {
       "url": "/settings",
@@ -1398,8 +1443,8 @@
     },
     {
       "url": "/teams-conversations",
-      "title": "Teams Conversations",
-      "description": "Review compiled Microsoft Teams conversation threads, attribution, and project-linked source detail."
+      "title": null,
+      "description": null
     },
     {
       "url": "/teams-conversations/[sourceDocumentId]",
@@ -1467,6 +1512,11 @@
       "description": "Catalog of all Procore tools grouped by category with status badges and external links"
     },
     {
+      "url": "/ui-library",
+      "title": null,
+      "description": "Disclosure primitive for secondary detail. Keep primary labels and status visible outside the collapsed body."
+    },
+    {
       "url": "/updates",
       "title": "What's New",
       "description": "A running log of features added, improved, and fixed across all areas of the platform."
@@ -1489,7 +1539,7 @@
     },
     {
       "name": "createChangeEvent",
-      "description": "Log a new change event — a potential scope change that may or may not become a change order. Use when the user says 'log a change event', 'something came up on [project]', or describes an unexpected field condition. Always preview before writing."
+      "description": null
     },
     {
       "name": "updateProjectStatus",
@@ -1814,10 +1864,6 @@
     {
       "name": "generateProgressReportPdf",
       "description": "Generate view/download links for an existing weekly progress report PDF. Use when the user asks to export, preview, view, download, or open the PDF for a weekly progress report."
-    },
-    {
-      "name": "getMeetingIntelligence",
-      "description": "Return structured meeting intelligence for completed meetings, risks, decisions, action items, and meeting insights. Use this for prompts like 'tell me about the meetings completed today', 'what insights did you gain from meetings', 'were any critical risks identified in meetings', or 'what decisions/action items came out of meetings'. The output is designed for generative UI rendering as meeting intelligence cards."
     },
     {
       "name": "getProjectBriefingSnapshot",

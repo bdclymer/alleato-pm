@@ -282,7 +282,11 @@ export function UserAccessPanel({
                   </div>
                   <div className="max-h-72 overflow-y-auto border-t border-border">
                     {visibleProjects.length === 0 ? (
-                      <EmptyState title="No available projects" className="py-6" />
+                      <EmptyState
+                        title="No available projects"
+                        description="Every project is already assigned, or none match your search."
+                        className="py-6"
+                      />
                     ) : (
                       visibleProjects.map((project) => {
                         const isSelected = selectedProjectIds.includes(project.id);

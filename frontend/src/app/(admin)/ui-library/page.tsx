@@ -15,11 +15,7 @@ import {
   Bell,
   Mail,
   Calendar,
-  BarChart2,
   Users,
-  Globe,
-  Star,
-  Heart,
 } from "lucide-react";
 import {
   Accordion,
@@ -47,7 +43,6 @@ import { Dock, DockIcon } from "@/components/ui/dock";
 import { DottedMap } from "@/components/ui/dotted-map";
 import { IconCloud } from "@/components/ui/icon-cloud";
 import { LightRays } from "@/components/ui/light-rays";
-import { OrbitingCircles } from "@/components/ui/orbiting-circles";
 import Text3DFlip from "@/components/ui/text-3d-flip";
 import { TransitionPanel } from "@/components/ui/transition-panel";
 import { AnimatedBackground } from "@/components/motion/animated-background";
@@ -76,6 +71,7 @@ import { Notch, type NotchItem } from "@/components/ui/notch";
 import { Tooltip } from "@/components/ui/tooltip-card";
 import WorldMap from "@/components/ui-library/world-map";
 import ExpandableCardDemoImport from "@/components/ui-library/expandable-card-demo-standard";
+import { OrbitingCirclesDemo } from "@/components/ui-library/orbiting-circles-demo";
 import {
   PropertyList,
   Property,
@@ -496,35 +492,6 @@ function LightRaysDemo() {
       >
         Light Rays
       </span>
-    </div>
-  );
-}
-
-// ─── Orbiting Circles Demo ────────────────────────────────────────────────────
-
-function OrbitingCirclesDemo() {
-  return (
-    <div className="relative flex h-56 w-56 items-center justify-center">
-      <span className="text-2xl">⚡</span>
-      <OrbitingCircles radius={80} duration={12} iconSize={28}>
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 border border-border text-xs">
-          <Star className="h-3.5 w-3.5 text-primary" />
-        </div>
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 border border-border text-xs">
-          <Heart className="h-3.5 w-3.5 text-primary" />
-        </div>
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 border border-border text-xs">
-          <Globe className="h-3.5 w-3.5 text-primary" />
-        </div>
-      </OrbitingCircles>
-      <OrbitingCircles radius={44} duration={8} reverse iconSize={22}>
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted border border-border">
-          <Users className="h-3 w-3 text-muted-foreground" />
-        </div>
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted border border-border">
-          <BarChart2 className="h-3 w-3 text-muted-foreground" />
-        </div>
-      </OrbitingCircles>
     </div>
   );
 }

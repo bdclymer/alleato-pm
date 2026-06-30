@@ -1,11 +1,26 @@
 /** @jest-environment jsdom */
 
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { KnowledgeBasePage } from "../knowledge-base-page";
 
 jest.mock("@/components/layout", () => ({
   PageShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SectionRuleHeading: ({
+    label,
+    actions,
+  }: {
+    label: React.ReactNode;
+    actions?: React.ReactNode;
+  }) => (
+    <div>
+      <div role="heading" aria-level={2}>
+        {label}
+      </div>
+      {actions}
+    </div>
+  ),
 }));
 
 jest.mock("@/hooks/use-knowledge-documents", () => ({
@@ -18,7 +33,7 @@ jest.mock("@/hooks/use-knowledge-documents", () => ({
         category: "knowledge",
         source: "knowledge_upload",
         status: "processed",
-        tags: "Field Operations,safety",
+        tags: ["Field Operations", "safety"],
         date: "2026-06-20T12:00:00Z",
         file_name: "safety-orientation.pdf",
         file_path: "knowledge/doc-1/safety-orientation.pdf",
@@ -31,7 +46,7 @@ jest.mock("@/hooks/use-knowledge-documents", () => ({
         category: "knowledge",
         source: "sharepoint",
         status: "processed",
-        tags: "Contracts,templates",
+        tags: ["Contracts", "templates"],
         date: "2026-06-19T12:00:00Z",
         file_name: "subcontract-template.docx",
         file_path: "knowledge/doc-2/subcontract-template.docx",
@@ -48,8 +63,10 @@ jest.mock("@/hooks/use-current-user-profile", () => ({
   }),
 }));
 
+const apiFetchMock = jest.fn();
+
 jest.mock("@/lib/api-client", () => ({
-  apiFetch: jest.fn(),
+  apiFetch: (...args: unknown[]) => apiFetchMock(...args),
 }));
 
 jest.mock("next/link", () => ({
@@ -69,6 +86,10 @@ jest.mock("next/link", () => ({
 }));
 
 describe("KnowledgeBasePage", () => {
+  beforeEach(() => {
+    apiFetchMock.mockReset();
+  });
+
   it("renders a docs-style knowledge layout with topic nav and on-page index", () => {
     render(<KnowledgeBasePage />);
 
@@ -96,5 +117,22 @@ describe("KnowledgeBasePage", () => {
     expect(screen.queryByRole("heading", { name: "Source documents" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Source confidence" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Safety orientation/ })).not.toBeInTheDocument();
+  });
+
+  it("shows matching source documents when a category is selected", async () => {
+    const user = userEvent.setup();
+    render(<KnowledgeBasePage />);
+
+    expect(
+      screen.queryByRole("heading", { name: "Field Operations sources" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: /Field Operations/ })[0]);
+
+    expect(
+      screen.getByRole("heading", { name: "Field Operations sources" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Safety orientation")).toBeInTheDocument();
+    expect(screen.queryByText("Subcontract template")).not.toBeInTheDocument();
   });
 });

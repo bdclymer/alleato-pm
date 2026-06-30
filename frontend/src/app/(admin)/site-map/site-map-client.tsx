@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   CheckCircle2,
@@ -23,12 +29,16 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { PageTabs } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -52,7 +62,18 @@ import {
   type PageAccessPolicy,
   type PageAccessPolicyInput,
 } from "@/lib/page-access";
-import type { PermissionModule } from "@/lib/permissions-shared";
+import {
+  formatAllowedRoleNames,
+  sortPermissionTemplates,
+  type PageRoleAccessMode,
+  type PageRoleAccessPolicy,
+  type PageRoleAccessPolicyInput,
+} from "@/lib/page-role-access";
+import type {
+  PermissionLevel,
+  PermissionModule,
+  PermissionTemplate,
+} from "@/lib/permissions-shared";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -121,17 +142,27 @@ export type InventoryRoute = {
   permissionModule: PermissionModule | null;
   accessUpdatedAt: string | null;
   accessIsExplicit: boolean;
+  roleAccessMode: PageRoleAccessMode;
+  allowedPermissionTemplateIds: string[];
+  roleAccessUpdatedAt: string | null;
+  roleAccessIsExplicit: boolean;
   _group?: string;
   _groupCount?: number;
 };
 
-type InventoryOverlay = Partial<Pick<InventoryRoute, "category" | "type" | "layout" | "status" | "notes" | "lastReviewed">> & {
+type InventoryOverlay = Partial<
+  Pick<
+    InventoryRoute,
+    "category" | "type" | "layout" | "status" | "notes" | "lastReviewed"
+  >
+> & {
   updatedAt?: string;
 };
 
 type GroupBy = "none" | "category" | "type" | "layout" | "status";
 type SitemapTab =
   | "all"
+  | "access-review"
   | "pages"
   | "api"
   | "project-pages"
@@ -205,6 +236,7 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
 
 const TAB_LABELS: Record<SitemapTab, string> = {
   all: "All",
+  "access-review": "Access Review",
   pages: "Pages",
   api: "API",
   "project-pages": "Project Pages",
@@ -224,8 +256,11 @@ const columns: ColumnConfig[] = [
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "layout", label: "Layout", defaultVisible: true },
-  { id: "accessLevel", label: "Access", defaultVisible: true },
-  { id: "permissionModule", label: "Module", defaultVisible: true },
+  { id: "accessLevel", label: "Required Access", defaultVisible: true },
+  { id: "permissionModule", label: "Required Module", defaultVisible: true },
+  { id: "allowedRoles", label: "Allowed Roles", defaultVisible: true },
+  { id: "qualifyingRoles", label: "Roles That Qualify", defaultVisible: true },
+  { id: "accessSource", label: "Policy Source", defaultVisible: true },
   { id: "dynamic", label: "Dynamic", defaultVisible: true },
   { id: "notes", label: "Notes", defaultVisible: true },
   { id: "lastReviewed", label: "Last Reviewed", defaultVisible: true },
@@ -234,10 +269,9 @@ const columns: ColumnConfig[] = [
 ];
 
 // Lookup config by id so column blocks stay aligned regardless of array order.
-const columnById = Object.fromEntries(columns.map((column) => [column.id, column])) as Record<
-  string,
-  ColumnConfig
->;
+const columnById = Object.fromEntries(
+  columns.map((column) => [column.id, column]),
+) as Record<string, ColumnConfig>;
 
 const defaultVisibleColumns = columns
   .filter((column) => column.defaultVisible !== false)
@@ -246,6 +280,7 @@ const defaultVisibleColumns = columns
 function parseTab(value: string | null): SitemapTab {
   if (
     value === "pages" ||
+    value === "access-review" ||
     value === "api" ||
     value === "project-pages" ||
     value === "admin-pages" ||
@@ -338,7 +373,10 @@ function saveOverlay(overlay: Record<string, InventoryOverlay>) {
   }
 }
 
-function applyOverlay(routes: InventoryRoute[], overlay: Record<string, InventoryOverlay>): InventoryRoute[] {
+function applyOverlay(
+  routes: InventoryRoute[],
+  overlay: Record<string, InventoryOverlay>,
+): InventoryRoute[] {
   return routes.map((route) => ({ ...route, ...overlay[route.route] }));
 }
 
@@ -346,7 +384,9 @@ function applyPageAccessPolicies(
   routes: InventoryRoute[],
   policies: PageAccessPolicy[],
 ): InventoryRoute[] {
-  const policyByRoute = new Map(policies.map((policy) => [policy.route, policy]));
+  const policyByRoute = new Map(
+    policies.map((policy) => [policy.route, policy]),
+  );
 
   return routes.map((route) => {
     const policy = policyByRoute.get(route.route);
@@ -366,16 +406,61 @@ function applyPageAccessPolicies(
   });
 }
 
+function applyPageRoleAccessPolicies(
+  routes: InventoryRoute[],
+  policies: PageRoleAccessPolicy[],
+): InventoryRoute[] {
+  const policyByRoute = new Map(
+    policies.map((policy) => [policy.route, policy]),
+  );
+
+  return routes.map((route) => {
+    const policy = policyByRoute.get(route.route);
+
+    return {
+      ...route,
+      roleAccessMode: policy?.mode ?? "inherit_requirement",
+      allowedPermissionTemplateIds: policy?.allowedPermissionTemplateIds ?? [],
+      roleAccessUpdatedAt: policy?.updatedAt ?? null,
+      roleAccessIsExplicit: Boolean(policy),
+    };
+  });
+}
+
 async function fetchPageAccessPolicies(): Promise<PageAccessPolicy[]> {
-  const { data } = await apiFetch<{ data: PageAccessPolicy[] }>("/api/permissions/page-access");
+  const { data } = await apiFetch<{ data: PageAccessPolicy[] }>(
+    "/api/permissions/page-access",
+  );
+  return data;
+}
+
+async function fetchPageRoleAccessPolicies(): Promise<PageRoleAccessPolicy[]> {
+  const { data } = await apiFetch<{ data: PageRoleAccessPolicy[] }>(
+    "/api/permissions/page-role-access",
+  );
+  return data;
+}
+
+async function fetchPermissionTemplates(): Promise<PermissionTemplate[]> {
+  const { data } = await apiFetch<{ data: PermissionTemplate[] }>(
+    "/api/permissions/templates",
+  );
   return data;
 }
 
 function defaultModuleForRoute(route: InventoryRoute): PermissionModule {
-  return route.permissionModule ?? inferPageAccessDefaults(route).permissionModule ?? "directory";
+  return (
+    route.permissionModule ??
+    inferPageAccessDefaults(route).permissionModule ??
+    "directory"
+  );
 }
 
-function buildTabHref(pathname: string, searchParams: URLSearchParams, tab: SitemapTab): string {
+function buildTabHref(
+  pathname: string,
+  searchParams: URLSearchParams,
+  tab: SitemapTab,
+): string {
   const nextParams = new URLSearchParams(searchParams.toString());
   if (tab === "all") nextParams.delete("tab");
   else nextParams.set("tab", tab);
@@ -386,23 +471,197 @@ function buildTabHref(pathname: string, searchParams: URLSearchParams, tab: Site
 
 function matchesTab(route: InventoryRoute, tab: SitemapTab): boolean {
   const isPageRoute = route.kind === "page" || route.kind === "page.nonprod";
+  if (tab === "access-review")
+    return isPageRoute && routeNeedsAccessReview(route);
   if (tab === "pages") return isPageRoute;
   if (tab === "api") return route.kind === "api";
-  if (tab === "project-pages") return isPageRoute && (route.type === "Project Page" || route.route.includes("[projectId]"));
-  if (tab === "admin-pages") return isPageRoute && (route.type === "Admin Page" || route.category === "Admin");
+  if (tab === "project-pages")
+    return (
+      isPageRoute &&
+      (route.type === "Project Page" || route.route.includes("[projectId]"))
+    );
+  if (tab === "admin-pages")
+    return (
+      isPageRoute && (route.type === "Admin Page" || route.category === "Admin")
+    );
   if (tab === "table-pages") return isPageRoute && route.layout === "Table";
   if (tab === "form-pages") return isPageRoute && route.layout === "Form";
   if (tab === "detail-pages") return isPageRoute && route.layout === "Detail";
   if (tab === "edit-pages") return isPageRoute && route.layout === "Edit";
-  if (tab === "deprecated-pages") return isPageRoute && route.layout === "Deprecated";
-  if (tab === "needs-review") return route.status === "Needs Review" || route.status === "Broken" || route.status === "Missing Nav";
+  if (tab === "deprecated-pages")
+    return isPageRoute && route.layout === "Deprecated";
+  if (tab === "needs-review")
+    return (
+      route.status === "Needs Review" ||
+      route.status === "Broken" ||
+      route.status === "Missing Nav"
+    );
   return true;
 }
 
 function tabNoun(tab: SitemapTab): string {
   if (tab === "api") return "API routes";
+  if (tab === "access-review") return "pages needing access review";
   if (tab === "all") return "routes";
   return "pages";
+}
+
+function routeNeedsAccessReview(route: InventoryRoute): boolean {
+  return (
+    !route.accessIsExplicit ||
+    route.status === "Needs Review" ||
+    route.status === "Broken" ||
+    route.status === "Missing Nav"
+  );
+}
+
+const MODULE_ACCESS_TO_LEVEL: Partial<
+  Record<PageAccessLevel, PermissionLevel>
+> = {
+  module_read: "read",
+  module_write: "write",
+  module_admin: "admin",
+};
+
+function permissionLevelMeets(
+  actual: PermissionLevel,
+  required: PermissionLevel,
+): boolean {
+  const order: PermissionLevel[] = ["none", "read", "write", "admin"];
+  return order.indexOf(actual) >= order.indexOf(required);
+}
+
+function getTemplateModuleLevels(
+  template: PermissionTemplate,
+  module: PermissionModule,
+): PermissionLevel[] {
+  const levels = template.rules_json[module];
+  return Array.isArray(levels) ? levels : [];
+}
+
+function templateSatisfiesRoute(
+  template: PermissionTemplate,
+  route: InventoryRoute,
+): boolean {
+  const requiredLevel = MODULE_ACCESS_TO_LEVEL[route.accessLevel];
+  if (!requiredLevel || !route.permissionModule) return false;
+
+  return getTemplateModuleLevels(template, route.permissionModule).some(
+    (level) => permissionLevelMeets(level, requiredLevel),
+  );
+}
+
+function getQualifyingRoleNames(
+  route: InventoryRoute,
+  templates: PermissionTemplate[],
+): string[] {
+  if (route.accessLevel === "public") return ["Everyone"];
+  if (route.accessLevel === "signed_in") return ["Signed-in users"];
+  if (route.accessLevel === "project_member") return ["Project members"];
+  if (route.accessLevel === "app_admin") return ["App admins"];
+  if (route.accessLevel === "developer") return ["Developers"];
+
+  return templates
+    .filter((template) => templateSatisfiesRoute(template, route))
+    .map((template) => template.name)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function formatQualifyingRoles(roleNames: string[]): string {
+  if (roleNames.length === 0) return "No matching role";
+  if (roleNames.length <= 3) return roleNames.join(", ");
+  return `${roleNames.slice(0, 3).join(", ")} +${roleNames.length - 3}`;
+}
+
+function RoleAccessSelect({
+  route,
+  permissionTemplates,
+  onChange,
+}: {
+  route: InventoryRoute;
+  permissionTemplates: PermissionTemplate[];
+  onChange: (route: InventoryRoute, input: PageRoleAccessPolicyInput) => void;
+}) {
+  const sortedTemplates = sortPermissionTemplates(permissionTemplates);
+  const selectedIds = new Set(route.allowedPermissionTemplateIds);
+  const policy: PageRoleAccessPolicy = {
+    route: route.route,
+    mode: route.roleAccessMode,
+    allowedPermissionTemplateIds: route.allowedPermissionTemplateIds,
+    notes: null,
+    updatedAt: route.roleAccessUpdatedAt,
+    updatedBy: null,
+  };
+  const label = formatAllowedRoleNames(policy, permissionTemplates);
+
+  const setInherited = () => {
+    onChange(route, {
+      route: route.route,
+      mode: "inherit_requirement",
+      allowedPermissionTemplateIds: [],
+    });
+  };
+
+  const toggleTemplate = (templateId: string) => {
+    const nextIds = new Set(selectedIds);
+    if (nextIds.has(templateId)) nextIds.delete(templateId);
+    else nextIds.add(templateId);
+
+    onChange(route, {
+      route: route.route,
+      mode: "explicit_allowlist",
+      allowedPermissionTemplateIds: [...nextIds],
+    });
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-row-interactive="true"
+          className={cn(
+            "h-8 max-w-60 justify-start px-0 text-left text-xs font-normal",
+            route.roleAccessMode === "inherit_requirement"
+              ? "text-muted-foreground"
+              : "text-foreground",
+          )}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <span className="truncate">{label}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="max-h-80 w-72 overflow-y-auto"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <DropdownMenuCheckboxItem
+          checked={route.roleAccessMode === "inherit_requirement"}
+          onCheckedChange={setInherited}
+          onSelect={(event) => event.preventDefault()}
+        >
+          Inherit required access
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        {sortedTemplates.map((template) => (
+          <DropdownMenuCheckboxItem
+            key={template.id}
+            checked={
+              route.roleAccessMode === "explicit_allowlist" &&
+              selectedIds.has(template.id)
+            }
+            onCheckedChange={() => toggleTemplate(template.id)}
+            onSelect={(event) => event.preventDefault()}
+          >
+            <span className="truncate">{template.name}</span>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function getGroupKey(route: InventoryRoute, groupBy: GroupBy): string {
@@ -413,7 +672,11 @@ function getGroupKey(route: InventoryRoute, groupBy: GroupBy): string {
   return "";
 }
 
-function buildGroupedItems(routes: InventoryRoute[], groupBy: GroupBy, collapsedGroups: Set<string>): InventoryRoute[] {
+function buildGroupedItems(
+  routes: InventoryRoute[],
+  groupBy: GroupBy,
+  collapsedGroups: Set<string>,
+): InventoryRoute[] {
   if (groupBy === "none") return routes;
 
   const grouped = new Map<string, InventoryRoute[]>();
@@ -474,27 +737,53 @@ function applyFilters(
     );
   }
 
-  if (filters.category) filtered = filtered.filter((route) => route.category === filters.category);
-  if (filters.type) filtered = filtered.filter((route) => route.type === filters.type);
-  if (filters.layout) filtered = filtered.filter((route) => route.layout === filters.layout);
-  if (filters.status) filtered = filtered.filter((route) => route.status === filters.status);
-  if (filters.dynamic) filtered = filtered.filter((route) => route.dynamic === (filters.dynamic === "true"));
+  if (filters.category)
+    filtered = filtered.filter((route) => route.category === filters.category);
+  if (filters.type)
+    filtered = filtered.filter((route) => route.type === filters.type);
+  if (filters.layout)
+    filtered = filtered.filter((route) => route.layout === filters.layout);
+  if (filters.status)
+    filtered = filtered.filter((route) => route.status === filters.status);
+  if (filters.accessSource) {
+    filtered = filtered.filter((route) =>
+      filters.accessSource === "explicit"
+        ? route.accessIsExplicit
+        : !route.accessIsExplicit,
+    );
+  }
+  if (filters.dynamic)
+    filtered = filtered.filter(
+      (route) => route.dynamic === (filters.dynamic === "true"),
+    );
 
   return filtered;
 }
 
-function sortRoutes(routes: InventoryRoute[], sortBy: string, direction: "asc" | "desc"): InventoryRoute[] {
+function sortRoutes(
+  routes: InventoryRoute[],
+  sortBy: string,
+  direction: "asc" | "desc",
+): InventoryRoute[] {
   const sorted = [...routes].sort((left, right) => {
-    if (sortBy === "parent") return deriveParent(left.route).localeCompare(deriveParent(right.route));
+    if (sortBy === "parent")
+      return deriveParent(left.route).localeCompare(deriveParent(right.route));
     const leftValue = left[sortBy as keyof InventoryRoute];
     const rightValue = right[sortBy as keyof InventoryRoute];
-    if (typeof leftValue === "number" && typeof rightValue === "number") return leftValue - rightValue;
+    if (typeof leftValue === "number" && typeof rightValue === "number")
+      return leftValue - rightValue;
     return String(leftValue ?? "").localeCompare(String(rightValue ?? ""));
   });
   return direction === "desc" ? sorted.reverse() : sorted;
 }
 
-function PanelField({ label, children }: { label: string; children: ReactNode }) {
+function PanelField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex items-center gap-4">
       <label className="w-28 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -541,7 +830,10 @@ function statusSelect({
   onChange: (value: InventoryStatus) => void;
 }) {
   return (
-    <Select value={value} onValueChange={(next) => onChange(next as InventoryStatus)}>
+    <Select
+      value={value}
+      onValueChange={(next) => onChange(next as InventoryStatus)}
+    >
       <SelectTrigger
         className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
         onClick={(event) => event.stopPropagation()}
@@ -567,7 +859,10 @@ function pageAccessSelect({
   onChange: (value: PageAccessLevel) => void;
 }) {
   return (
-    <Select value={value} onValueChange={(next) => onChange(next as PageAccessLevel)}>
+    <Select
+      value={value}
+      onValueChange={(next) => onChange(next as PageAccessLevel)}
+    >
       <SelectTrigger
         className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
         onClick={(event) => event.stopPropagation()}
@@ -599,7 +894,10 @@ function pageModuleSelect({
   }
 
   return (
-    <Select value={value ?? "directory"} onValueChange={(next) => onChange(next as PermissionModule)}>
+    <Select
+      value={value ?? "directory"}
+      onValueChange={(next) => onChange(next as PermissionModule)}
+    >
       <SelectTrigger
         className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
         onClick={(event) => event.stopPropagation()}
@@ -617,23 +915,426 @@ function pageModuleSelect({
   );
 }
 
+/**
+ * Reusable detail/editor for a single route. Rendered both in the slide-out side
+ * panel (table tabs) and as the right pane of the admin-pages split view.
+ */
+function RouteDetailPanel({
+  route,
+  permissionTemplates,
+  onFieldChange,
+  onAccessChange,
+  onModuleChange,
+  onRoleAccessChange,
+  onMarkReviewed,
+}: {
+  route: InventoryRoute;
+  permissionTemplates: PermissionTemplate[];
+  onFieldChange: <TKey extends keyof InventoryOverlay>(
+    route: string,
+    key: TKey,
+    value: InventoryOverlay[TKey],
+  ) => void;
+  onAccessChange: (route: InventoryRoute, accessLevel: PageAccessLevel) => void;
+  onModuleChange: (
+    route: InventoryRoute,
+    permissionModule: PermissionModule,
+  ) => void;
+  onRoleAccessChange: (
+    route: InventoryRoute,
+    input: PageRoleAccessPolicyInput,
+  ) => void;
+  onMarkReviewed: (route: string) => void;
+}) {
+  const qualifyingRoleNames = getQualifyingRoleNames(
+    route,
+    permissionTemplates,
+  );
+
+  return (
+    <div className="space-y-6 p-5">
+      <div className="space-y-1">
+        <p className="text-lg font-semibold text-foreground">{route.page}</p>
+        <code className="block break-all text-xs text-muted-foreground">
+          {route.route}
+        </code>
+      </div>
+
+      {/* All editable fields — horizontal detail layout */}
+      <div className="space-y-3">
+        <PanelField label="Status">
+          <Select
+            value={route.status}
+            onValueChange={(value) =>
+              onFieldChange(route.route, "status", value as InventoryStatus)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUSES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  <StatusBadge status={option} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PanelField>
+
+        <PanelField label="Category">
+          <Select
+            value={route.category}
+            onValueChange={(value) =>
+              onFieldChange(route.route, "category", value as InventoryCategory)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PanelField>
+
+        <PanelField label="Type">
+          <Select
+            value={route.type}
+            onValueChange={(value) =>
+              onFieldChange(route.route, "type", value as InventoryType)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TYPES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PanelField>
+
+        <PanelField label="Layout">
+          <Select
+            value={route.layout}
+            onValueChange={(value) =>
+              onFieldChange(route.route, "layout", value as InventoryLayout)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LAYOUTS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PanelField>
+
+        <PanelField label="Required access">
+          <Select
+            value={route.accessLevel}
+            onValueChange={(value) =>
+              onAccessChange(route, value as PageAccessLevel)
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_ACCESS_LEVELS.map((level) => (
+                <SelectItem key={level} value={level}>
+                  {PAGE_ACCESS_LEVEL_LABELS[level]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PanelField>
+
+        <PanelField label="Required module">
+          {accessLevelRequiresModule(route.accessLevel) ? (
+            <Select
+              value={route.permissionModule ?? "directory"}
+              onValueChange={(value) =>
+                onModuleChange(route, value as PermissionModule)
+              }
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_ACCESS_MODULES.map((module) => (
+                  <SelectItem key={module} value={module}>
+                    {PAGE_ACCESS_MODULE_LABELS[module]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm text-muted-foreground">
+              N/A
+            </div>
+          )}
+        </PanelField>
+
+        <PanelField label="Allowed roles">
+          <RoleAccessSelect
+            route={route}
+            permissionTemplates={permissionTemplates}
+            onChange={onRoleAccessChange}
+          />
+        </PanelField>
+      </div>
+
+      <div className="space-y-2">
+        <label
+          className="text-sm font-medium text-foreground"
+          htmlFor="sitemap-notes"
+        >
+          Notes
+        </label>
+        <Textarea
+          id="sitemap-notes"
+          value={route.notes}
+          placeholder="Add review notes, cleanup decisions, or nav gaps."
+          className="min-h-40 resize-y"
+          onChange={(event) =>
+            onFieldChange(route.route, "notes", event.target.value)
+          }
+        />
+      </div>
+
+      {/* Read-only metadata */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-4 text-sm">
+        <div>
+          <p className="text-xs text-muted-foreground">Policy source</p>
+          <p className="font-medium">
+            {route.accessIsExplicit ? "Explicit" : "Inferred"}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Roles that qualify</p>
+          <p className="font-medium">
+            {formatQualifyingRoles(qualifyingRoleNames)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Role policy</p>
+          <p className="font-medium">
+            {route.roleAccessMode === "explicit_allowlist"
+              ? "Explicit allowlist"
+              : "Inherited requirement"}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Dynamic</p>
+          <p className="font-medium">
+            {isDynamicRoute(route.route) ? "Dynamic" : "Static"}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Kind</p>
+          <p className="font-medium">{route.kind || "—"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">References</p>
+          <p className="font-medium">{route.refCount}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Last reviewed</p>
+          <p className="font-medium">
+            {formatDateTime(route.lastReviewed) || "—"}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Access updated</p>
+          <p className="font-medium">
+            {formatDateTime(route.accessUpdatedAt ?? undefined) || "—"}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Source</p>
+        <div className="space-y-1 rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">
+          <p className="break-all">{route.file}</p>
+          {route.refSample ? (
+            <p className="break-all">Refs: {route.refSample}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          className="gap-1.5"
+          onClick={() => onMarkReviewed(route.route)}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Mark reviewed
+        </Button>
+        {routeHref(route.route) ? (
+          <Button variant="outline" size="sm" asChild className="gap-1.5">
+            <Link href={routeHref(route.route) as string}>
+              Open route
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** Single selectable row in the admin-pages split list. */
+function AdminPageRow({
+  route,
+  isSelected,
+  onSelect,
+}: {
+  route: InventoryRoute;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      onClick={onSelect}
+      className={cn(
+        "h-auto w-full justify-start rounded-none px-3 py-2.5 text-left",
+        "hover:bg-accent/60 focus-visible:ring-1 focus-visible:ring-primary/30",
+        isSelected && "bg-accent hover:bg-accent",
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium text-foreground">
+            {route.page}
+          </span>
+          {!route.accessIsExplicit && (
+            <span className="shrink-0 text-[10px] text-muted-foreground">
+              Inferred
+            </span>
+          )}
+        </div>
+        <code className="mb-1 block truncate text-xs text-muted-foreground">
+          {route.route}
+        </code>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
+            {PAGE_ACCESS_LEVEL_LABELS[route.accessLevel]}
+          </span>
+          {route.permissionModule &&
+            accessLevelRequiresModule(route.accessLevel) && (
+              <span className="inline-flex items-center rounded bg-info-subtle px-1.5 py-0.5 text-[10px] font-medium leading-none text-info">
+                {PAGE_ACCESS_MODULE_LABELS[route.permissionModule]}
+              </span>
+            )}
+        </div>
+      </div>
+    </Button>
+  );
+}
+
+/** Left list pane of the admin-pages split view. */
+function AdminPagesListPanel({
+  routes,
+  selectedRouteId,
+  onSelect,
+  search,
+  onSearchChange,
+  noun,
+  searchPlaceholder,
+}: {
+  routes: InventoryRoute[];
+  selectedRouteId: string | null;
+  onSelect: (route: string) => void;
+  search: string;
+  onSearchChange: (value: string) => void;
+  noun: string;
+  searchPlaceholder: string;
+}) {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          {routes.length} {routes.length === 1 ? noun : `${noun}s`}
+        </span>
+        <ExpandableSearch
+          value={search}
+          onChange={onSearchChange}
+          placeholder={searchPlaceholder}
+        />
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {routes.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+            <PanelRightOpen className="size-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              {search
+                ? "No routes match your search."
+                : "No routes need review."}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border/30 pb-4">
+            {routes.map((route) => (
+              <AdminPageRow
+                key={route.route}
+                route={route}
+                isSelected={route.route === selectedRouteId}
+                onSelect={() => onSelect(route.route)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function buildColumns({
   overlay,
+  permissionTemplates,
   selectedRouteId,
   collapsedGroups,
   onFieldChange,
   onAccessChange,
   onModuleChange,
+  onRoleAccessChange,
   onToggleGroup,
   onOpenDetails,
   onMarkReviewed,
 }: {
   overlay: Record<string, InventoryOverlay>;
+  permissionTemplates: PermissionTemplate[];
   selectedRouteId: string | null;
   collapsedGroups: Set<string>;
-  onFieldChange: <TKey extends keyof InventoryOverlay>(route: string, key: TKey, value: InventoryOverlay[TKey]) => void;
+  onFieldChange: <TKey extends keyof InventoryOverlay>(
+    route: string,
+    key: TKey,
+    value: InventoryOverlay[TKey],
+  ) => void;
   onAccessChange: (route: InventoryRoute, accessLevel: PageAccessLevel) => void;
-  onModuleChange: (route: InventoryRoute, permissionModule: PermissionModule) => void;
+  onModuleChange: (
+    route: InventoryRoute,
+    permissionModule: PermissionModule,
+  ) => void;
+  onRoleAccessChange: (
+    route: InventoryRoute,
+    input: PageRoleAccessPolicyInput,
+  ) => void;
   onToggleGroup: (group: string) => void;
   onOpenDetails: (route: string) => void;
   onMarkReviewed: (route: string) => void;
@@ -786,8 +1487,79 @@ function buildColumns({
               disabled: !accessLevelRequiresModule(item.accessLevel),
               onChange: (value) => onModuleChange(item, value),
             }),
-      csvValue: (item) => item.permissionModule ? PAGE_ACCESS_MODULE_LABELS[item.permissionModule] : "",
+      csvValue: (item) =>
+        item.permissionModule
+          ? PAGE_ACCESS_MODULE_LABELS[item.permissionModule]
+          : "",
       sortValue: (item) => item.permissionModule ?? "",
+      sortable: true,
+    },
+    {
+      ...columnById.allowedRoles,
+      width: 250,
+      render: (item) =>
+        item._group ? null : (
+          <RoleAccessSelect
+            route={item}
+            permissionTemplates={permissionTemplates}
+            onChange={onRoleAccessChange}
+          />
+        ),
+      csvValue: (item) =>
+        formatAllowedRoleNames(
+          {
+            route: item.route,
+            mode: item.roleAccessMode,
+            allowedPermissionTemplateIds: item.allowedPermissionTemplateIds,
+            notes: null,
+            updatedAt: item.roleAccessUpdatedAt,
+            updatedBy: null,
+          },
+          permissionTemplates,
+        ),
+      sortValue: (item) =>
+        formatAllowedRoleNames(
+          {
+            route: item.route,
+            mode: item.roleAccessMode,
+            allowedPermissionTemplateIds: item.allowedPermissionTemplateIds,
+            notes: null,
+            updatedAt: item.roleAccessUpdatedAt,
+            updatedBy: null,
+          },
+          permissionTemplates,
+        ),
+      sortable: true,
+    },
+    {
+      ...columnById.qualifyingRoles,
+      width: 240,
+      render: (item) =>
+        item._group ? null : (
+          <span className="block max-w-60 truncate text-xs text-muted-foreground">
+            {formatQualifyingRoles(
+              getQualifyingRoleNames(item, permissionTemplates),
+            )}
+          </span>
+        ),
+      csvValue: (item) =>
+        getQualifyingRoleNames(item, permissionTemplates).join(", "),
+      sortValue: (item) =>
+        formatQualifyingRoles(
+          getQualifyingRoleNames(item, permissionTemplates),
+        ),
+      sortable: true,
+    },
+    {
+      ...columnById.accessSource,
+      render: (item) =>
+        item._group ? null : (
+          <span className="text-xs text-muted-foreground">
+            {item.accessIsExplicit ? "Explicit" : "Inferred"}
+          </span>
+        ),
+      csvValue: (item) => (item.accessIsExplicit ? "Explicit" : "Inferred"),
+      sortValue: (item) => (item.accessIsExplicit ? "explicit" : "inferred"),
       sortable: true,
     },
     {
@@ -846,7 +1618,10 @@ function buildColumns({
     {
       ...columnById.refCount,
       align: "right",
-      render: (item) => (item._group ? null : <span className="text-xs text-muted-foreground">{item.refCount}</span>),
+      render: (item) =>
+        item._group ? null : (
+          <span className="text-xs text-muted-foreground">{item.refCount}</span>
+        ),
       csvValue: (item) => String(item.refCount),
       sortValue: (item) => item.refCount,
       sortable: true,
@@ -895,7 +1670,11 @@ function buildColumns({
   ];
 }
 
-export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) {
+export default function SiteMapClient({
+  routes,
+}: {
+  routes: InventoryRoute[];
+}) {
   const queryClient = useQueryClient();
   const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
@@ -905,10 +1684,13 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
 
   const [overlay, setOverlay] = useState<Record<string, InventoryOverlay>>({});
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(),
+  );
   const [activeRouteId, setActiveRouteId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [adminSearch, setAdminSearch] = useState("");
 
   useEffect(() => {
     setOverlay(loadOverlay());
@@ -925,13 +1707,26 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     queryFn: fetchPageAccessPolicies,
   });
 
+  const pageRoleAccessQuery = useQuery({
+    queryKey: ["page-role-access-policies"],
+    queryFn: fetchPageRoleAccessPolicies,
+  });
+
+  const permissionTemplatesQuery = useQuery({
+    queryKey: ["permission-templates", "site-map-role-coverage"],
+    queryFn: fetchPermissionTemplates,
+  });
+
   const pageAccessMutation = useMutation({
     mutationFn: async (policies: PageAccessPolicyInput[]) => {
       const normalizedPolicies = policies.map(normalizePageAccessInput);
-      const { data } = await apiFetch<{ data: PageAccessPolicy[] }>("/api/permissions/page-access", {
-        method: "PUT",
-        body: JSON.stringify({ policies: normalizedPolicies }),
-      });
+      const { data } = await apiFetch<{ data: PageAccessPolicy[] }>(
+        "/api/permissions/page-access",
+        {
+          method: "PUT",
+          body: JSON.stringify({ policies: normalizedPolicies }),
+        },
+      );
       return data;
     },
     onSuccess: () => {
@@ -949,12 +1744,52 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     },
   });
 
+  const pageRoleAccessMutation = useMutation({
+    mutationFn: async (policies: PageRoleAccessPolicyInput[]) => {
+      const { data } = await apiFetch<{ data: PageRoleAccessPolicy[] }>(
+        "/api/permissions/page-role-access",
+        {
+          method: "PUT",
+          body: JSON.stringify({ policies }),
+        },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["page-role-access-policies"],
+      });
+      toast.success("Allowed roles saved");
+    },
+    onError: (error) => {
+      reportNonCriticalFailure({
+        area: "site-map",
+        operation: "save-page-role-access-policy",
+        error,
+        userVisibleFallback: "Allowed roles were not saved.",
+      });
+      toast.error("Allowed roles were not saved. Try refreshing the page.");
+    },
+  });
+
   const routesWithAccess = useMemo(
     () => applyPageAccessPolicies(routes, pageAccessQuery.data ?? []),
     [pageAccessQuery.data, routes],
   );
 
-  const mergedRoutes = useMemo(() => applyOverlay(routesWithAccess, overlay), [routesWithAccess, overlay]);
+  const routesWithRoleAccess = useMemo(
+    () =>
+      applyPageRoleAccessPolicies(
+        routesWithAccess,
+        pageRoleAccessQuery.data ?? [],
+      ),
+    [pageRoleAccessQuery.data, routesWithAccess],
+  );
+
+  const mergedRoutes = useMemo(
+    () => applyOverlay(routesWithRoleAccess, overlay),
+    [routesWithRoleAccess, overlay],
+  );
 
   const tableState = useUnifiedTableState({
     entityKey: "sitemap-inventory",
@@ -974,17 +1809,28 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     },
   });
 
-  const persistOverlay = useCallback((updater: (previous: Record<string, InventoryOverlay>) => Record<string, InventoryOverlay>) => {
-    setOverlay((previous) => {
-      const next = updater(previous);
-      saveOverlay(next);
-      setSavedAt(nowIso());
-      return next;
-    });
-  }, []);
+  const persistOverlay = useCallback(
+    (
+      updater: (
+        previous: Record<string, InventoryOverlay>,
+      ) => Record<string, InventoryOverlay>,
+    ) => {
+      setOverlay((previous) => {
+        const next = updater(previous);
+        saveOverlay(next);
+        setSavedAt(nowIso());
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleFieldChange = useCallback(
-    <TKey extends keyof InventoryOverlay>(route: string, key: TKey, value: InventoryOverlay[TKey]) => {
+    <TKey extends keyof InventoryOverlay>(
+      route: string,
+      key: TKey,
+      value: InventoryOverlay[TKey],
+    ) => {
       persistOverlay((previous) => ({
         ...previous,
         [route]: {
@@ -1013,7 +1859,10 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
   );
 
   const handleBulkFieldChange = useCallback(
-    <TKey extends keyof InventoryOverlay>(key: TKey, value: InventoryOverlay[TKey]) => {
+    <TKey extends keyof InventoryOverlay>(
+      key: TKey,
+      value: InventoryOverlay[TKey],
+    ) => {
       if (selectedIds.length === 0) return;
       persistOverlay((previous) => {
         const next = { ...previous };
@@ -1075,9 +1924,25 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     [pageAccessMutation],
   );
 
+  const handleRoleAccessChange = useCallback(
+    (route: InventoryRoute, input: PageRoleAccessPolicyInput) => {
+      pageRoleAccessMutation.mutate([
+        {
+          route: route.route,
+          mode: input.mode,
+          allowedPermissionTemplateIds: input.allowedPermissionTemplateIds,
+          notes: input.notes ?? null,
+        },
+      ]);
+    },
+    [pageRoleAccessMutation],
+  );
+
   const handleBulkAccessChange = useCallback(
     (accessLevel: PageAccessLevel) => {
-      const selectedRoutes = mergedRoutes.filter((route) => selectedIds.includes(route.route));
+      const selectedRoutes = mergedRoutes.filter((route) =>
+        selectedIds.includes(route.route),
+      );
       if (selectedRoutes.length === 0) return;
 
       pageAccessMutation.mutate(
@@ -1095,8 +1960,12 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
 
   const handleBulkModuleChange = useCallback(
     (permissionModule: PermissionModule) => {
-      const selectedRoutes = mergedRoutes.filter((route) => selectedIds.includes(route.route));
-      const moduleRoutes = selectedRoutes.filter((route) => accessLevelRequiresModule(route.accessLevel));
+      const selectedRoutes = mergedRoutes.filter((route) =>
+        selectedIds.includes(route.route),
+      );
+      const moduleRoutes = selectedRoutes.filter((route) =>
+        accessLevelRequiresModule(route.accessLevel),
+      );
       if (moduleRoutes.length === 0) return;
 
       pageAccessMutation.mutate(
@@ -1124,68 +1993,101 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     [currentTab, mergedRoutes],
   );
 
-  const filters = useMemo<FilterConfig[]>(() => [
-    {
-      id: "category",
-      label: "Category",
-      type: "select",
-      options: CATEGORIES.map((category) => ({ value: category, label: category })),
-    },
-    {
-      id: "type",
-      label: "Type",
-      type: "select",
-      options: TYPES.map((type) => ({ value: type, label: type })),
-    },
-    {
-      id: "layout",
-      label: "Layout",
-      type: "select",
-      options: LAYOUTS.map((layout) => ({ value: layout, label: layout })),
-    },
-    {
-      id: "status",
-      label: "Status",
-      type: "select",
-      options: STATUSES.map((status) => ({ value: status, label: status })),
-    },
-    {
-      id: "dynamic",
-      label: "Dynamic",
-      type: "select",
-      options: [
-        { value: "true", label: "Dynamic" },
-        { value: "false", label: "Static" },
-      ],
-    },
-  ], []);
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "category",
+        label: "Category",
+        type: "select",
+        options: CATEGORIES.map((category) => ({
+          value: category,
+          label: category,
+        })),
+      },
+      {
+        id: "type",
+        label: "Type",
+        type: "select",
+        options: TYPES.map((type) => ({ value: type, label: type })),
+      },
+      {
+        id: "layout",
+        label: "Layout",
+        type: "select",
+        options: LAYOUTS.map((layout) => ({ value: layout, label: layout })),
+      },
+      {
+        id: "status",
+        label: "Status",
+        type: "select",
+        options: STATUSES.map((status) => ({ value: status, label: status })),
+      },
+      {
+        id: "accessSource",
+        label: "Policy source",
+        type: "select",
+        options: [
+          { value: "explicit", label: "Explicit" },
+          { value: "inferred", label: "Inferred" },
+        ],
+      },
+      {
+        id: "dynamic",
+        label: "Dynamic",
+        type: "select",
+        options: [
+          { value: "true", label: "Dynamic" },
+          { value: "false", label: "Static" },
+        ],
+      },
+    ],
+    [],
+  );
 
   const activeFilters = useMemo(() => {
     const next: Record<string, FilterValue> = {};
-    if (tableState.activeFilters?.category) next.category = tableState.activeFilters.category;
-    if (tableState.activeFilters?.type) next.type = tableState.activeFilters.type;
-    if (tableState.activeFilters?.layout) next.layout = tableState.activeFilters.layout;
-    if (tableState.activeFilters?.status) next.status = tableState.activeFilters.status;
-    if (tableState.activeFilters?.dynamic) next.dynamic = tableState.activeFilters.dynamic;
+    if (tableState.activeFilters?.category)
+      next.category = tableState.activeFilters.category;
+    if (tableState.activeFilters?.type)
+      next.type = tableState.activeFilters.type;
+    if (tableState.activeFilters?.layout)
+      next.layout = tableState.activeFilters.layout;
+    if (tableState.activeFilters?.status)
+      next.status = tableState.activeFilters.status;
+    if (tableState.activeFilters?.accessSource)
+      next.accessSource = tableState.activeFilters.accessSource;
+    if (tableState.activeFilters?.dynamic)
+      next.dynamic = tableState.activeFilters.dynamic;
     return next;
   }, [tableState.activeFilters]);
 
   useEffect(() => {
     setCollapsedGroups(new Set());
     setSelectedIds([]);
+    setActiveRouteId(null);
+    setAdminSearch("");
     tableState.setActiveFilters({});
     tableState.setPage(1);
   }, [currentTab, tableState.setActiveFilters, tableState.setPage]);
 
   const filteredRoutes = useMemo(
-    () => applyFilters(tabbedRoutes, tableState.debouncedSearch ?? "", activeFilters),
+    () =>
+      applyFilters(
+        tabbedRoutes,
+        tableState.debouncedSearch ?? "",
+        activeFilters,
+      ),
     [activeFilters, tabbedRoutes, tableState.debouncedSearch],
   );
 
   const sortedRoutes = useMemo(
     () =>
       groupBy === "none"
-        ? sortRoutes(filteredRoutes, tableState.sortBy ?? "category", tableState.sortDirection)
+        ? sortRoutes(
+            filteredRoutes,
+            tableState.sortBy ?? "category",
+            tableState.sortDirection,
+          )
         : sortRoutes(filteredRoutes, groupBy, "asc"),
     [filteredRoutes, groupBy, tableState.sortBy, tableState.sortDirection],
   );
@@ -1199,7 +2101,13 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     if (groupBy !== "none") return groupedItems;
     const start = (tableState.page - 1) * tableState.perPage;
     return sortedRoutes.slice(start, start + tableState.perPage);
-  }, [groupBy, groupedItems, sortedRoutes, tableState.page, tableState.perPage]);
+  }, [
+    groupBy,
+    groupedItems,
+    sortedRoutes,
+    tableState.page,
+    tableState.perPage,
+  ]);
 
   const activeRoute = useMemo(
     () => mergedRoutes.find((route) => route.route === activeRouteId) ?? null,
@@ -1210,11 +2118,13 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     () =>
       buildColumns({
         overlay,
+        permissionTemplates: permissionTemplatesQuery.data ?? [],
         selectedRouteId: activeRouteId,
         collapsedGroups,
         onFieldChange: handleFieldChange,
         onAccessChange: handleAccessChange,
         onModuleChange: handleModuleChange,
+        onRoleAccessChange: handleRoleAccessChange,
         onToggleGroup: handleToggleGroup,
         onOpenDetails: setActiveRouteId,
         onMarkReviewed: handleMarkReviewed,
@@ -1226,20 +2136,63 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
       handleFieldChange,
       handleMarkReviewed,
       handleModuleChange,
+      handleRoleAccessChange,
       handleToggleGroup,
       overlay,
+      permissionTemplatesQuery.data,
     ],
   );
 
-  const totalPages = Math.max(1, Math.ceil(sortedRoutes.length / tableState.perPage));
-  const isFiltered = Boolean(tableState.debouncedSearch) || Object.keys(activeFilters).length > 0;
+  // Split review views: alphabetical routes filtered by the panel search.
+  const splitReviewRoutes = useMemo(() => {
+    if (currentTab !== "admin-pages" && currentTab !== "access-review")
+      return [];
+    const sorted = [...tabbedRoutes].sort((left, right) =>
+      left.page.localeCompare(right.page),
+    );
+    const query = adminSearch.trim().toLowerCase();
+    if (!query) return sorted;
+    return sorted.filter(
+      (route) =>
+        route.page.toLowerCase().includes(query) ||
+        route.route.toLowerCase().includes(query) ||
+        route.file.toLowerCase().includes(query),
+    );
+  }, [adminSearch, currentTab, tabbedRoutes]);
+
+  // Keep a selection on split review tabs so the right pane is never empty.
+  useEffect(() => {
+    if (
+      (currentTab !== "admin-pages" && currentTab !== "access-review") ||
+      splitReviewRoutes.length === 0
+    )
+      return;
+    if (
+      activeRouteId &&
+      splitReviewRoutes.some((route) => route.route === activeRouteId)
+    )
+      return;
+    setActiveRouteId(splitReviewRoutes[0].route);
+  }, [activeRouteId, currentTab, splitReviewRoutes]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedRoutes.length / tableState.perPage),
+  );
+  const isFiltered =
+    Boolean(tableState.debouncedSearch) ||
+    Object.keys(activeFilters).length > 0;
   const activeTabNoun = tabNoun(currentTab);
 
   const tabs = useMemo(
     () =>
       (Object.keys(TAB_LABELS) as SitemapTab[]).map((tab) => ({
         label: TAB_LABELS[tab],
-        href: buildTabHref(pathname, new URLSearchParams(searchParams.toString()), tab),
+        href: buildTabHref(
+          pathname,
+          new URLSearchParams(searchParams.toString()),
+          tab,
+        ),
         count: mergedRoutes.filter((route) => matchesTab(route, tab)).length,
         isActive: currentTab === tab,
       })),
@@ -1266,58 +2219,100 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
   const bulkToolbar =
     selectedIds.length > 0 ? (
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <span className="text-xs font-medium text-foreground">{selectedIds.length} selected</span>
-        <Select key={`access-${selectedIds.length}`} onValueChange={(value) => handleBulkAccessChange(value as PageAccessLevel)}>
+        <span className="text-xs font-medium text-foreground">
+          {selectedIds.length} selected
+        </span>
+        <Select
+          key={`access-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkAccessChange(value as PageAccessLevel)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
-            <SelectValue placeholder="Set access" />
+            <SelectValue placeholder="Set required access" />
           </SelectTrigger>
           <SelectContent>
             {PAGE_ACCESS_LEVELS.map((level) => (
-              <SelectItem key={level} value={level}>{PAGE_ACCESS_LEVEL_LABELS[level]}</SelectItem>
+              <SelectItem key={level} value={level}>
+                {PAGE_ACCESS_LEVEL_LABELS[level]}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select key={`module-${selectedIds.length}`} onValueChange={(value) => handleBulkModuleChange(value as PermissionModule)}>
+        <Select
+          key={`module-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkModuleChange(value as PermissionModule)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
-            <SelectValue placeholder="Set module" />
+            <SelectValue placeholder="Set required module" />
           </SelectTrigger>
           <SelectContent>
             {PAGE_ACCESS_MODULES.map((module) => (
-              <SelectItem key={module} value={module}>{PAGE_ACCESS_MODULE_LABELS[module]}</SelectItem>
+              <SelectItem key={module} value={module}>
+                {PAGE_ACCESS_MODULE_LABELS[module]}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select key={`category-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("category", value as InventoryCategory)}>
+        <Select
+          key={`category-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkFieldChange("category", value as InventoryCategory)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set category" />
           </SelectTrigger>
           <SelectContent>
             {CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>{category}</SelectItem>
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select key={`type-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("type", value as InventoryType)}>
+        <Select
+          key={`type-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkFieldChange("type", value as InventoryType)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set type" />
           </SelectTrigger>
           <SelectContent>
             {TYPES.map((type) => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select key={`layout-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("layout", value as InventoryLayout)}>
+        <Select
+          key={`layout-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkFieldChange("layout", value as InventoryLayout)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set layout" />
           </SelectTrigger>
           <SelectContent>
             {LAYOUTS.map((layout) => (
-              <SelectItem key={layout} value={layout}>{layout}</SelectItem>
+              <SelectItem key={layout} value={layout}>
+                {layout}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select key={`status-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("status", value as InventoryStatus)}>
+        <Select
+          key={`status-${selectedIds.length}`}
+          onValueChange={(value) =>
+            handleBulkFieldChange("status", value as InventoryStatus)
+          }
+        >
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set status" />
           </SelectTrigger>
@@ -1329,26 +2324,121 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleBulkReviewed}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={handleBulkReviewed}
+        >
           <CheckCircle2 className="h-3.5 w-3.5" />
           Mark reviewed
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSelectedIds([])}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => setSelectedIds([])}
+        >
           Clear
         </Button>
       </div>
     ) : null;
 
+  // Focused review tabs render as a master-detail split (left list + right editor).
+  if (currentTab === "admin-pages" || currentTab === "access-review") {
+    const isAccessReview = currentTab === "access-review";
+    const splitTitle = isAccessReview
+      ? "Access Review"
+      : "Page Access Requirements";
+    const splitNoun = isAccessReview ? "access review item" : "admin page";
+
+    return (
+      <div className="-mx-4 -mb-12 -mt-2 flex h-[calc(100vh-4rem)] flex-col overflow-hidden sm:-mx-6 lg:-mx-8">
+        <div className="shrink-0 border-b border-border/50 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-2 pt-3">
+            <div>
+              <p className="text-base font-semibold text-foreground">
+                {splitTitle}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {splitReviewRoutes.length}{" "}
+                {splitReviewRoutes.length === 1 ? splitNoun : `${splitNoun}s`}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {savedAt ? (
+                <span className="text-xs text-muted-foreground">Saved</span>
+              ) : null}
+              {pageAccessMutation.isPending ? (
+                <span className="text-xs text-muted-foreground">
+                  Saving access
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <PageTabs tabs={tabs} variant="inline" className="!mb-0 !mt-1" />
+        </div>
+
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="flex w-96 shrink-0 flex-col overflow-hidden border-r border-border/50">
+            <AdminPagesListPanel
+              routes={splitReviewRoutes}
+              selectedRouteId={activeRouteId}
+              onSelect={setActiveRouteId}
+              search={adminSearch}
+              onSearchChange={setAdminSearch}
+              noun={splitNoun}
+              searchPlaceholder={
+                isAccessReview
+                  ? "Search access review..."
+                  : "Search admin pages..."
+              }
+            />
+          </div>
+          <div className="min-w-0 flex-1 overflow-y-auto">
+            {activeRoute ? (
+              <RouteDetailPanel
+                route={activeRoute}
+                permissionTemplates={permissionTemplatesQuery.data ?? []}
+                onFieldChange={handleFieldChange}
+                onAccessChange={handleAccessChange}
+                onModuleChange={handleModuleChange}
+                onRoleAccessChange={handleRoleAccessChange}
+                onMarkReviewed={handleMarkReviewed}
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground/60">
+                <PanelRightOpen className="size-8 text-muted-foreground/40" />
+                <p className="text-sm">Select a page to review its access</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <UnifiedTablePage<InventoryRoute>
       header={{
-        title: "Page Access",
+        title: "Page Access Requirements",
         description: `${filteredRoutes.length} of ${tabbedRoutes.length} ${activeTabNoun} shown`,
         actions: (
           <div className="flex items-center gap-2">
-            {savedAt ? <span className="text-xs text-muted-foreground">Saved</span> : null}
-            {pageAccessMutation.isPending ? <span className="text-xs text-muted-foreground">Saving access</span> : null}
-            <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+            {savedAt ? (
+              <span className="text-xs text-muted-foreground">Saved</span>
+            ) : null}
+            {pageAccessMutation.isPending ? (
+              <span className="text-xs text-muted-foreground">
+                Saving access
+              </span>
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-8 gap-1.5 text-xs"
+            >
               <Link href="/sitemap.xml" target="_blank" rel="noreferrer">
                 XML Sitemap
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -1385,12 +2475,26 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
       }}
       data={{
         items: itemsForTable,
-        isLoading: pageAccessQuery.isLoading,
-        isFetching: pageAccessQuery.isFetching,
-        error: pageAccessQuery.error instanceof Error ? pageAccessQuery.error : null,
+        isLoading:
+          pageAccessQuery.isLoading ||
+          pageRoleAccessQuery.isLoading ||
+          permissionTemplatesQuery.isLoading,
+        isFetching:
+          pageAccessQuery.isFetching ||
+          pageRoleAccessQuery.isFetching ||
+          permissionTemplatesQuery.isFetching,
+        error:
+          pageAccessQuery.error instanceof Error
+            ? pageAccessQuery.error
+            : pageRoleAccessQuery.error instanceof Error
+              ? pageRoleAccessQuery.error
+              : permissionTemplatesQuery.error instanceof Error
+                ? permissionTemplatesQuery.error
+                : null,
       }}
       table={{
         columns: tableColumns,
+        defaultPinnedLeftColumns: ["page"],
         getRowId: (item) => item.route,
         activeRowId: activeRouteId,
         density: "compact",
@@ -1418,7 +2522,13 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
       selection={{
         selectedIds,
         onSelectAll: (checked) => {
-          setSelectedIds(checked ? itemsForTable.filter((item) => !item._group).map((item) => item.route) : []);
+          setSelectedIds(
+            checked
+              ? itemsForTable
+                  .filter((item) => !item._group)
+                  .map((item) => item.route)
+              : [],
+          );
         },
         onSelectRow: (id, checked) => {
           if (checked) {
@@ -1426,7 +2536,9 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
             setSelectedIds((previous) => [...previous, id]);
             return;
           }
-          setSelectedIds((previous) => previous.filter((route) => route !== id));
+          setSelectedIds((previous) =>
+            previous.filter((route) => route !== id),
+          );
         },
       }}
       sidePanel={
@@ -1434,193 +2546,15 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
           ? {
               storageKey: "sitemap-inventory-details",
               content: (
-                <div className="space-y-6 p-5">
-                  <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-foreground">{activeRoute.page}</h2>
-                    <code className="block break-all text-xs text-muted-foreground">{activeRoute.route}</code>
-                  </div>
-
-                  {/* All editable fields — horizontal detail layout */}
-                  <div className="space-y-3">
-                    <PanelField label="Status">
-                      <Select
-                        value={activeRoute.status}
-                        onValueChange={(value) => handleFieldChange(activeRoute.route, "status", value as InventoryStatus)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STATUSES.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              <StatusBadge status={option} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PanelField>
-
-                    <PanelField label="Category">
-                      <Select
-                        value={activeRoute.category}
-                        onValueChange={(value) => handleFieldChange(activeRoute.route, "category", value as InventoryCategory)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PanelField>
-
-                    <PanelField label="Type">
-                      <Select
-                        value={activeRoute.type}
-                        onValueChange={(value) => handleFieldChange(activeRoute.route, "type", value as InventoryType)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TYPES.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PanelField>
-
-                    <PanelField label="Layout">
-                      <Select
-                        value={activeRoute.layout}
-                        onValueChange={(value) => handleFieldChange(activeRoute.route, "layout", value as InventoryLayout)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LAYOUTS.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PanelField>
-
-                    <PanelField label="Access">
-                      <Select
-                        value={activeRoute.accessLevel}
-                        onValueChange={(value) => handleAccessChange(activeRoute, value as PageAccessLevel)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PAGE_ACCESS_LEVELS.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {PAGE_ACCESS_LEVEL_LABELS[level]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </PanelField>
-
-                    <PanelField label="Module">
-                      {accessLevelRequiresModule(activeRoute.accessLevel) ? (
-                        <Select
-                          value={activeRoute.permissionModule ?? "directory"}
-                          onValueChange={(value) => handleModuleChange(activeRoute, value as PermissionModule)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PAGE_ACCESS_MODULES.map((module) => (
-                              <SelectItem key={module} value={module}>
-                                {PAGE_ACCESS_MODULE_LABELS[module]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm text-muted-foreground">
-                          N/A
-                        </div>
-                      )}
-                    </PanelField>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground" htmlFor="sitemap-notes">
-                      Notes
-                    </label>
-                    <Textarea
-                      id="sitemap-notes"
-                      value={activeRoute.notes}
-                      placeholder="Add review notes, cleanup decisions, or nav gaps."
-                      className="min-h-40 resize-y"
-                      onChange={(event) => handleFieldChange(activeRoute.route, "notes", event.target.value)}
-                    />
-                  </div>
-
-                  {/* Read-only metadata */}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-4 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Access source</p>
-                      <p className="font-medium">{activeRoute.accessIsExplicit ? "Explicit" : "Inferred"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Dynamic</p>
-                      <p className="font-medium">{isDynamicRoute(activeRoute.route) ? "Dynamic" : "Static"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Kind</p>
-                      <p className="font-medium">{activeRoute.kind || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">References</p>
-                      <p className="font-medium">{activeRoute.refCount}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Last reviewed</p>
-                      <p className="font-medium">{formatDateTime(activeRoute.lastReviewed) || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Access updated</p>
-                      <p className="font-medium">{formatDateTime(activeRoute.accessUpdatedAt ?? undefined) || "—"}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">Source</p>
-                    <div className="space-y-1 rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">
-                      <p className="break-all">{activeRoute.file}</p>
-                      {activeRoute.refSample ? <p className="break-all">Refs: {activeRoute.refSample}</p> : null}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" className="gap-1.5" onClick={() => handleMarkReviewed(activeRoute.route)}>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Mark reviewed
-                    </Button>
-                    {routeHref(activeRoute.route) ? (
-                      <Button variant="outline" size="sm" asChild className="gap-1.5">
-                        <Link href={routeHref(activeRoute.route) as string}>
-                          Open route
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
+                <RouteDetailPanel
+                  route={activeRoute}
+                  permissionTemplates={permissionTemplatesQuery.data ?? []}
+                  onFieldChange={handleFieldChange}
+                  onAccessChange={handleAccessChange}
+                  onModuleChange={handleModuleChange}
+                  onRoleAccessChange={handleRoleAccessChange}
+                  onMarkReviewed={handleMarkReviewed}
+                />
               ),
               onClose: () => setActiveRouteId(null),
             }

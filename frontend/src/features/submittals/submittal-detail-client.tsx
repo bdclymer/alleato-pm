@@ -623,7 +623,7 @@ export function SubmittalDetailClient({
   }
 
   const tabFromUrl = normalizeSubmittalDetailTab(
-    searchParams.get("tab") ?? searchParams.get("view"),
+    searchParams?.get("tab") ?? searchParams?.get("view") ?? null,
   );
   const [activeTab, setActiveTab] =
     React.useState<SubmittalDetailTab>(tabFromUrl);
@@ -666,7 +666,7 @@ export function SubmittalDetailClient({
 
     const nextParams = new URLSearchParams(
       typeof window === "undefined"
-        ? searchParams.toString()
+        ? (searchParams?.toString() ?? "")
         : window.location.search,
     );
     if (nextTab === "details") {

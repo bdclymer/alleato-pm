@@ -86,7 +86,7 @@ export function buildKnowledgeTableColumns(options: {
       label: "Tags",
       defaultVisible: true,
       render: (item) => {
-        const tagList = item.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
+        const tagList = item.tags ?? [];
         if (tagList.length === 0) return null;
         return (
           <div className="flex max-w-48 flex-wrap gap-1">
@@ -103,7 +103,7 @@ export function buildKnowledgeTableColumns(options: {
           </div>
         );
       },
-      csvValue: (item) => item.tags ?? "",
+      csvValue: (item) => item.tags?.join(", ") ?? "",
     },
     {
       id: "file_name",

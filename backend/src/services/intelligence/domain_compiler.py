@@ -30,6 +30,7 @@ from ..ops.db_pressure_guard import (
     enforce_no_pm_app_high_churn_writes,
     enforce_pm_app_final_projection_guard,
 )
+from .compiler import is_synthesized_signal
 
 logger = logging.getLogger(__name__)
 
@@ -402,6 +403,25 @@ def _upsert_finding(
     finding_key = (finding.get("finding_key") or "").strip().lower()
     if not finding_key:
         raise ValueError("finding is missing finding_key")
+
+    # Defense-in-depth: a domain finding is LLM-synthesized, but if it ever
+    # echoes a raw email title/summary or the deterministic placeholder
+    # why_it_matters, it must not be written as an insight_card. Drop it loudly
+    # rather than projecting raw source into the user-facing surface.
+    candidate_signal = {
+        "title": finding.get("title") or finding_key,
+        "summary": finding.get("summary"),
+        "why_it_matters": finding.get("why_it_matters"),
+    }
+    if not is_synthesized_signal(candidate_signal):
+        logger.warning(
+            "[domain_compiler] dropping un-synthesized finding finding_key=%s target_id=%s "
+            "(raw source title/summary or placeholder why_it_matters)",
+            finding_key,
+            target_id,
+        )
+        return {"card": None, "evidence_doc_ids": [], "was_new": False, "dropped": True}
+
     now_iso = _iso(_utc_now())
 
     evidence_ids: List[str] = []
@@ -720,6 +740,8 @@ def compile_domain_packet(
     card_rows: List[Dict[str, Any]] = []
     for result in card_results:
         card = result["card"]
+        if not card:  # dropped un-synthesized finding — never persisted
+            continue
         card_rows.append(card)
         evidence_written += _write_evidence(
             supabase,

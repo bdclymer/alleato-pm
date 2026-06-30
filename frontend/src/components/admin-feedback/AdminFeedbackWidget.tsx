@@ -659,6 +659,11 @@ export function AdminFeedbackWidget() {
     if (!dialogOpen || !selectedElement) {
       return;
     }
+    // Don't clobber a screenshot the user already captured, uploaded, or
+    // annotated when the composer is reopened.
+    if (screenshotDataUrl) {
+      return;
+    }
 
     let isCancelled = false;
 
@@ -669,12 +674,27 @@ export function AdminFeedbackWidget() {
           setScreenshotDataUrl(dataUrl);
         }
       })
-      .catch((err) => {
-        console.error("[FeedbackWidget] Screenshot capture failed:", err);
-        if (!isCancelled) {
-          setScreenshotDataUrl(null);
-          toast.error("Auto-capture failed — upload a screenshot instead.");
+      .catch((error) => {
+        if (isCancelled) {
+          return;
         }
+        // This capture is automatic — the user never asked for it, and the
+        // composer offers explicit Camera / Upload / Point-to-an-area controls.
+        // A failure here (html-to-image is intermittently flaky on complex
+        // pages) must not block the user with an error toast. Record it for
+        // monitoring and leave the screenshot unset; the manual controls remain.
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "auto-capture-screenshot",
+          error,
+          userVisibleFallback:
+            "Automatic screenshot skipped; manual capture still available.",
+          metadata: {
+            pagePath,
+            selectedTargetId: selectedTarget?.targetId ?? null,
+          },
+        });
+        setScreenshotDataUrl(null);
       })
       .finally(() => {
         if (!isCancelled) {
@@ -685,7 +705,7 @@ export function AdminFeedbackWidget() {
     return () => {
       isCancelled = true;
     };
-  }, [dialogOpen, selectedElement]);
+  }, [dialogOpen, selectedElement, screenshotDataUrl, pagePath, selectedTarget]);
 
   useEffect(() => {
     const openComposer = () => {

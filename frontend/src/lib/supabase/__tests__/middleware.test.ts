@@ -26,10 +26,13 @@ function makeJwt(payload: Record<string, unknown>): string {
   ].join(".");
 }
 
-function makeAuthCookie(expiresAtSeconds: number): TestCookie {
+function makeAuthCookie(
+  expiresAtSeconds: number,
+  email = "test@example.com",
+): TestCookie {
   const token = makeJwt({
     sub: "user-1",
-    email: "test@example.com",
+    email,
     exp: expiresAtSeconds,
   });
   const session = JSON.stringify({ access_token: token });
@@ -62,6 +65,24 @@ describe("supabase middleware", () => {
     await updateSession(request);
 
     expect(request.cookies.getAll).not.toHaveBeenCalled();
+  });
+
+  it("requires an allowed dashboard owner for admin API routes", async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+
+    const denied = await updateSession(
+      makeRequest("/api/admin/analytics", [
+        makeAuthCookie(futureExp, "admin@alleatogroup.com"),
+      ]),
+    );
+    expect(denied.status).toBe(403);
+
+    const allowed = await updateSession(
+      makeRequest("/api/admin/analytics", [
+        makeAuthCookie(futureExp, "Megan@megankharrison.com"),
+      ]),
+    );
+    expect(allowed.headers.get("location")).toBeNull();
   });
 
   it("allows protected pages when a valid Supabase auth cookie exists", async () => {
@@ -113,6 +134,21 @@ describe("supabase middleware", () => {
 
     const response = await updateSession(
       makeRequest("/executive", [makeAuthCookie(futureExp)]),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://projects.alleatogroup.com/access-denied?reason=developer-only",
+    );
+  });
+
+  it("gates AI Chat History as developer-only for non-developers", async () => {
+    // Guardrail: /ai-chat-history is developer-only (not merely admin). The
+    // makeAuthCookie JWT carries no developer claim, so a regular admin hitting
+    // this path must be redirected to /access-denied.
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+
+    const response = await updateSession(
+      makeRequest("/ai-chat-history", [makeAuthCookie(futureExp)]),
     );
 
     expect(response.headers.get("location")).toBe(

@@ -197,6 +197,67 @@ def _safe_suggestion_payload(payload: Any) -> Any:
     return cleaned
 
 
+# --- Un-synthesized signal guard -------------------------------------------
+# `classify_basic_signal` is a deterministic, cost-free fallback — it does NOT
+# call a model. It stamps a fixed placeholder `why_it_matters`/`next_action` and
+# excerpts source text for the title/summary. That output is a STAGING signal,
+# never a finished synthesis. If it (or any path that echoes raw source text)
+# reaches a user-facing card / risk / decision / timeline event, the user sees a
+# raw email subject + boilerplate instead of an analyzed signal. These constants
+# + `is_synthesized_signal` are the hard write-boundary that prevents that.
+
+UNSYNTHESIZED_WHY_IT_MATTERS = (
+    "This source contains project-relevant language that should be reviewed "
+    "before it is trusted in a current intelligence packet."
+)
+UNSYNTHESIZED_NEXT_ACTION = (
+    "Review the source attribution and extracted signal, then promote or reject it."
+)
+
+# Raw-source TITLE prefixes ("Email: ...", "Subject: ...") mean the title is a
+# verbatim source header, not a synthesized signal title. A real synthesis never
+# produces one of these.
+_RAW_SOURCE_TITLE_PREFIX_RE = re.compile(r"^\s*(email|subject)\s*:", re.IGNORECASE)
+
+
+def _is_raw_source_title(value: Any) -> bool:
+    text = _clean_text(value)
+    if not text:
+        return True
+    if _RAW_SOURCE_TITLE_PREFIX_RE.match(text):
+        return True
+    return _looks_like_raw_source(text)
+
+
+def is_synthesized_signal(signal: Any) -> bool:
+    """True only when a signal carries a REAL synthesized title + why_it_matters.
+
+    Returns False for the deterministic `classify_basic_signal` placeholder, for
+    raw-email titles ("Email:"/"Subject:"/From+To headers/&nbsp; HTML), and for
+    raw-source summaries. A signal that fails this check must NEVER be projected
+    into a user-facing insight card, risk, decision, or timeline event — it is
+    dropped or routed to needs_review instead (see callers)."""
+    if not isinstance(signal, dict):
+        return False
+    why = _clean_text(signal.get("why_it_matters"))
+    if not why or why == _clean_text(UNSYNTHESIZED_WHY_IT_MATTERS):
+        return False
+    if _is_raw_source_title(signal.get("title")):
+        return False
+    if _looks_like_raw_source(signal.get("summary")):
+        return False
+    return True
+
+
+def _publishable_signals(items: Any) -> List[Dict[str, Any]]:
+    """Keep only the entries in a signal array that are genuinely synthesized.
+    Used to filter the project_current_state read arrays so a raw email can never
+    be projected as an active risk / open decision / needs-attention item."""
+    if not isinstance(items, list):
+        return []
+    return [item for item in items if is_synthesized_signal(item)]
+
+
 def _source_category(value: Any) -> str:
     raw = _clean_text(value).lower()
     if any(term in raw for term in ("meeting", "fireflies", "transcript")):
@@ -1227,8 +1288,8 @@ def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
         "signal_type": signal_type,
         "title": title[:180],
         "summary": (summary or title)[:800],
-        "why_it_matters": "This source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet.",
-        "next_action": "Review the source attribution and extracted signal, then promote or reject it.",
+        "why_it_matters": UNSYNTHESIZED_WHY_IT_MATTERS,
+        "next_action": UNSYNTHESIZED_NEXT_ACTION,
         "excerpt": excerpt,
         "normalized_signal_key": normalized_signal_key or _slugify(title),
     }
@@ -2119,28 +2180,45 @@ def apply_source_operating_record_projection(
         source_delta_id=daily_delta.get("id"),
         source_coverage=source_coverage if isinstance(source_coverage, dict) else {},
     )
-    timeline_event = _upsert_project_timeline_event(
-        supabase,
-        project_id=project_id,
-        source_synthesis=source_synthesis,
-        signal=signal,
-        document=document,
-    )
-    timeline_source = _upsert_timeline_event_source(
-        supabase,
-        timeline_event=timeline_event,
-        source_synthesis=source_synthesis,
-        document=document,
-        signal=signal,
-    )
-    change_candidate = _upsert_change_event_candidate(
-        supabase,
-        project_id=project_id,
-        source_synthesis=source_synthesis,
-        timeline_event=timeline_event,
-        signal=signal,
-        document=document,
-    )
+    # A deterministic / un-synthesized signal (placeholder why_it_matters, raw
+    # email title, raw-source summary) must never become a user-facing timeline
+    # event — that is how 44% of project_intelligence_timeline_events ended up as
+    # raw email subjects + boilerplate. Drop the timeline projection for those
+    # sources; the source_synthesis row still exists for a later enrichment pass.
+    signal_publishable = is_synthesized_signal(signal)
+    timeline_event: Dict[str, Any] = {}
+    timeline_source: Dict[str, Any] = {}
+    change_candidate: Optional[Dict[str, Any]] = None
+    if signal_publishable:
+        timeline_event = _upsert_project_timeline_event(
+            supabase,
+            project_id=project_id,
+            source_synthesis=source_synthesis,
+            signal=signal,
+            document=document,
+        )
+        timeline_source = _upsert_timeline_event_source(
+            supabase,
+            timeline_event=timeline_event,
+            source_synthesis=source_synthesis,
+            document=document,
+            signal=signal,
+        )
+        change_candidate = _upsert_change_event_candidate(
+            supabase,
+            project_id=project_id,
+            source_synthesis=source_synthesis,
+            timeline_event=timeline_event,
+            signal=signal,
+            document=document,
+        )
+    else:
+        logger.info(
+            "[Compiler] skipping timeline/change projection for un-synthesized "
+            "signal source_document_id=%s project_id=%s",
+            document.get("id"),
+            project_id,
+        )
 
     # Prefer the LLM-synthesized rolling-state read produced by
     # compile_project_daily_delta (stored on the delta's metadata). Each field
@@ -2154,10 +2232,17 @@ def apply_source_operating_record_projection(
         "current_summary": _safe_summary(operating_read.get("current_summary"))
         or _safe_summary(daily_delta.get("headline") or source_synthesis.get("executive_summary")),
         "health_status": "watch" if daily_delta.get("risks") or daily_delta.get("issues") else "unknown",
-        "what_changed_since_last_update": daily_delta.get("what_changed") or [],
-        "needs_attention": (daily_delta.get("risks") or []) + (daily_delta.get("change_event_candidates") or []),
-        "open_decisions": daily_delta.get("decisions") or [],
-        "active_risks": daily_delta.get("risks") or [],
+        # Every user-facing array is filtered to genuinely synthesized signals so
+        # an un-synthesized deterministic signal (raw email subject + placeholder
+        # why_it_matters) can never surface as an active risk / open decision /
+        # needs-attention / what-changed item. Prose read fields are guarded
+        # separately by `_safe_summary` below.
+        "what_changed_since_last_update": _publishable_signals(daily_delta.get("what_changed")),
+        "needs_attention": _publishable_signals(
+            (daily_delta.get("risks") or []) + (daily_delta.get("change_event_candidates") or [])
+        ),
+        "open_decisions": _publishable_signals(daily_delta.get("decisions")),
+        "active_risks": _publishable_signals(daily_delta.get("risks")),
         "financial_read": _safe_summary(operating_read.get("financial_read"))
         or (
             _safe_summary((daily_delta.get("financial_changes") or [{}])[0].get("summary"))
@@ -2815,6 +2900,29 @@ def promote_signal_candidate(
         return {
             "status": "needs_review",
             "reason": "source signal candidate is missing target_id",
+            "signal_candidate_id": candidate_id,
+        }
+
+    # Hard write-boundary: never promote an un-synthesized signal into an
+    # insight_card. The deterministic `classify_basic_signal` staging signal
+    # (placeholder why_it_matters) and any raw-email title/summary are routed to
+    # needs_review instead of being projected as a finished card. This is the
+    # single chokepoint for ALL candidate -> insight_card promotions (compiler,
+    # meeting extractor, project synthesizer).
+    if not is_synthesized_signal(candidate):
+        _rag_write().table("source_signal_candidates").update(
+            {
+                "status": "needs_review",
+                "extraction_json": {
+                    **_metadata_dict(candidate.get("extraction_json")),
+                    "promotion_error": "unsynthesized_signal",
+                },
+                "updated_at": _utc_now(),
+            }
+        ).eq("id", candidate_id).execute()
+        return {
+            "status": "needs_review",
+            "reason": "signal was not synthesized (placeholder why_it_matters or raw source title/summary)",
             "signal_candidate_id": candidate_id,
         }
 

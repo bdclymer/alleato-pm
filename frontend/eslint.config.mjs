@@ -119,6 +119,9 @@ const config = [
       "design-system/no-raw-detail-field": "warn",
       // Gate 25: blocks raw xl:grid-cols-[...] in detail pages — use <DetailLayout> from @/components/layout.
       "design-system/no-raw-detail-grid": "warn",
+      // Gate 26: blocks raw multi-column grids in page files — use <PageScaffold layout=...> from @/components/layout.
+      // WARN globally (73 existing pages are debt); ERROR on changed files via lint-staged.
+      "design-system/no-raw-page-grid": "warn",
     },
   }, // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
   // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.

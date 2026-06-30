@@ -52,7 +52,8 @@ export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const searchParams = useSearchParams();
-  const { userSlug } = useParams<{ userSlug: string }>();
+  const params = useParams<{ userSlug: string }>();
+  const userSlug = params?.userSlug;
   const rawSlug = userSlug ?? "";
   const routeKey = (() => {
     try {
@@ -155,7 +156,8 @@ export default function PermissionUserDetailPage() {
       projectIds: number[];
       templateId: string;
     }) => {
-      await apiFetch(`/api/permissions/users/${personId}/project-access`, {
+      if (!user?.personId) throw new Error("User ID required");
+      await apiFetch(`/api/permissions/users/${user.personId}/project-access`, {
         method: "POST",
         body: JSON.stringify({ project_ids: projectIds, template_id: templateId }),
       });
@@ -176,7 +178,8 @@ export default function PermissionUserDetailPage() {
 
   const removeProjectAccessMutation = useMutation({
     mutationFn: async ({ projectId }: { projectId: number | string }) => {
-      await apiFetch(`/api/permissions/users/${personId}/project-access`, {
+      if (!user?.personId) throw new Error("User ID required");
+      await apiFetch(`/api/permissions/users/${user.personId}/project-access`, {
         method: "DELETE",
         body: JSON.stringify({ project_id: Number(projectId) }),
       });

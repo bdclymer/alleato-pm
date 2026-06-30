@@ -32,6 +32,7 @@ const noEditableTitleColumn = require('./rules/no-editable-title-column');
 const noRawDateInput = require('./rules/no-raw-date-input');
 const noRawDetailField = require('./rules/no-raw-detail-field');
 const noRawDetailGrid = require('./rules/no-raw-detail-grid');
+const noRawPageGrid = require('./rules/no-raw-page-grid');
 const noSupabaseAuthGetuserInApiRoutes = require('./rules/no-supabase-auth-getuser-in-api-routes');
 
 module.exports = {
@@ -64,6 +65,7 @@ module.exports = {
     'no-raw-search-input': noRawSearchInput,
     'no-raw-detail-field': noRawDetailField,
     'no-raw-detail-grid': noRawDetailGrid,
+    'no-raw-page-grid': noRawPageGrid,
   },
   configs: {
     recommended: {

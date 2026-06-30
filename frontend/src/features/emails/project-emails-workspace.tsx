@@ -58,9 +58,11 @@ import { apiFetch } from "@/lib/api-client";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
 import type { EmailSource, ProjectEmail } from "@/hooks/use-emails";
+import type { EmailAssistantReviewState } from "@/hooks/use-emails";
 import { useProjects } from "@/hooks/use-projects";
 import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importance-feedback-dialog";
 import type { EmailImportanceFeedbackState } from "@/lib/ai/email-importance-feedback-types";
+import { deriveBrandonEmailAssistantDecision } from "@/lib/email-assistant/brandon-triage";
 import {
   EmailDetailSheet,
   projectEmailToDetailRecord,
@@ -125,6 +127,7 @@ interface ProjectEmailsWorkspaceProps {
   sortDirection?: "asc" | "desc";
   /** Called when the user picks a different sort from the rail header. */
   onSortChange?: (sortBy: string, direction: "asc" | "desc") => void;
+  detailsPanelMode?: "default" | "assistant-feedback";
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
@@ -280,6 +283,15 @@ function formatMetaDate(value: string | null | undefined): string {
 function formatRecipientLine(recipients: string[] | null | undefined): string {
   if (!recipients || recipients.length === 0) return "No recipients";
   return recipients.join(", ");
+}
+
+function formatAssistantLabel(value: string | null | undefined): string {
+  if (!value) return "Not recorded";
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
 function plainTextBody(email: ProjectEmail): string {
@@ -1557,6 +1569,158 @@ function EmailDetailsPanel({
   );
 }
 
+function AssistantFeedbackDetailsPanel({
+  selectedEmail,
+  review,
+  isLoadingReview,
+  className,
+  onClose,
+}: {
+  selectedEmail: ProjectEmail | null;
+  review: EmailAssistantReviewState | null;
+  isLoadingReview: boolean;
+  className?: string;
+  onClose?: () => void;
+}) {
+  const decision = React.useMemo(
+    () =>
+      selectedEmail
+        ? deriveBrandonEmailAssistantDecision({
+            subject: selectedEmail.subject,
+            bodyText: selectedEmail.body_text ?? selectedEmail.body,
+            fromEmail: selectedEmail.from_email,
+            fromName: selectedEmail.from_name,
+            toList: selectedEmail.to_list,
+            ccList: selectedEmail.cc_list,
+            mailboxUserId: selectedEmail.mailbox_user_id ?? null,
+            hasAttachments: selectedEmail.has_attachments,
+            receivedAt: selectedEmail.received_at,
+          })
+        : null,
+    [selectedEmail],
+  );
+
+  return (
+    <ScrollArea className={cn("h-full", className)}>
+      <div className="px-6 py-6">
+        {selectedEmail && decision ? (
+          <div className="space-y-6">
+            {onClose ? (
+              <div className="flex items-center justify-end 2xl:hidden">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  aria-label="Close assistant feedback panel"
+                  className="h-8 w-8 rounded-full text-muted-foreground"
+                >
+                  <Cross2Icon className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : null}
+
+            <section className="space-y-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  AI categorization
+                </div>
+                <div className="mt-2 text-xl font-semibold tracking-[-0.02em] text-foreground">
+                  {formatAssistantLabel(decision.action)}
+                </div>
+              </div>
+              <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] gap-3 text-sm">
+                <div className="text-muted-foreground">Priority</div>
+                <div className="text-foreground">{formatAssistantLabel(decision.priority)}</div>
+                <div className="text-muted-foreground">Score</div>
+                <div className="text-foreground">{decision.score}</div>
+                <div className="text-muted-foreground">Owner</div>
+                <div className="break-words text-foreground">{decision.owner}</div>
+                <div className="text-muted-foreground">Risk</div>
+                <div className="break-words text-foreground">{decision.risk}</div>
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground">
+                {decision.reason}
+              </p>
+            </section>
+
+            <section className="space-y-3 border-t border-border/70 pt-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Rules applied
+              </div>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Evidence</div>
+                  <p className="mt-1 leading-6 text-foreground">{decision.evidence}</p>
+                </div>
+                {review?.assistantReason ? (
+                  <div>
+                    <div className="text-muted-foreground">Recorded reason</div>
+                    <p className="mt-1 leading-6 text-foreground">{review.assistantReason}</p>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="space-y-3 border-t border-border/70 pt-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Review ledger
+              </div>
+              {isLoadingReview ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-44" />
+                </div>
+              ) : review ? (
+                <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] gap-3 text-sm">
+                  <div className="text-muted-foreground">Outcome</div>
+                  <div className="text-foreground">{formatAssistantLabel(review.reviewOutcome)}</div>
+                  <div className="text-muted-foreground">Reviewed</div>
+                  <div className="text-foreground">{formatLongTimestamp(review.createdAt)}</div>
+                  <div className="text-muted-foreground">Note</div>
+                  <div className="break-words text-foreground">
+                    {review.reviewerNote || "No note recorded"}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  No human review has been recorded for this email yet.
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3 border-t border-border/70 pt-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Draft
+              </div>
+              {isLoadingReview ? (
+                <Skeleton className="h-24 w-full" />
+              ) : review?.draftBody ? (
+                <pre className="whitespace-pre-wrap rounded-md bg-muted/40 p-3 font-sans text-sm leading-6 text-foreground">
+                  {review.draftBody}
+                </pre>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  No assistant draft is recorded for this email.
+                </p>
+              )}
+            </section>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              AI feedback
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Select an email to inspect the assistant category, rules, and draft.
+            </p>
+          </div>
+        )}
+      </div>
+    </ScrollArea>
+  );
+}
+
 export function ProjectEmailsWorkspace({
   emails,
   isLoading,
@@ -1572,6 +1736,7 @@ export function ProjectEmailsWorkspace({
   sortBy,
   sortDirection,
   onSortChange,
+  detailsPanelMode = "default",
   onCompose,
   onEdit,
   onDelete,
@@ -1624,6 +1789,19 @@ export function ProjectEmailsWorkspace({
     () => (selectedEmail ? projectEmailToDetailRecord(selectedEmail) : null),
     [selectedEmail],
   );
+  const { data: assistantReviewByEmailId = {}, isLoading: assistantReviewLoading } =
+    useQuery<Record<string, EmailAssistantReviewState>>({
+      queryKey: ["email-assistant-reviews", selectedEmail?.id],
+      queryFn: ({ signal }) =>
+        apiFetch<Record<string, EmailAssistantReviewState>>(
+          `/api/email-assistant/reviews?emailId=${selectedEmail?.id}`,
+          { signal },
+        ),
+      enabled: detailsPanelMode === "assistant-feedback" && Boolean(selectedEmail?.id),
+    });
+  const selectedAssistantReview = selectedEmail
+    ? (assistantReviewByEmailId[String(selectedEmail.id)] ?? null)
+    : null;
 
   const selectedEmailEditable = selectedEmail
     ? canEdit
@@ -1837,11 +2015,19 @@ export function ProjectEmailsWorkspace({
           </div>
 
           <div className="hidden min-h-0 w-80 shrink-0 2xl:block">
-            <EmailDetailsPanel
-              selectedEmail={selectedEmail}
-              primaryContact={primaryContact}
-              contextItems={contextItems}
-            />
+            {detailsPanelMode === "assistant-feedback" ? (
+              <AssistantFeedbackDetailsPanel
+                selectedEmail={selectedEmail}
+                review={selectedAssistantReview}
+                isLoadingReview={assistantReviewLoading}
+              />
+            ) : (
+              <EmailDetailsPanel
+                selectedEmail={selectedEmail}
+                primaryContact={primaryContact}
+                contextItems={contextItems}
+              />
+            )}
           </div>
         </div>
       </SplitPage>

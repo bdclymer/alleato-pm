@@ -144,7 +144,6 @@ export function OriginalBudgetEditModal({
   // component is conditionally rendered only while selectedLineItem is non-null and
   // always unmounts on cancel, so `open` transitioning false→true is the only signal
   // we need.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (open) {
       setCalculationMethod("manual");

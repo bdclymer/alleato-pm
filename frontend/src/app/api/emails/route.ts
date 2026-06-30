@@ -63,6 +63,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   const isAdmin = profile?.is_admin === true;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
+  const mailboxUserId = searchParams.get("mailbox_user_id")?.trim().toLowerCase() || null;
 
   const intake = createOutlookIntakeServiceClient();
   let query = intake
@@ -78,6 +79,10 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
     query = query.or(`from_email.eq.${user.email},to_list.cs.{${user.email}}`);
   } else if (!isAdmin) {
     return NextResponse.json([]);
+  }
+
+  if (mailboxUserId) {
+    query = query.eq("mailbox_user_id", mailboxUserId);
   }
 
   const { data, error } = await query;

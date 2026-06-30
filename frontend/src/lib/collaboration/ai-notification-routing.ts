@@ -120,8 +120,8 @@ export function getAiNotificationDeliveryPlan(
     notification.kind === AI_APPROVAL_QUEUE_NOTIFICATION_KIND &&
     isAiApprovalQueueNotification(notification)
   ) {
-    const channels = hasSelectedChannels
-      ? (["approvals_queue", ...selectedChannels] as AiNotificationDeliveryChannel[])
+    const channels: AiNotificationDeliveryChannel[] = hasSelectedChannels
+      ? ["approvals_queue", ...selectedChannels]
       : ["approvals_queue", "in_app", "assistant_widget"];
 
     return {

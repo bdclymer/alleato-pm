@@ -105,3 +105,19 @@ export function estimateCostWithFallback(
 export function listKnownModels(): string[] {
   return Object.keys(PRICING_MAP);
 }
+
+/**
+ * Extracts the model id from a chat_history metadata blob.
+ *
+ * The assistant write path (api/ai-assistant/chat/handler-v2.ts) records the
+ * model under the `model` key — NOT `modelId`. Reading the wrong key made the
+ * AI System Health "Models in use" table report every call as "unknown".
+ * Always go through this helper so the reader and writer can never drift again.
+ * Falls back to `modelId` for any legacy rows that used the old key.
+ */
+export function extractModelId(metadata: unknown): string {
+  if (!metadata || typeof metadata !== "object") return "";
+  const meta = metadata as Record<string, unknown>;
+  const model = meta.model ?? meta.modelId;
+  return typeof model === "string" ? model : "";
+}

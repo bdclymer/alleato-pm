@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { isAdminDashboardEmailAllowed } from "@/lib/auth/admin-dashboard-allowlist";
 import { getBestSupabaseAuthToken } from "./auth-cookie";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 
@@ -17,6 +18,7 @@ const DEVELOPER_ONLY_COMPANY_PREFIXES = [
   "/ai-avatar",
   "/calendar",
   "/billing-periods",
+  "/ai-chat-history",
 ];
 
 // Project-scoped route segments (after /[projectId]/) that require developer role.
@@ -42,9 +44,43 @@ function isDevOnlyPath(pathname: string): boolean {
   return false;
 }
 
+function isAdminApiPath(pathname: string): boolean {
+  return pathname === "/api/admin" || pathname.startsWith("/api/admin/");
+}
+
 export async function updateSession(request: NextRequest) {
-  const supabaseResponse = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-alleato-pathname", request.nextUrl.pathname);
+  const supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
   const pathname = request.nextUrl.pathname;
+
+  if (isAdminApiPath(pathname)) {
+    const tokenData = getBestSupabaseAuthToken(request.cookies.getAll());
+    if (
+      !tokenData?.userId ||
+      (typeof tokenData.expiresAtMs === "number" &&
+        tokenData.expiresAtMs <= Date.now() + 15_000)
+    ) {
+      return NextResponse.json(
+        { error: "Sign in before accessing admin controls." },
+        { status: 401 },
+      );
+    }
+
+    if (!isAdminDashboardEmailAllowed(tokenData.email)) {
+      return NextResponse.json(
+        {
+          error:
+            "Admin dashboard access is restricted to Megan Harrison and Brandon Clymer.",
+        },
+        { status: 403 },
+      );
+    }
+
+    return supabaseResponse;
+  }
 
   if (shouldBypassSessionMiddleware(pathname)) {
     return supabaseResponse;

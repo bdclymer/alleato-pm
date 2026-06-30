@@ -7,6 +7,7 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
+  ExternalLink,
   FileText,
   HardHat,
   List,
@@ -17,12 +18,13 @@ import {
 } from "lucide-react";
 
 import { Button, EmptyState, ExpandingSearch } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import {
   useKnowledgeDocuments,
   type KnowledgeDocument,
 } from "@/hooks/use-knowledge-documents";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_ORDER = [
@@ -72,8 +74,7 @@ const PAGE_SECTIONS = [
 ] as const;
 
 function deriveCategory(doc: KnowledgeDocument): Category {
-  if (!doc.tags) return "Other";
-  const first = doc.tags.split(",")[0]?.trim();
+  const first = doc.tags?.[0]?.trim();
   return first && (CATEGORY_ORDER as readonly string[]).includes(first)
     ? (first as Category)
     : "Other";
@@ -84,6 +85,8 @@ export function KnowledgeBasePage() {
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
   const [activeCategory, setActiveCategory] = React.useState<Category | null>(null);
+  const [openingDocumentId, setOpeningDocumentId] = React.useState<string | null>(null);
+  const [openError, setOpenError] = React.useState<string | null>(null);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
@@ -118,7 +121,7 @@ export function KnowledgeBasePage() {
         const haystack = [
           doc.title ?? "",
           doc.file_name ?? "",
-          doc.tags ?? "",
+          doc.tags?.join(" ") ?? "",
           doc.category ?? "",
           doc.source ?? "",
         ]
@@ -128,6 +131,53 @@ export function KnowledgeBasePage() {
       });
     });
   }, [documents, searchTerm, visibleCategories]);
+
+  const matchingDocuments = React.useMemo(() => {
+    return documents.filter((doc) => {
+      const category = deriveCategory(doc);
+      if (activeCategory && category !== activeCategory) return false;
+      if (!searchTerm) return Boolean(activeCategory);
+
+      const haystack = [
+        doc.title ?? "",
+        doc.file_name ?? "",
+        doc.tags?.join(" ") ?? "",
+        doc.category ?? "",
+        doc.source ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        category.toLowerCase().includes(searchTerm) ||
+        CATEGORY_DESCRIPTIONS[category].toLowerCase().includes(searchTerm) ||
+        haystack.includes(searchTerm)
+      );
+    });
+  }, [activeCategory, documents, searchTerm]);
+
+  async function handleOpenDocument(doc: KnowledgeDocument) {
+    setOpenError(null);
+    setOpeningDocumentId(doc.id);
+
+    try {
+      const response = await apiFetch<{ url?: string }>(
+        `/api/knowledge/signed-url?id=${encodeURIComponent(doc.id)}`,
+      );
+
+      if (!response.url) {
+        throw new Error("No document URL was returned.");
+      }
+
+      window.open(response.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      const title = doc.title ?? doc.file_name ?? "this source";
+      const message = error instanceof Error ? error.message : "Unknown error.";
+      setOpenError(`Could not open ${title}: ${message}`);
+    } finally {
+      setOpeningDocumentId(null);
+    }
+  }
 
   return (
     <PageShell
@@ -190,6 +240,14 @@ export function KnowledgeBasePage() {
                     setActiveCategory(null);
                   }}
                   hasFilter={Boolean(searchTerm || activeCategory)}
+                />
+                <KnowledgeSourceList
+                  documents={matchingDocuments}
+                  activeCategory={activeCategory}
+                  hasFilter={Boolean(searchTerm || activeCategory)}
+                  openingDocumentId={openingDocumentId}
+                  openError={openError}
+                  onOpenDocument={handleOpenDocument}
                 />
               </>
             )}
@@ -457,6 +515,90 @@ function TopicCards({
             </span>
           </Button>
         ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function KnowledgeSourceList({
+  documents,
+  activeCategory,
+  hasFilter,
+  openingDocumentId,
+  openError,
+  onOpenDocument,
+}: {
+  documents: readonly KnowledgeDocument[];
+  activeCategory: Category | null;
+  hasFilter: boolean;
+  openingDocumentId: string | null;
+  openError: string | null;
+  onOpenDocument: (doc: KnowledgeDocument) => void;
+}) {
+  if (!hasFilter) return null;
+
+  const title = activeCategory ? `${activeCategory} sources` : "Matching sources";
+
+  return (
+    <section className="space-y-3" aria-label={title}>
+      <SectionRuleHeading
+        label={title}
+        className="mb-0"
+        actions={
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {documents.length}
+          </span>
+        }
+      />
+
+      {openError && (
+        <p role="alert" className="text-sm text-destructive">
+          {openError}
+        </p>
+      )}
+
+      {documents.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No approved sources match the current category and search.
+        </p>
+      ) : (
+        <div className="divide-y divide-border">
+          {documents.map((doc) => {
+            const title = doc.title ?? doc.file_name ?? "Untitled";
+            const date = doc.date ?? doc.created_at;
+
+            return (
+              <div
+                key={doc.id}
+                className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate text-sm font-medium text-foreground">{title}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {[
+                      doc.file_name,
+                      date ? new Date(date).toLocaleDateString() : null,
+                      doc.source,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit gap-1.5"
+                  onClick={() => onOpenDocument(doc)}
+                  disabled={openingDocumentId === doc.id}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {openingDocumentId === doc.id ? "Opening" : "Open"}
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

@@ -4368,7 +4368,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 messages: modelMessages,
                 tools,
                 maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-                stopWhen: stepCountIs(10),
+                // GPT-5.4 is a reasoning model; without an explicit effort it burns
+                // full "medium" reasoning on every agentic step — including trivial
+                // "which tool do I call" steps. Verified against the live Vercel
+                // Gateway: reasoningEffort "low" drops reasoning_tokens 95->8 and a
+                // single call 10s->4.3s on gpt-5.4. textVerbosity "low" shortens the
+                // final answer. (Provider only warns — never throws — if a future
+                // non-reasoning model is selected, so this is safe unconditionally.)
+                providerOptions: {
+                  openai: { reasoningEffort: "low", textVerbosity: "low" },
+                },
+                stopWhen: stepCountIs(6),
                 experimental_telemetry: aiTelemetry({
                   functionId: "ai-assistant-chat-v2",
                   metadata: {
@@ -4539,7 +4549,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           })),
           outputPolicy: {
             maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-            stopWhen: "stepCountIs(10)",
+            reasoningEffort: "low",
+            textVerbosity: "low",
+            stopWhen: "stepCountIs(6)",
           },
         }),
         retrieval_plan: {

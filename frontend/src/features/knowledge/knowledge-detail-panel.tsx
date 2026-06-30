@@ -23,9 +23,7 @@ export function KnowledgeDetailPanel({
     return new Date(value).toLocaleDateString();
   })();
 
-  const tagList = doc.tags
-    ? doc.tags.split(",").map((t) => t.trim()).filter(Boolean)
-    : [];
+  const tagList = doc.tags ?? [];
 
   return (
     <div className="flex flex-col h-full">

@@ -4,7 +4,7 @@ import {
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
-import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
+import { estimateCostWithFallback, extractModelId } from "@/lib/ai/model-pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -185,7 +185,7 @@ export const GET = withApiGuardrails(WHERE, async () => {
     const usage = meta.usage as { inputTokens?: number; outputTokens?: number } | null | undefined;
     const inputTokens = usage?.inputTokens ?? 0;
     const outputTokens = usage?.outputTokens ?? 0;
-    const modelId = (meta.modelId as string | undefined) ?? "";
+    const modelId = extractModelId(meta);
 
     const { cost, pricing, matchedModel } = estimateCostWithFallback(modelId, inputTokens, outputTokens);
     if (!matchedModel) messagesWithUnknownModel++;

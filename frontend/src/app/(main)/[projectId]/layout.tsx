@@ -1,8 +1,10 @@
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isOwnerEmail } from "@/lib/auth/owner";
+import { canonicalizeProjectPath } from "@/lib/page-role-access";
 
 /**
  * Cached authorization check per user+project pair.
@@ -21,27 +23,53 @@ function getProjectAuthorization(userId: string, projectId: number) {
     async () => {
       const serviceClient = createServiceClient();
 
-      const { data: authLink } = await serviceClient
-        .from("users_auth")
-        .select("person_id")
-        .eq("auth_user_id", userId)
-        .maybeSingle();
+      const [{ data: authLink }, { data: profile }] = await Promise.all([
+        serviceClient
+          .from("users_auth")
+          .select("person_id")
+          .eq("auth_user_id", userId)
+          .maybeSingle(),
+        serviceClient
+          .from("user_profiles")
+          .select("is_admin, is_developer")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
+
+      const isAdmin =
+        profile?.is_admin === true || profile?.is_developer === true;
+      const isDeveloper = profile?.is_developer === true;
+
+      if (isAdmin && !authLink?.person_id) {
+        return {
+          authorized: true,
+          isAdmin,
+          isDeveloper,
+          permissionTemplateId: null,
+        } as const;
+      }
 
       if (!authLink?.person_id) {
         return { authorized: false, reason: "no-profile" } as const;
       }
 
-      // Active directory membership grants access.
+      // Active directory membership grants access and carries the permission
+      // template used by page-role policies.
       const { data: membership } = await serviceClient
         .from("project_directory_memberships")
-        .select("id")
+        .select("id, permission_template_id")
         .eq("person_id", authLink.person_id)
         .eq("project_id", projectId)
         .eq("status", "active")
         .maybeSingle();
 
       if (membership) {
-        return { authorized: true, isAdmin: false } as const;
+        return {
+          authorized: true,
+          isAdmin,
+          isDeveloper,
+          permissionTemplateId: membership.permission_template_id,
+        } as const;
       }
 
       // A project-role assignment also grants access (mirrors /api/projects).
@@ -53,7 +81,12 @@ function getProjectAuthorization(userId: string, projectId: number) {
         .maybeSingle();
 
       if (roleMembership) {
-        return { authorized: true, isAdmin: false } as const;
+        return {
+          authorized: true,
+          isAdmin,
+          isDeveloper,
+          permissionTemplateId: null,
+        } as const;
       }
 
       return { authorized: false, reason: "no-project-access" } as const;
@@ -62,6 +95,56 @@ function getProjectAuthorization(userId: string, projectId: number) {
     [`project-auth-${userId}-${projectId}`],
     { revalidate: 60 },
   )();
+}
+
+async function getPageRoleAccessDecision({
+  route,
+  isAdmin,
+  isDeveloper,
+  permissionTemplateId,
+}: {
+  route: string;
+  isAdmin: boolean;
+  isDeveloper: boolean;
+  permissionTemplateId: string | null;
+}): Promise<{ allowed: true } | { allowed: false; reason: string }> {
+  if (isAdmin || isDeveloper) {
+    return { allowed: true };
+  }
+
+  const serviceClient = createServiceClient();
+  const { data: policy, error: policyError } = await serviceClient
+    .from("app_page_role_access_policies")
+    .select("route, enforcement_mode")
+    .eq("route", route)
+    .maybeSingle();
+
+  if (policyError) {
+    return { allowed: false, reason: "page-role-policy-load-failed" };
+  }
+
+  if (!policy || policy.enforcement_mode === "inherit_requirement") {
+    return { allowed: true };
+  }
+
+  if (!permissionTemplateId) {
+    return { allowed: false, reason: "page-role-missing-template" };
+  }
+
+  const { data: assignment, error: assignmentError } = await serviceClient
+    .from("app_page_role_access_policy_templates")
+    .select("route")
+    .eq("route", route)
+    .eq("permission_template_id", permissionTemplateId)
+    .maybeSingle();
+
+  if (assignmentError) {
+    return { allowed: false, reason: "page-role-policy-load-failed" };
+  }
+
+  return assignment
+    ? { allowed: true }
+    : { allowed: false, reason: "page-role-denied" };
 }
 
 /**
@@ -105,6 +188,24 @@ export default async function ProjectLayout({
 
   if (!result.authorized) {
     redirect(`/access-denied?reason=${result.reason}`);
+  }
+
+  const requestHeaders = await headers();
+  const route = canonicalizeProjectPath(
+    requestHeaders.get("x-alleato-pathname") ?? "",
+  );
+
+  if (route) {
+    const pageAccess = await getPageRoleAccessDecision({
+      route,
+      isAdmin: result.isAdmin,
+      isDeveloper: result.isDeveloper,
+      permissionTemplateId: result.permissionTemplateId,
+    });
+
+    if (!pageAccess.allowed) {
+      redirect(`/access-denied?reason=${pageAccess.reason}`);
+    }
   }
 
   return <div className="flex flex-1 flex-col">{children}</div>;

@@ -1,76 +1,40 @@
 "use client";
 
 import {
-
   Activity,
-
   AlertTriangle,
-
   ArrowLeftRight,
-
   BarChart3,
-
   BookOpen,
-
   Brain,
-
   BrainCircuit,
-
   Building2,
-
   CheckCircle2,
-
   ClipboardCheck,
-
   Code2,
-
   Database,
-
   FileSearch,
-
   FileText,
-
   FlaskConical,
-
   HardHat,
-
   Inbox,
-
   LayoutDashboard,
-
   LineChart,
-
   ListChecks,
-
   MapIcon,
-
-
   Eye,
-
   Palette,
-
   PanelTop,
-
   Route,
-
   Shield,
-
   Sparkles,
-
   Table2,
-
   Terminal,
-
   UserCog,
-
   Users,
-
   Wrench,
-
   type LucideIcon,
-
 } from "lucide-react";
-
 
 import { PageShell } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,7 +43,6 @@ import { AdminKanbanView } from "./admin-kanban-view";
 import { AdminDirectoryView } from "./admin-directory-view";
 
 type AdminMenuItem = {
-
   label: string;
 
   href?: string;
@@ -91,33 +54,29 @@ type AdminMenuItem = {
   icon: LucideIcon;
 
   badge?: string;
-
 };
 
 type AdminMenuGroup = {
-
   title: string;
 
   description?: string;
 
   items: AdminMenuItem[];
-
 };
 
 type AdminMenuSection = {
-
   title: string;
 
   description: string;
 
   groups: AdminMenuGroup[];
-
 };
 
 const sections: AdminMenuSection[] = [
   {
     title: "Operations",
-    description: "Day-to-day platform operations, planning, feedback queues, manual actions, and releases.",
+    description:
+      "Day-to-day platform operations, planning, feedback queues, manual actions, and releases.",
     groups: [
       {
         title: "Operations",
@@ -126,7 +85,8 @@ const sections: AdminMenuSection[] = [
             label: "Command Center",
             href: "/command-center",
             route: "/command-center",
-            description: "Admin-level project overview and quick action workspace.",
+            description:
+              "Admin-level project overview and quick action workspace.",
             icon: LayoutDashboard,
           },
           {
@@ -140,14 +100,16 @@ const sections: AdminMenuSection[] = [
             label: "Feedback Inbox",
             href: "/feedback-inbox",
             route: "/feedback-inbox",
-            description: "Client feedback, issues, comments, and triage assignments.",
+            description:
+              "Client feedback, issues, comments, and triage assignments.",
             icon: Inbox,
           },
           {
             label: "Learning & Feedback",
             href: "/learning-feedback",
             route: "/learning-feedback",
-            description: "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
+            description:
+              "AI learning review queue, feedback coverage, and the triage pipeline in one place.",
             icon: Brain,
           },
           {
@@ -161,7 +123,8 @@ const sections: AdminMenuSection[] = [
             label: "Actions",
             href: "/actions",
             route: "/actions",
-            description: "Manual triggers for administrative jobs, sends, and repair actions.",
+            description:
+              "Manual triggers for administrative jobs, sends, and repair actions.",
             icon: Wrench,
           },
           {
@@ -182,7 +145,8 @@ const sections: AdminMenuSection[] = [
             label: "Updates",
             href: "/updates",
             route: "/updates",
-            description: "Release notes, product updates, and changelog entries.",
+            description:
+              "Release notes, product updates, and changelog entries.",
             icon: FileText,
           },
         ],
@@ -191,7 +155,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "Access & Settings",
-    description: "People, permissions, company configuration, route access, and admin verification.",
+    description:
+      "People, permissions, company configuration, route access, and admin verification.",
     groups: [
       {
         title: "Access & Settings",
@@ -200,7 +165,8 @@ const sections: AdminMenuSection[] = [
             label: "User Management",
             href: "/user-management",
             route: "/user-management",
-            description: "Invite users, grant access, and review company-wide permissions.",
+            description:
+              "Invite users, grant access, and review company-wide permissions.",
             icon: Users,
           },
           {
@@ -237,7 +203,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "AI Workspaces",
-    description: "The surfaces where people actually use the assistant and its output.",
+    description:
+      "The surfaces where people actually use the assistant and its output.",
     groups: [
       {
         title: "AI Workspaces",
@@ -259,7 +226,8 @@ const sections: AdminMenuSection[] = [
           {
             label: "Project Intelligence",
             route: "/[projectId]/intelligence",
-            description: "Project-scoped intelligence page; open it from a specific project.",
+            description:
+              "Project-scoped intelligence page; open it from a specific project.",
             icon: BrainCircuit,
             badge: "Project scoped",
           },
@@ -269,7 +237,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "AI Observability",
-    description: "Monitor what the assistant is doing — conversations, runs, prompts, and outputs.",
+    description:
+      "Monitor what the assistant is doing — conversations, runs, prompts, and outputs.",
     groups: [
       {
         title: "AI Observability",
@@ -278,7 +247,8 @@ const sections: AdminMenuSection[] = [
             label: "AI System Health",
             href: "/ai-system-health",
             route: "/ai-system-health",
-            description: "Conversations, tokens, spend, satisfaction, model mix, and self-learning loop on one screen.",
+            description:
+              "Conversations, tokens, spend, satisfaction, model mix, and self-learning loop on one screen.",
             icon: LineChart,
           },
           {
@@ -292,7 +262,8 @@ const sections: AdminMenuSection[] = [
             label: "AI Prompt Diagnostics",
             href: "/ai-prompt-diagnostics",
             route: "/ai-prompt-diagnostics",
-            description: "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
+            description:
+              "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
             icon: Terminal,
           },
           {
@@ -315,7 +286,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "AI Quality & Learning",
-    description: "Evaluate answer quality and review the feedback that trains the assistant.",
+    description:
+      "Evaluate answer quality and review the feedback that trains the assistant.",
     groups: [
       {
         title: "AI Quality & Learning",
@@ -338,21 +310,24 @@ const sections: AdminMenuSection[] = [
             label: "AI Learning Promotions",
             href: "/ai/learning-promotions",
             route: "/ai/learning-promotions",
-            description: "Approve retrieval-learning candidates and monitor promotion history.",
+            description:
+              "Approve retrieval-learning candidates and monitor promotion history.",
             icon: Sparkles,
           },
           {
             label: "Task Training",
             href: "/task-training",
             route: "/task-training",
-            description: "Review task feedback examples that train extraction behavior.",
+            description:
+              "Review task feedback examples that train extraction behavior.",
             icon: ClipboardCheck,
           },
           {
             label: "Outlook Draft Feedback",
             href: "/outlook-draft-feedback",
             route: "/outlook-draft-feedback",
-            description: "Review feedback on AI-generated Outlook email drafts.",
+            description:
+              "Review feedback on AI-generated Outlook email drafts.",
             icon: Inbox,
           },
         ],
@@ -361,7 +336,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "AI Configuration & Docs",
-    description: "Agent and skill setup, plus architecture and roadmap reference.",
+    description:
+      "Agent and skill setup, plus architecture and roadmap reference.",
     groups: [
       {
         title: "AI Configuration & Docs",
@@ -370,14 +346,16 @@ const sections: AdminMenuSection[] = [
             label: "AI Agents",
             href: "/ai/admin/agents",
             route: "/ai/admin/agents",
-            description: "Registered AI agents, their tools, and configuration.",
+            description:
+              "Registered AI agents, their tools, and configuration.",
             icon: BrainCircuit,
           },
           {
             label: "AI Skills Admin",
             href: "/ai/admin/skills",
             route: "/ai/admin/skills",
-            description: "Review approved, candidate, and retired Skill Library records.",
+            description:
+              "Review approved, candidate, and retired Skill Library records.",
             icon: Shield,
           },
           {
@@ -391,7 +369,8 @@ const sections: AdminMenuSection[] = [
             label: "How the AI Works",
             href: "/docs/ai-overview",
             route: "/docs/ai-overview",
-            description: "Architecture overview of data sources, models, tools, and learning.",
+            description:
+              "Architecture overview of data sources, models, tools, and learning.",
             icon: BookOpen,
           },
           {
@@ -407,7 +386,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "RAG Pipeline",
-    description: "The RAG ingestion pipeline that feeds the assistant — health, sync, metadata, and attribution.",
+    description:
+      "The RAG ingestion pipeline that feeds the assistant — health, sync, metadata, and attribution.",
     groups: [
       {
         title: "Knowledge Pipeline",
@@ -416,7 +396,8 @@ const sections: AdminMenuSection[] = [
             label: "RAG Health",
             href: "/rag",
             route: "/rag",
-            description: "Pipeline stage funnel, document status, and source-sync alerts on one screen.",
+            description:
+              "Pipeline stage funnel, document status, and source-sync alerts on one screen.",
             icon: Activity,
           },
           {
@@ -430,7 +411,8 @@ const sections: AdminMenuSection[] = [
             label: "Source Sync",
             href: "/source-sync",
             route: "/source-sync",
-            description: "Source ingestion freshness, sync runs, and recompute controls.",
+            description:
+              "Source ingestion freshness, sync runs, and recompute controls.",
             icon: ArrowLeftRight,
           },
           {
@@ -444,7 +426,8 @@ const sections: AdminMenuSection[] = [
             label: "Project Attribution",
             href: "/project-attribution",
             route: "/project-attribution",
-            description: "Review unmatched source documents and approve project attribution.",
+            description:
+              "Review unmatched source documents and approve project attribution.",
             icon: FileSearch,
           },
         ],
@@ -453,7 +436,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "Accounting",
-    description: "Accounting dashboards, financial workflows, and external accounting sync.",
+    description:
+      "Accounting dashboards, financial workflows, and external accounting sync.",
     groups: [
       {
         title: "Accounting",
@@ -462,7 +446,8 @@ const sections: AdminMenuSection[] = [
             label: "Accounting",
             href: "/accounting",
             route: "/accounting",
-            description: "Accounting dashboard and financial operations entry point.",
+            description:
+              "Accounting dashboard and financial operations entry point.",
             icon: BarChart3,
           },
           {
@@ -539,14 +524,16 @@ const sections: AdminMenuSection[] = [
             label: "SOP Backlog",
             href: "/accounting/sop-backlog",
             route: "/accounting/sop-backlog",
-            description: "Standard-operating-procedure backlog and processing queue.",
+            description:
+              "Standard-operating-procedure backlog and processing queue.",
             icon: ListChecks,
           },
           {
             label: "Acumatica Sync Logs",
             href: "/acumatica-sync-logs",
             route: "/acumatica-sync-logs",
-            description: "Created, updated, skipped, and failed export audit trail.",
+            description:
+              "Created, updated, skipped, and failed export audit trail.",
             icon: ArrowLeftRight,
           },
         ],
@@ -555,7 +542,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "Database & APIs",
-    description: "Database catalog, table explorers, generated table pages, audit log, and API documentation.",
+    description:
+      "Database catalog, table explorers, generated table pages, audit log, and API documentation.",
     groups: [
       {
         title: "Database & APIs",
@@ -564,7 +552,8 @@ const sections: AdminMenuSection[] = [
             label: "Database Inventory",
             href: "/database-inventory",
             route: "/database-inventory",
-            description: "Full MAIN + RAG table inventory with purpose, gotchas, owners, and live counts.",
+            description:
+              "Full MAIN + RAG table inventory with purpose, gotchas, owners, and live counts.",
             icon: Database,
             badge: "Developer",
           },
@@ -622,7 +611,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "QA & Testing",
-    description: "Quality dashboards, test matrices, run history, cases, PRP status, and runtime errors.",
+    description:
+      "Quality dashboards, test matrices, run history, cases, PRP status, and runtime errors.",
     groups: [
       {
         title: "QA & Testing",
@@ -673,7 +663,8 @@ const sections: AdminMenuSection[] = [
             label: "Runtime Errors",
             href: "/errors",
             route: "/errors",
-            description: "Grouped app errors, review state, and Linear escalation.",
+            description:
+              "Grouped app errors, review state, and Linear escalation.",
             icon: AlertTriangle,
           },
         ],
@@ -682,7 +673,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "Product Resources",
-    description: "Construction references, tool tracking, and crawled support documentation.",
+    description:
+      "Construction references, tool tracking, and crawled support documentation.",
     groups: [
       {
         title: "Product Resources",
@@ -721,7 +713,8 @@ const sections: AdminMenuSection[] = [
   },
   {
     title: "Design System",
-    description: "Design-system inspection, migration notes, UI drift, and experimental explorations.",
+    description:
+      "Design-system inspection, migration notes, UI drift, and experimental explorations.",
     groups: [
       {
         title: "Design System",
@@ -760,29 +753,24 @@ const sections: AdminMenuSection[] = [
   },
 ];
 
-
 const totalPages = sections.reduce(
-
-  (total, section) => total + section.groups.reduce((sectionTotal, group) => sectionTotal + group.items.length, 0),
+  (total, section) =>
+    total +
+    section.groups.reduce(
+      (sectionTotal, group) => sectionTotal + group.items.length,
+      0,
+    ),
 
   0,
-
 );
 
 export default function AdminDashboardPage() {
-
   return (
-
     <PageShell
-
       variant="dashboard"
-
       title="Admin Dashboard"
-
       description={`Directory of ${totalPages} internal pages across operations, access, AI, accounting, database, QA, and design.`}
-
     >
-
       <Tabs defaultValue="directory" className="gap-6">
         <TabsList variant="line">
           <TabsTrigger value="directory">Directory</TabsTrigger>
@@ -795,9 +783,6 @@ export default function AdminDashboardPage() {
           <AdminKanbanView sections={sections} />
         </TabsContent>
       </Tabs>
-
     </PageShell>
-
   );
-
 }

@@ -59,7 +59,7 @@ export function KnowledgeDocumentEditDialog({
     resolver: zodResolver(schema),
     defaultValues: {
       title: doc?.title ?? doc?.file_name ?? "",
-      tags: doc?.tags ?? "",
+      tags: doc?.tags?.join(", ") ?? "",
       status: doc?.status ?? "uploaded",
     },
   });
@@ -68,7 +68,7 @@ export function KnowledgeDocumentEditDialog({
     if (open && doc) {
       form.reset({
         title: doc.title ?? doc.file_name ?? "",
-        tags: doc.tags ?? "",
+        tags: doc.tags?.join(", ") ?? "",
         status: doc.status ?? "uploaded",
       });
     }

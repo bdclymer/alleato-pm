@@ -1720,48 +1720,6 @@ function toTextList(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
-function normalizeMeetingToolOutput(output: unknown): MeetingIntelligenceWidgetPayload | null {
-  const record = asRecord(output);
-  if (record.type === "meeting_intelligence") {
-    return record as MeetingIntelligenceWidgetPayload;
-  }
-
-  const meetings = Array.isArray(record.meetings) ? record.meetings : [];
-  if (meetings.length === 0 && typeof record.meetingCount !== "number") return null;
-
-  return {
-    type: "meeting_intelligence",
-    id: typeof record.id === "string" ? record.id : "meeting-intelligence",
-    title: typeof record.title === "string" ? record.title : "Meeting intelligence",
-    subtitle: typeof record.subtitle === "string" ? record.subtitle : "Structured meeting readout",
-    dateLabel: typeof record.dateLabel === "string" ? record.dateLabel : "Selected window",
-    meetingCount: typeof record.meetingCount === "number" ? record.meetingCount : meetings.length,
-    criticalRiskCount: typeof record.criticalRiskCount === "number" ? record.criticalRiskCount : 0,
-    decisionCount: typeof record.decisionCount === "number" ? record.decisionCount : 0,
-    actionItemCount: typeof record.actionItemCount === "number" ? record.actionItemCount : 0,
-    topInsights: toTextList(record.topInsights),
-    recommendedNextActions: toTextList(record.recommendedNextActions),
-    emptyState: typeof record.emptyState === "string" ? record.emptyState : undefined,
-    meetings: meetings.map((item, index) => {
-      const meeting = asRecord(item);
-      const id = typeof meeting.id === "string" ? meeting.id : `meeting-${index + 1}`;
-      const projectId = typeof meeting.projectId === "number" ? meeting.projectId : null;
-      return {
-        id,
-        title: typeof meeting.title === "string" ? meeting.title : "Untitled meeting",
-        projectId,
-        projectName: typeof meeting.projectName === "string" ? meeting.projectName : null,
-        date: typeof meeting.date === "string" ? meeting.date : null,
-        source: typeof meeting.source === "string" ? meeting.source : null,
-        summary: typeof meeting.summary === "string" ? meeting.summary : null,
-        criticalRisks: toTextList(meeting.criticalRisks),
-        decisions: toTextList(meeting.decisions),
-        actionItems: toTextList(meeting.actionItems),
-        href: typeof meeting.href === "string" ? meeting.href : projectId ? `/${projectId}/meetings/${id}` : `/meetings/${id}`,
-      };
-    }),
-  };
-}
 
 function normalizeCalendarInviteToolOutput(output: unknown): CalendarInviteWidgetPayload | null {
   const record = asRecord(output);
@@ -3607,7 +3565,6 @@ type AssistantToolPartForRegistry = {
 };
 
 const assistantToolComponentRegistry: Record<string, (output: unknown) => AssistantWidgetPayload | null> = {
-  getMeetingIntelligence: normalizeMeetingToolOutput,
   createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
   draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
   getRecentEmails: normalizeGetRecentEmailsToolOutput,
@@ -3622,7 +3579,6 @@ export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegis
 
 const TOOL_LOADING_LABELS: Record<string, string> = {
   generateExecutiveDailyBrief: "Generating daily brief…",
-  getMeetingIntelligence: "Analyzing meeting…",
   getRecentEmails: "Loading emails…",
 };
 

@@ -42,6 +42,24 @@ export interface ProjectEmail {
   conversation_id?: string | null;
 }
 
+export interface EmailAssistantReviewState {
+  id: string;
+  intakeEmailId: number;
+  graphMessageId: string;
+  mailboxUserId: string;
+  assistantAction: string;
+  assistantPriority: string;
+  assistantScore: number | null;
+  assistantReason: string | null;
+  assistantOwner: string | null;
+  assistantRisk: string | null;
+  assistantEvidence: string | null;
+  reviewOutcome: string;
+  reviewerNote: string | null;
+  draftBody: string | null;
+  createdAt: string;
+}
+
 /**
  * True when the email was ingested from Outlook via Microsoft Graph rather
  * than composed in-app. Outlook-synced emails are read-only in our system
@@ -77,8 +95,8 @@ export type UpdateEmailInput = Partial<CreateEmailInput>;
 export type EmailSource = "app" | "outlook" | "all";
 
 export const emailKeys = {
-  global: (status?: string, source?: EmailSource) =>
-    ["emails", "global", status, source] as const,
+  global: (status?: string, source?: EmailSource, mailboxUserId?: string) =>
+    ["emails", "global", status, source, mailboxUserId] as const,
   all: (projectId: number) => ["emails", projectId] as const,
   list: (projectId: number, status?: string, source?: EmailSource) =>
     ["emails", projectId, "list", status, source] as const,
@@ -90,14 +108,16 @@ export function useAllEmails(
   status?: string,
   enabled = true,
   source: EmailSource = "app",
+  mailboxUserId?: string,
 ) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (source !== "all") params.set("source", source);
+  if (mailboxUserId) params.set("mailbox_user_id", mailboxUserId);
   const queryString = params.toString();
 
   return useQuery<ProjectEmail[]>({
-    queryKey: emailKeys.global(status, source),
+    queryKey: emailKeys.global(status, source, mailboxUserId),
     queryFn: ({ signal }) =>
       apiFetch<ProjectEmail[]>(
         `/api/emails${queryString ? `?${queryString}` : ""}`,

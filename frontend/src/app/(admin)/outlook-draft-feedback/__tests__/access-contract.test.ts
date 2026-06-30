@@ -16,11 +16,15 @@ describe("outlook draft feedback access contract", () => {
     expect(pageSource).not.toContain("requireAdmin");
   });
 
-  it("keeps the training page read-only and connected to the canonical inbox queue", () => {
+  it("keeps the training page read-only and connected to the canonical Emails surface", () => {
     const pageSource = readFileSync(join(routeDir, "page.tsx"), "utf8");
 
-    expect(pageSource).toContain("EmailInboxClient");
-    expect(pageSource).toContain('initialTab="reviewed"');
+    expect(pageSource).toContain("EmailsClient");
+    expect(pageSource).toContain('detailsPanelMode="assistant-feedback"');
+    expect(pageSource).toContain('scope="global"');
+    expect(pageSource).toContain('source="outlook"');
+    expect(pageSource).toContain('mailboxUserId={BRANDON_MAILBOX_USER_ID}');
+    expect(pageSource).toContain("bclymer@alleatogroup.com");
     expect(pageSource).not.toContain("PageShell");
     expect(pageSource).not.toContain("<table");
     expect(pageSource).not.toContain("outlook_email_assistant_reviews");

@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/app/api/admin/_shared";
+import { requireDeveloper } from "@/app/api/admin/_shared";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractLangfuseTraceIdFromMetadata } from "@/lib/ai/langfuse-feedback";
@@ -298,7 +298,7 @@ export function mapChatHistoryRows(
 }
 
 export const GET = withApiGuardrails(WHERE, async ({ request }) => {
-  await requireAdmin(WHERE);
+  await requireDeveloper(WHERE);
 
   const supabase = createServiceClient();
   const searchParams = new URL(request.url).searchParams;

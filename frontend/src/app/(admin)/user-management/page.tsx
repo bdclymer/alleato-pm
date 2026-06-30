@@ -1435,12 +1435,21 @@ export default function PermissionsAdminPage() {
             scope: value === "company" ? "company" : "project",
           }),
         render: (role) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">
-              {role.scope === "company" ? "All projects" : "Project"}
-            </Badge>
-            {role.is_system && <Badge variant="outline">System</Badge>}
-          </div>
+          <Badge variant="outline">
+            {role.scope === "company" ? "All projects" : "Project"}
+          </Badge>
+        ),
+      },
+      {
+        id: "templateType",
+        label: "Type",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (role) => (role.is_system ? "system" : "custom"),
+        render: (role) => (
+          <span className="text-sm text-muted-foreground">
+            {role.is_system ? "System" : "Custom"}
+          </span>
         ),
       },
       {
@@ -1646,7 +1655,13 @@ export default function PermissionsAdminPage() {
             currentView: "table",
             onViewChange: () => undefined,
             columns: roleColumns,
-            visibleColumns: ["name", "description", "scope", "granular"],
+            visibleColumns: [
+              "name",
+              "description",
+              "scope",
+              "templateType",
+              "granular",
+            ],
             onColumnVisibilityChange: () => undefined,
           }}
           data={{

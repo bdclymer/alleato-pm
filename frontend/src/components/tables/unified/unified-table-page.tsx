@@ -124,6 +124,10 @@ export const TABLE_HEADER_LABEL_CLASSNAME =
 export const TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME = "w-auto lg:hidden";
 export const TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME =
   "hidden min-w-0 justify-end lg:flex";
+export const TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME =
+  "flex h-full min-h-0 flex-1 min-w-0 overflow-hidden";
+export const TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME =
+  "flex h-full min-h-0 flex-col overflow-hidden pb-0";
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -260,6 +264,12 @@ export interface TableColumn<T> extends ColumnConfig {
   editEmptyLabel?: string;
   editInputType?: React.HTMLInputTypeAttribute;
   /**
+   * "cell" lets the whole cell enter edit mode. "icon" keeps rendered content
+   * available for row/detail navigation and only opens editing from the pencil.
+   * Name columns default to "icon".
+   */
+  editTrigger?: "cell" | "icon";
+  /**
    * Declarative inline editor type. The component renders the matching editor
    * centrally — no per-column `renderEditor` needed:
    *  - "text" (default) / "number" / "date" → `<Input>` (also honours `editInputType`)
@@ -280,6 +290,14 @@ export interface TableColumn<T> extends ColumnConfig {
     onCommit: (value?: string) => void;
     onCancel: () => void;
   }) => ReactNode;
+}
+
+export function shouldUseIconOnlyInlineEdit<T>(
+  column: Pick<TableColumn<T>, "id" | "editTrigger">,
+) {
+  return column.editTrigger
+    ? column.editTrigger === "icon"
+    : column.id === "name";
 }
 
 type TableColumnAlignment = "left" | "center" | "right";
@@ -2565,15 +2583,18 @@ export function UnifiedTablePage<T>({
                             column,
                             "left",
                           );
+                          const isEditableCell =
+                            Boolean(resolvedFeatures.enableInlineEditing) &&
+                            Boolean(column.editable) &&
+                            Boolean(column.editValue);
+                          const isIconOnlyEdit =
+                            isEditableCell &&
+                            shouldUseIconOnlyInlineEdit(column);
                           return (
                             <TableCell
                               key={column.id}
                               data-editable-cell={
-                                resolvedFeatures.enableInlineEditing &&
-                                column.editable &&
-                                column.editValue
-                                  ? "true"
-                                  : undefined
+                                isEditableCell ? "true" : undefined
                               }
                               style={
                                 columnWidths[column.id] ||
@@ -2599,20 +2620,13 @@ export function UnifiedTablePage<T>({
                                   : columnAlignment === "center"
                                     ? "text-center"
                                     : "text-left",
-                                resolvedFeatures.enableInlineEditing &&
-                                  column.editable &&
-                                  column.editValue
-                                  ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
-                                  : "",
+                                isEditableCell &&
+                                  !isIconOnlyEdit &&
+                                  "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40",
+                                isIconOnlyEdit && "focus-within:bg-muted/40",
                               )}
                               onClick={(event) => {
-                                if (
-                                  !(
-                                    resolvedFeatures.enableInlineEditing &&
-                                    column.editable &&
-                                    column.editValue
-                                  )
-                                ) {
+                                if (!isEditableCell || isIconOnlyEdit) {
                                   return;
                                 }
                                 if (isInteractiveRowTarget(event.target)) {
@@ -2624,9 +2638,7 @@ export function UnifiedTablePage<T>({
                             >
                               {editingCell?.rowId === table.getRowId(item) &&
                               editingCell.columnId === column.id &&
-                              resolvedFeatures.enableInlineEditing &&
-                              column.editable &&
-                              column.editValue ? (
+                              isEditableCell ? (
                                 column.renderEditor ? (
                                   column.renderEditor({
                                     item,
@@ -2718,26 +2730,47 @@ export function UnifiedTablePage<T>({
                                     }}
                                   />
                                 )
-                              ) : resolvedFeatures.enableInlineEditing &&
-                                column.editable &&
-                                column.editValue ? (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
-                                  data-row-interactive="true"
-                                  aria-label={`Edit ${column.label}`}
-                                  title={`Edit ${column.label}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    startInlineEdit(item, column);
-                                  }}
-                                >
-                                  <span className="min-w-0 flex-1 truncate">
-                                    {column.render(item)}
-                                  </span>
-                                  <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
-                                </Button>
+                              ) : isEditableCell ? (
+                                isIconOnlyEdit ? (
+                                  <div className="flex min-w-0 items-center justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      {column.render(item)}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 shrink-0 opacity-0 transition-opacity hover:bg-transparent focus-visible:opacity-100 group-hover/cell:opacity-100 group-focus-within/cell:opacity-100"
+                                      data-row-interactive="true"
+                                      aria-label={`Edit ${column.label}`}
+                                      title={`Edit ${column.label}`}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        startInlineEdit(item, column);
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+                                    data-row-interactive="true"
+                                    aria-label={`Edit ${column.label}`}
+                                    title={`Edit ${column.label}`}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      startInlineEdit(item, column);
+                                    }}
+                                  >
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {column.render(item)}
+                                    </span>
+                                    <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
+                                  </Button>
+                                )
                               ) : (
                                 column.render(item)
                               )}
@@ -2941,7 +2974,7 @@ export function UnifiedTablePage<T>({
           const SplitView = views?.split;
           if (!SplitView) return null;
           return (
-            <div className="flex flex-1 min-h-0">
+            <div className={TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME}>
               {SplitView({
                 items: rowOrderedItems,
                 getRowId: table.getRowId,
@@ -3031,7 +3064,7 @@ export function UnifiedTablePage<T>({
         padding={containerPadding}
         className={cn(
           "pb-12",
-          canRenderSplitView && "flex flex-col min-h-0",
+          canRenderSplitView && TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
           sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}

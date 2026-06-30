@@ -16,6 +16,7 @@
     "lint": "eslint . --cache --cache-strategy content",
     "lint:errors": "eslint . --quiet --cache --cache-strategy content",
     "set-admin": "node scripts/set-admin.mjs",
+    "changelog:draft": "node ../scripts/changelog/draft-release.mjs",
     "typecheck": "rm -f tsconfig.tsbuildinfo && node scripts/run-typecheck-bounded.mjs",
     "audit:db": "tsx scripts/audit/audit-db-inserts.ts",
     "audit:db:mappers": "tsx scripts/audit/audit-db-mappers.ts",

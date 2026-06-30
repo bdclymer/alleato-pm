@@ -23,13 +23,14 @@ export default function DashboardLayout({
             style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
           >
             <SiteHeader />
-            <div
-              className="flex flex-1 flex-col min-w-0"
+            <main
+              id="app-main-content"
+              className="flex min-w-0 flex-1 flex-col"
               {...feedbackTargetProps("app.main-content")}
             >
               <div className="flex-1">{children}</div>
-              <SiteFooter />
-            </div>
+            </main>
+            <SiteFooter />
           </div>
         </CreateProjectDevConfigProvider>
       </SidebarInset>

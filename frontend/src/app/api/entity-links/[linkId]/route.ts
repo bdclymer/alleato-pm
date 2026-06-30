@@ -62,7 +62,7 @@ export async function DELETE(
     const supabase = await createClient();
 
     const { error, count } = await supabase
-      .from(parsed.data.table)
+      .from(parsed.data.table as never)
       .delete({ count: "exact" })
       .eq("id", parsed.data.linkId);
 

@@ -517,7 +517,10 @@ function AddMemberDialog({
                         )}
                       >
                         {isSelected && (
-                          <Check className="h-3 w-3" strokeWidth={3} />
+                          <Check
+                            className="h-3 w-3 text-primary-foreground"
+                            strokeWidth={3}
+                          />
                         )}
                       </div>
                       <div className="min-w-0 flex-1 flex items-baseline gap-2">
@@ -644,7 +647,10 @@ function AddVendorDialog({
                         )}
                       >
                         {isSelected && (
-                          <Check className="h-3 w-3" strokeWidth={3} />
+                          <Check
+                            className="h-3 w-3 text-primary-foreground"
+                            strokeWidth={3}
+                          />
                         )}
                       </div>
                       <div className="min-w-0 flex-1 flex items-baseline gap-2">
@@ -701,12 +707,12 @@ function AssignExistingCompanyDialog({
   onSuccess: () => void;
 }) {
   const [allCompanies, setAllCompanies] = React.useState<CompanyOption[]>([]);
-  const [selected, setSelected] = React.useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) return;
-    setSelected(null);
+    setSelectedIds([]);
     const supabase = createClient();
     supabase
       .from("companies")
@@ -721,19 +727,42 @@ function AssignExistingCompanyDialog({
     (c) => !existingCompanyIds.includes(c.id),
   );
 
+  const toggleSelected = (companyId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(companyId)
+        ? prev.filter((id) => id !== companyId)
+        : [...prev, companyId],
+    );
+  };
+
   const handleAssign = async () => {
-    if (!selected) return;
+    if (selectedIds.length === 0) return;
     setSaving(true);
     try {
-      await apiFetch(`/api/projects/${projectId}/directory/companies`, {
-        method: "POST",
-        body: JSON.stringify({ company_id: selected }),
-      });
-      toast.success("Company assigned to project");
-      onSuccess();
-      onOpenChange(false);
-    } catch (err) {
-      toast.error("Failed to assign company");
+      // Add each selected company. Settle all so one failure doesn't hide the
+      // companies that did get added; surface a partial-failure count.
+      const results = await Promise.allSettled(
+        selectedIds.map((companyId) =>
+          apiFetch(`/api/projects/${projectId}/directory/companies`, {
+            method: "POST",
+            body: JSON.stringify({ company_id: companyId }),
+          }),
+        ),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      const added = selectedIds.length - failed;
+      if (added > 0) {
+        toast.success(
+          `${added} compan${added === 1 ? "y" : "ies"} added to project`,
+        );
+        onSuccess();
+      }
+      if (failed > 0) {
+        toast.error(
+          `${failed} compan${failed === 1 ? "y" : "ies"} could not be added`,
+        );
+      }
+      if (failed === 0) onOpenChange(false);
     } finally {
       setSaving(false);
     }
@@ -744,10 +773,11 @@ function AssignExistingCompanyDialog({
       <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] gap-0 overflow-hidden border-border/60 p-0 sm:max-w-2xl">
         <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
           <DialogTitle className="text-lg tracking-tight">
-            Add company
+            Add companies
           </DialogTitle>
           <DialogDescription>
-            Search and select an existing company to add to this project.
+            Search and select one or more existing companies to add to this
+            project.
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 pb-2">
@@ -775,12 +805,12 @@ function AssignExistingCompanyDialog({
                   ]
                     .filter(Boolean)
                     .join(" · ");
-                  const isSelected = selected === company.id;
+                  const isSelected = selectedIds.includes(company.id);
                   return (
                     <CommandItem
                       key={company.id}
                       value={`${company.name} ${company.city ?? ""} ${company.state ?? ""}`}
-                      onSelect={() => setSelected(company.id)}
+                      onSelect={() => toggleSelected(company.id)}
                       className={cn(
                         "flex min-w-0 cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
                         "data-[selected=true]:bg-accent/60",
@@ -795,7 +825,10 @@ function AssignExistingCompanyDialog({
                         )}
                       >
                         {isSelected && (
-                          <Check className="h-3 w-3" strokeWidth={3} />
+                          <Check
+                            className="h-3 w-3 text-primary-foreground"
+                            strokeWidth={3}
+                          />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -828,9 +861,13 @@ function AssignExistingCompanyDialog({
             size="sm"
             className="w-full sm:w-auto"
             onClick={handleAssign}
-            disabled={!selected || saving}
+            disabled={selectedIds.length === 0 || saving}
           >
-            {saving ? "Adding..." : "Add company"}
+            {saving
+              ? "Adding..."
+              : selectedIds.length > 1
+                ? `Add ${selectedIds.length} companies`
+                : "Add company"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1062,7 +1099,7 @@ function ProjectTeamSection({
                 data-keep-text
                 onClick={() => setCreateRoleOpen(true)}
               >
-                Manage Roles
+                Add Role
               </Button>
             }
           />
@@ -1080,7 +1117,7 @@ function ProjectTeamSection({
                 data-keep-text
                 onClick={() => setCreateRoleOpen(true)}
               >
-                Manage Roles
+                Add Role
               </Button>
             }
           />
@@ -1105,7 +1142,7 @@ function ProjectTeamSection({
               data-keep-text
               onClick={() => setCreateRoleOpen(true)}
             >
-              Manage Roles
+              Add Role
             </Button>
           }
           items={filteredRows}
@@ -1903,359 +1940,270 @@ type CompanyContact = SubcontractorContact & {
   job_title: string | null;
 };
 
-type ExistingPerson = {
+type SubcontractorRow = {
+  id: string;
+  companyId: string;
+  projectCompanyId: string;
+  companyName: string;
+  typeLabel: string;
+  isPrimary: boolean;
+  contact: CompanyContact | null;
+};
+
+// Add-contact flow lifted out of the old per-company card. Lets the user attach
+// an existing directory contact to a company, or jump to creating a new one —
+// reused for every company from the flat Subcontractors table.
+type CompanyContactOption = {
   id: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
   company_name: string | null;
+  companyId: string | null;
 };
 
-function contactName(person: {
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-}): string {
-  const name = [person.first_name, person.last_name]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  return name || person.email || "Unnamed";
-}
-
-function CompanyContactCard({
-  projectId,
+// Multi-select contact picker for a company — same Modal + checkbox + assigned-
+// pills layout as AssignMemberDialog (Project Team) so both flows are identical.
+// Toggling a contact attaches/detaches them from this company immediately.
+function AddCompanyContactDialog({
+  open,
+  onOpenChange,
   companyId,
-  projectCompanyId,
   companyName,
-  typeLabel,
-  primaryContactId,
-  contacts,
-  removing,
-  onCompanyClick,
-  onRemoveCompany,
-  onRefetch,
+  onAdded,
 }: {
-  projectId: string;
-  companyId: string;
-  projectCompanyId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  companyId: string | null;
   companyName: string;
-  typeLabel: string;
-  primaryContactId: string | null;
-  contacts: CompanyContact[];
-  removing: boolean;
-  onCompanyClick: (companyId: string) => void;
-  onRemoveCompany: (projectCompanyId: string, companyName: string) => void;
-  onRefetch: () => void;
+  onAdded: () => void;
 }) {
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [addPopoverOpen, setAddPopoverOpen] = React.useState(false);
-  const [existingPeople, setExistingPeople] = React.useState<ExistingPerson[]>(
-    [],
-  );
-  const [loadingPeople, setLoadingPeople] = React.useState(false);
-  const [busyContactId, setBusyContactId] = React.useState<string | null>(null);
-  const updateMutation = useUpdateProjectCompany(projectId);
-  const { confirm: confirmContact, ConfirmDialog: ContactConfirmDialog } =
-    useConfirm();
-  const effectivePrimaryId = primaryContactId ?? contacts[0]?.id ?? null;
+  const [people, setPeople] = React.useState<CompanyContactOption[]>([]);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [search, setSearch] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!addPopoverOpen) return;
-    setLoadingPeople(true);
+  const load = React.useCallback(() => {
+    if (!companyId) return;
     const supabase = createClient();
     supabase
       .from("people")
       .select(
-        "id, first_name, last_name, email, company:companies!people_company_id_fkey(name)",
+        "id, first_name, last_name, email, company_id, company:companies!people_company_id_fkey(name)",
       )
-      .or(`company_id.is.null,company_id.neq.${companyId}`)
       .order("first_name", { ascending: true })
-      .limit(200)
+      .limit(1000)
       .then(({ data }) => {
-        setExistingPeople(
-          ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
-            id: row.id as string,
-            first_name: (row.first_name as string | null) ?? null,
-            last_name: (row.last_name as string | null) ?? null,
-            email: (row.email as string | null) ?? null,
-            company_name:
-              (row.company as { name?: string } | null)?.name ?? null,
-          })),
+        const rows: CompanyContactOption[] = (
+          (data ?? []) as Array<Record<string, unknown>>
+        ).map((row) => ({
+          id: row.id as string,
+          first_name: (row.first_name as string | null) ?? null,
+          last_name: (row.last_name as string | null) ?? null,
+          email: (row.email as string | null) ?? null,
+          company_name: (row.company as { name?: string } | null)?.name ?? null,
+          companyId: (row.company_id as string | null) ?? null,
+        }));
+        setPeople(rows);
+        setSelectedIds(
+          rows.filter((r) => r.companyId === companyId).map((r) => r.id),
         );
-        setLoadingPeople(false);
       });
-  }, [addPopoverOpen, companyId]);
+  }, [companyId]);
 
-  const handleSetPrimary = async (personId: string) => {
-    setBusyContactId(personId);
+  React.useEffect(() => {
+    if (!open) return;
+    setSearch("");
+    load();
+  }, [open, load]);
+
+  const personLabel = (p: CompanyContactOption) =>
+    [p.first_name, p.last_name].filter(Boolean).join(" ").trim() ||
+    p.email ||
+    "Unnamed";
+
+  const handleToggle = async (personId: string) => {
+    if (!companyId || saving) return;
+    const wasSelected = selectedIds.includes(personId);
+    setSaving(true);
+    setSelectedIds((prev) =>
+      wasSelected ? prev.filter((id) => id !== personId) : [...prev, personId],
+    );
     try {
-      await updateMutation.mutateAsync({
-        companyId: projectCompanyId,
-        data: { primary_contact_id: personId },
+      await updateContact(personId, {
+        company_id: wasSelected ? null : companyId,
       });
-      toast.success("Primary contact updated");
-      onRefetch();
-    } catch {
-      toast.error("Failed to update primary contact");
+      setPeople((prev) =>
+        prev.map((p) =>
+          p.id === personId
+            ? { ...p, companyId: wasSelected ? null : companyId }
+            : p,
+        ),
+      );
+      onAdded();
+    } catch (error) {
+      setSelectedIds((prev) =>
+        wasSelected
+          ? [...prev, personId]
+          : prev.filter((id) => id !== personId),
+      );
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to update contact";
+      toast.error(message);
     } finally {
-      setBusyContactId(null);
-    }
-  };
-
-  const handleAddExisting = async (person: ExistingPerson) => {
-    setAddPopoverOpen(false);
-    try {
-      await updateContact(person.id, { company_id: companyId });
-      toast.success(`${contactName(person)} added to ${companyName}`);
-      onRefetch();
-    } catch {
-      toast.error("Failed to add contact");
-    }
-  };
-
-  const handleRemoveContact = async (contact: CompanyContact) => {
-    const name = contactDisplayName(contact) || "this contact";
-    const ok = await confirmContact({
-      description: `Remove ${name} from ${companyName}? They stay in the directory but are no longer linked to this company.`,
-      variant: "destructive",
-      confirmLabel: "Remove",
-    });
-    if (!ok) return;
-    setBusyContactId(contact.id);
-    try {
-      await updateContact(contact.id, { company_id: null });
-      toast.success(`${name} removed from ${companyName}`);
-      onRefetch();
-    } catch {
-      toast.error("Failed to remove contact");
-    } finally {
-      setBusyContactId(null);
+      setSaving(false);
     }
   };
 
   return (
     <>
-      <tbody>
-        {/* Company section row — spans all columns */}
-        <tr>
-          <td colSpan={5} className="pt-4 pb-0">
-            <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-1.5">
-              <div className="flex min-w-0 items-baseline gap-2.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => onCompanyClick(companyId)}
-                  className="h-auto -ml-2 truncate px-2 py-0.5 text-sm font-semibold text-primary hover:bg-transparent hover:underline"
-                >
-                  {companyName}
-                </Button>
-                {typeLabel && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {typeLabel}
-                  </span>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-0.5">
-                <Popover open={addPopoverOpen} onOpenChange={setAddPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground"
-                      aria-label={`Add contact to ${companyName}`}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-0" align="end">
-                    <Command>
-                      <CommandInput placeholder="Search existing contacts..." />
-                      <CommandList className="max-h-56">
-                        <CommandEmpty>
-                          {loadingPeople ? "Loading..." : "No existing contacts found."}
-                        </CommandEmpty>
-                        {existingPeople.length > 0 && (
-                          <CommandGroup heading="Add existing contact">
-                            {existingPeople.map((person) => (
-                              <CommandItem
-                                key={person.id}
-                                value={`${person.first_name ?? ""} ${person.last_name ?? ""} ${person.email ?? ""}`}
-                                onSelect={() => void handleAddExisting(person)}
-                              >
-                                <div className="flex min-w-0 flex-col">
-                                  <span className="truncate text-sm">
-                                    {contactName(person)}
-                                  </span>
-                                  {(person.email || person.company_name) && (
-                                    <span className="truncate text-xs text-muted-foreground">
-                                      {[person.email, person.company_name]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                    </span>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )}
-                      </CommandList>
-                    </Command>
-                    <div className="border-t border-border/60 p-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-sm"
-                        onClick={() => {
-                          setAddPopoverOpen(false);
-                          setCreateOpen(true);
-                        }}
-                      >
-                        <UserPlus className="mr-2 h-4 w-4 shrink-0" />
-                        Create new contact
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground"
-                      aria-label="Company actions"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/directory/companies/${companyId}?edit=1`}>
-                        <Pencil className="mr-2 h-3.5 w-3.5" />
-                        Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      disabled={removing}
-                      onClick={() =>
-                        onRemoveCompany(projectCompanyId, companyName)
-                      }
-                    >
-                      <Trash2 className="mr-2 h-3.5 w-3.5" />
-                      {removing ? "Removing..." : "Remove"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </td>
-        </tr>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          size="2xl"
+          className="flex flex-col overflow-hidden gap-0 p-0 border-border/60"
+          style={{ maxHeight: "85vh" }}
+        >
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+            <DialogTitle className="text-lg tracking-tight">
+              Add contacts
+            </DialogTitle>
+            <DialogDescription>
+              {companyName
+                ? `Choose who works with ${companyName} on this project.`
+                : "Choose contacts for this company."}
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Contact rows */}
-        {contacts.length === 0 ? (
-          <tr>
-            <td
-              colSpan={5}
-              className="py-2.5 pb-3 text-sm text-muted-foreground"
-            >
-              No contacts yet.
-            </td>
-          </tr>
-        ) : (
-          contacts.map((contact) => {
-            const isPrimary = contact.id === effectivePrimaryId;
-            const phone = contact.phone_business || contact.phone_mobile;
-            return (
-              <tr key={contact.id} className="group border-t border-border/40">
-                <td className="py-2.5 pr-4">
-                  <div className="flex min-w-0 items-baseline gap-2">
-                    <Link
-                      href={`/directory/contacts/${contact.id}`}
-                      className="truncate text-sm text-foreground hover:underline"
-                    >
-                      {contactDisplayName(contact) || "Unnamed"}
-                    </Link>
-                    {isPrimary && (
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
-                        Primary
-                      </span>
-                    )}
+          <div className="flex min-h-0 flex-col px-6 pb-6">
+            <Command className="overflow-visible" shouldFilter={true}>
+              <div className="rounded-md bg-muted/50">
+                <CommandInput
+                  placeholder="Search contacts…"
+                  value={search}
+                  onValueChange={setSearch}
+                />
+              </div>
+              <CommandList className="mt-2 max-h-80 overflow-y-auto overscroll-contain -mx-1">
+                <CommandEmpty>
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {search ? `No matches for "${search}".` : "No contacts yet."}
                   </div>
-                </td>
-                <td className="py-2.5 pr-4">
-                  <span className="truncate text-sm text-muted-foreground">
-                    {contact.job_title}
-                  </span>
-                </td>
-                <td className="py-2.5 pr-4">
-                  {contact.email ? (
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="truncate text-sm text-muted-foreground hover:underline"
-                    >
-                      {contact.email}
-                    </a>
-                  ) : null}
-                </td>
-                <td className="py-2.5">
-                  <span className="truncate text-sm text-muted-foreground">
-                    {phone}
-                  </span>
-                </td>
-                <td className="py-2.5 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busyContactId === contact.id}
-                        className="h-7 w-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
-                        aria-label={`Actions for ${contactDisplayName(contact) || "contact"}`}
+                </CommandEmpty>
+                <CommandGroup className="p-0">
+                  {people.map((person) => {
+                    const displayName = personLabel(person);
+                    const email = person.email ?? "";
+                    const company = person.company_name ?? "";
+                    const isSelected = selectedIds.includes(person.id);
+                    return (
+                      <CommandItem
+                        key={person.id}
+                        value={`${displayName} ${email} ${company}`}
+                        onSelect={() => void handleToggle(person.id)}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                          "data-[selected=true]:bg-accent/60",
+                        )}
+                        disabled={saving}
                       >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {!isPrimary && (
-                        <DropdownMenuItem
-                          onClick={() => void handleSetPrimary(contact.id)}
+                        <div
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/25 bg-transparent",
+                          )}
                         >
-                          <Check className="mr-2 h-3.5 w-3.5" />
-                          Set as primary
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem asChild>
-                        <Link href={`/directory/contacts/${contact.id}`}>
-                          <Pencil className="mr-2 h-3.5 w-3.5" />
-                          Edit
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => void handleRemoveContact(contact)}
-                      >
-                        <UserX className="mr-2 h-3.5 w-3.5" />
-                        Remove from company
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            );
-          })
-        )}
-      </tbody>
+                          {isSelected && (
+                            <Check
+                              className="h-3 w-3 text-primary-foreground"
+                              strokeWidth={3}
+                            />
+                          )}
+                        </div>
+                        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1fr)] items-baseline gap-3">
+                          <span className="truncate text-sm text-foreground">
+                            {displayName}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {email}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {company}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
 
+            {selectedIds.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                  Assigned · {selectedIds.length}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedIds.map((id) => {
+                    const p = people.find((person) => person.id === id);
+                    if (!p) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 rounded-full bg-secondary py-0.5 pl-2.5 pr-1 text-xs"
+                      >
+                        <span className="text-foreground">{personLabel(p)}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => void handleToggle(id)}
+                          disabled={saving}
+                          aria-label={`Remove ${personLabel(p)}`}
+                          className="ml-0.5 h-4 w-4 rounded-full text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-40"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                onClick={() => {
+                  onOpenChange(false);
+                  setCreateOpen(true);
+                }}
+                className="text-xs font-medium"
+              >
+                <UserPlus className="h-3 w-3" />
+                Create new contact
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <ContactFormSheet
         open={createOpen}
         onOpenChange={setCreateOpen}
-        defaultCompanyId={companyId}
-        onSuccess={() => onRefetch()}
+        defaultCompanyId={companyId ?? undefined}
+        onSuccess={() => {
+          onAdded();
+          load();
+        }}
       />
-      {ContactConfirmDialog}
     </>
   );
 }
@@ -2288,11 +2236,19 @@ function CompaniesSection({
 }) {
   const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } =
     useConfirm();
+  const { confirm: confirmContact, ConfirmDialog: ContactConfirmDialog } =
+    useConfirm();
+  const updateMutation = useUpdateProjectCompany(projectId);
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
   const [removingCompanyId, setRemovingCompanyId] = React.useState<
     string | null
   >(null);
+  const [addContact, setAddContact] = React.useState<{
+    open: boolean;
+    companyId: string | null;
+    companyName: string;
+  }>({ open: false, companyId: null, companyName: "" });
 
   const handleRemoveCompany = async (
     companyId: string,
@@ -2366,7 +2322,6 @@ function CompaniesSection({
   }, [reloadContacts]);
 
   const companyCards = React.useMemo(() => {
-    const q = deferredSearch.trim().toLowerCase();
     return companies
       .map((projectCompany) => {
         const vendorClass = projectCompany.company?.vendor_class ?? null;
@@ -2390,18 +2345,292 @@ function CompaniesSection({
           contacts: contactsByCompany.get(projectCompany.company_id) ?? [],
         };
       })
-      .filter((card) => {
-        if (!q) return true;
-        if (card.name.toLowerCase().includes(q)) return true;
-        return card.contacts.some(
-          (contact) =>
-            contactDisplayName(contact).toLowerCase().includes(q) ||
-            (contact.email ?? "").toLowerCase().includes(q) ||
-            (contact.job_title ?? "").toLowerCase().includes(q),
-        );
-      })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [companies, ownerCompanyId, contactsByCompany, deferredSearch]);
+  }, [companies, ownerCompanyId, contactsByCompany]);
+
+  // Flatten to one row per contact (placeholder row for companies with no
+  // contacts), mirroring the Project Team table's one-row-per-member model so
+  // both sections share the same compact UnifiedTablePage layout & row height.
+  const allRows: SubcontractorRow[] = React.useMemo(
+    () =>
+      companyCards.flatMap((card): SubcontractorRow[] => {
+        const effectivePrimaryId =
+          card.primaryContactId ?? card.contacts[0]?.id ?? null;
+        if (card.contacts.length === 0) {
+          return [
+            {
+              id: `empty-${card.projectCompanyId}`,
+              companyId: card.companyId,
+              projectCompanyId: card.projectCompanyId,
+              companyName: card.name,
+              typeLabel: card.typeLabel,
+              isPrimary: false,
+              contact: null,
+            },
+          ];
+        }
+        return card.contacts.map((contact) => ({
+          id: contact.id,
+          companyId: card.companyId,
+          projectCompanyId: card.projectCompanyId,
+          companyName: card.name,
+          typeLabel: card.typeLabel,
+          isPrimary: contact.id === effectivePrimaryId,
+          contact,
+        }));
+      }),
+    [companyCards],
+  );
+
+  const filteredRows = React.useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    if (!q) return allRows;
+    return allRows.filter((row) => {
+      if (row.companyName.toLowerCase().includes(q)) return true;
+      const c = row.contact;
+      return (
+        !!c &&
+        (contactDisplayName(c).toLowerCase().includes(q) ||
+          (c.email ?? "").toLowerCase().includes(q) ||
+          (c.job_title ?? "").toLowerCase().includes(q))
+      );
+    });
+  }, [allRows, deferredSearch]);
+
+  const handleSetPrimary = async (
+    projectCompanyId: string,
+    personId: string,
+  ) => {
+    try {
+      await updateMutation.mutateAsync({
+        companyId: projectCompanyId,
+        data: { primary_contact_id: personId },
+      });
+      toast.success("Primary contact updated");
+      onRefetch();
+      reloadContacts();
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to update primary contact";
+      toast.error(message);
+    }
+  };
+
+  const handleRemoveContact = async (
+    contact: CompanyContact,
+    companyName: string,
+  ) => {
+    const name = contactDisplayName(contact) || "this contact";
+    const ok = await confirmContact({
+      description: `Remove ${name} from ${companyName}? They stay in the directory but are no longer linked to this company.`,
+      variant: "destructive",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
+    try {
+      await updateContact(contact.id, { company_id: null });
+      toast.success(`${name} removed from ${companyName}`);
+      onRefetch();
+      reloadContacts();
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to remove contact";
+      toast.error(message);
+    }
+  };
+
+  const subcontractorColumns: TableColumn<SubcontractorRow>[] = [
+    {
+      id: "company",
+      label: "Company",
+      width: 240,
+      render: (item) => (
+        <div className="flex min-w-0 items-baseline gap-2">
+          <button
+            type="button"
+            onClick={() => onCompanyClick(item.companyId)}
+            className="truncate text-sm font-medium text-primary hover:underline"
+          >
+            {item.companyName}
+          </button>
+          {item.typeLabel && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {item.typeLabel}
+            </span>
+          )}
+        </div>
+      ),
+      sortValue: (item) => item.companyName,
+      csvValue: (item) => item.companyName,
+    },
+    {
+      id: "name",
+      label: "Name",
+      render: (item) => {
+        if (!item.contact) {
+          return (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-sm text-primary"
+              onClick={() =>
+                setAddContact({
+                  open: true,
+                  companyId: item.companyId,
+                  companyName: item.companyName,
+                })
+              }
+            >
+              Add contact
+            </Button>
+          );
+        }
+        const c = item.contact;
+        return (
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-7 w-7 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                {initials(c.first_name, c.last_name)}
+              </AvatarFallback>
+            </Avatar>
+            <Link
+              href={`/directory/contacts/${c.id}`}
+              className="text-sm font-medium text-foreground hover:underline"
+            >
+              {contactDisplayName(c) || "Unnamed"}
+            </Link>
+            {item.isPrimary && (
+              <span className="shrink-0 text-[11px] text-muted-foreground">
+                Primary
+              </span>
+            )}
+          </div>
+        );
+      },
+      sortValue: (item) => contactDisplayName(item.contact),
+      csvValue: (item) => contactDisplayName(item.contact),
+    },
+    {
+      id: "title",
+      label: "Title",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.contact?.job_title ?? "—"}
+        </span>
+      ),
+      sortValue: (item) => item.contact?.job_title ?? "",
+      csvValue: (item) => item.contact?.job_title ?? "",
+    },
+    {
+      id: "email",
+      label: "Email",
+      render: (item) =>
+        item.contact?.email ? (
+          <a
+            href={`mailto:${item.contact.email}`}
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            {item.contact.email}
+          </a>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+      sortValue: (item) => item.contact?.email ?? "",
+      csvValue: (item) => item.contact?.email ?? "",
+    },
+    {
+      id: "phone",
+      label: "Phone",
+      render: (item) => {
+        const c = item.contact;
+        return (
+          <span className="text-sm text-muted-foreground">
+            {c?.phone_business || c?.phone_mobile || "—"}
+          </span>
+        );
+      },
+      sortValue: (item) =>
+        item.contact?.phone_business ?? item.contact?.phone_mobile ?? "",
+      csvValue: (item) =>
+        item.contact?.phone_business ?? item.contact?.phone_mobile ?? "",
+    },
+  ];
+
+  const renderRowActions = (item: SubcontractorRow) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground"
+          aria-label={`Actions for ${item.companyName}`}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() =>
+            setAddContact({
+              open: true,
+              companyId: item.companyId,
+              companyName: item.companyName,
+            })
+          }
+        >
+          <Plus className="mr-2 h-3.5 w-3.5" />
+          Add contact
+        </DropdownMenuItem>
+        {item.contact && !item.isPrimary && (
+          <DropdownMenuItem
+            onClick={() =>
+              void handleSetPrimary(item.projectCompanyId, item.contact!.id)
+            }
+          >
+            <Check className="mr-2 h-3.5 w-3.5" />
+            Set as primary
+          </DropdownMenuItem>
+        )}
+        {item.contact && (
+          <DropdownMenuItem asChild>
+            <Link href={`/directory/contacts/${item.contact.id}`}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit contact
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {item.contact && (
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() =>
+              void handleRemoveContact(item.contact!, item.companyName)
+            }
+          >
+            <UserX className="mr-2 h-3.5 w-3.5" />
+            Remove from company
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          className="text-destructive"
+          disabled={removingCompanyId === item.projectCompanyId}
+          onClick={() =>
+            void handleRemoveCompany(item.projectCompanyId, item.companyName)
+          }
+        >
+          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          Remove company
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const addCompanyAction = (
     <Button size="xs" data-keep-text onClick={onAssignClick}>
@@ -2411,68 +2640,51 @@ function CompaniesSection({
 
   return (
     <>
-      <SectionRow
-        title="Subcontractors"
-        action={addCompanyAction}
-        search={search}
-        onSearch={setSearch}
-        searchPlaceholder="Search companies or contacts..."
-      />
-      <div className="mt-4">
-        {isLoading ? (
-          <SectionSkeleton rows={3} />
-        ) : error ? (
+      {isLoading ? (
+        <>
+          <SectionRow title="Subcontractors" action={addCompanyAction} />
+          <div className="mt-4">
+            <SectionSkeleton rows={3} />
+          </div>
+        </>
+      ) : error ? (
+        <>
+          <SectionRow title="Subcontractors" action={addCompanyAction} />
           <p className="py-4 text-sm text-destructive">
             Failed to load companies.
           </p>
-        ) : companyCards.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            {search
-              ? "No companies or contacts match your search."
-              : "No subcontractors yet."}
-          </p>
-        ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border/60">
-                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4">
-                  Name
-                </th>
-                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4 w-40">
-                  Title
-                </th>
-                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground pr-4">
-                  Email
-                </th>
-                <th className="pb-2 pt-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-36">
-                  Phone
-                </th>
-                <th className="w-8" />
-              </tr>
-            </thead>
-            {companyCards.map((card) => (
-              <CompanyContactCard
-                key={card.projectCompanyId}
-                projectId={projectId}
-                companyId={card.companyId}
-                projectCompanyId={card.projectCompanyId}
-                companyName={card.name}
-                typeLabel={card.typeLabel}
-                primaryContactId={card.primaryContactId}
-                contacts={card.contacts}
-                removing={removingCompanyId === card.projectCompanyId}
-                onCompanyClick={onCompanyClick}
-                onRemoveCompany={handleRemoveCompany}
-                onRefetch={() => {
-                  onRefetch();
-                  reloadContacts();
-                }}
-              />
-            ))}
-          </table>
-        )}
-      </div>
+        </>
+      ) : (
+        <DirectoryUnifiedTable
+          title="Subcontractors"
+          action={addCompanyAction}
+          items={filteredRows}
+          columns={subcontractorColumns}
+          getRowId={(item) => item.id}
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search companies or contacts..."
+          totalItems={allRows.length}
+          rowActions={renderRowActions}
+          emptyTitle="No subcontractors yet"
+          emptyDescription="Add a company to start building the project directory."
+          filteredDescription="No companies or contacts match the current search."
+          isFiltered={Boolean(search)}
+        />
+      )}
+
+      <AddCompanyContactDialog
+        open={addContact.open}
+        onOpenChange={(open) => setAddContact((prev) => ({ ...prev, open }))}
+        companyId={addContact.companyId}
+        companyName={addContact.companyName}
+        onAdded={() => {
+          onRefetch();
+          reloadContacts();
+        }}
+      />
       {CompanyConfirmDialog}
+      {ContactConfirmDialog}
     </>
   );
 }

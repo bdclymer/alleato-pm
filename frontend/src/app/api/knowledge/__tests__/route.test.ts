@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
-import { DELETE, GET } from "../route";
+import { DELETE, GET, normalizeTags } from "../route";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
@@ -67,6 +67,7 @@ function makeSupabaseMock() {
       category: "knowledge",
       status: "embedded",
       file_name: "safety.pdf",
+      tags: "safety, osha",
     },
   ];
 
@@ -103,6 +104,31 @@ function makeSupabaseMock() {
   return { supabase, calls, removeMock, documentList };
 }
 
+describe("normalizeTags", () => {
+  it("returns null for null/undefined/empty", () => {
+    expect(normalizeTags(null)).toBeNull();
+    expect(normalizeTags(undefined)).toBeNull();
+    expect(normalizeTags("")).toBeNull();
+    expect(normalizeTags("   ")).toBeNull();
+  });
+
+  it("splits comma- and semicolon-separated strings and trims", () => {
+    expect(normalizeTags("safety, osha")).toEqual(["safety", "osha"]);
+    expect(normalizeTags("a;b ; c")).toEqual(["a", "b", "c"]);
+    expect(normalizeTags("hiring,,growth, ")).toEqual(["hiring", "growth"]);
+  });
+
+  it("parses a JSON-array string", () => {
+    expect(normalizeTags('["a","b"]')).toEqual(["a", "b"]);
+    expect(normalizeTags("[]")).toBeNull();
+  });
+
+  it("passes through and cleans an existing array", () => {
+    expect(normalizeTags(["x", " y ", ""])).toEqual(["x", "y"]);
+    expect(normalizeTags([])).toBeNull();
+  });
+});
+
 describe("/api/knowledge route", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -115,7 +141,11 @@ describe("/api/knowledge route", () => {
     const response = await GET(new NextRequest("http://localhost/api/knowledge"));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: documentList });
+    // tags is a TEXT column in the DB — the route must normalize it to an array
+    // so downstream `.map`/`.join` consumers never receive a raw string.
+    expect(await response.json()).toEqual({
+      data: [{ ...documentList[0], tags: ["safety", "osha"] }],
+    });
     expect(supabase.from).toHaveBeenCalledWith("document_metadata");
     expect(calls.document_metadata).toContainEqual({
       op: "eq",

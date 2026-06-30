@@ -61,4 +61,9 @@ export {
   InlineSelectEditor,
   type InlineSelectOption,
 } from "./inline-select-editor";
+export {
+  createInlinePatchHandler,
+  editableSelectColumn,
+  editableTextColumn,
+} from "./editable-columns";
 export { DataQualityCell } from "./data-quality-cell";
