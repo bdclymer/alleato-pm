@@ -295,6 +295,121 @@ export const appHelpToolGroups: AppHelpToolGroup[] = [
     ],
   },
   {
+    title: "Estimates",
+    description:
+      "Conceptual and detailed cost estimates that feed the project budget.",
+    articles: [
+      article(
+        "estimates",
+        "Estimates",
+        "Build and manage project cost estimates.",
+        ["/[projectId]/estimates"],
+      ),
+    ],
+  },
+  {
+    title: "Direct Costs",
+    description:
+      "Costs booked directly to the project outside of subcontracts and purchase orders.",
+    articles: [
+      article(
+        "direct-costs",
+        "Direct Costs",
+        "Record and track project direct costs.",
+        ["/[projectId]/direct-costs"],
+      ),
+    ],
+  },
+  {
+    title: "Invoicing",
+    description:
+      "Owner and subcontractor billing, pay applications, and invoice review.",
+    articles: [
+      article(
+        "invoicing",
+        "Invoicing",
+        "Manage owner and subcontractor invoices and pay applications.",
+        ["/[projectId]/invoicing"],
+      ),
+    ],
+  },
+  {
+    title: "Field Operations",
+    description:
+      "Daily logs, photos, and punch lists captured from the field.",
+    articles: [
+      article(
+        "daily-log",
+        "Daily Log",
+        "Capture daily field activity, weather, manpower, and notes.",
+        ["/[projectId]/daily-log"],
+      ),
+      article(
+        "photos",
+        "Photos",
+        "Upload, organize, and reference project photos.",
+        ["/[projectId]/photos"],
+      ),
+      article(
+        "punch-list",
+        "Punch List",
+        "Track and close out punch items before completion.",
+        ["/[projectId]/punch-list"],
+      ),
+    ],
+  },
+  {
+    title: "Integrations",
+    description:
+      "Connected systems: Outlook, Teams, and Acumatica ERP.",
+    articles: [
+      article(
+        "outlook-integration",
+        "Outlook Integration",
+        "Connect Outlook so project email flows into the platform.",
+        ["/settings/integrations"],
+      ),
+      article(
+        "acumatica-integration",
+        "Acumatica Integration",
+        "How financial data syncs from Acumatica ERP.",
+        ["/settings/integrations"],
+      ),
+    ],
+  },
+  {
+    title: "Settings and Permissions",
+    description:
+      "Account settings, notifications, user management, and access control.",
+    articles: [
+      article(
+        "permissions-admin",
+        "Permissions and Access",
+        "Manage roles, project access, and sensitive modules.",
+        ["/user-management", "/settings"],
+      ),
+      article(
+        "notifications",
+        "Notifications",
+        "Control how and when the platform notifies you.",
+        ["/settings"],
+      ),
+    ],
+  },
+  {
+    title: "Subcontractors",
+    description:
+      "The subcontractor portal: assigned work and invoice submission.",
+    articles: [
+      article(
+        "my-work",
+        "My Work",
+        "How subcontractors see assigned work across projects.",
+        ["/my-work"],
+      ),
+    ],
+  },
+  {
     title: "Training Docs",
     description:
       "AI-assisted training doc drafting, screenshot capture, review, and publishing.",

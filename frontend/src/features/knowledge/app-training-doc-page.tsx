@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
 import { SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type { TrainingDocStep, TrainingDocWithAssets } from "@/lib/training-docs/types";
@@ -82,7 +83,7 @@ export function AppTrainingDocPage({
           {bodyMarkdown.trim() ? (
             <section id="details" className="space-y-5">
               <SectionRuleHeading label="Details" />
-              <ManualMarkdown markdown={bodyMarkdown} />
+              <MarkdownRenderer content={bodyMarkdown} />
             </section>
           ) : null}
 
@@ -145,41 +146,6 @@ function TrainingDocStepBlock({
   );
 }
 
-function ManualMarkdown({ markdown }: { markdown: string }) {
-  const sections = parseMarkdownSections(markdown);
-  return (
-    <div className="max-w-3xl space-y-5">
-      {sections.map((section) => (
-        <section key={section.heading || section.blocks.map((block) => block.kind).join("-")} className="space-y-2">
-          {section.heading ? (
-            <div className="text-base font-semibold text-foreground">
-              {section.heading}
-            </div>
-          ) : null}
-          <div className="space-y-2 text-sm leading-6 text-foreground">
-            {section.blocks.map((block, index) =>
-              block.kind === "list" ? (
-                <ul
-                  key={`${section.heading}-list-${index}`}
-                  className="list-disc space-y-1 pl-5"
-                >
-                  {block.items.map((item) => (
-                    <li key={item}>{formatInlineMarkdown(item)}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p key={`${section.heading}-paragraph-${index}`}>
-                  {formatInlineMarkdown(block.text)}
-                </p>
-              ),
-            )}
-          </div>
-        </section>
-      ))}
-    </div>
-  );
-}
-
 function StepInstruction({ step }: { step: TrainingDocStep }) {
   const generatedList = getGeneratedList(step);
   const instructionIntro = stripMarkdownList(step.instruction_markdown);
@@ -200,82 +166,6 @@ function StepInstruction({ step }: { step: TrainingDocStep }) {
       ) : null}
     </div>
   );
-}
-
-function parseMarkdownSections(markdown: string): Array<{
-  heading: string;
-  blocks: Array<
-    { kind: "paragraph"; text: string } | { kind: "list"; items: string[] }
-  >;
-}> {
-  const sections: Array<{ heading: string; lines: string[] }> = [];
-  let current = { heading: "", lines: [] as string[] };
-
-  for (const line of markdown.split("\n")) {
-    const heading = line.match(/^##\s+(.+)$/);
-    if (heading) {
-      if (current.heading || current.lines.some((item) => item.trim())) {
-        sections.push(current);
-      }
-      current = { heading: heading[1].trim(), lines: [] };
-      continue;
-    }
-    current.lines.push(line);
-  }
-
-  if (current.heading || current.lines.some((item) => item.trim())) {
-    sections.push(current);
-  }
-
-  return sections.map((section) => ({
-    heading: section.heading,
-    blocks: parseMarkdownBlocks(section.lines),
-  }));
-}
-
-function parseMarkdownBlocks(
-  lines: string[],
-): Array<
-  { kind: "paragraph"; text: string } | { kind: "list"; items: string[] }
-> {
-  const blocks: Array<
-    { kind: "paragraph"; text: string } | { kind: "list"; items: string[] }
-  > = [];
-  let paragraph: string[] = [];
-  let list: string[] = [];
-
-  function flushParagraph() {
-    const text = paragraph.join(" ").replace(/\s+/g, " ").trim();
-    if (text) blocks.push({ kind: "paragraph", text });
-    paragraph = [];
-  }
-
-  function flushList() {
-    if (list.length) blocks.push({ kind: "list", items: list });
-    list = [];
-  }
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      flushParagraph();
-      flushList();
-      continue;
-    }
-
-    if (trimmed.startsWith("- ")) {
-      flushParagraph();
-      list.push(trimmed.slice(2).trim());
-      continue;
-    }
-
-    flushList();
-    paragraph.push(trimmed);
-  }
-
-  flushParagraph();
-  flushList();
-  return blocks;
 }
 
 function getGeneratedList(step: TrainingDocStep): string[] {
