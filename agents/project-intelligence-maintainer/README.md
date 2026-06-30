@@ -61,8 +61,10 @@ human approves the tool call. A repair is not complete until the tool reads back
 
 ## Schedule
 
-`agent/schedules/weekday-maintainer-scan.ts` runs on weekdays at 13:00 UTC and
-hands the maintainer scan to the Eve Linear Agent Session channel.
+`agent/schedules/weekday-maintainer-scan.ts` runs on weekdays at 13:00 UTC. It
+hands the maintainer scan to the Eve Linear Agent Session channel as the durable
+record, and can also post the same report to Microsoft Teams when Teams provider
+env is configured.
 
 Required delivery environment:
 
@@ -76,10 +78,30 @@ The Linear channel also accepts `LINEAR_ACCESS_TOKEN` or `LINEAR_API_KEY` as an
 access-token fallback, but `LINEAR_AGENT_ACCESS_TOKEN` is preferred because Eve's
 Linear channel posts native Agent Activities.
 
-If any delivery value is missing, the schedule logs a blocked delivery message
-with the missing configuration flags and exits without claiming success. The
-schedule does not mutate Project Intelligence data; repair tools still require
-bounded scope and human approval.
+Optional Teams delivery environment:
+
+```bash
+MICROSOFT_APP_ID=...
+MICROSOFT_APP_PASSWORD=...
+MICROSOFT_TENANT_ID=... # optional for single-tenant bots
+EVE_PROJECT_INTELLIGENCE_TEAMS_SERVICE_URL=https://smba.trafficmanager.net/...
+EVE_PROJECT_INTELLIGENCE_TEAMS_CONVERSATION_ID=...
+EVE_PROJECT_INTELLIGENCE_TEAMS_CONVERSATION_TYPE=channel
+EVE_PROJECT_INTELLIGENCE_TEAMS_TEAM_ID=...
+EVE_PROJECT_INTELLIGENCE_TEAMS_CHANNEL_ID=...
+EVE_PROJECT_INTELLIGENCE_TEAMS_REPLY_TO_ACTIVITY_ID=... # optional thread anchor
+```
+
+Teams delivery uses Eve's Bot Framework channel at `POST /eve/v1/teams`.
+Proactive scheduled delivery requires an existing Teams conversation reference,
+so `serviceUrl` and `conversationId` must come from a prior bot interaction or
+provider setup.
+
+If Linear delivery values are missing, the schedule logs a blocked delivery
+message and exits without claiming success. If Teams values are missing, Teams
+delivery logs a blocked message while Linear delivery remains the durable record.
+The schedule does not mutate Project Intelligence data; repair tools still
+require bounded scope and human approval.
 
 ## Failure contract
 
