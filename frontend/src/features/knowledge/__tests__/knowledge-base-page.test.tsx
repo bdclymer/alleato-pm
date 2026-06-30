@@ -165,17 +165,15 @@ describe("KnowledgeBasePage", () => {
       screen.getByRole("heading", { name: "Training Docs" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Training doc tools" }),
+      screen.getByRole("navigation", { name: "Knowledge topics" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "On this page" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("Search..."),
+      screen.getByPlaceholderText("Search training docs..."),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Training docs home" }).closest("header"),
-    ).toHaveClass("hidden", "lg:block");
+    expect(screen.getByRole("banner")).toHaveClass("hidden", "lg:flex");
     expect(screen.getAllByRole("link", { name: /Budget/ })[0]).toHaveAttribute(
       "href",
       "/knowledge/app/budget",
@@ -184,15 +182,11 @@ describe("KnowledgeBasePage", () => {
       screen.getAllByRole("link", { name: /Create training doc/ })[0],
     ).toHaveAttribute("href", "/training-docs");
     expect(
-      screen.getByRole("link", { name: "Company Knowledge" }),
-    ).toHaveAttribute("href", "/knowledge/company");
-    expect(
-      screen.getByRole("button", { name: "Open training docs menu" }),
+      screen.getByRole("button", { name: "Open knowledge menu" }),
     ).toBeInTheDocument();
     expect(
-      screen
-        .getByRole("button", { name: "Open training docs menu" })
-        .parentElement?.parentElement,
+      screen.getByRole("button", { name: "Open knowledge menu" }).parentElement
+        ?.parentElement,
     ).not.toHaveClass("border-b");
   });
 
@@ -201,14 +195,14 @@ describe("KnowledgeBasePage", () => {
     render(<AppTrainingDocsPage trainingDocs={[]} />);
 
     await user.click(
-      screen.getByRole("button", { name: "Open training docs menu" }),
+      screen.getByRole("button", { name: "Open knowledge menu" }),
     );
 
     expect(
-      screen.getByRole("navigation", { name: "Mobile training doc tools" }),
+      screen.getByRole("navigation", { name: "Mobile knowledge topics" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Close training docs menu" }),
+      screen.getByRole("button", { name: "Close knowledge menu" }),
     ).toBeInTheDocument();
   });
 
@@ -246,10 +240,10 @@ describe("KnowledgeBasePage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Budget" }),
+      screen.getByRole("heading", { name: "Budget Training Docs" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Published training docs" }),
+      screen.getByRole("region", { name: "Budget training docs" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Budget Setup")).toBeInTheDocument();
     expect(screen.queryByText("Meeting Prep")).not.toBeInTheDocument();
@@ -257,7 +251,7 @@ describe("KnowledgeBasePage", () => {
       screen.getByRole("link", { name: /Budget Setup/ }),
     ).toHaveAttribute(
       "href",
-      "https://alleato-os-docs.vercel.app/project-management-tools/training-docs/budget-setup",
+      "/knowledge/app/budget/budget-setup",
     );
   });
 });

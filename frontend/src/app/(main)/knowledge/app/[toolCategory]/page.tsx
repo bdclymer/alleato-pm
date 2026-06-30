@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { PageShell } from "@/components/layout";
 import { getAppKnowledgeToolCategory } from "@/features/knowledge/app-knowledge";
 import { AppTrainingDocsPage } from "@/features/knowledge/app-training-docs-page";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -19,16 +18,9 @@ export default async function KnowledgeAppToolCategoryPage({
 
   const trainingDocs = await listPublishedTrainingDocs(createServiceClient());
   return (
-    <PageShell
-      variant="detailWide"
-      title={`${category.title} Training Docs`}
-      showHeader={false}
-      contentClassName="mx-auto max-w-screen-2xl"
-    >
-      <AppTrainingDocsPage
-        activeCategorySlug={category.slug}
-        trainingDocs={trainingDocs}
-      />
-    </PageShell>
+    <AppTrainingDocsPage
+      activeCategorySlug={category.slug}
+      trainingDocs={trainingDocs}
+    />
   );
 }

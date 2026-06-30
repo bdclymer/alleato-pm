@@ -83,7 +83,6 @@ export function AppTrainingDocsPage({
       sourceListNoun="training docs"
       title="Training Docs"
       topBarLabel="Knowledge"
-      withShell={false}
     />
   );
 }
