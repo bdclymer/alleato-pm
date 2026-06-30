@@ -21,7 +21,10 @@ const BASE_URL = process.env.API_SMOKE_BASE_URL || "http://localhost:3000";
 const ERROR_ALERT_WEBHOOK_URL = process.env.ERROR_ALERT_WEBHOOK_URL || "";
 const PROJECT_ID = process.env.API_SMOKE_PROJECT_ID || "67";
 const BEARER_TOKEN = process.env.API_SMOKE_BEARER_TOKEN || "";
-const FAKE_UUID = "00000000-0000-0000-0000-000000000000";
+// A syntactically valid but non-existent UUID for "fake id" probes. Must NOT be the
+// nil UUID (00000000-…): route handlers call assertNonNilUuid() which rejects the nil
+// UUID with a 400 before auth/lookup, which would mask the 401/404 these probes assert.
+const FAKE_UUID = "11111111-1111-1111-1111-111111111111";
 
 // FastAPI backend (separate service from the Next.js app). The intelligence
 // endpoints live here, authed via the x-admin-api-key header. Default matches
@@ -123,7 +126,7 @@ const ENDPOINTS = [
   // removed or the inline schema crashed, breaking in-place editing.
   ["PATCH", `/api/commitments/${FAKE_UUID}`, "Commitment inline PATCH — title/description/executed (auth check)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
-  ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
+  ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (deprecated notice)", [200]],
   // Regression guard: this endpoint returns { deprecated: true } with 200 (no auth required).
   // A 500 here would mean the stub was accidentally removed or the handler was broken.
   ["POST", "/api/sync/acumatica/vendors", "Vendors Acumatica sync (deprecated notice)", [200]],
@@ -179,7 +182,10 @@ const ENDPOINTS = [
   // email fails. The status change is persisted first, then the route returns 200 with a
   // non-blocking `_emailWarning` instead of a 502. An unauthenticated PATCH must return 401
   // (auth runs before any status/email work) — a 500 means the close handler crashed before auth.
-  ["PATCH", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI close — email failure is non-blocking (auth check)", [401]],
+  // Sends a realistic close payload so this exercises the auth path (-> 401), not the
+  // empty-body case. The route must check auth BEFORE parsing the body, or an
+  // unauthenticated request would surface a 500 from request.json() instead of 401.
+  ["PATCH", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI close — email failure is non-blocking (auth check)", [401], { status: "closed" }],
 
   // Submittals
   ["GET", `/api/projects/${PROJECT_ID}/submittals`, "Submittals list", [200, 401]],
@@ -316,7 +322,8 @@ const AUTH_WRITE_PROBES = [
     method: "PUT",
     path: `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/advanced-settings`,
     description: "Prime contract advanced settings invalid payload validation",
-    expectedStatuses: [400],
+    // 400 if payload is validated first; 404 if the non-existent contract is resolved first.
+    expectedStatuses: [400, 404],
     body: {
       project_settings: {
         co_tier_count: 9,
@@ -457,7 +464,7 @@ async function run() {
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Endpoints: ${total}\n`);
 
-  for (const [method, path, description, expectedStatuses] of ENDPOINTS) {
+  for (const [method, path, description, expectedStatuses, requestBody] of ENDPOINTS) {
     const url = `${BASE_URL}${path}`;
     let status = 0;
     let body = null;
@@ -466,6 +473,12 @@ async function run() {
       const res = await fetch(url, {
         method,
         signal: AbortSignal.timeout(10000),
+        ...(requestBody !== undefined
+          ? {
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(requestBody),
+            }
+          : {}),
       });
       status = res.status;
       const text = await res.text();

@@ -8,6 +8,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
@@ -30,6 +31,7 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
 
     const { rfiId } = await params;
+    assertNonNilUuid(rfiId, "rfiId", "projects/[projectId]/rfis/[rfiId]#GET");
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -74,14 +76,18 @@ export const PATCH = withApiGuardrails(
   async ({ request, params }) => {
   
     const { rfiId } = await params;
-    const supabase = await createClient();
-    const body = await request.json();
+    assertNonNilUuid(rfiId, "rfiId", "projects/[projectId]/rfis/[rfiId]#PATCH");
 
-    // Auth check
+    // Auth check — run BEFORE parsing the request body. An unauthenticated request
+    // may have no body, so calling request.json() first would throw and surface a 500
+    // instead of the correct 401.
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis/[rfiId]#PATCH", message: "Authentication required." });
     }
+
+    const supabase = await createClient();
+    const body = await request.json();
 
     // Validate update data
     const result = rfiEditSchema.safeParse(body);
@@ -353,6 +359,7 @@ export const DELETE = withApiGuardrails(
   async ({ request, params }) => {
   
     const { rfiId } = await params;
+    assertNonNilUuid(rfiId, "rfiId", "projects/[projectId]/rfis/[rfiId]#DELETE");
     const supabase = await createClient();
 
     // Auth check
