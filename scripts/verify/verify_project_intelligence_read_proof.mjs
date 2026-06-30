@@ -66,8 +66,27 @@ const ragPool = new pg.Pool({
   max: 1,
 });
 
+async function connectOrFail(pool, label) {
+  try {
+    return await pool.connect();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = error?.code ? ` code=${error.code}` : "";
+    console.error(`${label} connection failed:${code} ${message}`);
+    console.error(
+      label === "RAG database"
+        ? "RAG read-proof verification cannot prove source intelligence jobs or full-source read proof while the AI/RAG database is unreachable."
+        : "App database read-proof verification cannot prove document metadata or packet evidence while the PM app database is unreachable.",
+    );
+    process.exit(1);
+  }
+}
+
 try {
-  const { rows: sourceRows } = await appPool.query(
+  const appClient = await connectOrFail(appPool, "App database");
+  const ragClient = await connectOrFail(ragPool, "RAG database");
+
+  const { rows: sourceRows } = await appClient.query(
     `
       select
         dm.id,
@@ -90,7 +109,7 @@ try {
   const ids = sourceRows.map((row) => row.id);
   let proofRows = [];
   if (ids.length) {
-    const result = await ragPool.query(
+    const result = await ragClient.query(
       `
         select distinct on (source_document_id)
           source_document_id,
