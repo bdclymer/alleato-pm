@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Check, Edit, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Edit, FileDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -31,7 +31,7 @@ import type { BudgetCodeOption } from "@/components/domain/change-events/change-
 import { useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, DetailPanel, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import {
   normalizeBudgetCodesForSelector,
   resolveBudgetCodeByCostFields,
@@ -599,6 +599,30 @@ export default function CommitmentCODetailPage() {
     }
   }, [co, contractId, projectId, commitmentCoId, router, confirm]);
 
+  const handleExportPdf = useCallback(async () => {
+    try {
+      const blob = await apiFetchBlob(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/pdf`,
+      );
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const fileSlug = co?.change_order_number || "commitment-change-order";
+
+      link.href = url;
+      link.download = `${fileSlug}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("PDF downloaded successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to export PDF",
+      );
+    }
+  }, [co?.change_order_number, projectId, commitmentCoId]);
+
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
     try {
@@ -1031,7 +1055,16 @@ export default function CommitmentCODetailPage() {
               <Edit />
               Edit
             </Button>
-            <DetailActions onDelete={handleDelete} />
+            <DetailActions
+              onDelete={handleDelete}
+              extraActions={[
+                {
+                  label: "Export PDF",
+                  icon: <FileDown className="h-4 w-4" />,
+                  onClick: () => void handleExportPdf(),
+                },
+              ]}
+            />
           </div>
         }
       >
