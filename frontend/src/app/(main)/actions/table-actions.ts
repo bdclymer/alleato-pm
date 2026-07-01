@@ -102,33 +102,19 @@ export async function deleteProject(id: string | number) {
   return deleteTableRow("projects", id, ["/projects", "/"]);
 }
 
-export async function createCompany(data: CompanyData): Promise<CreateResponse<CompanyData>> {
-  try {
-    const supabase = await createSupabaseClient();
+// Companies are managed exclusively in Acumatica (ERP) by Accounting, so
+// insurance, EIN, and legal details stay accurate — creation and edits from
+// the PM app are disabled. Records sync in automatically via
+// `backend/src/services/acumatica_sync.py`.
+const ERP_MANAGED_MESSAGE =
+  "Companies are managed in Acumatica (ERP) by Accounting and can no longer be changed here. Ask Accounting to update Acumatica — the change will sync in automatically.";
 
-    const { data: company, error } = await supabase
-      .from("companies")
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) {
-      return { error: error.message };
-    }
-
-    revalidatePath("/companies");
-    revalidatePath("/directory/companies");
-    return { success: true, data: company };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create company" };
-  }
+export async function createCompany(_data: CompanyData): Promise<CreateResponse<CompanyData>> {
+  return { error: ERP_MANAGED_MESSAGE };
 }
 
-export async function updateCompany(id: string, data: CompanyUpdateData) {
-  return updateTableRow("companies", id, data, [
-    "/companies",
-    "/directory/companies",
-  ]);
+export async function updateCompany(_id: string, _data: CompanyUpdateData) {
+  return { error: ERP_MANAGED_MESSAGE };
 }
 
 export async function deleteCompany(id: string) {
@@ -138,33 +124,12 @@ export async function deleteCompany(id: string) {
   ]);
 }
 
-export async function createClient(data: CompanyData) {
-  try {
-    const supabase = await createSupabaseClient();
-
-    const { data: client, error } = await supabase
-      .from("companies")
-      .insert({ ...data, type: data.type ?? "client" })
-      .select()
-      .single();
-
-    if (error) {
-      return { error: error.message };
-    }
-
-    revalidatePath("/clients");
-    revalidatePath("/directory/clients");
-    return { success: true, data: client };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create client" };
-  }
+export async function createClient(_data: CompanyData) {
+  return { error: ERP_MANAGED_MESSAGE };
 }
 
-export async function updateClient(id: string, data: CompanyUpdateData) {
-  return updateTableRow("companies", id, data, [
-    "/clients",
-    "/directory/clients",
-  ]);
+export async function updateClient(_id: string, _data: CompanyUpdateData) {
+  return { error: ERP_MANAGED_MESSAGE };
 }
 
 export async function deleteClient(id: string) {

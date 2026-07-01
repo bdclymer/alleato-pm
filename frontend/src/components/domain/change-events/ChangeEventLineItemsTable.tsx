@@ -368,7 +368,6 @@ export function ChangeEventLineItemsTable({
               value={formState.vendorId}
               onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
               vendors={vendors}
-              onAddCompany={() => {}}
             />
           </div>
 

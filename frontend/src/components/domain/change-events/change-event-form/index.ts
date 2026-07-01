@@ -1,7 +1,6 @@
 export { GeneralInfoSection } from "./GeneralInfoSection";
 export { LineItemsSection } from "./LineItemsSection";
 export { LineItemRow } from "./LineItemRow";
-export { AddCompanyModal } from "./AddCompanyModal";
 export { VendorCombobox } from "./VendorCombobox";
 export { ContractCombobox } from "./ContractCombobox";
 export { useChangeEventFormData } from "./useChangeEventFormData";

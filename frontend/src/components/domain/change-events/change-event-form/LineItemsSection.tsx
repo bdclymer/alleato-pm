@@ -49,7 +49,6 @@ interface LineItemsSectionProps {
   contracts: ContractOption[];
   budgetCodes: BudgetCodeOption[];
   commitmentLineItemsMap: Record<string, CommitmentSovLineItem[]>;
-  onAddCompany: () => void;
   onCreateBudgetCode: (rowIndex: number) => void;
   handleCommitmentChange: (rowIndex: number, commitmentId: string) => void;
   handleCommitmentLineItemChange: (rowIndex: number, commitmentId: string, sovLineItemId: string) => void;
@@ -69,7 +68,6 @@ export function LineItemsSection({
   contracts,
   budgetCodes,
   commitmentLineItemsMap,
-  onAddCompany,
   onCreateBudgetCode,
   handleCommitmentChange,
   handleCommitmentLineItemChange,
@@ -149,7 +147,6 @@ export function LineItemsSection({
                   contracts={contracts}
                   budgetCodes={budgetCodes}
                   commitmentLineItemsMap={commitmentLineItemsMap}
-                  onAddCompany={onAddCompany}
                   onCreateBudgetCode={onCreateBudgetCode}
                   handleCommitmentChange={handleCommitmentChange}
                   handleCommitmentLineItemChange={handleCommitmentLineItemChange}

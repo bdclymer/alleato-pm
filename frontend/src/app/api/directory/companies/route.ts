@@ -103,80 +103,26 @@ export const GET = withApiGuardrails(
 
 /**
  * POST /api/directory/companies
- * Create a new company in the global directory
  *
- * Required fields:
- * - name: Company name
- *
- * Optional fields:
- * - address, city, state, zip: Address information
- * - business_phone, email_address: Contact information
- * - company_type: YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER
- * - website: Company website
+ * Disabled: companies are managed exclusively in Acumatica (ERP) by Accounting,
+ * so insurance, EIN, and legal details stay accurate. New companies sync in
+ * automatically via `backend/src/services/acumatica_sync.py`.
  */
 export const POST = withApiGuardrails(
   "directory/companies#POST",
-  async ({ request }) => {
-  
-    const supabase = await createClient();
-
-    // Check authentication
+  async () => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies#POST", message: "Authentication required." });
     }
 
-    // Parse request body
-    const body = await request.json();
-
-    // Validate required fields
-    if (!body.name || typeof body.name !== "string" || body.name.trim().length === 0) {
-      return NextResponse.json(
-        {
-          error: "validation_error",
-          message: "Company name is required",
-        },
-        { status: 422 }
-      );
-    }
-
-    const companyType = body.company_type || body.type || "VENDOR";
-    const NON_VENDOR_TYPES = ["client", "CLIENT", "YOUR_COMPANY"];
-    const isVendor = !NON_VENDOR_TYPES.includes(companyType);
-
-    // Insert company
-    const { data: company, error } = await supabase
-      .from("companies")
-      .insert({
-        name: body.name.trim(),
-        title: body.title || null,
-        address: body.address || null,
-        city: body.city || null,
-        state: body.state || null,
-        website: body.website || null,
-        license_number: body.license_number || null,
-        type: companyType,
-        status: body.status || "ACTIVE",
-        is_vendor: isVendor,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      logger.error({ msg: "Error creating company:", error: error instanceof Error ? error.message : String(error) });
-      // Check for duplicate company
-      if (error.code === "23505") {
-        return NextResponse.json(
-          {
-            error: "duplicate_company",
-            message: "A company with this name already exists",
-          },
-          { status: 409 }
-        );
-      }
-      return apiErrorResponse(error);
-    }
-
-    return NextResponse.json(company, { status: 201 });
-    },
+    return NextResponse.json(
+      {
+        error: "erp_managed",
+        message:
+          "Companies are managed in Acumatica (ERP) by Accounting and can no longer be created here. Ask Accounting to add the company in Acumatica — it will sync in automatically.",
+      },
+      { status: 403 },
+    );
+  },
 );

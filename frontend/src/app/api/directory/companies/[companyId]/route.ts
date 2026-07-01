@@ -48,95 +48,28 @@ export const GET = withApiGuardrails(
 
 /**
  * PATCH /api/directory/companies/[companyId]
- * Update a company
+ *
+ * Disabled: companies are managed exclusively in Acumatica (ERP) by Accounting,
+ * so insurance, EIN, and legal details stay accurate. Edits sync in
+ * automatically via `backend/src/services/acumatica_sync.py`.
  */
 export const PATCH = withApiGuardrails(
   "directory/companies/[companyId]#PATCH",
-  async ({ request, params }) => {
-  
-    const { companyId } = await params;
-    const supabase = await createClient();
-
-    // Check authentication
+  async () => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]#PATCH", message: "Authentication required." });
     }
 
-    // Parse request body
-    const body = await request.json();
-
-    if (body.primary_contact_id !== undefined && body.primary_contact_id !== null) {
-      const { data: contact, error: contactError } = await supabase
-        .from("people")
-        .select("id")
-        .eq("id", body.primary_contact_id)
-        .eq("company_id", companyId)
-        .maybeSingle();
-
-      if (contactError) {
-        return apiErrorResponse(contactError);
-      }
-
-      if (!contact) {
-        return NextResponse.json(
-          { error: "Primary contact must be associated with this company" },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Update company
-    const { data: company, error } = await supabase
-      .from("companies")
-      .update({
-        ...(body.name !== undefined && { name: body.name }),
-        ...(body.title !== undefined && { title: body.title }),
-        ...(body.legal_name !== undefined && { legal_name: body.legal_name }),
-        ...(body.address !== undefined && { address: body.address }),
-        ...(body.city !== undefined && { city: body.city }),
-        ...(body.state !== undefined && { state: body.state }),
-        ...(body.zip_code !== undefined && { zip_code: body.zip_code }),
-        ...(body.country !== undefined && { country: body.country }),
-        ...(body.tax_id !== undefined && { tax_id: body.tax_id }),
-        ...(body.notes !== undefined && { notes: body.notes }),
-        ...(body.website !== undefined && { website: body.website }),
-        ...(body.license_number !== undefined && { license_number: body.license_number }),
-        ...(body.company_type !== undefined && { type: body.company_type }),
-        ...(body.type !== undefined && { type: body.type }),
-        ...(body.status !== undefined && { status: body.status }),
-        ...(body.business_phone !== undefined && { contact_phone: body.business_phone }),
-        ...(body.contact_phone !== undefined && { contact_phone: body.contact_phone }),
-        ...(body.email_address !== undefined && { contact_email: body.email_address }),
-        ...(body.contact_email !== undefined && { contact_email: body.contact_email }),
-        ...(body.erp_vendor_id !== undefined && { acumatica_vendor_id: body.erp_vendor_id }),
-        ...(body.acumatica_vendor_id !== undefined && { acumatica_vendor_id: body.acumatica_vendor_id }),
-        ...(body.primary_contact_id !== undefined && { primary_contact_id: body.primary_contact_id }),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", companyId)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Company not found" },
-          { status: 404 }
-        );
-      }
-      // Check for duplicate name
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "A company with this name already exists" },
-          { status: 409 }
-        );
-      }
-      return apiErrorResponse(error);
-    }
-
-    return NextResponse.json(company);
-    },
+    return NextResponse.json(
+      {
+        error: "erp_managed",
+        message:
+          "Companies are managed in Acumatica (ERP) by Accounting and can no longer be edited here. Ask Accounting to update the record in Acumatica — the change will sync in automatically.",
+      },
+      { status: 403 },
+    );
+  },
 );
 
 /**

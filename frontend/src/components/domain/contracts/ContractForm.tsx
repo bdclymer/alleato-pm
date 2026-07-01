@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { isDevelopment } from "@/lib/dev-autofill";
 import {
-  PrimeContractAddCompanyDialog,
   PrimeContractDatesSection,
   PrimeContractGeneralInfoSection,
   PrimeContractPrivacySection,
@@ -84,8 +83,6 @@ export function ContractForm({
     companyOptions,
     companiesLoading,
     userOptions,
-    showAddCompany,
-    newCompanyName,
     isCreating,
     isUnitQuantityMode,
     sovColumnCount,
@@ -93,7 +90,6 @@ export function ContractForm({
     handleSubmit,
     updateFormData,
     clearValidationError,
-    handleCreateCompany,
     getCostTypeLabel,
     toggleDivision,
     handleCreateBudgetCode,
@@ -116,8 +112,6 @@ export function ContractForm({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setShowAddCompany,
-    setNewCompanyName,
     markups,
     setMarkups,
     sovDisplayItems,
@@ -144,7 +138,6 @@ export function ContractForm({
             contractStatuses={CONTRACT_STATUSES}
             attachments={mode === "create" ? formData.attachments || [] : undefined}
             isSubmitting={isSubmitting}
-            onCreateCompany={() => setShowAddCompany(true)}
             onClearValidationError={clearValidationError}
             onUpdateFormData={updateFormData}
             onAttachmentChange={
@@ -209,15 +202,6 @@ export function ContractForm({
           />
         </div>
       </FormLayoutProvider>
-
-      <PrimeContractAddCompanyDialog
-        open={showAddCompany}
-        companyName={newCompanyName}
-        isCreating={isCreating}
-        onOpenChange={setShowAddCompany}
-        onCompanyNameChange={setNewCompanyName}
-        onCreate={handleCreateCompany}
-      />
 
       <FormActions
         onCancel={onCancel}

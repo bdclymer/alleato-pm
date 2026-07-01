@@ -72,23 +72,17 @@ export const GET = withApiGuardrails(
 );
 
 /**
- * Update company information.
+ * Update the project-level primary contact for a company.
  *
- * Supports partial updates - only include fields you want to change.
- *
- * Updatable fields:
- * - name, address, city, state, zip: Company information
- * - business_phone, email_address: Contact information
- * - primary_contact_id: Primary contact person
- * - erp_vendor_id: ERP system identifier
- * - company_type: YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER
- * - status: ACTIVE or INACTIVE
- * - logo_url: Company logo URL
+ * All other company fields (name, address, contact info, ERP vendor ID,
+ * company type, status, logo) are managed exclusively in Acumatica (ERP) by
+ * Accounting and can no longer be edited here. Only `primary_contact_id` —
+ * a project-scoped assignment, not an ERP-owned field — is accepted.
  */
 export const PATCH = withApiGuardrails(
   "projects/[projectId]/directory/companies/[companyId]#PATCH",
   async ({ request, params }) => {
-  
+
     const { projectId, companyId } = await params;
     const supabase = await createClient();
 
@@ -121,6 +115,25 @@ export const PATCH = withApiGuardrails(
     // Parse request body
     const body = await request.json();
 
+    // Only `primary_contact_id` is still editable at the project level.
+    // Every other field is ERP-managed — reject the request instead of
+    // silently ignoring the extra fields.
+    const allowedKeys = new Set(["primary_contact_id"]);
+    const requestedKeys = Object.keys(body ?? {});
+    const disallowedKeys = requestedKeys.filter((key) => !allowedKeys.has(key));
+
+    if (disallowedKeys.length > 0) {
+      return NextResponse.json(
+        {
+          error: "erp_managed",
+          message:
+            "Companies are managed in Acumatica (ERP) by Accounting and can no longer be edited here. Ask Accounting to update the record in Acumatica — the change will sync in automatically. Only the primary contact assignment can be changed here.",
+          fields: disallowedKeys,
+        },
+        { status: 403 },
+      );
+    }
+
     // Validate company exists
     const companyService = new CompanyService(supabase);
 
@@ -143,34 +156,11 @@ export const PATCH = withApiGuardrails(
       throw getError;
     }
 
-    // Update company
-    try {
-      const company = await companyService.updateCompany(
-        projectId,
-        companyId,
-        body,
-      );
-      return NextResponse.json(company);
-    } catch (updateError) {
-      // Check for duplicate ERP vendor ID
-      if (
-        updateError instanceof Error &&
-        updateError.message.includes("duplicate")
-      ) {
-        return NextResponse.json(
-          {
-            error: "validation_error",
-            message: "Validation failed",
-            errors: {
-              erp_vendor_id: ["ERP Vendor ID must be unique"],
-            },
-            code: "VALIDATION_FAILED",
-          },
-          { status: 422 },
-        );
-      }
-      throw updateError;
-    }
+    // Update the primary contact
+    const company = await companyService.updateCompany(projectId, companyId, {
+      primary_contact_id: body.primary_contact_id,
+    });
+    return NextResponse.json(company);
     },
 );
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, UserPlus, ArrowLeft, X, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, UserPlus, ArrowLeft, X, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -142,62 +142,13 @@ function CreateContactForm({
   const [saving, setSaving] = React.useState(false);
   const [companyOpen, setCompanyOpen] = React.useState(false);
   const [companySearch, setCompanySearch] = React.useState("");
-  const [creatingCompany, setCreatingCompany] = React.useState(false);
 
-  // Companies passed in from the parent, plus any created inline during this
-  // session so the just-added company is immediately selectable.
-  const [extraCompanies, setExtraCompanies] = React.useState<CompanyOption[]>(
-    [],
-  );
-  const allCompanies = React.useMemo(() => {
-    const seen = new Set(companies.map((c) => c.id));
-    return [...companies, ...extraCompanies.filter((c) => !seen.has(c.id))];
-  }, [companies, extraCompanies]);
-  const selectedCompany =
-    allCompanies.find((c) => c.id === companyId) ?? null;
+  const selectedCompany = companies.find((c) => c.id === companyId) ?? null;
   const filteredCompanies = React.useMemo(() => {
     const query = companySearch.trim().toLowerCase();
-    if (!query) return allCompanies;
-    return allCompanies.filter((c) => c.name.toLowerCase().includes(query));
-  }, [allCompanies, companySearch]);
-  // Offer create only when the typed name doesn't already exist (case-insensitive).
-  const canCreateCompany =
-    companySearch.trim().length > 0 &&
-    !allCompanies.some(
-      (c) => c.name.trim().toLowerCase() === companySearch.trim().toLowerCase(),
-    );
-
-  const handleCreateCompany = async (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      toast.error("Company name is required");
-      return;
-    }
-    setCreatingCompany(true);
-    try {
-      const created = await apiFetch<{ id: string; name: string }>(
-        "/api/companies",
-        {
-          method: "POST",
-          body: JSON.stringify({ name: trimmed }),
-        },
-      );
-      setExtraCompanies((prev) => [
-        { id: created.id, name: created.name },
-        ...prev,
-      ]);
-      setCompanyId(created.id);
-      setCompanySearch("");
-      setCompanyOpen(false);
-      toast.success(`Created ${created.name}`);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create company";
-      toast.error(message);
-    } finally {
-      setCreatingCompany(false);
-    }
-  };
+    if (!query) return companies;
+    return companies.filter((c) => c.name.toLowerCase().includes(query));
+  }, [companies, companySearch]);
 
   const handleCreate = async () => {
     const trimmedFirst = firstName.trim();
@@ -307,7 +258,7 @@ function CreateContactForm({
                   variant="outline"
                   role="combobox"
                   aria-expanded={companyOpen}
-                  disabled={saving || creatingCompany}
+                  disabled={saving}
                   className="h-9 w-full justify-between bg-background font-normal"
                 >
                   <span
@@ -327,12 +278,12 @@ function CreateContactForm({
               >
                 <Command shouldFilter={false}>
                   <CommandInput
-                    placeholder="Search or create company…"
+                    placeholder="Search company…"
                     value={companySearch}
                     onValueChange={setCompanySearch}
                   />
                   <CommandList className="max-h-60 overflow-y-auto">
-                    {filteredCompanies.length > 0 && (
+                    {filteredCompanies.length > 0 ? (
                       <CommandGroup>
                         {filteredCompanies.map((c) => (
                           <CommandItem
@@ -354,24 +305,12 @@ function CreateContactForm({
                           </CommandItem>
                         ))}
                       </CommandGroup>
+                    ) : (
+                      <CommandEmpty>
+                        No matching company. New companies are managed in
+                        Acumatica (ERP) by Accounting.
+                      </CommandEmpty>
                     )}
-                    {/* Create option is always visible so the path to add a new
-                        company is obvious; enabled only once a new name typed. */}
-                    <CommandGroup>
-                      <CommandItem
-                        value={`__create__${companySearch}`}
-                        disabled={creatingCompany || !canCreateCompany}
-                        onSelect={() => void handleCreateCompany(companySearch)}
-                        className="text-primary"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        {creatingCompany
-                          ? "Creating…"
-                          : companySearch.trim()
-                            ? `Create "${companySearch.trim()}"`
-                            : "Type a name to add a new company"}
-                      </CommandItem>
-                    </CommandGroup>
                   </CommandList>
                 </Command>
               </PopoverContent>

@@ -112,15 +112,12 @@ export function usePrimeContractFormState({
   const [selectedSovItems, setSelectedSovItems] = React.useState<Set<string>>(
     new Set(),
   );
-  const [showAddCompany, setShowAddCompany] = React.useState(false);
-  const [newCompanyName, setNewCompanyName] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
 
   const {
     options: companyOptions,
     isLoading: companiesLoading,
     error: companiesError,
-    createCompany,
   } = useCompanies();
 
   const { users: projectUsers } = useProjectUsers(projectId);
@@ -419,32 +416,6 @@ export function usePrimeContractFormState({
     },
     [],
   );
-
-  const handleCreateCompany = React.useCallback(async () => {
-    if (!newCompanyName.trim()) return;
-
-    setIsCreating(true);
-    try {
-      const newCompany = await createCompany({
-        name: newCompanyName.trim(),
-      });
-
-      if (newCompany) {
-        updateFormData({
-          ownerCompanyId: newCompany.id,
-          contractCompanyId: newCompany.id,
-        });
-        toast.success("Company created");
-        setNewCompanyName("");
-        setShowAddCompany(false);
-      }
-    } catch (error) {
-      console.error("Error creating company:", error);
-      toast.error("Failed to create company");
-    } finally {
-      setIsCreating(false);
-    }
-  }, [createCompany, newCompanyName, updateFormData]);
 
   const getCostTypeLabel = React.useCallback((type: string) => {
     const types: Record<string, string> = {
@@ -911,8 +882,6 @@ export function usePrimeContractFormState({
     companyOptions,
     companiesLoading,
     userOptions,
-    showAddCompany,
-    newCompanyName,
     isCreating,
     filteredBudgetCodes,
     isUnitQuantityMode,
@@ -921,7 +890,6 @@ export function usePrimeContractFormState({
     handleSubmit,
     updateFormData,
     clearValidationError,
-    handleCreateCompany,
     getCostTypeLabel,
     toggleDivision,
     handleCreateBudgetCode,
@@ -947,8 +915,6 @@ export function usePrimeContractFormState({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setShowAddCompany,
-    setNewCompanyName,
     markups,
     setMarkups,
     sovDisplayItems,

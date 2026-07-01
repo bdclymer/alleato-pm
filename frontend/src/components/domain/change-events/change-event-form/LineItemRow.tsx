@@ -38,7 +38,6 @@ interface LineItemRowProps {
   contracts: ContractOption[];
   budgetCodes: BudgetCodeOption[];
   commitmentLineItemsMap: Record<string, CommitmentSovLineItem[]>;
-  onAddCompany: () => void;
   onCreateBudgetCode: (rowIndex: number) => void;
   handleCommitmentChange: (rowIndex: number, commitmentId: string) => void;
   handleCommitmentLineItemChange: (rowIndex: number, commitmentId: string, sovLineItemId: string) => void;
@@ -56,7 +55,6 @@ export function LineItemRow({
   contracts,
   budgetCodes,
   commitmentLineItemsMap,
-  onAddCompany,
   onCreateBudgetCode,
   handleCommitmentChange,
   handleCommitmentLineItemChange,
@@ -140,7 +138,6 @@ export function LineItemRow({
           value={item.vendor}
           onChange={(value) => updateLineItem(index, "vendor", value)}
           vendors={vendors}
-          onAddCompany={onAddCompany}
         />
       </TableCell>
 

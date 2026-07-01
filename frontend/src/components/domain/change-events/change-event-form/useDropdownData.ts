@@ -38,8 +38,8 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
   const [contracts, setContracts] = React.useState<ContractOption[]>([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCodeOption[]>([]);
 
-  // Called after a company is added via AddCompanyModal so the new vendor
-  // appears immediately. Merges with the existing contract-derived list.
+  // Re-fetches the ERP-synced vendor list. Merges with the existing
+  // contract-derived list.
   const fetchVendors = React.useCallback(async () => {
     try {
       const data = await apiFetch<VendorOption[] | { data?: VendorOption[] }>(

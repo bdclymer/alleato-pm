@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -25,14 +24,12 @@ interface VendorComboboxProps {
   value: string;
   onChange: (value: string) => void;
   vendors: VendorOption[];
-  onAddCompany: () => void;
 }
 
 export function VendorCombobox({
   value,
   onChange,
   vendors,
-  onAddCompany,
 }: VendorComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -105,21 +102,6 @@ export function VendorCombobox({
                   )}
                 </CommandItem>
               ))}
-            </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup>
-              <CommandItem
-                onSelect={() => {
-                  setOpen(false);
-                  onAddCompany();
-                }}
-                className="cursor-pointer"
-              >
-                <Plus className="mr-2 h-4 w-4 text-primary" />
-                <span className="font-medium text-primary">
-                  Add Company to Directory
-                </span>
-              </CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>

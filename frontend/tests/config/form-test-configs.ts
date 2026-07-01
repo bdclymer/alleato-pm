@@ -204,25 +204,6 @@ export const formConfigs: FormTestConfig[] = [
   },
 
   {
-    name: 'CompanyFormDialog',
-    route: '/directory/companies',
-    isModal: true,
-    modalTrigger: 'button:has-text("Add Company")',
-    priority: 'medium',
-    authRequired: true,
-    submitButtonText: /save|create/i,
-    successIndicator: /created|success/i,
-    screenshotPrefix: 'company-dialog',
-    requiredFields: [
-      {
-        label: /company name|name/i,
-        type: 'text',
-        testValue: `${testPrefix}Test Company Ltd`
-      }
-    ]
-  },
-
-  {
     name: 'UserFormDialog',
     route: '/directory/users',
     isModal: true,

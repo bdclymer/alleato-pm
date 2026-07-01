@@ -13,7 +13,6 @@ import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/com
 import {
   GeneralInfoSection,
   LineItemsSection,
-  AddCompanyModal,
   useChangeEventFormData,
 } from "./change-event-form";
 
@@ -42,8 +41,6 @@ export function ChangeEventForm({
     primeContractOptions,
     primeContractSelectOptions,
     commitmentLineItemsMap,
-    addCompanyOpen,
-    setAddCompanyOpen,
     showCreateBudgetCodeModal,
     setShowCreateBudgetCodeModal,
     setTargetBudgetCodeRowIndex,
@@ -57,7 +54,6 @@ export function ChangeEventForm({
     attachmentsAsInfo,
     setFormData,
     handleBudgetCodeCreated,
-    fetchVendors,
     validate,
   } = useChangeEventFormData({ initialData, projectId });
 
@@ -78,13 +74,6 @@ export function ChangeEventForm({
 
   return (
     <>
-      <AddCompanyModal
-        open={addCompanyOpen}
-        onOpenChange={setAddCompanyOpen}
-        projectId={projectId}
-        onCompanyAdded={fetchVendors}
-      />
-
       <Form
         onSubmit={handleSubmit}
         data-dev-autofill-disabled="true"
@@ -111,7 +100,6 @@ export function ChangeEventForm({
             contracts={contracts}
             budgetCodes={budgetCodes}
             commitmentLineItemsMap={commitmentLineItemsMap}
-            onAddCompany={() => setAddCompanyOpen(true)}
             onCreateBudgetCode={(rowIndex) => {
               setTargetBudgetCodeRowIndex(rowIndex);
               setShowCreateBudgetCodeModal(true);

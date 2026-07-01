@@ -33,12 +33,6 @@ jest.mock("@/app/(main)/actions/table-actions", () => ({
 
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
-// Render the company dialog as a simple marker so we can assert it opened.
-jest.mock("@/components/domain/companies/CompanyFormDialog", () => ({
-  CompanyFormDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="company-dialog">Company dialog</div> : null,
-}));
-
 // jsdom lacks pointer-capture / scrollIntoView that Radix Popover + cmdk use.
 beforeAll(() => {
   Element.prototype.hasPointerCapture = jest.fn();
@@ -50,7 +44,9 @@ beforeAll(() => {
 // --- Tests -----------------------------------------------------------------
 
 describe("ContactFormSheet — company combobox", () => {
-  it("opens the company dialog without closing the sheet when 'Add New Company' is clicked", async () => {
+  it("lets the user pick an existing company but never offers to create a new one", async () => {
+    // Companies are managed exclusively in Acumatica (ERP) by Accounting, so
+    // this combobox must only ever select from the synced list.
     const user = userEvent.setup();
     const onOpenChange = jest.fn();
 
@@ -70,17 +66,16 @@ describe("ContactFormSheet — company combobox", () => {
     // Open the company combobox popover.
     await user.click(combobox!);
 
-    // Click "Add New Company" inside the popover. Before the fix this threw
-    // `ReferenceError: setOpen is not defined` and crashed the click handler.
-    const addCompany = await screen.findByRole("button", {
-      name: /add new company/i,
-    });
-    await user.click(addCompany);
+    // The synced company is selectable...
+    const companyOption = await screen.findByText("Acme Construction");
+    await user.click(companyOption);
 
-    // The company creation dialog should open...
-    expect(await screen.findByTestId("company-dialog")).toBeInTheDocument();
+    // ...but there is no way to create a new company from this form.
+    expect(
+      screen.queryByRole("button", { name: /add new company/i }),
+    ).not.toBeInTheDocument();
 
-    // ...and the sheet itself must NOT be closed by this action.
+    // ...and the sheet itself must NOT be closed by selecting a company.
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });

@@ -74,7 +74,6 @@ export function useChangeEventFormData({
   const [errors, setErrors] = React.useState<
     Partial<Record<keyof ChangeEventFormData, string>>
   >({});
-  const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     React.useState(false);
   const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] =
@@ -503,8 +502,6 @@ export function useChangeEventFormData({
     primeContractOptions,
     primeContractSelectOptions,
     commitmentLineItemsMap,
-    addCompanyOpen,
-    setAddCompanyOpen,
     showCreateBudgetCodeModal,
     setShowCreateBudgetCodeModal,
     targetBudgetCodeRowIndex,

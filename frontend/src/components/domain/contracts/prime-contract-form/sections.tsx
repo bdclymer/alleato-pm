@@ -13,17 +13,7 @@ import { RichTextField } from "@/components/forms/RichTextField";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { SelectField } from "@/components/forms/SelectField";
 import { TextField } from "@/components/forms/TextField";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Modal as Dialog,
-  ModalContent as DialogContent,
-  ModalDescription as DialogDescription,
-  ModalFooter as DialogFooter,
-  ModalHeader as DialogHeader,
-  ModalTitle as DialogTitle,
-} from "@/components/ui/unified-modal";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import type { ContractFormData } from "./types";
@@ -38,7 +28,6 @@ export function PrimeContractGeneralInfoSection({
   contractStatuses,
   attachments,
   isSubmitting,
-  onCreateCompany,
   onClearValidationError,
   onUpdateFormData,
   onAttachmentChange,
@@ -51,7 +40,6 @@ export function PrimeContractGeneralInfoSection({
   contractStatuses: Array<{ value: string; label: string }>;
   attachments?: NonNullable<ContractFormData["attachments"]>;
   isSubmitting?: boolean;
-  onCreateCompany: () => void;
   onClearValidationError: (field: "number" | "title") => void;
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
   onAttachmentChange?: (
@@ -89,8 +77,6 @@ export function PrimeContractGeneralInfoSection({
             disabled={companiesLoading}
             triggerTestId="owner-client-select"
             optionTestIdPrefix="owner-client-option"
-            onCreateNew={onCreateCompany}
-            createNewLabel="+ Create New Company"
           />
           <TextField
             label="Title"
@@ -372,53 +358,3 @@ export function PrimeContractPrivacySection({
   );
 }
 
-export function PrimeContractAddCompanyDialog({
-  open,
-  companyName,
-  isCreating,
-  onOpenChange,
-  onCompanyNameChange,
-  onCreate,
-}: {
-  open: boolean;
-  companyName: string;
-  isCreating: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCompanyNameChange: (value: string) => void;
-  onCreate: () => void;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Company</DialogTitle>
-          <DialogDescription>
-            Create a new company for the owner/client. It will be automatically added to the project directory.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <Label htmlFor="company-name">Company Name *</Label>
-          <Input
-            id="company-name"
-            value={companyName}
-            onChange={(e) => onCompanyNameChange(e.target.value)}
-            placeholder="Enter company name"
-            className="mt-2"
-          />
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={onCreate}
-            disabled={!companyName.trim() || isCreating}
-          >
-            {isCreating ? "Creating..." : "Create"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}

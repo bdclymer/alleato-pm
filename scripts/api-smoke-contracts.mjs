@@ -244,10 +244,15 @@ const ENDPOINTS = [
 
   // Other project-scoped
   ["GET", `/api/projects/${PROJECT_ID}/vendors`, "Vendors", [200, 401]],
-  // POST /vendors is used by AddCompanyModal in change-events form. Before
-  // this was added the endpoint 404'd silently. Unauthenticated calls should
-  // be 401, never 404 or 500 (401 = handler exists and is protected).
-  ["POST", `/api/projects/${PROJECT_ID}/vendors`, "Vendors create (unauthenticated)", [401]],
+  // Company creation is disabled everywhere (Acumatica/ERP is the source of
+  // truth — see issue #540). These routes must still check auth BEFORE the
+  // ERP guardrail, so an unauthenticated call is 401, never 404 or 500.
+  ["POST", `/api/projects/${PROJECT_ID}/vendors`, "Vendors create — disabled, auth check first", [401]],
+  ["POST", "/api/companies", "Companies create — disabled, auth check first", [401]],
+  ["POST", "/api/directory/companies", "Directory companies create — disabled, auth check first", [401]],
+  ["PATCH", `/api/directory/companies/${FAKE_UUID}`, "Directory company edit — disabled, auth check first", [401]],
+  ["POST", `/api/projects/${PROJECT_ID}/directory/companies`, "Directory companies create (project) — disabled, auth check first", [401]],
+  ["PATCH", `/api/projects/${PROJECT_ID}/directory/companies/${FAKE_UUID}`, "Directory company edit (project) — restricted to primary_contact_id, auth check first", [401]],
   ["GET", `/api/projects/${PROJECT_ID}/employees`, "Project employees", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/subcontracts`, "Subcontracts", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/purchase-orders`, "Purchase orders", [200, 401]],
@@ -281,6 +286,7 @@ const ENDPOINTS = [
   ["GET", "/api/documents/status", "Document status", [200, 401]],
   ["GET", "/api/initiative-cards", "Initiative cards", [200, 401]],
   ["GET", "/api/clients", "Clients", [200, 401]],
+  ["POST", "/api/clients", "Clients create — disabled, auth check first", [401]],
   ["GET", "/api/monitoring/dashboard", "Monitoring dashboard", [200, 401]],
   ["POST", "/api/docs-search", "Docs search (auth check)", [400, 401]],
 

@@ -78,38 +78,19 @@ export function useCompanies(
     fetchCompanies();
   }, [fetchCompanies]);
 
+  // Companies are managed exclusively in Acumatica (ERP) by Accounting, so
+  // insurance, EIN, and legal details stay accurate. Creating a company from
+  // the PM app is disabled — records sync in automatically.
   const createCompany = useCallback(
-    async (company: Partial<Company>): Promise<Company | null> => {
-      try {
-        const supabase = createClient();
-        const { data, error: insertError } = await supabase
-          .from("companies")
-          .insert({
-            name: company.name || "",
-            address: company.address,
-            city: company.city,
-            state: company.state,
-            website: company.website,
-            notes: company.notes,
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          throw new Error(insertError.message);
-        }
-
-        // Refetch to update the list
-        await fetchCompanies();
-        return data as Company;
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to create company"),
-        );
-        return null;
-      }
+    async (_company: Partial<Company>): Promise<Company | null> => {
+      setError(
+        new Error(
+          "Companies are managed in Acumatica (ERP) by Accounting and can no longer be created here.",
+        ),
+      );
+      return null;
     },
-    [fetchCompanies],
+    [],
   );
 
   // Transform companies to options for dropdowns

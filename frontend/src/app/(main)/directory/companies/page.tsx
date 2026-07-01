@@ -4,15 +4,12 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  Building2,
   ChevronLeft,
   ChevronRight,
-  FileSpreadsheet,
   Globe,
   Mail,
   Phone,
   RefreshCw,
-  Upload,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +23,6 @@ import {
   DataQualityCell,
   TableDateValue,
   TablePageActions,
-  InlineSelectEditor,
   type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
@@ -46,8 +42,7 @@ import {
 } from "@/features/directory/data-quality";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
-import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
-import type { CompanyFormData } from "@/lib/schemas/financial-schemas";
+import { acumaticaVendorUrl } from "@/lib/acumatica/vendor-url";
 
 const STATUS_COLORS: CellColorMap = {
   active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -61,22 +56,7 @@ const TYPE_COLORS: CellColorMap = {
   "connected company": "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
 };
 
-const COMPANY_TYPE_OPTIONS = [
-  { value: "client", label: "Client" },
-  { value: "vendor", label: "Vendor" },
-  { value: "subcontractor", label: "Subcontractor" },
-  { value: "supplier", label: "Supplier" },
-  { value: "connected company", label: "Connected Company" },
-];
-
-const COMPANY_STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
-
-function buildCompanyTableColumns(
-  onInlineEdit: (company: CompanyRow, field: string, value: string) => Promise<void>,
-): TableColumn<CompanyRow>[] {
+function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
   const colMap = Object.fromEntries(companyColumns.map((c) => [c.id, c]));
   const col = (id: string) => colMap[id];
 
@@ -95,33 +75,11 @@ function buildCompanyTableColumns(
       ...col("company_type"),
       render: (item) => <CellBadge value={item.company_type} colorMap={TYPE_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.company_type || "",
-      editable: true,
-      editValue: (item) => item.company_type?.toLowerCase() || "",
-      onEdit: (item, value) => onInlineEdit(item, "company_type", value),
-      renderEditor: ({ value, onChange, onCommit }) => (
-        <InlineSelectEditor
-          value={value || "vendor"}
-          options={COMPANY_TYPE_OPTIONS}
-          onChange={onChange}
-          onCommit={onCommit}
-        />
-      ),
     },
     {
       ...col("status"),
       render: (item) => <CellBadge value={item.status} colorMap={STATUS_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.status || "",
-      editable: true,
-      editValue: (item) => item.status?.toLowerCase() || "active",
-      onEdit: (item, value) => onInlineEdit(item, "status", value),
-      renderEditor: ({ value, onChange, onCommit }) => (
-        <InlineSelectEditor
-          value={value || "active"}
-          options={COMPANY_STATUS_OPTIONS}
-          onChange={onChange}
-          onCommit={onCommit}
-        />
-      ),
     },
     {
       ...col("data_quality"),
@@ -153,10 +111,6 @@ function buildCompanyTableColumns(
       ...col("business_phone"),
       render: (item) => <CellText value={item.business_phone} emptyLabel="-" />,
       sortValue: (item) => item.business_phone || "",
-      editable: true,
-      editInputType: "tel",
-      editValue: (item) => item.business_phone || "",
-      onEdit: (item, value) => onInlineEdit(item, "business_phone", value),
     },
     {
       ...col("website"),
@@ -166,27 +120,28 @@ function buildCompanyTableColumns(
         return <CellText value={display} />;
       },
       sortValue: (item) => item.website || "",
-      editable: true,
-      editInputType: "url",
-      editValue: (item) => item.website || "",
-      onEdit: (item, value) => onInlineEdit(item, "website", value),
     },
     {
       ...col("email_address"),
       render: (item) => <CellText value={item.email_address} emptyLabel="-" />,
       sortValue: (item) => item.email_address || "",
-      editable: true,
-      editInputType: "email",
-      editValue: (item) => item.email_address || "",
-      onEdit: (item, value) => onInlineEdit(item, "email_address", value),
     },
     {
       ...col("erp_vendor_id"),
-      render: (item) => <CellText value={item.erp_vendor_id} emptyLabel="-" />,
+      render: (item) =>
+        item.erp_vendor_id ? (
+          <a
+            href={acumaticaVendorUrl(item.erp_vendor_id)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            {item.erp_vendor_id}
+          </a>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
       sortValue: (item) => item.erp_vendor_id || "",
-      editable: true,
-      editValue: (item) => item.erp_vendor_id || "",
-      onEdit: (item, value) => onInlineEdit(item, "erp_vendor_id", value),
     },
     {
       ...col("created_at"),
@@ -347,7 +302,16 @@ function CompanyPreviewPane({
               {company.erp_vendor_id && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">ERP Vendor ID</dt>
-                  <dd className="font-mono text-xs">{company.erp_vendor_id}</dd>
+                  <dd>
+                    <a
+                      href={acumaticaVendorUrl(company.erp_vendor_id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-xs text-primary hover:underline"
+                    >
+                      {company.erp_vendor_id}
+                    </a>
+                  </dd>
                 </div>
               )}
               {company.created_at && (
@@ -411,42 +375,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   });
 
   const [isSyncing, setIsSyncing] = React.useState(false);
-  const [isAddCompanyOpen, setIsAddCompanyOpen] = React.useState(false);
-
-  const handleCreateCompany = React.useCallback(
-    async (data: CompanyFormData): Promise<{ error?: string } | void> => {
-      try {
-        await apiFetch("/api/directory/companies", {
-          method: "POST",
-          body: JSON.stringify({
-            name: data.name,
-            title: data.title || undefined,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            website: data.website,
-            license_number: data.license_number || undefined,
-            company_type: forcedCompanyType ?? "vendor",
-          }),
-        });
-        await refresh();
-      } catch (err) {
-        return { error: err instanceof Error ? err.message : "Failed to create company" };
-      }
-    },
-    [refresh, forcedCompanyType],
-  );
-
-  const handleInlineCompanyEdit = React.useCallback(
-    async (company: CompanyRow, field: string, value: string) => {
-      await apiFetch(`/api/directory/companies/${company.company_id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ [field]: value || null }),
-      });
-      await refresh();
-    },
-    [refresh],
-  );
 
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
@@ -493,10 +421,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     return companyFilters;
   }, [forcedCompanyType]);
 
-  const tableColumns = React.useMemo(
-    () => buildCompanyTableColumns(handleInlineCompanyEdit),
-    [handleInlineCompanyEdit],
-  );
+  const tableColumns = React.useMemo(() => buildCompanyTableColumns(), []);
   const selectedCompanyId = searchParams.get("detail");
   const selectedCompany =
     selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) ?? null : null;
@@ -581,12 +506,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     });
 
   return (
-    <>
-    <CompanyFormDialog
-      open={isAddCompanyOpen}
-      onOpenChange={setIsAddCompanyOpen}
-      onCreate={handleCreateCompany}
-    />
     <UnifiedTablePage
       header={{
         title: isClientsRoute ? "Clients" : "Companies",
@@ -594,11 +513,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
           "Manage companies, clients, contacts, users, and employees across your organization",
         actions: (
           <TablePageActions
-            addOptions={[
-              { label: "Add New Company", icon: <Building2 />, onClick: () => setIsAddCompanyOpen(true) },
-              { label: "Import from CSV", icon: <FileSpreadsheet /> },
-              { label: "Bulk Operations", icon: <Upload /> },
-            ]}
             moreOptions={[
               {
                 label: isSyncing ? "Syncing..." : "Sync from ERP",
@@ -689,13 +603,11 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       }}
       features={{
         enableExport: false,
-        enableInlineEditing: true,
       }}
       layout={{
         fullBleedTable: true,
         removeTableFrame: true,
       }}
     />
-    </>
   );
 }

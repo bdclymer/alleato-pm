@@ -4,12 +4,13 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import {
   Form,
   FormControl,
@@ -40,8 +41,7 @@ import {
   updateContact,
 } from "@/app/(main)/actions/table-actions";
 import { createClient } from "@/lib/supabase/client";
-import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
-import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Contact {
@@ -102,7 +102,6 @@ export function ContactFormSheet({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [isLoadingCompanies, setIsLoadingCompanies] = React.useState(false);
-  const [companyDialogOpen, setCompanyDialogOpen] = React.useState(false);
   const [companyPopoverOpen, setCompanyPopoverOpen] = React.useState(false);
 
   const form = useForm<ContactFormData>({
@@ -224,14 +223,13 @@ export function ContactFormSheet({
   };
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="p-0">
-          <SheetHeader>
-            <SheetTitle>{isEdit ? "Edit Contact" : "New Contact"}</SheetTitle>
-          </SheetHeader>
+    <SidePanel open={open} onOpenChange={onOpenChange}>
+      <SidePanelContent side="right" size="md">
+          <SidePanelHeader>
+            <SidePanelTitle>{isEdit ? "Edit Contact" : "New Contact"}</SidePanelTitle>
+          </SidePanelHeader>
 
-          <div className="px-8 py-2">
+          <SidePanelBody>
             <Form {...form}>
               <form
                 id={FORM_ID}
@@ -384,18 +382,6 @@ export function ContactFormSheet({
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
-                                <div className="border-t p-1">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full justify-start text-primary hover:text-primary"
-                                    onClick={() => { setCompanyPopoverOpen(false); setCompanyDialogOpen(true); }}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add New Company
-                                  </Button>
-                                </div>
                               </CommandList>
                             </Command>
                           </PopoverContent>
@@ -577,9 +563,9 @@ export function ContactFormSheet({
                 />
               </form>
             </Form>
-          </div>
+          </SidePanelBody>
 
-          <SheetFooter>
+          <SidePanelFooter>
             <Button
               type="button"
               variant="outline"
@@ -599,15 +585,8 @@ export function ContactFormSheet({
                   ? "Save"
                   : "Create Contact"}
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <CompanyFormDialog
-        open={companyDialogOpen}
-        onOpenChange={setCompanyDialogOpen}
-        onSuccess={fetchCompanies}
-      />
-    </>
+          </SidePanelFooter>
+        </SidePanelContent>
+      </SidePanel>
   );
 }
