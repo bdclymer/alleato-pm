@@ -14,6 +14,7 @@ import {
   useCollaborationNotifications,
   type CollaborationNotification,
 } from "@/hooks/use-collaboration-notifications";
+import { sortNotificationsByPriority } from "@/lib/collaboration/notification-priority";
 import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
 import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { cn } from "@/lib/utils";
@@ -102,6 +103,7 @@ export function NotificationBell() {
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
     useCollaborationNotifications({ enabled: open });
   const totalUnreadCount = unreadCount;
+  const prioritizedNotifications = sortNotificationsByPriority(notifications);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -166,7 +168,7 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-border/40">
-              {notifications.slice(0, 8).map((n) => (
+              {prioritizedNotifications.slice(0, 8).map((n) => (
                 <NotificationItem
                   key={n.id}
                   notification={n}

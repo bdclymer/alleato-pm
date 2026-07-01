@@ -19,6 +19,7 @@ function notification(
     entityType: "invoices",
     entityId: "218",
     projectId: 876,
+    actorId: null,
     ...overrides,
   };
 }

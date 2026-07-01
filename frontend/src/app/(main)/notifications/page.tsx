@@ -17,6 +17,7 @@ import {
   type CollaborationNotification,
 } from "@/hooks/use-collaboration-notifications";
 import { getCollaborationNotificationHref } from "@/lib/collaboration/notification-links";
+import { sortNotificationsByPriority } from "@/lib/collaboration/notification-priority";
 
 export const dynamic = "force-dynamic";
 
@@ -147,10 +148,9 @@ export default function NotificationsPage() {
     deleteNotification,
   } = useCollaborationNotifications();
 
-  const filtered =
-    tab === "unread"
-      ? notifications.filter((n) => !n.readAt)
-      : notifications;
+  const filtered = sortNotificationsByPriority(
+    tab === "unread" ? notifications.filter((n) => !n.readAt) : notifications,
+  );
   const totalUnreadCount = unreadCount + commentUnreadCount;
 
   const actions = (
@@ -166,8 +166,10 @@ export default function NotificationsPage() {
 
   return (
     <PageShell variant="content" title="Notifications" actions={actions}>
-      <Tabs value={tab} onValueChange={setTab} className="space-y-8">
-        <div className="space-y-4">
+      <div className="space-y-8">
+        {hasVeltNotifications ? <VeltCommentNotifications /> : null}
+
+        <Tabs value={tab} onValueChange={setTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">Project activity</TabsTrigger>
             <TabsTrigger value="unread">
@@ -189,10 +191,8 @@ export default function NotificationsPage() {
               />
             )}
           </TabsContent>
-        </div>
-
-        {hasVeltNotifications ? <VeltCommentNotifications /> : null}
-      </Tabs>
+        </Tabs>
+      </div>
     </PageShell>
   );
 }
