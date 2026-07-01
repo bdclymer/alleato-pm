@@ -1,16 +1,18 @@
 import { NextRequest } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
-import { GET } from "../route";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { GET, PATCH, PUT } from "../route";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn(),
 }));
 
 const createClientMock = createClient as jest.MockedFunction<typeof createClient>;
+const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 function createQueryChain<T>(payload: T) {
   const chain = {
@@ -28,9 +30,20 @@ function createQueryChain<T>(payload: T) {
   return chain;
 }
 
+function createMutationChain<T>(payload: T) {
+  const chain = {
+    update: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn(async () => ({ data: payload, error: null })),
+  };
+  return chain;
+}
+
 describe("/api/commitments/[commitmentId]", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getApiRouteUserMock.mockResolvedValue({ id: "user-1" } as never);
   });
 
   it("returns unit/quantity purchase order detail fields for the SOV table", async () => {
@@ -119,6 +132,78 @@ describe("/api/commitments/[commitmentId]", () => {
     });
     expect(sovChain.select).toHaveBeenCalledWith(
       expect.stringContaining("quantity, uom, unit_cost"),
+    );
+  });
+
+  it("rejects non-status PUT edits when a commitment is approved", async () => {
+    const commitmentId = "00000000-0000-0000-0000-000000000001";
+    const unifiedChain = createQueryChain({
+      commitment_type: "subcontract",
+      status: "Approved",
+    });
+    const updateChain = createMutationChain({ id: commitmentId });
+
+    createClientMock.mockResolvedValue({
+      from: jest.fn((table: string) => {
+        if (table === "commitments_unified") return unifiedChain;
+        if (table === "subcontracts") return updateChain;
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    } as never);
+
+    const response = await PUT(
+      new NextRequest(`http://localhost/api/commitments/${commitmentId}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: "Blocked title edit" }),
+      }),
+      { params: Promise.resolve({ commitmentId }) },
+    );
+
+    expect(response.status).toBe(412);
+    await expect(response.json()).resolves.toMatchObject({
+      error_code: "PRECONDITION_FAILED",
+      error_message: "Approved commitments are read-only. Change the status before editing other fields.",
+    });
+    expect(updateChain.update).not.toHaveBeenCalled();
+  });
+
+  it("allows status-only PATCH updates when a commitment is approved", async () => {
+    const commitmentId = "00000000-0000-0000-0000-000000000002";
+    const unifiedChain = createQueryChain({
+      commitment_type: "subcontract",
+      status: "Approved",
+    });
+    const updateChain = createMutationChain({
+      id: commitmentId,
+      contract_number: "SC-101",
+      title: "Approved subcontract",
+      status: "Draft",
+      description: null,
+      executed: false,
+      updated_at: "2026-07-01T19:00:00.000Z",
+    });
+
+    createClientMock.mockResolvedValue({
+      from: jest.fn((table: string) => {
+        if (table === "commitments_unified") return unifiedChain;
+        if (table === "subcontracts") return updateChain;
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    } as never);
+
+    const response = await PATCH(
+      new NextRequest(`http://localhost/api/commitments/${commitmentId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "draft" }),
+      }),
+      { params: Promise.resolve({ commitmentId }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "Draft" }),
     );
   });
 });

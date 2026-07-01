@@ -76,7 +76,7 @@ export const POST = withApiGuardrails<
 
     const { data: commitment, error: commitmentError } = await (supabase as any)
       .from("commitments_unified")
-      .select("id, project_id, commitment_type")
+      .select("id, project_id, commitment_type, status")
       .eq("id", commitmentId)
       .eq("project_id", numericProjectId)
       .single();
@@ -88,6 +88,15 @@ export const POST = withApiGuardrails<
         message: "Commitment not found.",
         status: 404,
         severity: "low",
+      });
+    }
+
+    if (typeof commitment.status === "string" && commitment.status.trim().toLowerCase() === "approved") {
+      throw new GuardrailError({
+        code: "PRECONDITION_FAILED",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/line-items/import#POST",
+        message: "Approved commitments are read-only. Change the status before importing line items.",
+        details: { commitmentId },
       });
     }
 

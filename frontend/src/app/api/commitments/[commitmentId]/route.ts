@@ -79,6 +79,19 @@ const commitmentInlinePatchSchema = z
     "At least one editable field is required",
   );
 
+function isApprovedCommitmentStatus(status: unknown): boolean {
+  return typeof status === "string" && status.trim().toLowerCase() === "approved";
+}
+
+function throwApprovedCommitmentLock(where: string, blockedFields: string[]): never {
+  throw new GuardrailError({
+    code: "PRECONDITION_FAILED",
+    where,
+    message: "Approved commitments are read-only. Change the status before editing other fields.",
+    details: { blockedFields },
+  });
+}
+
 /**
  * GET /api/commitments/[commitmentId]
  *
@@ -115,7 +128,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     // Determine type from unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
@@ -438,7 +451,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     // Determine the commitment type from the unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
@@ -447,6 +460,14 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
         { error: "Commitment not found" },
         { status: 404 },
       );
+    }
+
+    const attemptedFields = Object.entries(validatedData)
+      .filter(([, fieldValue]) => fieldValue !== undefined)
+      .map(([field]) => field);
+    const blockedFields = attemptedFields.filter((field) => field !== "status");
+    if (isApprovedCommitmentStatus(unifiedData.status) && blockedFields.length > 0) {
+      throwApprovedCommitmentLock("commitments/[commitmentId]#PUT", blockedFields);
     }
 
     // Query the appropriate table based on type
@@ -766,12 +787,20 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
 
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
     if (unifiedError || !unifiedData) {
       return NextResponse.json({ error: "Commitment not found" }, { status: 404 });
+    }
+
+    const blockedFields = Object.entries(parsed.data)
+      .filter(([, fieldValue]) => fieldValue !== undefined)
+      .map(([field]) => field)
+      .filter((field) => field !== "status");
+    if (isApprovedCommitmentStatus(unifiedData.status) && blockedFields.length > 0) {
+      throwApprovedCommitmentLock("commitments/[commitmentId]#PATCH", blockedFields);
     }
 
     const tableName =

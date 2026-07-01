@@ -12,6 +12,7 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { PageShell } from "@/components/layout";
+import { ErrorState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
 import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-subcontract-schema";
@@ -247,6 +248,11 @@ export default function EditCommitmentPage() {
 
   const detailUrl = `/${projectId}/commitments/${commitmentId}`;
   const handleCancel = () => router.push(detailUrl);
+  const normalizedStatus =
+    rawData && typeof rawData === "object" && typeof (rawData as { status?: unknown }).status === "string"
+      ? String((rawData as { status: string }).status).trim().toLowerCase()
+      : "draft";
+  const isApproved = normalizedStatus === "approved";
 
   const uploadCommitmentAttachments = async (
     targetCommitmentId: string,
@@ -389,6 +395,22 @@ export default function EditCommitmentPage() {
             </div>
           ))}
         </div>
+      </PageShell>
+    );
+  }
+
+  if (isApproved) {
+    return (
+      <PageShell
+        variant="form"
+        title={title}
+        onBack={handleCancel}
+        backLabel="Back"
+      >
+        <ErrorState
+          title="Approved commitments cannot be edited"
+          description="Change the commitment status back to Draft on the detail page before editing fields or line items."
+        />
       </PageShell>
     );
   }
