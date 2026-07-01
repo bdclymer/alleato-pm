@@ -74,7 +74,9 @@ function buildEvalIssue(prompt: string) {
   if (prompt.includes("config is missing")) {
     return {
       ...base,
+      allowedRepos: [],
       issueNumber: 851,
+      requiredLabels: [],
       title: "Triage config missing",
     };
   }

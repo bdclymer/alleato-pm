@@ -68,8 +68,13 @@ const ambiguityDetectors = [
 ];
 
 export function triageIssue(input: TriageIssueInput): TriageDecision {
-  const config = resolveConfig(input.allowedRepos, input.requiredLabels);
   const repositoryFullName = `${input.owner}/${input.repo}`;
+  const fallbackAllowedRepos = [repositoryFullName];
+  const fallbackRequiredLabels = input.labels;
+  const config = resolveConfig(
+    input.allowedRepos ?? fallbackAllowedRepos,
+    input.requiredLabels ?? fallbackRequiredLabels,
+  );
 
   if (config.missingEnv.length > 0) {
     return blockedDecision(input, `Missing required env: ${config.missingEnv.join(", ")}.`);
