@@ -564,9 +564,15 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          # Validate only what the agent changed. The full-program `pnpm quality`
+          # typecheck times out (~5 min) on this repo regardless of the diff, so it
+          # fails every run before a PR can open. The PR's own required checks
+          # (changed-quality, guardrails, design-system-guardrails) are the
+          # authoritative gate before auto-merge; this is just a pre-flight to avoid
+          # opening an obviously-broken PR.
           {
-            echo '$ pnpm --dir frontend run quality'
-            pnpm --dir frontend run quality
+            echo '$ pnpm --dir frontend run quality:changed'
+            pnpm --dir frontend run quality:changed
             echo
             echo '$ pnpm run check:routes'
             pnpm run check:routes
