@@ -672,6 +672,12 @@ jobs:
       - name: Create pull request
         if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: create_pr
+        # Disable Husky: peter-evans commits the change internally, which fires the
+        # repo's pre-commit gauntlet (and fails with "git user.email is not set" in
+        # CI). The PR's required checks are the real gate, so the local hooks add no
+        # safety here — they only block PR creation.
+        env:
+          HUSKY: "0"
         uses: peter-evans/create-pull-request@v7
         with:
           # Use a dedicated token, NOT the default GITHUB_TOKEN: PRs opened by
