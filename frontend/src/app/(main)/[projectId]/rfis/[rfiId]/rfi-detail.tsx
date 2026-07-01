@@ -20,6 +20,7 @@ import {
   DetailPanel,
   SectionRuleHeading,
 } from "@/components/layout";
+import { FormSection } from "@/components/forms";
 import { apiFetch } from "@/lib/api-client";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
 import { RfiFormalResponses } from "@/components/rfis/rfi-formal-responses";
@@ -197,6 +198,15 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
           </div>
 
           <RfiFormFields form={form} projectId={projectId} withFormProvider={false} />
+
+          <FormSection title="Attachments">
+            <EntityAttachments
+              entityType="rfi"
+              entityId={rfi.id}
+              projectId={String(projectId)}
+              showLabel={false}
+            />
+          </FormSection>
         </form>
       </Form>
     );
