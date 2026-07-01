@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MessageSquare, MessageSquarePlus, PanelRight } from "lucide-react";
 import {
   VeltCommentTool,
@@ -15,6 +16,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
+import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { cn } from "@/lib/utils";
 import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
 
@@ -22,6 +25,66 @@ const rowClass =
   "flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-sm font-normal text-foreground transition-colors hover:bg-accent hover:text-foreground";
 
 export function CommentsSidebarButton() {
+  const pathname = usePathname();
+  const collaborationRuntimeEnabled = useCollaborationRuntimeStore(
+    (state) => state.enabled,
+  );
+  const setCollaborationRuntimeEnabled = useCollaborationRuntimeStore(
+    (state) => state.setEnabled,
+  );
+  const collaborationRuntimeActive =
+    collaborationRuntimeEnabled || shouldForceCollaborationRuntime(pathname);
+  const setCommentsVisible = useCommentsVisibilityStore(
+    (state) => state.setVisible,
+  );
+
+  if (!collaborationRuntimeActive) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Comments"
+            className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={6} className="w-64 p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setCollaborationRuntimeEnabled(true);
+              setCommentsVisible(true);
+            }}
+            className={rowClass}
+          >
+            <MessageSquarePlus className="h-4 w-4 shrink-0" />
+            Turn on page comments
+          </button>
+          <div className="px-2.5 pb-2 pt-1 text-xs leading-relaxed text-muted-foreground">
+            Comments now load on demand so project pages do not pay the global
+            collaboration startup cost before anyone asks for it.
+          </div>
+          <div className="my-1 h-px bg-border/50" />
+          <Link
+            href="/comments"
+            className={cn(buttonVariants({ variant: "ghost" }), rowClass)}
+          >
+            <PanelRight className="h-4 w-4 shrink-0" />
+            Open all comments
+          </Link>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return <ActiveCommentsSidebarButton />;
+}
+
+function ActiveCommentsSidebarButton() {
   const [open, setOpen] = React.useState(false);
   const commentModeActive = useCommentModeState();
   const commentsVisible = useCommentsVisibilityStore((state) => state.visible);

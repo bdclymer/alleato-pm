@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { VeltProvider } from "@veltdev/react";
 import { apiFetch } from "@/lib/api-client";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
+import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 
 async function getVeltToken(payload: {
   userId: string;
@@ -22,11 +25,20 @@ async function getVeltToken(payload: {
 }
 
 export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
-  const { profile } = useCurrentUserProfile();
+  const pathname = usePathname();
+  const userEnabledRuntime = useCollaborationRuntimeStore(
+    (state) => state.enabled,
+  );
   const apiKey = process.env.NEXT_PUBLIC_VELT_API_KEY;
+  const shouldMountRuntime =
+    Boolean(apiKey) &&
+    (userEnabledRuntime || shouldForceCollaborationRuntime(pathname));
+  const { profile } = useCurrentUserProfile({
+    enabled: shouldMountRuntime,
+  });
 
   const authProvider = useMemo(() => {
-    if (!profile) return undefined;
+    if (!shouldMountRuntime || !profile) return undefined;
 
     const userId = profile.id;
     // Use company as org scope; fall back to "alleato" so all users share data
@@ -49,12 +61,16 @@ export function VeltAuthProvider({ children }: { children: React.ReactNode }) {
           isAdmin: profile.isAdmin ?? false,
       }),
     };
-  }, [profile]);
+  }, [profile, shouldMountRuntime]);
 
   if (!apiKey) {
     if (process.env.NODE_ENV !== "production") {
       console.error("[Velt] NEXT_PUBLIC_VELT_API_KEY is not configured.");
     }
+    return <>{children}</>;
+  }
+
+  if (!shouldMountRuntime) {
     return <>{children}</>;
   }
 

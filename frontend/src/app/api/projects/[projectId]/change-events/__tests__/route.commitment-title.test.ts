@@ -151,6 +151,7 @@ describe("/api/projects/[projectId]/change-events", () => {
         {
           id: changeEventId,
           commitment: "SC-104",
+          commitment_id: commitmentId,
           commitment_title: "Assigned Demo Subcontract",
         },
       ],

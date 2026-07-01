@@ -1866,6 +1866,60 @@ velt-comment-dialog-internal .velt-comment-dialog--line-div {
   border-color: hsl(var(--border)) !important;
 }
 
+/* The sidebar should read like a quiet message list, not a ticket board.
+   Hide assignment/status chrome that dominates the actual comment body. */
+velt-comments-sidebar velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comments-sidebar velt-comment-dialog-status-dropdown-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-status-dropdown-wireframe,
+velt-comments-sidebar velt-comment-dialog-status-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-status-wireframe,
+velt-comments-sidebar velt-comment-dialog-resolve-button-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-resolve-button-wireframe,
+velt-comments-sidebar velt-comment-dialog-thread-card-reply-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-reply-wireframe {
+  display: none !important;
+}
+
+/* Strip the giant orange "Assigned to" banner block if the SDK still renders
+   it outside the assign-button wireframe. Keep the thread content below. */
+velt-comments-sidebar velt-comment-dialog-thread-card > :first-child,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card > :first-child {
+  display: none !important;
+}
+
+/* Quiet the thread rows and bring them back to whitespace/dividers instead of
+   card-on-card styling. */
+velt-comments-sidebar velt-comment-dialog-thread-card,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card-message,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-message {
+  font-size: 0.975rem !important;
+  line-height: 1.6 !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card-time,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-time,
+velt-comments-sidebar velt-comment-dialog-thread-card-unread,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-unread {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* The focused thread panel uses the same components; keep attachments useful
+   but reduce border noise around previews. */
+velt-comments-sidebar img,
+velt-comments-sidebar-v2 img {
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+}
+
 /* The "All comments" footer band is removed at the source by dropping
    enableSidebarButtonOnCommentDialog() in VeltGlobalLayer (it duplicated the
    global Comments-button access and ate ~half the dialog height — noise-gate

@@ -1,6 +1,6 @@
 import type { ProjectEmail } from "@/hooks/use-emails";
 
-export const MAILBOX_REVIEW_REFETCH_INTERVAL_MS = 15_000;
+export const MAILBOX_REVIEW_REFETCH_INTERVAL_MS = 60 * 60 * 1000;
 
 export function getEmailsRefreshInterval(
   isMailboxReviewMode: boolean,

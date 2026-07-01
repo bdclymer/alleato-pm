@@ -73,6 +73,7 @@ interface ChangeEventWithTotals extends ChangeEvent {
   prime_pco_title: string | null
   rfq_title: string | null
   commitment: string | null
+  commitment_id: string | null
   commitment_title: string | null
 }
 
@@ -597,6 +598,7 @@ export const GET = withApiGuardrails(
           prime_pco_title: pcoMap.get(String(event.id))?.title ?? null,
           rfq_title: rfqMap.get(String(event.id)) || null,
           commitment: commitmentInfo?.contractNumber ?? contractInfo?.contractNumber ?? null,
+          commitment_id: lineItemAgg?.commitmentId ?? null,
           commitment_title: commitmentInfo?.title ?? contractInfo?.title ?? null,
         }
       }

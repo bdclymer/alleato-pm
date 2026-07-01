@@ -4,10 +4,11 @@ import type { ReactElement } from "react";
 import { formatDate } from "@/lib/format";
 
 import { StatusBadge } from "@/components/ds";
-import type {
-  ColumnConfig,
-  FilterConfig,
-  TableColumn,
+import {
+  CellLink,
+  type ColumnConfig,
+  type FilterConfig,
+  type TableColumn,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import {
@@ -368,7 +369,15 @@ export function buildChangeEventTableColumns(
     {
       ...byId("commitment_title"),
       render: (item) => (
-        <span className="line-clamp-1">{item.commitment_title || "--"}</span>
+        <CellLink
+          value={item.commitment_title}
+          href={
+            item.commitment_id
+              ? `/${item.project_id}/commitments/${item.commitment_id}`
+              : null
+          }
+          className="line-clamp-1"
+        />
       ),
       sortValue: (item) => item.commitment_title ?? "",
     },

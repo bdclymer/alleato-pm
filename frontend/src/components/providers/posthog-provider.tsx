@@ -6,6 +6,7 @@ import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
+import { shouldEnableHeavyProductAnalytics } from "@/lib/performance/runtime-gates";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST =
@@ -13,28 +14,47 @@ const POSTHOG_HOST =
 
 let posthogInitialized = false;
 
-function initPostHog() {
+function buildPostHogConfig(pathname: string | null | undefined) {
+  const enableHeavyAnalytics = shouldEnableHeavyProductAnalytics(pathname);
+
+  return {
+    capture_pageview: false,
+    capture_pageleave: true,
+    persistence: "localStorage+cookie" as const,
+    autocapture: {
+      dom_event_allowlist: ["click", "submit", "change"],
+    },
+    // Project pages are high-traffic operational surfaces. Keep analytics
+    // lightweight there and reserve heavier scripts for explicit AI/comment
+    // workflows that actually use them.
+    disable_session_recording: !enableHeavyAnalytics,
+    disable_surveys: !enableHeavyAnalytics,
+    capture_dead_clicks: enableHeavyAnalytics,
+    disable_external_dependency_loading: !enableHeavyAnalytics,
+    session_recording: enableHeavyAnalytics
+      ? {
+          maskAllInputs: true,
+          maskTextSelector:
+            '[data-ph-mask], [data-sensitive], input[type="password"]',
+        }
+      : undefined,
+    external_scripts_inject_target: "head" as const,
+    loaded: (ph: typeof posthog) => {
+      if (process.env.NODE_ENV === "development") {
+        ph.debug(false);
+      }
+    },
+  };
+}
+
+function initPostHog(pathname: string | null | undefined) {
   if (posthogInitialized || typeof window === "undefined" || !POSTHOG_KEY) {
     return;
   }
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
-    capture_pageview: false,
-    capture_pageleave: true,
-    persistence: "localStorage+cookie",
-    autocapture: {
-      dom_event_allowlist: ["click", "submit", "change"],
-    },
-    session_recording: {
-      maskAllInputs: true,
-      maskTextSelector: '[data-ph-mask], [data-sensitive], input[type="password"]',
-    },
-    loaded: (ph) => {
-      if (process.env.NODE_ENV === "development") {
-        ph.debug(false);
-      }
-    },
+    ...buildPostHogConfig(pathname),
   });
 
   posthogInitialized = true;
@@ -52,8 +72,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!analyticsReady) return;
-    initPostHog();
-  }, [analyticsReady]);
+    initPostHog(pathname);
+  }, [analyticsReady, pathname]);
+
+  useEffect(() => {
+    if (!posthogInitialized) return;
+    posthog.set_config(buildPostHogConfig(pathname));
+  }, [pathname]);
 
   useEffect(() => {
     if (!analyticsReady || !posthogInitialized || !pathname) return;

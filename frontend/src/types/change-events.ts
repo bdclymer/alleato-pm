@@ -34,6 +34,7 @@ export interface ChangeEvent {
   cost_rom?: number | null;
   rfq_title?: string | null;
   commitment?: string | null;
+  commitment_id?: string | null;
   commitment_title?: string | null;
   sent_to_prime_pco?: boolean | null;
   sent_to_commitment_pco?: boolean | null;

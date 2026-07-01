@@ -3,9 +3,9 @@
 import { Bell, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   VeltCommentNotifications,
-  useVeltCommentUnreadCount,
 } from "@/components/notifications/velt-comment-notifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,7 +14,8 @@ import {
   useCollaborationNotifications,
   type CollaborationNotification,
 } from "@/hooks/use-collaboration-notifications";
-import { useDeferredMount } from "@/hooks/use-deferred-mount";
+import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
+import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { cn } from "@/lib/utils";
 
 function formatTime(ts: string) {
@@ -92,12 +93,15 @@ function NotificationItem({
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const shouldLoad = useDeferredMount();
-  const hasVeltNotifications = Boolean(process.env.NEXT_PUBLIC_VELT_API_KEY);
-  const commentUnreadCount = useVeltCommentUnreadCount();
+  const pathname = usePathname();
+  const collaborationRuntimeEnabled = useCollaborationRuntimeStore(
+    (state) => state.enabled,
+  );
+  const collaborationRuntimeActive =
+    collaborationRuntimeEnabled || shouldForceCollaborationRuntime(pathname);
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
-    useCollaborationNotifications({ enabled: shouldLoad });
-  const totalUnreadCount = unreadCount + commentUnreadCount;
+    useCollaborationNotifications({ enabled: open });
+  const totalUnreadCount = unreadCount;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -173,7 +177,8 @@ export function NotificationBell() {
             </div>
           )}
 
-          {hasVeltNotifications ? (
+          {collaborationRuntimeActive &&
+          process.env.NEXT_PUBLIC_VELT_API_KEY ? (
             <div className="border-t border-border/50 py-3">
               <VeltCommentNotifications compact />
             </div>

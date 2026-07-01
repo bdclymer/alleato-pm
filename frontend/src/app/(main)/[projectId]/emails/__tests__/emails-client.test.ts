@@ -112,7 +112,7 @@ describe("buildMailboxPriorityTabs", () => {
 
 describe("getEmailsRefreshInterval", () => {
   it("polls only for mailbox review mode", () => {
-    expect(getEmailsRefreshInterval(true)).toBe(15_000);
+    expect(getEmailsRefreshInterval(true)).toBe(60 * 60 * 1000);
     expect(getEmailsRefreshInterval(false)).toBe(false);
   });
 });
