@@ -398,14 +398,35 @@ jobs:
         id: validate
         continue-on-error: true
         shell: bash
+        env:
+          DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
         run: |
           set -o pipefail
           {
-            echo '$ pnpm --dir frontend run quality'
-            pnpm --dir frontend run quality
-            echo
-            echo '$ pnpm run check:routes'
-            pnpm run check:routes
+            if [ "$DELIVERY_MODE" = "main" ]; then
+              echo '$ pnpm --dir frontend run quality:changed'
+              pnpm --dir frontend run quality:changed
+              echo
+              echo '$ pnpm run check:routes'
+              pnpm run check:routes
+              echo
+
+              mapfile -t changed_tests < <(git diff --name-only --diff-filter=ACMR | grep -E '^frontend/.+(__tests__/.*\.(test|spec)\.(ts|tsx)|\.(test|spec)\.(ts|tsx))$' || true)
+              if [ "${#changed_tests[@]}" -gt 0 ]; then
+                jest_paths=()
+                for file in "${changed_tests[@]}"; do
+                  jest_paths+=("${file#frontend/}")
+                done
+                echo '$ pnpm --dir frontend exec jest --runInBand --runTestsByPath ...'
+                pnpm --dir frontend exec jest --runInBand --runTestsByPath "${jest_paths[@]}"
+              fi
+            else
+              echo '$ pnpm --dir frontend run quality'
+              pnpm --dir frontend run quality
+              echo
+              echo '$ pnpm run check:routes'
+              pnpm run check:routes
+            fi
           } 2>&1 | tee .github/codex-artifacts/validation.log
 
       - name: Prepare PR body
