@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.graph_sync_common import assert_service_role_key, bool_env, bounded_int_env
+from graph_sync_common import assert_service_role_key, bool_env, bounded_int_env
 from src.services.env_loader import load_env
 from src.services.integrations.microsoft_graph.sync import run_graph_sync
 from src.services.supabase_helpers import get_supabase_client
