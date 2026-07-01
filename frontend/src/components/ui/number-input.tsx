@@ -43,6 +43,8 @@ function NumberInput({
   const [displayValue, setDisplayValue] = React.useState<string>("")
   const isFocusedRef = React.useRef(false)
   const internalRef = React.useRef<HTMLInputElement>(null)
+  const replaceOnNextInputRef = React.useRef(false)
+  const focusedRawValueRef = React.useRef("")
 
   // Merge external ref with internal ref
   const setRefs = React.useCallback((node: HTMLInputElement | null) => {
@@ -101,7 +103,20 @@ function NumberInput({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = sanitize(e.target.value)
+    const incoming = sanitize(e.target.value)
+    const focusedRaw = focusedRawValueRef.current
+    let cleaned = incoming
+
+    if (replaceOnNextInputRef.current) {
+      replaceOnNextInputRef.current = false
+
+      if (focusedRaw && incoming.startsWith(focusedRaw) && incoming.length > focusedRaw.length) {
+        cleaned = incoming.slice(focusedRaw.length)
+      } else if (focusedRaw === "0" && incoming.startsWith("0") && incoming.length > 1) {
+        cleaned = incoming.replace(/^0+(?=\d)/, "")
+      }
+    }
+
     setDisplayValue(cleaned)
     fireChange(cleaned)
   }
@@ -110,9 +125,12 @@ function NumberInput({
     isFocusedRef.current = true
     // Switch to raw number for clean editing
     const raw = sanitize(String(value ?? ""))
+    focusedRawValueRef.current = raw
+    replaceOnNextInputRef.current = raw.length > 0
     setDisplayValue(raw)
 
     if (autoSelectOnFocus) {
+      e.target.setSelectionRange(0, e.target.value.length)
       requestAnimationFrame(() => e.target.select())
     } else if (clearZeroOnFocus) {
       if (raw === "0" || raw === "0.00" || raw === "0.0") {
@@ -125,6 +143,8 @@ function NumberInput({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     isFocusedRef.current = false
+    replaceOnNextInputRef.current = false
+    focusedRawValueRef.current = ""
     if (formatOnBlur) {
       const raw = sanitize(e.target.value)
       setDisplayValue(raw ? formatForDisplay(raw) : "")

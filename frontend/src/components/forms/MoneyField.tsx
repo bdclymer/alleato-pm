@@ -57,6 +57,8 @@ export function MoneyField({
     `money-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const [displayValue, setDisplayValue] = React.useState<string>("");
   const isFocusedRef = React.useRef(false);
+  const replaceOnNextInputRef = React.useRef(false);
+  const focusedRawValueRef = React.useRef("");
 
   // ── Formatting helpers ──────────────────────────────────────────────
 
@@ -106,7 +108,19 @@ export function MoneyField({
   // ── Event handlers ──────────────────────────────────────────────────
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = sanitize(e.target.value);
+    const incoming = sanitize(e.target.value);
+    const focusedRaw = focusedRawValueRef.current;
+    let cleaned = incoming;
+
+    if (replaceOnNextInputRef.current) {
+      replaceOnNextInputRef.current = false;
+
+      if (focusedRaw && incoming.startsWith(focusedRaw) && incoming.length > focusedRaw.length) {
+        cleaned = incoming.slice(focusedRaw.length);
+      } else if (focusedRaw === "0" && incoming.startsWith("0") && incoming.length > 1) {
+        cleaned = incoming.replace(/^0+(?=\d)/, "");
+      }
+    }
 
     if (cleaned === "" || cleaned === "-") {
       setDisplayValue(cleaned);
@@ -132,6 +146,8 @@ export function MoneyField({
 
   const handleBlur = () => {
     isFocusedRef.current = false;
+    replaceOnNextInputRef.current = false;
+    focusedRawValueRef.current = "";
     // Format with commas and decimals on blur; treat 0 as empty if clearZeroOnFocus
     if (value !== undefined && !(clearZeroOnFocus && value === 0)) {
       setDisplayValue(formatForDisplay(value));
@@ -144,11 +160,17 @@ export function MoneyField({
     isFocusedRef.current = true;
     // Switch to raw number for clean editing; treat 0 as empty if clearZeroOnFocus
     if (value !== undefined && !(clearZeroOnFocus && value === 0)) {
-      setDisplayValue(value.toString());
+      const raw = value.toString();
+      focusedRawValueRef.current = raw;
+      replaceOnNextInputRef.current = raw.length > 0;
+      setDisplayValue(raw);
     } else {
+      focusedRawValueRef.current = "";
+      replaceOnNextInputRef.current = false;
       setDisplayValue("");
     }
     // Select all text for quick replacement
+    e.target.setSelectionRange(0, e.target.value.length);
     requestAnimationFrame(() => e.target.select());
   };
 
