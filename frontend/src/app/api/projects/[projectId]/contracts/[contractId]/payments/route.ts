@@ -58,12 +58,19 @@ export const GET = withApiGuardrails(
       .select("contract_number")
       .eq("id", contractId)
       .eq("project_id", projectIdNum)
-      .single();
+      .maybeSingle();
 
     if (contractError) {
       return NextResponse.json(
         { error: "Failed to verify contract before fetching payments", details: contractError.message },
         { status: 400 },
+      );
+    }
+
+    if (!contract) {
+      return NextResponse.json(
+        { error: "Contract not found" },
+        { status: 404 },
       );
     }
 
