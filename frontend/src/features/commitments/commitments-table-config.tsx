@@ -56,6 +56,7 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "erp_status", label: "ERP Status", defaultVisible: false },
   { id: "ssov_status", label: "SOV Status", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
+  { id: "created_by_name", label: "Created By", defaultVisible: true },
 ];
 
 export const commitmentFilters: FilterConfig[] = [
@@ -566,6 +567,15 @@ export function buildCommitmentTableColumns(
       csvValue: (item) => item.created_at,
       sortValue: (item) =>
         item.created_at ? new Date(item.created_at).getTime() : 0,
+    },
+    created_by_name: {
+      render: (item) => (
+        <span className="text-muted-foreground">
+          {item.created_by_name ?? "—"}
+        </span>
+      ),
+      csvValue: (item) => item.created_by_name ?? "",
+      sortValue: (item) => item.created_by_name ?? "",
     },
   };
 

@@ -4,6 +4,7 @@ import {
   optionalPercent,
   optionalPositiveNumber,
 } from "./common";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 /**
  * Commitment Status enum values matching the subcontracts.status DB constraint.
@@ -96,7 +97,8 @@ export const CreateSubcontractSchema = z.object({
   contractNumber: z
     .string()
     .min(1, "Contract number is required")
-    .max(50, "Contract number must be 50 characters or less"),
+    .max(50, "Contract number must be 50 characters or less")
+    .transform((value) => normalizeCommitmentContractNumber(value, "SC-")),
 
   // Optional fields with validation
   executed: z.boolean(),

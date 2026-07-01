@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 /**
  * Schema that matches what the commitment detail edit form actually sends.
@@ -453,6 +454,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     // Build a safe update payload containing only columns that exist in both
     // subcontracts and purchase_orders. Undefined values are omitted so Supabase
@@ -465,7 +468,12 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       if (val !== undefined) updatePayload[key] = val;
     };
 
-    def(validatedData.contract_number, "contract_number");
+    if (validatedData.contract_number !== undefined) {
+      updatePayload.contract_number = normalizeCommitmentContractNumber(
+        validatedData.contract_number,
+        contractNumberPrefix,
+      );
+    }
     def(validatedData.title, "title");
     def(validatedData.contract_company_id, "contract_company_id");
     if (validatedData.status !== undefined) {
@@ -679,6 +687,8 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     // Soft delete commitment (set deleted_at timestamp)
     const deletedAt = new Date().toISOString();
@@ -773,7 +783,10 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
       updated_at: new Date().toISOString(),
     };
     if (parsed.data.number !== undefined) {
-      updatePayload.contract_number = parsed.data.number;
+      updatePayload.contract_number = normalizeCommitmentContractNumber(
+        parsed.data.number,
+        contractNumberPrefix,
+      );
     }
     if (parsed.data.title !== undefined) {
       updatePayload.title = parsed.data.title;

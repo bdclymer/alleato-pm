@@ -117,12 +117,13 @@ describe("commitment-import — isPurchaseOrder", () => {
 
 describe("commitment-import — insert mapping", () => {
   it("subcontract insert keeps signed_contract_received_date", () => {
-    const row = baseRow({ signedDate: "2026-01-15" });
+    const row = baseRow({ number: "8189-0001", signedDate: "2026-01-15" });
     const insert = buildSubcontractInsert(row, "uuid-deem", "Approved", 754, "user-1");
     expect(insert.signed_contract_received_date).toBe("2026-01-15");
     expect(insert).not.toHaveProperty("signed_po_received_date");
     expect(insert.project_id).toBe(754);
     expect(insert.contract_company_id).toBe("uuid-deem");
+    expect(insert.contract_number).toBe("SC-8189-0001");
     expect(insert.executed).toBe(true);
   });
 

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { CreatePurchaseOrderSchema } from "@/lib/schemas/create-purchase-order-schema";
 import { apiErrorResponse } from "@/lib/api-error";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 /**
  * GET /api/projects/[id]/purchase-orders
@@ -76,7 +77,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // Map form data to database columns
     const purchaseOrderData = {
       project_id: parseInt(projectId),
-      contract_number: data.contractNumber?.trim() || "",
+      contract_number: normalizeCommitmentContractNumber(
+        data.contractNumber,
+        "PO-",
+      ),
       contract_company_id: data.contractCompanyId || null,
       title: data.title || null,
       status: data.status || "Draft",

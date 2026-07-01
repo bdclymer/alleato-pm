@@ -26,6 +26,7 @@ export const commitmentListItemSchema = z
     executed_date: z.string().nullable(),
     retention_percentage: z.number().nullable(),
     created_at: z.string(),
+    created_by_name: z.string().nullable().optional(),
     updated_at: z.string(),
     erp_status: z.string().nullable(),
     ssov_status: z.string().nullable(),

@@ -104,6 +104,7 @@ export interface Commitment {
   executed_date: string | null;
   description: string | null;
   created_at: string;
+  created_by_name?: string | null;
   updated_at: string;
   original_amount: number;
   approved_change_orders: number;

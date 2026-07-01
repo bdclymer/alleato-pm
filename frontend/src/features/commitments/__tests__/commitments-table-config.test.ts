@@ -29,6 +29,12 @@ describe("commitments table configuration", () => {
     }
   });
 
+  it("keeps creation metadata visible by default", () => {
+    expect(commitmentDefaultVisibleColumns).toEqual(
+      expect.arrayContaining(["created_at", "created_by_name"]),
+    );
+  });
+
   it("left-aligns cost codes because they are identifiers, not amounts", () => {
     expect(
       buildCommitmentTableColumns("25125").find(
