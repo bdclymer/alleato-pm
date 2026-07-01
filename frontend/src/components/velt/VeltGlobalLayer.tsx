@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
+import { observeMalformedVeltAnnotations } from "@/components/velt/annotation-sanitizer";
 import {
   VeltComments,
   VeltCommentsSidebar,
@@ -200,6 +201,8 @@ export function VeltGlobalLayer() {
 
   // Scope page annotations to the current route
   useSetDocument(pathname, { documentName: pathname });
+
+  useEffect(() => observeMalformedVeltAnnotations(document), []);
 
   // @ts-expect-error -- Velt recorder types lag behind live API
   useRecorderAddHandler((recorder: { recorderId?: string }) => {

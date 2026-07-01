@@ -14,6 +14,7 @@ import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recov
 import { VeltAuthProvider } from "@/components/velt/VeltAuthProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { DEFAULT_APP_METADATA_TITLE } from "@/lib/app-metadata";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,7 +29,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Alleato AI - Project Management",
+  title: DEFAULT_APP_METADATA_TITLE,
   description: "Modern construction management platform powered by AI.",
   icons: {
     icon: "/Alleato Favicon.png",
