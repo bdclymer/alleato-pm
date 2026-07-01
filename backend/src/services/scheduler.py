@@ -142,38 +142,6 @@ def init_scheduler() -> None:
         graph_sync_setting in ("1", "true", "yes") or
         (graph_sync_setting == "auto" and graph_has_creds)
     )
-    graph_subscription_setting = os.getenv("GRAPH_SUBSCRIPTIONS_ENABLED", "auto").lower()
-    graph_subscription_configured = bool(
-        graph_has_creds
-        and _has_any_env("MICROSOFT_GRAPH_WEBHOOK_NOTIFICATION_URL", "GRAPH_WEBHOOK_NOTIFICATION_URL")
-        and _has_any_env("MICROSOFT_GRAPH_WEBHOOK_CLIENT_STATE", "GRAPH_WEBHOOK_CLIENT_STATE")
-    )
-    graph_subscriptions_enabled = (
-        graph_subscription_setting in ("1", "true", "yes")
-        or (graph_subscription_setting == "auto" and graph_subscription_configured)
-    )
-    if graph_subscriptions_enabled:
-        subscription_interval_minutes = max(
-            15,
-            int(os.getenv("GRAPH_SUBSCRIPTION_RECONCILE_INTERVAL_MINUTES", "60")),
-        )
-        scheduler.add_job(
-            run_graph_subscription_reconcile_job,
-            IntervalTrigger(minutes=subscription_interval_minutes),
-            id="graph_subscription_reconcile",
-            name="Microsoft Graph Webhook Subscription Renewal",
-            replace_existing=True,
-            max_instances=1,
-        )
-        logger.info(
-            "[Scheduler] Microsoft Graph subscription reconcile every %d min",
-            subscription_interval_minutes,
-        )
-    elif graph_subscription_setting not in ("0", "false", "no") and graph_has_creds:
-        logger.warning(
-            "[Scheduler] Microsoft Graph subscription reconcile disabled because webhook URL/clientState are not configured."
-        )
-
     if graph_sync_enabled:
         # The heavy full mailbox sweep (run_graph_sync: Outlook/Teams/SharePoint for
         # ALL mailboxes) is the main DB-pressure source. It is decoupled from the
@@ -293,40 +261,3 @@ def _run_source_sync_health_recompute() -> dict:
         },
         "health": health,
     }
-
-
-async def run_graph_subscription_reconcile_job() -> None:
-    """Scheduled job: create or renew Microsoft Graph webhook subscriptions."""
-    import asyncio
-
-    logger.info("[Scheduler] Running Microsoft Graph subscription reconcile job")
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, _run_graph_subscription_reconcile)
-        logger.info("[Scheduler] Microsoft Graph subscription reconcile complete: %s", result)
-        if result.get("errors"):
-            logger.warning("[Scheduler] Graph subscription reconcile reported errors: %s", result["errors"])
-    except Exception as e:
-        logger.warning("[Scheduler] Microsoft Graph subscription reconcile failed (will retry): %s", e, exc_info=True)
-
-
-def _run_graph_subscription_reconcile() -> dict:
-    """Synchronous wrapper for Graph webhook subscription lifecycle maintenance."""
-    from .supabase_helpers import get_supabase_client
-    from .integrations.microsoft_graph.subscriptions import ensure_subscriptions
-
-    _guard_background_app_db("graph_subscription_reconcile")
-    client = get_supabase_client()
-    renew_within_hours = max(
-        1,
-        min(int(os.getenv("GRAPH_SUBSCRIPTION_RENEW_WITHIN_HOURS", "12")), 24),
-    )
-    expiration_hours = max(
-        1,
-        min(int(os.getenv("GRAPH_SUBSCRIPTION_EXPIRATION_HOURS", "48")), 48),
-    )
-    return ensure_subscriptions(
-        client,
-        renew_within_hours=renew_within_hours,
-        expiration_hours=expiration_hours,
-    )

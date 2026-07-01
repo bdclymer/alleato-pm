@@ -303,19 +303,7 @@ services:
     dockerContext: ./backend
     schedule: "0 */6 * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.env_loader import load_env; load_env();
-      from src.services.integrations.microsoft_graph.subscriptions import (
-        ensure_subscriptions, configured_subscription_targets
-      );
-      from src.services.supabase_helpers import get_rag_write_client;
-      supabase = get_rag_write_client();
-      result = ensure_subscriptions(supabase, targets=configured_subscription_targets());
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('failed', 0) > 0 and result.get('created', 0) == 0 and result.get('renewed', 0) == 0 else 0)
-      "
+      timeout 5m python3 src/scripts/run_graph_subscription_reconcile.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
