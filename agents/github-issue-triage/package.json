@@ -6,6 +6,8 @@
   "scripts": {
     "eve": "eve",
     "info": "eve info",
+    "build": "eve build",
+    "vercel-build": "eve build",
     "dev": "eve dev",
     "eval": "EVE_GITHUB_TRIAGE_MOCK_MODEL=true eve eval --max-concurrency 1 --timeout 60000",
     "eval:live": "eve eval",
