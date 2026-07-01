@@ -161,35 +161,19 @@ services:
     dockerContext: ./backend
     schedule: "20 */2 * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
-      from src.services.supabase_helpers import get_supabase_client;
-      result = run_graph_sync(
-        get_supabase_client(),
-        run_teams=False,
-        run_embedding=True,
-        run_teams_compiler=False,
-        embed_limit=25,
-        teams_compiler_batch_size=25,
-      );
-      print(json.dumps(result, indent=2));
-      errors = result.get('errors', []);
-      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
-      "
+      timeout 25m python3 scripts/run_graph_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "false"
+        value: "true"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_SERVICE_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: RAG_SUPABASE_URL
         sync: false
@@ -226,8 +210,6 @@ services:
       - key: GRAPH_SYNC_SHAREPOINT
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
-        value: "25"
-      - key: TEAMS_COMPILER_BATCH_SIZE
         value: "25"
 
   # Syncs new Fireflies meeting transcripts every 30 minutes.

@@ -184,21 +184,7 @@ def init_scheduler() -> None:
         full_sync_job_enabled = os.getenv(
             "GRAPH_FULL_SYNC_JOB_ENABLED", "true"
         ).strip().lower() not in ("0", "false", "no", "off")
-        if full_sync_job_enabled:
-            graph_interval_minutes = max(5, int(os.getenv("GRAPH_SYNC_INTERVAL_MINUTES", "60")))
-            scheduler.add_job(
-                run_graph_sync_job,
-                IntervalTrigger(minutes=graph_interval_minutes),
-                id="graph_sync",
-                name="Microsoft Graph Sync (Outlook / Teams / SharePoint)",
-                replace_existing=True,
-                max_instances=1,
-            )
-            logger.info(
-                "[Scheduler] Microsoft Graph sync every %d min",
-                graph_interval_minutes,
-            )
-        else:
+        if not full_sync_job_enabled:
             logger.info(
                 "[Scheduler] Heavy Microsoft Graph full sweep DISABLED "
                 "(GRAPH_FULL_SYNC_JOB_ENABLED=false) — webhook drain + embedding remain active."
@@ -309,31 +295,6 @@ def _run_source_sync_health_recompute() -> dict:
     }
 
 
-async def run_graph_sync_job() -> None:
-    """Scheduled job: fetch changed Outlook, Teams, and SharePoint rows via Microsoft Graph."""
-    import asyncio
-
-    logger.info("[Scheduler] Running Microsoft Graph fetch-only sync job")
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, _run_graph_sync)
-        logger.info(
-            "[Scheduler] Microsoft Graph fetch-only sync complete: %d total synced (outlook=%d, teams=%d, sharepoint=%d)",
-            result.get("total_synced", 0),
-            result.get("outlook", 0),
-            result.get("teams", 0),
-            result.get("sharepoint", 0),
-        )
-        if result.get("errors"):
-            logger.warning("[Scheduler] Graph sync reported errors: %s", result["errors"])
-    except ConfigurationError as e:
-        logger.critical("[Scheduler] Microsoft Graph sync disabled — fix config and restart: %s", e)
-        if scheduler:
-            scheduler.remove_job("graph_sync")
-    except Exception as e:
-        logger.warning("[Scheduler] Microsoft Graph sync failed (will retry): %s", e, exc_info=True)
-
-
 async def run_graph_subscription_reconcile_job() -> None:
     """Scheduled job: create or renew Microsoft Graph webhook subscriptions."""
     import asyncio
@@ -347,28 +308,6 @@ async def run_graph_subscription_reconcile_job() -> None:
             logger.warning("[Scheduler] Graph subscription reconcile reported errors: %s", result["errors"])
     except Exception as e:
         logger.warning("[Scheduler] Microsoft Graph subscription reconcile failed (will retry): %s", e, exc_info=True)
-
-
-def _run_graph_sync():
-    """Synchronous wrapper for Microsoft Graph fetch-only sync."""
-    from .supabase_helpers import get_supabase_client
-    from .integrations.microsoft_graph.sync import run_graph_sync
-
-    _guard_background_app_db("graph_sync")
-    client = get_supabase_client()
-    run_inline_embedding = os.getenv("GRAPH_SYNC_RUN_EMBEDDING_INLINE", "false").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
-    result = run_graph_sync(
-        client,
-        run_embedding=run_inline_embedding,
-    )
-    from .ingestion.sync_followups import maybe_run_comm_project_backfill
-
-    result["project_backfill"] = maybe_run_comm_project_backfill(client)
-    return result
 
 
 def _run_graph_subscription_reconcile() -> dict:

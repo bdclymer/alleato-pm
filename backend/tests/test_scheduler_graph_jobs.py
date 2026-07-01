@@ -61,35 +61,6 @@ class _RecordingScheduler:
         self.running = True
 
 
-def test_scheduled_graph_sync_defaults_to_fetch_only(monkeypatch):
-    calls = {}
-    client = object()
-
-    monkeypatch.delenv("GRAPH_SYNC_RUN_EMBEDDING_INLINE", raising=False)
-    monkeypatch.delenv("GRAPH_SYNC_RUN_COMPILER_INLINE", raising=False)
-    monkeypatch.setattr(
-        "src.services.supabase_helpers.get_supabase_client",
-        lambda: client,
-    )
-    monkeypatch.setattr(
-        "src.services.integrations.microsoft_graph.sync.run_graph_sync",
-        lambda supabase_client, **kwargs: calls.setdefault(
-            "sync",
-            {"client": supabase_client, **kwargs, "total_synced": 0},
-        ),
-    )
-    monkeypatch.setattr(
-        scheduler,
-        "_maybe_run_comm_project_backfill",
-        lambda supabase_client: {"client_matches": supabase_client is client},
-    )
-
-    result = scheduler._run_graph_sync()
-
-    assert result["run_embedding"] is False
-    assert result["project_backfill"] == {"client_matches": True}
-
-
 def test_init_scheduler_registers_acumatica_job_with_runtime_envs(monkeypatch):
     recording_scheduler = _RecordingScheduler()
 
