@@ -788,6 +788,13 @@ export const adminTools: NavigationTool[] = [
     adminOnly: true,
   },
   {
+    name: "My Feedback",
+    path: "/my-feedback",
+    icon: MessageCircle,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
     name: "Training Docs",
     path: "/training-docs",
     icon: BookOpen,

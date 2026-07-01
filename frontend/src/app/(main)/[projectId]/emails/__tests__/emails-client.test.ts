@@ -1,5 +1,9 @@
 import type { ProjectEmail } from "@/hooks/use-emails";
 import {
+  getEmailsRefreshInterval,
+  reconcileSelectedEmail,
+} from "@/app/(main)/[projectId]/emails/emails-client.helpers";
+import {
   buildMailboxPriorityTabs,
   countMailboxEmailsByPriority,
   normalizeMailboxPriorityFilter,
@@ -7,6 +11,7 @@ import {
 
 function buildEmail(
   priority: ProjectEmail["assistant_priority"],
+  overrides: Partial<ProjectEmail> = {},
 ): ProjectEmail {
   return {
     id: 1,
@@ -36,6 +41,7 @@ function buildEmail(
     updated_at: null,
     deleted_at: null,
     assistant_priority: priority,
+    ...overrides,
   };
 }
 
@@ -101,5 +107,78 @@ describe("buildMailboxPriorityTabs", () => {
       isActive: true,
       compact: true,
     });
+  });
+});
+
+describe("getEmailsRefreshInterval", () => {
+  it("polls only for mailbox review mode", () => {
+    expect(getEmailsRefreshInterval(true)).toBe(15_000);
+    expect(getEmailsRefreshInterval(false)).toBe(false);
+  });
+});
+
+describe("reconcileSelectedEmail", () => {
+  it("replaces the selected row with the refreshed query copy", () => {
+    const stale = buildEmail("high", {
+      id: 42,
+      assistant_review: {
+        reviewId: "review-1",
+        reviewOutcome: "skipped",
+        reviewerNote: null,
+        draftBody: null,
+        assistantCategory: null,
+        feedbackProvidedAt: null,
+        fieldFeedback: {
+          action: "unreviewed",
+          priority: "unreviewed",
+          category: "unreviewed",
+          draft: "unreviewed",
+          project: "unreviewed",
+          owner: "unreviewed",
+          reason: "unreviewed",
+          score: "unreviewed",
+        },
+        projectAssignmentFeedback: {
+          status: "unreviewed",
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        },
+      },
+    });
+    const refreshed = buildEmail("urgent", {
+      id: 42,
+      assistant_review: {
+        reviewId: "review-1",
+        reviewOutcome: "draft_edited",
+        reviewerNote: "Saved",
+        draftBody: "Updated draft",
+        assistantCategory: "Reply Needed",
+        feedbackProvidedAt: "2026-06-30T12:00:00.000Z",
+        fieldFeedback: {
+          action: "correct",
+          priority: "correct",
+          category: "correct",
+          draft: "correct",
+          project: "unreviewed",
+          owner: "unreviewed",
+          reason: "unreviewed",
+          score: "unreviewed",
+        },
+        projectAssignmentFeedback: {
+          status: "unreviewed",
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        },
+      },
+    });
+
+    expect(reconcileSelectedEmail([refreshed], stale)).toEqual(refreshed);
+  });
+
+  it("clears the selection when the row no longer exists", () => {
+    const selected = buildEmail("normal", { id: 99 });
+    expect(reconcileSelectedEmail([], selected)).toBeNull();
   });
 });

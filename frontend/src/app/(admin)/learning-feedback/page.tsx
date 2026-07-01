@@ -107,6 +107,7 @@ export default async function LearningFeedbackPage() {
   ];
 
   const reviewLinks = [
+    { href: "/my-feedback", label: "My submitted feedback", hint: "Review, edit, or undo what you rated" },
     { href: "/executive", label: "Executive brief", hint: "Rate today's brief items" },
     { href: "/potential-change-orders", label: "Potential change orders", hint: "Review & rate change-order signals" },
     { href: "/insights", label: "AI insights", hint: "All insight cards" },

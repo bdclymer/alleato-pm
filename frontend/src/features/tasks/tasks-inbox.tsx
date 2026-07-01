@@ -2635,7 +2635,7 @@ export function TasksInbox({
       : "Tasks for this project"
     : "Tasks assigned from meetings, emails, documents, and source intelligence.";
 
-  if (rawView === "split") {
+  if (tableState.currentView === "split") {
     return (
       <>
         <SplitPageFrame height="viewport" className="flex-row bg-background">

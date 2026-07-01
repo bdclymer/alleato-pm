@@ -133,6 +133,10 @@ export interface MailboxFeedbackCoverage {
   liveError: string | null;
 }
 
+interface EmailQueryOptions {
+  refetchInterval?: number | false;
+}
+
 export const emailKeys = {
   global: (status?: string, source?: EmailSource) =>
     ["emails", "global", status, source] as const,
@@ -152,6 +156,7 @@ export function useAllEmails(
   enabled = true,
   source: EmailSource = "app",
   mailboxUserId?: string,
+  options?: EmailQueryOptions,
 ) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
@@ -167,6 +172,7 @@ export function useAllEmails(
         { signal },
       ),
     enabled,
+    refetchInterval: options?.refetchInterval,
   });
 }
 

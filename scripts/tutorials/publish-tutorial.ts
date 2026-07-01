@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { createClient } = require("../../frontend/node_modules/@supabase/supabase-js");
@@ -101,8 +102,7 @@ async function main() {
   const manifestPath = path.resolve(options.manifestPath!);
   const outputDir = path.dirname(manifestPath);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as TutorialManifest;
-  const markdownPath = path.join(outputDir, `${manifest.slug}.md`);
-  const generatedMarkdown = await readFile(markdownPath, "utf8").catch(() => "");
+  const generatedMarkdown = await readGeneratedMarkdown(outputDir, manifest.slug);
   const slug = manifest.slug === "create-commitment" ? "create-a-commitment" : manifest.slug;
 
   assertNoBadCapture(manifest);
@@ -297,6 +297,28 @@ function stripGeneratedMarkdown(markdown: string) {
     .trim();
 }
 
+export async function readGeneratedMarkdown(outputDir: string, slug: string) {
+  const documentationDraftPath = path.join(outputDir, "documentation-draft.md");
+  const markdownPath = path.join(outputDir, `${slug}.md`);
+  const documentationDraft = await readFile(documentationDraftPath, "utf8").catch(() => "");
+  const generatedMarkdown = await readFile(markdownPath, "utf8").catch(() => "");
+  return chooseGeneratedMarkdown(documentationDraft, generatedMarkdown);
+}
+
+export function chooseGeneratedMarkdown(
+  documentationDraft: string,
+  generatedMarkdown: string,
+) {
+  return documentationDraft || generatedMarkdown;
+}
+
+export function getUploadRetryContentType(contentType: string) {
+  if (contentType === "video/webm") {
+    return "application/octet-stream";
+  }
+  return null;
+}
+
 async function replaceGeneratedRows(service: ReturnType<typeof createClient>, docId: string) {
   const { error: stepsError } = await service
     .from("training_doc_steps")
@@ -324,12 +346,23 @@ async function uploadAsset(
   contentType: string,
 ) {
   const body = await readFile(filePath);
-  const { error } = await service.storage
+  let { error } = await service.storage
     .from("documents")
     .upload(storagePath, body, {
       contentType,
       upsert: true,
     });
+
+  const retryContentType = getUploadRetryContentType(contentType);
+  if (error && retryContentType) {
+    const retry = await service.storage
+      .from("documents")
+      .upload(storagePath, body, {
+        contentType: retryContentType,
+        upsert: true,
+      });
+    error = retry.error;
+  }
 
   if (error) {
     throw new Error(`Failed to upload ${path.basename(filePath)}: ${error.message}`);
@@ -367,7 +400,13 @@ async function insertSteps(
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+const invokedPath = process.argv[1]
+  ? pathToFileURL(path.resolve(process.argv[1])).href
+  : null;
+
+if (invokedPath === import.meta.url) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}

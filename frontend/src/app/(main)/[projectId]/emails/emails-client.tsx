@@ -64,6 +64,10 @@ import {
   countMailboxEmailsByPriority,
   normalizeMailboxPriorityFilter,
 } from "@/features/emails/mailbox-priority-tabs";
+import {
+  getEmailsRefreshInterval,
+  reconcileSelectedEmail,
+} from "./emails-client.helpers";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
 const EMAIL_STATUS_OPTIONS = [
@@ -200,7 +204,15 @@ export function EmailsClient({
   });
 
   const projectEmailsQuery = useEmails(projectId ?? 0, undefined, source);
-  const globalEmailsQuery = useAllEmails(undefined, isGlobal, source, mailboxUserId);
+  const globalEmailsQuery = useAllEmails(
+    undefined,
+    isGlobal,
+    source,
+    mailboxUserId,
+    {
+      refetchInterval: getEmailsRefreshInterval(isMailboxReviewMode),
+    },
+  );
   const activeQuery = isGlobal ? globalEmailsQuery : projectEmailsQuery;
   const {
     data: emails = [],
@@ -285,6 +297,10 @@ export function EmailsClient({
   );
 
   // Sync URL status filter
+  React.useEffect(() => {
+    setSelectedEmail((current) => reconcileSelectedEmail(emails, current));
+  }, [emails]);
+
   React.useEffect(() => {
     const nextFilters: FilterState = {
       status: searchParams.get("status") || undefined,

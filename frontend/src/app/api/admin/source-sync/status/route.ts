@@ -13,6 +13,7 @@ import {
   coverageStatus,
   hasFullTranscriptReadProof,
   hasTaskExtractionOutcome,
+  isIntentionalSkipJob,
   latestJobMetadataByDocumentId,
   newest,
   readSupabaseRows,
@@ -460,7 +461,12 @@ async function buildRagLifecycleStatus(
       }
     }
     const recentFailures = [...new Set(latestJobBySourceId.values())].filter(
-      (job) => String(job.status).startsWith("failed") || job.status === "error",
+      (job) =>
+        (String(job.status).startsWith("failed") || job.status === "error") &&
+        // Intentional skips (interview-title / low-content exclusions) are
+        // recorded as failed_permanent upstream but are not real failures —
+        // never surface them as critical pipeline alerts.
+        !isIntentionalSkipJob(job),
     );
 
     const stages = [

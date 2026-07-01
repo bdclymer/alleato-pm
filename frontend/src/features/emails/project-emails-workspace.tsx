@@ -581,6 +581,30 @@ function hasAssistantDraft(email: ProjectEmail): boolean {
   return Boolean(email.assistant_review?.draftBody?.trim());
 }
 
+function reviewOutcomeLabel(outcome: string | null | undefined): string | null {
+  if (!outcome) return null;
+  return REVIEW_OUTCOME_LABELS[outcome as BrandonReviewOutcome] ?? outcome;
+}
+
+function reviewOutcomeClass(
+  outcome: string | null | undefined,
+): string {
+  switch (outcome) {
+    case "draft_copied":
+    case "draft_edited":
+      return "bg-emerald-50 text-emerald-700";
+    case "delegated":
+      return "bg-amber-50 text-amber-700";
+    case "watched":
+      return "bg-sky-50 text-sky-700";
+    case "marked_no_action":
+    case "skipped":
+      return "bg-slate-100 text-slate-700";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
 function getInitials(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "EM";
@@ -662,6 +686,11 @@ function InboxRow({
   const { onClose } = useSplitPage();
   const senderName = email.from_name || email.from_email || "Unknown sender";
   const hasDraft = hasAssistantDraft(email);
+  const reviewOutcome = defaultReviewOutcome(email);
+  const reviewLabel =
+    email.assistant_review?.reviewId || hasDraft
+      ? reviewOutcomeLabel(reviewOutcome)
+      : "Pending review";
 
   return (
     <Button
@@ -693,13 +722,31 @@ function InboxRow({
           <p className="min-w-0 flex-1 truncate text-[12px] font-medium leading-4 text-foreground">
             {email.subject || "Untitled email"}
           </p>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-3",
+              email.assistant_review?.reviewId || hasDraft
+                ? reviewOutcomeClass(reviewOutcome)
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            {reviewLabel}
+          </span>
           {hasDraft ? (
             <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
-              Draft
+              AI draft
             </span>
           ) : null}
         </div>
         <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "h-2 w-2 shrink-0 rounded-full",
+              priorityDotClass(email.assistant_priority),
+            )}
+            aria-label={priorityLabel(email.assistant_priority)}
+            title={priorityLabel(email.assistant_priority)}
+          />
           <p className="min-w-0 truncate text-[11px] leading-4 text-muted-foreground">
             {previewText(email)}
           </p>
@@ -2345,9 +2392,8 @@ export function EmailTrainingFeedbackPanel({
           {
             method: "POST",
             body: JSON.stringify({
-              assistantAction: selectedEmail.assistant_action ?? "watch",
-              assistantPriority: selectedEmail.assistant_priority ?? "normal",
-              assistantCategory: assistantCategory.trim() || null,
+              assistantAction,
+              assistantPriority,
               assistantScore: selectedEmail.assistant_score ?? null,
               assistantReason: selectedEmail.assistant_reason ?? null,
               assistantOwner: selectedEmail.assistant_owner ?? null,

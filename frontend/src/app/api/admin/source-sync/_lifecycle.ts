@@ -139,6 +139,35 @@ export function coverageStatus(count: number, total: number): LifecycleStatus {
   return "critical";
 }
 
+/**
+ * Error codes the ingestion pipeline uses for documents it *deliberately* did
+ * not embed — not failures. The backend records these with
+ * `status="failed_permanent"` (see fireflies_pipeline / embedder /
+ * document_parser) but marks them `intentional: true` and clears the error
+ * message. They must NOT be surfaced as critical pipeline failures, or the
+ * health map paints red for documents that were correctly skipped.
+ */
+export const INTENTIONAL_SKIP_ERROR_CODES = new Set<string>([
+  "interview_title_excluded",
+  "skipped_low_content",
+]);
+
+/**
+ * True when a source-processing job represents an intentional skip rather than
+ * a real failure. Matches by known skip error codes and by the backend's
+ * `INTENTIONALLY_EXCLUDED:` error-message marker (belt and suspenders — the
+ * message prefix survives even if a new skip code is added upstream).
+ */
+export function isIntentionalSkipJob(job: {
+  error_code?: string | null;
+  error_message?: string | null;
+  status?: string | null;
+}): boolean {
+  if (job.status === "intentionally_excluded") return true;
+  if (job.error_code && INTENTIONAL_SKIP_ERROR_CODES.has(job.error_code)) return true;
+  return Boolean(job.error_message?.startsWith("INTENTIONALLY_EXCLUDED:"));
+}
+
 export function isTransientSupabaseReadError(error: { message?: string } | null | undefined) {
   return String(error?.message ?? "").toLowerCase().includes("fetch failed");
 }

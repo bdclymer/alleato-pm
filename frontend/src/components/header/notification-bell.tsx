@@ -3,6 +3,10 @@
 import { Bell, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  VeltCommentNotifications,
+  useVeltCommentUnreadCount,
+} from "@/components/notifications/velt-comment-notifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,8 +93,11 @@ function NotificationItem({
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const shouldLoad = useDeferredMount();
+  const hasVeltNotifications = Boolean(process.env.NEXT_PUBLIC_VELT_API_KEY);
+  const commentUnreadCount = useVeltCommentUnreadCount();
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
     useCollaborationNotifications({ enabled: shouldLoad });
+  const totalUnreadCount = unreadCount + commentUnreadCount;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -107,9 +114,9 @@ export function NotificationBell() {
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
+          {totalUnreadCount > 0 && (
             <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {totalUnreadCount > 9 ? "9+" : totalUnreadCount}
             </span>
           )}
         </Button>
@@ -135,7 +142,7 @@ export function NotificationBell() {
         </div>
 
         {/* List */}
-        <div className="max-h-80 overflow-y-auto border-t border-border/50">
+        <div className="max-h-96 overflow-y-auto border-t border-border/50">
           {isLoading ? (
             <div className="space-y-0.5 py-2">
               {[1, 2, 3].map((i) => (
@@ -151,7 +158,7 @@ export function NotificationBell() {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <Bell className="h-5 w-5 text-muted-foreground/40" />
-              <p className="text-xs text-muted-foreground">No notifications yet</p>
+              <p className="text-xs text-muted-foreground">No project activity notifications yet</p>
             </div>
           ) : (
             <div className="divide-y divide-border/40">
@@ -165,6 +172,12 @@ export function NotificationBell() {
               ))}
             </div>
           )}
+
+          {hasVeltNotifications ? (
+            <div className="border-t border-border/50 py-3">
+              <VeltCommentNotifications compact />
+            </div>
+          ) : null}
         </div>
 
         {/* Footer */}

@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { Bell, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import {
+  VeltCommentNotifications,
+  useVeltCommentUnreadCount,
+} from "@/components/notifications/velt-comment-notifications";
 import { EmptyState, Badge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -132,6 +136,8 @@ function NotificationList({
 
 export default function NotificationsPage() {
   const [tab, setTab] = useState("all");
+  const hasVeltNotifications = Boolean(process.env.NEXT_PUBLIC_VELT_API_KEY);
+  const commentUnreadCount = useVeltCommentUnreadCount();
   const {
     notifications,
     unreadCount,
@@ -145,10 +151,11 @@ export default function NotificationsPage() {
     tab === "unread"
       ? notifications.filter((n) => !n.readAt)
       : notifications;
+  const totalUnreadCount = unreadCount + commentUnreadCount;
 
   const actions = (
     <div className="flex items-center gap-2">
-      {unreadCount > 0 && <Badge variant="secondary">{unreadCount}</Badge>}
+      {totalUnreadCount > 0 && <Badge variant="secondary">{totalUnreadCount}</Badge>}
       {unreadCount > 0 && (
         <Button variant="ghost" size="sm" onClick={() => void markAllAsRead()}>
           Mark all read
@@ -159,28 +166,32 @@ export default function NotificationsPage() {
 
   return (
     <PageShell variant="content" title="Notifications" actions={actions}>
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">
-            Unread{unreadCount > 0 ? ` (${unreadCount})` : ""}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value={tab}>
-          {isLoading ? (
-            <div className="space-y-1">
-              <Skeleton className="h-16 w-full rounded-md" />
-              <Skeleton className="h-16 w-full rounded-md" />
-              <Skeleton className="h-16 w-full rounded-md" />
-            </div>
-          ) : (
-            <NotificationList
-              items={filtered}
-              onMarkRead={(id) => void markAsRead(id)}
-              onDelete={(id) => void deleteNotification(id)}
-            />
-          )}
-        </TabsContent>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-8">
+        <div className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="all">Project activity</TabsTrigger>
+            <TabsTrigger value="unread">
+              Unread{unreadCount > 0 ? ` (${unreadCount})` : ""}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value={tab}>
+            {isLoading ? (
+              <div className="space-y-1">
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ) : (
+              <NotificationList
+                items={filtered}
+                onMarkRead={(id) => void markAsRead(id)}
+                onDelete={(id) => void deleteNotification(id)}
+              />
+            )}
+          </TabsContent>
+        </div>
+
+        {hasVeltNotifications ? <VeltCommentNotifications /> : null}
       </Tabs>
     </PageShell>
   );
