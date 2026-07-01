@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
+import { assertCommitmentChangeOrderLineItemsUnlocked } from "@/lib/change-orders/commitment-change-order-line-item-lock.server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -97,6 +97,12 @@ export const POST = withApiGuardrails(
 
     const body = await request.json();
     const supabase = await createClient();
+    await assertCommitmentChangeOrderLineItemsUnlocked(
+      supabase,
+      projectIdNum,
+      commitmentCoId,
+      "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#POST",
+    );
 
     const { data, error } = await supabase
       .from("commitment_change_order_lines")
