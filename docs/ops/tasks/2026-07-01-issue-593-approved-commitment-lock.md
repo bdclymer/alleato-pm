@@ -1,6 +1,6 @@
 # Task: Approved commitment edit lock for GitHub issue 593
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Created: 2026-07-01
 Linear Issue: AAI-841 - https://linear.app/megankharrison/issue/AAI-841/status-is-approved-i-shouldnt-be-able-to-come-in-here-and-edit-items
@@ -19,8 +19,8 @@ away from Approved, then push the fix to `main` and close GitHub issue `#593`.
 - [x] Reject approved commitment SOV import attempts in the line-item import API.
 - [x] Add regression tests for the approved-lock API guardrails.
 - [x] Run focused verification and record command evidence.
-- [ ] Push the fix to `origin/main`.
-- [ ] Close GitHub issue `#593` with accurate evidence.
+- [x] Push the fix to `origin/main`.
+- [x] Close GitHub issue `#593` with accurate evidence.
 
 ## Evidence
 
@@ -36,6 +36,8 @@ away from Approved, then push the fix to `main` and close GitHub issue `#593`.
 | Focused route tests | `./node_modules/.bin/jest --runInBand --runTestsByPath '/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/commitments/[commitmentId]/__tests__/route.test.ts' '/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/line-items/import/__tests__/route.test.ts'` | Pass | 4 tests passed, covering approved-lock mutation and import guardrails. |
 | Live route access check | `agent-browser open 'https://projects.alleatogroup.com/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b' && agent-browser wait 5000 && agent-browser get title` | Blocked | Browser session redirected to `/auth/login`, so authenticated route proof was not available in this session. |
 | Frontend typecheck | `./node_modules/.bin/tsc --noEmit --pretty false` | Blocked | The frontend typecheck OOMed the default Node heap after ~66s; a rerun with an 8 GB heap did not complete within the interactive budget and was stopped to keep the task moving. |
+| Push to `main` | `npm run codex:finish -- --message "Lock approved commitment edits" --staged-only` | Pass | Published the task-owned files to `origin/main` at `b77c0a1ca4`. |
+| Issue closeout | `gh issue view 593 --repo MeganHarrison/alleato-pm --json state,closed,closedAt,url` and `gh issue comment 593 --repo MeganHarrison/alleato-pm --body ...` | Pass | Issue `#593` is closed and now has an accurate closeout comment documenting commit `b77c0a1ca4`. |
 
 ## Risks / Gaps
 
@@ -46,6 +48,6 @@ away from Approved, then push the fix to `main` and close GitHub issue `#593`.
 
 ## Final Status
 
-- [ ] All checklist items are complete.
-- [ ] Evidence is recorded.
+- [x] All checklist items are complete.
+- [x] Evidence is recorded.
 - [ ] Final response includes what is done, what remains, and recommended next steps.
