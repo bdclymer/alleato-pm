@@ -430,7 +430,16 @@ jobs:
             fi
           fi
 
-          echo "delivery_mode=$mode" >> "$GITHUB_OUTPUT"
+          # Every fix ships as a PR (the branch ruleset requires status checks that a
+          # direct push can never satisfy). auto_merge distinguishes the two lanes:
+          #   true  -> low-risk: open a normal PR with auto-merge enabled (lands when green)
+          #   false -> risky/pr-required: open a draft PR for human review
+          auto_merge=false
+          if [ "$mode" = "main" ]; then
+            auto_merge=true
+          fi
+
+          echo "auto_merge=$auto_merge" >> "$GITHUB_OUTPUT"
           {
             echo "escalation_reason<<REASON_EOF"
             echo "$reason"
@@ -438,9 +447,11 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           if [ -n "$reason" ]; then
-            echo "Escalated direct-to-main -> pull-request: $reason"
+            echo "Low-risk lane downgraded to a review PR: $reason"
+          elif [ "$auto_merge" = "true" ]; then
+            echo "Low-risk: opening a PR with auto-merge enabled."
           else
-            echo "Delivery mode: $mode"
+            echo "Higher-risk: opening a draft PR for review."
           fi
 
       - name: Install frontend dependencies
@@ -452,44 +463,24 @@ jobs:
         id: validate
         continue-on-error: true
         shell: bash
-        env:
-          DELIVERY_MODE: ${{ steps.route.outputs.delivery_mode }}
         run: |
           set -o pipefail
           {
-            if [ "$DELIVERY_MODE" = "main" ]; then
-              echo '$ pnpm --dir frontend run quality:changed'
-              pnpm --dir frontend run quality:changed
-              echo
-              echo '$ pnpm run check:routes'
-              pnpm run check:routes
-              echo
-
-              mapfile -t changed_tests < <(git diff --name-only --diff-filter=ACMR | grep -E '^frontend/.+(__tests__/.*\.(test|spec)\.(ts|tsx)|\.(test|spec)\.(ts|tsx))$' || true)
-              if [ "${#changed_tests[@]}" -gt 0 ]; then
-                jest_paths=()
-                for file in "${changed_tests[@]}"; do
-                  jest_paths+=("${file#frontend/}")
-                done
-                echo '$ pnpm --dir frontend exec jest --runInBand --runTestsByPath ...'
-                pnpm --dir frontend exec jest --runInBand --runTestsByPath "${jest_paths[@]}"
-              fi
-            else
-              echo '$ pnpm --dir frontend run quality'
-              pnpm --dir frontend run quality
-              echo
-              echo '$ pnpm run check:routes'
-              pnpm run check:routes
-            fi
+            echo '$ pnpm --dir frontend run quality'
+            pnpm --dir frontend run quality
+            echo
+            echo '$ pnpm run check:routes'
+            pnpm run check:routes
           } 2>&1 | tee .github/codex-artifacts/validation.log
 
       - name: Prepare PR body
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         env:
           RUNNER_TEMP: ${{ runner.temp }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
           ESCALATION_REASON: ${{ steps.route.outputs.escalation_reason }}
+          AUTO_MERGE: ${{ steps.route.outputs.auto_merge }}
         shell: bash
         run: |
           {
@@ -497,8 +488,11 @@ jobs:
             echo
             echo "Resolves #$ISSUE_NUMBER"
             echo
-            if [ -n "$ESCALATION_REASON" ]; then
-              echo "> Eve triaged this as a direct-to-main fix, but the risk gate escalated it to a PR:"
+            if [ "$AUTO_MERGE" = "true" ]; then
+              echo "> Triaged low-risk and the diff-risk gate agreed: **auto-merge is enabled** — this PR merges once the required checks pass."
+              echo
+            elif [ -n "$ESCALATION_REASON" ]; then
+              echo "> Triaged as a low-risk fix, but the diff-risk gate escalated it to a reviewed PR:"
               echo "> $ESCALATION_REASON"
               echo
             fi
@@ -525,19 +519,16 @@ jobs:
             steps.run_codex.outcome == 'failure' ||
             steps.diff.outputs.allowed == 'false' ||
             steps.diff.outputs.no_changes == 'true' ||
-            steps.validate.outcome == 'failure' ||
-            steps.push_main.outcome == 'failure'
+            steps.validate.outcome == 'failure'
           )
         uses: actions/github-script@v7
         env:
           BLOCKED: ${{ steps.prepare.outputs.blocked }}
           BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
           CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
-          DELIVERY_MODE: ${{ steps.route.outputs.delivery_mode }}
           DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
           DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
           DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
-          PUSH_MAIN_OUTCOME: ${{ steps.push_main.outcome }}
         with:
           script: |
             const fs = require("fs");
@@ -589,19 +580,6 @@ jobs:
                 "",
                 blocked,
               ].join("\n");
-            } else if (process.env.PUSH_MAIN_OUTCOME === "failure") {
-              body = [
-                "Codex produced a validated direct-to-main fix, but publish to `main` failed.",
-                "",
-                "Cause:",
-                "- Git push or remote head verification failed during the direct publish step.",
-                "",
-                "Detection gap:",
-                "- The workflow could not guarantee a safe `HEAD == origin/main` publish until the final push step ran.",
-                "",
-                "Prevention step:",
-                "- Re-run the workflow after clearing any concurrent main-branch movement or push conflict.",
-              ].join("\n");
             } else {
               const validationPath = ".github/codex-artifacts/validation.log";
               const validationLog = fs.existsSync(validationPath)
@@ -609,9 +587,7 @@ jobs:
                 : "Validation log not found.";
 
               body = [
-                process.env.DELIVERY_MODE === "main"
-                  ? "Codex produced a candidate direct-to-main fix, but validation failed so nothing was published."
-                  : "Codex produced a candidate fix, but validation failed so no PR was created.",
+                "Codex produced a candidate fix, but validation failed so no PR was created.",
                 "",
                 "Cause:",
                 "- Repo validation failed after Codex edits.",
@@ -643,107 +619,44 @@ jobs:
           rm -rf .github/codex-artifacts
           git clean -fd .github/codex-artifacts || true
 
-      - name: Configure git author
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
-        run: |
-          git config user.name "MeganHarrison"
-          git config user.email "109628141+MeganHarrison@users.noreply.github.com"
-
-      - name: Commit and push direct-to-main fix
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
-        id: push_main
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
-        shell: bash
-        run: |
-          mapfile -t changed < <(git diff --name-only --diff-filter=ACMR)
-
-          if [ "${#changed[@]}" -eq 0 ]; then
-            echo "No changed files found for direct publish." >&2
-            exit 1
-          fi
-
-          git add "${changed[@]}"
-          git commit -m "fix: ${ISSUE_TITLE} (#${ISSUE_NUMBER})" -m "Closes #${ISSUE_NUMBER}"
-
-          # Concurrent codex:fix runs all publish to main from the same starting SHA,
-          # so a plain push races and all but one are rejected with "fetch first".
-          # Serialize by rebasing onto the latest origin/main and retrying the push.
-          pushed=false
-          for attempt in 1 2 3 4 5; do
-            git fetch origin main
-            if ! git rebase origin/main; then
-              git rebase --abort || true
-              echo "Rebase onto origin/main failed (real conflict with concurrent change) on attempt ${attempt}." >&2
-              break
-            fi
-
-            if git push origin HEAD:main; then
-              pushed=true
-              break
-            fi
-
-            echo "Push rejected on attempt ${attempt}; another run advanced main first. Rebasing and retrying." >&2
-            sleep $((attempt * 3))
-          done
-
-          if [ "$pushed" != "true" ]; then
-            echo "Failed to publish to main after rebase/retry attempts." >&2
-            exit 1
-          fi
-
-          local_sha="$(git rev-parse HEAD)"
-          remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
-
-          if [ -z "$remote_sha" ] || [ "$local_sha" != "$remote_sha" ]; then
-            echo "Remote main verification failed. local=$local_sha remote=$remote_sha" >&2
-            exit 1
-          fi
-
-          echo "commit_sha=$local_sha" >> "$GITHUB_OUTPUT"
-
-      - name: Create draft pull request
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+      - name: Create pull request
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: create_pr
         uses: peter-evans/create-pull-request@v7
         with:
+          # Use a dedicated token, NOT the default GITHUB_TOKEN: PRs opened by
+          # GITHUB_TOKEN do not trigger `on: pull_request` workflows, so the
+          # branch ruleset's required checks would never run and the PR could
+          # never merge (or auto-merge). AUTOFIX_GITHUB_TOKEN triggers them.
+          token: ${{ secrets.AUTOFIX_GITHUB_TOKEN }}
           branch: ${{ steps.prepare.outputs.branch_name }}
           title: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
           body-path: ${{ runner.temp }}/codex-pr-body.md
           commit-message: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
-          draft: true
+          # Low-risk fixes open as a normal PR (so auto-merge can be enabled);
+          # risky/pr-required fixes open as a draft for human review.
+          draft: ${{ steps.route.outputs.auto_merge != 'true' }}
           delete-branch: true
           labels: |
             codex
             automated-pr
 
-      - name: Comment with direct-to-main publish link
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.push_main.outcome == 'success'
-        uses: actions/github-script@v7
+      - name: Enable auto-merge for low-risk fix
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.auto_merge == 'true' && steps.create_pr.outputs.pull-request-number != ''
         env:
-          COMMIT_SHA: ${{ steps.push_main.outputs.commit_sha }}
-        with:
-          script: |
-            const sha = process.env.COMMIT_SHA;
-            if (!sha) {
-              core.setFailed("Direct publish commit SHA was not returned.");
-              return;
-            }
+          GH_TOKEN: ${{ secrets.AUTOFIX_GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
+        # The ruleset stays the gate: this merges the PR only once every required
+        # status check passes. No direct-to-main push is involved.
+        run: gh pr merge "$PR_NUMBER" --squash --auto
 
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `Codex published the direct-to-main fix in commit ${sha}.`,
-            });
-
-      - name: Comment with draft PR link
-        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+      - name: Comment with PR link
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         uses: actions/github-script@v7
         env:
           PULL_REQUEST_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
           PULL_REQUEST_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+          AUTO_MERGE: ${{ steps.route.outputs.auto_merge }}
         with:
           script: |
             const core = require("@actions/core");
@@ -751,13 +664,17 @@ jobs:
             const prUrl = process.env.PULL_REQUEST_URL;
 
             if (!prNumber || !prUrl) {
-              core.setFailed("Draft PR metadata was not returned by create-pull-request.");
+              core.setFailed("PR metadata was not returned by create-pull-request.");
               return;
             }
+
+            const body = process.env.AUTO_MERGE === "true"
+              ? `Codex opened PR #${prNumber} with auto-merge enabled — it will merge automatically once the required checks pass: ${prUrl}`
+              : `Codex opened draft PR #${prNumber} for review: ${prUrl}`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `Codex opened draft PR #${prNumber}: ${prUrl}`,
+              body,
             });

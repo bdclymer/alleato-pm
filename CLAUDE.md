@@ -340,15 +340,17 @@ After any deep research session, save a new snapshot to the memory directory fol
 interactive agent) make a change, never commit directly to `main` and never push straight
 to it — branch, open a PR, and let the preview deploy gate it (steps below).
 
-**The one exception is the vetted Codex automation lane** (`.github/workflows/codex-fix-issue.yml`).
-It does not use a blanket "always PR" or "always direct" rule — it *decides per issue*:
-Eve triage classifies the issue's risk (`direct-to-main` vs `pr-required`), and then a
-diff-risk gate re-checks that decision against the actual change Codex produced. A change
-is published straight to `main` only when it is triaged low-risk **and** its diff avoids
-risky surfaces (API routes, the Supabase/auth layer, financial/contract code), stays small
-(≤6 files, ≤400 lines), and passes the full quality gate. Anything else is auto-downgraded
-to a reviewed PR. The gate can only ever downgrade `main → PR`, never upgrade. That lane is
-the *only* sanctioned direct-to-`main` writer.
+**The Codex automation lane** (`.github/workflows/codex-fix-issue.yml`) still goes through
+a PR — it never pushes to `main` directly (the branch ruleset requires status checks that a
+direct push can't satisfy, and past direct-push attempts corrupted `main`). What it *decides
+per issue* is the **merge** posture, not whether to bypass the PR: Eve triage classifies the
+issue's risk, then a diff-risk gate re-checks that against the actual change Codex produced.
+A fix gets a normal PR with **auto-merge enabled** (it lands automatically once the required
+checks pass) only when it is triaged low-risk **and** its diff avoids risky surfaces (API
+routes, the Supabase/auth layer, financial/contract code) and stays small (≤6 files, ≤400
+lines). Anything else opens as a **draft PR for human review**. The gate can only downgrade
+auto-merge → review, never the reverse. Either way the ruleset's required checks are the
+gate — nothing reaches production unchecked.
 
 **Branch per task.** Start every task from fresh `main` on its own short-lived branch,
 push it, test on the Vercel **preview deployment** Vercel auto-builds for the branch/PR,
@@ -382,8 +384,9 @@ conflicts (and is what motivated this workflow). If a branch must live a while, 
 `main` into it frequently (daily-ish), never let it fall many commits behind.
 
 **For your own work, never** commit to `main` directly or push a feature/fix branch onto
-`main` — the PR + preview deploy is the record and the safety gate. (The Codex automation
-lane's risk-gated direct-to-`main` publish, described above, is the sole exception.)
+`main` — the PR + preview deploy is the record and the safety gate. The Codex automation
+lane also goes through a PR; its only special behavior is auto-merging the low-risk ones
+once checks pass (described above).
 
 ---
 
