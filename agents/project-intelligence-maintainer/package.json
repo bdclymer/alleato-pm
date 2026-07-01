@@ -6,6 +6,7 @@
   "scripts": {
     "eve": "eve",
     "info": "eve info",
+    "postinstall": "node scripts/patch-eve-linear-agent-session.mjs",
     "dev": "eve dev",
     "eval": "EVE_PROJECT_INTELLIGENCE_MOCK_MODEL=true eve eval --max-concurrency 1 --timeout 60000",
     "eval:live": "eve eval",
