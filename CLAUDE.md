@@ -336,9 +336,19 @@ After any deep research session, save a new snapshot to the memory directory fol
 
 ## Git Workflow
 
-**This app is live in production. `main` is production and is protected — never commit
-directly to `main`, and never push straight to it.** Every change is tested on a preview
-deployment before it merges.
+**This app is live in production. `main` is production.** When *you* (a human or an
+interactive agent) make a change, never commit directly to `main` and never push straight
+to it — branch, open a PR, and let the preview deploy gate it (steps below).
+
+**The one exception is the vetted Codex automation lane** (`.github/workflows/codex-fix-issue.yml`).
+It does not use a blanket "always PR" or "always direct" rule — it *decides per issue*:
+Eve triage classifies the issue's risk (`direct-to-main` vs `pr-required`), and then a
+diff-risk gate re-checks that decision against the actual change Codex produced. A change
+is published straight to `main` only when it is triaged low-risk **and** its diff avoids
+risky surfaces (API routes, the Supabase/auth layer, financial/contract code), stays small
+(≤6 files, ≤400 lines), and passes the full quality gate. Anything else is auto-downgraded
+to a reviewed PR. The gate can only ever downgrade `main → PR`, never upgrade. That lane is
+the *only* sanctioned direct-to-`main` writer.
 
 **Branch per task.** Start every task from fresh `main` on its own short-lived branch,
 push it, test on the Vercel **preview deployment** Vercel auto-builds for the branch/PR,
@@ -371,8 +381,9 @@ must contain `Closes #{number}` so GitHub auto-closes the issue on merge.
 conflicts (and is what motivated this workflow). If a branch must live a while, merge
 `main` into it frequently (daily-ish), never let it fall many commits behind.
 
-**Never** commit to `main` directly or push a feature/fix branch onto `main` — the PR +
-preview deploy is the record and the safety gate.
+**For your own work, never** commit to `main` directly or push a feature/fix branch onto
+`main` — the PR + preview deploy is the record and the safety gate. (The Codex automation
+lane's risk-gated direct-to-`main` publish, described above, is the sole exception.)
 
 ---
 

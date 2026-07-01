@@ -32,10 +32,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
+          # No pnpm cache here: blocked/no-op runs skip `pnpm install`, so the
+          # post-job cache-save step fails with "Path(s) ... do not exist" and
+          # reddens otherwise-successful runs. Frozen installs are fast enough.
 
       - name: Prepare issue context
         id: prepare
@@ -389,6 +388,61 @@ jobs:
             echo "allowed=true"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Decide delivery mode from diff risk
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+        id: route
+        shell: bash
+        env:
+          # Eve triage decides the intended lane from the ISSUE. This step re-checks
+          # the decision against the ACTUAL diff Codex produced and can only ever
+          # downgrade main -> pull-request when the change looks risky. It never
+          # upgrades a PR to a direct push.
+          INITIAL_DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
+        run: |
+          mode="$INITIAL_DELIVERY_MODE"
+          reason=""
+
+          if [ "$mode" = "main" ]; then
+            mapfile -t changed < <(git diff --name-only --diff-filter=ACMR | grep -v '^.github/codex-artifacts/' || true)
+            files_count="${#changed[@]}"
+            lines_changed="$(git diff --numstat --diff-filter=ACMR \
+              | awk '$3 !~ /^\.github\/codex-artifacts\// && $1 ~ /^[0-9]+$/ {added+=$1; removed+=$2} END {print added+removed+0}')"
+
+            # Surfaces where a silent wrong change on main is expensive: server write
+            # paths, auth/RLS, the Supabase layer, and money/contract logic.
+            risky_pattern='(^frontend/src/app/api/)|(/route\.(ts|tsx)$)|(^frontend/src/middleware\.ts$)|(^frontend/src/lib/supabase/)|(auth|rls|permission|invoice|payment|billing|budget|contract|commitment|retainage)'
+            risky_files=()
+            for file in "${changed[@]}"; do
+              if printf '%s\n' "$file" | grep -qiE "$risky_pattern"; then
+                risky_files+=("$file")
+              fi
+            done
+
+            if [ "${#risky_files[@]}" -gt 0 ]; then
+              mode="pull-request"
+              reason="Diff touches higher-risk surfaces, so it needs a reviewed PR instead of a direct push: ${risky_files[*]}"
+            elif [ "${files_count:-0}" -gt 6 ]; then
+              mode="pull-request"
+              reason="Diff spans ${files_count} files (> 6), too broad to publish straight to main."
+            elif [ "${lines_changed:-0}" -gt 400 ]; then
+              mode="pull-request"
+              reason="Diff changes ${lines_changed} lines (> 400), too large to publish straight to main."
+            fi
+          fi
+
+          echo "delivery_mode=$mode" >> "$GITHUB_OUTPUT"
+          {
+            echo "escalation_reason<<REASON_EOF"
+            echo "$reason"
+            echo "REASON_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ -n "$reason" ]; then
+            echo "Escalated direct-to-main -> pull-request: $reason"
+          else
+            echo "Delivery mode: $mode"
+          fi
+
       - name: Install frontend dependencies
         if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
         run: pnpm --dir frontend install --frozen-lockfile
@@ -399,7 +453,7 @@ jobs:
         continue-on-error: true
         shell: bash
         env:
-          DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
+          DELIVERY_MODE: ${{ steps.route.outputs.delivery_mode }}
         run: |
           set -o pipefail
           {
@@ -430,11 +484,12 @@ jobs:
           } 2>&1 | tee .github/codex-artifacts/validation.log
 
       - name: Prepare PR body
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         env:
           RUNNER_TEMP: ${{ runner.temp }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
+          ESCALATION_REASON: ${{ steps.route.outputs.escalation_reason }}
         shell: bash
         run: |
           {
@@ -442,6 +497,11 @@ jobs:
             echo
             echo "Resolves #$ISSUE_NUMBER"
             echo
+            if [ -n "$ESCALATION_REASON" ]; then
+              echo "> Eve triaged this as a direct-to-main fix, but the risk gate escalated it to a PR:"
+              echo "> $ESCALATION_REASON"
+              echo
+            fi
             if [ -f .github/codex-artifacts/SUMMARY.md ]; then
               cat .github/codex-artifacts/SUMMARY.md
               echo
@@ -473,7 +533,7 @@ jobs:
           BLOCKED: ${{ steps.prepare.outputs.blocked }}
           BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
           CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
-          DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
+          DELIVERY_MODE: ${{ steps.route.outputs.delivery_mode }}
           DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
           DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
           DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
@@ -584,13 +644,13 @@ jobs:
           git clean -fd .github/codex-artifacts || true
 
       - name: Configure git author
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         run: |
           git config user.name "MeganHarrison"
           git config user.email "109628141+MeganHarrison@users.noreply.github.com"
 
       - name: Commit and push direct-to-main fix
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: push_main
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -607,8 +667,33 @@ jobs:
           git add "${changed[@]}"
           git commit -m "fix: ${ISSUE_TITLE} (#${ISSUE_NUMBER})" -m "Closes #${ISSUE_NUMBER}"
 
+          # Concurrent codex:fix runs all publish to main from the same starting SHA,
+          # so a plain push races and all but one are rejected with "fetch first".
+          # Serialize by rebasing onto the latest origin/main and retrying the push.
+          pushed=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "Rebase onto origin/main failed (real conflict with concurrent change) on attempt ${attempt}." >&2
+              break
+            fi
+
+            if git push origin HEAD:main; then
+              pushed=true
+              break
+            fi
+
+            echo "Push rejected on attempt ${attempt}; another run advanced main first. Rebasing and retrying." >&2
+            sleep $((attempt * 3))
+          done
+
+          if [ "$pushed" != "true" ]; then
+            echo "Failed to publish to main after rebase/retry attempts." >&2
+            exit 1
+          fi
+
           local_sha="$(git rev-parse HEAD)"
-          git push origin HEAD:main
           remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
 
           if [ -z "$remote_sha" ] || [ "$local_sha" != "$remote_sha" ]; then
@@ -619,7 +704,7 @@ jobs:
           echo "commit_sha=$local_sha" >> "$GITHUB_OUTPUT"
 
       - name: Create draft pull request
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: create_pr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -634,7 +719,7 @@ jobs:
             automated-pr
 
       - name: Comment with direct-to-main publish link
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.push_main.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode == 'main' && steps.push_main.outcome == 'success'
         uses: actions/github-script@v7
         env:
           COMMIT_SHA: ${{ steps.push_main.outputs.commit_sha }}
@@ -654,7 +739,7 @@ jobs:
             });
 
       - name: Comment with draft PR link
-        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         uses: actions/github-script@v7
         env:
           PULL_REQUEST_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
