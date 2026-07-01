@@ -49,6 +49,7 @@ export default async function KnowledgeAppTrainingDocPage({
       contentClassName="mx-auto max-w-screen-2xl"
     >
       <AppTrainingDocPage
+        activeCategorySlug={category.slug}
         backHref={`/knowledge/app/${category.slug}`}
         backLabel={`${category.title} training docs`}
         doc={doc}

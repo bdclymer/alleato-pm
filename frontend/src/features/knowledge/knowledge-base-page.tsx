@@ -179,6 +179,7 @@ export function KnowledgeBrowsePage({
   overviewDescription,
   searchPlaceholder,
   showCategoriesWhenEmpty = false,
+  sideNavSlot,
   sourceListNoun,
   title,
   topBarLabel,
@@ -200,6 +201,8 @@ export function KnowledgeBrowsePage({
   overviewDescription: string;
   searchPlaceholder: string;
   showCategoriesWhenEmpty?: boolean;
+  /** Replaces the default topic nav (left column) when provided. */
+  sideNavSlot?: React.ReactNode;
   sourceListNoun: string;
   title: string;
   topBarLabel: string;
@@ -334,15 +337,17 @@ export function KnowledgeBrowsePage({
       />
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[15rem_minmax(0,48rem)_13rem] xl:gap-16">
-        <KnowledgeTopicNav
-          activeCategoryId={selectedCategoryId}
-          categories={visibleCategories}
-          counts={categoryCounts}
-          headingLabel={modeLabel === "Product" ? "Product" : modeLabel}
-          navLabel={navLabel}
-          totalCount={items.length}
-          onSelect={setSelectedCategoryId}
-        />
+        {sideNavSlot ?? (
+          <KnowledgeTopicNav
+            activeCategoryId={selectedCategoryId}
+            categories={visibleCategories}
+            counts={categoryCounts}
+            headingLabel={modeLabel === "Product" ? "Product" : modeLabel}
+            navLabel={navLabel}
+            totalCount={items.length}
+            onSelect={setSelectedCategoryId}
+          />
+        )}
 
         <main className="min-w-0 space-y-10">
           <section id="overview" className="scroll-mt-24 space-y-4">

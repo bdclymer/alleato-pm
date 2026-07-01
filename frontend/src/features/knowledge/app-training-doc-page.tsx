@@ -5,12 +5,15 @@ import { SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type { TrainingDocStep, TrainingDocWithAssets } from "@/lib/training-docs/types";
 import { cn } from "@/lib/utils";
+import { AppKnowledgeToolNav } from "./app-knowledge-tool-nav";
 
 export function AppTrainingDocPage({
+  activeCategorySlug,
   backHref,
   backLabel,
   doc,
 }: {
+  activeCategorySlug?: string | null;
   backHref: string;
   backLabel: string;
   doc: TrainingDocWithAssets;
@@ -27,34 +30,8 @@ export function AppTrainingDocPage({
 
   return (
     <div className="min-h-[calc(100vh-6rem)] bg-background text-foreground">
-      <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 pb-10 pt-8 lg:grid-cols-[18rem_minmax(0,56rem)_16rem] lg:px-10 xl:gap-14">
-        <aside className="hidden lg:block">
-          <nav aria-label="Training doc navigation" className="sticky top-6 space-y-5">
-            <Button asChild variant="ghost" size="sm" className="justify-start px-0">
-              <Link href={backHref}>{backLabel}</Link>
-            </Button>
-            <div className="space-y-2 text-sm">
-              <a href="#overview" className="block font-medium text-primary">
-                Overview
-              </a>
-              {bodyMarkdown.trim() ? (
-                <a href="#details" className="block text-muted-foreground hover:text-primary">
-                  Details
-                </a>
-              ) : null}
-              {walkthroughVideo?.signed_url ? (
-                <a href="#walkthrough-video" className="block text-muted-foreground hover:text-primary">
-                  Walkthrough Video
-                </a>
-              ) : null}
-              {sortedSteps.length ? (
-                <a href="#steps" className="block text-muted-foreground hover:text-primary">
-                  Steps
-                </a>
-              ) : null}
-            </div>
-          </nav>
-        </aside>
+      <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 pb-10 pt-8 lg:grid-cols-[15rem_minmax(0,56rem)_13rem] lg:px-10 xl:gap-14">
+        <AppKnowledgeToolNav activeSlug={activeCategorySlug} />
 
         <main className="min-w-0 space-y-10">
           <header id="overview" className="space-y-4">
@@ -130,6 +107,34 @@ export function AppTrainingDocPage({
             </section>
           ) : null}
         </main>
+
+        <aside className="hidden lg:block">
+          <nav aria-label="On this page" className="sticky top-6 space-y-3 text-sm">
+            <Button asChild variant="ghost" size="sm" className="justify-start px-0">
+              <Link href={backHref}>{backLabel}</Link>
+            </Button>
+            <div className="space-y-2">
+              <a href="#overview" className="block font-medium text-primary">
+                Overview
+              </a>
+              {bodyMarkdown.trim() ? (
+                <a href="#details" className="block text-muted-foreground hover:text-primary">
+                  Details
+                </a>
+              ) : null}
+              {walkthroughVideo?.signed_url ? (
+                <a href="#walkthrough-video" className="block text-muted-foreground hover:text-primary">
+                  Walkthrough Video
+                </a>
+              ) : null}
+              {sortedSteps.length ? (
+                <a href="#steps" className="block text-muted-foreground hover:text-primary">
+                  Steps
+                </a>
+              ) : null}
+            </div>
+          </nav>
+        </aside>
       </div>
     </div>
   );
