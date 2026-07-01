@@ -65,17 +65,20 @@ describe("document-center pdf route", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it("returns a print-ready HTML fallback when PDF rendering fails", async () => {
+  it("returns a 500 JSON error when PDF rendering fails", async () => {
     (renderPdfFromHtml as jest.Mock).mockRejectedValue(new Error("Puppeteer unavailable"));
 
     const response = await callRoute();
-    const body = await response.text();
+    const body = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("text/html");
-    expect(response.headers.get("x-alleato-pdf-fallback")).toBe("print-html");
-    expect(body).toContain("window.print()");
-    expect(body).toContain("Use your browser print dialog to save this document as a PDF.");
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(body).toEqual(
+      expect.objectContaining({
+        error: "PDF generation failed",
+        details: "Puppeteer unavailable",
+      }),
+    );
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         msg: expect.stringContaining("PDF generation failed"),

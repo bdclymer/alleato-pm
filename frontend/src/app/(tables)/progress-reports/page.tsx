@@ -36,6 +36,7 @@ import {
   useAllProgressReports,
   useDeleteProgressReport,
 } from "@/hooks/use-progress-reports";
+import { triggerBrowserDownload } from "@/lib/browser-download";
 import type { ProgressReportAllListItem } from "@/lib/progress-reports/types";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -129,6 +130,17 @@ function exportReports(reports: ProgressReportAllListItem[]) {
   link.click();
   URL.revokeObjectURL(url);
   document.body.removeChild(link);
+}
+
+function downloadProgressReportPdf(report: ProgressReportAllListItem) {
+  void triggerBrowserDownload(
+    `/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`,
+    `${report.title || "progress-report"}.pdf`,
+    "application/pdf",
+  ).catch((error) => {
+    console.error("Progress report PDF download failed", error);
+    toast.error("Progress report PDF download failed. Try again.");
+  });
 }
 
 export default function AllProgressReportsPage() {
@@ -346,15 +358,15 @@ export default function AllProgressReportsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a
-                    href={`/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download PDF
-                  </a>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    downloadProgressReportPdf(report);
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"

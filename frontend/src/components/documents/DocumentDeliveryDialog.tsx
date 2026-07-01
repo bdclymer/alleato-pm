@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api-client";
+import { triggerBrowserDownload } from "@/lib/browser-download";
 import type { DocumentRecordType } from "@/lib/documents/record-documents";
 
 interface RecipientOption {
@@ -45,6 +46,7 @@ interface DocumentDeliveryDialogProps {
   title: string;
   number: string;
   initialTab?: DialogTab;
+  allowedTabs?: DialogTab[];
 }
 
 function validateEmail(email: string): boolean {
@@ -60,8 +62,16 @@ export function DocumentDeliveryDialog({
   title,
   number,
   initialTab = "download",
+  allowedTabs = ["download", "email"],
 }: DocumentDeliveryDialogProps) {
-  const [activeTab, setActiveTab] = React.useState<DialogTab>(initialTab);
+  const sanitizedAllowedTabs = React.useMemo(
+    () => (allowedTabs.length > 0 ? allowedTabs : ["download", "email"]),
+    [allowedTabs],
+  );
+  const defaultTab = sanitizedAllowedTabs.includes(initialTab)
+    ? initialTab
+    : sanitizedAllowedTabs[0];
+  const [activeTab, setActiveTab] = React.useState<DialogTab>(defaultTab);
   const [recipientOptions, setRecipientOptions] = React.useState<RecipientOption[]>([]);
   const [recipients, setRecipients] = React.useState<Recipient[]>([]);
   const [manualEmail, setManualEmail] = React.useState("");
@@ -76,7 +86,7 @@ export function DocumentDeliveryDialog({
     if (!open) return;
 
     let isMounted = true;
-    setActiveTab(initialTab);
+    setActiveTab(defaultTab);
     setManualEmail("");
     setMessage("");
     setMetadataError(null);
@@ -124,7 +134,7 @@ export function DocumentDeliveryDialog({
     return () => {
       isMounted = false;
     };
-  }, [initialTab, number, open, recordId, recordType, title]);
+  }, [defaultTab, number, open, recordId, recordType, title]);
 
   const availableRecipients = React.useMemo(
     () =>
@@ -174,19 +184,15 @@ export function DocumentDeliveryDialog({
   const handleDownload = React.useCallback(async () => {
     setIsDownloading(true);
     try {
-      const link = document.createElement("a");
-      const href = `/api/document-center/${recordType}/${recordId}/pdf`;
-
-      link.href = href;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.download = `${number}-${title}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("Document opened");
+      await triggerBrowserDownload(
+        `/api/document-center/${recordType}/${recordId}/pdf`,
+        `${number}-${title}.pdf`,
+        "application/pdf",
+      );
+      toast.success("Download started");
     } catch (error) {
-      toast.error("Download failed");
+      console.error("Document download failed", error);
+      toast.error("Document download failed. Try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -229,14 +235,26 @@ export function DocumentDeliveryDialog({
     }
   }, [message, onEmailSent, onOpenChange, recipients, recordId, recordType, subject]);
 
+  const showTabbedLayout = sanitizedAllowedTabs.length > 1;
+  const modalTitle =
+    sanitizedAllowedTabs.length === 1
+      ? sanitizedAllowedTabs[0] === "email"
+        ? "Email PDF"
+        : "Preview PDF"
+      : "Document Delivery";
+  const modalDescription =
+    sanitizedAllowedTabs.length === 1
+      ? sanitizedAllowedTabs[0] === "email"
+        ? `Email the PDF for ${number}${title ? ` · ${title}` : ""}.`
+        : `Preview the PDF for ${number}${title ? ` · ${title}` : ""}.`
+      : `Generate or email the merged PDF for ${number}${title ? ` · ${title}` : ""}.`;
+
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent size="2xl">
         <ModalHeader>
-          <ModalTitle>Document Delivery</ModalTitle>
-          <ModalDescription>
-            Generate or email the merged PDF for {number} {title ? `· ${title}` : ""}.
-          </ModalDescription>
+          <ModalTitle>{modalTitle}</ModalTitle>
+          <ModalDescription>{modalDescription}</ModalDescription>
         </ModalHeader>
 
         <Tabs
@@ -244,18 +262,25 @@ export function DocumentDeliveryDialog({
           onValueChange={(value) => setActiveTab(value as DialogTab)}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="download">
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </TabsTrigger>
-            <TabsTrigger value="email">
-              <Mail className="mr-2 h-4 w-4" />
-              Email
-            </TabsTrigger>
-          </TabsList>
+          {showTabbedLayout ? (
+            <TabsList className={`grid w-full ${sanitizedAllowedTabs.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+              {sanitizedAllowedTabs.includes("download") ? (
+                <TabsTrigger value="download">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </TabsTrigger>
+              ) : null}
+              {sanitizedAllowedTabs.includes("email") ? (
+                <TabsTrigger value="email">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email
+                </TabsTrigger>
+              ) : null}
+            </TabsList>
+          ) : null}
 
-          <TabsContent value="download" className="space-y-4">
+          {sanitizedAllowedTabs.includes("download") ? (
+            <TabsContent value="download" className="space-y-4">
             <div className="rounded-xl border border-border bg-muted/30 p-4">
               <p className="text-sm font-medium text-foreground">PDF template</p>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -272,9 +297,11 @@ export function DocumentDeliveryDialog({
                 Download PDF
               </Button>
             </div>
-          </TabsContent>
+            </TabsContent>
+          ) : null}
 
-          <TabsContent value="email" className="space-y-4">
+          {sanitizedAllowedTabs.includes("email") ? (
+            <TabsContent value="email" className="space-y-4">
             <div className="space-y-3">
               <Label>Recipients</Label>
               {recipients.length > 0 ? (
@@ -398,7 +425,8 @@ export function DocumentDeliveryDialog({
                 Send Email
               </Button>
             </div>
-          </TabsContent>
+            </TabsContent>
+          ) : null}
         </Tabs>
       </ModalContent>
     </Modal>

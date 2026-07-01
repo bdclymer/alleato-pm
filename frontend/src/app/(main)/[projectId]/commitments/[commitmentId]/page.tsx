@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { triggerBrowserDownload } from "@/lib/browser-download";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
@@ -862,11 +863,7 @@ export default function CommitmentDetailPage() {
   const queryClient = useQueryClient();
 
   const { confirm, ConfirmDialog } = useConfirm();
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [documentDialogTab, setDocumentDialogTab] = useState<
-    "download" | "email"
-  >("download");
   const [activeTab, setActiveTab] = useState("general");
   const [subcontractorSovCount, setSubcontractorSovCount] = useState<number>(0);
 
@@ -985,12 +982,17 @@ export default function CommitmentDetailPage() {
   );
 
   const handleExport = useCallback(() => {
-    setDocumentDialogTab("download");
-    setIsExportDialogOpen(true);
-  }, []);
+    void triggerBrowserDownload(
+      `/api/document-center/commitment/${commitmentId}/pdf`,
+      `${commitment?.number || "commitment"}-${commitment?.title || "commitment"}.pdf`,
+      "application/pdf",
+    ).catch((error) => {
+      console.error("Commitment PDF download failed", error);
+      toast.error("Commitment PDF download failed. Try again.");
+    });
+  }, [commitment?.number, commitment?.title, commitmentId]);
 
   const handleEmail = useCallback(() => {
-    setDocumentDialogTab("email");
     setIsEmailDialogOpen(true);
   }, []);
 
@@ -1080,7 +1082,7 @@ export default function CommitmentDetailPage() {
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Download PDF
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/${projectId}/commitments/${commitmentId}/edit`}>
@@ -1216,16 +1218,14 @@ export default function CommitmentDetailPage() {
       {ConfirmDialog}
 
       <DocumentDeliveryDialog
-        open={isExportDialogOpen || isEmailDialogOpen}
-        onOpenChange={(nextOpen) => {
-          setIsExportDialogOpen(nextOpen);
-          setIsEmailDialogOpen(nextOpen);
-        }}
-        initialTab={documentDialogTab}
+        open={isEmailDialogOpen}
+        onOpenChange={setIsEmailDialogOpen}
         recordType="commitment"
         recordId={commitment.id}
         number={commitment.number}
         title={commitment.title || "Commitment"}
+        initialTab="email"
+        allowedTabs={["email"]}
       />
     </PageShell>
   );

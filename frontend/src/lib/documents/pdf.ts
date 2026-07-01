@@ -280,40 +280,65 @@ export async function renderPdfFromHtml(
   html: string,
   options: RenderPdfOptions = {},
 ): Promise<Buffer> {
-  const puppeteer = await import("puppeteer-core");
-  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+  const isProduction = process.env.NODE_ENV === "production";
+  const browser = isProduction
+    ? await (async () => {
+        const puppeteer = await import("puppeteer-core");
+        const chromium = (await import("@sparticuz/chromium")).default;
 
-  let executablePath: string;
-  let args: string[];
+        return puppeteer.default.launch({
+          executablePath: await chromium.executablePath(),
+          args: chromium.args,
+          headless: true,
+        });
+      })()
+    : null;
 
-  if (isProduction) {
-    const chromium = (await import("@sparticuz/chromium")).default;
-    executablePath = await chromium.executablePath();
-    args = chromium.args;
-  } else {
-    // Use local system Chrome on macOS/Windows dev machines.
-    const localPaths = [
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "/usr/bin/google-chrome",
-      "/usr/bin/chromium-browser",
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    ];
-    const fs = await import("fs");
-    const found = localPaths.find((p) => fs.existsSync(p));
-    if (!found) {
-      throw new Error(
-        "PDF generation requires Google Chrome locally. Install Chrome or set NODE_ENV=production to use the serverless binary.",
-      );
+  if (!browser) {
+    const [{ tmpdir }, fs, { promisify }, { execFile }] = await Promise.all([
+      import("node:os"),
+      import("node:fs/promises"),
+      import("node:util"),
+      import("node:child_process"),
+    ]);
+    const runExecFile = promisify(execFile);
+    const crypto = await import("node:crypto");
+    const path = await import("node:path");
+
+    const tempPrefix = `alleato-pdf-${crypto.randomUUID()}`;
+    const htmlPath = path.join(tmpdir(), `${tempPrefix}.html`);
+    const optionsPath = path.join(tmpdir(), `${tempPrefix}.json`);
+    const outputPath = path.join(tmpdir(), `${tempPrefix}.pdf`);
+    const scriptPath = path.join(process.cwd(), "scripts", "render-pdf.mjs");
+    const nodeBinary =
+      process.env.NODE && process.env.NODE.length > 0 ? process.env.NODE : process.execPath;
+
+    await fs.writeFile(htmlPath, html, "utf8");
+    await fs.writeFile(optionsPath, JSON.stringify(options), "utf8");
+
+    try {
+      try {
+        await runExecFile(nodeBinary, [scriptPath, htmlPath, optionsPath, outputPath], {
+          cwd: process.cwd(),
+        });
+      } catch (error) {
+        const details =
+          error instanceof Error && "stderr" in error
+            ? String((error as Error & { stderr?: string }).stderr || "").trim()
+            : "";
+        throw new Error(
+          details ? `Local PDF renderer failed via ${nodeBinary}: ${details}` : String(error),
+        );
+      }
+      return await fs.readFile(outputPath);
+    } finally {
+      await Promise.allSettled([
+        fs.rm(htmlPath, { force: true }),
+        fs.rm(optionsPath, { force: true }),
+        fs.rm(outputPath, { force: true }),
+      ]);
     }
-    executablePath = found;
-    args = ["--no-sandbox", "--disable-setuid-sandbox"];
   }
-
-  const browser = await puppeteer.default.launch({
-    executablePath,
-    args,
-    headless: true,
-  });
 
   try {
     const page = await browser.newPage();

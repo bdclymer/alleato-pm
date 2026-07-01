@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
+import { triggerBrowserDownload } from "@/lib/browser-download";
 import {
   useProgressReport,
   useUpdateProgressReport,
@@ -502,6 +503,16 @@ export function ProgressReportEditor({
   );
 
   const weekRange = `${formatProgressReportDate(draft.week_start)} – ${formatProgressReportDate(draft.week_end)}`;
+  const handleDownloadPdf = () => {
+    void triggerBrowserDownload(
+      `/api/projects/${projectId}/progress-reports/${reportId}/pdf`,
+      `${draft.title || "progress-report"}.pdf`,
+      "application/pdf",
+    ).catch((error) => {
+      console.error("Progress report PDF download failed", error);
+      toast.error("Progress report PDF download failed. Try again.");
+    });
+  };
 
   // ── Edit mode ──
   if (isEditing) {
@@ -979,12 +990,10 @@ export function ProgressReportEditor({
             <Edit className="mr-1.5 h-4 w-4" />
             Edit
           </Button>
-          <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
-            <Button variant="outline" size="sm">
-              <Download className="mr-1.5 h-4 w-4" />
-              Download PDF
-            </Button>
-          </a>
+          <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+            <Download className="mr-1.5 h-4 w-4" />
+            Download PDF
+          </Button>
         </div>
       </div>
 
