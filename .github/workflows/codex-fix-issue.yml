@@ -49,11 +49,30 @@ jobs:
             const path = require("path");
 
             const issue = context.payload.issue;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
             const cleanBody = (issue.body || "").replace(/<!--[\s\S]*?-->/g, "").trim();
+            const issueLabels = Array.isArray(issue.labels)
+              ? issue.labels.map((label) => typeof label === "string" ? label : label.name).filter(Boolean)
+              : [];
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
 
             function section(title) {
               const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
               const regex = new RegExp(`### ${escaped}\\s*([\\s\\S]*?)(?=\\n### |$)`, "i");
+              const match = cleanBody.match(regex);
+              return match ? match[1].trim() : "";
+            }
+
+            function issueSection(title) {
+              const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(`## ${escaped}\\s*([\\s\\S]*?)(?=\\n## |$)`, "i");
               const match = cleanBody.match(regex);
               return match ? match[1].trim() : "";
             }
@@ -66,6 +85,29 @@ jobs:
                 .slice(0, 48);
             }
 
+            function parseBulletValue(sectionBody, label) {
+              const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(`^- ${escaped}:\\s*(.+)$`, "mi");
+              const match = sectionBody.match(regex);
+              return match ? match[1].trim() : "";
+            }
+
+            function extractJsonPayload(body) {
+              const match = body.match(/## Agent Payload[\s\S]*?```json\s*([\s\S]*?)```/i);
+              if (!match) return null;
+
+              try {
+                return JSON.parse(match[1]);
+              } catch {
+                return null;
+              }
+            }
+
+            function parseEveRoute(commentBody) {
+              const match = commentBody.match(/^Path:\s*(.+)$/mi);
+              return match ? match[1].trim() : "";
+            }
+
             const automationScope = section("Automation scope");
             const problem = section("Problem statement");
             const expected = section("Expected behavior");
@@ -73,39 +115,171 @@ jobs:
             const acceptance = section("Acceptance criteria");
             const allowedPaths = section("Allowed edit paths");
             const guardrail = section("Required guardrail");
+            const feedback = issueSection("Feedback");
+            const location = issueSection("Location");
+            const request = issueSection("Request");
+            const screenshot = issueSection("Screenshot");
+            const agentPayload = extractJsonPayload(cleanBody);
+            const latestEveComment = [...comments]
+              .reverse()
+              .find((comment) => typeof comment.body === "string" && comment.body.includes("## Eve GitHub Triage"));
+            const eveRoute = latestEveComment && typeof latestEveComment.body === "string"
+              ? parseEveRoute(latestEveComment.body)
+              : "";
+            const isAdminFeedbackIssue = issueLabels.includes("admin-feedback");
+            const usesIssueTemplate = Boolean(
+              automationScope || problem || expected || repro || acceptance || allowedPaths || guardrail,
+            );
+            const deliveryMode = eveRoute === "direct-to-main" ? "main" : "pull-request";
 
             const missing = [];
-            for (const [label, value] of Object.entries({
-              "Automation scope": automationScope,
-              "Problem statement": problem,
-              "Expected behavior": expected,
-              "Reproduction": repro,
-              "Acceptance criteria": acceptance,
-              "Allowed edit paths": allowedPaths,
-              "Required guardrail": guardrail,
-            })) {
-              if (!value) missing.push(label);
+            if (usesIssueTemplate) {
+              for (const [label, value] of Object.entries({
+                "Automation scope": automationScope,
+                "Problem statement": problem,
+                "Expected behavior": expected,
+                "Reproduction": repro,
+                "Acceptance criteria": acceptance,
+                "Allowed edit paths": allowedPaths,
+                "Required guardrail": guardrail,
+              })) {
+                if (!value) missing.push(label);
+              }
             }
 
             const blockedReasons = [];
-            if (missing.length > 0) {
-              blockedReasons.push(`Issue template is incomplete. Missing sections: ${missing.join(", ")}.`);
-            }
+            let allowedPathLines = [];
+            let issueContext = "";
 
-            if (automationScope.toLowerCase() !== "frontend") {
-              blockedReasons.push("This workflow only supports `Frontend` automation scope in its first version.");
-            }
+            if (isAdminFeedbackIssue) {
+              const locationUrl = parseBulletValue(location, "URL") || agentPayload?.pageUrl || "";
+              const locationPath = parseBulletValue(location, "Path") || agentPayload?.pagePath || "";
+              const requestType = parseBulletValue(request, "Type") || agentPayload?.requestType || "";
+              const severity = parseBulletValue(request, "Severity") || agentPayload?.severity || "";
 
-            const allowedPathLines = allowedPaths
-              .split("\n")
-              .map((line) => line.trim())
-              .filter(Boolean);
+              if (!eveRoute) {
+                blockedReasons.push("Latest Eve triage comment was not found on this issue.");
+              } else if (!["direct-to-main", "pr-required"].includes(eveRoute)) {
+                blockedReasons.push(`Latest Eve route \`${eveRoute}\` is not executable by Codex.`);
+              }
 
-            const invalidAllowedPaths = allowedPathLines.filter((line) => !/^frontend\/(src|tests)\//.test(line));
-            if (invalidAllowedPaths.length > 0) {
-              blockedReasons.push(
-                `Allowed edit paths must stay under \`frontend/src/\` or \`frontend/tests/\`. Invalid paths: ${invalidAllowedPaths.join(", ")}.`,
-              );
+              if (!feedback) {
+                blockedReasons.push("Admin-feedback issue is missing the `## Feedback` section.");
+              }
+
+              if (!locationPath && !locationUrl) {
+                blockedReasons.push("Admin-feedback issue is missing route/location context.");
+              }
+
+              allowedPathLines = ["frontend/src/**", "frontend/tests/**"];
+              issueContext = [
+                "# GitHub Issue Context",
+                "",
+                `Issue Number: #${issue.number}`,
+                `Issue Title: ${issue.title}`,
+                `Issue URL: ${issue.html_url}`,
+                `Delivery Mode: ${deliveryMode}`,
+                `Eve Route: ${eveRoute || "missing"}`,
+                `Labels: ${issueLabels.join(", ") || "(none)"}`,
+                "Allowed Edit Paths:",
+                ...allowedPathLines.map((line) => `- ${line}`),
+                "",
+                "## Problem statement",
+                feedback || "_missing_",
+                "",
+                "## Expected behavior",
+                "Match the reported expected user behavior on the named surface without expanding scope beyond the issue-owned fix.",
+                "",
+                "## Reproduction",
+                locationUrl || locationPath
+                  ? `Open ${locationUrl || locationPath} and reproduce the reported problem on the named frontend surface.`
+                  : "_missing_",
+                "",
+                "## Acceptance criteria",
+                [
+                  `- Fix only the frontend behavior described in issue #${issue.number}.`,
+                  "- Keep changes under frontend/src/** or frontend/tests/**.",
+                  "- Add at least one guardrail so the bug fails loudly or is covered by validation.",
+                  deliveryMode === "main"
+                    ? "- Publish directly to main only if validation passes and the change stays isolated."
+                    : "- Open a pull request because this route was classified as higher risk.",
+                ].join("\n"),
+                "",
+                "## Required guardrail",
+                "Add a targeted regression guardrail for the exact reported frontend failure when practical.",
+                "",
+                "## Location context",
+                location || "_missing_",
+                "",
+                "## Request context",
+                request || "_missing_",
+                "",
+                "## Screenshot context",
+                screenshot || "_none_",
+                "",
+                "## Agent payload",
+                "```json",
+                JSON.stringify(agentPayload ?? {}, null, 2),
+                "```",
+                "",
+                "## Fixed validation commands",
+                "- pnpm --dir frontend install --frozen-lockfile",
+                "- pnpm --dir frontend run quality",
+                "- pnpm run check:routes",
+                "",
+              ].join("\n");
+            } else {
+              if (missing.length > 0) {
+                blockedReasons.push(`Issue template is incomplete. Missing sections: ${missing.join(", ")}.`);
+              }
+
+              if (automationScope.toLowerCase() !== "frontend") {
+                blockedReasons.push("This workflow only supports `Frontend` automation scope in its first version.");
+              }
+
+              allowedPathLines = allowedPaths
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean);
+
+              const invalidAllowedPaths = allowedPathLines.filter((line) => !/^frontend\/(src|tests)\//.test(line));
+              if (invalidAllowedPaths.length > 0) {
+                blockedReasons.push(
+                  `Allowed edit paths must stay under \`frontend/src/\` or \`frontend/tests/\`. Invalid paths: ${invalidAllowedPaths.join(", ")}.`,
+                );
+              }
+
+              issueContext = [
+                "# GitHub Issue Context",
+                "",
+                `Issue Number: #${issue.number}`,
+                `Issue Title: ${issue.title}`,
+                `Issue URL: ${issue.html_url}`,
+                "Automation Scope: frontend",
+                "Allowed Edit Paths:",
+                ...allowedPathLines.map((line) => `- ${line}`),
+                "",
+                "## Problem statement",
+                problem || "_missing_",
+                "",
+                "## Expected behavior",
+                expected || "_missing_",
+                "",
+                "## Reproduction",
+                repro || "_missing_",
+                "",
+                "## Acceptance criteria",
+                acceptance || "_missing_",
+                "",
+                "## Required guardrail",
+                guardrail || "_missing_",
+                "",
+                "## Fixed validation commands",
+                "- pnpm --dir frontend install --frozen-lockfile",
+                "- pnpm --dir frontend run quality",
+                "- pnpm run check:routes",
+                "",
+              ].join("\n");
             }
 
             const normalizedTitle = (issue.title || `issue-${issue.number}`)
@@ -113,38 +287,6 @@ jobs:
               .trim();
             const issueSlug = normalizeSlug(normalizedTitle || `issue-${issue.number}`);
             const branchName = `codex/issue-${issue.number}-${issueSlug || "fix"}`;
-
-            const issueContext = [
-              "# GitHub Issue Context",
-              "",
-              `Issue Number: #${issue.number}`,
-              `Issue Title: ${issue.title}`,
-              `Issue URL: ${issue.html_url}`,
-              `Automation Scope: ${automationScope || "unknown"}`,
-              "Allowed Edit Paths:",
-              ...allowedPathLines.map((line) => `- ${line}`),
-              "",
-              "## Problem statement",
-              problem || "_missing_",
-              "",
-              "## Expected behavior",
-              expected || "_missing_",
-              "",
-              "## Reproduction",
-              repro || "_missing_",
-              "",
-              "## Acceptance criteria",
-              acceptance || "_missing_",
-              "",
-              "## Required guardrail",
-              guardrail || "_missing_",
-              "",
-              "## Fixed validation commands",
-              "- pnpm --dir frontend install --frozen-lockfile",
-              "- pnpm --dir frontend run quality",
-              "- pnpm run check:routes",
-              "",
-            ].join("\n");
 
             const promptPath = path.join(process.env.RUNNER_TEMP, "codex-issue-context.md");
             fs.writeFileSync(promptPath, issueContext);
@@ -155,18 +297,21 @@ jobs:
                   "",
                   "Cause:",
                   blockedReasons.map((reason) => `- ${reason}`).join("\n"),
-                  "",
-                  "Detection gap:",
-                  "- The issue payload did not provide a fully constrained frontend-only task that this workflow can validate safely.",
-                  "",
-                  "Prevention step:",
-                  "- Use the `Codex Fixable Frontend Bug` issue form and keep edits limited to `frontend/src/**` and `frontend/tests/**`.",
-                ].join("\n")
+                "",
+                "Detection gap:",
+                "- The issue payload did not provide a fully constrained frontend-only task that this workflow can validate safely.",
+                "",
+                "Prevention step:",
+                isAdminFeedbackIssue
+                  ? "- Keep the `admin-feedback` issue labeled, preserve route/location context, and ensure Eve posts an executable `direct-to-main` or `pr-required` triage comment before enqueueing Codex."
+                  : "- Use the `Codex Fixable Frontend Bug` issue form and keep edits limited to `frontend/src/**` and `frontend/tests/**`.",
+              ].join("\n")
               : "";
 
             core.setOutput("blocked", blockedReasons.length > 0 ? "true" : "false");
             core.setOutput("blocker_comment", blockerComment);
             core.setOutput("branch_name", branchName);
+            core.setOutput("delivery_mode", deliveryMode);
             core.setOutput("issue_title", normalizedTitle);
             core.setOutput("issue_context_path", promptPath);
 
@@ -265,7 +410,7 @@ jobs:
           } 2>&1 | tee .github/codex-artifacts/validation.log
 
       - name: Prepare PR body
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         env:
           RUNNER_TEMP: ${{ runner.temp }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -300,16 +445,19 @@ jobs:
             steps.run_codex.outcome == 'failure' ||
             steps.diff.outputs.allowed == 'false' ||
             steps.diff.outputs.no_changes == 'true' ||
-            steps.validate.outcome == 'failure'
+            steps.validate.outcome == 'failure' ||
+            steps.push_main.outcome == 'failure'
           )
         uses: actions/github-script@v7
         env:
           BLOCKED: ${{ steps.prepare.outputs.blocked }}
           BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
           CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
+          DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
           DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
           DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
           DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
+          PUSH_MAIN_OUTCOME: ${{ steps.push_main.outcome }}
         with:
           script: |
             const fs = require("fs");
@@ -361,6 +509,19 @@ jobs:
                 "",
                 blocked,
               ].join("\n");
+            } else if (process.env.PUSH_MAIN_OUTCOME === "failure") {
+              body = [
+                "Codex produced a validated direct-to-main fix, but publish to `main` failed.",
+                "",
+                "Cause:",
+                "- Git push or remote head verification failed during the direct publish step.",
+                "",
+                "Detection gap:",
+                "- The workflow could not guarantee a safe `HEAD == origin/main` publish until the final push step ran.",
+                "",
+                "Prevention step:",
+                "- Re-run the workflow after clearing any concurrent main-branch movement or push conflict.",
+              ].join("\n");
             } else {
               const validationPath = ".github/codex-artifacts/validation.log";
               const validationLog = fs.existsSync(validationPath)
@@ -368,7 +529,9 @@ jobs:
                 : "Validation log not found.";
 
               body = [
-                "Codex produced a candidate fix, but validation failed so no PR was created.",
+                process.env.DELIVERY_MODE === "main"
+                  ? "Codex produced a candidate direct-to-main fix, but validation failed so nothing was published."
+                  : "Codex produced a candidate fix, but validation failed so no PR was created.",
                 "",
                 "Cause:",
                 "- Repo validation failed after Codex edits.",
@@ -400,8 +563,43 @@ jobs:
           rm -rf .github/codex-artifacts
           git clean -fd .github/codex-artifacts || true
 
+      - name: Configure git author
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        run: |
+          git config user.name "codex-issue-fix[bot]"
+          git config user.email "codex-issue-fix[bot]@users.noreply.github.com"
+
+      - name: Commit and push direct-to-main fix
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        id: push_main
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
+        shell: bash
+        run: |
+          mapfile -t changed < <(git diff --name-only --diff-filter=ACMR)
+
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "No changed files found for direct publish." >&2
+            exit 1
+          fi
+
+          git add "${changed[@]}"
+          git commit -m "fix: ${ISSUE_TITLE} (#${ISSUE_NUMBER})" -m "Closes #${ISSUE_NUMBER}"
+
+          local_sha="$(git rev-parse HEAD)"
+          git push origin HEAD:main
+          remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+
+          if [ -z "$remote_sha" ] || [ "$local_sha" != "$remote_sha" ]; then
+            echo "Remote main verification failed. local=$local_sha remote=$remote_sha" >&2
+            exit 1
+          fi
+
+          echo "commit_sha=$local_sha" >> "$GITHUB_OUTPUT"
+
       - name: Create draft pull request
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: create_pr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -415,8 +613,29 @@ jobs:
             codex
             automated-pr
 
+      - name: Comment with direct-to-main publish link
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.push_main.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          COMMIT_SHA: ${{ steps.push_main.outputs.commit_sha }}
+        with:
+          script: |
+            const core = require("@actions/core");
+            const sha = process.env.COMMIT_SHA;
+            if (!sha) {
+              core.setFailed("Direct publish commit SHA was not returned.");
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Codex published the direct-to-main fix in commit ${sha}.`,
+            });
+
       - name: Comment with draft PR link
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode != 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         uses: actions/github-script@v7
         env:
           PULL_REQUEST_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}

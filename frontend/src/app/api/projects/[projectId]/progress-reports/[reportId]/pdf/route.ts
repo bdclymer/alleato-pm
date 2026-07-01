@@ -13,7 +13,7 @@ import {
   listProjectTeamContacts,
   resolveProgressReportContacts,
 } from "@/lib/progress-reports/server";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
@@ -22,10 +22,10 @@ export const dynamic = "force-dynamic";
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/pdf#GET",
   async ({ request, params }) => {
-    const developerGuard = await requireDeveloperApi();
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

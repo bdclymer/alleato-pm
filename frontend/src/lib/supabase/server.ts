@@ -30,10 +30,14 @@ export async function createClient() {
             .forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             );
-        } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+        } catch (error) {
+          console.warn(JSON.stringify({
+            event: "supabase_server_cookie_set_suppressed",
+            timestamp: new Date().toISOString(),
+            reason:
+              "The Supabase SSR client attempted to mutate cookies from a server component request context.",
+            error: error instanceof Error ? error.message : String(error),
+          }));
         }
       },
     },
@@ -56,6 +60,33 @@ export async function getApiRouteUser(): Promise<Pick<User, "id" | "email"> | nu
   return null;
 }
 
+export async function getApiRouteUserFromRequest(
+  request: Pick<Request, "headers">,
+): Promise<Pick<User, "id" | "email"> | null> {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.slice(7).trim();
+      if (!token) return null;
+      const supabase = createClientWithToken(token);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token);
+      if (!user) return null;
+      return { id: user.id, email: user.email ?? "" };
+    } catch (error) {
+      console.warn(JSON.stringify({
+        event: "supabase_bearer_auth_failed",
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return null;
+    }
+  }
+
+  return getApiRouteUser();
+}
+
 async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null> {
   try {
     const cookieStore = await cookies();
@@ -69,7 +100,12 @@ async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null
     }
 
     return { id: tokenData.userId, email: tokenData.email };
-  } catch {
+  } catch (error) {
+    console.warn(JSON.stringify({
+      event: "supabase_cookie_auth_failed",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    }));
     return null;
   }
 }

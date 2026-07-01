@@ -126,6 +126,37 @@ export async function upsertTriageComment(
   return "created";
 }
 
+export async function ensureIssueLabels(
+  repoRef: RepoRef,
+  issueNumber: number,
+  labels: string[],
+): Promise<string[]> {
+  const requested = labels.map((label) => label.trim()).filter((label) => label.length > 0);
+  if (requested.length === 0) return [];
+
+  const installation = await getInstallationContext(repoRef);
+  const issue = await githubInstallationRequest<unknown>(
+    installation.token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/issues/${issueNumber}`,
+  );
+  const currentLabels = normalizeIssue(repoRef, issue)?.labels ?? [];
+  const missingLabels = requested.filter((label) => !currentLabels.includes(label));
+
+  if (missingLabels.length === 0) return [];
+
+  await githubInstallationRequest(
+    installation.token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/issues/${issueNumber}/labels`,
+    {
+      method: "POST",
+      body: JSON.stringify({ labels: missingLabels }),
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+
+  return missingLabels;
+}
+
 export function getBackfillRepos(): RepoRef[] {
   const configured = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_BACKFILL_REPOS);
   const fallback = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_REPOS);

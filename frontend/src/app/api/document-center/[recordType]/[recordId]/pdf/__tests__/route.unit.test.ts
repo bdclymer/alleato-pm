@@ -23,8 +23,13 @@ jest.mock("@/lib/logger", () => ({
 }));
 
 jest.mock("@/lib/supabase/server", () => ({
-  createClient: jest.fn().mockResolvedValue({}),
-  getApiRouteUser: jest.fn().mockResolvedValue({ id: "user-1", email: "test@example.com" }),
+  getApiRouteUserFromRequest: jest
+    .fn()
+    .mockResolvedValue({ id: "user-1", email: "test@example.com" }),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createServiceClient: jest.fn().mockReturnValue({}),
 }));
 
 import { renderPdfFromHtml } from "@/lib/documents/pdf";

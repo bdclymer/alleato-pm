@@ -1,6 +1,7 @@
 import { defineSchedule } from "eve/schedules";
 
 import {
+  ensureIssueLabels,
   getBackfillRepos,
   listOpenIssuesForBackfill,
   upsertTriageComment,
@@ -41,6 +42,15 @@ export default defineSchedule({
           });
           const result = await upsertTriageComment(repoRef, issue.issueNumber, formatTriageComment(decision));
           console.info(`GitHub triage backfill ${result} comment for #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}.`);
+
+          if (decision.route === "direct-to-main" || decision.route === "pr-required") {
+            const addedLabels = await ensureIssueLabels(repoRef, issue.issueNumber, ["codex:fix"]);
+            if (addedLabels.length > 0) {
+              console.info(
+                `GitHub triage backfill queued #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo} with labels: ${addedLabels.join(", ")}.`,
+              );
+            }
+          }
         } catch (error) {
           console.error(`GitHub triage backfill comment failed for #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}: ${toErrorMessage(error)}`);
         }

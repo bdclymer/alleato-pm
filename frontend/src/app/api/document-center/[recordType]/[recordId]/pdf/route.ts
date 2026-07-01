@@ -2,7 +2,8 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   getDocumentPdfOptions,
   getDocumentBundle,
@@ -40,8 +41,8 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Unsupported record type" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const user = await getApiRouteUser();
+    const supabase = createServiceClient();
+    const user = await getApiRouteUserFromRequest(request);
 
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "document-center/[recordType]/[recordId]/pdf#GET", message: "Authentication required." });
