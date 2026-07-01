@@ -92,6 +92,12 @@ const PRESET_COLORS = [
 
 const STROKE_WIDTHS = [1, 2, 4, 6];
 
+// Physical mouse wheels report large discrete deltaY steps (~100 per notch);
+// trackpad pinch gestures (ctrl/meta + wheel) report small continuous deltas.
+// Separate sensitivities keep both feeling like a single, natural zoom step.
+const WHEEL_ZOOM_SENSITIVITY = 0.0018;
+const PINCH_ZOOM_SENSITIVITY = 0.005;
+
 // ─── Props ──────────────────────────────────────────────────────────────────
 
 interface DrawingViewerProps {
@@ -281,9 +287,12 @@ export function DrawingViewer({
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [draggingAnnotationId, setDraggingAnnotationId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<Point | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   // ── refs ──
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const panStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
   const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const pdfPageRef = useRef<HTMLDivElement>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
@@ -377,23 +386,42 @@ export function DrawingViewer({
     };
   }, [fitMode, getFitScale]);
 
-  // ── Trackpad pinch-to-zoom & scroll-wheel zoom ──
+  // ── Scroll-wheel zoom (default, matches Procore) & trackpad pinch-to-zoom ──
+  // Scrolling the mouse wheel (or trackpad pinch via ctrl/meta) zooms the
+  // drawing in/out around the cursor position instead of panning the page.
   useEffect(() => {
-    const el = containerRef.current;
+    const el = scrollContainerRef.current;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // ctrlKey is set by the browser for trackpad pinch gestures
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = -e.deltaY * 0.005;
-        setScale((prev) => {
-          const next = Math.min(Math.max(prev * (1 + delta), 0.1), 5);
-          setFitMode("custom");
-          onScaleChange?.(next);
-          return next;
+      e.preventDefault();
+      const scrollEl = scrollContainerRef.current;
+      if (!scrollEl) return;
+
+      const rect = scrollEl.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const contentX = scrollEl.scrollLeft + cx;
+      const contentY = scrollEl.scrollTop + cy;
+      const prevScrollWidth = scrollEl.scrollWidth;
+      const prevScrollHeight = scrollEl.scrollHeight;
+
+      const sensitivity = e.ctrlKey || e.metaKey ? PINCH_ZOOM_SENSITIVITY : WHEEL_ZOOM_SENSITIVITY;
+      const delta = -e.deltaY * sensitivity;
+      setScale((prev) => {
+        const next = Math.min(Math.max(prev * (1 + delta), 0.1), 5);
+        setFitMode("custom");
+        onScaleChange?.(next);
+        requestAnimationFrame(() => {
+          const grownEl = scrollContainerRef.current;
+          if (!grownEl || prevScrollWidth === 0 || prevScrollHeight === 0) return;
+          const ratioX = grownEl.scrollWidth / prevScrollWidth;
+          const ratioY = grownEl.scrollHeight / prevScrollHeight;
+          grownEl.scrollLeft = contentX * ratioX - cx;
+          grownEl.scrollTop = contentY * ratioY - cy;
         });
-      }
+        return next;
+      });
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
@@ -615,8 +643,18 @@ export function DrawingViewer({
           x: pt.x - textAnn.position.x,
           y: pt.y - textAnn.position.y,
         });
-      } else {
-        setSelectedAnnotationId(null);
+        return;
+      }
+      setSelectedAnnotationId(null);
+      const scrollEl = scrollContainerRef.current;
+      if (scrollEl) {
+        panStartRef.current = {
+          x: e.clientX,
+          y: e.clientY,
+          scrollLeft: scrollEl.scrollLeft,
+          scrollTop: scrollEl.scrollTop,
+        };
+        setIsPanning(true);
       }
       return;
     }
@@ -675,6 +713,15 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isPanning && panStartRef.current) {
+      const scrollEl = scrollContainerRef.current;
+      if (scrollEl) {
+        scrollEl.scrollLeft = panStartRef.current.scrollLeft - (e.clientX - panStartRef.current.x);
+        scrollEl.scrollTop = panStartRef.current.scrollTop - (e.clientY - panStartRef.current.y);
+      }
+      return;
+    }
+
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
     const pt = getCanvasPoint(e, canvas);
@@ -715,6 +762,11 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseUp = () => {
+    if (isPanning) {
+      setIsPanning(false);
+      panStartRef.current = null;
+      return;
+    }
     if (draggingAnnotationId) {
       setDraggingAnnotationId(null);
       setDragOffset(null);
@@ -788,11 +840,9 @@ export function DrawingViewer({
   // ── canvas cursor ──
   const canvasCursor =
     resolvedTool === "select"
-      ? draggingAnnotationId
+      ? draggingAnnotationId || isPanning
         ? "grabbing"
-        : selectedAnnotationId
-          ? "grab"
-          : "default"
+        : "grab"
       : resolvedTool === "comment" || resolvedTool === "link"
       ? "crosshair"
       : resolvedTool === "eraser"
@@ -1033,7 +1083,10 @@ export function DrawingViewer({
         </div>}
 
         {/* ── PDF + annotation canvas ──────────────────────────────────────── */}
-        <div className="flex-1 overflow-auto bg-muted/30 flex items-start justify-center p-4">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-auto bg-muted/30 flex items-start justify-center p-4"
+        >
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
               <div className="flex items-center gap-3 text-muted-foreground">
