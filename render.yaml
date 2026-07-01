@@ -65,7 +65,7 @@ services:
     dockerContext: ./backend
     schedule: "10 * * * *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding
+      timeout 25m python3 scripts/run_graph_teams_channel_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -109,7 +109,7 @@ services:
     dockerContext: ./backend
     schedule: "40 * * * *"
     dockerCommand: >-
-      timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding
+      timeout 10m python3 scripts/run_graph_teams_dm_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
