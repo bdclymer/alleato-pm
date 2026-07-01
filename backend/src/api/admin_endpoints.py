@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from services.supabase_helpers import SupabaseRagStore
 from services.env_loader import load_env
-from services.pipeline import run_embedder, run_extractor, run_parser
+from services.ingestion.fireflies_reprocessing import reprocess_existing_fireflies_document
 
 load_env()
 
@@ -78,21 +78,33 @@ def get_rag_store() -> SupabaseRagStore:
 _background_tasks = {}
 
 
-def _resolve_pipeline_process_url(supabase) -> str:
-    """Resolve the pipeline endpoint from DB config, fallback to local backend URL."""
+def _resolve_fireflies_process_url(supabase) -> str:
+    """Resolve the canonical Fireflies reprocess endpoint."""
     config = (
         supabase.table("pipeline_config")
-        .select("value")
-        .eq("key", "pipeline_url")
-        .maybe_single()
+        .select("key,value")
+        .in_("key", ["fireflies_pipeline_url", "pipeline_url"])
         .execute()
     )
-    configured = ((config.data or {}).get("value") or "").strip() if config else ""
+    rows = config.data or []
+    configured = ""
+    for key_name in ("fireflies_pipeline_url", "pipeline_url"):
+        match = next(
+            (str(row.get("value") or "").strip() for row in rows if str(row.get("key") or "") == key_name),
+            "",
+        )
+        if match:
+            configured = match
+            break
+
     if configured:
-        return configured.rstrip("/")
+        normalized = configured.rstrip("/")
+        if normalized.endswith("/api/pipeline/process"):
+            return normalized[: -len("/api/pipeline/process")] + "/api/ingest/fireflies/process"
+        return normalized
 
     local_backend = (os.getenv("PYTHON_BACKEND_URL") or "http://127.0.0.1:8000").strip().rstrip("/")
-    return f"{local_backend}/api/pipeline/process"
+    return f"{local_backend}/api/ingest/fireflies/process"
 
 
 def _find_stale_raw_ingested_jobs(
@@ -133,17 +145,14 @@ def _find_stale_raw_ingested_jobs(
             break
     return retryable
 
-@router.post("/documents/generate-embeddings", response_model=EmbeddingGenerationResponse)
+@router.post("/documents/reprocess-fireflies", response_model=EmbeddingGenerationResponse)
 async def trigger_generate_embeddings(
     request: EmbeddingGenerationRequest,
     background_tasks: BackgroundTasks,
     store: SupabaseRagStore = Depends(get_rag_store)
 ):
     """
-    Trigger embedding generation for documents in the pipeline.
-    
-    This endpoint starts the document processing pipeline to generate embeddings
-    for documents at the specified stage.
+    Trigger canonical Fireflies reprocessing for documents in the pipeline.
     """
     try:
         # Generate a task ID
@@ -197,26 +206,17 @@ async def trigger_generate_embeddings(
                     metadata_id = job["metadata_id"]
                     fireflies_id = job.get("fireflies_id")
                     try:
-                        stage = request.stage
-                        if stage == "raw_ingested":
-                            run_parser(metadata_id)
-                            stage = "segmented"
-
-                        if stage == "segmented" and not request.skip_embedding:
-                            run_embedder(metadata_id)
-                            stage = "embedded"
-
-                        if stage == "embedded" and not request.skip_extraction:
-                            run_extractor(metadata_id)
-                            stage = "done"
-
+                        result = reprocess_existing_fireflies_document(metadata_id, store=store)
                         processed += 1
                         results.append(
                             {
                                 "fireflies_id": fireflies_id,
                                 "metadata_id": metadata_id,
                                 "status": "processed",
-                                "final_stage": stage,
+                                "final_stage": "done",
+                                "owner": result["owner"],
+                                "chunk_count": result["chunkCount"],
+                                "skipped": result["skipped"],
                             }
                         )
                     except Exception as job_exc:
@@ -288,7 +288,7 @@ async def trigger_generate_embeddings(
             detail=f"Failed to trigger embedding generation: {str(e)}"
         )
 
-@router.get("/documents/embedding-status/{task_id}")
+@router.get("/documents/reprocess-status/{task_id}")
 async def get_embedding_status(task_id: str):
     """Check the status of an embedding generation task."""
     if task_id not in _background_tasks:
@@ -296,7 +296,7 @@ async def get_embedding_status(task_id: str):
     
     return _background_tasks[task_id]
 
-@router.get("/documents/pipeline-stats")
+@router.get("/documents/fireflies-stats")
 async def get_pipeline_statistics(
     store: SupabaseRagStore = Depends(get_rag_store)
 ):
@@ -341,7 +341,7 @@ async def replay_stale_raw_ingested_jobs(
     request: ReplayStaleRawIngestedRequest,
     store: SupabaseRagStore = Depends(get_rag_store),
 ):
-    """Requeue stale raw_ingested jobs by calling the pipeline process endpoint."""
+    """Requeue stale raw_ingested jobs by calling the canonical Fireflies endpoint."""
     if request.stale_minutes < 1:
         raise HTTPException(status_code=400, detail="stale_minutes must be >= 1")
     if request.limit < 1 or request.limit > 200:
@@ -350,7 +350,7 @@ async def replay_stale_raw_ingested_jobs(
     try:
         supabase = store._client
         rag_supabase = store._rag_client
-        pipeline_url = _resolve_pipeline_process_url(supabase)
+        pipeline_url = _resolve_fireflies_process_url(supabase)
         jobs = _find_stale_raw_ingested_jobs(
             supabase=rag_supabase,
             stale_minutes=request.stale_minutes,

@@ -873,8 +873,8 @@ def run_graph_sync(
     # ── Promote pending Outlook intake attachments ────────────────────────────
     # Runs after embedding so newly-promoted docs are picked up by the NEXT
     # embedding pass (or immediately if run_embedding runs again below).
-    # The scheduler also runs this as a dedicated 30-minute job; running it here
-    # too ensures freshly-synced emails get attachments promoted in the same run.
+    # This sync orchestration is now the primary automated owner for attachment
+    # promotion; dedicated scheduler-owned promotion jobs were retired.
     if run_attachment_promotion:
         try:
             promotion_result = promote_outlook_intake_attachments(

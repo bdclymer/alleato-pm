@@ -105,6 +105,12 @@ export const LifecycleDocumentSchema = z.object({
   date: z.string().nullable(),
   projectId: z.number().nullable(),
   projectName: z.string().nullable(),
+  taskOutcome: z.enum([
+    "tasks_created",
+    "no_actionable_tasks",
+    "task_signal_staged",
+    "not_extracted",
+  ]),
   stages: z.object({
     synced: z.boolean(),
     vectorized: z.boolean(),

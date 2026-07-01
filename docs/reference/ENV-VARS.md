@@ -283,14 +283,7 @@ These are set automatically by Vercel — do not set them manually.
 | Variable | Required | Where Set | Purpose | Notes |
 |----------|----------|-----------|---------|-------|
 | `FIREFLIES_API_KEY` | Yes (if Fireflies enabled) | Render | Fireflies.ai API key for meeting transcripts | |
-| `FIREFLIES_SYNC_ENABLED` | No | Render | Enable Fireflies transcript sync | |
-| `FIREFLIES_SYNC_INTERVAL_MINUTES` | No | Render | Fireflies sync run interval | |
-| `FIREFLIES_SYNC_LIMIT` | No | Render | Max transcripts per sync run | |
 | `FIREFLIES_PROJECT_ASSIGN_MIN_CONFIDENCE` | No | Render | Min confidence for project assignment | |
-| `FIREFLIES_PIPELINE_BACKLOG_ENABLED` | No | Render | Enable backlog processing for Fireflies | |
-| `FIREFLIES_PIPELINE_BACKLOG_INTERVAL_MINUTES` | No | Render | Backlog run interval | |
-| `FIREFLIES_PIPELINE_BACKLOG_LIMIT` | No | Render | Max items per backlog run | |
-| `FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES` | No | Render | Age threshold to consider items stale | |
 
 ### Task Extraction
 

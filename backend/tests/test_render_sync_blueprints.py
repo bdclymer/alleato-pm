@@ -72,6 +72,16 @@ def test_acumatica_cron_uses_guarded_direct_entrypoint():
         assert acumatica["dockerCommand"] == "python3 scripts/run_acumatica_financial_sync.py"
 
 
+def test_fireflies_cron_uses_direct_entrypoint():
+    for path in _render_blueprint_paths():
+        fireflies = _services_by_name(path)["alleato-fireflies-sync"]
+
+        assert fireflies["schedule"] == "15 * * * *"
+        assert fireflies["dockerCommand"] == (
+            "timeout 20m python3 scripts/run_fireflies_sync.py"
+        )
+
+
 def test_alleato_crons_require_app_db_pressure_guard():
     for path in _render_blueprint_paths():
         services = _services_by_name(path)

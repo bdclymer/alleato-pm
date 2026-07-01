@@ -54,6 +54,38 @@ function normalizePipelineStage(
   return stage ?? "unknown";
 }
 
+function describeLifecycleStage(
+  normalizedStage: string,
+  taskCount: number,
+  projectAssigned: boolean,
+): string {
+  if (normalizedStage === "failed") {
+    return "Failed";
+  }
+
+  if (normalizedStage === "processing") {
+    return "Processing";
+  }
+
+  if (taskCount > 0) {
+    return "Tasks extracted";
+  }
+
+  if (projectAssigned && normalizedStage === "done") {
+    return "Project assigned";
+  }
+
+  if (normalizedStage === "done") {
+    return "Vectorized";
+  }
+
+  if (normalizedStage === "raw_ingested") {
+    return "Synced";
+  }
+
+  return "Unknown";
+}
+
 export const GET = withApiGuardrails(
   "documents/status#GET",
   async ({ request }) => {
@@ -204,6 +236,29 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
+    const documentIds = (documents ?? []).map((doc) => doc.id).filter(Boolean);
+    const taskCountByDocumentId = new Map<string, number>();
+
+    if (documentIds.length > 0) {
+      const { data: taskRows, error: taskError } = await supabase
+        .from("tasks")
+        .select("metadata_id")
+        .in("metadata_id", documentIds);
+
+      if (taskError) {
+        return apiErrorResponse(taskError);
+      }
+
+      for (const row of taskRows ?? []) {
+        const metadataId = String(row.metadata_id ?? "").trim();
+        if (!metadataId) continue;
+        taskCountByDocumentId.set(
+          metadataId,
+          (taskCountByDocumentId.get(metadataId) ?? 0) + 1,
+        );
+      }
+    }
+
     const transformedDocuments =
       documents?.map((doc) => {
         const jobs = Array.isArray(doc.fireflies_ingestion_jobs)
@@ -214,6 +269,8 @@ export const GET = withApiGuardrails(
 
         const job = jobs[0];
         const stage = normalizePipelineStage(job?.stage, job?.error_message);
+        const taskCount = taskCountByDocumentId.get(doc.id) ?? 0;
+        const projectAssigned = Boolean(doc.project_id);
 
         return {
           id: doc.id,
@@ -241,6 +298,14 @@ export const GET = withApiGuardrails(
           participants: doc.participants,
           participants_array: doc.participants_array,
           pipeline_stage: stage,
+          raw_pipeline_stage: job?.stage ?? null,
+          lifecycle_label: describeLifecycleStage(
+            stage,
+            taskCount,
+            projectAssigned,
+          ),
+          project_assigned: projectAssigned,
+          task_count: taskCount,
           attempt_count: job?.attempt_count || 0,
           last_attempt_at: job?.last_attempt_at,
           error_message: job?.error_message,

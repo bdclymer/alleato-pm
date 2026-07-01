@@ -382,9 +382,6 @@ class _MissingChunksStore:
     def start_ingestion_job(self, fireflies_id, content_hash):  # noqa: ANN001
         return None
 
-    def delete_open_rewriter_tasks_for_document(self, document_id):  # noqa: ANN001
-        return None
-
     def delete_chunks_for_document(self, document_id):  # noqa: ANN001
         return None
 

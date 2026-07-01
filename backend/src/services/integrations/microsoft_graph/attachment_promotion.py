@@ -16,8 +16,15 @@ from ...supabase_helpers import (
     SupabaseRagStore,
     get_outlook_intake_read_client,
     get_outlook_intake_write_client,
+    storage_upload_with_retry,
 )
-from .outlook import DOCUMENT_BUCKET
+from .client import get_graph_client
+from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
+from .outlook import (
+    DOCUMENT_BUCKET,
+    _attachment_bytes_for_intake,
+    _attachment_metadata_text,
+)
 from .project_documents import upsert_project_document_by_source
 
 logger = logging.getLogger(__name__)
@@ -155,7 +162,7 @@ def classify_attachment_for_promotion(
     if ext in {".dwg", ".dxf", ".rvt"}:
         return AttachmentDecision("promoted", "Drawing", f"extension:{ext.lstrip('.')}")
     if ext in PROMOTABLE_EXTENSIONS and not (content_type or "").startswith("image/"):
-        return AttachmentDecision("review_needed", None, f"promotable_extension_no_context:{ext.lstrip('.')}")
+        return AttachmentDecision("promoted", "Email Attachment", f"extension:{ext.lstrip('.')}")
 
     return AttachmentDecision("skipped", None, f"unsupported_or_low_value_extension:{ext.lstrip('.') or 'none'}")
 
@@ -176,6 +183,8 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
             extracted_text,
             is_inline,
             source_metadata,
+            promotion_status,
+            promotion_reason,
             promotion_attempt_count,
             outlook_email_intake!inner(
               id,
@@ -183,6 +192,7 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
               mailbox_user_id,
               project_id,
               subject,
+              from_name,
               body_text,
               from_email,
               received_at,
@@ -192,13 +202,31 @@ def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, A
             )
             """
         )
-        .in_("promotion_status", ["pending", "failed"])
+        .in_("promotion_status", ["pending", "failed", "review_needed"])
         .lt("promotion_attempt_count", 3)
         .order("created_at", desc=False)
         .limit(limit)
         .execute()
     )
-    return response.data or []
+    return [row for row in (response.data or []) if _should_retry_attachment_promotion(row)]
+
+
+def _should_retry_attachment_promotion(row: dict[str, Any]) -> bool:
+    status = str(row.get("promotion_status") or "")
+    if status in {"pending", "failed"}:
+        return True
+
+    if status == "review_needed" and row.get("promotion_reason") == "missing_project_assignment":
+        intake = row.get("outlook_email_intake") or {}
+        return bool(intake.get("project_id"))
+
+    if status == "review_needed" and str(row.get("promotion_reason") or "").startswith(
+        "promotable_extension_no_context:"
+    ):
+        intake = row.get("outlook_email_intake") or {}
+        return bool(intake.get("project_id"))
+
+    return False
 
 
 def _fetch_attachment_payload(supabase_client, attachment_id: int, *, include_content: bool) -> dict[str, Any]:
@@ -260,6 +288,63 @@ def _project_document_id(supabase_client, *, project_id: int, source_item_id: st
     return int(rows[0]["id"]) if rows else None
 
 
+def _existing_document_for_content_hash(
+    supabase_client,
+    *,
+    content_hash: Optional[str],
+    current_doc_id: str,
+) -> Optional[dict[str, Any]]:
+    if not content_hash:
+        return None
+
+    response = (
+        supabase_client.from_("document_metadata")
+        .select("id, url, storage_bucket, file_path, source_size, source_metadata")
+        .eq("content_hash", content_hash)
+        .limit(5)
+        .execute()
+    )
+    for row in response.data or []:
+        if row.get("id") != current_doc_id:
+            return row
+    return None
+
+
+def _load_attachment_bytes_for_promotion(
+    *,
+    payload_row: dict[str, Any],
+    intake: dict[str, Any],
+    row: dict[str, Any],
+) -> Optional[bytes]:
+    raw_bytes = _decode_bytea(payload_row.get("content"))
+    if raw_bytes is not None:
+        return raw_bytes
+
+    graph_attachment_id = row.get("graph_attachment_id")
+    graph_message_id = intake.get("graph_message_id")
+    mailbox_user_id = intake.get("mailbox_user_id")
+    if not graph_attachment_id or not graph_message_id or not mailbox_user_id:
+        return None
+
+    graph = get_graph_client()
+    if not graph.is_configured():
+        return None
+
+    attachment_stub = {
+        "id": graph_attachment_id,
+        "name": row.get("file_name") or "attachment",
+        "contentType": row.get("content_type") or "application/octet-stream",
+        "size": int(row.get("file_size") or 0),
+        "isInline": bool(row.get("is_inline")),
+    }
+    return _attachment_bytes_for_intake(
+        graph,
+        str(mailbox_user_id),
+        str(graph_message_id),
+        attachment_stub,
+    )
+
+
 def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
     intake = row.get("outlook_email_intake") or {}
     project_id = intake.get("project_id")
@@ -290,11 +375,7 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         )
         return {"status": decision.status, "reason": decision.reason}
 
-    payload_row = _fetch_attachment_payload(
-        supabase_client,
-        row["id"],
-        include_content=COPY_ATTACHMENTS_TO_STORAGE,
-    )
+    payload_row = _fetch_attachment_payload(supabase_client, row["id"], include_content=True)
     file_name = row.get("file_name") or "attachment"
     graph_attachment_id = row.get("graph_attachment_id") or str(row["id"])
     graph_message_id = intake.get("graph_message_id") or str(row.get("intake_email_id"))
@@ -306,30 +387,64 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         / f"{_stable_graph_id(graph_attachment_id, 12)}-{_storage_safe_name(file_name)}"
     )
     content_type = row.get("content_type") or mimetypes.guess_type(file_name)[0] or "application/octet-stream"
-    raw_bytes = _decode_bytea(payload_row.get("content")) if COPY_ATTACHMENTS_TO_STORAGE else None
+    raw_bytes = _load_attachment_bytes_for_promotion(
+        payload_row=payload_row,
+        intake=intake,
+        row=row,
+    )
     content_hash = payload_row.get("checksum_sha256")
     public_url = intake.get("web_link") or row.get("file_url") or ""
     storage_bucket: Optional[str] = None
     stored_path: Optional[str] = None
     storage_copy_status = "deferred"
+    metadata_content_hash = content_hash
+    duplicate_of_doc_id: Optional[str] = None
 
-    if COPY_ATTACHMENTS_TO_STORAGE:
-        if not raw_bytes:
-            raise ValueError("attachment_content_missing")
+    if raw_bytes:
         if len(raw_bytes) > MAX_ATTACHMENT_BYTES:
             raise ValueError(f"attachment_exceeds_max_bytes:{len(raw_bytes)}")
-        supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
-            storage_path,
-            raw_bytes,
-            {"content-type": content_type, "upsert": "true"},
-        )
-        public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
-        storage_bucket = DOCUMENT_BUCKET
-        stored_path = storage_path
-        storage_copy_status = "copied"
         content_hash = content_hash or hashlib.sha256(raw_bytes).hexdigest()
+        metadata_content_hash = content_hash
+        existing_doc = _existing_document_for_content_hash(
+            supabase_client,
+            content_hash=content_hash,
+            current_doc_id=doc_id,
+        )
+        if existing_doc:
+            duplicate_of_doc_id = existing_doc.get("id")
+            public_url = existing_doc.get("url") or public_url
+            storage_bucket = existing_doc.get("storage_bucket")
+            stored_path = existing_doc.get("file_path")
+            metadata_content_hash = None
+            storage_copy_status = "reused_existing"
+        else:
+            try:
+                storage_upload_with_retry(
+                    supabase_client.storage.from_(DOCUMENT_BUCKET),
+                    storage_path,
+                    raw_bytes,
+                    {"content-type": content_type, "upsert": "true"},
+                )
+            except Exception:
+                if not content_type.startswith("image/"):
+                    raise
+                storage_upload_with_retry(
+                    supabase_client.storage.from_(DOCUMENT_BUCKET),
+                    storage_path,
+                    raw_bytes,
+                    {"content-type": "application/octet-stream", "upsert": "true"},
+                )
+                content_type = "application/octet-stream"
+            public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
+            storage_bucket = DOCUMENT_BUCKET
+            stored_path = storage_path
+            storage_copy_status = "copied"
 
     extracted_text = payload_row.get("extracted_text") or ""
+    _, ext = os.path.splitext(file_name)
+    ext = ext.lower()
+    if not extracted_text and raw_bytes and ext in SUPPORTED_EXTENSIONS:
+        extracted_text = _extract_text(raw_bytes, ext).replace("\x00", "").strip()
 
     source_metadata = {
         **(row.get("source_metadata") or {}),
@@ -342,16 +457,24 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
         "assignment_confidence": intake.get("assignment_confidence"),
         "source_file_url": row.get("file_url"),
         "storage_copy_status": storage_copy_status,
+        "storage_content_type": content_type,
     }
+    if duplicate_of_doc_id:
+        source_metadata["duplicate_content_hash_of"] = duplicate_of_doc_id
+        source_metadata["original_content_hash"] = content_hash
     content = (
         extracted_text
-        or "\n".join(
-            [
-                f"Email attachment: {file_name}",
-                f"Email subject: {intake.get('subject') or ''}",
-                f"Sender: {intake.get('from_email') or ''}",
-                f"Attachment category: {decision.category}",
-            ]
+        or _attachment_metadata_text(
+            subject=intake.get("subject") or "",
+            sender_name=intake.get("from_name") or intake.get("from_email") or "",
+            sender_addr=intake.get("from_email") or "",
+            attachment_name=file_name,
+            attachment={
+                "id": graph_attachment_id,
+                "contentType": content_type,
+            },
+            email_doc_id=str(intake.get("document_metadata_id") or ""),
+            email_web_link=intake.get("web_link") or "",
         )
     )[:50000]
 
@@ -369,7 +492,14 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
             "url": public_url,
             "participants": intake.get("from_email") or "",
             "status": "raw_ingested" if extracted_text else "metadata_only",
-            "tags": ",".join(["outlook_attachment", (decision.category or "document").lower().replace(" ", "_")]),
+            "tags": ",".join(
+                [
+                    "outlook_attachment",
+                    "inline" if row.get("is_inline") else "attached_file",
+                    ext.lstrip(".") if ext else "no_extension",
+                    (decision.category or "document").lower().replace(" ", "_"),
+                ]
+            ),
             "project_id": project_id,
             "source_system": "outlook_attachment",
             "source_item_id": doc_id,
@@ -378,7 +508,7 @@ def _promote_attachment(supabase_client, row: dict[str, Any]) -> dict[str, Any]:
             "source_size": row.get("file_size"),
             "storage_bucket": storage_bucket,
             "file_path": stored_path,
-            "content_hash": content_hash,
+            "content_hash": metadata_content_hash,
             "source_metadata": source_metadata,
             "workflow_target": "document",
         }

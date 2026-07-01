@@ -1,26 +1,19 @@
 "use client";
 import { ProjectPageHeader } from "@/components/layout";
+import Link from "next/link";
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   RefreshCw,
-  PlayCircle,
   AlertCircle,
   CheckCircle,
   Clock,
   FileText,
-  Database,
   Brain,
-  Sparkles,
+  FolderCheck,
+  ListTodo,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -42,81 +35,63 @@ interface Document {
   date: string;
   created_at: string;
   pipeline_stage: string;
+  raw_pipeline_stage: string | null;
+  lifecycle_label: string;
+  project_assigned: boolean;
+  task_count: number;
   attempt_count: number;
   last_attempt_at: string;
   error_message: string | null;
 }
 
-interface PhaseCount {
-  phase: string;
-  ready: number;
-  stage: string;
-}
-
 const statusConfig = {
-  raw_ingested: {
-    label: "Raw Ingested",
+  Synced: {
+    label: "Synced",
     color: "bg-muted text-foreground",
     icon: FileText,
   },
-  segmented: {
-    label: "Segmented",
-    color: "bg-info/10 text-info",
-    icon: Database,
-  },
-  embedded: {
-    label: "Embedded",
+  Vectorized: {
+    label: "Vectorized",
     color: "bg-muted text-foreground",
     icon: Brain,
   },
-  complete: {
-    label: "Complete",
+  "Project assigned": {
+    label: "Project assigned",
+    color: "bg-info/10 text-info",
+    icon: FolderCheck,
+  },
+  "Tasks extracted": {
+    label: "Tasks extracted",
     color: "bg-success/10 text-success",
-    icon: CheckCircle,
+    icon: ListTodo,
   },
-  error: {
-    label: "Error",
-    color: "bg-destructive/10 text-destructive",
-    icon: AlertCircle,
-  },
-  pending: {
-    label: "Pending",
+  Processing: {
+    label: "Processing",
     color: "bg-warning/10 text-warning",
     icon: Clock,
   },
-};
-
-const phaseIconClass: Record<string, string> = {
-  parse: "text-primary",
-  embed: "text-muted-foreground",
-  extract: "text-success",
-};
-
-const phaseConfig = {
-  parse: {
-    label: "Parse Documents",
-    description: "Segment documents into semantic chunks",
-    icon: Database,
+  Failed: {
+    label: "Failed",
+    color: "bg-destructive/10 text-destructive",
+    icon: AlertCircle,
   },
-  embed: {
-    label: "Generate Embeddings",
-    description: "Create vector embeddings for search",
-    icon: Brain,
+  Unknown: {
+    label: "Unknown",
+    color: "bg-muted text-muted-foreground",
+    icon: Clock,
   },
-  extract: {
-    label: "Extract Insights",
-    description: "Extract decisions, risks, and opportunities",
-    icon: Sparkles,
+  done: {
+    label: "Complete",
+    color: "bg-success/10 text-success",
+    icon: CheckCircle,
   },
 };
 
 export default function DocumentPipelinePage() {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [phaseCounts, setPhaseCounts] = useState<PhaseCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [triggering, setTriggering] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [currentView, setCurrentView] = useState<ViewMode>("table");
 
@@ -124,7 +99,7 @@ export default function DocumentPipelinePage() {
     try {
       setLoadError(null);
       const data = await apiFetch<{ documents: Document[] }>(
-        "/api/documents/status",
+        "/api/documents/status?type=meeting&source=fireflies",
       );
       setDocuments(data.documents);
     } catch (error) {
@@ -139,25 +114,9 @@ export default function DocumentPipelinePage() {
     }
   };
 
-  const fetchPhaseCounts = async () => {
-    try {
-      const data = await apiFetch<{ phaseCounts: PhaseCount[] }>(
-        "/api/documents/trigger-pipeline",
-      );
-      setPhaseCounts(data.phaseCounts);
-    } catch (error) {
-      toast.error("Could not load pipeline phase counts", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "The pipeline phase summary could not be loaded.",
-      });
-    }
-  };
-
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([fetchDocuments(), fetchPhaseCounts()]);
+    await fetchDocuments();
     setLoading(false);
   };
 
@@ -168,51 +127,14 @@ export default function DocumentPipelinePage() {
     toast.success("Document status updated");
   };
 
-  const triggerPhase = async (phase: string) => {
-    setTriggering(phase);
-
-    // Show immediate feedback
-    toast.loading(
-      `Triggering ${phaseConfig[phase as keyof typeof phaseConfig]?.label || phase}...`,
-      {
-        id: `trigger-${phase}`,
-      },
-    );
-
-    try {
-      const data = await apiFetch<{ message?: string }>(
-        "/api/documents/trigger-pipeline",
-        {
-          method: "POST",
-          body: JSON.stringify({ phase }),
-        },
-      );
-
-      toast.success(data.message || "Pipeline triggered successfully", {
-        id: `trigger-${phase}`, // Replaces the loading toast
-      });
-      // Refresh data to show updated status
-      await loadData();
-    } catch (error) {
-      toast.error("Could not trigger pipeline phase", {
-        id: `trigger-${phase}`, // Replaces the loading toast
-        description:
-          error instanceof Error
-            ? error.message
-            : "The pipeline endpoint did not accept the request.",
-      });
-    } finally {
-      setTriggering(null);
-    }
-  };
-
   useEffect(() => {
     loadData();
   }, []);
 
-  const getStatusBadge = (status: string, pipelineStage: string) => {
+  const getStatusBadge = (lifecycleLabel: string) => {
     const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+      statusConfig[lifecycleLabel as keyof typeof statusConfig] ||
+      statusConfig.Unknown;
     const Icon = config.icon;
     return (
       <Badge className={`${config.color} gap-1`}>
@@ -222,9 +144,23 @@ export default function DocumentPipelinePage() {
     );
   };
 
-  const getPhaseCount = (phase: string) => {
-    return phaseCounts.find((pc) => pc.phase === phase)?.ready || 0;
-  };
+  const lifecycleSummary = useMemo(() => {
+    const total = documents.length;
+    const failed = documents.filter((doc) => doc.pipeline_stage === "failed").length;
+    const processing = documents.filter((doc) => doc.pipeline_stage === "processing").length;
+    const vectorized = documents.filter((doc) => ["done", "processing"].includes(doc.raw_pipeline_stage ?? "") || doc.lifecycle_label === "Tasks extracted" || doc.lifecycle_label === "Project assigned" || doc.lifecycle_label === "Vectorized").length;
+    const projectAssigned = documents.filter((doc) => doc.project_assigned).length;
+    const tasksExtracted = documents.filter((doc) => doc.task_count > 0).length;
+
+    return {
+      total,
+      failed,
+      processing,
+      vectorized,
+      projectAssigned,
+      tasksExtracted,
+    };
+  }, [documents]);
 
   const documentColumns = useMemo<TableColumn<Document>[]>(
     () => [
@@ -260,25 +196,51 @@ export default function DocumentPipelinePage() {
         width: 120,
       },
       {
-        id: "status",
-        label: "Status",
+        id: "lifecycle",
+        label: "Lifecycle",
         sortable: true,
-        render: (doc) => getStatusBadge(doc.status, doc.pipeline_stage),
-        sortValue: (doc) => doc.status,
-        csvValue: (doc) => doc.status,
-        width: 150,
+        render: (doc) => getStatusBadge(doc.lifecycle_label),
+        sortValue: (doc) => doc.lifecycle_label,
+        csvValue: (doc) => doc.lifecycle_label,
+        width: 170,
+      },
+      {
+        id: "project_assigned",
+        label: "Project",
+        sortable: true,
+        render: (doc) => (
+          <span className="text-sm text-muted-foreground">
+            {doc.project_assigned ? "Assigned" : "Unassigned"}
+          </span>
+        ),
+        sortValue: (doc) => (doc.project_assigned ? 1 : 0),
+        csvValue: (doc) => (doc.project_assigned ? "Assigned" : "Unassigned"),
+        width: 130,
+      },
+      {
+        id: "task_count",
+        label: "Tasks",
+        sortable: true,
+        render: (doc) => (
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {doc.task_count}
+          </span>
+        ),
+        sortValue: (doc) => doc.task_count,
+        csvValue: (doc) => String(doc.task_count),
+        width: 90,
       },
       {
         id: "pipeline_stage",
-        label: "Pipeline Stage",
+        label: "Backend stage",
         sortable: true,
         render: (doc) => (
           <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            {doc.pipeline_stage}
+            {doc.raw_pipeline_stage ?? doc.pipeline_stage}
           </code>
         ),
-        sortValue: (doc) => doc.pipeline_stage,
-        csvValue: (doc) => doc.pipeline_stage,
+        sortValue: (doc) => doc.raw_pipeline_stage ?? doc.pipeline_stage,
+        csvValue: (doc) => doc.raw_pipeline_stage ?? doc.pipeline_stage,
         width: 150,
       },
       {
@@ -346,6 +308,7 @@ export default function DocumentPipelinePage() {
         doc.type,
         doc.source,
         doc.pipeline_stage,
+        doc.lifecycle_label,
         doc.error_message,
       ]
         .filter(Boolean)
@@ -369,80 +332,54 @@ export default function DocumentPipelinePage() {
         title="Document Pipeline"
         description="Monitor and manage document processing pipeline"
         actions={
-          <Button
-            onClick={refreshData}
-            variant="outline"
-            size="sm"
-            disabled={refreshing}
-          >
-            <RefreshCw className={refreshing ? "animate-spin" : undefined} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/task-training">Review extracted tasks</Link>
+            </Button>
+            <Button
+              onClick={refreshData}
+              variant="outline"
+              size="sm"
+              disabled={refreshing}
+            >
+              <RefreshCw className={refreshing ? "animate-spin" : undefined} />
+              Refresh
+            </Button>
+          </div>
         }
       />
       <PageContainer>
-        {/* Pipeline Phase Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Object.entries(phaseConfig).map(([phase, config]) => {
-            const Icon = config.icon;
-            const count = getPhaseCount(phase);
-            const isProcessing = triggering === phase;
-            return (
-              <Card
-                key={phase}
-                className={isProcessing ? "ring-2 ring-primary/50" : ""}
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon
-                        className={`h-5 w-5 ${phaseIconClass[phase] ?? "text-muted-foreground"} ${isProcessing ? "animate-pulse" : ""}`}
-                      />
-                      <CardTitle className="text-lg">{config.label}</CardTitle>
-                    </div>
-                    {isProcessing ? (
-                      <Badge variant="default" className="bg-primary">
-                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                        Processing
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">{count} ready</Badge>
-                    )}
-                  </div>
-                  <CardDescription className="text-sm">
-                    {config.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    className="w-full"
-                    variant={count > 0 ? "default" : "secondary"}
-                    disabled={count === 0 || triggering !== null}
-                    onClick={() => triggerPhase(phase)}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <RefreshCw className="animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <PlayCircle />
-                        Trigger {config.label}
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <span className="text-foreground">
+              <span className="font-semibold">{lifecycleSummary.total}</span> Fireflies records in view
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{lifecycleSummary.vectorized}</span> vectorized
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{lifecycleSummary.projectAssigned}</span> project assigned
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{lifecycleSummary.tasksExtracted}</span> with extracted tasks
+            </span>
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{lifecycleSummary.processing}</span> processing
+            </span>
+            <span className={lifecycleSummary.failed > 0 ? "text-destructive" : "text-muted-foreground"}>
+              <span className="font-medium">{lifecycleSummary.failed}</span> failed
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            This view now tracks Fireflies by outcome: synced, vectorized, project assigned, and tasks extracted. The old parse/embed/extract operator language has been retired from this page.
+          </p>
         </div>
 
         <UnifiedTablePage
           header={{
-            title: "Document Status",
+            title: "Fireflies Lifecycle",
             description:
-              "Monitor document processing state and pipeline errors.",
+              "Human-readable Fireflies processing state, project attribution, extracted tasks, and failure details.",
             variant: "compact",
           }}
           toolbar={{

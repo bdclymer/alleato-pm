@@ -33,6 +33,81 @@ from supabase import Client, create_client
 
 logger = logging.getLogger(__name__)
 
+_APP_DOCUMENT_METADATA_COLUMNS = {
+    "id",
+    "title",
+    "url",
+    "created_at",
+    "type",
+    "source",
+    "content",
+    "summary",
+    "participants",
+    "tags",
+    "category",
+    "fireflies_id",
+    "fireflies_link",
+    "project_id",
+    "project",
+    "date",
+    "duration_minutes",
+    "bullet_points",
+    "action_items",
+    "file_id",
+    "overview",
+    "description",
+    "status",
+    "access_level",
+    "captured_at",
+    "content_hash",
+    "participants_array",
+    "phase",
+    "audio",
+    "video",
+    "file_name",
+    "file_path",
+    "storage_bucket",
+    "raw_text",
+    "summary_embedding",
+    "organizer_email",
+    "host_email",
+    "meeting_link",
+    "sentiment",
+    "keywords",
+    "meeting_type",
+    "topics_discussed",
+    "speakers",
+    "analytics",
+    "transcript_chapters",
+    "notes",
+    "outline",
+    "extended_sections",
+    "meeting_attendees",
+    "meeting_attendance",
+    "channels",
+    "is_silent_meeting",
+    "calendar_type",
+    "privacy",
+    "decisions",
+    "key_topics",
+    "summary_bullets",
+    "source_system",
+    "source_drive_id",
+    "source_item_id",
+    "source_site_id",
+    "source_path",
+    "source_web_url",
+    "source_etag",
+    "source_last_modified_at",
+    "source_size",
+    "workflow_target",
+    "division",
+    "trade",
+    "source_metadata",
+    "deleted_at",
+    "document_type",
+}
+
 # Warn at most once per process per resolver about RAG flag/credential drift.
 _RAG_FLAG_DRIFT_WARNED: set[str] = set()
 
@@ -277,11 +352,14 @@ def update_ingestion_job_state(
         client=app_client,
         fallback_fireflies_id=fireflies_id,
     )
+    attempt_timestamp = datetime.utcnow().isoformat()
     payload = {
         "fireflies_id": resolved_fireflies_id,
         "metadata_id": metadata_id,
         "stage": stage,
+        "last_attempt_at": attempt_timestamp,
         "error_message": error_message[:500] if error_message else None,
+        "updated_at": attempt_timestamp,
     }
 
     app_client.table("fireflies_ingestion_jobs").upsert(
@@ -402,7 +480,11 @@ class SupabaseRagStore:
             "processing_metadata",
         ):
             catalog.pop(field, None)
-        return catalog
+        return {
+            key: value
+            for key, value in catalog.items()
+            if key in _APP_DOCUMENT_METADATA_COLUMNS and value is not None
+        }
 
     def _rag_document_metadata_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         document_id = metadata.get("id") or metadata.get("app_document_id")
@@ -504,7 +586,7 @@ class SupabaseRagStore:
     def fetch_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
         response = (
             self._client.table("document_metadata")
-            .select("id,title,type,category,source,source_system,source_item_id,project_id,project,date,captured_at,created_at,updated_at,summary,overview,status,fireflies_id,fireflies_link,meeting_link,url,source_web_url,storage_bucket,file_path,file_name,participants,participants_array,source_metadata")
+            .select("id,title,type,category,source,source_system,source_item_id,project_id,project,date,captured_at,created_at,summary,overview,status,fireflies_id,fireflies_link,meeting_link,url,source_web_url,storage_bucket,file_path,file_name,participants,participants_array,source_metadata,content,raw_text")
             .eq("id", document_id)
             .single()
             .execute()
@@ -587,28 +669,6 @@ class SupabaseRagStore:
             self._client.table("tasks").upsert(
                 task, on_conflict="metadata_id,description"
             ).execute()
-
-    def delete_open_rewriter_tasks_for_document(self, metadata_id: str) -> int:
-        """Delete auto-generated, still-open rewriter tasks for a meeting.
-
-        Makes re-ingestion idempotent: the LLM rewrites descriptions slightly
-        differently each run, so the (metadata_id, description) upsert key can't
-        dedupe paraphrases and re-ingests accumulate near-duplicate tasks. We
-        clear the prior batch before writing the new one. Scoped to
-        ``extraction_source='fireflies_rewriter'`` AND ``status='open'`` so a
-        user's edited, completed, or manually-created tasks are never touched.
-        """
-        if not metadata_id:
-            return 0
-        result = (
-            self._client.table("tasks")
-            .delete()
-            .eq("metadata_id", metadata_id)
-            .eq("extraction_source", "fireflies_rewriter")
-            .eq("status", "open")
-            .execute()
-        )
-        return len(result.data or [])
 
     # document chunks ---------------------------------------------------
     def delete_chunks_for_document(self, document_id: str) -> None:

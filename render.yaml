@@ -241,13 +241,7 @@ services:
     dockerContext: ./backend
     schedule: "15 * * * *"
     dockerCommand: >-
-      env FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_fireflies_sync;
-      result = _run_fireflies_sync(limit=25);
-      print(json.dumps(result if isinstance(result, dict) else {'result': str(result)}, indent=2, default=str));
-      "
+      timeout 20m python3 scripts/run_fireflies_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -373,6 +367,54 @@ services:
         value: "true"
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
+
+  # Drains queued Outlook mailbox deltas created by Graph webhook notifications.
+  # This is the real-time freshness path between subscription notifications and
+  # the heavier 2-hour `alleato-graph-sync` polling cron. Without this owner,
+  # webhook notifications can queue `graph_sync_state.sync_status=webhook_pending`
+  # rows that never get processed because the backend web service runs with
+  # `DISABLE_SCHEDULER=true`.
+  - type: cron
+    name: alleato-graph-webhook-drain
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/3 * * * *"
+    dockerCommand: >-
+      timeout 5m python3 scripts/run_graph_webhook_drain.py
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: GRAPH_SYNC_ENABLED
+        value: "true"
+      - key: GRAPH_WEBHOOK_DRAIN_ENABLED
+        value: "true"
+      - key: GRAPH_WEBHOOK_DRAIN_MAX_MAILBOXES
+        value: "3"
 
   - type: cron
     name: alleato-microsoft-executive-assistant-check

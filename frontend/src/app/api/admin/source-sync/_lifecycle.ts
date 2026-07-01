@@ -276,11 +276,27 @@ export function hasTaskExtractionOutcome(
   taskIds: Set<string>,
   jobMetadataByDocumentId: Map<string, Record<string, unknown>>,
 ) {
-  if (taskIds.has(documentId)) return true;
+  return getTaskExtractionOutcome(documentId, taskIds, jobMetadataByDocumentId) !== "not_extracted";
+}
+
+export type TaskExtractionOutcome =
+  | "tasks_created"
+  | "no_actionable_tasks"
+  | "task_signal_staged"
+  | "not_extracted";
+
+export function getTaskExtractionOutcome(
+  documentId: string,
+  taskIds: Set<string>,
+  jobMetadataByDocumentId: Map<string, Record<string, unknown>>,
+): TaskExtractionOutcome {
+  if (taskIds.has(documentId)) return "tasks_created";
   const status = String(
     jobMetadataByDocumentId.get(documentId)?.task_extraction_status ?? "",
   ).toLowerCase();
-  return status === "tasks_created" || status === "no_actionable_tasks" || status === "task_signal_staged";
+  if (status === "no_actionable_tasks") return "no_actionable_tasks";
+  if (status === "task_signal_staged") return "task_signal_staged";
+  return "not_extracted";
 }
 
 export function hasFullTranscriptReadProof(

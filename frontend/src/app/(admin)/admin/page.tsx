@@ -76,10 +76,10 @@ const sections: AdminMenuSection[] = [
         title: "AI Feedback and Learning",
         items: [
           {
-            label: "Pipeline Health",
-            href: "/pipeline-health",
-            route: "/pipeline-health",
-            description: "Ingestion and embedding pipeline health map.",
+            label: "Source Sync",
+            href: "/source-sync",
+            route: "/source-sync",
+            description: "Cross-source ingestion, vectorization, and extraction health.",
             icon: Activity,
           },
           {

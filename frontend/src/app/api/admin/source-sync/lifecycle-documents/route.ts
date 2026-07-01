@@ -11,6 +11,7 @@ import {
   batches,
   computeDocumentStages,
   familyByKey,
+  getTaskExtractionOutcome,
   latestJobMetadataByDocumentId,
   readSupabaseRows,
   STAGE_KEYS,
@@ -292,6 +293,11 @@ export const GET = withApiGuardrails(
         date: row.source_last_modified_at ?? row.date ?? row.created_at,
         projectId: row.project_id,
         projectName: row.project_id !== null ? projectNames.get(row.project_id) ?? null : null,
+        taskOutcome: getTaskExtractionOutcome(
+          row.id,
+          support.taskIds,
+          support.jobMetadataByDocumentId,
+        ),
         stages,
         // Only meetings have a guaranteed detail route keyed by document id.
         detailHref: family.key === "meetings" ? `/meetings/${row.id}` : null,

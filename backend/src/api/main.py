@@ -52,6 +52,7 @@ except ImportError:
 
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from src.services.ingestion.fireflies_reprocessing import reprocess_existing_fireflies_document
 from src.services.pipeline import run_full_pipeline
 from src.services.url_resource_ingestion import UrlIngestionError, UrlResourceIngestionService
 from src.api.admin_endpoints import require_admin_api_key
@@ -121,6 +122,19 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         logger.info("[Pipeline] acquired slot metadata_id=%s", metadata_id)
         run_full_pipeline(metadata_id)
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
+
+
+def _run_fireflies_reprocess_limited(metadata_id: str) -> None:
+    """Run Fireflies-native reprocessing with the shared pipeline semaphore."""
+    logger.info(
+        "[FirefliesReprocess] waiting for slot (%s max) metadata_id=%s",
+        _PIPELINE_MAX_CONCURRENCY,
+        metadata_id,
+    )
+    with _pipeline_semaphore:
+        logger.info("[FirefliesReprocess] acquired slot metadata_id=%s", metadata_id)
+        reprocess_existing_fireflies_document(metadata_id)
+        logger.info("[FirefliesReprocess] released slot metadata_id=%s", metadata_id)
 
 
 app = FastAPI(
@@ -1296,6 +1310,25 @@ async def pipeline_process_endpoint(
 
     background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
+
+
+@app.post(
+    "/api/ingest/fireflies/process",
+    tags=["Ingestion"],
+    summary="Reprocess an existing Fireflies document through the canonical Fireflies-native path",
+)
+async def fireflies_process_existing_endpoint(
+    payload: PipelineProcessRequest,
+    background_tasks: BackgroundTasks,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Queue Fireflies-native reprocessing for an existing Fireflies meeting row."""
+    background_tasks.add_task(_run_fireflies_reprocess_limited, payload.metadataId)
+    return {
+        "status": "queued",
+        "metadataId": payload.metadataId,
+        "owner": "fireflies_native_reprocess",
+    }
 
 
 @app.post(

@@ -1072,9 +1072,6 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         metadata={"chunk_count": len(rows), "source_type": source_type},
     )
     record_source_processing_status(source_context, status="complete")
-    if has_app_document:
-        _run_source_intelligence_compiler(supabase_client, metadata_id)
-
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
     return len(rows)
 
