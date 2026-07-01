@@ -2089,7 +2089,7 @@ export function UnifiedTablePage<T>({
         <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
           <div
             className={cn(
-              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
               removeTableFrame ? "border-0 rounded-none" : "",
               sidePanel
                 ? removeTableFrame
