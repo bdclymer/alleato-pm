@@ -666,10 +666,11 @@ export function renderDrawingCard(
     onSelect?: (id: string, checked: boolean) => void;
   },
   onQrCode?: () => void,
+  onEdit?: (item: DrawingLogTableRow) => void,
 ): ReactElement {
   return (
     <div className="relative group/wrapper">
-      {(onDelete || onQrCode) && (
+      {(onEdit || onDelete || onQrCode) && (
         <div
           className="absolute right-1.5 top-1.5 z-20 opacity-0 group-hover/wrapper:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
@@ -687,6 +688,16 @@ export function renderDrawingCard(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(item);
+                  }}
+                >
+                  Edit
+                </DropdownMenuItem>
+              )}
               {onQrCode && (
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -727,6 +738,7 @@ export function renderDrawingList(
   onClick: (item: DrawingLogTableRow) => void,
   onDelete?: (item: DrawingLogTableRow) => void,
   onQrCode?: () => void,
+  onEdit?: (item: DrawingLogTableRow) => void,
 ): ReactElement {
   const publishState = getDrawingPublishState(item);
   const isDraft = publishState === "draft";
@@ -740,7 +752,7 @@ export function renderDrawingList(
 
   return (
     <div className={`relative${dimmed ? " opacity-60" : ""}`}>
-      {onDelete && (
+      {(onEdit || onDelete) && (
         <div
           className="absolute right-2 top-1/2 z-20 -translate-y-1/2"
           onClick={(e) => e.stopPropagation()}
@@ -758,15 +770,27 @@ export function renderDrawingList(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(item);
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
+              {onEdit && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(item);
+                  }}
+                >
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item);
+                  }}
+                >
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -775,7 +799,7 @@ export function renderDrawingList(
       <Button
         type="button"
         variant="ghost"
-        className={`h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
+        className={`h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50${onDelete || onEdit ? " pr-12" : ""}`}
         onClick={() => onClick(item)}
       >
         <div>

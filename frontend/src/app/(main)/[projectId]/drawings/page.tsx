@@ -1069,6 +1069,7 @@ export default function ProjectDrawingsPage() {
                   drawingId: item.id,
                   drawingNumber: item.drawingNumber ?? "Drawing",
                 }),
+              openEditDialog,
             ),
           cardGroupBy: (item) => item.discipline || "Ungrouped",
           list: (item) =>
@@ -1081,6 +1082,7 @@ export default function ProjectDrawingsPage() {
                   drawingId: item.id,
                   drawingNumber: item.drawingNumber ?? "Drawing",
                 }),
+              openEditDialog,
             ),
         }}
         emptyState={{
