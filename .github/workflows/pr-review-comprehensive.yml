@@ -9,6 +9,11 @@ on:
 
 jobs:
   review-with-tracking:
+    # Automation-created PRs are reviewed (with a merge-gating verdict) by
+    # autofix-pr-manager.yml — skip them here to avoid double reviews.
+    if: |
+      !startsWith(github.event.pull_request.head.ref, 'autofix/') &&
+      !contains(github.event.pull_request.labels.*.name, 'automated-pr')
     runs-on: ubuntu-latest
     permissions:
       contents: read

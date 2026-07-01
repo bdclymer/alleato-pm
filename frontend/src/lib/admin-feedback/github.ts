@@ -219,7 +219,7 @@ async function addLabels(
 ) {
   // Add labels in a separate call so the "labeled" event fires distinctly,
   // which is required for GitHub Actions workflows that trigger on labeled events.
-  await fetch(
+  const response = await fetch(
     `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/labels`,
     {
       method: "POST",
@@ -232,6 +232,11 @@ async function addLabels(
       body: JSON.stringify({ labels }),
     },
   );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`GitHub issue labeling failed: ${response.status} ${errorText}`);
+  }
 }
 
 export async function createGitHubIssue(input: CreateGitHubIssueInput) {
@@ -273,19 +278,22 @@ export async function createGitHubIssue(input: CreateGitHubIssueInput) {
     }));
   }
 
-  // Post @claude comment to trigger auto-assignment to Claude Code
-  try {
-    await addIssueComment(config, issue.number, "@claude");
-  } catch (error) {
-    console.warn(JSON.stringify({
-      event: "admin_feedback_github_claude_comment_failed",
-      timestamp: new Date().toISOString(),
-      issueNumber: issue.number,
-      error: error instanceof Error ? error.message : String(error),
-    }));
+  return issue;
+}
+
+/**
+ * Adds labels to an existing issue. Used by the dispatch route to hand an
+ * issue to the autofix pipeline (`codex:fix` / `claude:fix` labels trigger
+ * the Autofix Issue workflow).
+ */
+export async function addGitHubIssueLabels(issueNumber: number, labels: string[]) {
+  const config = getRepoConfig();
+  if (!config) {
+    return false;
   }
 
-  return issue;
+  await addLabels(config, issueNumber, labels);
+  return true;
 }
 
 export async function addGitHubIssueComment(issueNumber: number, body: string) {

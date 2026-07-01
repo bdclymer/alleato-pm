@@ -1,4 +1,4 @@
-# Codex Issue Fix
+# Autofix Issue
 
 You are running in GitHub Actions for this repository. Fix the labeled issue if and only if you can do so safely inside the constraints below.
 
@@ -26,7 +26,7 @@ You are running in GitHub Actions for this repository. Fix the labeled issue if 
 
 ## Required output files
 
-If you make a viable fix, write `./.github/codex-artifacts/SUMMARY.md` with these sections:
+If you make a viable fix, write `./.github/autofix-artifacts/SUMMARY.md` with these sections:
 
 - `## Root cause`
 - `## Changes made`
@@ -34,7 +34,7 @@ If you make a viable fix, write `./.github/codex-artifacts/SUMMARY.md` with thes
 - `## How this fails loudly now`
 - `## Verification notes`
 
-If you are blocked or the task is unsafe, write `./.github/codex-artifacts/BLOCKED.md` with these sections:
+If you are blocked or the task is unsafe, write `./.github/autofix-artifacts/BLOCKED.md` with these sections:
 
 - `## Cause`
 - `## Detection gap`

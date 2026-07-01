@@ -1,27 +1,91 @@
-name: Codex Fix Issue
+name: Autofix Issue
+
+# Unified issue-fix lane. Triggered by labels:
+#   - `autofix`     → engine chosen by the AUTOFIX_ENGINE repo variable (codex | claude | off)
+#   - `codex:fix`   → Codex, unless AUTOFIX_ENGINE=claude (remapped) or off
+#   - `claude:fix`  → Claude Code, unless AUTOFIX_ENGINE=off
+#
+# Every fix lands via a PR — never a direct push to main. The branch ruleset's
+# required checks make bot pushes to main impossible (see #620), so the Eve
+# triage route + diff-risk gate now pick between two PR lanes:
+#   low-risk → PR with auto-merge enabled at creation (merges when checks pass)
+#   risky    → PR gated on the Autofix PR Manager's review approval
 
 on:
   issues:
     types: [labeled]
 
 concurrency:
-  group: codex-fix-issue-${{ github.event.issue.number }}
+  group: autofix-issue-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
-  codex-fix:
-    if: github.event.label.name == 'codex:fix'
+  resolve-engine:
+    if: contains(fromJSON('["autofix","codex:fix","claude:fix"]'), github.event.label.name)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    outputs:
+      engine: ${{ steps.pick.outputs.engine }}
+    steps:
+      - name: Pick engine from label + AUTOFIX_ENGINE variable
+        id: pick
+        uses: actions/github-script@v7
+        env:
+          AUTOFIX_ENGINE: ${{ vars.AUTOFIX_ENGINE }}
+          TRIGGER_LABEL: ${{ github.event.label.name }}
+        with:
+          script: |
+            const toggle = (process.env.AUTOFIX_ENGINE || "codex").toLowerCase();
+            const label = process.env.TRIGGER_LABEL;
+
+            let engine = "none";
+            let note = "";
+
+            if (toggle === "off") {
+              engine = "none";
+              note = "Autofix is disabled (`AUTOFIX_ENGINE=off`). Set the repository variable `AUTOFIX_ENGINE` to `codex` or `claude` to re-enable, then re-apply the label.";
+            } else if (label === "autofix") {
+              engine = toggle === "claude" ? "claude" : "codex";
+            } else if (label === "codex:fix") {
+              engine = toggle === "claude" ? "claude" : "codex";
+              if (engine === "claude") {
+                note = "`codex:fix` was remapped to the Claude engine because the repository variable `AUTOFIX_ENGINE` is set to `claude`.";
+              }
+            } else if (label === "claude:fix") {
+              engine = "claude";
+            }
+
+            if (note) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: note,
+              });
+            }
+
+            core.setOutput("engine", engine);
+
+  fix:
+    needs: resolve-engine
+    if: needs.resolve-engine.outputs.engine == 'codex' || needs.resolve-engine.outputs.engine == 'claude'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       issues: write
       pull-requests: write
+      id-token: write
+    env:
+      AUTOFIX_ENGINE_CHOICE: ${{ needs.resolve-engine.outputs.engine }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          token: ${{ secrets.AUTOFIX_GITHUB_TOKEN }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -41,6 +105,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           RUNNER_TEMP: ${{ runner.temp }}
+          ENGINE: ${{ needs.resolve-engine.outputs.engine }}
         with:
           script: |
             const fs = require("fs");
@@ -49,6 +114,7 @@ jobs:
             const issue = context.payload.issue;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const engine = process.env.ENGINE;
             const cleanBody = (issue.body || "").replace(/<!--[\s\S]*?-->/g, "").trim();
             const issueLabels = Array.isArray(issue.labels)
               ? issue.labels.map((label) => typeof label === "string" ? label : label.name).filter(Boolean)
@@ -146,19 +212,18 @@ jobs:
             }
 
             const blockedReasons = [];
+            const notes = [];
             let allowedPathLines = [];
             let issueContext = "";
 
             if (isAdminFeedbackIssue) {
               const locationUrl = parseBulletValue(location, "URL") || agentPayload?.pageUrl || "";
               const locationPath = parseBulletValue(location, "Path") || agentPayload?.pagePath || "";
-              const requestType = parseBulletValue(request, "Type") || agentPayload?.requestType || "";
-              const severity = parseBulletValue(request, "Severity") || agentPayload?.severity || "";
 
               if (!eveRoute) {
-                blockedReasons.push("Latest Eve triage comment was not found on this issue.");
+                notes.push("No Eve triage comment found — defaulting to the safe pull-request delivery path.");
               } else if (!["direct-to-main", "pr-required"].includes(eveRoute)) {
-                blockedReasons.push(`Latest Eve route \`${eveRoute}\` is not executable by Codex.`);
+                blockedReasons.push(`Latest Eve route \`${eveRoute}\` is not executable by automation (needs clarification or is blocked).`);
               }
 
               if (!feedback) {
@@ -177,7 +242,7 @@ jobs:
                 `Issue Title: ${issue.title}`,
                 `Issue URL: ${issue.html_url}`,
                 `Delivery Mode: ${deliveryMode}`,
-                `Eve Route: ${eveRoute || "missing"}`,
+                `Eve Route: ${eveRoute || "missing (defaulted to pull-request)"}`,
                 `Labels: ${issueLabels.join(", ") || "(none)"}`,
                 "Allowed Edit Paths:",
                 ...allowedPathLines.map((line) => `- ${line}`),
@@ -199,8 +264,8 @@ jobs:
                   "- Keep changes under frontend/src/** or frontend/tests/**.",
                   "- Add at least one guardrail so the bug fails loudly or is covered by validation.",
                   deliveryMode === "main"
-                    ? "- Publish directly to main only if validation passes and the change stays isolated."
-                    : "- Open a pull request because this route was classified as higher risk.",
+                    ? "- This lands as a PR with auto-merge enabled, so validation must fully pass and the change must stay isolated."
+                    : "- This lands as a PR gated on automated review because the route was classified as higher risk.",
                 ].join("\n"),
                 "",
                 "## Required guardrail",
@@ -281,17 +346,17 @@ jobs:
             }
 
             const normalizedTitle = (issue.title || `issue-${issue.number}`)
-              .replace(/^\[codex fix\]:\s*/i, "")
+              .replace(/^\[(codex fix|autofix)\]:\s*/i, "")
               .trim();
             const issueSlug = normalizeSlug(normalizedTitle || `issue-${issue.number}`);
-            const branchName = `codex/issue-${issue.number}-${issueSlug || "fix"}`;
+            const branchName = `autofix/issue-${issue.number}-${issueSlug || "fix"}`;
 
-            const promptPath = path.join(process.env.RUNNER_TEMP, "codex-issue-context.md");
+            const promptPath = path.join(process.env.RUNNER_TEMP, "autofix-issue-context.md");
             fs.writeFileSync(promptPath, issueContext);
 
             const blockerComment = blockedReasons.length
               ? [
-                  "Codex did not start because the issue is not safely automatable yet.",
+                  `Autofix (${engine}) did not start because the issue is not safely automatable yet.`,
                   "",
                   "Cause:",
                   blockedReasons.map((reason) => `- ${reason}`).join("\n"),
@@ -301,8 +366,8 @@ jobs:
                 "",
                 "Prevention step:",
                 isAdminFeedbackIssue
-                  ? "- Keep the `admin-feedback` issue labeled, preserve route/location context, and ensure Eve posts an executable `direct-to-main` or `pr-required` triage comment before enqueueing Codex."
-                  : "- Use the `Codex Fixable Frontend Bug` issue form and keep edits limited to `frontend/src/**` and `frontend/tests/**`.",
+                  ? "- Keep the `admin-feedback` issue labeled and preserve route/location context. If Eve triage marked this as needing clarification, answer the questions on the issue and re-apply the label."
+                  : "- Use the `Autofix Frontend Bug` issue form and keep edits limited to `frontend/src/**` and `frontend/tests/**`.",
               ].join("\n")
               : "";
 
@@ -312,46 +377,79 @@ jobs:
             core.setOutput("delivery_mode", deliveryMode);
             core.setOutput("issue_title", normalizedTitle);
             core.setOutput("issue_context_path", promptPath);
+            if (notes.length) core.info(notes.join("\n"));
 
-      - name: Build Codex prompt
+      - name: Build agent prompt
         if: steps.prepare.outputs.blocked != 'true'
+        id: build_prompt
         env:
           ISSUE_CONTEXT_PATH: ${{ steps.prepare.outputs.issue_context_path }}
           RUNNER_TEMP: ${{ runner.temp }}
         run: |
-          cp .github/codex/prompts/fix-issue.md "$RUNNER_TEMP/codex-prompt.md"
-          printf '\n\n' >> "$RUNNER_TEMP/codex-prompt.md"
-          cat "$ISSUE_CONTEXT_PATH" >> "$RUNNER_TEMP/codex-prompt.md"
+          cp .github/automation/prompts/fix-issue.md "$RUNNER_TEMP/autofix-prompt.md"
+          printf '\n\n' >> "$RUNNER_TEMP/autofix-prompt.md"
+          cat "$ISSUE_CONTEXT_PATH" >> "$RUNNER_TEMP/autofix-prompt.md"
 
-      - name: Start blocker artifact directory
+          {
+            echo "prompt<<AUTOFIX_PROMPT_EOF"
+            cat "$RUNNER_TEMP/autofix-prompt.md"
+            echo "AUTOFIX_PROMPT_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Start artifact directory
         if: steps.prepare.outputs.blocked != 'true'
-        run: mkdir -p .github/codex-artifacts
+        run: mkdir -p .github/autofix-artifacts
 
       - name: Run Codex
-        if: steps.prepare.outputs.blocked != 'true'
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'codex'
         id: run_codex
         continue-on-error: true
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          prompt-file: ${{ runner.temp }}/codex-prompt.md
-          output-file: .github/codex-artifacts/final-message.md
+          prompt-file: ${{ runner.temp }}/autofix-prompt.md
+          output-file: .github/autofix-artifacts/final-message.md
           model: gpt-5.4
           effort: high
           sandbox: workspace-write
           safety-strategy: drop-sudo
           codex-args: '["--full-auto"]'
 
+      - name: Run Claude Code
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'claude'
+        id: run_claude
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ steps.build_prompt.outputs.prompt }}
+          claude_args: |
+            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(pnpm:*),Bash(npm run:*),Bash(node:*),Bash(npx:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(rg:*),Bash(mkdir:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
+
+      - name: Determine agent outcome
+        if: steps.prepare.outputs.blocked != 'true'
+        id: agent
+        env:
+          CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
+          CLAUDE_OUTCOME: ${{ steps.run_claude.outcome }}
+        run: |
+          if [ "$CODEX_OUTCOME" = "success" ] || [ "$CLAUDE_OUTCOME" = "success" ]; then
+            echo "outcome=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "outcome=failure" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check changed files
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success'
         id: diff
         shell: bash
         run: |
           mapfile -t all_changed < <(git diff --name-only --diff-filter=ACMR)
+          mapfile -t untracked < <(git ls-files --others --exclude-standard)
           changed=()
 
-          for file in "${all_changed[@]}"; do
-            if [[ "$file" == .github/codex-artifacts/* ]]; then
+          for file in "${all_changed[@]}" "${untracked[@]}"; do
+            if [[ -z "$file" || "$file" == .github/autofix-artifacts/* ]]; then
               continue
             fi
             changed+=("$file")
@@ -365,9 +463,6 @@ jobs:
 
           invalid=()
           for file in "${changed[@]}"; do
-            if [[ "$file" == .github/codex-artifacts/* ]]; then
-              continue
-            fi
             if [[ ! "$file" =~ ^frontend/src/ && ! "$file" =~ ^frontend/tests/ ]]; then
               invalid+=("$file")
             fi
@@ -389,12 +484,12 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Decide delivery mode from diff risk
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
         id: route
         shell: bash
         env:
           # Eve triage decides the intended lane from the ISSUE. This step re-checks
-          # the decision against the ACTUAL diff Codex produced and can only ever
+          # the decision against the ACTUAL diff the agent produced and can only ever
           # downgrade main -> pull-request when the change looks risky. It never
           # upgrades a PR to a direct push.
           INITIAL_DELIVERY_MODE: ${{ steps.prepare.outputs.delivery_mode }}
@@ -403,10 +498,15 @@ jobs:
           reason=""
 
           if [ "$mode" = "main" ]; then
-            mapfile -t changed < <(git diff --name-only --diff-filter=ACMR | grep -v '^.github/codex-artifacts/' || true)
+            mapfile -t tracked < <(git diff --name-only --diff-filter=ACMR | grep -v '^.github/autofix-artifacts/' || true)
+            mapfile -t untracked < <(git ls-files --others --exclude-standard | grep -v '^.github/autofix-artifacts/' || true)
+            changed=()
+            for file in "${tracked[@]}" "${untracked[@]}"; do
+              [ -n "$file" ] && changed+=("$file")
+            done
             files_count="${#changed[@]}"
             lines_changed="$(git diff --numstat --diff-filter=ACMR \
-              | awk '$3 !~ /^\.github\/codex-artifacts\// && $1 ~ /^[0-9]+$/ {added+=$1; removed+=$2} END {print added+removed+0}')"
+              | awk '$3 !~ /^\.github\/autofix-artifacts\// && $1 ~ /^[0-9]+$/ {added+=$1; removed+=$2} END {print added+removed+0}')"
 
             # Surfaces where a silent wrong change on main is expensive: server write
             # paths, auth/RLS, the Supabase layer, and money/contract logic.
@@ -430,10 +530,9 @@ jobs:
             fi
           fi
 
-          # Every fix ships as a PR (the branch ruleset requires status checks that a
-          # direct push can never satisfy). auto_merge distinguishes the two lanes:
-          #   true  -> low-risk: open a normal PR with auto-merge enabled (lands when green)
-          #   false -> risky/pr-required: open a draft PR for human review
+          # Map the (possibly downgraded) lane onto PR-only delivery:
+          #   true  -> low-risk: normal PR with auto-merge enabled (lands when green)
+          #   false -> risky/pr-required: PR waits for the Autofix PR Manager's approval
           auto_merge=false
           if [ "$mode" = "main" ]; then
             auto_merge=true
@@ -447,19 +546,19 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           if [ -n "$reason" ]; then
-            echo "Low-risk lane downgraded to a review PR: $reason"
+            echo "Low-risk lane downgraded to a review-gated PR: $reason"
           elif [ "$auto_merge" = "true" ]; then
             echo "Low-risk: opening a PR with auto-merge enabled."
           else
-            echo "Higher-risk: opening a draft PR for review."
+            echo "Higher-risk: opening a PR gated on automated review approval."
           fi
 
       - name: Install frontend dependencies
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
         run: pnpm --dir frontend install --frozen-lockfile
 
-      - name: Validate Codex changes
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+      - name: Validate changes
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
         id: validate
         continue-on-error: true
         shell: bash
@@ -471,20 +570,20 @@ jobs:
             echo
             echo '$ pnpm run check:routes'
             pnpm run check:routes
-          } 2>&1 | tee .github/codex-artifacts/validation.log
+          } 2>&1 | tee .github/autofix-artifacts/validation.log
 
       - name: Prepare PR body
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         env:
           RUNNER_TEMP: ${{ runner.temp }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
+          ENGINE: ${{ needs.resolve-engine.outputs.engine }}
           ESCALATION_REASON: ${{ steps.route.outputs.escalation_reason }}
           AUTO_MERGE: ${{ steps.route.outputs.auto_merge }}
         shell: bash
         run: |
           {
-            echo "# Automated Codex Fix"
+            echo "# Automated Fix (${ENGINE})"
             echo
             echo "Resolves #$ISSUE_NUMBER"
             echo
@@ -492,135 +591,80 @@ jobs:
               echo "> Triaged low-risk and the diff-risk gate agreed: **auto-merge is enabled** — this PR merges once the required checks pass."
               echo
             elif [ -n "$ESCALATION_REASON" ]; then
-              echo "> Triaged as a low-risk fix, but the diff-risk gate escalated it to a reviewed PR:"
+              echo "> Triaged as a low-risk fix, but the diff-risk gate escalated it to a review-gated PR:"
               echo "> $ESCALATION_REASON"
               echo
             fi
-            if [ -f .github/codex-artifacts/SUMMARY.md ]; then
-              cat .github/codex-artifacts/SUMMARY.md
+            if [ -f .github/autofix-artifacts/SUMMARY.md ]; then
+              cat .github/autofix-artifacts/SUMMARY.md
               echo
             fi
-            cat .github/codex/templates/pr-body.md
-          } > "$RUNNER_TEMP/codex-pr-body.md"
+            cat .github/automation/templates/pr-body.md
+          } > "$RUNNER_TEMP/autofix-pr-body.md"
 
-      - name: Upload Codex artifacts
+      - name: Upload artifacts
         if: always() && steps.prepare.outputs.blocked != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: codex-issue-${{ github.event.issue.number }}-artifacts
-          path: .github/codex-artifacts/
+          name: autofix-issue-${{ github.event.issue.number }}-artifacts
+          path: .github/autofix-artifacts/
           if-no-files-found: ignore
 
-      - name: Comment with blocker details
-        if: |
-          always() &&
-          (
-            steps.prepare.outputs.blocked == 'true' ||
-            steps.run_codex.outcome == 'failure' ||
-            steps.diff.outputs.allowed == 'false' ||
-            steps.diff.outputs.no_changes == 'true' ||
-            steps.validate.outcome == 'failure'
-          )
-        uses: actions/github-script@v7
-        env:
-          BLOCKED: ${{ steps.prepare.outputs.blocked }}
-          BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
-          CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
-          DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
-          DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
-          DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
-        with:
-          script: |
-            const fs = require("fs");
-
-            let body = "";
-
-            if (process.env.BLOCKED === "true") {
-              body = process.env.BLOCKER_COMMENT;
-            } else if (process.env.CODEX_OUTCOME === "failure") {
-              const finalMessagePath = ".github/codex-artifacts/final-message.md";
-              const finalMessage = fs.existsSync(finalMessagePath)
-                ? fs.readFileSync(finalMessagePath, "utf8").trim()
-                : "Codex exited before producing a final message.";
-
-              body = [
-                "Codex attempted the fix but did not complete successfully.",
-                "",
-                "Cause:",
-                `- ${finalMessage}`,
-                "",
-                "Detection gap:",
-                "- The workflow has no stronger preflight signal for this failure mode than the Codex run itself.",
-                "",
-                "Prevention step:",
-                "- Tighten the issue scope further or split the issue into a smaller frontend-only fix with explicit acceptance criteria.",
-              ].join("\n");
-            } else if (process.env.DIFF_ALLOWED === "false") {
-              body = [
-                "Codex changes were rejected before PR creation.",
-                "",
-                "Cause:",
-                "- Codex edited files outside the allowed frontend scope.",
-                process.env.DIFF_INVALID_FILES ? `- Invalid files:\n${process.env.DIFF_INVALID_FILES}` : "",
-                "",
-                "Detection gap:",
-                "- The issue scope was not narrow enough to keep the agent inside the approved file boundaries.",
-                "",
-                "Prevention step:",
-                "- Narrow the allowed paths in the issue and reserve this automation for focused frontend bugs.",
-              ].filter(Boolean).join("\n");
-            } else if (process.env.DIFF_NO_CHANGES === "true") {
-              const blockedPath = ".github/codex-artifacts/BLOCKED.md";
-              const blocked = fs.existsSync(blockedPath)
-                ? fs.readFileSync(blockedPath, "utf8").trim()
-                : "Codex finished without making changes.";
-
-              body = [
-                "Codex did not open a PR because no code changes were produced.",
-                "",
-                blocked,
-              ].join("\n");
-            } else {
-              const validationPath = ".github/codex-artifacts/validation.log";
-              const validationLog = fs.existsSync(validationPath)
-                ? fs.readFileSync(validationPath, "utf8").trim().split("\n").slice(-60).join("\n")
-                : "Validation log not found.";
-
-              body = [
-                "Codex produced a candidate fix, but validation failed so no PR was created.",
-                "",
-                "Cause:",
-                "- Repo validation failed after Codex edits.",
-                "",
-                "Detection gap:",
-                "- The workflow could not prove the issue was fixed without violating repo quality gates.",
-                "",
-                "Prevention step:",
-                "- Add or tighten issue acceptance criteria so the fix path stays aligned with existing frontend checks.",
-                "",
-                "Validation excerpt:",
-                "```text",
-                validationLog,
-                "```",
-              ].join("\n");
-            }
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
-            });
-
-      - name: Remove Codex runtime artifacts from diff
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success'
+      - name: Capture no-change explanation
+        if: steps.prepare.outputs.blocked != 'true' && steps.diff.outputs.no_changes == 'true'
+        id: no_change_reason
         shell: bash
         run: |
-          rm -rf .github/codex-artifacts
-          git clean -fd .github/codex-artifacts || true
+          if [ -f .github/autofix-artifacts/BLOCKED.md ]; then
+            {
+              echo "reason<<EOF"
+              cat .github/autofix-artifacts/BLOCKED.md
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "reason=The agent finished without making changes." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Capture validation log excerpt
+        if: always() && steps.prepare.outputs.blocked != 'true'
+        id: validation_log
+        shell: bash
+        run: |
+          if [ -f .github/autofix-artifacts/validation.log ]; then
+            {
+              echo "excerpt<<EOF"
+              tail -n 60 .github/autofix-artifacts/validation.log
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "excerpt=Validation log not found." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Capture agent final message
+        if: always() && steps.prepare.outputs.blocked != 'true'
+        id: final_message
+        shell: bash
+        run: |
+          if [ -f .github/autofix-artifacts/final-message.md ]; then
+            {
+              echo "text<<EOF"
+              head -c 4000 .github/autofix-artifacts/final-message.md
+              echo
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "text=The agent exited before producing a final message." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Remove runtime artifacts from diff
+        if: steps.prepare.outputs.blocked != 'true'
+        shell: bash
+        run: |
+          rm -rf .github/autofix-artifacts
+          git clean -fd .github/autofix-artifacts || true
 
       - name: Create pull request
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         id: create_pr
         uses: peter-evans/create-pull-request@v7
         with:
@@ -631,15 +675,15 @@ jobs:
           token: ${{ secrets.AUTOFIX_GITHUB_TOKEN }}
           branch: ${{ steps.prepare.outputs.branch_name }}
           title: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
-          body-path: ${{ runner.temp }}/codex-pr-body.md
+          body-path: ${{ runner.temp }}/autofix-pr-body.md
           commit-message: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
-          # Low-risk fixes open as a normal PR (so auto-merge can be enabled);
-          # risky/pr-required fixes open as a draft for human review.
-          draft: ${{ steps.route.outputs.auto_merge != 'true' }}
+          author: "MeganHarrison <109628141+MeganHarrison@users.noreply.github.com>"
+          committer: "MeganHarrison <109628141+MeganHarrison@users.noreply.github.com>"
+          draft: false
           delete-branch: true
           labels: |
-            codex
             automated-pr
+            ${{ needs.resolve-engine.outputs.engine }}
 
       - name: Enable auto-merge for low-risk fix
         if: steps.prepare.outputs.blocked != 'true' && steps.route.outputs.auto_merge == 'true' && steps.create_pr.outputs.pull-request-number != ''
@@ -651,15 +695,15 @@ jobs:
         run: gh pr merge "$PR_NUMBER" --squash --auto
 
       - name: Comment with PR link
-        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         uses: actions/github-script@v7
         env:
           PULL_REQUEST_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
           PULL_REQUEST_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+          ENGINE: ${{ needs.resolve-engine.outputs.engine }}
           AUTO_MERGE: ${{ steps.route.outputs.auto_merge }}
         with:
           script: |
-            const core = require("@actions/core");
             const prNumber = process.env.PULL_REQUEST_NUMBER;
             const prUrl = process.env.PULL_REQUEST_URL;
 
@@ -669,8 +713,97 @@ jobs:
             }
 
             const body = process.env.AUTO_MERGE === "true"
-              ? `Codex opened PR #${prNumber} with auto-merge enabled — it will merge automatically once the required checks pass: ${prUrl}`
-              : `Codex opened draft PR #${prNumber} for review: ${prUrl}`;
+              ? `Autofix (${process.env.ENGINE}) opened PR #${prNumber} with auto-merge enabled — it merges automatically once the required checks pass: ${prUrl}. This issue closes on merge.`
+              : `Autofix (${process.env.ENGINE}) opened PR #${prNumber}: ${prUrl}. It will be auto-reviewed and auto-merged once the review approves and checks pass; this issue closes on merge.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Comment with blocker details
+        if: |
+          always() &&
+          (
+            steps.prepare.outputs.blocked == 'true' ||
+            steps.agent.outputs.outcome == 'failure' ||
+            steps.diff.outputs.allowed == 'false' ||
+            steps.diff.outputs.no_changes == 'true' ||
+            steps.validate.outcome == 'failure'
+          )
+        uses: actions/github-script@v7
+        env:
+          BLOCKED: ${{ steps.prepare.outputs.blocked }}
+          BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
+          AGENT_OUTCOME: ${{ steps.agent.outputs.outcome }}
+          DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
+          DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
+          DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
+          NO_CHANGE_REASON: ${{ steps.no_change_reason.outputs.reason }}
+          VALIDATION_EXCERPT: ${{ steps.validation_log.outputs.excerpt }}
+          FINAL_MESSAGE: ${{ steps.final_message.outputs.text }}
+          ENGINE: ${{ needs.resolve-engine.outputs.engine }}
+        with:
+          script: |
+            const engine = process.env.ENGINE;
+            let body = "";
+
+            if (process.env.BLOCKED === "true") {
+              body = process.env.BLOCKER_COMMENT;
+            } else if (process.env.AGENT_OUTCOME === "failure") {
+              body = [
+                `Autofix (${engine}) attempted the fix but did not complete successfully.`,
+                "",
+                "Cause:",
+                `- ${process.env.FINAL_MESSAGE || "The agent exited before producing a final message."}`,
+                "",
+                "Detection gap:",
+                "- The workflow has no stronger preflight signal for this failure mode than the agent run itself.",
+                "",
+                "Prevention step:",
+                "- Tighten the issue scope further or split the issue into a smaller frontend-only fix with explicit acceptance criteria.",
+              ].join("\n");
+            } else if (process.env.DIFF_ALLOWED === "false") {
+              body = [
+                `Autofix (${engine}) changes were rejected before publish.`,
+                "",
+                "Cause:",
+                "- The agent edited files outside the allowed frontend scope.",
+                process.env.DIFF_INVALID_FILES ? `- Invalid files:\n${process.env.DIFF_INVALID_FILES}` : "",
+                "",
+                "Detection gap:",
+                "- The issue scope was not narrow enough to keep the agent inside the approved file boundaries.",
+                "",
+                "Prevention step:",
+                "- Narrow the allowed paths in the issue and reserve this automation for focused frontend bugs.",
+              ].filter(Boolean).join("\n");
+            } else if (process.env.DIFF_NO_CHANGES === "true") {
+              body = [
+                `Autofix (${engine}) did not publish because no code changes were produced.`,
+                "",
+                process.env.NO_CHANGE_REASON || "The agent finished without making changes.",
+              ].join("\n");
+            } else {
+              body = [
+                `Autofix (${engine}) produced a candidate fix, but validation failed so no PR was created.`,
+                "",
+                "Cause:",
+                "- Repo validation failed after agent edits.",
+                "",
+                "Detection gap:",
+                "- The workflow could not prove the issue was fixed without violating repo quality gates.",
+                "",
+                "Prevention step:",
+                "- Add or tighten issue acceptance criteria so the fix path stays aligned with existing frontend checks.",
+                "",
+                "Validation excerpt:",
+                "```text",
+                process.env.VALIDATION_EXCERPT || "Validation log not found.",
+                "```",
+              ].join("\n");
+            }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,

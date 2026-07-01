@@ -4,6 +4,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   addGitHubIssueComment,
+  addGitHubIssueLabels,
   createGitHubIssue,
 } from "@/lib/admin-feedback/github";
 import { getApiRouteUser } from "@/lib/supabase/server";
@@ -169,58 +170,77 @@ export const POST = withApiGuardrails("/api/admin/feedback/dispatch#POST", async
       ? `codex --print "${escapeDoubleQuotes(prompt)}"`
       : `claude --print "${escapeDoubleQuotes(prompt)}"`;
 
+  // Both engines are label-driven: the issue is created (or reused), the
+  // dispatch context is added as a comment, and the engine label
+  // (`codex:fix` / `claude:fix`) triggers the Autofix Issue workflow.
+  const engineLabel = target === "codex" ? "codex:fix" : "claude:fix";
+  const missingConfigMessage =
+    "GitHub integration is not configured. Agent dispatch requires GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN.";
+
   let githubIssue:
     | { number: number; url: string; state: string }
     | null = null;
-  let trigger: "github" | "metadata_queue" = "metadata_queue";
+  const trigger = "github" as const;
 
-  if (target === "claude_code") {
-    if (item.github_issue_number) {
-      const triggered = await addGitHubIssueComment(
-        item.github_issue_number,
-        ["@claude", "", "Please pick this up from the Feedback Inbox dispatch queue.", "", "```text", prompt, "```"].join("\n"),
-      );
-      if (!triggered) {
-        throw new GuardrailError({
-          code: "INTERNAL_ERROR",
-          where: "/api/admin/feedback/dispatch#POST",
-          message: "GitHub integration is not configured. Claude Code dispatch requires GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN.",
-        });
-      }
-      githubIssue = {
-        number: item.github_issue_number,
-        url: item.github_issue_url ?? "",
-        state: item.github_issue_state ?? "open",
-      };
-      trigger = "github";
-    } else {
-      githubIssue = await createGitHubIssue({
-        title: item.title,
-        comment: item.comment,
-        pageUrl: item.page_url,
-        pagePath: item.page_path,
-        pageTitle: item.page_title ?? null,
-        requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
-        severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
-        targetId: item.target_id ?? null,
-        targetSelector: item.target_selector,
-        targetTag: item.target_tag ?? null,
-        targetText: item.target_text ?? null,
-        domPath: item.dom_path ?? null,
-        screenshotUrl: item.screenshot_url ?? null,
-        projectId: item.project_id ?? null,
-        metadata: (item.metadata as Record<string, unknown>) ?? {},
+  if (item.github_issue_number) {
+    githubIssue = {
+      number: item.github_issue_number,
+      url: item.github_issue_url ?? "",
+      state: item.github_issue_state ?? "open",
+    };
+  } else {
+    githubIssue = await createGitHubIssue({
+      title: item.title,
+      comment: item.comment,
+      pageUrl: item.page_url,
+      pagePath: item.page_path,
+      pageTitle: item.page_title ?? null,
+      requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
+      severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
+      targetId: item.target_id ?? null,
+      targetSelector: item.target_selector,
+      targetTag: item.target_tag ?? null,
+      targetText: item.target_text ?? null,
+      domPath: item.dom_path ?? null,
+      screenshotUrl: item.screenshot_url ?? null,
+      projectId: item.project_id ?? null,
+      metadata: (item.metadata as Record<string, unknown>) ?? {},
+    });
+
+    if (!githubIssue) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/admin/feedback/dispatch#POST",
+        message: missingConfigMessage,
       });
-
-      if (!githubIssue) {
-        throw new GuardrailError({
-          code: "INTERNAL_ERROR",
-          where: "/api/admin/feedback/dispatch#POST",
-          message: "GitHub integration is not configured. Claude Code dispatch requires GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN.",
-        });
-      }
-      trigger = "github";
     }
+  }
+
+  const commented = await addGitHubIssueComment(
+    githubIssue.number,
+    [
+      `Dispatched from the Feedback Inbox to the ${target === "codex" ? "Codex" : "Claude Code"} autofix lane.`,
+      "",
+      "```text",
+      prompt,
+      "```",
+    ].join("\n"),
+  );
+  if (!commented) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/feedback/dispatch#POST",
+      message: missingConfigMessage,
+    });
+  }
+
+  const labeled = await addGitHubIssueLabels(githubIssue.number, [engineLabel]);
+  if (!labeled) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/feedback/dispatch#POST",
+      message: missingConfigMessage,
+    });
   }
 
   const currentMetadata =
