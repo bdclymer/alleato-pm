@@ -164,9 +164,10 @@ function markupValueForColumn(
           {markup.markupType} ({markup.percentage}%)
         </span>
       );
-    case "cost_rom":
-      // Markups (insurance, fee, etc.) are cost-side only — show the amount in
-      // the Cost ROM column, never in the revenue/prime-PCO column.
+    case "revenue_prime_pco":
+      // Markups (insurance, fee, etc.) are applied on top of cost to derive
+      // revenue billed to the owner — show the amount in the revenue/prime-PCO
+      // column, never in the Cost ROM column.
       return <span className="tabular-nums">{formatMoney(markup.amount)}</span>;
     default:
       return dash;
