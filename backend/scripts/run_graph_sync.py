@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from base64 import urlsafe_b64decode
 from pathlib import Path
 
 
@@ -30,8 +31,41 @@ def _bounded_int_env(name: str, default: int, minimum: int, maximum: int) -> int
     return max(minimum, min(value, maximum))
 
 
+def _jwt_role_for_key(value: str) -> str | None:
+    parts = value.split(".")
+    if len(parts) != 3:
+        return None
+    try:
+        payload = json.loads(urlsafe_b64decode(parts[1] + "=" * (-len(parts[1]) % 4)).decode("utf-8"))
+    except Exception:  # noqa: BLE001 - best-effort claim inspection only
+        return None
+    role = payload.get("role")
+    return str(role) if role else None
+
+
+def _assert_service_role_key(env_name: str, fallback_env_name: str | None = None) -> None:
+    value = os.getenv(env_name)
+    resolved_name = env_name
+    if not value and fallback_env_name:
+        value = os.getenv(fallback_env_name)
+        resolved_name = fallback_env_name
+    if not value:
+        suffix = f" or {fallback_env_name}" if fallback_env_name else ""
+        raise RuntimeError(f"Missing required Supabase service credential: {env_name}{suffix}")
+
+    role = _jwt_role_for_key(value)
+    if role and role != "service_role":
+        raise RuntimeError(
+            f"{resolved_name} is configured with JWT role '{role}', not 'service_role'. "
+            "The direct Graph sync owner will hit row-level security errors until this "
+            "service is redeployed with the correct service-role key."
+        )
+
+
 def main() -> int:
     load_env()
+    _assert_service_role_key("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY")
+    _assert_service_role_key("RAG_SUPABASE_SERVICE_ROLE_KEY", "RAG_SUPABASE_SERVICE_KEY")
 
     result = run_graph_sync(
         get_supabase_client(),

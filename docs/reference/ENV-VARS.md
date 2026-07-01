@@ -222,9 +222,7 @@ These are set automatically by Vercel — do not set them manually.
 | `GRAPH_SYNC_TEAMS` | No | Render | Enable Teams message sync | Default `false` |
 | `GRAPH_SYNC_ONEDRIVE` | No | Render | Enable OneDrive file sync | Default `false` |
 | `GRAPH_SYNC_TEAMS_DM` | No | Render | Enable Teams DM sync | Known limitation: 10 cross-tenant chats permanently 403 |
-| `GRAPH_SYNC_INTERVAL_MINUTES` | No | Render | Sync interval override | Render cron handles scheduling — this is for inline scheduler |
-| `GRAPH_SYNC_RUN_EMBEDDING_INLINE` | No | Render | Run embedding step at end of each sync | Default `true` |
-| `GRAPH_SYNC_RUN_COMPILER_INLINE` | No | Render | Run intelligence compiler at end of each sync | Default `true` |
+| `GRAPH_SYNC_RUN_EMBEDDING` | No | Render | Run embedding step at end of each sync | Default `true` |
 | `GRAPH_EMBEDDING_ENABLED` | No | Render | Enable embedding pipeline | |
 | `GRAPH_EMBEDDING_INTERVAL_MINUTES` | No | Render | Embedding run interval | |
 | `GRAPH_EMBEDDING_LIMIT` | No | Render | Max docs to embed per run | |

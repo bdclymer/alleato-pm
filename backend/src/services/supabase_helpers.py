@@ -277,6 +277,20 @@ def get_outlook_intake_read_client() -> Client:
     return get_supabase_client()
 
 
+def as_actionable_outlook_intake_write_error(exc: Exception, *, table_name: str) -> Exception:
+    """Turn opaque Outlook intake RLS failures into actionable env drift errors."""
+
+    text = str(exc)
+    if "row-level security" in text or "42501" in text:
+        return RuntimeError(
+            f"Writing {table_name} hit row-level security (42501). The Outlook intake "
+            "write client is not authenticated as service_role for the AI/RAG "
+            "Supabase project. Check RAG_SUPABASE_SERVICE_ROLE_KEY on this service "
+            "and redeploy with the AI DB service_role key. Original error: " + text
+        )
+    return exc
+
+
 def fetch_optional_row(
     client: Client,
     table_name: str,
@@ -890,6 +904,7 @@ class SupabaseRagStore:
 __all__ = [
     "DocumentChunk",
     "SupabaseRagStore",
+    "as_actionable_outlook_intake_write_error",
     "get_outlook_intake_read_client",
     "get_outlook_intake_write_client",
     "get_rag_read_client",

@@ -20,6 +20,7 @@ from urllib.parse import quote
 
 from ...supabase_helpers import (
     SupabaseRagStore,
+    as_actionable_outlook_intake_write_error,
     get_outlook_intake_read_client,
     get_outlook_intake_write_client,
     get_rag_write_client,
@@ -565,14 +566,26 @@ def _upsert_outlook_intake_email(
     rows = existing.data or []
     if rows:
         email_id = rows[0]["id"]
-        intake_write.from_("outlook_email_intake").update(payload).eq("id", email_id).execute()
+        try:
+            intake_write.from_("outlook_email_intake").update(payload).eq("id", email_id).execute()
+        except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+            raise as_actionable_outlook_intake_write_error(
+                exc,
+                table_name="outlook_email_intake",
+            ) from exc
         return int(email_id)
 
-    inserted = (
-        intake_write.from_("outlook_email_intake")
-        .insert({**payload, "created_at": now_iso})
-        .execute()
-    )
+    try:
+        inserted = (
+            intake_write.from_("outlook_email_intake")
+            .insert({**payload, "created_at": now_iso})
+            .execute()
+        )
+    except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+        raise as_actionable_outlook_intake_write_error(
+            exc,
+            table_name="outlook_email_intake",
+        ) from exc
     inserted_rows = inserted.data or []
     if inserted_rows:
         return int(inserted_rows[0]["id"])
@@ -626,10 +639,16 @@ def _record_outlook_skip_audit(
         "last_seen_at": now_iso,
     }
 
-    _outlook_intake_write_client().from_("outlook_email_skip_audit").upsert(
-        payload,
-        on_conflict="graph_message_id",
-    ).execute()
+    try:
+        _outlook_intake_write_client().from_("outlook_email_skip_audit").upsert(
+            payload,
+            on_conflict="graph_message_id",
+        ).execute()
+    except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+        raise as_actionable_outlook_intake_write_error(
+            exc,
+            table_name="outlook_email_skip_audit",
+        ) from exc
 
 
 def _fetch_document_project_id(supabase_client, doc_id: Optional[str]) -> Optional[int]:
@@ -691,10 +710,16 @@ def _reconcile_outlook_project_assignment(
         intake_update["document_metadata_id"] = document_metadata_id
 
     intake_write = _outlook_intake_write_client()
-    if intake_email_id:
-        intake_write.from_("outlook_email_intake").update(intake_update).eq("id", intake_email_id).execute()
-    elif msg_id:
-        intake_write.from_("outlook_email_intake").update(intake_update).eq("graph_message_id", msg_id).execute()
+    try:
+        if intake_email_id:
+            intake_write.from_("outlook_email_intake").update(intake_update).eq("id", intake_email_id).execute()
+        elif msg_id:
+            intake_write.from_("outlook_email_intake").update(intake_update).eq("graph_message_id", msg_id).execute()
+    except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+        raise as_actionable_outlook_intake_write_error(
+            exc,
+            table_name="outlook_email_intake",
+        ) from exc
 
     return canonical_project_id
 
@@ -1331,9 +1356,21 @@ def _upsert_outlook_intake_attachment(
     )
     rows = existing.data or []
     if rows:
-        intake_write.from_("outlook_email_intake_attachments").update(payload).eq("id", rows[0]["id"]).execute()
+        try:
+            intake_write.from_("outlook_email_intake_attachments").update(payload).eq("id", rows[0]["id"]).execute()
+        except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+            raise as_actionable_outlook_intake_write_error(
+                exc,
+                table_name="outlook_email_intake_attachments",
+            ) from exc
     else:
-        intake_write.from_("outlook_email_intake_attachments").insert(payload).execute()
+        try:
+            intake_write.from_("outlook_email_intake_attachments").insert(payload).execute()
+        except Exception as exc:  # noqa: BLE001 - fail loudly on env drift
+            raise as_actionable_outlook_intake_write_error(
+                exc,
+                table_name="outlook_email_intake_attachments",
+            ) from exc
     return True
 
 
