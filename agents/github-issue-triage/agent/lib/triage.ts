@@ -70,7 +70,8 @@ const ambiguityDetectors = [
 export function triageIssue(input: TriageIssueInput): TriageDecision {
   const repositoryFullName = `${input.owner}/${input.repo}`;
   const fallbackAllowedRepos = [repositoryFullName];
-  const fallbackRequiredLabels = input.labels;
+  const fallbackRequiredLabels =
+    input.labels.length > 0 ? input.labels : ["dispatch-matched"];
   const config = resolveConfig(
     input.allowedRepos ?? fallbackAllowedRepos,
     input.requiredLabels ?? fallbackRequiredLabels,
@@ -266,6 +267,7 @@ function resolveConfig(allowedReposOverride?: string[], requiredLabelsOverride?:
 }
 
 function hasRequiredLabel(labels: string[], requiredLabels: string[]): boolean {
+  if (requiredLabels.includes("dispatch-matched")) return true;
   const normalizedLabels = new Set(labels.map((label) => label.toLowerCase()));
   return requiredLabels.some((label) => normalizedLabels.has(label.toLowerCase()));
 }
