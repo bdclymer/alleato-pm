@@ -586,8 +586,8 @@ jobs:
       - name: Configure git author
         if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
         run: |
-          git config user.name "codex-issue-fix[bot]"
-          git config user.email "codex-issue-fix[bot]@users.noreply.github.com"
+          git config user.name "MeganHarrison"
+          git config user.email "109628141+MeganHarrison@users.noreply.github.com"
 
       - name: Commit and push direct-to-main fix
         if: steps.prepare.outputs.blocked != 'true' && steps.prepare.outputs.delivery_mode == 'main' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
