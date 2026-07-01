@@ -112,6 +112,8 @@ function NumberInput({
 
       if (focusedRaw && incoming.startsWith(focusedRaw) && incoming.length > focusedRaw.length) {
         cleaned = incoming.slice(focusedRaw.length)
+      } else if (focusedRaw && incoming.endsWith(focusedRaw) && incoming.length > focusedRaw.length) {
+        cleaned = incoming.slice(0, -focusedRaw.length)
       } else if (focusedRaw === "0" && incoming.startsWith("0") && incoming.length > 1) {
         cleaned = incoming.replace(/^0+(?=\d)/, "")
       }

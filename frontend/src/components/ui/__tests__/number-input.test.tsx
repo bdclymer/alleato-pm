@@ -19,4 +19,19 @@ describe("NumberInput", () => {
 
     expect(input).toHaveValue("2");
   });
+
+  it("replaces a focused zero value when the browser inserts before the old value", () => {
+    function Harness() {
+      const [value, setValue] = React.useState("0");
+      return <NumberInput value={value} onChange={(event) => setValue(event.target.value)} formatOnBlur={false} />;
+    }
+
+    render(<Harness />);
+
+    const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "20" } });
+
+    expect(input).toHaveValue("2");
+  });
 });

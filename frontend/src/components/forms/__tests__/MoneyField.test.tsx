@@ -19,4 +19,19 @@ describe("MoneyField", () => {
 
     expect(input).toHaveValue("100");
   });
+
+  it("replaces a focused existing value when the browser inserts before the old value", () => {
+    function Harness() {
+      const [value, setValue] = React.useState<number | undefined>(5600);
+      return <MoneyField label="Amount" inline value={value} onChange={setValue} showCurrency={false} />;
+    }
+
+    render(<Harness />);
+
+    const input = screen.getByLabelText("Amount");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "5605600" } });
+
+    expect(input).toHaveValue("560");
+  });
 });
