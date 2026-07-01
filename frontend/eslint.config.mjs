@@ -86,6 +86,7 @@ const config = [
       "design-system/require-page-shell": "warn",
       "design-system/no-raw-button": "warn",
       "design-system/no-raw-form-controls": "warn",
+      "design-system/require-approved-form-components": "warn",
       "design-system/require-money-field": "warn",
       // WARN globally (300+ existing violations — tracked as debt, fix incrementally).
       // ENFORCED as ERROR on changed files via lint-staged (.lintstagedrc.js).

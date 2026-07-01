@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 interface Props<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>
@@ -50,8 +50,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
           {description && <FormDescription>{description}</FormDescription>}
 
           <FormControl>
-            <Input
-              type="number"
+            <NumberInput
               name={field.name}
               ref={field.ref}
               value={field.value ?? ""}
@@ -62,6 +61,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
               max={max}
               step={step}
               disabled={disabled}
+              clearZeroOnFocus
             />
           </FormControl>
 

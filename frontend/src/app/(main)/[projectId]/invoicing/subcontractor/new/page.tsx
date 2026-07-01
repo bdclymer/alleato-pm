@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, Paperclip } from "lucide-react";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -685,11 +686,14 @@ export default function NewSubcontractorInvoicePage() {
                                   {formatCurrency(item.from_previous)}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  <Input
-                                    type="number"
+                                  <NumberInput
                                     step="0.01"
                                     min="0"
                                     max="100"
+                                    decimals={2}
+                                    formatOnBlur={false}
+                                    autoSelectOnFocus
+                                    clearZeroOnFocus
                                     aria-label={`Percent complete for ${item.description}`}
                                     className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
                                     value={e.completion_percent}
@@ -729,34 +733,36 @@ export default function NewSubcontractorInvoicePage() {
                                   />
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <span className="text-sm text-muted-foreground">$</span>
-                                    <Input
-                                      type="number"
-                                      inputMode="decimal"
-                                      step="0.01"
-                                      min="0"
-                                      className="h-8 w-28 text-right tabular-nums text-sm"
-                                      value={e.work_completed_period}
-                                      placeholder=""
-                                      onChange={(ev) =>
-                                        setSovEdits((prev) => ({
-                                          ...prev,
-                                          [item.id]: {
-                                            ...prev[item.id],
-                                            completion_percent: formatPercentInput(
-                                              calculateCompletionPercentFromCurrentAmount({
-                                                scheduledValue: item.scheduled_value,
-                                                previouslyBilled: item.from_previous,
-                                                currentAmount: parseNum(ev.target.value),
-                                              }),
-                                            ),
-                                            work_completed_period: ev.target.value,
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
+                                  <MoneyField
+                                    label={`${item.description} work completed this period`}
+                                    inline
+                                    showCurrency={false}
+                                    clearZeroOnFocus
+                                    className="h-8 w-28 text-sm"
+                                    value={
+                                      e.work_completed_period
+                                        ? parseNum(e.work_completed_period)
+                                        : undefined
+                                    }
+                                    placeholder=""
+                                    onChange={(value) =>
+                                      setSovEdits((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          ...prev[item.id],
+                                          completion_percent: formatPercentInput(
+                                            calculateCompletionPercentFromCurrentAmount({
+                                              scheduledValue: item.scheduled_value,
+                                              previouslyBilled: item.from_previous,
+                                              currentAmount: value ?? 0,
+                                            }),
+                                          ),
+                                          work_completed_period:
+                                            value == null ? "" : String(value),
+                                        },
+                                      }))
+                                    }
+                                  />
                                   {sovRowErrors[item.id] ? (
                                     <p className="mt-1 text-xs text-destructive">
                                       {sovRowErrors[item.id]}
@@ -764,27 +770,29 @@ export default function NewSubcontractorInvoicePage() {
                                   ) : null}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <span className="text-sm text-muted-foreground">$</span>
-                                    <Input
-                                      type="number"
-                                      inputMode="decimal"
-                                      step="0.01"
-                                      min="0"
-                                      className="h-8 w-28 text-right tabular-nums text-sm"
-                                      value={e.materials_stored}
-                                      placeholder=""
-                                      onChange={(ev) =>
-                                        setSovEdits((prev) => ({
-                                          ...prev,
-                                          [item.id]: {
-                                            ...prev[item.id],
-                                            materials_stored: ev.target.value,
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
+                                  <MoneyField
+                                    label={`${item.description} materials stored`}
+                                    inline
+                                    showCurrency={false}
+                                    clearZeroOnFocus
+                                    className="h-8 w-28 text-sm"
+                                    value={
+                                      e.materials_stored
+                                        ? parseNum(e.materials_stored)
+                                        : undefined
+                                    }
+                                    placeholder=""
+                                    onChange={(value) =>
+                                      setSovEdits((prev) => ({
+                                        ...prev,
+                                        [item.id]: {
+                                          ...prev[item.id],
+                                          materials_stored:
+                                            value == null ? "" : String(value),
+                                        },
+                                      }))
+                                    }
+                                  />
                                 </TableCell>
                               </TableRow>
                             );
@@ -892,11 +900,14 @@ export default function NewSubcontractorInvoicePage() {
                                   {formatCurrency(0)}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  <Input
-                                    type="number"
+                                  <NumberInput
                                     step="0.01"
                                     min="0"
                                     max="100"
+                                    decimals={2}
+                                    formatOnBlur={false}
+                                    autoSelectOnFocus
+                                    clearZeroOnFocus
                                     aria-label={`Percent complete for change order ${co.change_order_number}`}
                                     className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
                                     value={e.completion_percent}
@@ -936,38 +947,36 @@ export default function NewSubcontractorInvoicePage() {
                                   />
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <span className="text-sm text-muted-foreground">$</span>
-                                    <MoneyField
-                                      label={`Change order ${co.change_order_number} work completed this period`}
-                                      inline
-                                      showCurrency={false}
-                                      className="h-8 w-28 text-right tabular-nums text-sm"
-                                      value={
-                                        e.work_completed_period
-                                          ? parseNum(e.work_completed_period)
-                                          : undefined
-                                      }
-                                      placeholder=""
-                                      onChange={(value) =>
-                                        setCoEdits((prev) => ({
-                                          ...prev,
-                                          [co.id]: {
-                                            ...prev[co.id],
-                                            completion_percent: formatPercentInput(
-                                              calculateCompletionPercentFromCurrentAmount({
-                                                scheduledValue: co.amount,
-                                                previouslyBilled: 0,
-                                                currentAmount: value ?? 0,
-                                              }),
-                                            ),
-                                            work_completed_period:
-                                              value == null ? "" : String(value),
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
+                                  <MoneyField
+                                    label={`Change order ${co.change_order_number} work completed this period`}
+                                    inline
+                                    showCurrency={false}
+                                    clearZeroOnFocus
+                                    className="h-8 w-28 text-sm"
+                                    value={
+                                      e.work_completed_period
+                                        ? parseNum(e.work_completed_period)
+                                        : undefined
+                                    }
+                                    placeholder=""
+                                    onChange={(value) =>
+                                      setCoEdits((prev) => ({
+                                        ...prev,
+                                        [co.id]: {
+                                          ...prev[co.id],
+                                          completion_percent: formatPercentInput(
+                                            calculateCompletionPercentFromCurrentAmount({
+                                              scheduledValue: co.amount,
+                                              previouslyBilled: 0,
+                                              currentAmount: value ?? 0,
+                                            }),
+                                          ),
+                                          work_completed_period:
+                                            value == null ? "" : String(value),
+                                        },
+                                      }))
+                                    }
+                                  />
                                   {coRowErrors[co.id] ? (
                                     <p className="mt-1 text-xs text-destructive">
                                       {coRowErrors[co.id]}
@@ -975,31 +984,29 @@ export default function NewSubcontractorInvoicePage() {
                                   ) : null}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <span className="text-sm text-muted-foreground">$</span>
-                                    <MoneyField
-                                      label={`Change order ${co.change_order_number} materials stored`}
-                                      inline
-                                      showCurrency={false}
-                                      className="h-8 w-28 text-right tabular-nums text-sm"
-                                      value={
-                                        e.materials_stored
-                                          ? parseNum(e.materials_stored)
-                                          : undefined
-                                      }
-                                      placeholder=""
-                                      onChange={(value) =>
-                                        setCoEdits((prev) => ({
-                                          ...prev,
-                                          [co.id]: {
-                                            ...prev[co.id],
-                                            materials_stored:
-                                              value == null ? "" : String(value),
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
+                                  <MoneyField
+                                    label={`Change order ${co.change_order_number} materials stored`}
+                                    inline
+                                    showCurrency={false}
+                                    clearZeroOnFocus
+                                    className="h-8 w-28 text-sm"
+                                    value={
+                                      e.materials_stored
+                                        ? parseNum(e.materials_stored)
+                                        : undefined
+                                    }
+                                    placeholder=""
+                                    onChange={(value) =>
+                                      setCoEdits((prev) => ({
+                                        ...prev,
+                                        [co.id]: {
+                                          ...prev[co.id],
+                                          materials_stored:
+                                            value == null ? "" : String(value),
+                                        },
+                                      }))
+                                    }
+                                  />
                                 </TableCell>
                               </TableRow>
                             );
