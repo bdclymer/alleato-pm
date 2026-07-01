@@ -1687,7 +1687,7 @@ export default function PrimeContractCODetailPage() {
                           <Button
                             type="button"
                             variant="link"
-                            className="inline-flex h-auto items-center gap-1 p-0 text-primary"
+                            className="inline-flex h-auto min-w-0 flex-wrap items-start justify-start gap-1 whitespace-normal p-0 text-left text-primary"
                             onClick={() =>
                               router.push(
                                 `/${projectId}/prime-contracts/${co.contract!.id}`,
