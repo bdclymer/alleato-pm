@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
-import { triggerBrowserDownload } from "@/lib/browser-download";
+import { downloadPdf } from "@/hooks/use-pdf-export";
 import {
   useProgressReport,
   useUpdateProgressReport,
@@ -504,13 +504,10 @@ export function ProgressReportEditor({
 
   const weekRange = `${formatProgressReportDate(draft.week_start)} – ${formatProgressReportDate(draft.week_end)}`;
   const handleDownloadPdf = () => {
-    void triggerBrowserDownload(
-      `/api/projects/${projectId}/progress-reports/${reportId}/pdf`,
-      `${draft.title || "progress-report"}.pdf`,
-      "application/pdf",
-    ).catch((error) => {
-      console.error("Progress report PDF download failed", error);
-      toast.error("Progress report PDF download failed. Try again.");
+    void downloadPdf({
+      endpoint: `/api/projects/${projectId}/progress-reports/${reportId}/pdf`,
+      filename: draft.title || "progress-report",
+      errorMessage: "Progress report PDF download failed. Try again.",
     });
   };
 

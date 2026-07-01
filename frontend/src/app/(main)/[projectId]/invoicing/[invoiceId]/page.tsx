@@ -68,6 +68,7 @@ import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { apiFetch, apiFetchWithTimeout } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import { formatPercent } from "@/lib/format";
 import { EntityAttachments } from "@/components/ds";
 
@@ -973,15 +974,10 @@ export default function InvoiceDetailPage() {
     }
   };
 
-  const handleExportPDF = () => {
-    const url = `/api/projects/${projectId}/invoicing/owner/${invoiceId}/pdf`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+  const { exportPdf: handleExportPDF } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/invoicing/owner/${invoiceId}/pdf`,
+    filename: `invoice-${invoice?.invoice_number || invoiceId}`,
+  });
 
   const openEmailDialog = () => {
     const invoiceNumber = invoice?.invoice_number || invoice?.id || "";

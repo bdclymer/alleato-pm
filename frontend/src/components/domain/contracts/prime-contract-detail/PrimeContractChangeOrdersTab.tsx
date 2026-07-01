@@ -10,7 +10,8 @@ import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { apiFetch, apiFetchBlob } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
+import { downloadPdf } from "@/hooks/use-pdf-export";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,27 +32,14 @@ interface PrimeContractChangeOrdersTabProps {
   onShowRejectCoDialog: () => void;
 }
 
-async function downloadPrimeContractChangeOrderPdf(
+function downloadPrimeContractChangeOrderPdf(
   changeOrder: Pick<PrimeContractCO, "id" | "change_order_number">,
 ) {
-  try {
-    const blob = await apiFetchBlob(
-      `/api/document-center/prime-contract-change-order/${changeOrder.id}/pdf`,
-    );
-    const filename = `${changeOrder.change_order_number || "prime-contract-change-order"}.pdf`;
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Failed to download change order PDF:", error);
-    toast.error("Failed to download change order PDF. Please try again.");
-  }
+  return downloadPdf({
+    endpoint: `/api/document-center/prime-contract-change-order/${changeOrder.id}/pdf`,
+    filename: changeOrder.change_order_number || "prime-contract-change-order",
+    errorMessage: "Failed to download change order PDF. Please try again.",
+  });
 }
 
 export function PrimeContractChangeOrdersTab({

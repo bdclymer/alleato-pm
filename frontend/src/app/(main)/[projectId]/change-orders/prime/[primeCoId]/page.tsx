@@ -110,6 +110,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import { cn } from "@/lib/utils";
 import {
   normalizePrimeContractChangeOrderStatus,
@@ -391,6 +392,11 @@ export default function PrimeContractCODetailPage() {
   const [reviewedBySelectOpen, setReviewedBySelectOpen] = useState(false);
   const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
+
+  const { exportPdf: handleExportPdf } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/pdf`,
+    filename: `prime-contract-change-order-${co?.pcco_number || primeCoId}`,
+  });
 
 
   const [emails, setEmails] = useState<ProjectEmail[]>([]);
@@ -1600,14 +1606,9 @@ export default function PrimeContractCODetailPage() {
                 Reject
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <a
-                  href={`/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/pdf`}
-                  download
-                >
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Export PDF
-                </a>
+              <DropdownMenuItem onClick={handleExportPdf}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export PDF
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDeliveryDialogOpen(true)}>
                 <Mail className="mr-2 h-4 w-4" />
@@ -2334,6 +2335,7 @@ export default function PrimeContractCODetailPage() {
         number={co.pcco_number || `PCCO-${co.id}`}
         title={co.title || "Prime Contract Change Order"}
         initialTab="email"
+        allowedTabs={["email"]}
         onEmailSent={() => void fetchEmails()}
       />
 

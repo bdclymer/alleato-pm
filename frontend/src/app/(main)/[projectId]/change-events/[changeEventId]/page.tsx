@@ -48,7 +48,8 @@ import { ContentSectionStack, PageShell } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { StatusBadge, EmptyState, ErrorState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { apiFetch, apiFetchBlob } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
@@ -367,26 +368,10 @@ export default function ChangeEventDetailPage() {
     toast.success("Change event ID copied");
   }, [changeEventId]);
 
-  const handleExportPDF = useCallback(async () => {
-    if (!changeEvent) return;
-    try {
-      toast.loading("Generating PDF...", { id: "pdf-export" });
-      const blob = await apiFetchBlob(
-        `/api/projects/${projectId}/change-events/${changeEventId}/pdf`,
-      );
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `change-event-${changeEvent.number || changeEvent.id}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("PDF downloaded", { id: "pdf-export" });
-    } catch (error) {
-      toast.error("Failed to generate PDF", {
-        id: "pdf-export",
-      });
-    }
-  }, [changeEvent, projectId, changeEventId]);
+  const { exportPdf: handleExportPDF } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/change-events/${changeEventId}/pdf`,
+    filename: `change-event-${changeEvent?.number || changeEvent?.id || changeEventId}`,
+  });
 
 
   /* ── Loading state ──────────────────────────────────────────────── */

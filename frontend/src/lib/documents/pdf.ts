@@ -1,3 +1,105 @@
+import { logger } from "@/lib/logger";
+
+/**
+ * Must match the installed @sparticuz/chromium version — the guardrail test in
+ * __tests__/pdf.unit.test.ts fails if a package upgrade drifts this pin.
+ */
+export const CHROMIUM_PACK_VERSION = "148.0.0";
+
+/**
+ * Chromium pack downloaded at runtime when the bundled binary is unusable.
+ *
+ * MUST be architecture-aware: Vercel functions run x64 OR arm64 (varies per
+ * deployment), and the @sparticuz/chromium npm package bundles an x64-only
+ * binary. Serving the wrong pack extracts fine but fails at launch with
+ * `cannot execute binary file` (exit code 126) — seen in production 2026-07-01
+ * on the commitment-CO export. Override via CHROMIUM_REMOTE_PACK_URL env (e.g.
+ * self-hosted storage) — the override is used verbatim for both architectures.
+ */
+export function getChromiumRemotePackUrl(arch: string = process.arch): string {
+  const override = process.env.CHROMIUM_REMOTE_PACK_URL;
+  if (override) return override;
+  const packArch = arch === "arm64" ? "arm64" : "x64";
+  return `https://github.com/Sparticuz/chromium/releases/download/v${CHROMIUM_PACK_VERSION}/chromium-v${CHROMIUM_PACK_VERSION}-pack.${packArch}.tar`;
+}
+
+/**
+ * Removes the Chromium artifacts @sparticuz/chromium caches in /tmp.
+ * executablePath() short-circuits on an existing /tmp/chromium, so a warm
+ * function instance holding a wrong-arch or corrupt binary stays broken until
+ * this cache is wiped.
+ */
+async function clearCachedChromium(): Promise<void> {
+  const [{ rm }, { tmpdir }, path] = await Promise.all([
+    import("node:fs/promises"),
+    import("node:os"),
+    import("node:path"),
+  ]);
+  await Promise.allSettled([
+    rm(path.join(tmpdir(), "chromium"), { force: true }),
+    rm(path.join(tmpdir(), "chromium-pack"), { recursive: true, force: true }),
+  ]);
+}
+
+/**
+ * Launches headless Chromium in a serverless (Vercel/Lambda) environment.
+ *
+ * Resolution order:
+ * 1. arm64 function → straight to the arm64 remote pack (the npm-bundled
+ *    binary is x64-only, so the "bundled" path can never work on arm64).
+ * 2. x64 function → bundled binary if next.config's outputFileTracingIncludes
+ *    delivered it (fast path; Turbopack builds currently don't), else the x64
+ *    remote pack.
+ * 3. If launch itself fails (wrong-arch/corrupt binary cached in /tmp on a warm
+ *    instance — exec code 126), wipe the /tmp cache, re-extract the
+ *    arch-correct pack, and retry once.
+ *
+ * Net effect: a PDF route cannot hard-fail on a tracing/bundling regression or
+ * an architecture change — worst case is a slower cold start. New PDF tools do
+ * not have to be hand-wired into next.config to avoid a 500.
+ */
+async function launchServerlessBrowser() {
+  const puppeteer = await import("puppeteer-core");
+  const chromium = (await import("@sparticuz/chromium")).default;
+
+  const launch = (executablePath: string) =>
+    puppeteer.default.launch({
+      executablePath,
+      args: chromium.args,
+      headless: true,
+    });
+
+  const resolveExecutablePath = async (): Promise<string> => {
+    if (process.arch === "arm64") {
+      return chromium.executablePath(getChromiumRemotePackUrl());
+    }
+    try {
+      return await chromium.executablePath();
+    } catch (bundledError) {
+      logger.warn({
+        msg: "[pdf] bundled Chromium unavailable; downloading remote pack",
+        arch: process.arch,
+        error: bundledError instanceof Error ? bundledError.message : String(bundledError),
+        remotePackUrl: getChromiumRemotePackUrl(),
+      });
+      return chromium.executablePath(getChromiumRemotePackUrl());
+    }
+  };
+
+  try {
+    return await launch(await resolveExecutablePath());
+  } catch (launchError) {
+    logger.warn({
+      msg: "[pdf] Chromium launch failed; clearing cached binary and retrying with arch-correct pack",
+      arch: process.arch,
+      error: launchError instanceof Error ? launchError.message : String(launchError),
+      remotePackUrl: getChromiumRemotePackUrl(),
+    });
+    await clearCachedChromium();
+    return launch(await chromium.executablePath(getChromiumRemotePackUrl()));
+  }
+}
+
 function esc(s: string | number | null | undefined): string {
   if (s == null) return "";
   return String(s)
@@ -281,18 +383,7 @@ export async function renderPdfFromHtml(
   options: RenderPdfOptions = {},
 ): Promise<Buffer> {
   const isProduction = process.env.NODE_ENV === "production";
-  const browser = isProduction
-    ? await (async () => {
-        const puppeteer = await import("puppeteer-core");
-        const chromium = (await import("@sparticuz/chromium")).default;
-
-        return puppeteer.default.launch({
-          executablePath: await chromium.executablePath(),
-          args: chromium.args,
-          headless: true,
-        });
-      })()
-    : null;
+  const browser = isProduction ? await launchServerlessBrowser() : null;
 
   if (!browser) {
     const [{ tmpdir }, fs, { promisify }, { execFile }] = await Promise.all([

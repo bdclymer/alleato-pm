@@ -36,7 +36,7 @@ import {
   useAllProgressReports,
   useDeleteProgressReport,
 } from "@/hooks/use-progress-reports";
-import { triggerBrowserDownload } from "@/lib/browser-download";
+import { downloadPdf } from "@/hooks/use-pdf-export";
 import type { ProgressReportAllListItem } from "@/lib/progress-reports/types";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -133,13 +133,10 @@ function exportReports(reports: ProgressReportAllListItem[]) {
 }
 
 function downloadProgressReportPdf(report: ProgressReportAllListItem) {
-  void triggerBrowserDownload(
-    `/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`,
-    `${report.title || "progress-report"}.pdf`,
-    "application/pdf",
-  ).catch((error) => {
-    console.error("Progress report PDF download failed", error);
-    toast.error("Progress report PDF download failed. Try again.");
+  void downloadPdf({
+    endpoint: `/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`,
+    filename: report.title || "progress-report",
+    errorMessage: "Progress report PDF download failed. Try again.",
   });
 }
 

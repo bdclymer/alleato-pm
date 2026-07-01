@@ -21,6 +21,7 @@ import { InvoiceGeneralSettings } from "@/components/domain/invoices/InvoiceGene
 import { InvoiceG702Summary } from "@/components/domain/invoices/InvoiceG702Summary";
 import { InvoiceG703Detail } from "@/components/domain/invoices/InvoiceG703Detail";
 import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import { useConfirm } from "@/hooks/use-confirm";
 import type {
   PaymentApplication,
@@ -180,13 +181,10 @@ export default function InvoiceDetailPage({
     }
   }, [confirm, deleteMutation, invoiceId, projectId, contractId, router]);
 
-  const handleExportPdf = useCallback(() => {
-    window.open(
-      `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}/pdf`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  }, [projectId, contractId, invoiceId]);
+  const { exportPdf: handleExportPdf } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}/pdf`,
+    filename: `invoice-${invoice?.application_number || invoiceId}`,
+  });
 
   // Page title and subtitle
   const pageTitle = invoice

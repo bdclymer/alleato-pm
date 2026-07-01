@@ -67,6 +67,7 @@ import {
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
 import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import { handleFormError } from "@/lib/handle-form-error";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
@@ -221,15 +222,10 @@ export function SubcontractorInvoiceDetail({
     }
   }
 
-  async function handleExportPdf() {
-    const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
+  const { exportPdf: handleExportPdf } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`,
+    filename: `subcontract-invoice-${invoice?.invoice_number || `APP-${invoiceId}`}`,
+  });
 
   // Opens and pre-fills the email dialog for invoice delivery.
   function handleEmailInvoice() {
