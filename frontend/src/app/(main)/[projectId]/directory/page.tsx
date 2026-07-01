@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   X,
   Plus,
+  ChevronRight,
 } from "lucide-react";
 import {
   Button,
@@ -50,11 +51,21 @@ import {
 import { PageShell } from "@/components/layout";
 import {
   UnifiedTablePage,
+  TableExpandedRow,
   type FilterConfig,
   type FilterValue,
   type TableColumn,
   type ViewMode,
 } from "@/components/tables/unified";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import { CompanyDetailSheet } from "@/components/domain/directory/CompanyDetailSheet";
 import { ProjectTeamDialog } from "@/components/domain/directory/ProjectTeamDialog";
@@ -173,6 +184,10 @@ function DirectoryUnifiedTable<T>({
   filteredDescription,
   isFiltered,
   enablePagination = false,
+  renderExpandedRow,
+  groupByOptions,
+  groupBy,
+  onGroupByChange,
 }: {
   title: string;
   action?: React.ReactNode;
@@ -194,6 +209,10 @@ function DirectoryUnifiedTable<T>({
   filteredDescription: string;
   isFiltered: boolean;
   enablePagination?: boolean;
+  renderExpandedRow?: (item: T, colSpan: number) => React.ReactNode | null;
+  groupByOptions?: { value: string; label: string }[];
+  groupBy?: string | null;
+  onGroupByChange?: (value: string) => void;
 }) {
   const [currentView, setCurrentView] = React.useState<ViewMode>("table");
 
@@ -219,6 +238,9 @@ function DirectoryUnifiedTable<T>({
         activeFilters,
         onFilterChange,
         onClearFilters,
+        groupByOptions,
+        groupBy,
+        onGroupByChange,
       }}
       data={{
         items,
@@ -231,6 +253,7 @@ function DirectoryUnifiedTable<T>({
         rowActions,
         onRowClick,
         density: "compact",
+        renderExpandedRow,
       }}
       features={{
         enableSearch: Boolean(onSearch),
@@ -1950,6 +1973,19 @@ type SubcontractorRow = {
   contact: CompanyContact | null;
 };
 
+// One row per company — used by the Subcontractors table's "By company"
+// roll-up view, which collapses each company's contacts into a single row
+// (expandable to see every contact) instead of one row per contact.
+type CompanyGroupRow = {
+  id: string;
+  companyId: string;
+  projectCompanyId: string;
+  companyName: string;
+  typeLabel: string;
+  contacts: CompanyContact[];
+  primaryContact: CompanyContact | null;
+};
+
 // Add-contact flow lifted out of the old per-company card. Lets the user attach
 // an existing directory contact to a company, or jump to creating a new one —
 // reused for every company from the flat Subcontractors table.
@@ -2249,6 +2285,29 @@ function CompaniesSection({
     companyId: string | null;
     companyName: string;
   }>({ open: false, companyId: null, companyName: "" });
+  const [groupBy, setGroupBy] = React.useState("none");
+  const isGrouped = groupBy === "company";
+  const [expandedCompanyIds, setExpandedCompanyIds] = React.useState<
+    Set<string>
+  >(new Set());
+  const toggleExpandedCompany = React.useCallback((id: string) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+  const companyGroupByOptions = React.useMemo(
+    () => [
+      { value: "none", label: "All contacts" },
+      { value: "company", label: "By company" },
+    ],
+    [],
+  );
 
   const handleRemoveCompany = async (
     companyId: string,
@@ -2396,6 +2455,34 @@ function CompaniesSection({
       );
     });
   }, [allRows, deferredSearch]);
+
+  // "By company" roll-up: one row per company instead of one row per contact.
+  const groupedRows: CompanyGroupRow[] = React.useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    const cards = q
+      ? companyCards.filter((card) => {
+          if (card.name.toLowerCase().includes(q)) return true;
+          return card.contacts.some(
+            (c) =>
+              contactDisplayName(c).toLowerCase().includes(q) ||
+              (c.email ?? "").toLowerCase().includes(q) ||
+              (c.job_title ?? "").toLowerCase().includes(q),
+          );
+        })
+      : companyCards;
+    return cards.map((card) => ({
+      id: card.projectCompanyId,
+      companyId: card.companyId,
+      projectCompanyId: card.projectCompanyId,
+      companyName: card.name,
+      typeLabel: card.typeLabel,
+      contacts: card.contacts,
+      primaryContact:
+        card.contacts.find((c) => c.id === card.primaryContactId) ??
+        card.contacts[0] ??
+        null,
+    }));
+  }, [companyCards, deferredSearch]);
 
   const handleSetPrimary = async (
     projectCompanyId: string,
@@ -2632,6 +2719,244 @@ function CompaniesSection({
     </DropdownMenu>
   );
 
+  const groupedColumns: TableColumn<CompanyGroupRow>[] = [
+    {
+      id: "company",
+      label: "Company",
+      width: 240,
+      render: (item) => (
+        <div className="flex min-w-0 items-center gap-1.5">
+          {item.contacts.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpandedCompany(item.id);
+              }}
+              className="h-5 w-5 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={
+                expandedCompanyIds.has(item.id)
+                  ? `Collapse contacts for ${item.companyName}`
+                  : `Expand contacts for ${item.companyName}`
+              }
+            >
+              <ChevronRight
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  expandedCompanyIds.has(item.id) && "rotate-90",
+                )}
+              />
+            </Button>
+          )}
+          <button
+            type="button"
+            onClick={() => onCompanyClick(item.companyId)}
+            className="truncate text-sm font-medium text-primary hover:underline"
+          >
+            {item.companyName}
+          </button>
+          {item.typeLabel && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {item.typeLabel}
+            </span>
+          )}
+        </div>
+      ),
+      sortValue: (item) => item.companyName,
+      csvValue: (item) => item.companyName,
+    },
+    {
+      id: "name",
+      label: "Contacts",
+      render: (item) => {
+        if (item.contacts.length === 0) {
+          return (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-sm text-primary"
+              onClick={() =>
+                setAddContact({
+                  open: true,
+                  companyId: item.companyId,
+                  companyName: item.companyName,
+                })
+              }
+            >
+              Add contact
+            </Button>
+          );
+        }
+        if (item.contacts.length === 1) {
+          const c = item.contacts[0];
+          return (
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-7 w-7 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  {initials(c.first_name, c.last_name)}
+                </AvatarFallback>
+              </Avatar>
+              <Link
+                href={`/directory/contacts/${c.id}`}
+                className="text-sm font-medium text-foreground hover:underline"
+              >
+                {contactDisplayName(c) || "Unnamed"}
+              </Link>
+            </div>
+          );
+        }
+        return (
+          <span className="text-sm text-muted-foreground">
+            {item.contacts.length} contacts
+          </span>
+        );
+      },
+      sortValue: (item) => item.contacts.length,
+      csvValue: (item) => String(item.contacts.length),
+    },
+    {
+      id: "title",
+      label: "Title",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.primaryContact?.job_title ?? "—"}
+        </span>
+      ),
+      sortValue: (item) => item.primaryContact?.job_title ?? "",
+      csvValue: (item) => item.primaryContact?.job_title ?? "",
+    },
+    {
+      id: "email",
+      label: "Email",
+      render: (item) =>
+        item.primaryContact?.email ? (
+          <a
+            href={`mailto:${item.primaryContact.email}`}
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            {item.primaryContact.email}
+          </a>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+      sortValue: (item) => item.primaryContact?.email ?? "",
+      csvValue: (item) => item.primaryContact?.email ?? "",
+    },
+    {
+      id: "phone",
+      label: "Phone",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.primaryContact?.phone_business ||
+            item.primaryContact?.phone_mobile ||
+            "—"}
+        </span>
+      ),
+      sortValue: (item) =>
+        item.primaryContact?.phone_business ??
+        item.primaryContact?.phone_mobile ??
+        "",
+      csvValue: (item) =>
+        item.primaryContact?.phone_business ??
+        item.primaryContact?.phone_mobile ??
+        "",
+    },
+  ];
+
+  const renderGroupedRowActions = (item: CompanyGroupRow) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground"
+          aria-label={`Actions for ${item.companyName}`}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() =>
+            setAddContact({
+              open: true,
+              companyId: item.companyId,
+              companyName: item.companyName,
+            })
+          }
+        >
+          <Plus className="mr-2 h-3.5 w-3.5" />
+          Add contact
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive"
+          disabled={removingCompanyId === item.projectCompanyId}
+          onClick={() =>
+            void handleRemoveCompany(item.projectCompanyId, item.companyName)
+          }
+        >
+          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          Remove company
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const renderGroupedExpandedRow = (
+    item: CompanyGroupRow,
+    colSpan: number,
+  ) => {
+    if (item.contacts.length <= 1 || !expandedCompanyIds.has(item.id)) {
+      return null;
+    }
+    return (
+      <TableExpandedRow colSpan={colSpan}>
+        <div className="px-6 py-3">
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+                <InlineTableHeaderCell>Name</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Email</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Phone</InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {item.contacts.map((c) => (
+                <InlineTableRow key={c.id}>
+                  <InlineTableCell>
+                    <Link
+                      href={`/directory/contacts/${c.id}`}
+                      className="text-foreground hover:underline"
+                    >
+                      {contactDisplayName(c) || "Unnamed"}
+                    </Link>
+                    {item.primaryContact?.id === c.id && (
+                      <span className="ml-1.5 text-[11px] text-muted-foreground">
+                        Primary
+                      </span>
+                    )}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {c.job_title ?? "—"}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {c.email ?? "—"}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {c.phone_business || c.phone_mobile || "—"}
+                  </InlineTableCell>
+                </InlineTableRow>
+              ))}
+            </InlineTableBody>
+          </InlineTable>
+        </div>
+      </TableExpandedRow>
+    );
+  };
+
   const addCompanyAction = (
     <Button size="xs" data-keep-text onClick={onAssignClick}>
       Add Company
@@ -2654,8 +2979,29 @@ function CompaniesSection({
             Failed to load companies.
           </p>
         </>
+      ) : isGrouped ? (
+        <DirectoryUnifiedTable<CompanyGroupRow>
+          title="Subcontractors"
+          action={addCompanyAction}
+          items={groupedRows}
+          columns={groupedColumns}
+          getRowId={(item) => item.id}
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search companies or contacts..."
+          totalItems={companyCards.length}
+          rowActions={renderGroupedRowActions}
+          renderExpandedRow={renderGroupedExpandedRow}
+          groupByOptions={companyGroupByOptions}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
+          emptyTitle="No subcontractors yet"
+          emptyDescription="Add a company to start building the project directory."
+          filteredDescription="No companies or contacts match the current search."
+          isFiltered={Boolean(search)}
+        />
       ) : (
-        <DirectoryUnifiedTable
+        <DirectoryUnifiedTable<SubcontractorRow>
           title="Subcontractors"
           action={addCompanyAction}
           items={filteredRows}
@@ -2666,6 +3012,9 @@ function CompaniesSection({
           searchPlaceholder="Search companies or contacts..."
           totalItems={allRows.length}
           rowActions={renderRowActions}
+          groupByOptions={companyGroupByOptions}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
           emptyTitle="No subcontractors yet"
           emptyDescription="Add a company to start building the project directory."
           filteredDescription="No companies or contacts match the current search."
