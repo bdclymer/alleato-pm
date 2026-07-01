@@ -140,6 +140,48 @@ export function coverageStatus(count: number, total: number): LifecycleStatus {
 }
 
 /**
+ * Per-stage grace window (minutes) a freshly-synced document is allowed to sit
+ * before NOT having cleared that downstream stage counts against health. The
+ * crons that feed each stage run behind sync, so the newest cohort is normally
+ * "in flight", not stuck. Without this, `coverageStatus` paints every stage
+ * amber/red permanently on a rolling window. Values mirror the backend health
+ * thresholds (source_sync_health.py: STALE_SYNC_MINUTES=120,
+ * STALE_EXTRACTION_MINUTES=1440, packet freshness=36h) so the map and the
+ * backend agree on what "behind" vs "stuck" means. `synced` has no grace — it
+ * is the sync itself.
+ */
+export const STAGE_GRACE_MINUTES: Record<LifecycleStageKey, number> = {
+  synced: 0,
+  vectorized: 120,
+  projectAssigned: 120,
+  tasksExtracted: 1440,
+  projectIntelligenceUpdated: 2160,
+};
+
+/** Age of an ISO timestamp in minutes, or null when unparseable/absent. */
+export function ageMinutes(iso: string | null | undefined, nowMs: number): number | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  return (nowMs - then) / 60000;
+}
+
+/**
+ * Coverage status computed over only the *mature* cohort — documents older than
+ * the stage's grace window. Documents still within the window are in flight
+ * (the feeding cron simply has not run yet) and never drag a stage red. Returns
+ * "healthy" when nothing is mature yet: an all-fresh cohort is flowing, not
+ * broken. Real stalls — mature documents that never cleared — still surface.
+ */
+export function maturityCoverageStatus(
+  clearedMature: number,
+  totalMature: number,
+): LifecycleStatus {
+  if (totalMature === 0) return "healthy";
+  return coverageStatus(clearedMature, totalMature);
+}
+
+/**
  * Error codes the ingestion pipeline uses for documents it *deliberately* did
  * not embed — not failures. The backend records these with
  * `status="failed_permanent"` (see fireflies_pipeline / embedder /

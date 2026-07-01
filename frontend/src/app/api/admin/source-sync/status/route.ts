@@ -8,13 +8,15 @@ import { createRagServiceClient, createServiceClient } from "@/lib/supabase/serv
 import { SourceSyncStatusSchema, type SourceSyncStatus } from "../_contracts";
 import {
   SOURCE_FAMILIES,
+  STAGE_GRACE_MINUTES,
+  ageMinutes,
   batches,
   computeDocumentStages,
-  coverageStatus,
   hasFullTranscriptReadProof,
   hasTaskExtractionOutcome,
   isIntentionalSkipJob,
   latestJobMetadataByDocumentId,
+  maturityCoverageStatus,
   newest,
   readSupabaseRows,
   type LifecycleJobRow,
@@ -416,6 +418,38 @@ async function buildRagLifecycleStatus(
     const vectorized = stageFlags.filter((flags) => flags.vectorized).length;
     const projectAssigned = stageFlags.filter((flags) => flags.projectAssigned).length;
     const tasksExtracted = stageFlags.filter((flags) => flags.tasksExtracted).length;
+
+    // Health color is judged over the *mature* cohort only (docs past the
+    // stage's grace window). Docs still within the window are in flight — the
+    // feeding cron simply has not run yet — so normal lag reads as "flowing",
+    // not stalled. Displayed count/total stay the full cohort for transparency.
+    const nowMs = Date.now();
+    const rowAgeMinutes = familyRows.map((row) => ageMinutes(row.created_at, nowMs));
+    const maturity = (stageKey: LifecycleStageKey) => {
+      const grace = STAGE_GRACE_MINUTES[stageKey];
+      let clearedMature = 0;
+      let totalMature = 0;
+      let inFlight = 0;
+      stageFlags.forEach((flags, index) => {
+        const age = rowAgeMinutes[index];
+        const isMature = age === null || age >= grace;
+        if (isMature) {
+          totalMature += 1;
+          if (flags[stageKey]) clearedMature += 1;
+        } else if (!flags[stageKey]) {
+          inFlight += 1;
+        }
+      });
+      return { clearedMature, totalMature, inFlight };
+    };
+    const inFlightSuffix = (inFlight: number, stageKey: LifecycleStageKey) =>
+      inFlight > 0
+        ? ` ${inFlight} still in flight (synced <${Math.round(STAGE_GRACE_MINUTES[stageKey] / 60)}h ago).`
+        : "";
+    const vectorizedMaturity = maturity("vectorized");
+    const projectAssignedMaturity = maturity("projectAssigned");
+    const tasksMaturity = maturity("tasksExtracted");
+    const intelligenceMaturity = maturity("projectIntelligenceUpdated");
     const evidenceOnlyProjectIntelligence = familyRows.filter(
       (row) => family.key === "meetings" && evidenceIds.has(row.id) && !hasFullTranscriptReadProof(row.id, jobMetadataByDocumentId),
     ).length;
@@ -485,46 +519,60 @@ async function buildRagLifecycleStatus(
       lifecycleStage(
         "vectorized",
         "Vectorized",
-        coverageStatus(vectorized, total),
+        maturityCoverageStatus(vectorizedMaturity.clearedMature, vectorizedMaturity.totalMature),
         vectorized,
         total,
         latestChunkAt,
-        family.key === "meetings"
+        (family.key === "meetings"
           ? `${vectorized}/${total} Fireflies metadata rows have embedded meeting_transcript chunks and are searchable by the AI assistant.`
-          : `${vectorized}/${total} have embedded chunks and are searchable by the AI assistant.`,
+          : `${vectorized}/${total} have embedded chunks and are searchable by the AI assistant.`) +
+          inFlightSuffix(vectorizedMaturity.inFlight, "vectorized"),
         "RAG embedder",
       ),
       lifecycleStage(
         "projectAssigned",
         "Project assigned",
-        coverageStatus(projectAssigned, total),
+        maturityCoverageStatus(
+          projectAssignedMaturity.clearedMature,
+          projectAssignedMaturity.totalMature,
+        ),
         projectAssigned,
         total,
         latestSourceAt,
-        `${projectAssigned}/${total} have project_id assigned.`,
+        `${projectAssigned}/${total} have project_id assigned.` +
+          inFlightSuffix(projectAssignedMaturity.inFlight, "projectAssigned"),
         "project attribution",
       ),
       lifecycleStage(
         "tasksExtracted",
         "Tasks extracted",
-        coverageStatus(tasksExtracted, total),
+        maturityCoverageStatus(tasksMaturity.clearedMature, tasksMaturity.totalMature),
         tasksExtracted,
         total,
         latestTaskAt,
-        `${tasksExtracted}/${total} have task extraction outcomes from this source set.`,
+        `${tasksExtracted}/${total} have task extraction outcomes from this source set.` +
+          inFlightSuffix(tasksMaturity.inFlight, "tasksExtracted"),
         "task extractor",
       ),
       lifecycleStage(
         "projectIntelligenceUpdated",
         "Project Intelligence updated",
-        hasFreshPackets ? coverageStatus(intelligenceUpdated, total) : "critical",
+        // Absent a fresh packet the compiler is genuinely down → critical
+        // regardless of cohort age. Otherwise judge over the mature cohort.
+        hasFreshPackets
+          ? maturityCoverageStatus(
+              intelligenceMaturity.clearedMature,
+              intelligenceMaturity.totalMature,
+            )
+          : "critical",
         intelligenceUpdated,
         total,
         latestEvidenceAt ?? latestPacketAt,
         hasFreshPackets
-          ? family.key === "meetings"
-            ? `${intelligenceUpdated}/${total} have Project Intelligence evidence with full transcript-read proof; ${evidenceOnlyProjectIntelligence} have evidence without read proof; newest current packet ${latestPacketAt ?? "not found"}.`
-            : `${intelligenceUpdated}/${total} have recent Project Intelligence evidence; newest current packet ${latestPacketAt ?? "not found"}.`
+          ? (family.key === "meetings"
+              ? `${intelligenceUpdated}/${total} have Project Intelligence evidence with full transcript-read proof; ${evidenceOnlyProjectIntelligence} have evidence without read proof; newest current packet ${latestPacketAt ?? "not found"}.`
+              : `${intelligenceUpdated}/${total} have recent Project Intelligence evidence; newest current packet ${latestPacketAt ?? "not found"}.`) +
+            inFlightSuffix(intelligenceMaturity.inFlight, "projectIntelligenceUpdated")
           : `No fresh current Project Intelligence packet within ${RAG_LIFECYCLE_MAX_PACKET_AGE_HOURS} hours.`,
         "intelligence compiler",
       ),

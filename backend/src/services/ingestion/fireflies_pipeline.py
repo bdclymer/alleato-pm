@@ -19,6 +19,7 @@ import requests
 
 from ..ai_transport import get_openai_client, retry_ai_call
 from ..pipeline.source_processing import (
+    INTENTIONALLY_EXCLUDED_STATUS,
     SourceProcessingContext,
     record_source_processing_status,
     status_for_project_assignment,
@@ -453,7 +454,7 @@ class FirefliesIngestionPipeline:
                 )
                 record_source_processing_status(
                     source_context,
-                    status="failed_permanent",
+                    status=INTENTIONALLY_EXCLUDED_STATUS,
                     error_code="interview_title_excluded",
                     error_message=reason,
                 )

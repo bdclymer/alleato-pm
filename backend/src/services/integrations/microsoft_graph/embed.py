@@ -847,7 +847,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         _clear_ingestion_error("done")
         record_source_processing_status(
             source_context,
-            status="failed_permanent",
+            status=INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
             error_code="interview_title_excluded",
             error_message=reason,
         )
@@ -922,7 +922,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         _clear_ingestion_error("embedded")
         record_source_processing_status(
             source_context,
-            status="failed_permanent",
+            status=INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
             error_code="skipped_low_content",
             error_message=f"Substantive text length {substantive_chars} below minimum {min_chars}.",
         )

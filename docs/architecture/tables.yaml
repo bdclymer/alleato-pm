@@ -3588,7 +3588,7 @@ tables:
     owner: pipeline
     status: live-empty
     purpose: "Durable per-source lifecycle ledger tracking source item hashes through assignment, RAG indexing, signal extraction, project intelligence, routing, and terminal states."
-    gotchas: "This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecycle rows in RAG, not PM APP."
+    gotchas: "This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecycle rows in RAG, not PM APP. Terminal status `intentionally_excluded` (added 2026-06-30) marks documents the pipeline deliberately does NOT embed (interview-title meetings, sub-minimum low-content docs) — it is NOT a failure. Never count `intentionally_excluded` (or the historical `failed_permanent` rows carrying error_code `interview_title_excluded`/`skipped_low_content`) as a pipeline failure in health/alerting; only real `failed_retryable`/`failed_permanent` outcomes are failures. Status CHECK constraint enumerates allowed values."
     relatedTables:
       - rag_document_metadata
       - document_chunks
