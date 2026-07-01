@@ -52,6 +52,7 @@ try {
 
   const pdf = await page.pdf({
     format: "Letter",
+    landscape: Boolean(options.landscape),
     printBackground: true,
     displayHeaderFooter: Boolean(options.footerTemplate),
     headerTemplate: "<div></div>",

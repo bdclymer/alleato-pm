@@ -225,7 +225,7 @@ async function fetchBudgetRows(
     .select(
       `
       *,
-      cost_code:cost_codes(id, title, division_id),
+      cost_code:cost_codes(id, title, division_id, division:cost_code_divisions(code, title)),
       cost_type:cost_code_types(code, description),
       sub_job:sub_jobs(code, name)
     `,
@@ -266,7 +266,7 @@ async function fetchBudgetRows(
     .select(
       `
       *,
-      cost_code:cost_codes(id, title, division_id),
+      cost_code:cost_codes(id, title, division_id, division:cost_code_divisions(code, title)),
       cost_type:cost_code_types(code, description),
       sub_job:sub_jobs(code, name)
     `,
@@ -898,8 +898,18 @@ export async function computeBudgetGrandTotals(
   const lineItems: BudgetLineItem[] = (budgetRowsResult.data || []).map(
     (item: Record<string, unknown>) => {
       const costCode = item.cost_code as
-        | { id?: string; title?: string; division_id?: string }
+        | {
+            id?: string;
+            title?: string;
+            division_id?: string;
+            division?:
+              | { code?: string; title?: string }
+              | Array<{ code?: string; title?: string }>
+              | null;
+          }
         | undefined;
+      const divisionRaw = costCode?.division;
+      const division = Array.isArray(divisionRaw) ? divisionRaw[0] : divisionRaw;
       const costType = item.cost_type as
         | { code?: string; description?: string }
         | undefined;
@@ -964,8 +974,8 @@ export async function computeBudgetGrandTotals(
         costCode: costCodeId,
         costCodeDescription: costCode?.title || "",
         costType: costType?.code || "",
-        division: costCode?.division_id || "",
-        divisionTitle: "",
+        division: division?.code || costCode?.division_id || "",
+        divisionTitle: division?.title || "",
         subJob: subJob?.name || "",
 
         originalBudgetAmount,

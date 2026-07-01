@@ -338,8 +338,11 @@ function CurrencyCell({ value }: { value: number }) {
 
 export function getBudgetLineLabel(lineItem: BudgetLineItem) {
   const { costCode, costCodeDescription, costType, description } = lineItem;
-  const codeLabel = costCode
-    ? `${costCode}${costType ? `.${costType}` : ""}`
+  const codeLabelBase = costCode
+    ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
+    : costCodeDescription || "";
+  const codeLabel = codeLabelBase
+    ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
     : null;
   const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
   const normalizedDescription = description.trim();
@@ -372,9 +375,12 @@ function createSafeClickHandler(
   isLocked: boolean,
   action: string,
   originalHandler?: () => void,
-  options: { allowWhenLocked?: boolean } = {},
+  options: { allowWhenLocked?: boolean; hideWhenLocked?: boolean } = {},
 ): (() => void) | undefined {
   if (!originalHandler) return undefined;
+  // Locked budgets hide edit affordances entirely instead of showing a
+  // clickable control that only produces an error toast.
+  if (isLocked && options.hideWhenLocked) return undefined;
 
   return () => {
     if (isLocked && !options.allowWhenLocked) {
@@ -725,7 +731,8 @@ export function BudgetTable({
             onEdit={createSafeClickHandler(
               isLocked,
               "edit line items",
-              onEditLineItem ? () => onEditLineItem(row.original) : undefined
+              onEditLineItem ? () => onEditLineItem(row.original) : undefined,
+              { hideWhenLocked: true },
             )}
             editable={true}
           />
@@ -1013,7 +1020,10 @@ export function BudgetTable({
               "edit forecast",
               onForecastToCompleteClick
                 ? () => onForecastToCompleteClick(row.original)
-                : undefined
+                : undefined,
+              // Procore parity: forecasting stays editable after budget lock —
+              // the lock freezes the budget, not the forecast.
+              { allowWhenLocked: true },
             )}
             editable={true}
           />
@@ -1078,7 +1088,9 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0
         );
-        if (hasChildren || !onEditLineItem) {
+        // Locked budgets do not allow line edits or deletes, so show no
+        // row actions at all instead of disabled/toasting controls.
+        if (hasChildren || !onEditLineItem || isLocked) {
           return null;
         }
 

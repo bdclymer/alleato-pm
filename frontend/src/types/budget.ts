@@ -11,6 +11,8 @@ export interface BudgetLineItem {
   costCodeDescription?: string;
   /** Cost type letter code, e.g. "X", "L", "M" */
   costType?: string;
+  /** Division title resolved from cost_code_divisions, e.g. "50 Engineering" */
+  divisionTitle?: string;
   description: string;
   originalBudgetAmount: number;
   unitQty?: number;

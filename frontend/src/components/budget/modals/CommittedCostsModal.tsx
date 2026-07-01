@@ -25,7 +25,7 @@ interface Commitment {
   description: string;
   amount: number;
   status: string;
-  type: "subcontract" | "purchase_order";
+  type: "subcontract" | "purchase_order" | "change_order";
   executedDate: string | null;
   changeOrders: number;
 }
@@ -107,7 +107,7 @@ export function CommittedCostsModal({
           {/* Inline stats */}
           <div className="flex items-baseline justify-between">
             <p className="text-sm text-muted-foreground">
-              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""} · Approved subcontracts and purchase orders for this cost code.
+              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""} · Approved subcontracts, purchase orders, and commitment change orders for this cost code.
             </p>
             <p className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap ml-4">
               {formatCurrency(totalAmount)}
@@ -163,7 +163,11 @@ export function CommittedCostsModal({
                     </InlineTableCell>
                     <InlineTableCell>
                       <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                        {commitment.type === "subcontract" ? "SC" : "PO"}
+                        {commitment.type === "subcontract"
+                          ? "SC"
+                          : commitment.type === "change_order"
+                            ? "CO"
+                            : "PO"}
                       </span>
                     </InlineTableCell>
                     <InlineTableCell>

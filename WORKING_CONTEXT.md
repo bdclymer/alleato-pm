@@ -7,9 +7,33 @@
 
 ## Current focus
 
-**Status:** RFI subcontractor response system fully deployed. DB migrated. Fresh CRON_SECRET set. Awaiting first cron fire confirmation.
-**Last updated:** 2026-06-24
-**Last worked on by:** Claude Code (RFI email response system + cron auth fix)
+**Status:** Budget page feedback fixes (Exol Morrisville review) shipped as PR #621 — all six items browser-verified; awaiting preview check + merge.
+**Last updated:** 2026-07-01
+**Last worked on by:** Claude Code (budget sidebars/PDF export/division titles/labels/forecast edit/lock gating)
+
+## Budget page feedback fixes (2026-07-01) — PR #621
+
+All six items from Megan's Exol Morrisville (`/876/budget`) budget review fixed on
+branch `fix/budget-page-feedback` (worktree), browser-verified against project 876:
+
+1. **Approved COs sidebar** — column comes from `v_budget_lines.approved_co_total`
+   = `pco_line_items` × approved+promoted `prime_contract_pcos`, keyed by
+   `pco_line_items.budget_code_id = budget_lines.id`. Sidebar route now queries that
+   source (two-step — `pco_id` is polymorphic, no FK for PostgREST embed), supports
+   `division-XX` group rows, dedupes promoted PCOs vs PCCOs.
+2. **Committed Costs sidebar** — SOV `budget_code` is stored in mixed formats
+   (`"50-5500.S"`, `"505500"`, project_budget_codes UUIDs); match by
+   `normalizeBudgetCodeLookupKey` like the aggregation, plus approved commitment COs.
+3. **Budget PDF export** — `GET /api/projects/[projectId]/budget/export/pdf`
+   (landscape via new `renderPdfFromHtml({landscape})`), builder `lib/budget-pdf.ts`.
+4. **Division titles** — resolved from `cost_code_divisions` via nested embed on the
+   budget-row fetch (`divisionTitle` on line items); hardcoded map is fallback only.
+5. **Cost code labels** — restored `code - name.type` (regression from ea7b0c5a0).
+6. **Locked budget** — FTC editable when locked (Procore parity; verified save +
+   DB read-back + revert); edit/delete affordances hidden when locked.
+
+**Data issue found, NOT fixed:** project 876 PO 000112 has duplicate SOV rows
+($117,000 under both `522000` and `52-2000.M`) — inflates Committed Costs.
 
 ## RFI Subcontractor Response System (2026-06-24)
 

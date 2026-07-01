@@ -376,6 +376,8 @@ export interface RenderPdfOptions {
   footerTemplate?: string;
   /** Bottom page margin; widen to make room for a footerTemplate. Defaults to 0.5in. */
   marginBottom?: string;
+  /** Print in landscape orientation (wide tables). Defaults to portrait. */
+  landscape?: boolean;
 }
 
 export async function renderPdfFromHtml(
@@ -454,6 +456,7 @@ export async function renderPdfFromHtml(
 
     const pdf = await page.pdf({
       format: "Letter",
+      landscape: Boolean(options.landscape),
       printBackground: true,
       displayHeaderFooter: Boolean(options.footerTemplate),
       headerTemplate: "<div></div>",
