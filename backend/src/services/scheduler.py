@@ -112,24 +112,6 @@ def init_scheduler() -> None:
             )
             logger.info("[Scheduler] Acumatica financial sync cron: %s (UTC)", sync_cron)
 
-    if _env_flag_enabled("SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED"):
-        health_interval_minutes = max(
-            5,
-            int(os.getenv("SOURCE_SYNC_HEALTH_RECOMPUTE_INTERVAL_MINUTES", "15")),
-        )
-        scheduler.add_job(
-            run_source_sync_health_recompute_job,
-            IntervalTrigger(minutes=health_interval_minutes),
-            id="source_sync_health_recompute",
-            name="Source Sync Health Recompute",
-            replace_existing=True,
-            max_instances=1,
-        )
-        logger.info(
-            "[Scheduler] Source sync health recompute every %d min",
-            health_interval_minutes,
-        )
-
     # Microsoft Graph sync (Outlook + Teams + SharePoint) — hourly by default
     # Auto-enable when Graph credentials are configured (unless explicitly disabled)
     graph_has_creds = bool(
@@ -200,64 +182,9 @@ async def run_acumatica_financial_sync_job() -> None:
         logger.warning("[Scheduler] Acumatica financial sync failed (will retry): %s", e, exc_info=True)
 
 
-async def run_source_sync_health_recompute_job() -> None:
-    """Scheduled job: persist current source-sync snapshots and active alerts."""
-    import asyncio
-
-    logger.info("[Scheduler] Running source sync health recompute job")
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, _run_source_sync_health_recompute)
-        logger.info(
-            "[Scheduler] Source sync health recompute complete: snapshots=%d alerts_upserted=%d alerts_resolved=%d overall=%s",
-            result.get("updatedSnapshots", 0),
-            result.get("routedAlerts", {}).get("upserted", 0),
-            result.get("routedAlerts", {}).get("resolved", 0),
-            result.get("health", {}).get("status"),
-        )
-    except Exception as e:
-        logger.warning("[Scheduler] Source sync health recompute failed (will retry): %s", e, exc_info=True)
-
-
 def _run_acumatica_financial_sync():
     """Synchronous wrapper for Acumatica ERP finance sync."""
     from .acumatica_sync import run_acumatica_financial_sync
 
     _guard_background_app_db("acumatica_financial_sync")
     return run_acumatica_financial_sync()
-
-
-def _run_source_sync_health_recompute() -> dict:
-    """Synchronous wrapper for source-sync health persistence."""
-    from .health.source_sync_health import (
-        MAX_RECOMPUTE_ALERT_WRITES,
-        MAX_RECOMPUTE_SNAPSHOT_WRITES,
-        get_source_sync_health,
-        persist_source_sync_alerts,
-        update_source_health_snapshot,
-    )
-    from .supabase_helpers import get_supabase_client
-
-    _guard_background_app_db("source_sync_health_recompute")
-    client = get_supabase_client()
-    health = get_source_sync_health(client)
-    updated = 0
-    for source in health.get("sources", [])[:MAX_RECOMPUTE_SNAPSHOT_WRITES]:
-        update_source_health_snapshot(client, source)
-        updated += 1
-    routed_alerts = persist_source_sync_alerts(
-        client,
-        health.get("alerts", [])[:MAX_RECOMPUTE_ALERT_WRITES],
-        resolve_missing=False,
-    )
-    return {
-        "status": "completed",
-        "updatedSnapshots": updated,
-        "routedAlerts": routed_alerts,
-        "writeCaps": {
-            "snapshots": MAX_RECOMPUTE_SNAPSHOT_WRITES,
-            "alerts": MAX_RECOMPUTE_ALERT_WRITES,
-            "resolveMissing": False,
-        },
-        "health": health,
-    }

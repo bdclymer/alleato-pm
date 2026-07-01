@@ -72,6 +72,14 @@ def test_acumatica_cron_uses_guarded_direct_entrypoint():
         assert acumatica["dockerCommand"] == "python3 scripts/run_acumatica_financial_sync.py"
 
 
+def test_source_sync_health_cron_uses_direct_entrypoint():
+    for path in _render_blueprint_paths():
+        source_sync = _services_by_name(path)["alleato-source-sync-health"]
+
+        assert source_sync["schedule"] == "*/30 * * * *"
+        assert source_sync["dockerCommand"] == "python3 scripts/run_source_sync_health_recompute.py"
+
+
 def test_fireflies_cron_uses_direct_entrypoint():
     for path in _render_blueprint_paths():
         fireflies = _services_by_name(path)["alleato-fireflies-sync"]

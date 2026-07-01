@@ -43,14 +43,14 @@ services:
     dockerContext: ./backend
     schedule: "*/30 * * * *"
     dockerCommand: >-
-      python3 -c "import asyncio; from src.services.scheduler import run_source_sync_health_recompute_job; asyncio.run(run_source_sync_health_recompute_job())"
+      python3 scripts/run_source_sync_health_recompute.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "false"
+        value: "true"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL

@@ -117,7 +117,11 @@ def test_run_source_sync_health_recompute_persists_snapshots_and_alerts(monkeypa
         ) or {"upserted": len(alerts), "resolved": 0},
     )
 
-    result = scheduler._run_source_sync_health_recompute()
+    from src.services.health.source_sync_health_recompute import (
+        run_source_sync_health_recompute,
+    )
+
+    result = run_source_sync_health_recompute()
 
     assert result["status"] == "completed"
     assert result["updatedSnapshots"] == 2
