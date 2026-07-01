@@ -21,6 +21,11 @@ import { DateField } from "@/components/forms/DateField";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { apiFetch } from "@/lib/api-client";
 import {
+  calculateCompletionPercentFromCurrentAmount,
+  calculateCurrentAmountFromCompletionPercent,
+  validateCurrentAmount,
+} from "@/lib/invoicing/subcontractor-percent-autofill";
+import {
   Table,
   TableBody,
   TableCell,
@@ -52,6 +57,7 @@ interface ApprovedCO {
 }
 
 interface SovEdit {
+  completion_percent: string;
   work_completed_period: string;
   materials_stored: string;
 }
@@ -80,6 +86,10 @@ function pct(value: number, total: number) {
 function parseNum(s: string) {
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
+}
+
+function formatPercentInput(value: number) {
+  return Number.isFinite(value) ? value.toFixed(2).replace(/\.00$/, "") : "0";
 }
 
 // ---------------------------------------------------------------------------
@@ -235,6 +245,13 @@ export default function NewSubcontractorInvoicePage() {
         const edits: Record<string, SovEdit> = {};
         for (const item of items) {
           edits[item.id] = {
+            completion_percent: formatPercentInput(
+              calculateCompletionPercentFromCurrentAmount({
+                scheduledValue: item.scheduled_value,
+                previouslyBilled: item.from_previous,
+                currentAmount: 0,
+              }),
+            ),
             work_completed_period: "",
             materials_stored: "",
           };
@@ -265,6 +282,7 @@ export default function NewSubcontractorInvoicePage() {
             approved.map((co) => [
               co.id,
               {
+                completion_percent: "0",
                 work_completed_period: "",
                 materials_stored: "",
               },
@@ -290,6 +308,7 @@ export default function NewSubcontractorInvoicePage() {
     return sovItems.reduce(
       (acc, item) => {
         const e = sovEdits[item.id] ?? {
+          completion_percent: "0",
           work_completed_period: "",
           materials_stored: "",
         };
@@ -307,6 +326,7 @@ export default function NewSubcontractorInvoicePage() {
     return approvedCOs.reduce(
       (acc, co) => {
         const e = coEdits[co.id] ?? {
+          completion_percent: "0",
           work_completed_period: "",
           materials_stored: "",
         };
@@ -328,10 +348,15 @@ export default function NewSubcontractorInvoicePage() {
       toast.error("No commitment selected");
       return;
     }
+    if (formErrors.length > 0) {
+      toast.error(formErrors[0]);
+      return;
+    }
     setSubmitting(true);
     try {
       const lineItems = sovItems.map((item) => {
         const e = sovEdits[item.id] ?? {
+          completion_percent: "0",
           work_completed_period: "",
           materials_stored: "",
         };
@@ -351,6 +376,7 @@ export default function NewSubcontractorInvoicePage() {
       const coLineItems = approvedCOs
         .map((co, index) => {
           const e = coEdits[co.id] ?? {
+            completion_percent: "0",
             work_completed_period: "",
             materials_stored: "",
           };
@@ -480,6 +506,55 @@ export default function NewSubcontractorInvoicePage() {
         .join(" — ")
     : undefined;
 
+  const sovRowErrors = useMemo(
+    () =>
+      Object.fromEntries(
+        sovItems.map((item) => {
+          const edit = sovEdits[item.id] ?? {
+            completion_percent: "0",
+            work_completed_period: "",
+            materials_stored: "",
+          };
+
+          const validation = validateCurrentAmount({
+            scheduledValue: item.scheduled_value,
+            previouslyBilled: item.from_previous,
+            currentAmount: parseNum(edit.work_completed_period),
+          });
+
+          return [item.id, validation.error];
+        }),
+      ) as Record<string, string | null>,
+    [sovEdits, sovItems],
+  );
+
+  const coRowErrors = useMemo(
+    () =>
+      Object.fromEntries(
+        approvedCOs.map((co) => {
+          const edit = coEdits[co.id] ?? {
+            completion_percent: "0",
+            work_completed_period: "",
+            materials_stored: "",
+          };
+
+          const validation = validateCurrentAmount({
+            scheduledValue: co.amount,
+            previouslyBilled: 0,
+            currentAmount: parseNum(edit.work_completed_period),
+          });
+
+          return [co.id, validation.error];
+        }),
+      ) as Record<string, string | null>,
+    [approvedCOs, coEdits],
+  );
+
+  const formErrors = [
+    ...Object.values(sovRowErrors).filter((error): error is string => Boolean(error)),
+    ...Object.values(coRowErrors).filter((error): error is string => Boolean(error)),
+  ];
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -591,6 +666,7 @@ export default function NewSubcontractorInvoicePage() {
                         <>
                           {sovItems.map((item) => {
                             const e = sovEdits[item.id] ?? {
+                              completion_percent: "0",
                               work_completed_period: "",
                               materials_stored: "",
                             };
@@ -609,7 +685,48 @@ export default function NewSubcontractorInvoicePage() {
                                   {formatCurrency(item.from_previous)}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  {pct(item.from_previous, item.scheduled_value)}
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="100"
+                                    aria-label={`Percent complete for ${item.description}`}
+                                    className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
+                                    value={e.completion_percent}
+                                    onChange={(ev) => {
+                                      const nextPercent = ev.target.value;
+                                      setSovEdits((prev) => {
+                                        const next = {
+                                          ...prev,
+                                          [item.id]: {
+                                            ...prev[item.id],
+                                            completion_percent: nextPercent,
+                                          },
+                                        };
+
+                                        if (nextPercent.trim() === "") {
+                                          return next;
+                                        }
+
+                                        const calculated = calculateCurrentAmountFromCompletionPercent({
+                                          scheduledValue: item.scheduled_value,
+                                          previouslyBilled: item.from_previous,
+                                          completionPercent: parseNum(nextPercent),
+                                        });
+
+                                        if (calculated.error) {
+                                          return next;
+                                        }
+
+                                        next[item.id] = {
+                                          ...next[item.id],
+                                          work_completed_period:
+                                            calculated.amount == null ? "" : String(calculated.amount),
+                                        };
+                                        return next;
+                                      });
+                                    }}
+                                  />
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-1">
@@ -627,12 +744,24 @@ export default function NewSubcontractorInvoicePage() {
                                           ...prev,
                                           [item.id]: {
                                             ...prev[item.id],
+                                            completion_percent: formatPercentInput(
+                                              calculateCompletionPercentFromCurrentAmount({
+                                                scheduledValue: item.scheduled_value,
+                                                previouslyBilled: item.from_previous,
+                                                currentAmount: parseNum(ev.target.value),
+                                              }),
+                                            ),
                                             work_completed_period: ev.target.value,
                                           },
                                         }))
                                       }
                                     />
                                   </div>
+                                  {sovRowErrors[item.id] ? (
+                                    <p className="mt-1 text-xs text-destructive">
+                                      {sovRowErrors[item.id]}
+                                    </p>
+                                  ) : null}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-1">
@@ -673,7 +802,7 @@ export default function NewSubcontractorInvoicePage() {
                               {formatCurrency(totals.fromPrevious)}
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-muted-foreground">
-                              {pct(totals.fromPrevious, totals.scheduled)}
+                              {pct(totals.fromPrevious + totals.thisPeriod, totals.scheduled)}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
                               {formatCurrency(totals.thisPeriod)}
@@ -744,6 +873,7 @@ export default function NewSubcontractorInvoicePage() {
                         <>
                           {approvedCOs.map((co) => {
                             const e = coEdits[co.id] ?? {
+                              completion_percent: "0",
                               work_completed_period: "",
                               materials_stored: "",
                             };
@@ -762,7 +892,48 @@ export default function NewSubcontractorInvoicePage() {
                                   {formatCurrency(0)}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  {pct(0, co.amount)}
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="100"
+                                    aria-label={`Percent complete for change order ${co.change_order_number}`}
+                                    className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
+                                    value={e.completion_percent}
+                                    onChange={(ev) => {
+                                      const nextPercent = ev.target.value;
+                                      setCoEdits((prev) => {
+                                        const next = {
+                                          ...prev,
+                                          [co.id]: {
+                                            ...prev[co.id],
+                                            completion_percent: nextPercent,
+                                          },
+                                        };
+
+                                        if (nextPercent.trim() === "") {
+                                          return next;
+                                        }
+
+                                        const calculated = calculateCurrentAmountFromCompletionPercent({
+                                          scheduledValue: co.amount,
+                                          previouslyBilled: 0,
+                                          completionPercent: parseNum(nextPercent),
+                                        });
+
+                                        if (calculated.error) {
+                                          return next;
+                                        }
+
+                                        next[co.id] = {
+                                          ...next[co.id],
+                                          work_completed_period:
+                                            calculated.amount == null ? "" : String(calculated.amount),
+                                        };
+                                        return next;
+                                      });
+                                    }}
+                                  />
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-1">
@@ -783,6 +954,13 @@ export default function NewSubcontractorInvoicePage() {
                                           ...prev,
                                           [co.id]: {
                                             ...prev[co.id],
+                                            completion_percent: formatPercentInput(
+                                              calculateCompletionPercentFromCurrentAmount({
+                                                scheduledValue: co.amount,
+                                                previouslyBilled: 0,
+                                                currentAmount: value ?? 0,
+                                              }),
+                                            ),
                                             work_completed_period:
                                               value == null ? "" : String(value),
                                           },
@@ -790,6 +968,11 @@ export default function NewSubcontractorInvoicePage() {
                                       }
                                     />
                                   </div>
+                                  {coRowErrors[co.id] ? (
+                                    <p className="mt-1 text-xs text-destructive">
+                                      {coRowErrors[co.id]}
+                                    </p>
+                                  ) : null}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-1">
@@ -832,7 +1015,7 @@ export default function NewSubcontractorInvoicePage() {
                               {formatCurrency(coTotals.fromPrevious)}
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-muted-foreground">
-                              {pct(coTotals.fromPrevious, coTotals.scheduled)}
+                              {pct(coTotals.fromPrevious + coTotals.thisPeriod, coTotals.scheduled)}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
                               {formatCurrency(coTotals.thisPeriod)}
@@ -881,14 +1064,14 @@ export default function NewSubcontractorInvoicePage() {
               type="button"
               variant="outline"
               onClick={() => handleAction("draft")}
-              disabled={submitting}
+              disabled={submitting || formErrors.length > 0}
             >
               {submitting ? "Saving…" : "Save as Draft"}
             </Button>
             <Button
               type="button"
               onClick={() => handleAction("under_review")}
-              disabled={submitting}
+              disabled={submitting || formErrors.length > 0}
             >
               {submitting ? "Submitting…" : "Submit"}
             </Button>
