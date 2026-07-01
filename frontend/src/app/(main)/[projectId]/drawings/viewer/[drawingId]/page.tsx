@@ -66,12 +66,16 @@ import {
 } from "@/hooks/use-drawing-pins";
 import { LinkPinModal, PIN_TYPE_CONFIG } from "@/components/drawings/LinkPinModal";
 import { DrawingLinksPanel } from "@/components/drawings/DrawingLinksPanel";
+import type {
+  AnnotationTool,
+  HtmlOverlay,
+  LocalAnnotationType,
+} from "@/components/drawings/OsdDrawingViewer";
 
-// Dynamically import to avoid SSR issues (react-pdf requires browser APIs)
-const DrawingViewerWithComments = dynamic(
+const OsdDrawingViewerWithComments = dynamic(
   () =>
-    import("@/components/drawings/DrawingViewerWithComments").then(
-      (mod) => ({ default: mod.DrawingViewerWithComments })
+    import("@/components/drawings/OsdDrawingViewerWithComments").then(
+      (mod) => ({ default: mod.OsdDrawingViewerWithComments })
     ),
   {
     ssr: false,
@@ -85,9 +89,7 @@ const DrawingViewerWithComments = dynamic(
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AnnotationTool = "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
 type RightPanel = "info" | "search" | "activity" | "links" | "filter" | null;
-type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
 type PinFilterType = DrawingMarkupPin["pin_type"];
 type DrawingSearchItem = {
   drawingNumber?: string | null;
@@ -164,7 +166,7 @@ function getSearchItemLabel(drawing: DrawingSearchItem) {
 
 // ── Link pin renderer ─────────────────────────────────────────────────────────
 
-function LinkPin({
+function LinkPinShape({
   pin,
   highlighted,
 }: {
@@ -175,18 +177,7 @@ function LinkPin({
   const pinColor = pin.color ?? config?.color ?? "hsl(var(--status-info))";
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: `${pin.x_pct}%`,
-        top: `${pin.y_pct}%`,
-        transform: "translate(-50%, -100%)",
-        zIndex: 25,
-        cursor: "default",
-        pointerEvents: "none",
-      }}
-    >
-      {/* Flag pin shape */}
+    <div className="relative">
       <div
         className={cn(
           "flex items-center gap-1 px-1.5 py-0.5 rounded shadow-sm text-white text-[10px] font-semibold transition-all",
@@ -199,7 +190,6 @@ function LinkPin({
         )}
         {pin.entity_number && <span>{pin.entity_number}</span>}
       </div>
-      {/* Pin tail */}
       <div
         className="mx-auto"
         style={{
@@ -430,23 +420,28 @@ export default function DrawingViewerPage() {
       (pin.page === pageInfo.current || pageInfo.total === 0)
   );
 
+  const linkPinOverlays: HtmlOverlay[] = filteredPins.map((pin) => ({
+    id: `link-pin-${pin.id}`,
+    xPct: pin.x_pct,
+    yPct: pin.y_pct,
+    page: pin.page ?? 1,
+    placement: "BOTTOM",
+    zIndex: 25,
+    element: (
+      <div
+        onMouseEnter={() => setHighlightedPinId(pin.id)}
+        onMouseLeave={() => setHighlightedPinId((id) => (id === pin.id ? null : id))}
+      >
+        <LinkPinShape pin={pin} highlighted={highlightedPinId === pin.id} />
+      </div>
+    ),
+  }));
+
   const visibleLocalAnnotationTypes = visibleLayers.localMarkup
     ? (Object.entries(visibleLocalAnnotations)
         .filter(([, visible]) => visible)
         .map(([key]) => key) as LocalAnnotationType[])
     : [];
-
-  const linkPinsOverlay = (
-    <>
-      {filteredPins.map((pin) => (
-        <LinkPin
-          key={pin.id}
-          pin={pin}
-          highlighted={highlightedPinId === pin.id}
-        />
-      ))}
-    </>
-  );
 
   const viewerTool = activeTool;
 
@@ -791,12 +786,9 @@ export default function DrawingViewerPage() {
               </div>
             )}
             {proxyFileUrl && (
-              <DrawingViewerWithComments
+              <OsdDrawingViewerWithComments
                 drawingId={drawingId}
                 fileUrl={proxyFileUrl}
-                fileName={drawingIdentity?.title || drawingIdentity?.number || "Drawing"}
-                drawingNumber={drawingIdentity?.number ?? undefined}
-                title={drawingIdentity?.title || drawingIdentity?.number || undefined}
                 showToolbar={false}
                 controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
@@ -806,7 +798,7 @@ export default function DrawingViewerPage() {
                 onRotationChange={setViewRotation}
                 onPageNumberChange={handlePageNumberChange}
                 onCommentClick={handleCommentClick}
-                linkPinsOverlay={linkPinsOverlay}
+                extraOverlays={linkPinOverlays}
                 showCommentPins={visibleLayers.comments}
                 visibleAnnotationTypes={visibleLocalAnnotationTypes}
                 className="h-full border-none rounded-none bg-background"
