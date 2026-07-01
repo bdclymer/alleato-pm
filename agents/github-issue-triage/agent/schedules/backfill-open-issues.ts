@@ -1,19 +1,15 @@
 import { defineSchedule } from "eve/schedules";
 
-import github from "../channels/github.js";
 import {
-  buildBackfillMessage,
   getBackfillRepos,
-  issueAlreadyTriaged,
   listOpenIssuesForBackfill,
-  resolveInstallationIdForRepo,
+  upsertTriageComment,
 } from "../lib/github-app.js";
+import { formatTriageComment, triageIssue } from "../lib/triage.js";
 
-// Daily weekday backfill. Safe to run repeatedly because existing triage
-// comments are skipped by default.
 export default defineSchedule({
-  cron: "0 14 * * 1-5",
-  async run({ appAuth, receive }) {
+  cron: "*/5 * * * *",
+  async run() {
     const repos = getBackfillRepos();
     if (repos.length === 0) {
       console.error(
@@ -23,14 +19,6 @@ export default defineSchedule({
     }
 
     for (const repoRef of repos) {
-      let installationId: number;
-      try {
-        installationId = await resolveInstallationIdForRepo(repoRef);
-      } catch (error) {
-        console.error(`GitHub triage backfill blocked for ${repoRef.owner}/${repoRef.repo}: ${toErrorMessage(error)}`);
-        continue;
-      }
-
       let issues;
       try {
         issues = await listOpenIssuesForBackfill(repoRef);
@@ -43,27 +31,18 @@ export default defineSchedule({
 
       for (const issue of issues) {
         try {
-          if (await issueAlreadyTriaged(repoRef, issue.issueNumber)) {
-            console.info(`GitHub triage backfill skipped #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}: already triaged.`);
-            continue;
-          }
-
-          const session = await receive(github, {
-            auth: appAuth,
-            message: buildBackfillMessage(issue),
-            target: {
-              installationId,
-              issueNumber: issue.issueNumber,
-              owner: repoRef.owner,
-              repo: repoRef.repo,
-            },
+          const decision = triageIssue({
+            body: issue.body,
+            issueNumber: issue.issueNumber,
+            labels: issue.labels,
+            owner: repoRef.owner,
+            repo: repoRef.repo,
+            title: issue.title,
           });
-
-          console.info(
-            `GitHub triage backfill dispatched #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo} with eve session ${session.id}.`,
-          );
+          const result = await upsertTriageComment(repoRef, issue.issueNumber, formatTriageComment(decision));
+          console.info(`GitHub triage backfill ${result} comment for #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}.`);
         } catch (error) {
-          console.error(`GitHub triage backfill dispatch failed for #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}: ${toErrorMessage(error)}`);
+          console.error(`GitHub triage backfill comment failed for #${issue.issueNumber} in ${repoRef.owner}/${repoRef.repo}: ${toErrorMessage(error)}`);
         }
       }
     }

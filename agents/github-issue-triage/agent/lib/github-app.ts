@@ -26,6 +26,8 @@ type InstallationContext = {
 };
 
 const githubApiBaseUrl = "https://api.github.com";
+const defaultRepos = ["MeganHarrison/alleato-pm"];
+const defaultLabels = ["admin-feedback"];
 
 export async function listOpenIssuesForBackfill(repoRef: RepoRef): Promise<GitHubIssue[]> {
   const installation = await getInstallationContext(repoRef);
@@ -82,10 +84,52 @@ export async function issueAlreadyTriaged(repoRef: RepoRef, issueNumber: number)
     : false;
 }
 
+export async function upsertTriageComment(
+  repoRef: RepoRef,
+  issueNumber: number,
+  body: string,
+): Promise<"created" | "updated"> {
+  const installation = await getInstallationContext(repoRef);
+  const comments = await githubInstallationRequest<unknown[]>(
+    installation.token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/issues/${issueNumber}/comments?per_page=100`,
+  );
+
+  const existing = Array.isArray(comments)
+    ? comments.map(normalizeComment).filter((comment): comment is GitHubIssueComment => comment !== null)
+      .reverse()
+      .find((comment) => comment.body.includes("## Eve GitHub Triage"))
+    : null;
+
+  if (existing) {
+    await githubInstallationRequest(
+      installation.token,
+      `/repos/${repoRef.owner}/${repoRef.repo}/issues/comments/${existing.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ body }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    return "updated";
+  }
+
+  await githubInstallationRequest(
+    installation.token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/issues/${issueNumber}/comments`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body }),
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+  return "created";
+}
+
 export function getBackfillRepos(): RepoRef[] {
   const configured = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_BACKFILL_REPOS);
   const fallback = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_REPOS);
-  const values = configured.length > 0 ? configured : fallback;
+  const values = configured.length > 0 ? configured : fallback.length > 0 ? fallback : defaultRepos;
 
   return values
     .map((value) => {
@@ -117,7 +161,7 @@ export async function resolveInstallationIdForRepo(repoRef: RepoRef): Promise<nu
 function getBackfillLabels(): string[] {
   const configured = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_BACKFILL_LABELS);
   const fallback = normalizeCsv(process.env.EVE_GITHUB_TRIAGE_LABELS);
-  return configured.length > 0 ? configured : fallback;
+  return configured.length > 0 ? configured : fallback.length > 0 ? fallback : defaultLabels;
 }
 
 function getBackfillLimit(): number {

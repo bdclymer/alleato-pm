@@ -207,6 +207,40 @@ export function buildManualRetriageContext(input: {
   ];
 }
 
+export function formatTriageComment(decision: TriageDecision): string {
+  const why = decision.blockedReason
+    ? [decision.blockedReason]
+    : [decision.summary, ...decision.reasonCodes.map((code) => `Reason code: ${code}`)];
+  const approval = decision.approvalRequired
+    ? ["Required before any fix workflow continues."]
+    : ["Not requested, because the issue is blocked or waiting on clarification."];
+  const nextStep = decision.route === "wait-for-clarification"
+    ? ["Clarify the exact route, expected behavior, and proof steps, then rerun triage."]
+    : decision.route === "blocked"
+      ? ["Resolve the blocking configuration or routing condition, then rerun triage."]
+      : decision.route === "pr-required"
+        ? ["Open a pull request path after explicit approval."]
+        : ["Use the direct-to-main lane after explicit approval and targeted verification."];
+
+  return [
+    "## Eve GitHub Triage",
+    "",
+    `Path: ${decision.route}`,
+    "",
+    "Why:",
+    ...why.map((item) => `- ${item}`),
+    "",
+    "Approval:",
+    ...approval.map((item) => `- ${item}`),
+    "",
+    "Verification:",
+    ...decision.verificationPlan.map((item) => `- ${item}`),
+    "",
+    "Next step:",
+    ...nextStep.map((item) => `- ${item}`),
+  ].join("\n");
+}
+
 export function shouldDispatchComment(body: string, botName: string): boolean {
   const normalized = body.toLowerCase();
   return normalized.includes(`/triage`) || normalized.includes(`/reroute`) || normalized.includes(`@${botName.toLowerCase()}`);
@@ -251,17 +285,22 @@ function blockedDecision(input: TriageIssueInput, reason: string): TriageDecisio
   };
 }
 
+const defaultAllowedRepos = ["MeganHarrison/alleato-pm"];
+const defaultRequiredLabels = ["admin-feedback"];
+
 function resolveConfig(allowedReposOverride?: string[], requiredLabelsOverride?: string[]): TriageConfig {
-  const allowedRepos = normalizeList(allowedReposOverride ?? splitCsv(process.env.EVE_GITHUB_TRIAGE_REPOS));
-  const requiredLabels = normalizeList(requiredLabelsOverride ?? splitCsv(process.env.EVE_GITHUB_TRIAGE_LABELS));
-  const missingEnv = [
-    ...(allowedRepos.length === 0 ? ["EVE_GITHUB_TRIAGE_REPOS"] : []),
-    ...(requiredLabels.length === 0 ? ["EVE_GITHUB_TRIAGE_LABELS"] : []),
-  ];
+  const configuredAllowedRepos = allowedReposOverride ?? splitCsv(process.env.EVE_GITHUB_TRIAGE_REPOS);
+  const configuredRequiredLabels = requiredLabelsOverride ?? splitCsv(process.env.EVE_GITHUB_TRIAGE_LABELS);
+  const allowedRepos = normalizeList(
+    configuredAllowedRepos.length > 0 ? configuredAllowedRepos : defaultAllowedRepos,
+  );
+  const requiredLabels = normalizeList(
+    configuredRequiredLabels.length > 0 ? configuredRequiredLabels : defaultRequiredLabels,
+  );
 
   return {
     allowedRepos,
-    missingEnv,
+    missingEnv: [],
     requiredLabels,
   };
 }
@@ -277,7 +316,9 @@ function normalizeList(values: string[]): string[] {
 }
 
 function splitCsv(value: string | undefined): string[] {
-  return typeof value === "string" ? value.split(",") : [];
+  if (typeof value !== "string") return [];
+  const items = value.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
+  return items;
 }
 
 function truncateBody(body: string): string {
