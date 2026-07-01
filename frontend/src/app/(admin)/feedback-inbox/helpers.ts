@@ -5,6 +5,7 @@ import {
   ARCHIVED_STATUSES,
   DEFERRED_STATUSES,
   IN_PROGRESS_STATUSES,
+  PR_CREATED_STATUSES,
   RESOLVED_STATUSES,
 } from "./constants";
 import type {
@@ -80,6 +81,7 @@ export function toDisplayStatus(status: string): DisplayStatus {
   if (ARCHIVED_STATUSES.has(status)) return "archived";
   if (RESOLVED_STATUSES.has(status)) return "resolved";
   if (DEFERRED_STATUSES.has(status)) return "deferred";
+  if (PR_CREATED_STATUSES.has(status)) return "pr_created";
   if (IN_PROGRESS_STATUSES.has(status)) return "in_progress";
   return "open";
 }

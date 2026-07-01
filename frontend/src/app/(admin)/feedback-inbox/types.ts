@@ -69,6 +69,7 @@ export type StatusFilter =
 export type DisplayStatus =
   | "open"
   | "in_progress"
+  | "pr_created"
   | "deferred"
   | "resolved"
   | "archived";

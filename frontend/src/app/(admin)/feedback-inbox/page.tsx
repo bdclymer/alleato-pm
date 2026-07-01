@@ -126,7 +126,7 @@ export default function FeedbackInboxPage() {
         } else if (filter === "dispatched") {
           params.set(
             "status",
-            "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,deferred,resolved,closed",
+            "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed",
           );
         } else if (filter === "deferred") {
           params.set("status", "deferred");
@@ -138,7 +138,7 @@ export default function FeedbackInboxPage() {
       } else {
         params.set(
           "status",
-          "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,deferred,resolved,closed",
+          "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed",
         );
       }
       const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(

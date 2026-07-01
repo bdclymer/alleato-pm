@@ -170,7 +170,7 @@ export function FeedbackDetail({
                     "bg-status-success/10 text-status-success hover:bg-status-success/15",
                   displayStatus === "open" &&
                     "bg-status-warning/10 text-status-warning hover:bg-status-warning/15",
-                  displayStatus === "in_progress" &&
+                  (displayStatus === "in_progress" || displayStatus === "pr_created") &&
                     "bg-status-info/10 text-status-info hover:bg-status-info/15",
                   displayStatus === "deferred" &&
                     "bg-muted text-muted-foreground",

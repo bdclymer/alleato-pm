@@ -287,6 +287,7 @@ const ENDPOINTS = [
   // Auth checks — these must require auth
   ["POST", "/api/cron/daily-flags", "Cron unauthorized", [401]],
   ["POST", "/api/cron/autonomous-triage", "Cron unauthorized", [401]],
+  ["POST", "/api/cron/sync-feedback-pr-status", "Cron unauthorized", [401]],
   ["GET", "/api/monitoring/notify", "Monitoring notify unauthorized", [401]],
 ];
 

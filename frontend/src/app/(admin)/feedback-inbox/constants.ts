@@ -1,6 +1,7 @@
 import {
   Archive,
   Circle,
+  GitPullRequest,
   Loader2,
   PauseCircle,
   ShieldCheck,
@@ -27,6 +28,7 @@ export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 export const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
   { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
+  { value: "pr_created", label: "PR Created" },
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
   { value: "archived", label: "Archived" },
@@ -58,6 +60,13 @@ export const STATUS_META: Record<
     className: "text-status-info",
     dotClassName: "bg-status-info animate-pulse",
     label: "In Progress",
+    showInList: true,
+  },
+  pr_created: {
+    icon: GitPullRequest,
+    className: "text-status-info",
+    dotClassName: "bg-status-info",
+    label: "PR Created",
     showInList: true,
   },
   deferred: {
@@ -95,11 +104,13 @@ export const IN_PROGRESS_STATUSES = new Set([
   "verifying",
   "in_review",
 ]);
+export const PR_CREATED_STATUSES = new Set(["pr_created"]);
 export const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
 export const DEFERRED_STATUSES = new Set(["deferred"]);
 export const ARCHIVED_STATUSES = new Set(["archived"]);
 export const LIST_SECTION_ORDER: DisplayStatus[] = [
   "in_progress",
+  "pr_created",
   "open",
   "deferred",
   "resolved",

@@ -297,3 +297,86 @@ export async function addGitHubIssueComment(issueNumber: number, body: string) {
   await addIssueComment(config, issueNumber, body);
   return true;
 }
+
+export type LinkedPullRequestStatus = {
+  number: number;
+  url: string;
+  state: "open" | "closed";
+  merged: boolean;
+};
+
+async function isPullRequestMerged(
+  config: NonNullable<ReturnType<typeof getRepoConfig>>,
+  pullNumber: number,
+): Promise<boolean> {
+  const response = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/pulls/${pullNumber}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const data = await response.json();
+  return Boolean(data.merged);
+}
+
+/**
+ * Finds pull requests that reference the given issue number (via a
+ * "Closes #N" style closing keyword or a plain mention) so the feedback
+ * inbox can reflect PR-created / merged state without a live webhook.
+ */
+export async function findLinkedPullRequests(
+  issueNumber: number,
+): Promise<LinkedPullRequestStatus[] | null> {
+  const config = getRepoConfig();
+  if (!config) {
+    return null;
+  }
+
+  const query = `repo:${config.owner}/${config.repo} type:pr "#${issueNumber}"`;
+  const response = await fetch(
+    `https://api.github.com/search/issues?q=${encodeURIComponent(query)}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`GitHub PR search failed: ${response.status} ${await response.text()}`);
+  }
+
+  const data = await response.json();
+  const items: unknown[] = Array.isArray(data.items) ? data.items : [];
+
+  const results: LinkedPullRequestStatus[] = [];
+  for (const raw of items) {
+    const item = raw as {
+      pull_request?: unknown;
+      number: number;
+      html_url: string;
+      state: string;
+    };
+    if (!item.pull_request) continue;
+
+    if (item.state === "closed") {
+      const merged = await isPullRequestMerged(config, item.number);
+      results.push({ number: item.number, url: item.html_url, state: "closed", merged });
+    } else {
+      results.push({ number: item.number, url: item.html_url, state: "open", merged: false });
+    }
+  }
+
+  return results;
+}
