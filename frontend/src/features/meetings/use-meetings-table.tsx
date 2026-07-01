@@ -23,6 +23,7 @@ import {
   type EditableField,
   type EditContext,
 } from "@/features/meetings/meetings-table-config";
+import { getMeetingDetailHref } from "@/features/meetings/meeting-routes";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -598,7 +599,13 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleInlineCancel,
   };
 
-  const tableColumns = buildMeetingTableColumns(editContext);
+  const getMeetingHref = React.useCallback(
+    (meeting: Meeting) =>
+      getMeetingDetailHref({ meetingId: meeting.id, projectId }),
+    [projectId],
+  );
+
+  const tableColumns = buildMeetingTableColumns(editContext, getMeetingHref);
 
   // ── Sorting and pagination ────────────────────────────────────────────────────
   const sortedMeetings = sortMeetings(
@@ -662,11 +669,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   };
 
   const handleOpenMeetingPage = (meeting: Meeting) => {
-    if (projectId) {
-      router.push(`/${projectId}/meetings/${meeting.id}`);
-    } else {
-      router.push(`/meetings/${meeting.id}`);
-    }
+    router.push(getMeetingHref(meeting));
   };
 
   const handleEdit = (meeting: Meeting) => {

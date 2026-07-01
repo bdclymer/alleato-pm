@@ -44,6 +44,7 @@ import {
 } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import type { Meeting } from "@/lib/validation/meetings";
+import { getMeetingDetailHref } from "@/features/meetings/meeting-routes";
 
 // ─── Inline editing types ───────────────────────────────────────────────────
 
@@ -67,6 +68,11 @@ export interface EditContext {
   ) => Promise<void>;
   handleInlineCancel: () => void;
 }
+
+export type GetMeetingHref = (meeting: Meeting) => string;
+
+const defaultGetMeetingHref: GetMeetingHref = (meeting) =>
+  getMeetingDetailHref({ meetingId: meeting.id });
 
 // ─── Column configs ──────────────────────────────────────────────────────────
 
@@ -920,7 +926,10 @@ function InlineCategorySelect({
 
 // ─── Column builder ───────────────────────────────────────────────────────────
 
-export function buildMeetingTableColumns(editContext?: EditContext): TableColumn<Meeting>[] {
+export function buildMeetingTableColumns(
+  editContext?: EditContext,
+  getMeetingHref: GetMeetingHref = defaultGetMeetingHref,
+): TableColumn<Meeting>[] {
   return [
     // ── Title: link to project detail page ──────────────────────────────────
     {
@@ -952,7 +961,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               fallbackLabel={`Embedding: ${embeddingStatus.label}`}
             />
             <a
-              href={`/meetings/${item.id}`}
+              href={getMeetingHref(item)}
               className="font-medium truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
               onClick={(event) => event.stopPropagation()}
             >
@@ -1303,6 +1312,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       csvValue: (item) => getEmbeddingStatus(item).label,
       sortValue: (item) => getEmbeddingStatus(item).sortValue,
       sortable: true,
+      editable: false,
     },
   ];
 }
