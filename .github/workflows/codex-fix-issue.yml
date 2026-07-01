@@ -44,7 +44,6 @@ jobs:
           RUNNER_TEMP: ${{ runner.temp }}
         with:
           script: |
-            const core = require("@actions/core");
             const fs = require("fs");
             const path = require("path");
 
@@ -620,7 +619,6 @@ jobs:
           COMMIT_SHA: ${{ steps.push_main.outputs.commit_sha }}
         with:
           script: |
-            const core = require("@actions/core");
             const sha = process.env.COMMIT_SHA;
             if (!sha) {
               core.setFailed("Direct publish commit SHA was not returned.");
