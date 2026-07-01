@@ -9,7 +9,7 @@ import {
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -30,6 +30,35 @@ function isDocumentRecordType(value: string): value is DocumentRecordType {
   );
 }
 
+function buildPrintFallbackHtml(html: string): string {
+  const printEnhancer = `
+<style>
+  @media screen {
+    body::before {
+      content: "Server PDF generation is unavailable. Use your browser print dialog to save this document as a PDF.";
+      display: block;
+      margin: 16px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      font: 14px/1.5 Arial, Helvetica, sans-serif;
+    }
+  }
+</style>
+<script>
+  window.addEventListener("load", () => {
+    window.setTimeout(() => window.print(), 150);
+  });
+</script>`;
+
+  if (html.includes("</head>")) {
+    return html.replace("</head>", `${printEnhancer}</head>`);
+  }
+
+  return `${printEnhancer}${html}`;
+}
+
 export const GET = withApiGuardrails(
   "document-center/[recordType]/[recordId]/pdf#GET",
   async ({ request, params }) => {
@@ -48,15 +77,34 @@ export const GET = withApiGuardrails(
 
     const bundle = await getDocumentBundle(supabase, recordType, recordId);
     const html = renderDocumentHtml(bundle);
-    const pdfBuffer = await renderPdfFromHtml(html);
+    try {
+      const pdfBuffer = await renderPdfFromHtml(html);
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${bundle.filename}"`,
-        "Cache-Control": "no-store",
-      },
-    });
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${bundle.filename}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    } catch (pdfError) {
+      logger.error({
+        msg: "[document-center/pdf] PDF generation failed; returning print fallback",
+        recordType,
+        recordId,
+        error: pdfError instanceof Error ? pdfError.message : String(pdfError),
+      });
+
+      return new NextResponse(buildPrintFallbackHtml(html), {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `inline; filename="${bundle.filename.replace(/\.pdf$/i, ".html")}"`,
+          "Cache-Control": "no-store",
+          "X-Alleato-Pdf-Fallback": "print-html",
+        },
+      });
+    }
     },
 );

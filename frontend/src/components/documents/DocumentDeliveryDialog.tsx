@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { apiFetch, apiFetchBlob } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import type { DocumentRecordType } from "@/lib/documents/record-documents";
 
 interface RecipientOption {
@@ -174,21 +174,17 @@ export function DocumentDeliveryDialog({
   const handleDownload = React.useCallback(async () => {
     setIsDownloading(true);
     try {
-      const blob = await apiFetchBlob(
-        `/api/document-center/${recordType}/${recordId}/pdf`,
-      );
-      const filename = `${number}-${title}.pdf`;
-
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
+      const href = `/api/document-center/${recordType}/${recordId}/pdf`;
+
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.download = `${number}-${title}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("PDF downloaded");
+      toast.success("Document opened");
     } catch (error) {
       toast.error("Download failed");
     } finally {
