@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
+  getDocumentPdfOptions,
   getDocumentBundle,
   renderDocumentHtml,
   type DocumentRecordType,
@@ -48,8 +49,9 @@ export const GET = withApiGuardrails(
 
     const bundle = await getDocumentBundle(supabase, recordType, recordId);
     const html = renderDocumentHtml(bundle);
+    const pdfOptions = getDocumentPdfOptions(bundle);
     try {
-      const pdfBuffer = await renderPdfFromHtml(html);
+      const pdfBuffer = await renderPdfFromHtml(html, pdfOptions);
 
       return new NextResponse(new Uint8Array(pdfBuffer), {
         status: 200,

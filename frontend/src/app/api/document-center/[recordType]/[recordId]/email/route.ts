@@ -7,6 +7,7 @@ import { sendDocumentEmail } from "@/lib/documents/email";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import { logger } from "@/lib/logger";
 import {
+  getDocumentPdfOptions,
   getDocumentBundle,
   renderDocumentEmailHtml,
   renderDocumentEmailText,
@@ -157,7 +158,7 @@ export const POST = withApiGuardrails(
     let attachments: Array<{ filename: string; content: string }> = [];
     try {
       const documentHtml = renderDocumentHtml(bundle);
-      const pdfBuffer = await renderPdfFromHtml(documentHtml);
+      const pdfBuffer = await renderPdfFromHtml(documentHtml, getDocumentPdfOptions(bundle));
       attachments = [{ filename: bundle.filename, content: pdfBuffer.toString("base64") }];
     } catch (pdfError) {
       logger.error({ msg: "[document-center/email] PDF generation failed, sending without attachment:", data: pdfError });

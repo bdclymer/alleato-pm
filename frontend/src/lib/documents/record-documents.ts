@@ -1,6 +1,15 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parse } from "node-html-parser";
 
 import type { Database } from "@/types/database.types";
+import {
+  BRANDED_FOOTER_MARGIN,
+  buildBrandedDocumentHtml,
+  buildBrandedFooterTemplate,
+} from "@/lib/documents/branded-letterhead";
 
 export type DocumentRecordType =
   | "prime-contract"
@@ -102,6 +111,9 @@ interface VendorRecipientRow {
   contact_email: string | null;
   contact_name: string | null;
   name: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface CommitmentBaseRow {
@@ -127,6 +139,7 @@ interface CommitmentBaseRow {
   bill_to?: string | null;
   ship_to?: string | null;
   ship_via?: string | null;
+  prime_contract_id?: string | null;
   inclusions?: string | null;
   exclusions?: string | null;
   invoice_contact_ids?: string[] | null;
@@ -203,6 +216,48 @@ interface ProjectRow {
   address: string | null;
   project_number: string | null;
   company_id: string | null;
+  state?: string | null;
+  summary_metadata?: {
+    city?: string | null;
+    postal_code?: string | null;
+  } | null;
+}
+
+interface CompanyProfileRow {
+  id: string;
+  name: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  title?: string | null;
+}
+
+interface ContactProfile {
+  name: string | null;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+interface CommitmentContractTemplateData {
+  ownerName: string | null;
+  contractorNotice: ContactProfile & {
+    companyName: string | null;
+    addressLine1: string | null;
+    addressLine2: string | null;
+  };
+  counterpartyNotice: ContactProfile & {
+    companyName: string | null;
+    addressLine1: string | null;
+    addressLine2: string | null;
+  };
+  contractorSignerName: string | null;
+  contractorSignerTitle: string | null;
+}
+
+export interface DocumentPdfOptions {
+  footerTemplate?: string;
+  marginBottom?: string;
 }
 
 export interface DocumentRecipientSuggestion {
@@ -254,7 +309,10 @@ export interface DocumentBundle {
     name: string;
     address: string;
     jobNumber: string;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
   };
+  commitmentContractTemplate?: CommitmentContractTemplateData;
   sections: DocumentSection[];
   totals: Array<{ label: string; value: string }>;
   lineItems: DocumentLineItem[];
@@ -440,289 +498,347 @@ function getTotal(bundle: DocumentBundle, label: string): string {
   return bundle.totals.find((item) => item.label === label)?.value ?? "$0.00";
 }
 
-function renderSubcontractCommitmentHtml(bundle: DocumentBundle): string {
-  const effectiveDate = formatLegalDate(bundle.effectiveDate);
-  const contractor = bundle.parties?.contractor || "Alleato, LLC";
-  const subcontractor = bundle.parties?.counterparty || "Not set";
-  const projectName = bundle.project?.name || "Not set";
-  const projectAddress = bundle.project?.address || "Not set";
-  const projectJobNumber = bundle.project?.jobNumber || "Not set";
+let cachedCommitmentTemplateHtml: string | null = null;
 
+function getCommitmentTemplateHtml(): string {
+  if (cachedCommitmentTemplateHtml) {
+    return cachedCommitmentTemplateHtml;
+  }
+
+  cachedCommitmentTemplateHtml = readFileSync(
+    path.join(process.cwd(), "src", "lib", "documents", "templates", "commitment-subcontract-template.html"),
+    "utf8",
+  );
+  return cachedCommitmentTemplateHtml;
+}
+
+function formatAddressLine2(
+  city: string | null | undefined,
+  state: string | null | undefined,
+  postalCode?: string | null,
+): string | null {
+  const parts = [city, state].map((value) => value?.trim()).filter(Boolean);
+  const base = parts.join(", ");
+  const zip = postalCode?.trim();
+  if (base && zip) return `${base} ${zip}`;
+  return base || zip || null;
+}
+
+function formatContactName(person: PersonRow | null | undefined): string | null {
+  if (!person) return null;
+  const value = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+  return value || null;
+}
+
+function getContactPhone(person: PersonRow | null | undefined): string | null {
+  return person?.phone_business || person?.phone_mobile || null;
+}
+
+function pickAuthorizedSigner(people: PersonRow[]): PersonRow | null {
+  return (
+    people.find((person) => /\b(ceo|president|owner)\b/i.test(person.job_title || "")) ??
+    null
+  );
+}
+
+function applyTextReplacements(html: string, replacements: Array<[RegExp, string]>) {
+  let output = html;
+  for (const [pattern, replacement] of replacements) {
+    output = output.replace(pattern, replacement);
+  }
+  return output;
+}
+
+function isMeaningfulValue(value: string | null | undefined): value is string {
+  return Boolean(value && value.trim() && value.trim() !== "Not set");
+}
+
+function renderInlineValueOrBlank(
+  value: string | null | undefined,
+  width = "220px",
+): string {
+  if (!isMeaningfulValue(value)) {
+    return `<span style="display:inline-block;min-width:${width};border-bottom:1px solid #111;height:1em;vertical-align:baseline;"></span>`;
+  }
+
+  return `<span style="font-weight:600;">${renderHtmlValue(value.trim())}</span>`;
+}
+
+function replaceHtmlRangeByMarkers(
+  html: string,
+  startMarker: string,
+  endMarker: string,
+  replacement: string,
+): string {
+  const startTextIndex = html.indexOf(startMarker);
+  const endTextIndex = html.indexOf(endMarker);
+  if (startTextIndex === -1 || endTextIndex === -1 || endTextIndex <= startTextIndex) {
+    return html;
+  }
+
+  const startTagIndex = html.lastIndexOf("<p", startTextIndex);
+  const endTagIndex = html.lastIndexOf("<p", endTextIndex);
+  if (startTagIndex === -1 || endTagIndex === -1 || endTagIndex <= startTagIndex) {
+    return html;
+  }
+
+  return `${html.slice(0, startTagIndex)}${replacement}${html.slice(endTagIndex)}`;
+}
+
+function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
+
+  const renderNoticeLines = (notice: CommitmentContractTemplateData["contractorNotice"]) =>
+    [
+      notice?.name,
+      notice?.companyName,
+      notice?.email,
+      notice?.addressLine1,
+      notice?.addressLine2,
+      notice?.phone ? `Phone: ${notice.phone}` : null,
+    ]
+      .filter(isMeaningfulValue)
+      .map(
+        (line) => `
+          <p align="justify" style="margin:0 0 8px;">
+            <font color="#000000">
+              <span style="text-decoration:none">
+                <font face="Times New Roman, serif">
+                  <font size="3" style="font-size:12pt">
+                    <span style="font-style:normal">
+                      <span style="font-weight:normal">${renderHtmlValue(line)}</span>
+                    </span>
+                  </font>
+                </font>
+              </span>
+            </font>
+          </p>
+        `,
+      )
+      .join("");
+
+  return `
+    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+    <p align="justify" style="line-height:100%;margin-bottom:0in">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>If to Subcontractor:</b></span></font></font></span></font>
+    </p>
+    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+    <table width="682" cellpadding="0" cellspacing="0">
+      <col width="146" />
+      <col width="535" />
+      <tr valign="top">
+        <td width="146" style="border:none;padding:0in"></td>
+        <td width="535" style="border:none;padding:0in">
+          ${renderNoticeLines(counterpartyNotice)}
+        </td>
+      </tr>
+      <tr valign="top">
+        <td width="146" style="border:none;padding:0in">
+          <p align="justify" style="margin:0;">
+            <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">If to Contractor:</span></span></font></font></span></font>
+          </p>
+        </td>
+        <td width="535" style="border:none;padding:0in">
+          ${renderNoticeLines(contractorNotice)}
+        </td>
+      </tr>
+    </table>
+    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+  `;
+}
+
+function buildCommitmentExhibitAHtml(bundle: DocumentBundle): string {
   const description = getSectionField(bundle, "Overview", "Description");
-  const accountingMethod = getSectionField(bundle, "Overview", "Accounting Method");
   const paymentTerms = getSectionField(bundle, "Commercial Terms", "Payment Terms");
-  const retainage = getSectionField(bundle, "Commercial Terms", "Retainage");
+  const originalAmount = getTotal(bundle, "Original Amount");
   const startDate = getSectionField(bundle, "Dates", "Start Date");
   const estimatedCompletion = getSectionField(bundle, "Dates", "Estimated Completion");
-  const actualCompletion = getSectionField(bundle, "Dates", "Actual Completion");
-  const signedReceived = getSectionField(bundle, "Dates", "Signed Received");
-
   const inclusions = bundle.listSections.find((section) => section.title === "Inclusions")?.items ?? [];
   const exclusions = bundle.listSections.find((section) => section.title === "Exclusions")?.items ?? [];
 
-  const lineItemsTable = bundle.lineItems.length
-    ? `
-      <table>
-        <thead>
-          <tr>
-            <th>Line</th>
-            <th>Description</th>
-            <th>Qty</th>
-            <th>Unit</th>
-            <th>Unit Cost</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${bundle.lineItems
-            .map(
-              (item) => `
-                <tr>
-                  <td>${renderHtmlValue(item.lineNumber)}</td>
-                  <td>${renderHtmlValue(item.description)}</td>
-                  <td>${renderHtmlValue(item.quantity)}</td>
-                  <td>${renderHtmlValue(item.unit)}</td>
-                  <td>${renderHtmlValue(item.unitCost)}</td>
-                  <td>${renderHtmlValue(item.total)}</td>
-                </tr>
-              `,
-            )
-            .join("")}
-        </tbody>
-      </table>
-    `
-    : "<p class=\"muted\">No line items added.</p>";
+  const lineItemsRows = bundle.lineItems
+    .map(
+      (item) => `
+        <tr>
+          <td style="border:1px solid #000;padding:6px 8px;">${renderHtmlValue(item.lineNumber)}</td>
+          <td style="border:1px solid #000;padding:6px 8px;">${renderHtmlValue(item.description)}</td>
+          <td style="border:1px solid #000;padding:6px 8px;text-align:center;">${renderHtmlValue(item.quantity)}</td>
+          <td style="border:1px solid #000;padding:6px 8px;text-align:center;">${renderHtmlValue(item.unit)}</td>
+          <td style="border:1px solid #000;padding:6px 8px;text-align:right;">${renderHtmlValue(item.total)}</td>
+        </tr>
+      `,
+    )
+    .join("");
 
-  const renderExhibitList = (items: string[]) =>
-    items.length > 0
-      ? `<ul>${items.map((item) => `<li>${renderHtmlValue(item)}</li>`).join("")}</ul>`
-      : "<p class=\"muted\">No items specified.</p>";
+  const renderBulletList = (items: string[]) =>
+    items.length === 0
+      ? `<p style="margin:0 0 12px 0;"><font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">None specified in the commitment record.</span></span></font></font></span></font></p>`
+      : `
+          <ul style="margin:0 0 14px 18px;padding:0;">
+            ${items
+              .map(
+                (item) => `
+                  <li style="margin:0 0 8px 0;">
+                    <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">${renderHtmlValue(item)}</span></span></font></font></span></font>
+                  </li>
+                `,
+              )
+              .join("")}
+          </ul>
+        `;
 
-  return `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charSet="utf-8" />
-      <title>${renderHtmlValue(bundle.filename)}</title>
-      <style>
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          font-family: "Times New Roman", Georgia, serif;
-          color: #111827;
-          background: #ffffff;
-          line-height: 1.45;
-          font-size: 12pt;
-        }
-        .page {
-          max-width: 820px;
-          margin: 0 auto;
-          padding: 30px 28px 40px;
-        }
-        .title {
-          text-align: center;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          margin: 0 0 18px;
-          font-size: 18pt;
-          font-weight: 700;
-        }
-        p { margin: 0 0 10px; }
-        .section-title {
-          margin: 18px 0 8px;
-          font-size: 12pt;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
-        .subsection-title {
-          margin: 14px 0 6px;
-          font-size: 11pt;
-          font-weight: 700;
-        }
-        .letter-list {
-          padding-left: 18px;
-          margin: 0 0 12px;
-        }
-        .letter-list li {
-          margin: 6px 0;
-        }
-        .money-grid,
-        .dates-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px 18px;
-          margin: 8px 0 14px;
-        }
-        .money-grid div,
-        .dates-grid div {
-          border-bottom: 1px solid #d1d5db;
-          padding: 4px 0;
-        }
-        .label {
-          font-weight: 700;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 8px;
-        }
-        th, td {
-          border: 1px solid #d1d5db;
-          padding: 7px 8px;
-          vertical-align: top;
-          font-size: 10.5pt;
-        }
-        th {
-          background: #f3f4f6;
-          text-align: left;
-          font-weight: 700;
-        }
-        ul {
-          margin: 0;
-          padding-left: 20px;
-        }
-        li { margin: 4px 0; }
-        .signature-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-          margin-top: 18px;
-        }
-        .signature-block {
-          border: 1px solid #d1d5db;
-          padding: 12px;
-          min-height: 155px;
-        }
-        .sig-line {
-          margin-top: 26px;
-          border-bottom: 1px solid #111827;
-          height: 20px;
-        }
-        .muted {
-          color: #6b7280;
-        }
-        .exhibit {
-          margin-top: 24px;
-          padding-top: 14px;
-          border-top: 1px solid #9ca3af;
-          page-break-inside: avoid;
-        }
-        .footer {
-          margin-top: 18px;
-          text-align: right;
-          color: #6b7280;
-          font-size: 10pt;
-        }
-        @media print {
-          .exhibit {
-            page-break-before: always;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <main class="page">
-        <h1 class="title">Construction Subcontract</h1>
+  return `
+    <p align="center" style="line-height:100%;margin-bottom:0in;page-break-before:always">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>EXHIBIT &quot;A&quot;</b></span></font></font></span></font>
+    </p>
+    <p align="center" style="line-height:100%;margin-bottom:0in">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>SUBCONTRACTOR SCOPE OF WORK</b></span></font></font></span></font>
+    </p>
+    <p style="line-height:100%;margin-bottom:0in"><br /></p>
+    <p style="margin:0 0 12px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Subcontractor shall furnish all necessary equipment, material, and labor required for commitment ${renderHtmlValue(bundle.number)} on ${renderHtmlValue(bundle.project?.name || "the project")}.</span></span></font></font></span></font>
+    </p>
+    <p style="margin:0 0 12px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Project address: ${renderHtmlValue(bundle.project?.addressLine1 || bundle.project?.address || "Not set")}${bundle.project?.addressLine2 ? `, ${renderHtmlValue(bundle.project.addressLine2)}` : ""}</span></span></font></font></span></font>
+    </p>
+    <p style="margin:0 0 12px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Contract amount: ${renderHtmlValue(originalAmount)}${isMeaningfulValue(paymentTerms) ? ` • Payment terms: ${renderHtmlValue(paymentTerms)}` : ""}</span></span></font></font></span></font>
+    </p>
+    ${
+      isMeaningfulValue(description)
+        ? `
+          <p style="margin:0 0 12px 0;">
+            <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Commitment description: ${renderHtmlValue(description)}</span></span></font></font></span></font>
+          </p>
+        `
+        : ""
+    }
+    <p style="margin:18px 0 8px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Scope line items</b></span></font></font></span></font>
+    </p>
+    <table width="682" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px 0;">
+      <col width="72" />
+      <col width="370" />
+      <col width="80" />
+      <col width="70" />
+      <col width="90" />
+      <tr>
+        <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Line</th>
+        <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Description</th>
+        <th style="border:1px solid #000;padding:6px 8px;text-align:center;font-weight:700;">Qty</th>
+        <th style="border:1px solid #000;padding:6px 8px;text-align:center;font-weight:700;">Unit</th>
+        <th style="border:1px solid #000;padding:6px 8px;text-align:right;font-weight:700;">Amount</th>
+      </tr>
+      ${lineItemsRows}
+    </table>
+    <p style="margin:0 0 8px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Inclusions</b></span></font></font></span></font>
+    </p>
+    ${renderBulletList(inclusions)}
+    <p style="margin:0 0 8px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Exclusions</b></span></font></font></span></font>
+    </p>
+    ${renderBulletList(exclusions)}
+    <p style="margin:18px 0 10px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><u><span style="font-weight:normal">Date of commencement of Subcontractor’s Work:</span></u></span></font></font></span></font>
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal"> ${renderInlineValueOrBlank(startDate, "200px")}</span></span></font></font></span></font>
+    </p>
+    <p style="margin:0 0 10px 0;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><u><span style="font-weight:normal">The Work of this Subcontract shall be substantially completed not later than:</span></u></span></font></font></span></font>
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal"> ${renderInlineValueOrBlank(estimatedCompletion, "200px")}</span></span></font></font></span></font>
+    </p>
+  `;
+}
 
-        <p>
-          THIS CONSTRUCTION SUBCONTRACT ("Agreement") is made effective as of the ${renderHtmlValue(effectiveDate)}
-          by and between ${renderHtmlValue(contractor)} ("Contractor") and ${renderHtmlValue(subcontractor)} ("Subcontractor").
-        </p>
+function renderCommitmentContractHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const templateRoot = parse(getCommitmentTemplateHtml());
+  templateRoot.querySelector('div[title="header"]')?.remove();
+  templateRoot.querySelector('div[title="footer"]')?.remove();
 
-        <h2 class="section-title">Recitals</h2>
-        <ol class="letter-list" type="A">
-          <li>
-            Contractor is engaged by the Owner to furnish labor and materials and perform work required for the following Project:
-            <p><span class="label">Project Name:</span> ${renderHtmlValue(projectName)}</p>
-            <p><span class="label">Project Address:</span> ${renderHtmlValue(projectAddress)}</p>
-            <p><span class="label">Project Job Number:</span> ${renderHtmlValue(projectJobNumber)}</p>
-          </li>
-          <li>Subcontractor has agreed to furnish labor and materials and perform the Work required by Contractor.</li>
-          <li>The parties agree to reduce to writing all prior oral and written agreements regarding the subject matter of this Agreement.</li>
-        </ol>
+  const projectAddressLine1 = bundle.project?.addressLine1 || bundle.project?.address || "Not set";
+  const projectAddressLine2 = bundle.project?.addressLine2 || "Not set";
+  const contractorName = bundle.parties?.contractor || "Alleato Group";
+  const counterpartyName = bundle.parties?.counterparty || "Not set";
+  const ownerName = templateData?.ownerName || "Not set";
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
 
-        <p>NOW, THEREFORE, for good and valuable consideration, the receipt and sufficiency of which are acknowledged, the parties agree as follows:</p>
+  const contractorNoticeName = contractorNotice?.name || "";
+  const contractorNoticeCompany = contractorNotice?.companyName || contractorName;
+  const contractorNoticeEmail = contractorNotice?.email || "";
+  const contractorNoticeAddressLine1 = contractorNotice?.addressLine1 || "";
+  const contractorNoticeAddressLine2 = contractorNotice?.addressLine2 || "";
+  const contractorNoticePhone = contractorNotice?.phone || "";
 
-        <h2 class="section-title">1. Subcontractor's Obligations</h2>
-        <p><span class="label">Scope of Work.</span> Subcontractor shall perform the Work in accordance with this Agreement and all referenced subcontract documents.</p>
-        <p><span class="label">Description.</span> ${renderHtmlValue(description)}</p>
-        <p><span class="label">Accounting Method.</span> ${renderHtmlValue(accountingMethod)}</p>
+  const counterpartyNoticeName = counterpartyNotice?.name || "";
+  const counterpartyNoticeCompany = counterpartyNotice?.companyName || counterpartyName;
+  const counterpartyNoticeEmail = counterpartyNotice?.email || "";
+  const counterpartyNoticeAddressLine1 = counterpartyNotice?.addressLine1 || "";
+  const counterpartyNoticeAddressLine2 = counterpartyNotice?.addressLine2 || "";
+  const counterpartyNoticePhone = counterpartyNotice?.phone || "";
 
-        <h2 class="section-title">2. Contract Price and Payment Procedures</h2>
-        <div class="money-grid">
-          <div><span class="label">Original Amount:</span> ${renderHtmlValue(getTotal(bundle, "Original Amount"))}</div>
-          <div><span class="label">Billed To Date:</span> ${renderHtmlValue(getTotal(bundle, "Billed To Date"))}</div>
-          <div><span class="label">Balance To Finish:</span> ${renderHtmlValue(getTotal(bundle, "Balance To Finish"))}</div>
-          <div><span class="label">Retainage:</span> ${renderHtmlValue(retainage)}</div>
-        </div>
-        <p><span class="label">Payment Terms.</span> ${renderHtmlValue(paymentTerms)}</p>
+  const bodyHtml = applyTextReplacements(templateRoot.querySelector("body")?.innerHTML ?? templateRoot.toString(), [
+    [/the 1st day of August, 2024/g, formatLegalDate(bundle.effectiveDate)],
+    [/Alleato\s*Group/g, contractorName],
+    [/Deem,\s*LLC/g, counterpartyName],
+    [/Goodwill\s*Industries of Central Indiana,\s*Llc/g, ownerName],
+    [/Goodwill\s*Bart/g, bundle.project?.name || "Not set"],
+    [/940\s*N Marr Road/g, projectAddressLine1],
+    [/Columbus,&nbsp;Indiana\s*47201/g, projectAddressLine2],
+    [/24-104/g, bundle.project?.jobNumber || "Not set"],
+    [/Chad(?:&nbsp;|\s+)Gooding/g, counterpartyNoticeName],
+    [/cgooding@deemfirst\.com/g, counterpartyNoticeEmail],
+    [/11201(?:&nbsp;|\s+)USA(?:&nbsp;|\s+)Pkwy/g, counterpartyNoticeAddressLine1],
+    [/Fishers(?:&nbsp;|\s+)Indiana(?:&nbsp;|\s+)46037/g, counterpartyNoticeAddressLine2],
+    [/\(317\)\s*491-2449/g, counterpartyNoticePhone],
+    [/Nick(?:&nbsp;|\s+)Jepson/g, contractorNoticeName],
+    [/njepson@alleatogroup\.com/g, contractorNoticeEmail],
+    [/Fishers(?:,|&nbsp;|\s)+Indiana(?:&nbsp;|\s)+46037/g, counterpartyNoticeAddressLine2],
+    [/Fishers,\s*Indiana\s*46037/g, counterpartyNoticeAddressLine2],
+    [/Cell:\s*\(727\)\s*603-1265/g, contractorNoticePhone ? `Cell: ${contractorNoticePhone}` : ""],
+    [/Brandon\s*Clymer/g, templateData?.contractorSignerName || ""],
+    [/President/g, templateData?.contractorSignerTitle || ""],
+    [/ProcoreSubcontractorSignHere/g, ""],
+    [/ProcoreSubcontractorPrintHere/g, ""],
+    [/ProcoreSubcontractorTitleHere/g, ""],
+    [/ProcoreSubcontractorSignedDate/g, ""],
+    [/ProcoreGeneralContractorSignHere/g, ""],
+    [/ProcoreGeneralContractorSignedDate/g, ""],
+  ]);
 
-        <h2 class="section-title">3. Schedule of Values</h2>
-        ${lineItemsTable}
+  const noticeNormalizedBody = replaceHtmlRangeByMarkers(
+    bodyHtml,
+    "If\nto Subcontractor:",
+    "i.\n\tMerger.",
+    buildCommitmentNoticeHtml(bundle),
+  );
 
-        <h2 class="section-title">4. Project Dates</h2>
-        <div class="dates-grid">
-          <div><span class="label">Start Date:</span> ${renderHtmlValue(startDate)}</div>
-          <div><span class="label">Estimated Completion:</span> ${renderHtmlValue(estimatedCompletion)}</div>
-          <div><span class="label">Actual Completion:</span> ${renderHtmlValue(actualCompletion)}</div>
-          <div><span class="label">Signed Received:</span> ${renderHtmlValue(signedReceived)}</div>
-        </div>
+  const exhibitNormalizedBody = replaceHtmlRangeByMarkers(
+    noticeNormalizedBody,
+    "EXHIBIT\n&quot;A&quot;",
+    "EXHIBIT\n&quot;B&quot;",
+    buildCommitmentExhibitAHtml(bundle),
+  );
 
-        <h2 class="section-title">5. Execution</h2>
-        <p>IN WITNESS WHEREOF, the parties have executed this Agreement effective as of the date first written above.</p>
-        <div class="signature-grid">
-          <div class="signature-block">
-            <p class="label">Contractor</p>
-            <p>${renderHtmlValue(contractor)}</p>
-            <div class="sig-line"></div>
-            <p>Name / Signature</p>
-            <div class="sig-line"></div>
-            <p>Date</p>
-          </div>
-          <div class="signature-block">
-            <p class="label">Subcontractor</p>
-            <p>${renderHtmlValue(subcontractor)}</p>
-            <div class="sig-line"></div>
-            <p>Name / Signature</p>
-            <div class="sig-line"></div>
-            <p>Date</p>
-          </div>
-        </div>
+  const normalizedBody = exhibitNormalizedBody
+    .replace(/<p[^>]*>,<\/p>/g, "<p></p>")
+    .replace(/<p[^>]*>\s*,\s*<\/p>/g, contractorNoticeAddressLine1 ? `<p>${renderHtmlValue(contractorNoticeAddressLine1)}</p>` : "<p></p>")
+    .replace(/<p[^>]*>\s*<\/p>\s*<p[^>]*>Cell:\s*<\/p>/g, "<p></p><p></p>");
 
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit A</h2>
-          <h3 class="subsection-title">Subcontractor Scope of Work</h3>
-          ${renderExhibitList(inclusions)}
-        </section>
-
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit B</h2>
-          <h3 class="subsection-title">Exclusions and Clarifications</h3>
-          ${renderExhibitList(exclusions)}
-        </section>
-
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit C</h2>
-          <h3 class="subsection-title">Billing Processing and Payment Schedule</h3>
-          <p>${renderHtmlValue(paymentTerms)}</p>
-          <p class="muted">Detailed billing package requirements and pay application timing follow project policy.</p>
-        </section>
-
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit D</h2>
-          <h3 class="subsection-title">Schedule of Work</h3>
-          <p><span class="label">Start Date:</span> ${renderHtmlValue(startDate)}</p>
-          <p><span class="label">Estimated Completion:</span> ${renderHtmlValue(estimatedCompletion)}</p>
-        </section>
-
-        <p class="footer">Generated by Alleato</p>
-      </main>
-    </body>
-  </html>`;
+  return buildBrandedDocumentHtml({
+    title: bundle.title,
+    renderHeading: false,
+    renderFooterInBody: false,
+    bodyHtml: normalizedBody,
+  });
 }
 
 export function renderDocumentHtml(bundle: DocumentBundle): string {
-  if (bundle.recordType === "commitment" && bundle.commitmentType === "subcontract") {
-    return renderSubcontractCommitmentHtml(bundle);
+  if (bundle.recordType === "commitment") {
+    return renderCommitmentContractHtml(bundle);
   }
 
   const sectionsHtml = bundle.sections
@@ -1000,6 +1116,17 @@ export function renderDocumentHtml(bundle: DocumentBundle): string {
   </html>`;
 }
 
+export function getDocumentPdfOptions(bundle: DocumentBundle): DocumentPdfOptions {
+  if (bundle.recordType === "commitment") {
+    return {
+      footerTemplate: buildBrandedFooterTemplate(),
+      marginBottom: BRANDED_FOOTER_MARGIN,
+    };
+  }
+
+  return {};
+}
+
 export function renderDocumentEmailHtml(
   bundle: DocumentBundle,
   customMessage: string,
@@ -1271,7 +1398,7 @@ async function loadCommitmentBundle(
   if (base.contract_company_id) {
     const { data: vendorData, error: vendorError } = await supabase
       .from("companies")
-      .select("id, contact_email, contact_name, name")
+      .select("id, contact_email, contact_name, name, address, city, state")
       .eq("id", base.contract_company_id)
       .single();
 
@@ -1284,21 +1411,107 @@ async function loadCommitmentBundle(
 
   const { data: projectData } = await supabase
     .from("projects")
-    .select('id, name, address, project_number, company_id')
+    .select('id, name, address, project_number, company_id, state, summary_metadata')
     .eq("id", base.project_id)
     .single();
 
   const project = (projectData ?? null) as ProjectRow | null;
-  let contractorName = "Alleato, LLC";
-  if (project?.company_id) {
-    const { data: contractorCompany } = await supabase
-      .from("companies")
-      .select("name")
-      .eq("id", project.company_id)
-      .single();
 
-    contractorName = contractorCompany?.name || contractorName;
+  const [projectPrimeContractResult, vendorPeopleResult] = await Promise.all([
+    base.prime_contract_id
+      ? supabase
+          .from("prime_contracts")
+          .select("id, client_id, contract_company_id, contractor_id")
+          .eq("id", base.prime_contract_id)
+          .single()
+      : supabase
+          .from("prime_contracts")
+          .select("id, client_id, contract_company_id, contractor_id")
+          .eq("project_id", base.project_id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+    base.contract_company_id
+      ? supabase
+          .from("people")
+          .select("id, first_name, last_name, email, job_title, phone_business, phone_mobile, company_id")
+          .eq("company_id", base.contract_company_id)
+          .order("created_at", { ascending: true })
+          .limit(5)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (projectPrimeContractResult.error && projectPrimeContractResult.error.code !== "PGRST116") {
+    throw new Error(`Failed to load project contract context: ${projectPrimeContractResult.error.message}`);
   }
+
+  if (vendorPeopleResult.error) {
+    throw new Error(`Failed to load vendor contacts: ${vendorPeopleResult.error.message}`);
+  }
+
+  const projectPrimeContract = projectPrimeContractResult.data;
+  const vendorPeople = (vendorPeopleResult.data ?? []) as PersonRow[];
+  const vendorPrimaryContact = vendorPeople[0] ?? null;
+
+  const companyIds = Array.from(
+    new Set(
+      [
+        vendor?.id,
+        project?.company_id,
+        projectPrimeContract?.client_id,
+        projectPrimeContract?.contract_company_id,
+        projectPrimeContract?.contractor_id,
+      ].filter(Boolean),
+    ),
+  );
+
+  const companyProfilesById = new Map<string, CompanyProfileRow>();
+  if (companyIds.length > 0) {
+    const { data: companyProfiles, error: companyProfilesError } = await supabase
+      .from("companies")
+      .select("id, name, address, city, state, title")
+      .in("id", companyIds);
+
+    if (companyProfilesError) {
+      throw new Error(`Failed to load related companies: ${companyProfilesError.message}`);
+    }
+
+    for (const profile of companyProfiles ?? []) {
+      companyProfilesById.set(profile.id, profile as CompanyProfileRow);
+    }
+  }
+
+  const contractorCompany =
+    (project?.company_id ? companyProfilesById.get(project.company_id) : null) ??
+    (projectPrimeContract?.contractor_id ? companyProfilesById.get(projectPrimeContract.contractor_id) : null) ??
+    (projectPrimeContract?.contract_company_id
+      ? companyProfilesById.get(projectPrimeContract.contract_company_id)
+      : null) ??
+    null;
+  const ownerCompany =
+    (projectPrimeContract?.client_id ? companyProfilesById.get(projectPrimeContract.client_id) : null) ??
+    (projectPrimeContract?.contract_company_id
+      ? companyProfilesById.get(projectPrimeContract.contract_company_id)
+      : null) ??
+    null;
+
+  const contractorCompanyId = contractorCompany?.id ?? null;
+  const contractorPeopleResult = contractorCompanyId
+    ? await supabase
+        .from("people")
+        .select("id, first_name, last_name, email, job_title, phone_business, phone_mobile, company_id")
+        .eq("company_id", contractorCompanyId)
+        .order("created_at", { ascending: true })
+        .limit(20)
+    : { data: [], error: null };
+
+  if (contractorPeopleResult.error) {
+    throw new Error(`Failed to load contractor contacts: ${contractorPeopleResult.error.message}`);
+  }
+
+  const contractorPeople = (contractorPeopleResult.data ?? []) as PersonRow[];
+  const contractorSigner = pickAuthorizedSigner(contractorPeople);
+  const contractorName = contractorCompany?.name || "Alleato Group";
 
   const contactRecipients = await fetchPeopleSuggestions(
     supabase,
@@ -1356,6 +1569,36 @@ async function loadCommitmentBundle(
       name: project?.name || "Not set",
       address: project?.address || "Not set",
       jobNumber: project?.project_number || String(base.project_id),
+      addressLine1: project?.address || "Not set",
+      addressLine2:
+        formatAddressLine2(
+          project?.summary_metadata?.city ?? null,
+          project?.state ?? null,
+          project?.summary_metadata?.postal_code ?? null,
+        ) || null,
+    },
+    commitmentContractTemplate: {
+      ownerName: ownerCompany?.name || null,
+      contractorNotice: {
+        companyName: contractorCompany?.name || contractorName,
+        name: null,
+        title: null,
+        email: null,
+        phone: null,
+        addressLine1: contractorCompany?.address || null,
+        addressLine2: formatAddressLine2(contractorCompany?.city, contractorCompany?.state),
+      },
+      counterpartyNotice: {
+        companyName: vendor?.name || null,
+        name: formatContactName(vendorPrimaryContact),
+        title: vendorPrimaryContact?.job_title || null,
+        email: vendorPrimaryContact?.email || vendor?.contact_email || null,
+        phone: getContactPhone(vendorPrimaryContact),
+        addressLine1: vendor?.address || null,
+        addressLine2: formatAddressLine2(vendor?.city, vendor?.state),
+      },
+      contractorSignerName: formatContactName(contractorSigner),
+      contractorSignerTitle: contractorSigner?.job_title || null,
     },
     sections: [
       {

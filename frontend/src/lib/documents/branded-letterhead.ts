@@ -5,6 +5,7 @@ interface BrandedDocumentHtmlOptions {
   title: string;
   subtitle?: string;
   detail?: string;
+  renderHeading?: boolean;
   meta?: Array<{
     label: string;
     value: string | null | undefined;
@@ -141,6 +142,7 @@ export function buildBrandedDocumentHtml({
   title,
   subtitle,
   detail,
+  renderHeading = true,
   meta,
   bodyHtml,
   renderFooterInBody = true,
@@ -369,12 +371,16 @@ export function buildBrandedDocumentHtml({
       <div class="letterhead-rule"></div>
     </header>
     <main>
-      <section class="document-heading">
+      ${
+        renderHeading
+          ? `<section class="document-heading">
         <h1 class="document-title">${esc(title)}</h1>
         ${subtitle ? `<p class="document-subtitle">${esc(subtitle)}</p>` : ""}
         ${detail ? `<p class="document-detail">${esc(detail)}</p>` : ""}
         ${renderMeta(meta)}
-      </section>
+      </section>`
+          : ""
+      }
       <div class="document-content">
         ${bodyHtml}
       </div>

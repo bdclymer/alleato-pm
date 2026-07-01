@@ -9,6 +9,7 @@ jest.mock("@/lib/documents/pdf", () => ({
 }));
 
 jest.mock("@/lib/documents/record-documents", () => ({
+  getDocumentPdfOptions: jest.fn(),
   getDocumentBundle: jest.fn(),
   renderDocumentHtml: jest.fn(),
 }));
@@ -27,7 +28,11 @@ jest.mock("@/lib/supabase/server", () => ({
 }));
 
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import { getDocumentBundle, renderDocumentHtml } from "@/lib/documents/record-documents";
+import {
+  getDocumentBundle,
+  getDocumentPdfOptions,
+  renderDocumentHtml,
+} from "@/lib/documents/record-documents";
 import { logger } from "@/lib/logger";
 
 function makeRequest() {
@@ -51,6 +56,7 @@ describe("document-center pdf route", () => {
       recordId: "test-id",
       filename: "commitment-test.pdf",
     });
+    (getDocumentPdfOptions as jest.Mock).mockReturnValue({});
     (renderDocumentHtml as jest.Mock).mockReturnValue("<html><head></head><body><main>Commitment</main></body></html>");
   });
 
@@ -63,6 +69,7 @@ describe("document-center pdf route", () => {
     expect(response.headers.get("content-type")).toBe("application/pdf");
     expect(response.headers.get("content-disposition")).toContain("commitment-test.pdf");
     expect(logger.error).not.toHaveBeenCalled();
+    expect(renderPdfFromHtml).toHaveBeenCalledWith(expect.any(String), {});
   });
 
   it("returns a 500 JSON error when PDF rendering fails", async () => {
