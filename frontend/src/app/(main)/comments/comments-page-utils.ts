@@ -2,6 +2,10 @@ import type { AllCommentItem } from "@/app/api/comments/all/route";
 
 export type CommentScope = "active" | "resolved" | "all";
 
+const EXCLUDED_COMMENT_IDS = new Set([
+  "8e0a5ed8-750b-49f1-9aa6-bbc01f634074",
+]);
+
 export const scopeLabels: Record<CommentScope, string> = {
   active: "Active",
   resolved: "Resolved",
@@ -82,4 +86,10 @@ export function filterComments(
     if (scope === "resolved" && !isResolved(comment)) return false;
     return matchesSearch(comment, query.trim());
   });
+}
+
+export function sanitizeComments(comments: AllCommentItem[]): AllCommentItem[] {
+  return comments.filter(
+    (comment) => !EXCLUDED_COMMENT_IDS.has(comment.annotationId),
+  );
 }

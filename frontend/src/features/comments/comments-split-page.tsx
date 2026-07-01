@@ -1,0 +1,384 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { ArrowLeft, ArrowUpRight, Inbox, MessageCircle, PanelLeft } from "lucide-react";
+import useSWR from "swr";
+import { apiFetch } from "@/lib/api-client";
+import type { AllCommentItem } from "@/app/api/comments/all/route";
+import { EmptyState, ErrorState } from "@/components/ds";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { cn } from "@/lib/utils";
+import {
+  type CommentScope,
+  documentLabel,
+  filterComments,
+  isResolved,
+  relativeTimeLabel,
+  sanitizeComments,
+  scopeLabels,
+  sortComments,
+  statusLabel,
+  timeLabel,
+} from "@/app/(main)/comments/comments-page-utils";
+
+function initials(name: string): string {
+  return (
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "C"
+  );
+}
+
+function CommentsListPane({
+  comments,
+  selectedComment,
+  scope,
+  scopeCounts,
+  query,
+  onQueryChange,
+  onScopeChange,
+  onSelect,
+}: {
+  comments: AllCommentItem[];
+  selectedComment: AllCommentItem | null;
+  scope: CommentScope;
+  scopeCounts: Record<CommentScope, number>;
+  query: string;
+  onQueryChange: (value: string) => void;
+  onScopeChange: (scope: CommentScope) => void;
+  onSelect: (comment: AllCommentItem) => void;
+}) {
+  const { isDesktop, onClose } = useSplitPage();
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="border-b border-border/70 px-5 py-4">
+        <div className="min-w-0">
+          <p className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
+            Comments
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Scan open discussion and jump back to the source page.
+          </p>
+        </div>
+
+        <div className="mt-4">
+          <ExpandableSearch
+            value={query}
+            onChange={onQueryChange}
+            placeholder="Search comments"
+            ariaLabel="Search comments"
+          />
+        </div>
+
+        <div className="mt-4 flex gap-1">
+          {(Object.keys(scopeLabels) as CommentScope[]).map((value) => (
+            <Button
+              key={value}
+              type="button"
+              variant={scope === value ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => onScopeChange(value)}
+              className="h-8 flex-1 px-2 text-xs"
+            >
+              {scopeLabels[value]}
+              <span className="ml-1 text-[11px] text-muted-foreground">
+                {scopeCounts[value]}
+              </span>
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {comments.length === 0 ? (
+          <div className="px-5 py-6 text-sm text-muted-foreground">
+            No matching comments.
+          </div>
+        ) : (
+          comments.map((comment) => {
+            const selected = selectedComment?.annotationId === comment.annotationId;
+
+            return (
+              <Button
+                key={comment.annotationId}
+                type="button"
+                onClick={() => {
+                  onSelect(comment);
+                  if (!isDesktop) onClose();
+                }}
+                variant="ghost"
+                className={cn(
+                  "h-auto w-full justify-start rounded-none border-b border-border/60 px-5 py-4 text-left font-normal transition-colors",
+                  selected ? "bg-muted/50 hover:bg-muted/50" : "hover:bg-muted/30",
+                )}
+              >
+                <Avatar className="mt-0.5 h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
+                    {initials(comment.authorName)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+                      {comment.authorName}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {relativeTimeLabel(comment.lastUpdated)}
+                    </span>
+                  </span>
+                  <span className="mt-1 block line-clamp-2 text-sm text-foreground">
+                    {comment.preview}
+                  </span>
+                  <span className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span>{documentLabel(comment.documentId)}</span>
+                    <span>{statusLabel(comment)}</span>
+                    {comment.replyCount > 0 ? (
+                      <span>
+                        {comment.replyCount}{" "}
+                        {comment.replyCount === 1 ? "reply" : "replies"}
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
+              </Button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentsDetailWorkspace({
+  selectedComment,
+  total,
+}: {
+  selectedComment: AllCommentItem | null;
+  total: number;
+}) {
+  const { isDesktop, onOpen } = useSplitPage();
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="border-b border-border/70 px-5 py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              {!isDesktop ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpen}
+                  className="-ml-2 h-8 w-8 text-muted-foreground"
+                  aria-label="Open comments list"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              ) : (
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              )}
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-foreground">
+                  {selectedComment ? selectedComment.authorName : "Comment details"}
+                </p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {selectedComment
+                    ? documentLabel(selectedComment.documentId)
+                    : `${total} comments across Alleato`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {selectedComment?.documentId.startsWith("/") ? (
+            <Button asChild size="sm">
+              <Link href={selectedComment.documentId}>
+                Open source
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {selectedComment ? (
+          <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-5 py-8 lg:px-8">
+            <section className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Avatar className="mt-0.5 h-10 w-10 shrink-0">
+                  <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
+                    {initials(selectedComment.authorName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 space-y-1">
+                  <p className="text-base font-semibold text-foreground">
+                    {selectedComment.authorName}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {timeLabel(selectedComment.lastUpdated) || "Unknown update time"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-w-3xl whitespace-pre-wrap text-sm leading-7 text-foreground">
+                {selectedComment.preview}
+              </div>
+            </section>
+
+            <section className="border-t border-border/70 pt-6 text-sm sm:flex sm:flex-wrap sm:gap-10">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Status
+                </p>
+                <p className="text-foreground">{statusLabel(selectedComment)}</p>
+              </div>
+
+              <div className="mt-6 space-y-1 sm:mt-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Replies
+                </p>
+                <p className="text-foreground">{selectedComment.replyCount}</p>
+              </div>
+
+              <div className="mt-6 space-y-1 sm:mt-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Source
+                </p>
+                <p className="break-words text-foreground">
+                  {documentLabel(selectedComment.documentId)}
+                </p>
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6">
+            <EmptyState
+              icon={<Inbox className="h-6 w-6" />}
+              title="Select a comment"
+              description="Choose a thread from the left rail to inspect details and open the source page."
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentsPageLoadingState() {
+  return <div className="h-svh w-full bg-background" />;
+}
+
+function CommentsPageErrorState() {
+  return (
+    <div className="flex h-svh w-full items-center justify-center bg-background p-6">
+      <ErrorState
+        title="Couldn't load comments"
+        description="The comments service did not respond. Try again in a moment."
+      />
+    </div>
+  );
+}
+
+function CommentsPageEmptyState() {
+  return (
+    <div className="flex h-svh w-full items-center justify-center bg-background p-6">
+      <EmptyState
+        icon={<MessageCircle className="h-6 w-6" />}
+        title="No comments yet"
+        description="Comments left from page headers will collect here."
+      />
+    </div>
+  );
+}
+
+export function CommentsSplitPage() {
+  const [scope, setScope] = React.useState<CommentScope>("active");
+  const [query, setQuery] = React.useState("");
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+
+  const { data, error, isLoading } = useSWR<{ comments: AllCommentItem[] }>(
+    "/api/comments/all",
+    (url: string) => apiFetch<{ comments: AllCommentItem[] }>(url),
+  );
+
+  const comments = React.useMemo(() => {
+    const rows = sanitizeComments(data?.comments ?? []);
+    return [...rows].sort(sortComments);
+  }, [data]);
+
+  const filteredComments = React.useMemo(() => {
+    return filterComments(comments, scope, query);
+  }, [comments, query, scope]);
+
+  React.useEffect(() => {
+    if (!selectedId && filteredComments.length > 0) {
+      setSelectedId(filteredComments[0]?.annotationId ?? null);
+      return;
+    }
+
+    if (
+      selectedId &&
+      !filteredComments.some((comment) => comment.annotationId === selectedId)
+    ) {
+      setSelectedId(filteredComments[0]?.annotationId ?? null);
+    }
+  }, [filteredComments, selectedId]);
+
+  const selectedComment =
+    filteredComments.find((comment) => comment.annotationId === selectedId) ?? null;
+
+  const total = comments.length;
+  const activeCount = comments.filter((comment) => !isResolved(comment)).length;
+  const resolvedCount = total - activeCount;
+
+  const scopeCounts: Record<CommentScope, number> = {
+    active: activeCount,
+    resolved: resolvedCount,
+    all: total,
+  };
+
+  if (isLoading) {
+    return <CommentsPageLoadingState />;
+  }
+
+  if (error) {
+    return <CommentsPageErrorState />;
+  }
+
+  if (total === 0) {
+    return <CommentsPageEmptyState />;
+  }
+
+  return (
+    <SplitPageFrame height="viewport" className="bg-background">
+      <SplitPage
+        breakpoint="lg"
+        defaultIsOpen
+        className="min-h-0 flex-1"
+        firstPaneClassName="w-full lg:w-[24rem] lg:border-r lg:border-border/70"
+      >
+        <CommentsListPane
+          comments={filteredComments}
+          selectedComment={selectedComment}
+          scope={scope}
+          scopeCounts={scopeCounts}
+          query={query}
+          onQueryChange={setQuery}
+          onScopeChange={setScope}
+          onSelect={(comment) => setSelectedId(comment.annotationId)}
+        />
+        <CommentsDetailWorkspace selectedComment={selectedComment} total={total} />
+      </SplitPage>
+    </SplitPageFrame>
+  );
+}

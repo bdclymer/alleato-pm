@@ -3,6 +3,7 @@ import {
   documentLabel,
   filterComments,
   relativeTimeLabel,
+  sanitizeComments,
   sortComments,
   statusLabel,
 } from "../comments-page-utils";
@@ -70,6 +71,17 @@ describe("comments page utilities", () => {
     ]);
     expect(filterComments(rows, "all", "67 / submittals").map((row) => row.annotationId)).toEqual([
       "resolved",
+    ]);
+  });
+
+  it("removes excluded annotation ids from the inbox feed", () => {
+    const rows = [
+      comment({ annotationId: "8e0a5ed8-750b-49f1-9aa6-bbc01f634074" }),
+      comment({ annotationId: "visible-comment" }),
+    ];
+
+    expect(sanitizeComments(rows).map((row) => row.annotationId)).toEqual([
+      "visible-comment",
     ]);
   });
 
