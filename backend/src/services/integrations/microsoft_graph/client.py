@@ -222,10 +222,44 @@ class GraphClient:
 
     def download_bytes(self, url: str) -> bytes:
         """Download a file's raw bytes (for OneDrive content)."""
-        headers = {"Authorization": f"Bearer {self._get_token()}"}
-        resp = httpx.get(url, headers=headers, timeout=120, follow_redirects=True)
-        resp.raise_for_status()
-        return resp.content
+        last_exc: Optional[Exception] = None
+        max_retries = 4
+        base_delay = 2.0
+        for attempt in range(max_retries):
+            try:
+                headers = {"Authorization": f"Bearer {self._get_token()}"}
+                resp = httpx.get(url, headers=headers, timeout=120, follow_redirects=True)
+                if resp.status_code in (429, 503):
+                    retry_after = int(resp.headers.get("Retry-After", base_delay * (2 ** attempt)))
+                    logger.warning(
+                        "[Graph] Download %d response — retrying in %ds (attempt %d/%d)",
+                        resp.status_code,
+                        retry_after,
+                        attempt + 1,
+                        max_retries,
+                    )
+                    time.sleep(min(retry_after, 60))
+                    continue
+                resp.raise_for_status()
+                return resp.content
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                last_exc = exc
+            except OSError as exc:
+                if getattr(exc, "errno", None) in _RETRY_ERRNO:
+                    last_exc = exc
+                else:
+                    raise
+
+            delay = base_delay * (2 ** attempt)
+            logger.warning(
+                "[Graph] Transient download error on attempt %d/%d (%s) — retrying in %.1fs",
+                attempt + 1,
+                max_retries,
+                last_exc,
+                delay,
+            )
+            time.sleep(delay)
+        raise last_exc or RuntimeError(f"Graph download failed without a captured exception: {url}")
 
 
 # Singleton
