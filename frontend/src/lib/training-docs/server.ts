@@ -210,6 +210,7 @@ export async function listPublishedTrainingDocs(service: ServiceClient) {
     .select(
       "title, slug, summary, audience, status, source_route, published_doc_path, last_published_at, metadata",
     )
+    .eq("status", "published")
     .not("published_doc_path", "is", null)
     .order("title", { ascending: true });
 

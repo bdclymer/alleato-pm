@@ -8,6 +8,7 @@ import type { PublishedTrainingDoc } from "@/lib/training-docs/docs-site";
 import {
   APP_KNOWLEDGE_TOOL_CATEGORIES,
   getAppKnowledgeToolHref,
+  getTrainingDocToolCategory,
 } from "./app-knowledge";
 import {
   AppKnowledgeToolNav,
@@ -16,10 +17,12 @@ import {
 import {
   KnowledgeBrowsePage,
   type KnowledgeCategoryConfig,
+  type KnowledgeSourceItem,
 } from "./knowledge-base-page";
 
 export function AppTrainingDocsPage({
   activeCategorySlug,
+  trainingDocs,
 }: {
   activeCategorySlug?: string;
   trainingDocs?: PublishedTrainingDoc[];
@@ -39,6 +42,31 @@ export function AppTrainingDocsPage({
     [],
   );
 
+  const items = React.useMemo<KnowledgeSourceItem[]>(
+    () =>
+      (trainingDocs ?? []).flatMap((doc) => {
+        const category = getTrainingDocToolCategory(doc);
+        if (!category) return [];
+        // Link to the in-app training doc, never the external docs site.
+        return {
+          id: doc.slug,
+          categoryId: category.slug,
+          title: doc.title,
+          description:
+            doc.summary?.trim() ||
+            "Training doc published from the Alleato review workflow.",
+          meta: [
+            doc.sourceRoute,
+            doc.lastPublishedAt ? formatDate(doc.lastPublishedAt) : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          href: `/knowledge/app/${category.slug}/${doc.slug}`,
+        };
+      }),
+    [trainingDocs],
+  );
+
   return (
     <KnowledgeBrowsePage
       actionHref={isAdmin ? "/training-docs" : null}
@@ -51,7 +79,7 @@ export function AppTrainingDocsPage({
       eyebrow="App"
       isAdmin={isAdmin}
       isLoading={false}
-      items={[]}
+      items={items}
       modeLabel="App"
       navLabel="All tools"
       overviewDescription="Step-by-step app documentation organized by tool."
@@ -64,5 +92,15 @@ export function AppTrainingDocsPage({
       withShell={false}
     />
   );
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
