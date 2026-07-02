@@ -657,6 +657,10 @@ export function MeetingDetailContent({
               assignee, priority, due date), with create + delete. */}
           <section className="border-t border-border pt-6">
             <AccordionSection label={`Tasks (${meetingTasks.length})`}>
+              <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+                Tasks are tracked follow-ups you can edit, assign, prioritize, and
+                close across Alleato.
+              </p>
               <MeetingTasksManager
                 meetingId={meeting.id}
                 initialTasks={meetingTasks}
@@ -677,6 +681,10 @@ export function MeetingDetailContent({
           {actionItemsContent ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Action Items">
+                <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+                  Action items are the source transcript notes from Fireflies,
+                  grouped by the assignee named in the meeting.
+                </p>
                 <ActionItemsByAssignee content={actionItemsContent} />
               </AccordionSection>
             </section>
