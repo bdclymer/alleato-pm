@@ -876,7 +876,7 @@ function FeedbackStatusTabs({
   onValueChange: (value: string) => void;
 }) {
   return (
-    <div className="mt-4 flex w-full items-center border-b border-border/70">
+    <div className="mt-2 flex items-center gap-4 border-b border-border/70">
       {FEEDBACK_STATUS_TABS.map((tab) => (
         <Button
           key={tab.value}
@@ -885,9 +885,9 @@ function FeedbackStatusTabs({
           size="sm"
           onClick={() => onValueChange(tab.value)}
           className={cn(
-            "h-8 min-w-0 flex-1 rounded-none px-2 text-xs font-medium shadow-none",
+            "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
             value === tab.value
-              ? "text-foreground shadow-[inset_0_-2px_0_hsl(var(--primary))]"
+              ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
               : "text-muted-foreground hover:bg-transparent hover:text-foreground",
           )}
         >

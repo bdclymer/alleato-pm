@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, ExternalLink, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
+import { ArrowLeft, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
 import {
   Button,
   Select,
@@ -62,7 +62,6 @@ export function FeedbackDetail({
     pageTitle: item.page_title,
   });
   const toolLabel = toolLabelFromPath(item.page_path);
-  const sourceLabel = toolLabel ?? item.page_title ?? item.page_path ?? "Submitted page";
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -232,15 +231,14 @@ export function FeedbackDetail({
         {/* Description */}
         <div className="space-y-8">
           <div className="space-y-1.5 text-sm">
-            <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
-              <ExternalLink className="h-4 w-4 shrink-0" />
+            <div className="min-w-0 text-muted-foreground">
               <a
                 href={item.page_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-w-0 truncate text-foreground hover:text-primary hover:underline"
+                className="block min-w-0 truncate text-foreground hover:text-primary hover:underline"
               >
-                {sourceLabel}
+                {item.page_url}
               </a>
             </div>
             {item.target_text ? (
