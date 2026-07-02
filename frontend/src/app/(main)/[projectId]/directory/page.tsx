@@ -2106,12 +2106,12 @@ function AddCompanyContactDialog({
         >
           <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
             <DialogTitle className="text-lg tracking-tight">
-              Add contacts
+              Add from company directory
             </DialogTitle>
             <DialogDescription>
               {companyName
-                ? `Choose who works with ${companyName} on this project.`
-                : "Choose contacts for this company."}
+                ? `Select people already in the company directory for ${companyName}, or create a new person.`
+                : "Select people already in the company directory for this company, or create a new person."}
             </DialogDescription>
           </DialogHeader>
 
@@ -2119,7 +2119,7 @@ function AddCompanyContactDialog({
             <Command className="overflow-visible" shouldFilter={true}>
               <div className="rounded-md bg-muted/50">
                 <CommandInput
-                  placeholder="Search contacts…"
+                  placeholder="Search company directory…"
                   value={search}
                   onValueChange={setSearch}
                 />
@@ -2127,7 +2127,9 @@ function AddCompanyContactDialog({
               <CommandList className="mt-2 max-h-80 overflow-y-auto overscroll-contain -mx-1">
                 <CommandEmpty>
                   <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                    {search ? `No matches for "${search}".` : "No contacts yet."}
+                    {search
+                      ? `No matches for "${search}".`
+                      : "No people found in the company directory."}
                   </div>
                 </CommandEmpty>
                 <CommandGroup className="p-0">
@@ -2225,7 +2227,7 @@ function AddCompanyContactDialog({
                 className="text-xs font-medium"
               >
                 <UserPlus className="h-3 w-3" />
-                Create new contact
+                Create new person
               </Button>
             </div>
           </div>
@@ -2576,7 +2578,7 @@ function CompaniesSection({
                 })
               }
             >
-              Add contact
+              Add person
             </Button>
           );
         }
@@ -2674,7 +2676,7 @@ function CompaniesSection({
           }
         >
           <Plus className="mr-2 h-3.5 w-3.5" />
-          Add contact
+          Add from company directory
         </DropdownMenuItem>
         {item.contact && !item.isPrimary && (
           <DropdownMenuItem
@@ -2785,7 +2787,7 @@ function CompaniesSection({
                 })
               }
             >
-              Add contact
+              Add person
             </Button>
           );
         }
@@ -2888,7 +2890,7 @@ function CompaniesSection({
           }
         >
           <Plus className="mr-2 h-3.5 w-3.5" />
-          Add contact
+          Add from company directory
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive"

@@ -188,11 +188,15 @@ export function CompanyDetailSheet({
       const name =
         [person.first_name, person.last_name].filter(Boolean).join(" ") ||
         person.email ||
-        "Contact";
+        "Person";
       toast.success(`${name} added to company`);
       await loadDetails();
-    } catch {
-      toast.error("Failed to add contact");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The company directory did not confirm the add.";
+      toast.error("Could not add person", { description: message });
     }
   };
 
@@ -236,7 +240,7 @@ export function CompanyDetailSheet({
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onSelect={() => setAddContactPopoverOpen(true)}>
                     <UserPlus className="mr-2 h-3.5 w-3.5" />
-                    Add contact
+                    Add from company directory
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -334,20 +338,20 @@ export function CompanyDetailSheet({
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-7 text-xs">
                           <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                          Add contact
+                          Add from company directory
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-72 p-0" align="end">
                         <Command>
-                          <CommandInput placeholder="Search existing contacts..." />
+                          <CommandInput placeholder="Search company directory..." />
                           <CommandList className="max-h-56">
                             <CommandEmpty>
                               {loadingPeople
                                 ? "Loading..."
-                                : "No existing contacts found."}
+                                : "No people found in the company directory."}
                             </CommandEmpty>
                             {existingPeople.length > 0 && (
-                              <CommandGroup heading="Add existing contact">
+                              <CommandGroup heading="People in company directory">
                                 {existingPeople.map((person) => {
                                   const name =
                                     [person.first_name, person.last_name]
@@ -392,7 +396,7 @@ export function CompanyDetailSheet({
                             }}
                           >
                             <UserPlus className="mr-2 h-4 w-4 shrink-0" />
-                            Create new contact
+                            Create new person
                           </Button>
                         </div>
                       </PopoverContent>
@@ -410,7 +414,7 @@ export function CompanyDetailSheet({
                         onClick={() => setAddContactPopoverOpen(true)}
                       >
                         <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                        Add contact
+                        Add from company directory
                       </Button>
                     }
                   />
