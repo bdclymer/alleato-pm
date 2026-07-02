@@ -19,10 +19,19 @@ jest.mock("@/lib/logger", () => ({
   logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
 }));
 
-const findLinkedPullRequestsMock = jest.fn();
+const buildIndexMock = jest.fn();
+const checkExistenceMock = jest.fn();
 jest.mock("@/lib/admin-feedback/github", () => ({
-  findLinkedPullRequests: (...args: unknown[]) => findLinkedPullRequestsMock(...args),
+  buildFeedbackPullRequestIndex: (...args: unknown[]) => buildIndexMock(...args),
+  checkGitHubIssueExistence: (...args: unknown[]) => checkExistenceMock(...args),
 }));
+
+// Helper: build the issue→PR index the cron consumes.
+function indexOf(
+  entries: Array<[number, { mergedPr?: unknown; openPr?: unknown }]>,
+) {
+  return new Map(entries);
+}
 
 type FeedbackRow = {
   id: string;
@@ -86,16 +95,18 @@ describe("/api/cron/sync-feedback-pr-status", () => {
     expect(noAuth.status).toBe(401);
     const wrong = await POST(req({ authorization: "Bearer nope" }));
     expect(wrong.status).toBe(401);
-    expect(findLinkedPullRequestsMock).not.toHaveBeenCalled();
+    expect(buildIndexMock).not.toHaveBeenCalled();
   });
 
   it("sets status to pr_created when an open PR links the issue", async () => {
     feedbackRows = [
       { id: "item-1", status: "open", github_issue_number: 545, metadata: {} },
     ];
-    findLinkedPullRequestsMock.mockResolvedValue([
-      { number: 10, url: "https://github.com/org/repo/pull/10", state: "open", merged: false },
-    ]);
+    buildIndexMock.mockResolvedValue(
+      indexOf([
+        [545, { openPr: { number: 10, url: "https://github.com/org/repo/pull/10", state: "open", merged: false } }],
+      ]),
+    );
 
     const response = await POST(req({ authorization: "Bearer cron-secret" }));
     await expect(response.json()).resolves.toMatchObject({
@@ -111,15 +122,18 @@ describe("/api/cron/sync-feedback-pr-status", () => {
         metadata: expect.objectContaining({ linkedPrNumber: 10 }),
       }),
     );
+    expect(checkExistenceMock).not.toHaveBeenCalled();
   });
 
   it("sets status to resolved when the linked PR is merged", async () => {
     feedbackRows = [
       { id: "item-2", status: "pr_created", github_issue_number: 546, metadata: {} },
     ];
-    findLinkedPullRequestsMock.mockResolvedValue([
-      { number: 11, url: "https://github.com/org/repo/pull/11", state: "closed", merged: true },
-    ]);
+    buildIndexMock.mockResolvedValue(
+      indexOf([
+        [546, { mergedPr: { number: 11, url: "https://github.com/org/repo/pull/11", state: "closed", merged: true } }],
+      ]),
+    );
 
     const response = await POST(req({ authorization: "Bearer cron-secret" }));
     await expect(response.json()).resolves.toMatchObject({
@@ -134,24 +148,50 @@ describe("/api/cron/sync-feedback-pr-status", () => {
     );
   });
 
-  it("does not update when no linked PR is found", async () => {
+  it("flags the item when its linked GitHub issue was deleted", async () => {
     feedbackRows = [
-      { id: "item-3", status: "open", github_issue_number: 547, metadata: {} },
+      { id: "item-3", status: "submitted", github_issue_number: 582, metadata: {} },
     ];
-    findLinkedPullRequestsMock.mockResolvedValue([]);
+    buildIndexMock.mockResolvedValue(indexOf([]));
+    checkExistenceMock.mockResolvedValue("deleted");
 
     const response = await POST(req({ authorization: "Bearer cron-secret" }));
-    await expect(response.json()).resolves.toMatchObject({ checked: 1, prCreated: 0, resolved: 0 });
+    await expect(response.json()).resolves.toMatchObject({ checked: 1, missing: 1 });
+    expect(updateMock).toHaveBeenCalledWith(
+      "item-3",
+      expect.objectContaining({
+        metadata: expect.objectContaining({ githubIssueMissing: true }),
+      }),
+    );
+    // Status is NOT auto-changed — deletion is not resolution.
+    expect(updateMock.mock.calls[0][1]).not.toHaveProperty("status");
+  });
+
+  it("does not re-probe an item already flagged missing, and leaves live-but-unlinked items alone", async () => {
+    feedbackRows = [
+      { id: "item-4", status: "submitted", github_issue_number: 583, metadata: { githubIssueMissing: true } },
+      { id: "item-5", status: "submitted", github_issue_number: 550, metadata: {} },
+    ];
+    buildIndexMock.mockResolvedValue(indexOf([]));
+    checkExistenceMock.mockResolvedValue("exists");
+
+    const response = await POST(req({ authorization: "Bearer cron-secret" }));
+    await expect(response.json()).resolves.toMatchObject({ checked: 2, missing: 0 });
+    // item-4 skipped (already flagged); item-5 probed but exists → no update.
+    expect(checkExistenceMock).toHaveBeenCalledTimes(1);
+    expect(checkExistenceMock).toHaveBeenCalledWith(550);
     expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("does not downgrade an already-matching status", async () => {
     feedbackRows = [
-      { id: "item-4", status: "pr_created", github_issue_number: 548, metadata: {} },
+      { id: "item-6", status: "pr_created", github_issue_number: 548, metadata: {} },
     ];
-    findLinkedPullRequestsMock.mockResolvedValue([
-      { number: 12, url: "https://github.com/org/repo/pull/12", state: "open", merged: false },
-    ]);
+    buildIndexMock.mockResolvedValue(
+      indexOf([
+        [548, { openPr: { number: 12, url: "https://github.com/org/repo/pull/12", state: "open", merged: false } }],
+      ]),
+    );
 
     const response = await POST(req({ authorization: "Bearer cron-secret" }));
     await expect(response.json()).resolves.toMatchObject({ prCreated: 0, resolved: 0 });

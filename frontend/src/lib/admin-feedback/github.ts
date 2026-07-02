@@ -430,6 +430,12 @@ async function isPullRequestMerged(
  * Finds pull requests that reference the given issue number (via a
  * "Closes #N" style closing keyword or a plain mention) so the feedback
  * inbox can reflect PR-created / merged state without a live webhook.
+ *
+ * NOTE: prefer {@link buildFeedbackPullRequestIndex} for bulk reconciliation.
+ * This per-issue variant issues one GitHub *search* call per issue, which
+ * exhausts the 30-req/min Search API limit when run across the whole inbox
+ * (the failure that silently froze every feedback item at `submitted`).
+ * Retained for single-item lookups only.
  */
 export async function findLinkedPullRequests(
   issueNumber: number,
@@ -465,8 +471,16 @@ export async function findLinkedPullRequests(
       number: number;
       html_url: string;
       state: string;
+      title?: string;
+      body?: string | null;
     };
     if (!item.pull_request) continue;
+    // GitHub's quoted search on `#N` is fuzzy (it ignores `#` and can match
+    // unrelated PRs, or `#57` matching `#571`). Post-filter to an EXACT,
+    // word-boundary `#N` reference in the title/body.
+    if (!referencesIssue(`${item.title ?? ""}\n${item.body ?? ""}`, issueNumber)) {
+      continue;
+    }
 
     if (item.state === "closed") {
       const merged = await isPullRequestMerged(config, item.number);
@@ -477,4 +491,144 @@ export async function findLinkedPullRequests(
   }
 
   return results;
+}
+
+/**
+ * True when `text` contains an exact, word-boundary reference to `#issueNumber`
+ * (so `#57` does NOT match `#571`). Used to filter GitHub's fuzzy PR search and
+ * to parse closing references out of PR bodies.
+ */
+export function referencesIssue(text: string, issueNumber: number): boolean {
+  return new RegExp(`#${issueNumber}(?!\\d)`).test(text);
+}
+
+/** All distinct issue numbers referenced by `#N` tokens in a PR title/body. */
+export function extractReferencedIssueNumbers(text: string): number[] {
+  const found = new Set<number>();
+  for (const match of text.matchAll(/#(\d+)(?!\d)/g)) {
+    const n = Number.parseInt(match[1], 10);
+    if (Number.isFinite(n) && n > 0) found.add(n);
+  }
+  return [...found];
+}
+
+export type FeedbackPullRequestIndex = Map<
+  number,
+  { mergedPr?: LinkedPullRequestStatus; openPr?: LinkedPullRequestStatus }
+>;
+
+/**
+ * Builds an issue-number → linked-PR index in a bounded number of REST calls
+ * (a few list pages), instead of one Search API call per issue. This is the
+ * bulk primitive the reconciliation cron uses so it never trips the Search
+ * rate limit. Every open PR and the most-recently-updated closed PRs are
+ * scanned; each PR's title+body is parsed for exact `#N` references.
+ */
+export async function buildFeedbackPullRequestIndex(
+  maxClosedPages = 3,
+): Promise<FeedbackPullRequestIndex | null> {
+  const config = getRepoConfig();
+  if (!config) {
+    return null;
+  }
+
+  const index: FeedbackPullRequestIndex = new Map();
+
+  const listPulls = async (state: "open" | "closed", pages: number) => {
+    const out: Array<{
+      number: number;
+      html_url: string;
+      state: string;
+      title: string;
+      body: string | null;
+      merged_at: string | null;
+    }> = [];
+    for (let page = 1; page <= pages; page++) {
+      const response = await fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/pulls?state=${state}&sort=updated&direction=desc&per_page=100&page=${page}`,
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${config.token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error(
+          `GitHub PR list failed (${state} p${page}): ${response.status} ${await response.text()}`,
+        );
+      }
+      const batch = (await response.json()) as typeof out;
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      out.push(...batch);
+      if (batch.length < 100) break;
+    }
+    return out;
+  };
+
+  const record = (
+    issueNumber: number,
+    pr: LinkedPullRequestStatus,
+  ) => {
+    const entry = index.get(issueNumber) ?? {};
+    if (pr.merged) {
+      // Keep the first (most recent) merged PR seen.
+      entry.mergedPr = entry.mergedPr ?? pr;
+    } else if (pr.state === "open") {
+      entry.openPr = entry.openPr ?? pr;
+    }
+    index.set(issueNumber, entry);
+  };
+
+  const openPulls = await listPulls("open", 2);
+  const closedPulls = await listPulls("closed", maxClosedPages);
+
+  for (const pr of [...openPulls, ...closedPulls]) {
+    const refs = extractReferencedIssueNumbers(`${pr.title}\n${pr.body ?? ""}`);
+    if (refs.length === 0) continue;
+    const status: LinkedPullRequestStatus = {
+      number: pr.number,
+      url: pr.html_url,
+      state: pr.state === "open" ? "open" : "closed",
+      merged: Boolean(pr.merged_at),
+    };
+    for (const issueNumber of refs) {
+      record(issueNumber, status);
+    }
+  }
+
+  return index;
+}
+
+export type GitHubIssueExistence = "exists" | "deleted" | "unknown";
+
+/**
+ * Reports whether a feedback item's linked GitHub issue still exists. Deleted
+ * issues (HTTP 410) — a recurring cause of permanently-stuck inbox items —
+ * are reported distinctly so the sync can surface the broken link instead of
+ * leaving the item frozen at `submitted` forever.
+ */
+export async function checkGitHubIssueExistence(
+  issueNumber: number,
+): Promise<GitHubIssueExistence> {
+  const config = getRepoConfig();
+  if (!config) {
+    return "unknown";
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  if (response.ok) return "exists";
+  if (response.status === 410 || response.status === 404) return "deleted";
+  return "unknown";
 }

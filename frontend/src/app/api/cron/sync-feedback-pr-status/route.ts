@@ -1,11 +1,19 @@
 /**
  * POST /api/cron/sync-feedback-pr-status
  *
- * Polls GitHub for pull requests linked to open feedback-inbox items (via
- * their `github_issue_number`) and keeps status in sync without needing a
- * live GitHub webhook:
+ * Reconciles feedback-inbox item status against GitHub PRs without needing a
+ * live webhook:
  *   - A linked PR is open           → status = 'pr_created'
  *   - A linked PR is merged         → status = 'resolved'
+ *   - The linked GitHub issue was deleted (410) and no PR references it
+ *                                   → metadata.githubIssueMissing = true (so
+ *                                     the inbox surfaces the broken link
+ *                                     instead of freezing at 'submitted')
+ *
+ * It builds a single issue→PR index from a handful of PR list pages rather
+ * than one Search API call per item. The previous per-item search blew the
+ * GitHub Search rate limit (30/min) across a full inbox, so every update
+ * silently failed and items stayed 'submitted' forever.
  *
  * Secured via CRON_SECRET env var (set in Vercel).
  * Vercel cron schedule: every 15 minutes.
@@ -17,11 +25,19 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { logEvent } from "@/lib/guardrails/observability";
 import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
-import { findLinkedPullRequests } from "@/lib/admin-feedback/github";
+import {
+  buildFeedbackPullRequestIndex,
+  checkGitHubIssueExistence,
+} from "@/lib/admin-feedback/github";
 
 export const maxDuration = 60;
 
 const TERMINAL_STATUSES = ["resolved", "closed", "archived"];
+
+// Cap how many missing-issue probes we make per run so a large backlog of
+// deleted issues can't blow the REST rate limit. The rest are picked up on
+// subsequent runs.
+const MAX_MISSING_ISSUE_PROBES = 40;
 
 export const POST = withApiGuardrails(
   "/api/cron/sync-feedback-pr-status#POST",
@@ -54,59 +70,94 @@ export const POST = withApiGuardrails(
       });
     }
 
+    // One bounded index for the whole inbox — no per-item Search calls.
+    const prIndex = await buildFeedbackPullRequestIndex();
+    if (!prIndex) {
+      // GitHub not configured — nothing to reconcile.
+      logEvent({
+        event: "background_job_completed",
+        requestId,
+        where: "/api/cron/sync-feedback-pr-status#POST",
+        details: { checked: 0, prCreated: 0, resolved: 0, missing: 0, failed: 0, skipped: "not_configured" },
+      });
+      return NextResponse.json({ success: true, checked: 0, prCreated: 0, resolved: 0, missing: 0, failed: 0 });
+    }
+
     let checked = 0;
     let prCreated = 0;
     let resolved = 0;
+    let missing = 0;
     let failed = 0;
+    let missingProbes = 0;
+
+    const applyUpdate = async (
+      id: string,
+      status: string | null,
+      metadata: Record<string, unknown>,
+    ) => {
+      const payload: Record<string, unknown> = { metadata };
+      if (status) payload.status = status;
+      const { error: updateError } = await supabase
+        .from("admin_feedback_items")
+        .update(payload)
+        .eq("id", id);
+      if (updateError) {
+        failed++;
+        logger.error({
+          msg: "[cron/sync-feedback-pr-status] status update failed",
+          data: { id, error: updateError.message },
+        });
+        return false;
+      }
+      return true;
+    };
 
     for (const item of items ?? []) {
       if (!item.github_issue_number) continue;
       checked++;
 
+      const existingMetadata =
+        item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
+          ? (item.metadata as Record<string, unknown>)
+          : {};
+
       try {
-        const linkedPulls = await findLinkedPullRequests(item.github_issue_number);
-        if (!linkedPulls || linkedPulls.length === 0) continue;
+        const linked = prIndex.get(item.github_issue_number);
+        const targetPull = linked?.mergedPr ?? linked?.openPr;
 
-        const mergedPull = linkedPulls.find((pr) => pr.merged);
-        const openPull = linkedPulls.find((pr) => pr.state === "open");
-        const targetPull = mergedPull ?? openPull;
-        if (!targetPull) continue;
-
-        const nextStatus = mergedPull ? "resolved" : "pr_created";
-        if (item.status === nextStatus) continue;
-
-        const existingMetadata =
-          item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
-            ? (item.metadata as Record<string, unknown>)
-            : {};
-
-        const { error: updateError } = await supabase
-          .from("admin_feedback_items")
-          .update({
-            status: nextStatus,
-            metadata: {
-              ...existingMetadata,
-              linkedPrNumber: targetPull.number,
-              linkedPrUrl: targetPull.url,
-            },
-          })
-          .eq("id", item.id);
-
-        if (updateError) {
-          failed++;
-          logger.error({
-            msg: "[cron/sync-feedback-pr-status] status update failed",
-            data: { id: item.id, error: updateError.message },
+        if (targetPull) {
+          const nextStatus = linked?.mergedPr ? "resolved" : "pr_created";
+          if (item.status === nextStatus) continue;
+          const ok = await applyUpdate(item.id, nextStatus, {
+            ...existingMetadata,
+            linkedPrNumber: targetPull.number,
+            linkedPrUrl: targetPull.url,
+            githubIssueMissing: false,
           });
+          if (!ok) continue;
+          if (nextStatus === "resolved") resolved++;
+          else prCreated++;
           continue;
         }
 
-        if (nextStatus === "resolved") resolved++;
-        else prCreated++;
+        // No PR references this item. If it's already flagged missing, skip the
+        // probe. Otherwise verify the linked issue still exists — a deleted
+        // issue (410) is the recurring cause of permanently-stuck items.
+        if (existingMetadata.githubIssueMissing === true) continue;
+        if (missingProbes >= MAX_MISSING_ISSUE_PROBES) continue;
+        missingProbes++;
+        const existence = await checkGitHubIssueExistence(item.github_issue_number);
+        if (existence === "deleted") {
+          const ok = await applyUpdate(item.id, null, {
+            ...existingMetadata,
+            githubIssueMissing: true,
+          });
+          if (ok) missing++;
+        }
       } catch (err) {
         failed++;
         logger.error({
-          msg: "[cron/sync-feedback-pr-status] PR lookup failed",
+          msg: "[cron/sync-feedback-pr-status] reconcile failed",
           data: { id: item.id, error: err instanceof Error ? err.message : String(err) },
         });
       }
@@ -116,9 +167,9 @@ export const POST = withApiGuardrails(
       event: "background_job_completed",
       requestId,
       where: "/api/cron/sync-feedback-pr-status#POST",
-      details: { checked, prCreated, resolved, failed },
+      details: { checked, prCreated, resolved, missing, failed },
     });
 
-    return NextResponse.json({ success: true, checked, prCreated, resolved, failed });
+    return NextResponse.json({ success: true, checked, prCreated, resolved, missing, failed });
   },
 );
