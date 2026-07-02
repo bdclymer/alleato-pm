@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Cloud,
   Eraser,
   Highlighter,
   Home,
@@ -62,13 +63,17 @@ export type AnnotationTool =
   | "pen"
   | "highlighter"
   | "rectangle"
+  | "cloud"
   | "arrow"
   | "text"
   | "eraser"
   | "comment"
   | "link";
 
-export type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
+export type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "cloud" | "arrow" | "text";
+
+/** Shapes with a bounding box (start/end) that make sense to link to an RFI, punch item, etc. */
+const LINKABLE_SHAPE_TYPES = new Set<LocalAnnotationType>(["rectangle", "cloud", "arrow"]);
 
 interface ImagePoint {
   x: number;
@@ -103,6 +108,29 @@ const STROKE_WIDTHS = [1, 2, 4, 6];
 
 function uid() {
   return Math.random().toString(36).slice(2);
+}
+
+/** Anchor point (image-space) for a "Link" follow-up action after a shape is drawn. */
+function getAnnotationAnchor(a: Annotation): ImagePoint | null {
+  if (a.start && a.end) {
+    if (a.type === "arrow") return a.end;
+    return { x: (a.start.x + a.end.x) / 2, y: (a.start.y + a.end.y) / 2 };
+  }
+  return null;
+}
+
+// ─── Committed-shape notification (for a follow-up "Link" action) ──────────
+
+export interface CommittedAnnotationInfo {
+  id: string;
+  type: LocalAnnotationType;
+  /** 0–100, percentage across the rendered page — the shape's anchor point. */
+  xPct: number;
+  /** 0–100, percentage down the rendered page. */
+  yPct: number;
+  page: number;
+  /** Removes the just-committed shape (used by a "Delete" follow-up action). */
+  remove: () => void;
 }
 
 // ─── Public overlay type ────────────────────────────────────────────────────
@@ -150,6 +178,9 @@ export interface OsdDrawingViewerProps {
   /** Called when the user clicks while the comment or link tool is active. Coords are 0–100. */
   onCommentClick?: (xPct: number, yPct: number, page: number) => void;
 
+  /** Called after a linkable shape (rectangle/cloud/arrow) is drawn, so the parent can offer a "Link" follow-up action. */
+  onAnnotationCommitted?: (info: CommittedAnnotationInfo) => void;
+
   /** Pins / threads to render on top of the drawing in image-space. */
   htmlOverlays?: HtmlOverlay[];
 
@@ -172,6 +203,7 @@ export function OsdDrawingViewer({
   onRotationChange,
   onPageNumberChange,
   onCommentClick,
+  onAnnotationCommitted,
   htmlOverlays,
   visibleAnnotationTypes,
 }: OsdDrawingViewerProps) {
@@ -609,6 +641,7 @@ export function OsdDrawingViewer({
                 { value: "pen" as AnnotationTool, icon: <Pencil className="h-4 w-4" />, label: "Pen" },
                 { value: "highlighter" as AnnotationTool, icon: <Highlighter className="h-4 w-4" />, label: "Highlighter" },
                 { value: "rectangle" as AnnotationTool, icon: <Square className="h-4 w-4" />, label: "Rectangle" },
+                { value: "cloud" as AnnotationTool, icon: <Cloud className="h-4 w-4" />, label: "Cloud" },
                 { value: "arrow" as AnnotationTool, icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
                 { value: "text" as AnnotationTool, icon: <Type className="h-4 w-4" />, label: "Text" },
                 { value: "eraser" as AnnotationTool, icon: <Eraser className="h-4 w-4" />, label: "Eraser" },
@@ -725,7 +758,20 @@ export function OsdDrawingViewer({
               strokeWidth={strokeWidth}
               page={pageNumber}
               annotations={visibleAnnotationsOnPage}
-              onCommit={(ann) => setAnnotations((prev) => [...prev, ann])}
+              onCommit={(ann) => {
+                setAnnotations((prev) => [...prev, ann]);
+                if (!onAnnotationCommitted || !LINKABLE_SHAPE_TYPES.has(ann.type)) return;
+                const anchor = getAnnotationAnchor(ann);
+                if (!anchor) return;
+                onAnnotationCommitted({
+                  id: ann.id,
+                  type: ann.type,
+                  xPct: (anchor.x / imageSize.width) * 100,
+                  yPct: (anchor.y / imageSize.height) * 100,
+                  page: ann.page,
+                  remove: () => setAnnotations((prev) => prev.filter((a) => a.id !== ann.id)),
+                });
+              }}
               onErase={(id) => setAnnotations((prev) => prev.filter((a) => a.id !== id))}
               onCommentClick={onCommentClick}
             />
@@ -1079,6 +1125,46 @@ function AnnotationOverlay({
 
 // ─── Annotation rendering ───────────────────────────────────────────────────
 
+/** Scalloped "revision cloud" outline around a bounding box, built from outward-bulging arcs. */
+function buildCloudPath(x: number, y: number, w: number, h: number): string {
+  const perimeter = 2 * (w + h);
+  const bumpSize = Math.max(Math.min(w, h) / 4, 14);
+  const bumpCount = Math.max(Math.round(perimeter / bumpSize), 8);
+  const step = perimeter / bumpCount;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
+  const pointAt = (dist: number): ImagePoint => {
+    let d = ((dist % perimeter) + perimeter) % perimeter;
+    if (d <= w) return { x: x + d, y };
+    d -= w;
+    if (d <= h) return { x: x + w, y: y + d };
+    d -= h;
+    if (d <= w) return { x: x + w - d, y: y + h };
+    d -= w;
+    return { x, y: y + h - d };
+  };
+
+  const points: ImagePoint[] = [];
+  for (let i = 0; i <= bumpCount; i++) points.push(pointAt(i * step));
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const p0 = points[i - 1];
+    const p1 = points[i];
+    const mx = (p0.x + p1.x) / 2;
+    const my = (p0.y + p1.y) / 2;
+    const nx = mx - cx;
+    const ny = my - cy;
+    const len = Math.hypot(nx, ny) || 1;
+    const bulge = step * 0.55;
+    const bx = mx + (nx / len) * bulge;
+    const by = my + (ny / len) * bulge;
+    d += ` Q ${bx} ${by} ${p1.x} ${p1.y}`;
+  }
+  return `${d} Z`;
+}
+
 function AnnotationShape({ annotation: a }: { annotation: Annotation }) {
   const stroke = a.color;
   const sw = a.strokeWidth;
@@ -1121,6 +1207,24 @@ function AnnotationShape({ annotation: a }: { annotation: Annotation }) {
           vectorEffect={ns}
         />
       </g>
+    );
+  }
+
+  if (a.type === "cloud" && a.start && a.end) {
+    const x = Math.min(a.start.x, a.end.x);
+    const y = Math.min(a.start.y, a.end.y);
+    const w = Math.max(Math.abs(a.end.x - a.start.x), 1);
+    const h = Math.max(Math.abs(a.end.y - a.start.y), 1);
+    return (
+      <path
+        d={buildCloudPath(x, y, w, h)}
+        fill={stroke}
+        fillOpacity={0.12}
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinejoin="round"
+        vectorEffect={ns}
+      />
     );
   }
 
@@ -1190,7 +1294,7 @@ function findAnnotationAt(annotations: Annotation[], pt: ImagePoint): Annotation
           if (pointToSegmentDistance(pt, a.points[j], a.points[j + 1]) < tol) return a;
         }
       }
-    } else if (a.type === "rectangle" && a.start && a.end) {
+    } else if ((a.type === "rectangle" || a.type === "cloud") && a.start && a.end) {
       const minX = Math.min(a.start.x, a.end.x) - tol;
       const maxX = Math.max(a.start.x, a.end.x) + tol;
       const minY = Math.min(a.start.y, a.end.y) - tol;

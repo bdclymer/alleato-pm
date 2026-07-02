@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect-client";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -58,11 +59,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
           ? `?callbackUrl=${encodeURIComponent(validatedCallback)}`
           : "";
       try {
-        const result = await apiFetch<{ redirect?: string }>(
-          `/api/auth/post-login-redirect${query}`,
+        const redirect = await resolvePostLoginRedirect(
+          () => apiFetch<{ redirect?: string }>(`/api/auth/post-login-redirect${query}`),
+          validatedCallback,
         );
         setTimeout(() => {
-          router.push(result?.redirect || "/");
+          router.push(redirect);
           router.refresh();
         }, 100);
       } catch {

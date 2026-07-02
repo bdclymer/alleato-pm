@@ -17,6 +17,7 @@ import {
   Highlighter,
   MousePointer2,
   Square,
+  Cloud,
   ArrowUpRight,
   Type,
   Eraser,
@@ -102,6 +103,7 @@ const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: st
   { tool: "pen", icon: <Pencil className="h-4 w-4" />, label: "Pen" },
   { tool: "highlighter", icon: <Highlighter className="h-4 w-4" />, label: "Highlight" },
   { tool: "rectangle", icon: <Square className="h-4 w-4" />, label: "Rectangle" },
+  { tool: "cloud", icon: <Cloud className="h-4 w-4" />, label: "Cloud" },
   { tool: "arrow", icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
   { tool: "text", icon: <Type className="h-4 w-4" />, label: "Text" },
   { tool: "eraser", icon: <Eraser className="h-4 w-4" />, label: "Eraser" },
@@ -124,6 +126,7 @@ const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = 
   { key: "pen", label: "Freehand" },
   { key: "highlighter", label: "Highlights" },
   { key: "rectangle", label: "Rectangles" },
+  { key: "cloud", label: "Clouds" },
   { key: "arrow", label: "Arrows" },
   { key: "text", label: "Text" },
 ];
@@ -258,6 +261,7 @@ export default function DrawingViewerPage() {
     pen: true,
     highlighter: true,
     rectangle: true,
+    cloud: true,
     arrow: true,
     text: true,
   });
@@ -390,6 +394,12 @@ export default function DrawingViewerPage() {
     }
   }, [activeTool]);
 
+  // Handle "Link" chosen from the action bar shown after drawing a shape (cloud/rectangle/arrow)
+  const handleShapeLinkRequest = useCallback((x: number, y: number, page: number) => {
+    setPendingLinkPos({ x, y, page });
+    setLinkModalOpen(true);
+  }, []);
+
   const handleLinkConfirm = async (input: CreatePinInput) => {
     await createPin.mutateAsync(input);
     toast.success("Link added to drawing");
@@ -467,6 +477,7 @@ export default function DrawingViewerPage() {
       pen: visible,
       highlighter: visible,
       rectangle: visible,
+      cloud: visible,
       arrow: visible,
       text: visible,
     });
@@ -790,8 +801,9 @@ export default function DrawingViewerPage() {
                 drawingId={drawingId}
                 fileUrl={proxyFileUrl}
                 showToolbar={false}
-                controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
+                controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "cloud" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
+                onShapeLinkRequest={handleShapeLinkRequest}
                 controlledScale={viewScale}
                 onScaleChange={setViewScale}
                 controlledRotation={viewRotation}
