@@ -391,24 +391,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const isRecycleBinTab = activeFilters.tab === "recycle-bin";
   const isChangeOrdersTab = activeFilters.tab === "change-orders";
 
-  // Hide TYPE column when a type tab is active — it's redundant to show
-  // "Subcontract" in every row when the tab already filters to subcontracts.
-  const effectiveVisibleColumns = React.useMemo(() => {
-    const isTypeTab =
-      activeFilters.type === "subcontract" ||
-      activeFilters.type === "purchase_order";
-    if (!isTypeTab) return tableState.visibleColumns;
-    return tableState.visibleColumns.filter((c) => c !== "type");
-  }, [tableState.visibleColumns, activeFilters.type]);
+  const effectiveVisibleColumns = tableState.visibleColumns;
 
-  // Tab navigation sets type/tab in the URL — don't count those as user-applied
-  // filters in the badge. Only count filters the user set via the filter panel.
+  // Internal page modes still use the `tab` query param. Keep that state out of
+  // the filter badge and clear action so the toolbar reflects only user-applied
+  // filters.
   const toolbarActiveFilters = React.useMemo(() => {
-    const isTypeTab =
-      activeFilters.type === "subcontract" ||
-      activeFilters.type === "purchase_order";
-    const { tab: _tab, type, ...rest } = activeFilters;
-    return isTypeTab ? rest : { ...rest, type };
+    const { tab: _tab, ...rest } = activeFilters;
+    return rest;
   }, [activeFilters]);
 
   const {
@@ -911,25 +901,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.type);
 
-  const tabs = [
-    {
-      label: "Commitments",
-      href: `/${projectId}/commitments`,
-      count: totalItems,
-      isActive: !activeFilters.type && !activeFilters.tab,
-    },
-    {
-      label: "Subcontracts",
-      href: `/${projectId}/commitments?type=subcontract`,
-      isActive: activeFilters.type === "subcontract" && !activeFilters.tab,
-    },
-    {
-      label: "Purchase Orders",
-      href: `/${projectId}/commitments?type=purchase_order`,
-      isActive: activeFilters.type === "purchase_order" && !activeFilters.tab,
-    },
-  ];
-
   return (
     <>
       <UnifiedTablePage
@@ -975,7 +946,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
             </PermissionGate>
           ),
         }}
-        tabs={tabs}
         layout={{
           fullBleedTable: true,
           hideTableBody: isChangeOrdersTab,
