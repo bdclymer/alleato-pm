@@ -632,17 +632,6 @@ export function MeetingDetailContent({
             View in Fireflies
           </a>
         ) : null}
-        {(meeting.url || meeting.source) ? (
-          <a
-            href={(meeting.url || meeting.source) ?? ""}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            View file
-          </a>
-        ) : null}
       </div>
 
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
