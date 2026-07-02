@@ -235,6 +235,9 @@ const ENDPOINTS = [
 
   // Meetings
   ["GET", `/api/projects/${PROJECT_ID}/meetings`, "Meetings list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}`, "Meeting detail (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}/items/${FAKE_UUID}/tasks`, "Meeting agenda item tasks (fake ids)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}/items/${FAKE_UUID}/history`, "Meeting agenda item previous-minutes history (fake ids)", [200, 401, 404]],
 
   // Photos
   ["GET", `/api/projects/${PROJECT_ID}/photos`, "Photos list", [200, 401]],

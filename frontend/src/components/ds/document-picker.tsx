@@ -42,7 +42,9 @@ export type DocumentPickerEntityType =
   | 'submittal'
   | 'rfi'
   | 'drawing'
-  | 'company';
+  | 'company'
+  | 'meeting'
+  | 'meeting_item';
 
 interface LinkedDoc {
   document_metadata_id: string;

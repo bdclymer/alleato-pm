@@ -65,6 +65,8 @@ module.exports = {
       // here would create nested shells.
       '(admin)/training-docs/page.tsx',
       '(admin)/training-map/page.tsx',
+      '(admin)/meeting-templates/page.tsx',
+      '(admin)/meeting-templates/[templateId]/page.tsx',
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',

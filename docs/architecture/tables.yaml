@@ -1944,6 +1944,117 @@ tables:
     purpose: "Dormant meeting preparation records."
     relatedTables: []
 
+  # ─── Meetings tool (Procore-style, added 2026-07-01) ─────
+
+  - name: meeting_series
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Groups recurring meetings under one project-scoped name (e.g. weekly OAC). unique(project_id, name). Backfilled from distinct document_metadata.title per project for existing Fireflies transcripts."
+    relatedTables:
+      - meetings
+      - projects
+
+  - name: meetings
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Procore-style meeting record: agenda/minutes mode, schedule fields, optional link to a Fireflies transcript via transcript_document_id. Backfilled one row per existing document_metadata (type='meeting') row that has a project_id."
+    gotchas: "transcript_document_id references document_metadata.id (TEXT) — do not confuse with meeting_documents (generic attachment junction). number is scoped per series_id via unique(series_id, number)."
+    relatedTables:
+      - meeting_series
+      - meeting_attendees
+      - meeting_categories
+      - meeting_items
+      - meeting_documents
+      - document_metadata
+      - meeting_templates
+
+  - name: meeting_attendees
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Per-meeting attendee roster (person_id -> people.id). attended is null until the meeting is in minutes mode and attendance is marked."
+    relatedTables:
+      - meetings
+      - people
+
+  - name: meeting_categories
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Agenda section headers within a single meeting (ordered by position). Parent of meeting_items."
+    relatedTables:
+      - meetings
+      - meeting_items
+
+  - name: meeting_items
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Individual agenda/minutes line items within a meeting_category: title, assignee, due date, status. Can carry forward to a later meeting (carried_from_item_id) and can spawn a task (tasks.meeting_item_id)."
+    gotchas: "origin_meeting_id and carried_from_item_id both self/cross-reference meetings and meeting_items to support 'carry open item to next meeting' workflows — do not assume carried items always share the same meeting."
+    relatedTables:
+      - meetings
+      - meeting_categories
+      - people
+      - tasks
+      - meeting_item_documents
+
+  - name: meeting_templates
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Company-level (no project_id by design, matching Procore) reusable meeting template. Everyone authenticated can read; only admins write."
+    relatedTables:
+      - meeting_template_categories
+      - meetings
+
+  - name: meeting_template_categories
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Agenda section headers within a meeting_template, mirrors meeting_categories."
+    relatedTables:
+      - meeting_templates
+      - meeting_template_items
+
+  - name: meeting_template_items
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pre-defined agenda line items within a meeting_template_category, mirrors meeting_items minus assignment/status fields."
+    relatedTables:
+      - meeting_template_categories
+
+  - name: meeting_documents
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pattern C attachment junction: links document_metadata records (generic uploads, not the transcript) to a meeting."
+    relatedTables:
+      - meetings
+      - document_metadata
+
+  - name: meeting_item_documents
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pattern C attachment junction: links document_metadata records to an individual meeting_item."
+    relatedTables:
+      - meeting_items
+      - document_metadata
+
   # ─── Chat ────────────────────────────────────────────────
 
   - name: chat_history
@@ -4250,3 +4361,42 @@ tables:
       - subcontractor_invoice_audit_log
       - permission_audit_log
       - acumatica_outbound_audit_logs
+
+  # ─── Inventory Drift Catch-Up: pre-existing tables undocumented before this
+  # commit (found while regenerating TABLE-LIST.md for the meetings tool
+  # migration; not created by this change) ─────────────────────────────────
+
+  - name: app_page_role_access_policies
+    db: MAIN
+    domain: permissions
+    owner: core
+    status: live
+    purpose: "Admin-managed project-page role access policy. Presence of a route row makes the route policy explicit; child rows define allowed permission templates."
+    relatedTables:
+      - app_page_role_access_policy_templates
+
+  - name: app_page_role_access_policy_templates
+    db: MAIN
+    domain: permissions
+    owner: core
+    status: live
+    purpose: "Allowed permission templates for an explicit page-role access policy."
+    relatedTables:
+      - app_page_role_access_policies
+
+  - name: people_junk_backup
+    db: MAIN
+    domain: directory
+    owner: core
+    status: dormant
+    purpose: "Backup of orphaned auto-created people/contact rows deleted during the auto-people-contacts trigger retirement (2026-06-30). Retained for recovery only."
+    relatedTables:
+      - people
+
+  - name: user_phone_links
+    db: RAG
+    domain: unknown
+    status: dormant
+    owner: unknown
+    purpose: "TODO: Document this table. Discovered as pre-existing schema drift while regenerating TABLE-LIST.md; not created or touched by the meetings tool migration."
+    relatedTables: []

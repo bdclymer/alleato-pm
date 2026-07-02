@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { resolveMeetingDocumentId } from "@/lib/meetings/server";
 
 /** Adapts the live meeting_preps table into the legacy digest response shape. */
 function toDigestResponse(prep: {
@@ -43,19 +44,28 @@ function toDigestResponse(prep: {
 export const GET = withApiGuardrails<{ projectId: string; meetingId: string }>(
   "projects/[projectId]/meetings/[meetingId]/digest#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/meetings/[meetingId]/digest#GET";
     const { meetingId } = await params;
     const supabase = await createClient();
     const user = await getApiRouteUser();
     const authError = null as Error | null;
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/digest#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
+
+    const resolved = await resolveMeetingDocumentId(supabase, meetingId);
+    if (resolved.kind === "meetings_row_no_transcript") {
+      return NextResponse.json(
+        { error: "This meeting has no linked transcript yet" },
+        { status: 404 }
+      );
+    }
+    const documentMetadataId = resolved.documentMetadataId;
 
     const { data, error } = await supabase
       .from("meeting_preps")
       .select("*")
-      .eq("meeting_id", meetingId)
+      .eq("meeting_id", documentMetadataId)
       .maybeSingle();
 
     if (error) {

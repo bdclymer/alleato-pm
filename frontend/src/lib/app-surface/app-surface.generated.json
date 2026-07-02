@@ -353,18 +353,13 @@
     },
     {
       "url": "/[projectId]/meetings/[meetingId]",
-      "title": null,
-      "description": "View meeting transcript with segments, tasks, risks, decisions, and opportunities"
+      "title": "Loading meeting…",
+      "description": "Add attendees to this meeting."
     },
     {
       "url": "/[projectId]/meetings/[meetingId]/prep",
       "title": "Meeting Prep",
       "description": "Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch."
-    },
-    {
-      "url": "/[projectId]/meetings/schedule",
-      "title": "Schedule Meeting",
-      "description": "Schedule a future meeting and generate AI-powered meeting prep."
     },
     {
       "url": "/[projectId]/my-work",
@@ -1275,6 +1270,16 @@
       "url": "/meeting-segments",
       "title": null,
       "description": "Table of chunked meeting content segments with decisions, tasks, and risks extracted by AI"
+    },
+    {
+      "url": "/meeting-templates",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/meeting-templates/[templateId]",
+      "title": null,
+      "description": null
     },
     {
       "url": "/meetings",

@@ -7,6 +7,25 @@
 
 ## Current focus
 
+**Status:** Meetings tool shipped to PR #641 (feat/meetings-tool) — awaiting preview-deploy test + review + merge.
+**Last updated:** 2026-07-02
+**Last worked on by:** Claude Code (orchestrated 17-task subagent build)
+
+## Procore-style Meetings tool (2026-07-01 → 07-02)
+
+PR: https://github.com/MeganHarrison/alleato-pm/pull/641 — plan at docs/superpowers/plans/2026-07-01-meetings-tool.md, execution ledger at .superpowers/sdd/progress.md (read it for per-task review outcomes + follow-up tickets).
+
+- New PM-APP tables (meetings/series/attendees/categories/items/templates + Pattern C junctions), backfilled live: 652 series / 1,346 meetings from existing transcripts.
+- Full API (all writes behind project-scoped gates), hooks, list/detail/agenda/admin-template UI, Fireflies auto-link, PDF export.
+- e2e 9/9 green; build passes; full-jest failure set identical to origin/main (zero regressions).
+- Phases 2–5 (AI layers) architecture-locked in the plan doc — each becomes its own plan when started.
+- Follow-up tickets listed in the PR body (transcript UNIQUE index, prep/generate hardening, reorder RPC, is_private, project TZ, PDF series name).
+
+**⚠️ SECURITY, still open:** commit 78ab97384 (pushed to origin/main by a parallel session) contains agents/project-intelligence-maintainer/.env.vercel.production with LIVE Linear keys (LINEAR_API_KEY, LINEAR_AGENT_ACCESS_TOKEN, LINEAR_WEBHOOK_SECRET). Rotate + remove + gitignore. Task chip task_20e19b26 exists.
+
+
+## Current focus
+
 **Status:** Budget page feedback fixes (Exol Morrisville review) shipped as PR #621 — all six items browser-verified; awaiting preview check + merge.
 **Last updated:** 2026-07-01
 **Last worked on by:** Claude Code (budget sidebars/PDF export/division titles/labels/forecast edit/lock gating)

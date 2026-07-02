@@ -16,6 +16,10 @@ export const DEFAULT_EXCLUDED_TYPES = [
   "email",
   "meeting",
   "Interview",
+  // Internal document_metadata stub created solely to satisfy the
+  // tasks.metadata_id FK for meeting-agenda-item tasks — never a real
+  // document, so it must never surface in the Files/Documents UI.
+  "meeting_agenda_task",
 ];
 
 const MAX_PER_PAGE = 500;

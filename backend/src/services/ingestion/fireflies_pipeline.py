@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -240,8 +240,351 @@ class FirefliesIngestionPipeline:
         return "\n".join(parts).strip()
 
     @staticmethod
+    def _normalize_meeting_title(value: Optional[str]) -> str:
+        if not value:
+            return ""
+        lowered = str(value).strip().lower()
+        lowered = re.sub(r"\s+", " ", lowered)
+        lowered = re.sub(r"[^a-z0-9]+", " ", lowered)
+        return lowered.strip()
+
+    def _find_matching_meeting_for_transcript(
+        self,
+        *,
+        document_id: str,
+        project_id: Optional[int],
+        title: str,
+        captured_at: Optional[datetime],
+        fireflies_id: Optional[str],
+    ) -> Optional[str]:
+        if not project_id:
+            logger.info(
+                "[FirefliesIngestion] Transcript %s has no inferred project_id; skipping meeting linkage",
+                document_id,
+            )
+            return None
+
+        normalized_title = self._normalize_meeting_title(title)
+        if not normalized_title:
+            logger.warning(
+                "[FirefliesIngestion] Transcript %s missing meeting title after normalization; skipping meeting linkage",
+                document_id,
+            )
+            return None
+
+        def _load_rows(query_date: Optional[datetime]) -> List[dict]:
+            query = (
+                self.store._client.table("meetings")
+                .select("id,name,meeting_date,transcript_document_id,meeting_link")
+                .eq("project_id", project_id)
+            )
+            if query_date is not None:
+                query = query.eq("meeting_date", query_date.date().isoformat())
+            return query.execute().data or []
+
+        rows = _load_rows(captured_at)
+        if captured_at and not rows:
+            # Legacy meetings can miss meeting_date; fallback to a project-only
+            # scan before declaring no match.
+            rows = _load_rows(None)
+
+        if not rows:
+            logger.warning(
+                "[FirefliesIngestion] No meeting candidates for project_id=%s title=%r from transcript %s",
+                project_id,
+                title,
+                document_id,
+            )
+            return None
+
+        exact_matches = [
+            row
+            for row in rows
+            if self._normalize_meeting_title(row.get("name") or "") == normalized_title
+        ]
+        if fireflies_id:
+            ff_matches = [
+                row for row in exact_matches if fireflies_id in str(row.get("meeting_link") or "")
+            ]
+            if ff_matches:
+                exact_matches = ff_matches
+
+        if len(exact_matches) == 0:
+            logger.warning(
+                "[FirefliesIngestion] No exact meeting title match for transcript %s (project_id=%s, title=%r)",
+                document_id,
+                project_id,
+                title,
+            )
+            return None
+
+        if len(exact_matches) > 1:
+            logger.warning(
+                "[FirefliesIngestion] Multiple meeting matches (%d) for transcript %s; skipping auto-link to avoid override",
+                len(exact_matches),
+                document_id,
+            )
+            return None
+
+        match = exact_matches[0]
+        meeting_id = match.get("id")
+        if not meeting_id:
+            logger.warning(
+                "[FirefliesIngestion] Matched meeting row missing id for transcript %s (project_id=%s)",
+                document_id,
+                project_id,
+            )
+            return None
+
+        existing_transcript_id = match.get("transcript_document_id")
+        if existing_transcript_id:
+            if existing_transcript_id != document_id:
+                logger.warning(
+                    "[FirefliesIngestion] Meeting %s already linked to %s; not replacing with %s",
+                    meeting_id,
+                    existing_transcript_id,
+                    document_id,
+                )
+            return existing_transcript_id if existing_transcript_id == document_id else None
+
+        try:
+            self.store._client.table("meetings").update({
+                "transcript_document_id": document_id,
+            }).eq("id", meeting_id).execute()
+            logger.info(
+                "[FirefliesIngestion] Linked transcript document %s to meeting %s",
+                document_id,
+                meeting_id,
+            )
+            return str(meeting_id)
+        except Exception as exc:
+            logger.error(
+                "[FirefliesIngestion] Failed to link transcript document %s to meeting %s: %s",
+                document_id,
+                meeting_id,
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    def _link_transcript_to_meeting(
+        self,
+        *,
+        document_id: str,
+        meeting_title: str,
+        project_id: Optional[int],
+        captured_at: Optional[datetime],
+        fireflies_id: Optional[str],
+    ) -> Optional[str]:
+        return self._find_matching_meeting_for_transcript(
+            document_id=document_id,
+            project_id=project_id,
+            title=meeting_title,
+            captured_at=captured_at,
+            fireflies_id=fireflies_id,
+        )
+
+    @staticmethod
     def _is_interview_title(title: Optional[str]) -> bool:
         return "interview" in str(title or "").lower()
+
+    # Postgres unique_violation error code (mirrors the frontend's structured
+    # meeting-create retry in projects/[projectId]/meetings/route.ts).
+    _POSTGRES_UNIQUE_VIOLATION = "23505"
+
+    def _upsert_structured_meeting(self, sb: Any, doc_meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Ensure every ingested Fireflies transcript has a structured `meetings` row.
+
+        Mirrors the series-upsert + max(number)+1 logic in the frontend meeting
+        creation route (`frontend/src/app/api/projects/[projectId]/meetings/route.ts`)
+        so a transcript that arrives with no pre-scheduled meeting still shows up
+        in the Meetings tool. If `_link_transcript_to_meeting` already attached this
+        document to an existing (pre-scheduled) meeting, step 1 below finds that
+        link and skips — this helper never creates a duplicate row.
+
+        Never raises: any failure is logged loudly via ``logger.error`` (so it is
+        visible in monitoring) and the helper returns ``None``. Transcript
+        ingestion must succeed even when structured-meeting linking fails.
+        """
+        document_id = doc_meta.get("id")
+        try:
+            if not document_id:
+                logger.error(
+                    "[FirefliesIngestion] _upsert_structured_meeting called without a document id; doc_meta=%r",
+                    doc_meta,
+                )
+                return None
+
+            # 1. Idempotency: a meetings row may already be linked to this
+            # transcript, either by a prior run of this helper or by
+            # `_link_transcript_to_meeting` attaching a pre-scheduled meeting.
+            existing_link = (
+                sb.table("meetings")
+                .select("id,project_id,series_id,number,name,meeting_date,meeting_link,transcript_document_id")
+                .eq("transcript_document_id", str(document_id))
+                .limit(1)
+                .execute()
+            )
+            existing_rows = existing_link.data or []
+            if existing_rows:
+                return existing_rows[0]
+
+            # 2. A transcript can be ingested before a project is assigned.
+            # Skip for now — it can be linked by a later re-sync once
+            # project assignment succeeds, or remain unlinked.
+            project_id = doc_meta.get("project_id")
+            if not project_id:
+                logger.warning(
+                    "[FirefliesIngestion] Transcript %s has no project_id; skipping structured meeting creation",
+                    document_id,
+                )
+                return None
+
+            # Use the human-readable title (trimmed) as the series/meeting name,
+            # falling back to "Meeting" to match the Task 1 backfill convention.
+            display_title = str(doc_meta.get("title") or "").strip() or "Meeting"
+
+            # 3. Series: exact name match within the project; else create.
+            # Handle the UNIQUE(project_id, name) race by re-selecting on conflict.
+            series_row = self._get_or_create_meeting_series(sb, project_id, display_title)
+            if series_row is None:
+                logger.error(
+                    "[FirefliesIngestion] Failed to resolve meeting_series for transcript %s (project_id=%s, title=%r)",
+                    document_id,
+                    project_id,
+                    display_title,
+                )
+                return None
+            series_id = series_row.get("id")
+
+            captured_raw = doc_meta.get("date") or doc_meta.get("captured_at")
+            meeting_date = self._coerce_meeting_date(captured_raw)
+            meeting_link = doc_meta.get("meeting_link") or doc_meta.get("fireflies_link")
+
+            def _insert_meeting(number: int):
+                payload = {
+                    "project_id": project_id,
+                    "series_id": series_id,
+                    "number": number,
+                    "name": display_title,
+                    "meeting_date": meeting_date,
+                    "meeting_link": meeting_link,
+                    "mode": "minutes",  # a transcript exists -> the meeting happened
+                    "is_draft": False,
+                    "transcript_document_id": str(document_id),
+                }
+                return sb.table("meetings").insert(payload).execute()
+
+            next_number = self._next_meeting_number(sb, series_id)
+            try:
+                response = _insert_meeting(next_number)
+            except Exception as insert_exc:
+                if not self._is_unique_violation(insert_exc):
+                    raise
+                # 4. Duplicate-number race: another writer inserted the same
+                # number between our read and our insert. Re-read and retry once.
+                next_number = self._next_meeting_number(sb, series_id)
+                response = _insert_meeting(next_number)
+
+            rows = response.data or []
+            if not rows:
+                logger.error(
+                    "[FirefliesIngestion] Structured meeting insert for transcript %s returned no row",
+                    document_id,
+                )
+                return None
+
+            logger.info(
+                "[FirefliesIngestion] Created structured meeting %s (series=%s, number=%s) for transcript %s",
+                rows[0].get("id"),
+                series_id,
+                next_number,
+                document_id,
+            )
+            return rows[0]
+        except Exception as exc:
+            logger.error(
+                "[FirefliesIngestion] _upsert_structured_meeting failed for transcript %s: %s",
+                document_id,
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    def _get_or_create_meeting_series(
+        self, sb: Any, project_id: int, name: str
+    ) -> Optional[Dict[str, Any]]:
+        existing = (
+            sb.table("meeting_series")
+            .select("id,project_id,name")
+            .eq("project_id", project_id)
+            .eq("name", name)
+            .limit(1)
+            .execute()
+        )
+        existing_rows = existing.data or []
+        if existing_rows:
+            return existing_rows[0]
+
+        try:
+            response = sb.table("meeting_series").insert({"project_id": project_id, "name": name}).execute()
+        except Exception as insert_exc:
+            if not self._is_unique_violation(insert_exc):
+                raise
+            # Another writer created the same (project_id, name) series
+            # concurrently — re-select rather than fail.
+            retry = (
+                sb.table("meeting_series")
+                .select("id,project_id,name")
+                .eq("project_id", project_id)
+                .eq("name", name)
+                .limit(1)
+                .execute()
+            )
+            retry_rows = retry.data or []
+            return retry_rows[0] if retry_rows else None
+
+        rows = response.data or []
+        return rows[0] if rows else None
+
+    @staticmethod
+    def _next_meeting_number(sb: Any, series_id: str) -> int:
+        result = (
+            sb.table("meetings")
+            .select("number")
+            .eq("series_id", series_id)
+            .order("number", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        current_max = rows[0].get("number") if rows else None
+        return int(current_max or 0) + 1
+
+    @classmethod
+    def _is_unique_violation(cls, error: Any) -> bool:
+        """True for a Postgres unique_violation, whether raised as an exception
+        (real supabase-py `.execute()` behavior) or exposed via a `.code`/
+        dict-style error payload (test doubles and some client wrappers)."""
+        code = getattr(error, "code", None)
+        if code is None and isinstance(error, dict):
+            code = error.get("code")
+        if code is not None and str(code) == cls._POSTGRES_UNIQUE_VIOLATION:
+            return True
+        message = str(error).lower()
+        return "duplicate key value violates unique constraint" in message or cls._POSTGRES_UNIQUE_VIOLATION in message
+
+    @staticmethod
+    def _coerce_meeting_date(value: Optional[str]) -> Optional[str]:
+        """Return the ISO date part (YYYY-MM-DD) from an ISO datetime/date string."""
+        if not value:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        # Values are already ISO (from datetime.isoformat()); take the date part
+        # without requiring a full parse round-trip.
+        return text[:10]
 
     # ------------------------------------------------------------------
     # Public API
@@ -307,6 +650,30 @@ class FirefliesIngestionPipeline:
                 ),
                 status="skipped_unchanged",
                 metadata={"reason": "content_hash_already_ingested"},
+            )
+            # NOTE: `existing_project_id` is not yet defined at this point in the
+            # function (it's only assigned further below, after this early-return
+            # branch) — use `existing.get("project_id")` directly, same as the
+            # `record_source_processing_status` call immediately above.
+            skipped_project_id = (existing or {}).get("project_id")
+            self._link_transcript_to_meeting(
+                document_id=str(existing_document_id or parsed.fireflies_id or source_item_id),
+                meeting_title=parsed.title,
+                project_id=skipped_project_id,
+                captured_at=parsed.captured_at,
+                fireflies_id=parsed.fireflies_id,
+            )
+            skipped_document_id = str(existing_document_id or parsed.fireflies_id or source_item_id)
+            self._upsert_structured_meeting(
+                self.store._client,
+                {
+                    "id": skipped_document_id,
+                    "project_id": skipped_project_id,
+                    "title": parsed.title,
+                    "date": parsed.captured_at.isoformat() if parsed.captured_at else None,
+                    "meeting_link": (existing or {}).get("meeting_link"),
+                    "fireflies_link": (existing or {}).get("fireflies_link"),
+                },
             )
             return IngestionResult(
                 document_id=str(existing.get("id") or parsed.fireflies_id or uuid4()),
@@ -423,6 +790,14 @@ class FirefliesIngestionPipeline:
 
         try:
             self.store.upsert_document_metadata(metadata)
+            self._link_transcript_to_meeting(
+                document_id=str(document_id),
+                meeting_title=parsed.title,
+                project_id=effective_project_id,
+                captured_at=parsed.captured_at,
+                fireflies_id=parsed.fireflies_id,
+            )
+            self._upsert_structured_meeting(self.store._client, metadata)
             if self._is_interview_title(parsed.title):
                 reason = (
                     'INTENTIONALLY_EXCLUDED: Meeting title contains "Interview", '

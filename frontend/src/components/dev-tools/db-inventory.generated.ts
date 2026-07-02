@@ -1,7 +1,7 @@
 // AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
-// Generated: 2026-06-27T12:01:45.966Z
+// Generated: 2026-07-01T22:10:03.769Z
 
 import inventoryJson from "./db-inventory.generated.json";
 
@@ -29,12 +29,14 @@ export type DbInventoryDomain =
   | "infrastructure"
   | "intelligence"
   | "marketing"
+  | "meetings"
   | "ops"
   | "permissions"
   | "pipeline"
   | "project_intelligence"
   | "projects"
   | "support"
+  | "unknown"
   | "workflow";
 
 export type DbInventoryReference = {

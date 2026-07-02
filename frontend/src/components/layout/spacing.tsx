@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { forwardRef } from "react";
 
 const detailGridClassMap = {
   default:
@@ -93,26 +94,29 @@ export function SectionRuleHeading({
 // Forces variant="outline" size="sm" so section CTAs always look distinct
 // from heading text. Never pass a raw <Button variant="ghost"> as an action.
 // ---------------------------------------------------------------------------
-export interface SectionActionProps {
+export interface SectionActionProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  onClick?: () => void;
   disabled?: boolean;
-  className?: string;
 }
 
-export function SectionAction({ children, onClick, disabled, className }: SectionActionProps) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn("h-7 text-xs", className)}
-    >
-      {children}
-    </Button>
-  );
-}
+export const SectionAction = forwardRef<HTMLButtonElement, SectionActionProps>(
+  ({ children, disabled, className, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        className={cn("h-7 text-xs", className)}
+        {...props}
+      >
+        {children}
+      </Button>
+    );
+  },
+);
+
+SectionAction.displayName = "SectionAction";
 
 export interface LabelValueRowProps {
   label: string;

@@ -11,6 +11,7 @@ import {
   buildMeetingPrepUserMessage,
 } from "@/lib/ai/prompts/meeting-prep";
 import { apiErrorResponse } from "@/lib/api-error";
+import { resolveMeetingDocumentId } from "@/lib/meetings/server";
 
 const MODEL_ID = "anthropic/claude-sonnet-4.5";
 
@@ -20,11 +21,11 @@ type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> }
 export const POST = withApiGuardrails(
   "projects/[projectId]/meetings/[meetingId]/prep/generate#POST",
   async ({ request, params }) => {
-  
-    const { projectId, meetingId } = await params;
+    const where = "projects/[projectId]/meetings/[meetingId]/prep/generate#POST";
+    const { projectId, meetingId: rawMeetingId } = await params;
     const user = await getApiRouteUser();
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep/generate#POST", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -36,6 +37,20 @@ export const POST = withApiGuardrails(
     }
 
     const serviceClient = createServiceClient();
+
+    // Resolve meetingId -> the document_metadata id this legacy AI-prep logic
+    // operates on. If meetingId is a new meetings-table UUID, that's its
+    // linked transcript document (404 with a clear message if unlinked); if
+    // it doesn't match a meetings row, treat it as a legacy document id
+    // directly (pre-existing behavior).
+    const resolved = await resolveMeetingDocumentId(serviceClient, rawMeetingId);
+    if (resolved.kind === "meetings_row_no_transcript") {
+      return NextResponse.json(
+        { error: "This meeting has no linked transcript yet" },
+        { status: 404 }
+      );
+    }
+    const meetingId = resolved.documentMetadataId;
 
     // 1. Fetch the meeting we're prepping for
     const { data: meeting, error: meetingError } = await serviceClient

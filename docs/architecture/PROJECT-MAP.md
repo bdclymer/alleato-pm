@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (322)
+## UI Routes (323)
 
-_297/322 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_296/323 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -87,9 +87,8 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/invoicing/subcontractor/[invoiceId]` | View detailed subcontractor invoice with schedule of values and change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
 | `/[projectId]/invoicing/subcontractor/new` | Create new subcontractor invoice with SOV and approved change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
 | `/[projectId]/meetings` | List project meetings with transcripts and extracted key information | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
-| `/[projectId]/meetings/[meetingId]` | View meeting transcript with segments, tasks, risks, decisions, and opportunities | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
+| `/[projectId]/meetings/[meetingId]` | Add attendees to this meeting. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
-| `/[projectId]/meetings/schedule` | Schedule a future meeting and generate AI-powered meeting prep. | frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
@@ -272,6 +271,8 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/learning-feedback` | What the AI needs you to look at — review queue, feedback coverage, and the learning pipeline in one place. | frontend/src/app/(admin)/learning-feedback/page.tsx |
 | `/manpower` | Cross-project staffing plan persisted from Microsoft Project CSV imports. | frontend/src/app/(main)/manpower/page.tsx |
 | `/meeting-segments` | Table of chunked meeting content segments with decisions, tasks, and risks extracted by AI | frontend/src/app/(tables)/meeting-segments/page.tsx |
+| `/meeting-templates` | — | frontend/src/app/(admin)/meeting-templates/page.tsx |
+| `/meeting-templates/[templateId]` | — | frontend/src/app/(admin)/meeting-templates/[templateId]/page.tsx |
 | `/meetings` | Table of all meetings with summaries, participants, and action items | frontend/src/app/(tables)/meetings/page.tsx |
 | `/meetings/[meetingId]` | Meeting detail page with transcript, segments, extracted items, and related meetings | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
 | `/my-feedback` | Thumbs-up/down, ratings, and corrections you give the AI anywhere in the app show up here so you can review or fix them. | frontend/src/app/(admin)/my-feedback/page.tsx |
@@ -340,7 +341,7 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (713)
+## API Endpoints (727)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -400,6 +401,8 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/get-users-for-info-email` | GET | frontend/src/app/api/admin/get-users-for-info-email/route.ts |
 | `/api/admin/intelligence-packets` | GET | frontend/src/app/api/admin/intelligence-packets/route.ts |
 | `/api/admin/list-all-users` | GET | frontend/src/app/api/admin/list-all-users/route.ts |
+| `/api/admin/meeting-templates` | GET, POST | frontend/src/app/api/admin/meeting-templates/route.ts |
+| `/api/admin/meeting-templates/[templateId]` | GET, PATCH, DELETE | frontend/src/app/api/admin/meeting-templates/[templateId]/route.ts |
 | `/api/admin/operations-readiness/status` | GET | frontend/src/app/api/admin/operations-readiness/status/route.ts |
 | `/api/admin/owner-briefing/send-test` | POST | frontend/src/app/api/admin/owner-briefing/send-test/route.ts |
 | `/api/admin/portfolio-brief/preview` | POST | frontend/src/app/api/admin/portfolio-brief/preview/route.ts |
@@ -516,7 +519,6 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -609,6 +611,7 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/manpower` | GET | frontend/src/app/api/manpower/route.ts |
 | `/api/manpower/assignments/[assignmentId]` | PATCH | frontend/src/app/api/manpower/assignments/[assignmentId]/route.ts |
 | `/api/manpower/import` | POST | frontend/src/app/api/manpower/import/route.ts |
+| `/api/meeting-templates` | GET | frontend/src/app/api/meeting-templates/route.ts |
 | `/api/meetings/[meetingId]` | GET | frontend/src/app/api/meetings/[meetingId]/route.ts |
 | `/api/monitoring/dashboard` | GET | frontend/src/app/api/monitoring/dashboard/route.ts |
 | `/api/monitoring/notify` | GET, POST | frontend/src/app/api/monitoring/notify/route.ts |
@@ -890,10 +893,22 @@ _297/322 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit` | POST | frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit/route.ts |
 | `/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void` | POST | frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void/route.ts |
 | `/api/projects/[projectId]/meetings` | GET, POST | frontend/src/app/api/projects/[projectId]/meetings/route.ts |
-| `/api/projects/[projectId]/meetings/[meetingId]` | GET, PUT, DELETE | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/attendees` | PATCH | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/attendees/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/categories` | POST, PATCH | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/categories/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/categories/[categoryId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/categories/[categoryId]/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/convert` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/convert/route.ts |
 | `/api/projects/[projectId]/meetings/[meetingId]/digest` | GET | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/digest/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/follow-up` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/follow-up/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/items` | POST, PATCH | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/items/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/history` | GET | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/history/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/tasks` | GET, POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/tasks/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/link-transcript` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/link-transcript/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/pdf` | GET | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/pdf/route.ts |
 | `/api/projects/[projectId]/meetings/[meetingId]/prep` | GET, PUT | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/route.ts |
 | `/api/projects/[projectId]/meetings/[meetingId]/prep/generate` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/generate/route.ts |
+| `/api/projects/[projectId]/meetings/[meetingId]/restore` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/restore/route.ts |
 | `/api/projects/[projectId]/pcos` | GET, POST | frontend/src/app/api/projects/[projectId]/pcos/route.ts |
 | `/api/projects/[projectId]/pcos/[pcoId]` | GET, PATCH | frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/route.ts |
 | `/api/projects/[projectId]/pcos/[pcoId]/atomic` | PUT | frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/atomic/route.ts |
