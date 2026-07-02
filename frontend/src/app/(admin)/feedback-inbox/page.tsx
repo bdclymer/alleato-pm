@@ -770,7 +770,7 @@ function FeedbackListPane({
       className="relative flex h-full min-h-0 w-full flex-col border-r border-border/70 bg-muted/30 lg:w-[var(--feedback-left-width)]"
       style={{ "--feedback-left-width": `${leftWidth}px` } as CSSProperties}
     >
-      <div className="border-b border-border/70 bg-background/90 px-4 py-4">
+      <div className="bg-background/90 px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
