@@ -238,10 +238,18 @@ export function buildDocumentTableColumns(opts?: {
   projectNames?: Map<number, string>;
   projects?: Array<{ id: number; name: string | null }>;
   onEditField?: (docId: string, field: string, value: string) => void;
+  onTitleClick?: (item: PipelineDoc) => void;
   getTitleHref?: (item: PipelineDoc) => string | null;
   isTitleExternal?: (item: PipelineDoc) => boolean;
 }): TableColumn<PipelineDoc>[] {
-  const { projectNames, projects, onEditField, getTitleHref, isTitleExternal } = opts ?? {};
+  const {
+    projectNames,
+    projects,
+    onEditField,
+    onTitleClick,
+    getTitleHref,
+    isTitleExternal,
+  } = opts ?? {};
   const handleEdit = (field: string) =>
     onEditField
       ? (item: PipelineDoc, value: string) => onEditField(item.id, field, value)
@@ -272,6 +280,23 @@ export function buildDocumentTableColumns(opts?: {
     {
       ...documentColumns[1],
       render: (item) => {
+        if (onTitleClick) {
+          return (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onTitleClick(item);
+              }}
+              className="h-auto justify-start p-0 text-left font-medium text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
+            >
+              {item.title || "Untitled Document"}
+            </Button>
+          );
+        }
+
         const href = getTitleHref?.(item) ?? null;
         const external = isTitleExternal?.(item) ?? false;
 
