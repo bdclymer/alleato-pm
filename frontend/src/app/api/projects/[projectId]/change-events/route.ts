@@ -209,6 +209,18 @@ export const GET = withApiGuardrails(
   
     const { projectId } = await params
     const { client: supabase } = await getSupabaseClient(request)
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+    const user = token
+      ? (await supabase.auth.getUser(token)).data.user
+      : await getApiRouteUser()
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events#GET",
+        message: "Authentication required.",
+      })
+    }
     const { searchParams } = new URL(request.url)
 
     // Parse and validate query parameters

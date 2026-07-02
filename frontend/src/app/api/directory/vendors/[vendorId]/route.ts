@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const GET = withApiGuardrails<{ vendorId: string }>(
@@ -8,6 +8,15 @@ export const GET = withApiGuardrails<{ vendorId: string }>(
   async ({ request, params }) => {
   const { vendorId } = await params;
   const supabase = await createClient();
+  const user = await getApiRouteUser();
+
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "directory/vendors/[vendorId]#GET",
+      message: "Authentication required.",
+    });
+  }
 
   const { data, error } = await supabase
     .from("companies")

@@ -111,6 +111,14 @@ interface DynamicTableClient {
 
 export async function GET(request: Request) {
   try {
+    const user = await getApiRouteUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const parsed = getSchema.safeParse({
       entityType: searchParams.get("entityType"),

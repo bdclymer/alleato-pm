@@ -48,6 +48,15 @@ export const GET = withApiGuardrails(
   
     const { projectId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/prime-contract-change-orders#GET",
+        message: "Authentication required.",
+      });
+    }
     const url = request.nextUrl;
 
     // --- Parse query params ---

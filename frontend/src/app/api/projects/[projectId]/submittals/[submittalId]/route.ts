@@ -57,6 +57,14 @@ export const GET = withApiGuardrails(
   
     const { projectId, submittalId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/submittals/[submittalId]#GET",
+        message: "Authentication required.",
+      });
+    }
     const serviceClient = createServiceClient();
 
     const { data, error } = await supabase

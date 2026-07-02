@@ -55,6 +55,15 @@ export const GET = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
   
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]/change-orders/[changeOrderId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     const { data: changeOrder, error } = await supabase
       .from("contract_change_orders")

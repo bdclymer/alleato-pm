@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { apiErrorResponse } from "@/lib/api-error";
+import { createClient, getApiRouteUser } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,14 @@ export const dynamic = 'force-dynamic';
  * through directly.
  */
 export async function GET(req: NextRequest) {
+  const user = await getApiRouteUser();
+  if (!user) {
+    return NextResponse.json(
+        { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+        { status: 401 },
+      );
+  }
+
   const { searchParams } = new URL(req.url);
   const entityType = searchParams.get('for');
 
@@ -28,7 +37,6 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createClient();
-
   const { data, error } = await supabase
     .from('document_type_taxonomy')
     .select('type_key, display_name, category, sort_order')
@@ -39,10 +47,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[document-picker/types] supabase error:', error);
-    return NextResponse.json(
-      { error: 'Failed to load document types' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json(data ?? []);

@@ -33,6 +33,14 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
     const { projectId, commitmentCoId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     const scoped = await getScopedCommitmentChangeOrder(
       supabase,

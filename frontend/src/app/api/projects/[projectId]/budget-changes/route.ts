@@ -1,4 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -48,6 +49,14 @@ export const GET = withApiGuardrails(
     const changeEventId = searchParams.get("changeEventId");
 
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget-changes#GET",
+        message: "Authentication required.",
+      });
+    }
     let query = supabase
       .from("budget_changes")
       .select("*")

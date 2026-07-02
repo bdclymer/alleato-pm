@@ -63,6 +63,15 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
   
     const { commitmentId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]/advanced-settings#GET",
+        message: "Authentication required.",
+      });
+    }
 
     // First verify the commitment exists
     const { data: unifiedData, error: unifiedError } = await supabase

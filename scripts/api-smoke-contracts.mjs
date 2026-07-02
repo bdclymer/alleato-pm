@@ -77,7 +77,8 @@ const ENDPOINTS = [
   // budget_lines join hard-errors for the anon role, so an unguarded handler
   // surfaces as Postgres "permission denied for table budget_lines" noise.
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200, 404] }],
-  ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/related-items/options?type=rfi`, "Change event related-items options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
   // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
   // Email — regression guard for issue #193: Puppeteer failure caused 500 before fix in commit 24e1d0009
@@ -247,7 +248,8 @@ const ENDPOINTS = [
   // Entity Links (cross-entity relationships) — top-level route, NOT project-scoped.
   // GET requires entityType+entityId+projectId query params, returns 400 without them.
   // The [linkId] sub-route only supports DELETE — there is no GET handler.
-  ["GET", "/api/entity-links", "Entity links list (auth + schema check)", [200, 400, 401]],
+  ["GET", "/api/entity-links", "Entity links list (unauthed must 401 — auth runs before param validation)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400, 500] }],
+  ["GET", "/api/entity-links/search?targetType=rfi&projectId=67&q=a", "Entity links search (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
   ["POST", "/api/entity-links", "Entity link create (auth check)", [400, 401]],
   ["DELETE", `/api/entity-links/${FAKE_UUID}`, "Entity link delete (auth check)", [401, 404]],
 
@@ -313,6 +315,18 @@ const ENDPOINTS = [
   ["POST", "/api/cron/autonomous-triage", "Cron unauthorized", [401]],
   ["POST", "/api/cron/sync-feedback-pr-status", "Cron unauthorized", [401]],
   ["GET", "/api/monitoring/notify", "Monitoring notify unauthorized", [401]],
+
+  // Silent-200 auth-guard sweep (PR #639, verified 2026-07-02): these GET routes
+  // previously ran DB queries as the anon role with no auth check. Four raw
+  // (non-withApiGuardrails) handlers threw GuardrailError with nothing to catch
+  // it → 500/400; several wrapped handlers placed the guard after param/existence
+  // checks → 200/400/404 unauthenticated. All now check auth FIRST and 401.
+  // Grace tolerates the pre-deploy production behavior until the fix ships.
+  ["GET", "/api/estimates/gc-templates", "GC templates (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 500] }],
+  ["GET", "/api/document-picker/types?for=commitment", "Document-picker types (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/history`, "Commitment history (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1`, "Prime CO detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 404] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1/related-items/options?type=rfi`, "Prime CO related-items options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
 ];
 
 const AUTH_WRITE_PROBES = [

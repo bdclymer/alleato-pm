@@ -55,6 +55,15 @@ export const GET = withApiGuardrails(
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
     const serviceClient = createServiceClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events/[changeEventId]/attachments#GET",
+        message: "Authentication required.",
+      });
+    }
 
     if (!(await verifyChangeEvent(supabase, Number(projectId), changeEventId))) {
       return Response.json({ success: false, error_message: "Change event not found", error: "Change event not found" }, { status: 404 });

@@ -33,6 +33,14 @@ export const GET = withApiGuardrails(
     const { rfiId } = await params;
     assertNonNilUuid(rfiId, "rfiId", "projects/[projectId]/rfis/[rfiId]#GET");
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/rfis/[rfiId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     const { data, error } = await supabase
       .from("rfis")

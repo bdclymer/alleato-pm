@@ -1,9 +1,10 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { listSpecificationLookupOptions } from "@/lib/specifications/compatibility";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 /**
  * GET /api/projects/[projectId]/submittal-spec-sections
@@ -14,6 +15,14 @@ export const GET = withApiGuardrails(
   async ({ params }) => {
     const { projectId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/submittal-spec-sections#GET",
+        message: "Authentication required.",
+      });
+    }
 
     try {
       const data = await listSpecificationLookupOptions(

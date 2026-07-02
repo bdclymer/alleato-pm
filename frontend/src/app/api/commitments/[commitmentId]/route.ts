@@ -124,6 +124,15 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const { commitmentId } = await params;
     assertNonNilUuid(commitmentId, "commitmentId", "commitments/[commitmentId]#GET");
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     // Determine type from unified view
     const { data: unifiedData, error: unifiedError } = await supabase

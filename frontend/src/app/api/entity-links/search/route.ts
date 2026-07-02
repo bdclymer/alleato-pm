@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   ENTITY_SOURCE_TABLE,
   type EntityType,
@@ -80,6 +80,14 @@ function getTitleColumn(entityType: EntityType): string {
 
 export async function GET(request: Request) {
   try {
+    const user = await getApiRouteUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const parsed = searchSchema.safeParse({
       targetType: searchParams.get("targetType"),

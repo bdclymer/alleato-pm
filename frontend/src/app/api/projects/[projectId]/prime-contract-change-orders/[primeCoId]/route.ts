@@ -27,8 +27,17 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
   
     const { projectId, primeCoId } = await params;
-    const numericId = Number(primeCoId);
 
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]#GET",
+        message: "Authentication required.",
+      });
+    }
+
+    const numericId = Number(primeCoId);
     if (!Number.isFinite(numericId) || numericId <= 0) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 404 });
     }

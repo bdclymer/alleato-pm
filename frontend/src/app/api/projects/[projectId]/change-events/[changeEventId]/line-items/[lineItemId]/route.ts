@@ -26,6 +26,14 @@ export const GET = withApiGuardrails(
   
     const { projectId, changeEventId, lineItemId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     // Verify change event exists
     const { data: changeEvent, error: eventError } = await supabase

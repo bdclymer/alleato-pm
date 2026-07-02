@@ -22,6 +22,14 @@ export const GET = withApiGuardrails(
   
     const { projectId } = await params;
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/photo-albums#GET",
+        message: "Authentication required.",
+      });
+    }
 
     const { data, error } = await supabase
       .from("photo_albums")
