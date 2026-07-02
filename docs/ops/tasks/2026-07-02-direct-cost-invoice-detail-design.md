@@ -100,15 +100,20 @@ Failure-loudly behavior: API load failure remains a toast/error state; missing s
 | Local visual proof | `docs/ops/evidence/2026-07-02-direct-cost-invoice-detail-design/direct-cost-local-after.png` | Pass | Local authenticated route shows `Invoice #1500`, compact property row, quiet invoice details, and read-only line-items table. |
 | Source-link proof | `agent-browser --session invoice-design-local eval "Array.from(document.querySelectorAll('a')).filter(a => a.textContent?.includes('Bill 003649')).map(a => a.href)"` | Pass | Returned `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=003649`. |
 | Navigation proof | `agent-browser --session invoice-design-local eval "document.querySelector('a[href=\"/876/direct-costs\"]')?.click()" && agent-browser --session invoice-design-local wait 1500 && agent-browser --session invoice-design-local get url` | Pass | Returned `http://localhost:3001/876/direct-costs`. |
+| Publish proof | `npm run codex:finish -- --message "Quiet direct cost invoice detail" --files ...` | Pass | Published commit `6d877f3d02` to `origin/main`. |
+| Production deploy check | `npx vercel inspect dpl_2KzaUsH5pebhapVL8Brp9wzdmNd3 --logs` | Failed | Vercel build failed because `@/components/ui/detail-property-bar` was untracked locally and omitted from the first scoped commit. Cause: local dev resolved an untracked shared primitive. Detection gap: the scoped finish command did not include that dependency. Prevention: add the shared primitive as a task-owned file and rerun publish/deploy verification. |
+| Follow-up design audit | `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs 'frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx' frontend/src/components/ui/detail-property-bar.tsx` | Pass | Page and shared primitive pass the design doctrine surface audit. |
+| Follow-up static/lint check | `./node_modules/.bin/eslint 'src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx' 'src/components/ui/detail-property-bar.tsx'` from `frontend/` | Pass | Page and shared primitive lint cleanly. |
 
 ## Files Changed
 
 - `frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx` - direct-cost invoice detail UI owner.
+- `frontend/src/components/ui/detail-property-bar.tsx` - shared compact detail-property row primitive required by the invoice detail page.
 - `docs/ops/tasks/2026-07-02-direct-cost-invoice-detail-design.md` - task definition and evidence.
 
 ## Risks / Gaps
 
-- Production deploy must be verified after the finish/publish flow lands the code on `origin/main`.
+- First production deployment failed because the shared property-bar primitive was not included in the scoped commit; follow-up commit includes it.
 - The page is read-only by product design because direct costs sync from Acumatica.
 
 ## Final Status
