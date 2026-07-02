@@ -21,6 +21,11 @@ import {
 } from "lucide-react";
 import {
   Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import {
@@ -56,6 +61,7 @@ import {
   getDispatchStatus,
   notifyFeedbackInboxFailure,
   toDisplayStatus,
+  toolLabelFromPath,
 } from "./helpers";
 import type {
   DisplayStatus,
@@ -78,6 +84,7 @@ type FeedbackSortValue =
   | "priority"
   | "source"
   | "status";
+type FeedbackDateFilter = "all" | "today" | "7d" | "30d" | "older";
 
 const FEEDBACK_SORT_OPTIONS: {
   value: FeedbackSortValue;
@@ -88,6 +95,16 @@ const FEEDBACK_SORT_OPTIONS: {
   { value: "priority", label: "Priority first" },
   { value: "source", label: "Source A-Z" },
   { value: "status", label: "Status" },
+];
+const FEEDBACK_DATE_FILTERS: {
+  value: FeedbackDateFilter;
+  label: string;
+}[] = [
+  { value: "all", label: "Any date" },
+  { value: "today", label: "Today" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "older", label: "Older than 30 days" },
 ];
 
 function clampNumber(value: number, min: number, max: number): number {
@@ -154,11 +171,34 @@ function sortRank(item: FeedbackItem): number {
   return 3;
 }
 
+function itemToolLabel(item: FeedbackItem): string {
+  return toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
+}
+
+function matchesDateFilter(item: FeedbackItem, filter: FeedbackDateFilter): boolean {
+  if (filter === "all") return true;
+
+  const createdAt = new Date(item.created_at).getTime();
+  const now = Date.now();
+  const ageMs = now - createdAt;
+  const dayMs = 86_400_000;
+
+  if (filter === "today") {
+    return new Date(item.created_at).toDateString() === new Date().toDateString();
+  }
+  if (filter === "7d") return ageMs <= 7 * dayMs;
+  if (filter === "30d") return ageMs <= 30 * dayMs;
+  return ageMs > 30 * dayMs;
+}
+
 export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("all");
   const [filter, setFilter] = useState<StatusFilter>("open");
+  const [dateFilter, setDateFilter] = useState<FeedbackDateFilter>("all");
+  const [toolFilter, setToolFilter] = useState("all");
+  const [submitterFilter, setSubmitterFilter] = useState("all");
   const [searchValue, setSearchValue] = useState("");
   const [sortBy, setSortBy] = useState<FeedbackSortValue>("newest");
   const [leftWidth, setLeftWidth] = useState(FEEDBACK_LEFT_DEFAULT);
@@ -215,10 +255,41 @@ export default function FeedbackInboxPage() {
       : activeTab === "issues"
         ? issueItems
         : dispatchScoped(items);
+  const toolOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const item of tabScopedItems) {
+      const label = itemToolLabel(item);
+      options.set(label, label);
+    }
+    return [...options.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [tabScopedItems]);
+  const submitterOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const item of tabScopedItems) {
+      const value = item.created_by;
+      const label = item.submitter?.full_name || item.submitter?.email || item.created_by;
+      options.set(value, label);
+    }
+    return [...options.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [tabScopedItems]);
+  const filterScopedItems = useMemo(
+    () =>
+      tabScopedItems.filter((item) => {
+        if (!matchesDateFilter(item, dateFilter)) return false;
+        if (toolFilter !== "all" && itemToolLabel(item) !== toolFilter) return false;
+        if (submitterFilter !== "all" && item.created_by !== submitterFilter) return false;
+        return true;
+      }),
+    [dateFilter, submitterFilter, tabScopedItems, toolFilter],
+  );
   const searchTerm = searchValue.trim().toLowerCase();
   const visibleItems = useMemo(() => {
     const filtered = searchTerm
-      ? tabScopedItems.filter((item) => {
+      ? filterScopedItems.filter((item) => {
           const submitter =
             item.submitter?.full_name || item.submitter?.email || item.created_by;
           const fields = [
@@ -233,7 +304,7 @@ export default function FeedbackInboxPage() {
           ];
           return fields.some((field) => field.toLowerCase().includes(searchTerm));
         })
-      : tabScopedItems;
+      : filterScopedItems;
 
     return [...filtered].sort((a, b) => {
       if (sortBy === "oldest") {
@@ -258,7 +329,7 @@ export default function FeedbackInboxPage() {
       }
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [searchTerm, sortBy, tabScopedItems]);
+  }, [filterScopedItems, searchTerm, sortBy]);
   const currentTabLabel =
     FEEDBACK_INBOX_TABS.find((tab) => tab.value === activeTab)?.label ?? "Issues";
   const selected = useMemo(
@@ -269,7 +340,10 @@ export default function FeedbackInboxPage() {
     STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
     filter.replace("_", " ");
   const activeFilterCount =
-    activeTab !== "all" ? 1 : 0;
+    (activeTab !== "all" ? 1 : 0) +
+    (dateFilter !== "all" ? 1 : 0) +
+    (toolFilter !== "all" ? 1 : 0) +
+    (submitterFilter !== "all" ? 1 : 0);
 
   // ---- Fetch ----
   const fetchItems = useCallback(async () => {
@@ -543,6 +617,7 @@ export default function FeedbackInboxPage() {
             activeTab={activeTab}
             currentFilterLabel={currentFilterLabel}
             currentTabLabel={currentTabLabel}
+            dateFilter={dateFilter}
             deletingId={deletingId}
             featureRequestCount={featureRequestItems.length}
             filter={filter}
@@ -556,8 +631,13 @@ export default function FeedbackInboxPage() {
             searchValue={searchValue}
             selectedId={selectedId}
             sortBy={sortBy}
+            submitterFilter={submitterFilter}
+            submitterOptions={submitterOptions}
+            toolFilter={toolFilter}
+            toolOptions={toolOptions}
             totalCount={dispatchScoped(items).length}
             onDelete={deleteItem}
+            onDateFilterChange={setDateFilter}
             onFilterChange={handleFilterTabClick}
             onInboxTabChange={handleInboxTabClick}
             onResizeStart={handleResizeStart}
@@ -565,7 +645,9 @@ export default function FeedbackInboxPage() {
             onSelect={selectItem}
             onSendToGitHub={sendToGitHub}
             onSortChange={setSortBy}
+            onSubmitterFilterChange={setSubmitterFilter}
             onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
+            onToolFilterChange={setToolFilter}
             onUpdateStatus={updateStatus}
           />
           <FeedbackDetailPane
@@ -589,6 +671,7 @@ function FeedbackListPane({
   activeTab,
   currentFilterLabel,
   currentTabLabel,
+  dateFilter,
   deletingId,
   featureRequestCount,
   filter,
@@ -601,8 +684,13 @@ function FeedbackListPane({
   searchValue,
   selectedId,
   sortBy,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
   totalCount,
   onDelete,
+  onDateFilterChange,
   onFilterChange,
   onInboxTabChange,
   onResizeStart,
@@ -610,13 +698,16 @@ function FeedbackListPane({
   onSelect,
   onSendToGitHub,
   onSortChange,
+  onSubmitterFilterChange,
   onToggleCollapsed,
+  onToolFilterChange,
   onUpdateStatus,
 }: {
   activeFilterCount: number;
   activeTab: FeedbackInboxTab;
   currentFilterLabel: string;
   currentTabLabel: string;
+  dateFilter: FeedbackDateFilter;
   deletingId: string | null;
   featureRequestCount: number;
   filter: StatusFilter;
@@ -630,8 +721,13 @@ function FeedbackListPane({
   searchValue: string;
   selectedId: string | null;
   sortBy: FeedbackSortValue;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
   totalCount: number;
   onDelete: (id: string) => void;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
   onFilterChange: (value: string) => void;
   onInboxTabChange: (value: string) => void;
   onResizeStart: (event: ReactMouseEvent<HTMLButtonElement>) => void;
@@ -639,7 +735,9 @@ function FeedbackListPane({
   onSelect: (id: string) => void;
   onSendToGitHub: (id: string) => void;
   onSortChange: (value: FeedbackSortValue) => void;
+  onSubmitterFilterChange: (value: string) => void;
   onToggleCollapsed: () => void;
+  onToolFilterChange: (value: string) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
 }) {
   const splitPage = useSplitPage();
@@ -693,10 +791,18 @@ function FeedbackListPane({
             <FeedbackFilterPopover
               activeCount={activeFilterCount}
               activeTab={activeTab}
+              dateFilter={dateFilter}
               featureRequestCount={featureRequestCount}
               issueCount={issueCount}
+              submitterFilter={submitterFilter}
+              submitterOptions={submitterOptions}
+              toolFilter={toolFilter}
+              toolOptions={toolOptions}
               totalCount={totalCount}
+              onDateFilterChange={onDateFilterChange}
               onInboxTabChange={onInboxTabChange}
+              onSubmitterFilterChange={onSubmitterFilterChange}
+              onToolFilterChange={onToolFilterChange}
             />
             <ExpandableSearch
               value={searchValue}
@@ -745,17 +851,33 @@ function FeedbackListPane({
 function FeedbackFilterPopover({
   activeCount,
   activeTab,
+  dateFilter,
   featureRequestCount,
   issueCount,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
   totalCount,
+  onDateFilterChange,
   onInboxTabChange,
+  onSubmitterFilterChange,
+  onToolFilterChange,
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
+  dateFilter: FeedbackDateFilter;
   featureRequestCount: number;
   issueCount: number;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
   totalCount: number;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
   onInboxTabChange: (value: string) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToolFilterChange: (value: string) => void;
 }) {
   return (
     <Popover>
@@ -782,12 +904,23 @@ function FeedbackFilterPopover({
         <FeedbackScopePanel
           activeCount={activeCount}
           activeTab={activeTab}
+          dateFilter={dateFilter}
           featureRequestCount={featureRequestCount}
           issueCount={issueCount}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
           totalCount={totalCount}
           onClear={() => {
             onInboxTabChange("all");
+            onDateFilterChange("all");
+            onToolFilterChange("all");
+            onSubmitterFilterChange("all");
           }}
+          onDateFilterChange={onDateFilterChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
           onTypeChange={onInboxTabChange}
         />
       </PopoverContent>
@@ -798,18 +931,34 @@ function FeedbackFilterPopover({
 function FeedbackScopePanel({
   activeCount,
   activeTab,
+  dateFilter,
   featureRequestCount,
   issueCount,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
   totalCount,
   onClear,
+  onDateFilterChange,
+  onSubmitterFilterChange,
+  onToolFilterChange,
   onTypeChange,
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
+  dateFilter: FeedbackDateFilter;
   featureRequestCount: number;
   issueCount: number;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
   totalCount: number;
   onClear: () => void;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToolFilterChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 }) {
   return (
@@ -862,6 +1011,59 @@ function FeedbackScopePanel({
             );
           })}
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Submitted</span>
+        <Select
+          value={dateFilter}
+          onValueChange={(value) => onDateFilterChange(value as FeedbackDateFilter)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FEEDBACK_DATE_FILTERS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Tool</span>
+        <Select value={toolFilter} onValueChange={onToolFilterChange}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Any tool" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any tool</SelectItem>
+            {toolOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Submitted by</span>
+        <Select value={submitterFilter} onValueChange={onSubmitterFilterChange}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Anyone" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Anyone</SelectItem>
+            {submitterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
     </div>
