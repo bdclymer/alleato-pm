@@ -21,11 +21,6 @@ import {
 } from "lucide-react";
 import {
   Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import {
@@ -51,6 +46,7 @@ const VeltCommentToolbar = dynamic(
   { ssr: false },
 );
 import {
+  FEEDBACK_STATUS_TABS,
   FEEDBACK_INBOX_TABS,
   STATUS_FILTERS,
   STATUS_OPTIONS,
@@ -162,7 +158,7 @@ export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("all");
-  const [filter, setFilter] = useState<StatusFilter>("active");
+  const [filter, setFilter] = useState<StatusFilter>("open");
   const [searchValue, setSearchValue] = useState("");
   const [sortBy, setSortBy] = useState<FeedbackSortValue>("newest");
   const [leftWidth, setLeftWidth] = useState(FEEDBACK_LEFT_DEFAULT);
@@ -273,8 +269,7 @@ export default function FeedbackInboxPage() {
     STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
     filter.replace("_", " ");
   const activeFilterCount =
-    (filter !== "active" ? 1 : 0) +
-    (activeTab !== "all" ? 1 : 0);
+    activeTab !== "all" ? 1 : 0;
 
   // ---- Fetch ----
   const fetchItems = useCallback(async () => {
@@ -683,9 +678,6 @@ function FeedbackListPane({
             <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
               Feedback
             </h1>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {items.length} shown / {totalCount} active
-            </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <Button
@@ -703,10 +695,8 @@ function FeedbackListPane({
               activeTab={activeTab}
               featureRequestCount={featureRequestCount}
               issueCount={issueCount}
-              status={filter}
               totalCount={totalCount}
               onInboxTabChange={onInboxTabChange}
-              onStatusChange={onFilterChange}
             />
             <ExpandableSearch
               value={searchValue}
@@ -721,6 +711,10 @@ function FeedbackListPane({
             <VeltCommentToolbar />
           </div>
         </div>
+        <FeedbackStatusTabs
+          value={filter}
+          onValueChange={onFilterChange}
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -753,19 +747,15 @@ function FeedbackFilterPopover({
   activeTab,
   featureRequestCount,
   issueCount,
-  status,
   totalCount,
   onInboxTabChange,
-  onStatusChange,
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
   featureRequestCount: number;
   issueCount: number;
-  status: StatusFilter;
   totalCount: number;
   onInboxTabChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
 }) {
   return (
     <Popover>
@@ -794,13 +784,10 @@ function FeedbackFilterPopover({
           activeTab={activeTab}
           featureRequestCount={featureRequestCount}
           issueCount={issueCount}
-          status={status}
           totalCount={totalCount}
           onClear={() => {
-            onStatusChange("active");
             onInboxTabChange("all");
           }}
-          onStatusChange={onStatusChange}
           onTypeChange={onInboxTabChange}
         />
       </PopoverContent>
@@ -813,20 +800,16 @@ function FeedbackScopePanel({
   activeTab,
   featureRequestCount,
   issueCount,
-  status,
   totalCount,
   onClear,
-  onStatusChange,
   onTypeChange,
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
   featureRequestCount: number;
   issueCount: number;
-  status: StatusFilter;
   totalCount: number;
   onClear: () => void;
-  onStatusChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 }) {
   return (
@@ -881,24 +864,36 @@ function FeedbackScopePanel({
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <span className="text-xs font-medium text-muted-foreground">Status</span>
-        <Select value={status} onValueChange={onStatusChange}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_FILTERS.map((statusFilter) => (
-              <SelectItem
-                key={statusFilter.value}
-                value={statusFilter.value}
-              >
-                {statusFilter.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    </div>
+  );
+}
+
+function FeedbackStatusTabs({
+  value,
+  onValueChange,
+}: {
+  value: StatusFilter;
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <div className="mt-4 flex w-full items-center border-b border-border/70">
+      {FEEDBACK_STATUS_TABS.map((tab) => (
+        <Button
+          key={tab.value}
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onValueChange(tab.value)}
+          className={cn(
+            "h-8 min-w-0 flex-1 rounded-none px-2 text-xs font-medium shadow-none",
+            value === tab.value
+              ? "text-foreground shadow-[inset_0_-2px_0_hsl(var(--primary))]"
+              : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+          )}
+        >
+          <span className="truncate">{tab.label}</span>
+        </Button>
+      ))}
     </div>
   );
 }
