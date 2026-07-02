@@ -78,6 +78,7 @@ import {
   buildTaskFeedbackSnapshot,
   buildTasksFilters,
   buildTasksTableColumns,
+  getTaskProjectId,
   isAiGeneratedTask,
   renderTasksList,
   renderTasksRowActions,
@@ -2126,6 +2127,14 @@ export function TasksInbox({
       typeof tableState.activeFilters.source_system === "string"
         ? tableState.activeFilters.source_system.toLowerCase()
         : null;
+    const projectFilter =
+      typeof tableState.activeFilters.project_id === "string"
+        ? tableState.activeFilters.project_id
+        : null;
+    const assigneeFilter =
+      typeof tableState.activeFilters.assignee_person_id === "string"
+        ? tableState.activeFilters.assignee_person_id
+        : null;
 
     return items.filter((item) => {
       if (
@@ -2133,6 +2142,23 @@ export function TasksInbox({
         getTaskSourceLabel(item).toLowerCase() !== sourceFilter
       )
         return false;
+
+      if (projectFilter) {
+        const itemProjectId = getTaskProjectId(item);
+        if (projectFilter === "__none__") {
+          if (itemProjectId !== null) return false;
+        } else if (String(itemProjectId ?? "") !== projectFilter) {
+          return false;
+        }
+      }
+
+      if (assigneeFilter) {
+        if (assigneeFilter === "__unassigned__") {
+          if (item.assignee_person_id || item.assignee_email) return false;
+        } else if (item.assignee_person_id !== assigneeFilter) {
+          return false;
+        }
+      }
 
       if (!searchTerm) return true;
 
@@ -2151,6 +2177,8 @@ export function TasksInbox({
     });
   }, [
     items,
+    tableState.activeFilters.assignee_person_id,
+    tableState.activeFilters.project_id,
     tableState.activeFilters.source_system,
     tableState.debouncedSearch,
   ]);
@@ -2503,6 +2531,38 @@ export function TasksInbox({
     const sourceFilters = buildTasksFilters(items).filter(
       (item) => item.id !== "status",
     );
+    const projectFilters = isProjectScoped
+      ? []
+      : [
+          {
+            id: "project_id",
+            label: "Project",
+            type: "select" as const,
+            options: [
+              { value: "__none__", label: "Unlinked" },
+              ...projects.map((project) => ({
+                value: String(project.id),
+                label: projectOptionLabel(project),
+              })),
+            ],
+          },
+        ];
+    const assigneeFilters = [
+      {
+        id: "assignee_person_id",
+        label: "Assigned to",
+        type: "select" as const,
+        options: [
+          { value: "__unassigned__", label: "Unassigned" },
+          ...users
+            .filter((user) => user.person_id)
+            .map((user) => ({
+              value: user.person_id as string,
+              label: userOptionLabel(user),
+            })),
+        ],
+      },
+    ];
     return [
       {
         id: "status",
@@ -2513,9 +2573,11 @@ export function TasksInbox({
           label: item.label,
         })),
       },
+      ...projectFilters,
+      ...assigneeFilters,
       ...sourceFilters,
     ];
-  }, [items]);
+  }, [isProjectScoped, items, projects, users]);
 
   const selectItemRef = useRef(selectItem);
   selectItemRef.current = selectItem;
@@ -2562,7 +2624,9 @@ export function TasksInbox({
 
   const isFiltered =
     tableState.debouncedSearch.trim().length > 0 ||
-    tableState.activeFilters.source_system !== undefined;
+    tableState.activeFilters.source_system !== undefined ||
+    tableState.activeFilters.project_id !== undefined ||
+    tableState.activeFilters.assignee_person_id !== undefined;
 
   const handleFilterChange = useCallback(
     (nextFilters: Record<string, FilterValue>) => {
