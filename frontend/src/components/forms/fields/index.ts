@@ -3,6 +3,7 @@ export * from "./RHFSelectField";
 export * from "./RHFNumberField";
 export * from "./RHFCheckboxField";
 export * from "./RHFDateField";
+export * from "./RHFTimeField";
 export * from "./RHFMoneyField";
 export * from "./RHFComboboxField";
 export * from "./RHFMultiComboboxField";

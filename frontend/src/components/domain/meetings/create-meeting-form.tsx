@@ -1,21 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 
-import {
-  Modal as Dialog,
-  ModalContent as DialogContent,
-  ModalDescription as DialogDescription,
-  ModalFooter as DialogFooter,
-  ModalHeader as DialogHeader,
-  ModalTitle as DialogTitle,
-  ModalTrigger as DialogTrigger,
-} from "@/components/ui/unified-modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
@@ -24,6 +16,7 @@ import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiCombobo
 import { RHFSelectField, type SelectOption } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { RHFTimeField } from "@/components/forms/fields/RHFTimeField";
 import { useCreateMeeting, useMeetingSeriesList } from "@/hooks/use-meetings";
 import { useMeetingTemplateOptions } from "@/hooks/use-meeting-templates";
 import { usePeople } from "@/hooks/use-people";
@@ -45,12 +38,12 @@ const TIMEZONE_OPTIONS: SelectOption[] = [
 
 const NO_TEMPLATE_VALUE = "__none__";
 
-// Time fields use the native HTML time input, which yields "HH:MM". Empty
-// string means "not set" and must be normalized to undefined before submit
-// so the optional Zod schema doesn't see the empty string.
+// Time fields are entered as free text and normalized to "HH:MM" by
+// RHFTimeField on blur. Empty string means "not set" and must be normalized
+// to undefined before submit so the optional Zod schema doesn't see it.
 const timeFieldSchema = z
   .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24h) format")
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use a valid time, e.g. 9:00 AM")
   .optional()
   .or(z.literal(""));
 
@@ -96,20 +89,13 @@ function buildDefaultValues(): CreateMeetingFormValues {
   };
 }
 
-interface CreateMeetingDialogProps {
+interface CreateMeetingFormProps {
   projectId: string;
-  onSuccess?: () => void;
-  onCreated?: (meetingId: string) => void;
-  trigger?: React.ReactNode;
+  onCancel?: () => void;
 }
 
-export function CreateMeetingDialog({
-  projectId,
-  onSuccess,
-  onCreated,
-  trigger,
-}: CreateMeetingDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProps) {
+  const router = useRouter();
   const createMeeting = useCreateMeeting(projectId);
   const { data: templateData } = useMeetingTemplateOptions();
   const { data: seriesData } = useMeetingSeriesList(projectId);
@@ -138,7 +124,13 @@ export function CreateMeetingDialog({
     () =>
       people.map((person) => {
         const fullName = `${person.first_name} ${person.last_name}`.trim();
-        const label = person.company?.name ? `${fullName} — ${person.company.name}` : fullName;
+        // Many imported contacts only have an email — fall back to it so the
+        // option never renders blank (root cause of "select attendees
+        // doesn't work": a name-only label collapsed to "" for these rows).
+        const displayName = fullName || person.email || "Unnamed contact";
+        const label = person.company?.name
+          ? `${displayName} — ${person.company.name}`
+          : displayName;
         return {
           value: person.id,
           label,
@@ -166,12 +158,12 @@ export function CreateMeetingDialog({
     }
   }, [nameValue, form]);
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      form.reset(buildDefaultValues());
-      seriesTouched.current = false;
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+      return;
     }
+    router.push(`/${projectId}/meetings`);
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -194,9 +186,7 @@ export function CreateMeetingDialog({
             ? values.template_id
             : undefined,
       });
-      handleOpenChange(false);
-      onSuccess?.();
-      onCreated?.(created.meeting.id);
+      router.push(`/${projectId}/meetings/${created.meeting.id}/agenda`);
     } catch (error) {
       reportNonCriticalFailure({
         area: "meetings",
@@ -209,134 +199,109 @@ export function CreateMeetingDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus />
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="max-w-2xl space-y-4">
+        <RHFSelectField
+          control={form.control}
+          name="template_id"
+          label="Template"
+          options={templateOptions}
+          placeholder="No Template"
+        />
+
+        <RHFTextField
+          control={form.control}
+          name="name"
+          label="Meeting Name *"
+          placeholder="Weekly OAC Meeting"
+        />
+
+        <RHFTextField
+          control={form.control}
+          name="series_name"
+          label="Series"
+          placeholder="Defaults to the meeting name"
+          description="Type an existing series to group this meeting with it, or leave it to start a new series."
+          list="meeting-series-options"
+          onFocus={() => {
+            seriesTouched.current = true;
+          }}
+        />
+        <datalist id="meeting-series-options">
+          {existingSeriesNames.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <RHFDateField control={form.control} name="meeting_date" label="Date" nullable />
+          <RHFSelectField
+            control={form.control}
+            name="timezone"
+            label="Timezone"
+            options={TIMEZONE_OPTIONS}
+            placeholder="Select timezone"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <RHFTimeField control={form.control} name="start_time" label="Start Time" />
+          <RHFTimeField control={form.control} name="end_time" label="End Time" />
+        </div>
+
+        <RHFTextField
+          control={form.control}
+          name="location"
+          label="Location"
+          placeholder="Conference room or address"
+        />
+
+        <RHFTextField
+          control={form.control}
+          name="meeting_link"
+          label="Meeting Link"
+          placeholder="https://..."
+        />
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-8">
+          <RHFCheckboxField control={form.control} name="is_private" label="Private" />
+          <RHFCheckboxField control={form.control} name="is_draft" label="Draft" />
+        </div>
+
+        <RHFTextareaField
+          control={form.control}
+          name="overview"
+          label="Overview"
+          placeholder="What should this meeting cover?"
+          rows={4}
+        />
+
+        <RHFMultiComboboxField
+          control={form.control}
+          name="attendee_person_ids"
+          label="Attendees"
+          options={attendeeOptions}
+          placeholder="Select attendees"
+          searchPlaceholder="Search people..."
+          emptyMessage="No matching person found."
+          disabled={isLoadingPeople}
+        />
+
+        <div className="flex items-center gap-3 pt-2">
+          <Button type="submit" disabled={createMeeting.isPending}>
+            {createMeeting.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Meeting
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent size="xl" className="max-h-dvh overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create Meeting</DialogTitle>
-          <DialogDescription>
-            Start a structured project meeting. Each new meeting begins with an
-            Uncategorized Items agenda section.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <RHFSelectField
-              control={form.control}
-              name="template_id"
-              label="Template"
-              options={templateOptions}
-              placeholder="No Template"
-            />
-
-            <RHFTextField
-              control={form.control}
-              name="name"
-              label="Meeting Name *"
-              placeholder="Weekly OAC Meeting"
-            />
-
-            <RHFTextField
-              control={form.control}
-              name="series_name"
-              label="Series"
-              placeholder="Defaults to the meeting name"
-              description="Type an existing series to group this meeting with it, or leave it to start a new series."
-              list="meeting-series-options"
-              onFocus={() => {
-                seriesTouched.current = true;
-              }}
-            />
-            <datalist id="meeting-series-options">
-              {existingSeriesNames.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <RHFDateField control={form.control} name="meeting_date" label="Date" nullable />
-              <RHFSelectField
-                control={form.control}
-                name="timezone"
-                label="Timezone"
-                options={TIMEZONE_OPTIONS}
-                placeholder="Select timezone"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <RHFTextField
-                control={form.control}
-                name="start_time"
-                label="Start Time"
-                type="time"
-              />
-              <RHFTextField control={form.control} name="end_time" label="End Time" type="time" />
-            </div>
-
-            <RHFTextField
-              control={form.control}
-              name="location"
-              label="Location"
-              placeholder="Conference room or address"
-            />
-
-            <RHFTextField
-              control={form.control}
-              name="meeting_link"
-              label="Meeting Link"
-              placeholder="https://..."
-            />
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-8">
-              <RHFCheckboxField control={form.control} name="is_private" label="Private" />
-              <RHFCheckboxField control={form.control} name="is_draft" label="Draft" />
-            </div>
-
-            <RHFTextareaField
-              control={form.control}
-              name="overview"
-              label="Overview"
-              placeholder="What should this meeting cover?"
-              rows={4}
-            />
-
-            <RHFMultiComboboxField
-              control={form.control}
-              name="attendee_person_ids"
-              label="Attendees"
-              options={attendeeOptions}
-              placeholder="Select attendees"
-              searchPlaceholder="Search people..."
-              emptyMessage="No matching person found."
-              disabled={isLoadingPeople}
-            />
-
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={createMeeting.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMeeting.isPending}>
-                {createMeeting.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Meeting
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={createMeeting.isPending}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

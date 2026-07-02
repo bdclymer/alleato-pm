@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (323)
+## UI Routes (325)
 
-_296/323 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_298/325 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -87,8 +87,10 @@ _296/323 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/invoicing/subcontractor/[invoiceId]` | View detailed subcontractor invoice with schedule of values and change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
 | `/[projectId]/invoicing/subcontractor/new` | Create new subcontractor invoice with SOV and approved change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
 | `/[projectId]/meetings` | List project meetings with transcripts and extracted key information | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
-| `/[projectId]/meetings/[meetingId]` | Add attendees to this meeting. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
+| `/[projectId]/meetings/[meetingId]` | View meeting transcript with segments, tasks, risks, decisions, and opportunities | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
+| `/[projectId]/meetings/[meetingId]/agenda` | Add attendees to this meeting. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/agenda/page.tsx |
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
+| `/[projectId]/meetings/new` | Start a structured project meeting. Each new meeting begins with an Uncategorized Items agenda section. | frontend/src/app/(main)/[projectId]/meetings/new/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
@@ -341,7 +343,7 @@ _296/323 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (727)
+## API Endpoints (728)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -500,6 +502,7 @@ _296/323 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/contacts` | GET, POST | frontend/src/app/api/contacts/route.ts |
 | `/api/cron/attribution-rules` | POST | frontend/src/app/api/cron/attribution-rules/route.ts |
 | `/api/cron/autonomous-triage` | POST | frontend/src/app/api/cron/autonomous-triage/route.ts |
+| `/api/cron/check-feedback-github-health` | POST | frontend/src/app/api/cron/check-feedback-github-health/route.ts |
 | `/api/cron/daily-flags` | POST | frontend/src/app/api/cron/daily-flags/route.ts |
 | `/api/cron/decay-memories` | POST | frontend/src/app/api/cron/decay-memories/route.ts |
 | `/api/cron/executive-daily-brief` | GET, POST | frontend/src/app/api/cron/executive-daily-brief/route.ts |

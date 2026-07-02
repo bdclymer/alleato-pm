@@ -353,6 +353,11 @@
     },
     {
       "url": "/[projectId]/meetings/[meetingId]",
+      "title": null,
+      "description": "View meeting transcript with segments, tasks, risks, decisions, and opportunities"
+    },
+    {
+      "url": "/[projectId]/meetings/[meetingId]/agenda",
       "title": "Loading meeting…",
       "description": "Add attendees to this meeting."
     },
@@ -360,6 +365,11 @@
       "url": "/[projectId]/meetings/[meetingId]/prep",
       "title": "Meeting Prep",
       "description": "Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch."
+    },
+    {
+      "url": "/[projectId]/meetings/new",
+      "title": "Create Meeting",
+      "description": "Start a structured project meeting. Each new meeting begins with an Uncategorized Items agenda section."
     },
     {
       "url": "/[projectId]/my-work",

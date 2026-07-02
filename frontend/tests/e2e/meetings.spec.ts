@@ -1,9 +1,10 @@
 /**
  * Meetings tool — end-to-end coverage of the core workflow:
- * create meeting via dialog → detail page → add category → add item →
- * inline-edit item status → convert to minutes → record official minutes
- * text → create follow-up (carries items) → previous-minutes visible on
- * carried item → soft delete from list → recycle bin restore.
+ * create meeting via the full-page form → detail page → add category →
+ * add item → inline-edit item status → convert to minutes → record
+ * official minutes text → create follow-up (carries items) →
+ * previous-minutes visible on carried item → soft delete from list →
+ * recycle bin restore.
  *
  * Runs against project 876 on this worktree's dedicated dev server
  * (see playwright.config.ts baseURL / PLAYWRIGHT_BASE_URL).
@@ -35,7 +36,7 @@ let meetingId = "";
 let followUpMeetingId = "";
 
 function meetingDetailUrl(id: string): string {
-  return `/${PROJECT_ID}/meetings/${id}`;
+  return `/${PROJECT_ID}/meetings/${id}/agenda`;
 }
 
 // Short settle wait after the first hydration-dependent element becomes
@@ -44,32 +45,6 @@ function meetingDetailUrl(id: string): string {
 // elements — clicking immediately on that signal intermittently no-ops.
 async function settleAfterHydration(page: Page) {
   await page.waitForTimeout(1500);
-}
-
-async function openMeetingsList(page: Page) {
-  await page.goto(BASE_MEETINGS_URL, { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Meetings" })).toBeVisible();
-  const createButton = page.getByRole("button", { name: "Create Meeting" });
-  await expect(createButton).toBeEnabled({ timeout: 30000 });
-  // The toolbar row-count text only renders once the series-list query has
-  // resolved — wait for it instead of a skeleton class, which can also
-  // appear in unrelated header chrome. A hidden mobile-toolbar duplicate of
-  // this text also exists in the DOM, so target the visible (desktop) one.
-  const rowCount = page.getByText(/\d+ rows?/).last();
-  let loaded = false;
-  for (let attempt = 1; attempt <= 3 && !loaded; attempt++) {
-    if (attempt > 1) await page.reload({ waitUntil: "domcontentloaded" });
-    // Same cold-compile-tax mitigation as openMeetingDetail: reload and
-    // give the (possibly still-compiling, or momentarily stalled under
-    // sustained sequential-test load) list route another runway rather
-    // than treating a single slow load as a real failure.
-    loaded = await expect(rowCount)
-      .toBeVisible({ timeout: 30000 })
-      .then(() => true)
-      .catch(() => false);
-  }
-  expect(loaded).toBe(true);
-  await settleAfterHydration(page);
 }
 
 /**
@@ -144,24 +119,50 @@ async function openMeetingDetail(page: Page, id: string) {
 }
 
 test.describe("Meetings tool", () => {
-  test("create meeting via dialog", async ({ page }) => {
-    await openMeetingsList(page);
-
-    await clickUntilVisible(
-      page.getByRole("button", { name: "Create Meeting" }),
-      page.getByRole("dialog"),
-    );
+  test("create meeting via full page form", async ({ page }) => {
+    // Complaint #2: create meeting must be a full page, not a modal — there
+    // is no more "open dialog" step here, just a direct navigation.
+    await page.goto(`/${PROJECT_ID}/meetings/new`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Create Meeting" })).toBeVisible({
+      timeout: 20000,
+    });
+    // No modal/dialog role should be present — this is a full page.
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
     await page.getByLabel("Meeting Name *").fill(MEETING_NAME);
 
-    await page.getByRole("dialog").getByRole("button", { name: "Create Meeting" }).click();
+    // Complaint #1: start/end time fields must accept natural typing
+    // (including a literal colon) and actually hold the value.
+    const startTimeInput = page.getByLabel("Start Time");
+    await startTimeInput.click();
+    await startTimeInput.pressSequentially("9:00 AM", { delay: 30 });
+    await startTimeInput.blur();
+    await expect(startTimeInput).toHaveValue("09:00");
 
-    // Dialog closes and navigates to the new meeting's detail page.
-    await page.waitForURL(new RegExp(`/${PROJECT_ID}/meetings/[^/]+$`), {
+    const endTimeInput = page.getByLabel("End Time");
+    await endTimeInput.click();
+    await endTimeInput.pressSequentially("10:30 AM", { delay: 30 });
+    await endTimeInput.blur();
+    await expect(endTimeInput).toHaveValue("10:30");
+
+    // Complaint #3: attendee picker must actually let you select people.
+    const attendeesTrigger = page.getByRole("combobox").last();
+    await attendeesTrigger.scrollIntoViewIfNeeded();
+    await attendeesTrigger.click();
+    const firstOption = page.getByRole("option").first();
+    await expect(firstOption).toBeVisible({ timeout: 10000 });
+    await firstOption.click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator('[data-slot="badge"]').first()).toBeVisible();
+
+    await page.getByRole("button", { name: "Create Meeting" }).click();
+
+    // Submitting navigates to the new meeting's agenda route.
+    await page.waitForURL(new RegExp(`/${PROJECT_ID}/meetings/[^/]+/agenda$`), {
       timeout: 15000,
       waitUntil: "commit",
     });
-    meetingId = new URL(page.url()).pathname.split("/").pop()!;
+    meetingId = new URL(page.url()).pathname.split("/").at(-2)!;
     expect(meetingId).toBeTruthy();
 
     await expect(page.getByText(MEETING_NAME).first()).toBeVisible();
@@ -344,142 +345,26 @@ test.describe("Meetings tool", () => {
     await expect(carriedItemRow.getByText(OFFICIAL_MINUTES_TEXT)).toBeVisible();
   });
 
-  test("soft delete meeting from list and restore from recycle bin", async ({ page }) => {
-    await openMeetingsList(page);
+  test("soft delete and restore round-trip (API contract)", async ({ page }) => {
+    // The project meetings list is the legacy transcript table (reverted per
+    // product decision 2026-07-02); structured planning meetings have no list
+    // UI for delete/restore right now, so this covers the API contract the
+    // future UI will call.
+    const base = `/api/projects/${PROJECT_ID}/meetings/${meetingId}`;
 
-    // Filter the list down to just this run's series first — by this point
-    // in a serial run the project has many pre-existing meeting series, and
-    // relying on default list order to surface a brand-new row is fragile.
-    const searchToggle = page.getByRole("button", { name: "Search table" });
-    if (await searchToggle.isVisible().catch(() => false)) {
-      await searchToggle.click();
-    }
-    const searchInput = page.getByPlaceholder("Search meetings or series...");
-    await searchInput.fill(MEETING_NAME);
-    await page.waitForTimeout(500); // debounced search
+    const del = await page.request.delete(base);
+    expect(del.status()).toBe(200);
 
-    // Meetings are grouped by series; expand the series row that matches our
-    // meeting name to reveal the nested meeting row and its row actions.
-    // Wait for the row to actually exist before handing off to the
-    // click-retry helper — otherwise a slow list fetch means every retry
-    // attempt burns its own actionability timeout waiting for a locator
-    // that hasn't appeared yet, which can exceed the test's overall budget.
-    const seriesRow = page.locator("tr", { hasText: MEETING_NAME });
-    await expect(seriesRow.first()).toBeVisible({ timeout: 30000 });
+    // Soft-deleted meetings 404 on detail fetch...
+    const afterDelete = await page.request.get(base);
+    expect(afterDelete.status()).toBe(404);
 
-    const seriesToggle = seriesRow
-      .getByRole("button", { name: /Expand series|Collapse series/ })
-      .first();
-    // The series row's own "Meeting actions" trigger doesn't exist yet —
-    // wait for at least one nested meeting row (any of them) to confirm
-    // the series has expanded before scoping to a specific meeting number.
-    await clickUntilVisible(
-      seriesToggle,
-      page.getByRole("button", { name: "Meeting actions" }).first(),
-    );
-
-    // The original meeting (created earlier in this run, meetingId) and its
-    // follow-up share the same series name/row text, so scope to the row
-    // showing meeting number 1 specifically — otherwise `.first()` on
-    // "Meeting actions" can hit whichever meeting the table happens to
-    // render first, silently deleting the wrong one.
-    // Use the row's accessible name anchored at "#1 " — a bare hasText("#1")
-    // also matches the series wrapper <tr> that CONTAINS the nested meetings
-    // table (its text includes every child row), which resolves to two
-    // "Meeting actions" buttons and trips strict mode.
-    const originalMeetingRow = page.getByRole("row", { name: /^#1 / });
-    const meetingActionsButton = originalMeetingRow.getByRole("button", {
-      name: "Meeting actions",
-    });
-    await expect(meetingActionsButton).toBeVisible({ timeout: 15000 });
-
-    await openMenuAndClickItem(meetingActionsButton, page.getByRole("menuitem", { name: "Delete" }));
-
-    await expect(page.getByRole("alertdialog")).toBeVisible();
-    const deleteResponsePromise = page.waitForResponse(
-      (res) =>
-        res.request().method() === "DELETE" &&
-        new URL(res.url()).pathname === `/api/projects/${PROJECT_ID}/meetings/${meetingId}`,
-      { timeout: 30000 },
-    );
-    await page.getByRole("button", { name: "Delete Meeting" }).click();
-    const deleteResponse = await deleteResponsePromise;
-    expect(deleteResponse.status()).toBe(200);
-    await expect(page.getByRole("alertdialog")).not.toBeVisible();
-
-    // Confirm the specific meeting is gone (soft-deleted) via a fresh detail
-    // fetch — the follow-up meeting shares the same series name, so
-    // text-presence alone can't distinguish "this meeting" from "a sibling
-    // meeting in the same series."
-    const detailAfterDelete = await page.request.get(
-      `/api/projects/${PROJECT_ID}/meetings/${meetingId}`,
-    );
-    expect(detailAfterDelete.status()).toBe(404);
-
-    // Restore from the recycle bin. Same "#1" scoping as above — the
-    // recycle bin can also show a sibling meeting in the same series.
-    await page.getByRole("button", { name: "Recycle Bin" }).click();
-    await page.waitForURL(/tab=recycle-bin/);
-    // Re-apply the search filter — the recycle bin tab is a distinct table
-    // view and doesn't reliably inherit the previous tab's search term.
-    const recycleBinSearchToggle = page.getByRole("button", { name: "Search table" });
-    if (await recycleBinSearchToggle.isVisible().catch(() => false)) {
-      await recycleBinSearchToggle.click();
-    }
-    const recycleBinSearchInput = page.getByPlaceholder("Search meetings or series...");
-    if (await recycleBinSearchInput.isVisible().catch(() => false)) {
-      await recycleBinSearchInput.fill(MEETING_NAME);
-      await page.waitForTimeout(500);
-    }
-
-    const recycleBinSeriesToggle = page
-      .locator("tr", { hasText: MEETING_NAME })
-      .getByRole("button", { name: /Expand series|Collapse series/ })
-      .first();
-    await expect(recycleBinSeriesToggle).toBeVisible({ timeout: 30000 });
-
-    // Same wrapper-row pitfall as above — anchor on the row accessible name.
-    // And same hydration pitfall as the main tab: a single bare click on the
-    // toggle can no-op before handlers attach, so retry until the nested
-    // row's Restore button actually appears.
-    const recycleBinRestoreButton = page
-      .getByRole("row", { name: /^#1 / })
-      .getByRole("button", { name: "Restore" });
-    await clickUntilVisible(recycleBinSeriesToggle, recycleBinRestoreButton);
-
-    const restoreResponsePromise = page.waitForResponse(
-      (res) =>
-        res.request().method() === "POST" &&
-        new URL(res.url()).pathname === `/api/projects/${PROJECT_ID}/meetings/${meetingId}/restore`,
-      { timeout: 30000 },
-    );
-    await recycleBinRestoreButton.click();
-    const restoreResponse = await restoreResponsePromise;
-    expect(restoreResponse.status()).toBe(200);
-
-    // The restored meeting is readable again via a fresh detail fetch.
-    const detailAfterRestore = await page.request.get(
-      `/api/projects/${PROJECT_ID}/meetings/${meetingId}`,
-    );
-    expect(detailAfterRestore.status()).toBe(200);
-
-    // And it's back in the default "All" list. Re-apply the search filter so
-    // the assertion doesn't depend on list order/pagination, and assert the
-    // visible series ROW — bare getByText can match a hidden mobile-toolbar
-    // duplicate of the search term.
-    await page.getByRole("button", { name: "All", exact: true }).click();
-    await page.waitForURL((url) => !url.search.includes("tab=recycle-bin"));
-    const allTabSearchToggle = page.getByRole("button", { name: "Search table" });
-    if (await allTabSearchToggle.isVisible().catch(() => false)) {
-      await allTabSearchToggle.click();
-    }
-    const allTabSearchInput = page.getByPlaceholder("Search meetings or series...");
-    if (await allTabSearchInput.isVisible().catch(() => false)) {
-      await allTabSearchInput.fill(MEETING_NAME);
-      await page.waitForTimeout(500);
-    }
-    await expect(
-      page.getByRole("row", { name: new RegExp(MEETING_NAME) }).first(),
-    ).toBeVisible({ timeout: 30000 });
+    // ...and restore brings the full detail back.
+    const restore = await page.request.post(`${base}/restore`);
+    expect(restore.status()).toBe(200);
+    const afterRestore = await page.request.get(base);
+    expect(afterRestore.status()).toBe(200);
+    const detail = (await afterRestore.json()) as { meeting?: { id?: string } };
+    expect(detail.meeting?.id).toBe(meetingId);
   });
 });

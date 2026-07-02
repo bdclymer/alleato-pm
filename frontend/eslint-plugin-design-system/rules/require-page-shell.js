@@ -65,6 +65,12 @@ module.exports = {
       // here would create nested shells.
       '(admin)/training-docs/page.tsx',
       '(admin)/training-map/page.tsx',
+      // Restored transcript detail: delegates to MeetingDetailContent, which
+      // owns its own full page shell (same shape as the (tables)/ global page).
+      '[projectId]/meetings/[meetingId]/page.tsx',
+      // Restored project meetings list: thin server component delegating to
+      // MeetingsTablePage (owns UnifiedTablePage) / TablePageWrapper on error.
+      '[projectId]/meetings/page.tsx',
       '(admin)/meeting-templates/page.tsx',
       '(admin)/meeting-templates/[templateId]/page.tsx',
       'invoicing/subcontractor/page.tsx',
