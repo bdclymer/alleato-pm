@@ -5,18 +5,17 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NumberInput } from "../number-input";
 
 describe("NumberInput", () => {
-  it("renders zero as placeholder content when clearZeroOnFocus is enabled", () => {
+  it("renders zero as empty content when clearZeroOnFocus is enabled", () => {
     render(
       <NumberInput
         value="0"
         onChange={() => undefined}
         formatOnBlur={false}
         clearZeroOnFocus
-        placeholder="0"
       />,
     );
 
-    const input = screen.getByPlaceholderText("0");
+    const input = screen.getByRole("textbox");
     expect(input).toHaveValue("");
   });
 

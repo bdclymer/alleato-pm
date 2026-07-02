@@ -694,7 +694,6 @@ export default function NewSubcontractorInvoicePage() {
                                     formatOnBlur={false}
                                     autoSelectOnFocus
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     aria-label={`Percent complete for ${item.description}`}
                                     className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
                                     value={e.completion_percent}
@@ -739,7 +738,6 @@ export default function NewSubcontractorInvoicePage() {
                                     inline
                                     showCurrency={false}
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     className="h-8 w-28 text-sm"
                                     value={
                                       e.work_completed_period
@@ -777,7 +775,6 @@ export default function NewSubcontractorInvoicePage() {
                                     inline
                                     showCurrency={false}
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     className="h-8 w-28 text-sm"
                                     value={
                                       e.materials_stored
@@ -911,7 +908,6 @@ export default function NewSubcontractorInvoicePage() {
                                     formatOnBlur={false}
                                     autoSelectOnFocus
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     aria-label={`Percent complete for change order ${co.change_order_number}`}
                                     className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
                                     value={e.completion_percent}
@@ -956,7 +952,6 @@ export default function NewSubcontractorInvoicePage() {
                                     inline
                                     showCurrency={false}
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     className="h-8 w-28 text-sm"
                                     value={
                                       e.work_completed_period
@@ -994,7 +989,6 @@ export default function NewSubcontractorInvoicePage() {
                                     inline
                                     showCurrency={false}
                                     clearZeroOnFocus
-                                    placeholder="0"
                                     className="h-8 w-28 text-sm"
                                     value={
                                       e.materials_stored
