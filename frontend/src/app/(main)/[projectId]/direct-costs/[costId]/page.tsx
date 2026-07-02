@@ -1,17 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PageShell, ContentSectionStack, DetailPanel, SectionRuleHeading, LabelValueRow } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
+import {
+  ContentSectionStack,
+  PageShell,
+  SectionRuleHeading,
+} from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
+import {
+  DetailField,
+  DetailFieldGrid,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
-  DetailField,
-  DetailFieldGrid,
   InlineTableFooter,
   InlineTableFooterCell,
   InlineTableFooterRow,
@@ -22,7 +30,15 @@ import {
 } from "@/components/ds";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/table-config/formatters";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ExternalLink,
+  ReceiptText,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 
 interface DirectCostDetailPageProps {
@@ -81,21 +97,6 @@ interface DirectCostDetail {
   vendor: { id: string; name: string } | null;
   employee: { id: string; first_name: string; last_name: string } | null;
   line_items: LineItem[];
-}
-
-function statusVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "Approved":
-      return "default";
-    case "Pending":
-      return "secondary";
-    case "Revise and Resubmit":
-      return "destructive";
-    default:
-      return "outline";
-  }
 }
 
 export default function DirectCostDetailPage({
@@ -189,108 +190,123 @@ export default function DirectCostDetailPage({
   }
 
   const invoiceNumber = extractInvoiceNumber(directCost.invoice_number);
+  const pageTitle = invoiceNumber
+    ? `Invoice #${invoiceNumber}`
+    : `Direct cost ${directCost.id.slice(0, 8)}`;
 
   const lineItemsTotal = directCost.line_items?.reduce(
     (sum, li) => sum + (li.line_total ?? li.quantity * li.unit_cost),
     0,
   ) ?? 0;
+  const sortedLineItems = [...(directCost.line_items ?? [])].sort(
+    (a, b) => a.line_order - b.line_order,
+  );
+  const acumaticaHref = directCost.acumatica_ref_nbr
+    ? `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(
+        directCost.acumatica_ref_nbr,
+      )}`
+    : null;
 
   return (
     <>
       <PageShell
         variant="detail"
-        title="Direct Cost Details"
-        description={invoiceNumber ? `Invoice #${invoiceNumber}` : `#${directCost.id.slice(0, 8)}`}
-        onBack={() => router.back()}
+        title={pageTitle}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/${resolvedParams.projectId}/direct-costs`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Direct Costs
+            </Link>
+          </Button>
+        }
       >
-        <ContentSectionStack>
-          {/* Cost Information + Record Info */}
-          <section>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-              <div className="space-y-4">
-                <SectionRuleHeading label="Cost Information" className="[&_span]:text-primary" />
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{directCost.cost_type}</Badge>
-                  <Badge variant={statusVariant(directCost.status)}>
-                    {directCost.status}
-                  </Badge>
-                </div>
-                <DetailFieldGrid columns={2}>
-                  <DetailField label="Total Amount">
-                    <span className="text-2xl font-semibold">
-                      {formatCurrency(directCost.total_amount)}
-                    </span>
-                  </DetailField>
-                  <DetailField label="Date" value={directCost.date} date />
-                  <DetailField
-                    label="Vendor"
-                    value={directCost.vendor?.name}
-                  />
-                  {directCost.employee ? (
-                    <DetailField label="Employee">
-                      {directCost.employee.first_name}{" "}
-                      {directCost.employee.last_name}
-                    </DetailField>
-                  ) : null}
-                  <DetailField label="Invoice Number" value={invoiceNumber} />
-                  {directCost.received_date && (
-                    <DetailField label="Received Date" value={directCost.received_date} date />
-                  )}
-                  {directCost.paid_date && (
-                    <DetailField label="Paid Date" value={directCost.paid_date} date />
-                  )}
-                  {directCost.acumatica_sync_at && (
-                    <DetailField label="Acumatica">
-                      {directCost.acumatica_ref_nbr ? (
-                        <a
-                          href={`https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(directCost.acumatica_ref_nbr)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary underline-offset-4 hover:underline"
-                        >
-                          {directCost.acumatica_doc_type ? `${directCost.acumatica_doc_type} ` : ""}
-                          {directCost.acumatica_ref_nbr}
-                        </a>
-                      ) : (
-                        <Badge variant="outline">Synced</Badge>
-                      )}
-                    </DetailField>
-                  )}
-                  {directCost.description && (
-                    <DetailField label="Description" span={2}>
-                      {directCost.description}
-                    </DetailField>
-                  )}
-                </DetailFieldGrid>
-              </div>
-              <div className="space-y-8">
-                <div>
-                  <SectionRuleHeading label="Record Information" className="[&_span]:text-primary" />
-                  <DetailPanel>
-                    <dl className="space-y-3 text-sm">
-                      <LabelValueRow label="Created">
-                        {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
-                      </LabelValueRow>
-                      {directCost.updated_at &&
-                        directCost.updated_at !== directCost.created_at && (
-                          <LabelValueRow label="Last Updated">
-                            {formatDate(directCost.updated_at, "MMM d, yyyy HH:mm")}
-                          </LabelValueRow>
-                        )}
-                    </dl>
-                  </DetailPanel>
-                </div>
-              </div>
-            </div>
+        <DetailPropertyBar>
+          <DetailPropertyItem
+            icon={Banknote}
+            contentClassName="text-sm font-semibold text-foreground"
+          >
+            {formatCurrency(directCost.total_amount)}
+          </DetailPropertyItem>
+          <DetailPropertyItem
+            icon={Building2}
+            muted={!directCost.vendor?.name}
+            title={directCost.vendor?.name ?? undefined}
+          >
+            {directCost.vendor?.name ?? "Vendor not set"}
+          </DetailPropertyItem>
+          <DetailPropertyItem icon={CheckCircle2}>
+            {directCost.status}
+          </DetailPropertyItem>
+          <DetailPropertyItem icon={ReceiptText}>
+            {directCost.cost_type}
+          </DetailPropertyItem>
+          <DetailPropertyItem icon={CalendarDays}>
+            {formatDate(directCost.date)}
+          </DetailPropertyItem>
+          {directCost.received_date ? (
+            <DetailPropertyItem icon={CalendarDays}>
+              Received {formatDate(directCost.received_date)}
+            </DetailPropertyItem>
+          ) : null}
+          {directCost.paid_date ? (
+            <DetailPropertyItem icon={CalendarDays}>
+              Paid {formatDate(directCost.paid_date)}
+            </DetailPropertyItem>
+          ) : null}
+          {directCost.acumatica_sync_at ? (
+            acumaticaHref ? (
+              <DetailPropertyItem
+                icon={ExternalLink}
+                href={acumaticaHref}
+                external
+              >
+                {directCost.acumatica_doc_type ? `${directCost.acumatica_doc_type} ` : ""}
+                {directCost.acumatica_ref_nbr}
+              </DetailPropertyItem>
+            ) : (
+              <DetailPropertyItem icon={ExternalLink} muted>
+                Synced from Acumatica
+              </DetailPropertyItem>
+            )
+          ) : null}
+        </DetailPropertyBar>
+
+        <ContentSectionStack className="space-y-8">
+          <section className="space-y-4">
+            <SectionRuleHeading label="Invoice Details" />
+            <DetailFieldGrid columns={2} className="gap-y-3">
+              <DetailField label="Invoice number">
+                {invoiceNumber ?? "—"}
+              </DetailField>
+              {directCost.employee ? (
+                <DetailField label="Employee">
+                  {directCost.employee.first_name} {directCost.employee.last_name}
+                </DetailField>
+              ) : null}
+              {directCost.description ? (
+                <DetailField label="Description" span={2}>
+                  {directCost.description}
+                </DetailField>
+              ) : null}
+              <DetailField label="Created">
+                {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
+              </DetailField>
+              {directCost.updated_at &&
+              directCost.updated_at !== directCost.created_at ? (
+                <DetailField label="Last updated">
+                  {formatDate(directCost.updated_at, "MMM d, yyyy HH:mm")}
+                </DetailField>
+              ) : null}
+            </DetailFieldGrid>
           </section>
 
           {/* Line Items */}
-          {directCost.line_items && directCost.line_items.length > 0 && (
-            <section>
+          {sortedLineItems.length > 0 && (
+            <section className="space-y-4">
               <div>
                 <SectionRuleHeading
-                  label={`Line Items (${directCost.line_items.length})`}
-                  className="[&_span]:text-primary"
+                  label={`Line Items (${sortedLineItems.length})`}
                 />
                 <InlineTable variant="read">
                   <InlineTableHeader>
@@ -304,32 +320,28 @@ export default function DirectCostDetailPage({
                     </InlineTableHeaderRow>
                   </InlineTableHeader>
                   <InlineTableBody>
-                    {directCost.line_items
-                      .sort((a, b) => a.line_order - b.line_order)
-                      .map((li) => (
-                        <InlineTableRow key={li.id}>
-                          <InlineTableCell className="font-medium">
-                            {li.budget_code?.code ?? "-"}
-                          </InlineTableCell>
-                          <InlineTableCell>
-                            {li.description ??
-                              li.budget_code?.description ??
-                              "-"}
-                          </InlineTableCell>
-                          <InlineTableCell align="right">
-                            {li.quantity}
-                          </InlineTableCell>
-                          <InlineTableCell>{li.uom}</InlineTableCell>
-                          <InlineTableCell align="right">
-                            {formatCurrency(li.unit_cost)}
-                          </InlineTableCell>
-                          <InlineTableCell align="right" className="font-medium">
-                            {formatCurrency(
-                              li.line_total ?? li.quantity * li.unit_cost,
-                            )}
-                          </InlineTableCell>
-                        </InlineTableRow>
-                      ))}
+                    {sortedLineItems.map((li) => (
+                      <InlineTableRow key={li.id}>
+                        <InlineTableCell className="font-medium">
+                          {li.budget_code?.code ?? "-"}
+                        </InlineTableCell>
+                        <InlineTableCell>
+                          {li.description ?? li.budget_code?.description ?? "-"}
+                        </InlineTableCell>
+                        <InlineTableCell align="right">
+                          {li.quantity}
+                        </InlineTableCell>
+                        <InlineTableCell>{li.uom}</InlineTableCell>
+                        <InlineTableCell align="right">
+                          {formatCurrency(li.unit_cost)}
+                        </InlineTableCell>
+                        <InlineTableCell align="right" className="font-medium">
+                          {formatCurrency(
+                            li.line_total ?? li.quantity * li.unit_cost,
+                          )}
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    ))}
                   </InlineTableBody>
                   <InlineTableFooter>
                     <InlineTableFooterRow>
