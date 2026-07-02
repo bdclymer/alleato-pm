@@ -7,12 +7,13 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ClipboardEvent,
   type KeyboardEvent,
   type RefObject,
 } from "react";
-import { Image as ImageIcon, Loader2, Send, XCircle } from "lucide-react";
+import { Loader2, Send, XCircle } from "lucide-react";
 import { Button, Textarea } from "@/components/ds";
-import { SectionRuleHeading } from "@/components/layout/spacing";
+import { SectionAction, SectionRuleHeading } from "@/components/layout/spacing";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -50,9 +51,7 @@ function CommentInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = externalInputRef ?? localInputRef;
 
-  function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function attachImageFile(file: File, source: "file-picker" | "paste") {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file.");
       return;
@@ -77,13 +76,32 @@ function CommentInput({
         fallback: "The selected feedback comment screenshot could not be read.",
         error,
         metadata: {
+          source,
           fileName: file.name,
           fileSize: file.size,
         },
       });
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    attachImageFile(file, "file-picker");
     e.target.value = "";
+  }
+
+  function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const imageItem = Array.from(e.clipboardData.items).find((item) =>
+      item.type.startsWith("image/"),
+    );
+    if (!imageItem) return;
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    e.preventDefault();
+    attachImageFile(file, "paste");
   }
 
   const filteredUsers = useMemo(() => {
@@ -237,6 +255,7 @@ function CommentInput({
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Add a comment"
           rows={1}
           className="max-h-24 min-h-10 resize-none border-0 bg-transparent p-0 shadow-none"
@@ -247,9 +266,8 @@ function CommentInput({
             variant="ghost"
             size="xs"
             onClick={() => fileInputRef.current?.click()}
-            className="gap-1.5 text-xs"
+            className="h-auto px-0 py-0 text-xs font-normal text-primary hover:bg-transparent hover:underline"
           >
-            <ImageIcon className="h-3.5 w-3.5" />
             Attach image
           </Button>
           <Button
@@ -282,6 +300,7 @@ export function CommentsSection({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchComments = useCallback(async () => {
@@ -326,6 +345,7 @@ export function CommentsSection({
   useEffect(() => {
     setLoading(true);
     setComments([]);
+    setCollapsed(false);
     fetchComments();
     fetchUsers();
   }, [fetchComments, fetchUsers]);
@@ -397,57 +417,73 @@ export function CommentsSection({
 
   return (
     <div className="space-y-6">
-      <SectionRuleHeading label="Comments" className="mb-0 pb-0" />
-
-      <div ref={scrollRef} className="space-y-6">
-        {loading && (
-          <div className="flex items-center justify-center py-4">
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-          </div>
-        )}
-
-        {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-4">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-              {getInitials(comment.author)}
-            </span>
-            <div className="min-w-0 flex-1 rounded-md bg-muted/30 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                  {displayName(comment.author)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {relativeTime(comment.created_at)}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {renderBody(comment.body)}
-              </p>
-              {comment.screenshot_url && (
-                <a
-                  href={comment.screenshot_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1.5 inline-block"
-                >
-                  <img
-                    src={comment.screenshot_url}
-                    alt="Comment screenshot"
-                    className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
-                  />
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <CommentInput
-        onSubmit={handleSubmit}
-        users={users}
-        submitting={submitting}
-        inputRef={commentInputRef}
+      <SectionRuleHeading
+        label="Comments"
+        className="mb-0 pb-0"
+        actions={
+          <SectionAction
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? "Expand" : "Collapse"}
+          </SectionAction>
+        }
       />
+
+      {!collapsed && (
+        <>
+          <div ref={scrollRef} className="space-y-6">
+            {loading && (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              </div>
+            )}
+
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex gap-4">
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                  {getInitials(comment.author)}
+                </span>
+                <div className="min-w-0 flex-1 rounded-md bg-muted/30 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                      {displayName(comment.author)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {relativeTime(comment.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    {renderBody(comment.body)}
+                  </p>
+                  {comment.screenshot_url && (
+                    <a
+                      href={comment.screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 inline-block"
+                    >
+                      <img
+                        src={comment.screenshot_url}
+                        alt="Comment screenshot"
+                        className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <CommentInput
+            onSubmit={handleSubmit}
+            users={users}
+            submitting={submitting}
+            inputRef={commentInputRef}
+          />
+        </>
+      )}
     </div>
   );
 }
