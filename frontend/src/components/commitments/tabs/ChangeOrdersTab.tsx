@@ -15,6 +15,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, ExternalLink, FileText, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/misc/status-badge'
+import { PermissionGate } from '@/components/domain/permissions/PermissionGate'
 import Link from 'next/link'
 
 interface ChangeOrder {
@@ -175,10 +176,12 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
         <CardHeader className="px-0">
           <div className="flex items-center justify-between">
             <CardTitle>Change Orders</CardTitle>
-            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Change Event
-            </Button>
+            <PermissionGate projectId={projectId} module="change_orders" level="write">
+              <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Create Change Event
+              </Button>
+            </PermissionGate>
           </div>
         </CardHeader>
         <CardContent className="space-y-4 px-0">
@@ -196,10 +199,12 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
         <CardHeader className="px-0">
           <div className="flex items-center justify-between">
             <CardTitle>Change Orders</CardTitle>
-            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Change Event
-            </Button>
+            <PermissionGate projectId={projectId} module="change_orders" level="write">
+              <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Create Change Event
+              </Button>
+            </PermissionGate>
           </div>
         </CardHeader>
         <CardContent className="px-0">
@@ -215,10 +220,12 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
         <CardHeader className="px-0">
           <div className="flex items-center justify-between">
             <CardTitle>Change Orders</CardTitle>
-            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Change Event
-            </Button>
+            <PermissionGate projectId={projectId} module="change_orders" level="write">
+              <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Create Change Event
+              </Button>
+            </PermissionGate>
           </div>
           <CardDescription>
             No change orders have been created for this commitment yet.
@@ -240,10 +247,12 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
       <CardHeader className="px-0">
         <div className="flex items-center justify-between">
           <CardTitle>Change Orders ({changeOrders.length})</CardTitle>
-          <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Create Change Event
-          </Button>
+          <PermissionGate projectId={projectId} module="change_orders" level="write">
+            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Change Event
+            </Button>
+          </PermissionGate>
         </div>
         <CardDescription>
           Approved change orders automatically update the revised contract amount.

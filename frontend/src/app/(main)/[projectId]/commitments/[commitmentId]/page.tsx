@@ -37,6 +37,7 @@ import { RfqsTab } from "@/components/commitments/tabs/RfqsTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
 import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
 import {
@@ -1058,12 +1059,14 @@ export default function CommitmentDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onSelect={() => router.push(`/${projectId}/change-events/new?commitmentId=${commitmentId}`)}
-          >
-            <GitBranch className="mr-2 h-4 w-4" />
-            Create Change Event
-          </DropdownMenuItem>
+          <PermissionGate projectId={projectId} module="change_orders" level="write">
+            <DropdownMenuItem
+              onSelect={() => router.push(`/${projectId}/change-events/new?commitmentId=${commitmentId}`)}
+            >
+              <GitBranch className="mr-2 h-4 w-4" />
+              Create Change Event
+            </DropdownMenuItem>
+          </PermissionGate>
           <DropdownMenuItem
             onSelect={() => {
               const commitmentType =

@@ -148,6 +148,22 @@ export const POST = withApiGuardrails(
       );
     }
 
+    // Guardrail: a change order can't be requested after the moment it's created.
+    // Compare calendar-date prefixes (not parsed Date instants) so this can't
+    // false-positive across timezones at day boundaries.
+    if (
+      typeof body.requested_date === "string" &&
+      body.requested_date.slice(0, 10) > new Date().toISOString().slice(0, 10)
+    ) {
+      return NextResponse.json(
+        {
+          error: "Invalid requested date",
+          message: "Requested date cannot be in the future.",
+        },
+        { status: 400 },
+      );
+    }
+
     // Verify the commitment belongs to this project
     const { data: commitment, error: commitmentError } = await supabase
       .from("commitments_unified")

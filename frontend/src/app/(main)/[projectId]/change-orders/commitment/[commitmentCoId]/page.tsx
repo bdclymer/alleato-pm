@@ -8,7 +8,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 import {
   InlineTable,
@@ -29,7 +29,6 @@ import {
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import { useCostCodeTypes } from "@/hooks/use-project-cost-codes";
-import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, DetailPanel, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
 import { usePdfExport } from "@/hooks/use-pdf-export";
@@ -77,18 +76,6 @@ const CHANGE_REASONS = [
   "Value Engineering",
   "Other",
 ] as const;
-
-const MARKUP_TYPE_LABELS: Record<string, string> = {
-  insurance: "Insurance",
-  bond: "Bond",
-  fee: "Contractor Fee",
-  overhead: "Overhead",
-  custom: "Custom",
-};
-
-function getMarkupLabel(markupType: string): string {
-  return MARKUP_TYPE_LABELS[markupType.toLowerCase()] || markupType;
-}
 
 // ---------------------------------------------------------------------------
 // Types & schema
@@ -244,39 +231,10 @@ export default function CommitmentCODetailPage() {
     [co?.status],
   );
 
-  // Vertical markup
-  const numericProjectId = Number(projectId);
-  const { markupRows } = useVerticalMarkup(
-    Number.isFinite(numericProjectId) ? numericProjectId : undefined,
-  );
-
   const lineItemSubtotal = useMemo(
     () => lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
     [lineItems],
   );
-
-  const computedMarkups = useMemo(() => {
-    if (!markupRows.length) return [];
-    const sorted = [...markupRows].sort(
-      (a, b) => a.calculation_order - b.calculation_order,
-    );
-    let runningBase = lineItemSubtotal;
-    return sorted.map((markup) => {
-      const amount = runningBase * (markup.percentage / 100);
-      if (markup.compound) {
-        runningBase += amount;
-      }
-      return { ...markup, amount };
-    });
-  }, [markupRows, lineItemSubtotal]);
-
-  const markupTotal = useMemo(
-    () => computedMarkups.reduce((sum, m) => sum + m.amount, 0),
-    [computedMarkups],
-  );
-
-  const grandTotal = lineItemSubtotal + markupTotal;
-
 
   // Fetch CO data
   const fetchCo = useCallback(async () => {
@@ -717,7 +675,7 @@ export default function CommitmentCODetailPage() {
                   name="change_order_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CO Number *</FormLabel>
+                      <FormLabel>CCO Number *</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="e.g. 001" />
                       </FormControl>
@@ -1008,7 +966,7 @@ export default function CommitmentCODetailPage() {
       <PageShell
         variant="detail"
         title={pageTitle}
-        description={co.change_order_number ? `CO ${co.change_order_number}` : undefined}
+        description={co.change_order_number ?? undefined}
         statusBadge={<StatusBadge status={statusLabel(co.status)} />}
         onBack={handleBack}
         actions={
@@ -1058,7 +1016,7 @@ export default function CommitmentCODetailPage() {
               <div>
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="CO Number">
+                  <LabelValueRow label="CCO Number">
                     {co.change_order_number || "—"}
                   </LabelValueRow>
                   {co.title && (
@@ -1396,39 +1354,12 @@ export default function CommitmentCODetailPage() {
                       </InlineTableCell>
                     </InlineTableRow>
                   )}
-                  {/* Subtotal row when markup rows exist */}
-                  {computedMarkups.length > 0 && (
-                    <InlineTableRow className="border-t font-medium">
-                      <InlineTableCell colSpan={3}>Subtotal</InlineTableCell>
-                      <InlineTableCell align="right">{formatCurrency(lineItemSubtotal)}</InlineTableCell>
-                      {!lineItemLock.locked && <InlineTableCell />}
-                    </InlineTableRow>
-                  )}
-                  {/* Vertical markup rows */}
-                  {computedMarkups.map((markup) => (
-                    <InlineTableRow
-                      key={markup.id}
-                      type="markup"
-                      className="text-muted-foreground"
-                    >
-                      <InlineTableCell colSpan={2} className="pl-4">
-                        {getMarkupLabel(markup.markup_type)}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        {formatPercent(markup.percentage / 100)}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        {formatCurrency(markup.amount)}
-                      </InlineTableCell>
-                      {!lineItemLock.locked && <InlineTableCell />}
-                    </InlineTableRow>
-                  ))}
                 </InlineTableBody>
                 <InlineTableFooter>
                   <InlineTableFooterRow type="totals">
                     <InlineTableFooterCell colSpan={3}>Total</InlineTableFooterCell>
                     <InlineTableFooterCell align="right">
-                      {formatCurrency(grandTotal)}
+                      {formatCurrency(lineItemSubtotal)}
                     </InlineTableFooterCell>
                     {!lineItemLock.locked && <InlineTableFooterCell />}
                   </InlineTableFooterRow>

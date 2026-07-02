@@ -158,6 +158,23 @@ export const PUT = withApiGuardrails(
       updateData.description = updateData.description ?? "";
     }
 
+    // Guardrail: a change order can't be requested after the moment it's created.
+    // Compare calendar-date prefixes (not parsed Date instants) so this can't
+    // false-positive across timezones at day boundaries.
+    if (
+      typeof updateData.requested_date === "string" &&
+      scoped.created_at &&
+      updateData.requested_date.slice(0, 10) > scoped.created_at.slice(0, 10)
+    ) {
+      return NextResponse.json(
+        {
+          error: "Invalid requested date",
+          message: "Requested date cannot be later than the date the change order was created.",
+        },
+        { status: 400 },
+      );
+    }
+
     const { data, error } = await supabase
       .from("contract_change_orders")
       .update(updateData)

@@ -87,6 +87,12 @@ export const InvoicesTab = memo(function InvoicesTab({
     }
   };
 
+  const goToCreateInvoice = () => {
+    router.push(
+      `/${projectId}/invoicing/subcontractor/new?commitmentType=${encodeURIComponent(commitmentType)}&commitmentId=${encodeURIComponent(commitmentId)}`,
+    );
+  };
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -329,9 +335,9 @@ export const InvoicesTab = memo(function InvoicesTab({
           title="No invoices yet"
           description="Invoices submitted against this contract will appear here."
           action={
-            <Button size="sm" variant="outline" onClick={createRetainageReleaseInvoice}>
+            <Button size="sm" variant="outline" onClick={goToCreateInvoice}>
               <Plus />
-              Create Retainage Release Invoice
+              Create Invoice
             </Button>
           }
         />

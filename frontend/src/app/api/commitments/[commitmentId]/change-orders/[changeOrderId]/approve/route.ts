@@ -91,7 +91,7 @@ export const POST = withApiGuardrails<{ commitmentId: string; changeOrderId: str
       .from("contract_change_orders")
       .update({
         status: "approved",
-        approved_date: new Date().toISOString(),
+        approved_date: new Date().toISOString().split("T")[0],
         approved_by: user.id,
         updated_at: new Date().toISOString(),
       })

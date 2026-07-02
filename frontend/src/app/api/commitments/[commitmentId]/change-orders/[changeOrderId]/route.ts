@@ -139,7 +139,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
     // Verify the change order exists and belongs to this commitment
     const { data: existingCO, error: fetchError } = await supabase
       .from("contract_change_orders")
-      .select("id, status")
+      .select("id, status, created_at")
       .eq("id", changeOrderId)
       .eq("contract_id", commitmentId)
       .single();
@@ -148,6 +148,24 @@ export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
       return NextResponse.json(
         { error: "Change order not found" },
         { status: 404 },
+      );
+    }
+
+    // Guardrail: the requested date can never be later than the date this
+    // change order was created — a request necessarily precedes its record.
+    // Compare calendar-date prefixes (not parsed Date instants) so this can't
+    // false-positive across timezones at day boundaries.
+    if (
+      validated.requested_date &&
+      existingCO.created_at &&
+      validated.requested_date.slice(0, 10) > existingCO.created_at.slice(0, 10)
+    ) {
+      return NextResponse.json(
+        {
+          error: "Invalid requested date",
+          message: "Requested date cannot be later than the date the change order was created.",
+        },
+        { status: 400 },
       );
     }
 
@@ -165,7 +183,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
       validated.status === "approved" &&
       existingCO.status !== "approved"
     ) {
-      updateData.approved_date = new Date().toISOString();
+      updateData.approved_date = new Date().toISOString().split("T")[0];
       updateData.approved_by = user.id;
     }
 
