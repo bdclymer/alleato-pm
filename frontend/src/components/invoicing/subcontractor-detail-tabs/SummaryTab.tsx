@@ -72,6 +72,9 @@ type CoSummary = {
 };
 
 type InvoiceShape = {
+  acumatica_doc_type?: string | null;
+  acumatica_ref_nbr?: string | null;
+  acumatica_sync_at?: string | null;
   contract_number?: string | null;
   contract_title?: string | null;
   contract_company_name?: string | null;
@@ -167,6 +170,13 @@ function formatCompanyAddress(
   return lines;
 }
 
+function buildAcumaticaApBillHref(
+  docType: string | null | undefined,
+  refNbr: string,
+): string {
+  return `https://alleatogroup.acumatica.com/Main?ScreenId=AP301000&DocType=${encodeURIComponent(docType ?? "Bill")}&RefNbr=${encodeURIComponent(refNbr)}`;
+}
+
 interface SummaryTabProps {
   invoice: InvoiceShape;
   editing?: boolean;
@@ -243,6 +253,12 @@ export function SummaryTab({
   const changeOrderAdditions = coSummary?.additions ?? 0;
   const changeOrderDeductions = coSummary?.deductions ?? 0;
   const changeOrderNet = coSummary?.net ?? 0;
+  const erpRefNbr = invoice.acumatica_ref_nbr?.trim();
+  const erpDocType = invoice.acumatica_doc_type?.trim() || "Bill";
+  const erpHref = erpRefNbr
+    ? buildAcumaticaApBillHref(erpDocType, erpRefNbr)
+    : null;
+  const isErpLinked = Boolean(invoice.acumatica_sync_at || erpRefNbr);
 
   return (
     <div className="space-y-8">
@@ -312,6 +328,22 @@ export function SummaryTab({
               />
             ) : (
               invoice.invoice_number ?? "—"
+            )}
+          </DetailField>
+          <DetailField label="ERP Link">
+            {erpHref && erpRefNbr ? (
+              <a
+                href={erpHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {erpDocType} {erpRefNbr}
+              </a>
+            ) : isErpLinked ? (
+              "Linked, missing ERP reference"
+            ) : (
+              "Not linked"
             )}
           </DetailField>
           <DetailField label="Commitment #">
