@@ -9,12 +9,15 @@ import {
   useSearchParams,
 } from "next/navigation";
 import {
+  ChevronDown,
   Download,
+  FileText,
   Mail,
   Minus,
   MoreHorizontal,
   Pencil,
   Plus,
+  Table2,
   Trash2,
   Upload,
   X,
@@ -92,6 +95,8 @@ import {
   buildDrawingRowActions,
   drawingColumns,
   drawingDefaultVisibleColumns,
+  getDrawingPublishState,
+  getDrawingPublishStateLabel,
   matchesDrawingPublishState,
   renderDrawingCard,
   renderDrawingList,
@@ -670,18 +675,22 @@ export default function ProjectDrawingsPage() {
     const header = [
       "Drawing Number",
       "Drawing Title",
-      "Revision",
       "Discipline",
+      "Type",
+      "Revision",
       "Set",
+      "Status",
       "Drawing Date",
       "Received Date",
     ];
     const rows = filteredItems.map((drawing) => [
       drawing.drawingNumber,
       drawing.title,
-      drawing.revisionNumber ?? "",
       drawing.discipline ?? "",
+      drawing.drawingType ?? "",
+      drawing.revisionNumber ?? "",
       drawing.setName ?? "",
+      getDrawingPublishStateLabel(getDrawingPublishState(drawing)),
       drawing.drawingDate ?? "",
       drawing.receivedDate ?? "",
     ]);
@@ -692,11 +701,15 @@ export default function ProjectDrawingsPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `drawings-${projectId}-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `Drawing-Log-${projectId}-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportPdf = () => {
+    window.open(`/api/projects/${projectId}/drawings/pdf`, "_blank", "noopener,noreferrer");
   };
 
   const handleDeleteDrawing = (item: DrawingLogTableRow) => {
@@ -1011,8 +1024,30 @@ export default function ProjectDrawingsPage() {
           columns: drawingColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
-          onExport: handleExportCsv,
-          customActions: gallerySizeControls,
+          customActions: (
+            <>
+              {gallerySizeControls}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4" />
+                    Export
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportPdf}>
+                    <FileText className="h-4 w-4" />
+                    PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportCsv}>
+                    <Table2 className="h-4 w-4" />
+                    CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ),
         }}
         data={{
           items: filteredItems,
@@ -1109,7 +1144,7 @@ export default function ProjectDrawingsPage() {
           enableFilters: true,
           enableViews: true,
           enableColumnToggle: true,
-          enableExport: true,
+          enableExport: false,
           enableBulkDelete: false,
           enableRowSelection: true,
           enableRowActions: true,

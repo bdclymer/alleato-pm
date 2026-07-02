@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { Download } from "lucide-react";
 
 import {
   Button,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ds";
 import { useUpdateRfi, useDeleteRfi } from "@/hooks/use-rfis";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { RfiEditValues } from "@/lib/schemas/rfi-schema";
 import type { RFI } from "@/types/database-extensions";
 
@@ -41,11 +43,17 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         data: { status: newStatus } as Record<string, unknown> & RfiEditValues,
       });
       router.refresh();
-    } catch {
-      // Genuine failures are surfaced by useUpdateRfi's onError (handleFormError).
-      // Caught here so a rejected mutation doesn't become an unhandled rejection.
-      // Note: a close-notification email failure is NOT an error — the route now
-      // returns 200 with a non-blocking _emailWarning instead of a 502.
+    } catch (error) {
+      // The user-facing message is surfaced by useUpdateRfi's onError
+      // (handleFormError); this catch stops a rejected mutation from becoming an
+      // unhandled rejection and records the failure for observability.
+      reportNonCriticalFailure({
+        area: "rfi-header-actions",
+        operation: "update-rfi-status",
+        error,
+        userVisibleFallback: "The RFI status could not be updated.",
+        metadata: { rfiId: rfi.id, newStatus },
+      });
     }
   };
 
@@ -106,16 +114,26 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         <DetailActions
           onEdit={() => router.push(`${pathname}?mode=edit`)}
           onDelete={() => setDeleteOpen(true)}
-          extraActions={
-            statusAction
+          extraActions={[
+            ...(statusAction
               ? [
                   {
                     label: statusAction.label,
                     onClick: () => void handleStatusChange(statusAction.next),
                   },
                 ]
-              : undefined
-          }
+              : []),
+            {
+              label: "Export PDF",
+              icon: <Download className="h-4 w-4" />,
+              onClick: () =>
+                window.open(
+                  `/api/projects/${projectId}/rfis/${rfi.id}/pdf`,
+                  "_blank",
+                  "noopener,noreferrer",
+                ),
+            },
+          ]}
         />
       </div>
 

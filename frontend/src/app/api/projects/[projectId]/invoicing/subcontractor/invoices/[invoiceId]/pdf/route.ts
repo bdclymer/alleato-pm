@@ -3,6 +3,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   renderSubcontractorInvoicePdfBuffer,
   type SubcontractorInvoicePdfData,
@@ -12,6 +14,16 @@ import {
 
 // Node runtime is required for React PDF rendering.
 export const runtime = "nodejs";
+
+// Matches Procore's export naming convention, e.g.
+// "24-102-Wesleyan_Office-2-Invoice_2-2026-07-01.pdf".
+function buildProcoreStyleFilename(data: SubcontractorInvoicePdfData): string {
+  const projectNumber = (data.project_number || "project").replace(/\s+/g, "-");
+  const projectName = (data.project_name || "Project").trim().replace(/[^a-zA-Z0-9]+/g, "_");
+  const sequence = data.application_number;
+  const date = new Date().toISOString().split("T")[0];
+  return `${projectNumber}-${projectName}-${sequence}-Invoice_${sequence}-${date}.pdf`;
+}
 
 type SubcontractInvoicePdfFetchResult =
   | { data: SubcontractorInvoicePdfData; error: null }
@@ -153,6 +165,21 @@ async function buildRollup(
     }
   }
 
+  let coAdditions = 0;
+  let coDeductions = 0;
+  if (contractId) {
+    const { data: coRows } = await supabase
+      .from("contract_change_orders")
+      .select("amount, status")
+      .eq("contract_id", contractId)
+      .in("status", ["approved"]);
+    for (const co of coRows ?? []) {
+      const amt = Number(co.amount) || 0;
+      if (amt >= 0) coAdditions += amt;
+      else coDeductions += amt;
+    }
+  }
+
   const contractSumToDate = originalContractSum + netChangeByChangeOrders;
   if (invoice.is_retainage_release) {
     lessPreviousCertificates = Math.max(totalEarnedLessRetainage - invoiceNetAmount, 0);
@@ -174,6 +201,8 @@ async function buildRollup(
     less_previous_certificates: lessPreviousCertificates,
     current_payment_due: currentPaymentDue,
     balance_to_finish_including_retainage: balanceToFinish,
+    change_order_additions: coAdditions,
+    change_order_deductions: coDeductions,
   };
 }
 
@@ -298,6 +327,15 @@ export async function fetchSubcontractorInvoicePdfData(
   const lineItems = normalizeLineItems(invoiceRow.subcontractor_invoice_line_items);
   const rollup = await buildRollup(supabase, invoiceRow, invoiceIdNum);
 
+  const serviceClient = createServiceClient();
+  const linkedAttachments = await listLinkedPatternCDocuments({
+    supabase,
+    serviceClient,
+    entityType: "subcontractor_invoice",
+    entityId: String(invoiceRow.id),
+  });
+  const attachments = linkedAttachments.map((a) => a.title || a.file_name || "Untitled");
+
   return {
     data: {
       id: invoiceRow.id,
@@ -326,6 +364,7 @@ export async function fetchSubcontractorInvoicePdfData(
       contract_company_zip: subcontractorCompany?.zip_code ?? null,
       line_items: lineItems,
       rollup,
+      attachments,
     },
     error: null,
   };
@@ -391,8 +430,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const pdfBuffer = await renderSubcontractorInvoicePdfBuffer(result.data);
-    const invoiceNumber = result.data.invoice_number || result.data.application_number;
-    const filename = `subcontract-invoice-${invoiceNumber}.pdf`;
+    const filename = buildProcoreStyleFilename(result.data);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -478,6 +478,19 @@ export function RfisTable({ projectId }: RfisTableProps) {
         activeFilters,
         onFilterChange: handleFilterChange,
         onClearFilters: () => handleFilterChange({}),
+        customActions: (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Export RFI Log PDF"
+            title="Export RFI Log PDF"
+            onClick={() =>
+              window.open(`/api/projects/${projectId}/rfis/pdf`, "_blank", "noopener,noreferrer")
+            }
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+        ),
       }}
       data={{ items: rfis, isLoading, isFetching: false, error: null }}
       table={{

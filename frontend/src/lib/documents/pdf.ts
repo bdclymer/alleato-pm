@@ -120,6 +120,59 @@ function fmtNum(n: number | null | undefined): string {
   return String(n);
 }
 
+export interface LogTableColumn {
+  label: string;
+  /** CSS text-align for the column body cells. Defaults to "left". */
+  align?: "left" | "center" | "right";
+}
+
+/**
+ * Renders a wide, landscape-friendly data table for branded "log" style PDF
+ * exports (RFI log, drawing log, budget export, etc). Meant to be dropped
+ * into `buildBrandedDocumentHtml({ bodyHtml, contentWidth: "100%" })` and
+ * rendered with `renderPdfFromHtml(html, { landscape: true, ... })`.
+ */
+export function buildBrandedLogTableHtml({
+  columns,
+  rows,
+  emptyMessage = "No records found.",
+}: {
+  columns: LogTableColumn[];
+  rows: Array<Array<string | number | null | undefined>>;
+  emptyMessage?: string;
+}): string {
+  const headerCells = columns
+    .map((col) => `<th style="text-align:${col.align ?? "left"};">${esc(col.label)}</th>`)
+    .join("");
+
+  const bodyRows = rows.length
+    ? rows
+        .map((row) => {
+          const cells = row
+            .map((value, i) => {
+              const align = columns[i]?.align ?? "left";
+              return `<td style="text-align:${align};">${esc(value ?? "—")}</td>`;
+            })
+            .join("");
+          return `<tr>${cells}</tr>`;
+        })
+        .join("")
+    : `<tr><td colspan="${columns.length}" style="text-align:center;padding:16px;color:#807b76;">${esc(emptyMessage)}</td></tr>`;
+
+  return `
+    <style>
+      .log-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+      .log-table th { background: #2f3030; color: #fff; padding: 5px 6px; font-weight: 700; border: 1px solid #4a4a4a; white-space: nowrap; }
+      .log-table td { padding: 4px 6px; border: 1px solid #e2ddd7; vertical-align: top; }
+      .log-table tr:nth-child(even) td { background: #faf9f7; }
+    </style>
+    <table class="log-table">
+      <thead><tr>${headerCells}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  `;
+}
+
 interface LineItemForPdf {
   quantity?: number | null;
   unit_of_measure?: string | null;

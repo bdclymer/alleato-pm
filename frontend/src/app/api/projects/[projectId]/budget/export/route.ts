@@ -5,6 +5,21 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  buildBrandedDocumentHtml,
+  buildBrandedFooterTemplate,
+  BRANDED_FOOTER_MARGIN,
+} from "@/lib/documents/branded-letterhead";
+import { buildBrandedLogTableHtml, renderPdfFromHtml } from "@/lib/documents/pdf";
+
+// Puppeteer (used by the PDF export branch) requires the Node.js runtime.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function formatMoneyCell(value: number | string): string {
+  if (typeof value !== "number") return String(value ?? "");
+  return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
 
 // Cost types that count towards Job to Date (all approved)
 const JTD_COST_TYPES = [
@@ -113,9 +128,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const format = searchParams.get("format") || "excel";
 
     // Validate format
-    if (!["excel", "csv"].includes(format)) {
+    if (!["excel", "csv", "pdf"].includes(format)) {
       return NextResponse.json(
-        { error: "Invalid format. Must be 'excel' or 'csv'" },
+        { error: "Invalid format. Must be 'excel', 'csv', or 'pdf'" },
         { status: 400 },
       );
     }
@@ -534,6 +549,106 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         headers: {
           "Content-Type": "text/csv",
           "Content-Disposition": `attachment; filename="${filename}.csv"`,
+        },
+      });
+    } else if (format === "pdf") {
+      const moneyCols = [
+        "Original Budget",
+        "Budget Modifications",
+        "Approved Change Orders",
+        "Revised Budget",
+        "Job to Date Cost",
+        "Direct Costs",
+        "Pending Changes",
+        "Committed Costs",
+        "Forecast to Complete",
+        "Estimated Cost at Completion",
+        "Projected Over/Under",
+      ] as const;
+
+      const columns = [
+        { label: "Cost Code", align: "left" as const },
+        { label: "Description", align: "left" as const },
+        { label: "Original Budget", align: "right" as const },
+        { label: "Budget Mods", align: "right" as const },
+        { label: "Approved COs", align: "right" as const },
+        { label: "Revised Budget", align: "right" as const },
+        { label: "JTD Cost", align: "right" as const },
+        { label: "Direct Costs", align: "right" as const },
+        { label: "Pending Changes", align: "right" as const },
+        { label: "Committed Costs", align: "right" as const },
+        { label: "Forecast to Complete", align: "right" as const },
+        { label: "Est. Cost at Completion", align: "right" as const },
+        { label: "Projected +/-", align: "right" as const },
+      ];
+
+      const rows = exportData.map((item) => [
+        item["Cost Code"],
+        item["Description"],
+        formatMoneyCell(item["Original Budget"]),
+        formatMoneyCell(item["Budget Modifications"]),
+        formatMoneyCell(item["Approved Change Orders"]),
+        formatMoneyCell(item["Revised Budget"]),
+        formatMoneyCell(item["Job to Date Cost"]),
+        formatMoneyCell(item["Direct Costs"]),
+        formatMoneyCell(item["Pending Changes"]),
+        formatMoneyCell(item["Committed Costs"]),
+        formatMoneyCell(item["Forecast to Complete"]),
+        formatMoneyCell(item["Estimated Cost at Completion"]),
+        formatMoneyCell(item["Projected Over/Under"]),
+      ]);
+
+      const grandTotals = exportData.reduce(
+        (totals, item) => {
+          for (const col of moneyCols) {
+            totals[col] = (totals[col] || 0) + (typeof item[col] === "number" ? item[col] : 0);
+          }
+          return totals;
+        },
+        {} as Record<(typeof moneyCols)[number], number>,
+      );
+
+      rows.push([
+        "",
+        "Grand Totals",
+        formatMoneyCell(grandTotals["Original Budget"]),
+        formatMoneyCell(grandTotals["Budget Modifications"]),
+        formatMoneyCell(grandTotals["Approved Change Orders"]),
+        formatMoneyCell(grandTotals["Revised Budget"]),
+        formatMoneyCell(grandTotals["Job to Date Cost"]),
+        formatMoneyCell(grandTotals["Direct Costs"]),
+        formatMoneyCell(grandTotals["Pending Changes"]),
+        formatMoneyCell(grandTotals["Committed Costs"]),
+        formatMoneyCell(grandTotals["Forecast to Complete"]),
+        formatMoneyCell(grandTotals["Estimated Cost at Completion"]),
+        formatMoneyCell(grandTotals["Projected Over/Under"]),
+      ]);
+
+      const bodyHtml = buildBrandedLogTableHtml({
+        columns,
+        rows,
+        emptyMessage: "No budget line items found.",
+      });
+
+      const html = buildBrandedDocumentHtml({
+        title: "Budget Report",
+        subtitle: projectName,
+        detail: `${exportData.length} line item${exportData.length === 1 ? "" : "s"}`,
+        bodyHtml,
+        renderFooterInBody: false,
+        contentWidth: "100%",
+      });
+
+      const pdfBuffer = await renderPdfFromHtml(html, {
+        landscape: true,
+        footerTemplate: buildBrandedFooterTemplate(),
+        marginBottom: BRANDED_FOOTER_MARGIN,
+      });
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}.pdf"`,
         },
       });
     } else {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
+  Download,
   Eye,
   ExternalLink,
   Mail,
@@ -841,6 +842,21 @@ export function SubmittalDetailClient({
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Export PDF"
+              title="Export PDF"
+              onClick={() =>
+                window.open(
+                  `/api/projects/${projectId}/submittals/${submittal.id}/pdf`,
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
+            >
+              <Download className="h-4 w-4" />
+            </Button>
             {!submittal.deleted_at && (
               <Button
                 variant={isEditMode ? "default" : "outline"}

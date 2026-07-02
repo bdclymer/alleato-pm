@@ -10,12 +10,14 @@ import {
 } from "next/navigation";
 import {
   ChevronDown,
+  Download,
   FileText,
   MoreVertical,
   Plus,
   RotateCcw,
   Save,
   Settings,
+  Table2,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -1979,43 +1981,8 @@ export default function SubmittalsPage(): ReactElement {
   }, [filteredItems, tableState.visibleColumns]);
 
   const handlePdfExport = React.useCallback(() => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    const visibleCols = submittalColumns.filter((c) =>
-      tableState.visibleColumns.includes(c.id),
-    );
-    const tableHtml = `
-      <html><head><title>Submittals</title>
-      <style>
-        body { font-family: sans-serif; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f3f4f6; text-align: left; padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 11px; }
-        td { padding: 5px 8px; border: 1px solid #e5e7eb; }
-        tr:nth-child(even) { background: #f9fafb; }
-        h1 { font-size: 16px; margin-bottom: 12px; }
-      </style></head>
-      <body>
-        <h1>Submittals</h1>
-        <table>
-          <thead><tr>${visibleCols.map((c) => `<th>${c.label}</th>`).join("")}</tr></thead>
-          <tbody>${filteredItems
-            .map(
-              (item) =>
-                `<tr>${visibleCols
-                  .map((c) => {
-                    const val = getSubmittalColumnValue(item, c.id);
-                    return `<td>${val === null || val === undefined ? "" : String(val)}</td>`;
-                  })
-                  .join("")}</tr>`,
-            )
-            .join("")}</tbody>
-        </table>
-      </body></html>
-    `;
-    printWindow.document.write(tableHtml);
-    printWindow.document.close();
-    printWindow.print();
-  }, [filteredItems, tableState.visibleColumns]);
+    window.open(`/api/projects/${projectId}/submittals/pdf`, "_blank", "noopener,noreferrer");
+  }, [projectId]);
 
   if (activeTab === "settings") {
     return <SubmittalSettingsTab projectId={projectId} tabs={tabs} />;
@@ -2167,16 +2134,26 @@ export default function SubmittalsPage(): ReactElement {
           columns: submittalColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
-          onExport: handleExport,
           customActions: (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePdfExport}
-              title="Export PDF"
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4" />
+                  Export
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handlePdfExport}>
+                  <FileText className="h-4 w-4" />
+                  PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExport}>
+                  <Table2 className="h-4 w-4" />
+                  CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ),
         }}
         data={{
@@ -2239,7 +2216,7 @@ export default function SubmittalsPage(): ReactElement {
             ),
         }}
         features={{
-          enableExport: true,
+          enableExport: false,
           enableBulkDelete: activeTab === "items",
           enableRowSelection: activeTab === "items",
         }}

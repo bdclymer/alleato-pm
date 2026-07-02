@@ -18,6 +18,11 @@ interface BrandedDocumentHtmlOptions {
    * pinned to the bottom of every page. Defaults to true.
    */
   renderFooterInBody?: boolean;
+  /**
+   * Content column max-width. Defaults to "640px" (portrait cover-sheet
+   * documents). Pass "100%" for wide landscape log/table exports.
+   */
+  contentWidth?: string;
 }
 
 /** Page bottom margin reserved for `buildBrandedFooterTemplate`. */
@@ -147,6 +152,7 @@ export function buildBrandedDocumentHtml({
   meta,
   bodyHtml,
   renderFooterInBody = true,
+  contentWidth = "640px",
 }: BrandedDocumentHtmlOptions) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -233,7 +239,7 @@ export function buildBrandedDocumentHtml({
       letter-spacing: 0.35em;
     }
     .document-heading {
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto 22px;
       padding: 0;
     }
@@ -283,7 +289,7 @@ export function buildBrandedDocumentHtml({
       font-weight: 600;
     }
     .document-content {
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
       padding: 0;
     }
@@ -301,7 +307,7 @@ export function buildBrandedDocumentHtml({
       border-top: 1px solid #ece7e2;
       color: #807b76;
       white-space: nowrap;
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
     }
     .document-footer-contact > span {
@@ -329,7 +335,7 @@ export function buildBrandedDocumentHtml({
       color: #77716b;
       font-size: 8px;
       text-align: center;
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
     }
     .document-footer-rule {

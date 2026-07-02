@@ -264,7 +264,7 @@ export function BudgetPageHeader({
               Export to CSV
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onExport?.("pdf")}>
-              <Download className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2" />
               Export to PDF
             </DropdownMenuItem>
             <DropdownMenuSeparator />
