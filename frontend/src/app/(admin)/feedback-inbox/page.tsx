@@ -14,9 +14,11 @@ import {
 import {
   ArrowUpDown,
   Check,
+  Columns3,
   Filter,
   PanelLeftClose,
   PanelLeftOpen,
+  PanelRight,
   X,
 } from "lucide-react";
 import {
@@ -33,8 +35,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
+import {
+  BoardView,
+  type BoardColumnDefinition,
+} from "@/components/tables/unified/board-view";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import {
+  displayAdminFeedbackTitle,
+  isCommentRedundantWithTitle,
+} from "@/lib/admin-feedback/title";
 import { apiFetch } from "@/lib/api-client";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
@@ -54,6 +70,7 @@ import {
   FEEDBACK_STATUS_TABS,
   FEEDBACK_INBOX_TABS,
   STATUS_FILTERS,
+  STATUS_META,
   STATUS_OPTIONS,
 } from "./constants";
 import {
@@ -74,6 +91,7 @@ const ACTIVE_EXCLUDED_STATUS_QUERY = "resolved,closed,deferred,archived";
 const ALL_STATUS_QUERY =
   "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed";
 const FEEDBACK_LAYOUT_STORAGE_KEY = "alleato-feedback-inbox-layout";
+const FEEDBACK_VIEW_STORAGE_KEY = "alleato-feedback-inbox-view";
 const FEEDBACK_LEFT_DEFAULT = 456;
 const FEEDBACK_LEFT_MIN = 320;
 const FEEDBACK_LEFT_MAX = 640;
@@ -85,6 +103,7 @@ type FeedbackSortValue =
   | "source"
   | "status";
 type FeedbackDateFilter = "all" | "today" | "7d" | "30d" | "older";
+type FeedbackViewMode = "split" | "board";
 
 const FEEDBACK_SORT_OPTIONS: {
   value: FeedbackSortValue;
@@ -106,6 +125,13 @@ const FEEDBACK_DATE_FILTERS: {
   { value: "30d", label: "Last 30 days" },
   { value: "older", label: "Older than 30 days" },
 ];
+const FEEDBACK_BOARD_COLUMNS: BoardColumnDefinition[] = STATUS_OPTIONS
+  .filter((option) => option.value !== "archived")
+  .map((option) => ({
+    id: option.value,
+    label: option.label,
+    emptyLabel: `No ${option.label.toLowerCase()} feedback`,
+  }));
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -147,6 +173,18 @@ function saveFeedbackLayout(preference: {
   );
 }
 
+function loadFeedbackViewMode(): FeedbackViewMode {
+  if (typeof window === "undefined") return "split";
+  return window.localStorage.getItem(FEEDBACK_VIEW_STORAGE_KEY) === "board"
+    ? "board"
+    : "split";
+}
+
+function saveFeedbackViewMode(viewMode: FeedbackViewMode) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(FEEDBACK_VIEW_STORAGE_KEY, viewMode);
+}
+
 function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "all") return ALL_STATUS_QUERY;
   if (filter === "active") return null;
@@ -175,6 +213,10 @@ function itemToolLabel(item: FeedbackItem): string {
   return toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
 }
 
+function feedbackBoardColumnId(item: FeedbackItem): DisplayStatus {
+  return toDisplayStatus(item.status);
+}
+
 function matchesDateFilter(item: FeedbackItem, filter: FeedbackDateFilter): boolean {
   if (filter === "all") return true;
 
@@ -201,6 +243,7 @@ export default function FeedbackInboxPage() {
   const [submitterFilter, setSubmitterFilter] = useState("all");
   const [searchValue, setSearchValue] = useState("");
   const [sortBy, setSortBy] = useState<FeedbackSortValue>("newest");
+  const [viewMode, setViewMode] = useState<FeedbackViewMode>("split");
   const [leftWidth, setLeftWidth] = useState(FEEDBACK_LEFT_DEFAULT);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -216,11 +259,16 @@ export default function FeedbackInboxPage() {
     const preference = loadFeedbackLayout();
     setLeftWidth(preference.leftWidth);
     setLeftCollapsed(preference.leftCollapsed);
+    setViewMode(loadFeedbackViewMode());
   }, []);
 
   useEffect(() => {
     saveFeedbackLayout({ leftWidth, leftCollapsed });
   }, [leftWidth, leftCollapsed]);
+
+  useEffect(() => {
+    saveFeedbackViewMode(viewMode);
+  }, [viewMode]);
 
   const dispatchScoped = useCallback(
     (list: FeedbackItem[]) =>
@@ -548,6 +596,11 @@ export default function FeedbackInboxPage() {
     setSelectedId(id);
   }
 
+  function selectItemFromBoard(id: string) {
+    setSelectedId(id);
+    setViewMode("split");
+  }
+
   const handleInboxTabClick = useCallback((value: string) => {
     setActiveTab(value as FeedbackInboxTab);
     setSelectedId(null);
@@ -604,29 +657,17 @@ export default function FeedbackInboxPage() {
         height="fill"
         className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background"
       >
-        <SplitPage
-          variant="two-column"
-          breakpoint="lg"
-          defaultIsOpen={!selected}
-          className="min-h-0 flex-1"
-          firstPaneClassName={leftCollapsed ? "lg:w-14" : "lg:w-auto"}
-          secondPaneClassName="bg-background"
-        >
-          <FeedbackListPane
+        {viewMode === "board" ? (
+          <FeedbackBoardPane
             activeFilterCount={activeFilterCount}
             activeTab={activeTab}
             currentFilterLabel={currentFilterLabel}
             currentTabLabel={currentTabLabel}
             dateFilter={dateFilter}
-            deletingId={deletingId}
             featureRequestCount={featureRequestItems.length}
             filter={filter}
-            focusedIndex={focusedIndex}
             issueCount={issueItems.length}
             items={visibleItems}
-            leftCollapsed={leftCollapsed}
-            leftWidth={leftWidth}
-            listPanelRef={listPanelRef}
             loading={loading}
             searchValue={searchValue}
             selectedId={selectedId}
@@ -636,31 +677,78 @@ export default function FeedbackInboxPage() {
             toolFilter={toolFilter}
             toolOptions={toolOptions}
             totalCount={dispatchScoped(items).length}
-            onDelete={deleteItem}
             onDateFilterChange={setDateFilter}
             onFilterChange={handleFilterTabClick}
             onInboxTabChange={handleInboxTabClick}
-            onResizeStart={handleResizeStart}
             onSearchChange={setSearchValue}
-            onSelect={selectItem}
-            onSendToGitHub={sendToGitHub}
+            onSelect={selectItemFromBoard}
             onSortChange={setSortBy}
             onSubmitterFilterChange={setSubmitterFilter}
-            onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
             onToolFilterChange={setToolFilter}
-            onUpdateStatus={updateStatus}
+            onViewModeChange={setViewMode}
+            viewMode={viewMode}
           />
-          <FeedbackDetailPane
-            commentInputRef={commentInputRef}
-            deletingId={deletingId}
-            item={selected}
-            sendingToGitHub={sendingToGitHub}
-            updatingId={updatingId}
-            onDelete={deleteItem}
-            onSendToGitHub={sendToGitHub}
-            onUpdateStatus={updateStatus}
-          />
-        </SplitPage>
+        ) : (
+          <SplitPage
+            variant="two-column"
+            breakpoint="lg"
+            defaultIsOpen={!selected}
+            className="min-h-0 flex-1"
+            firstPaneClassName={leftCollapsed ? "lg:w-14" : "lg:w-auto"}
+            secondPaneClassName="bg-background"
+          >
+            <FeedbackListPane
+              activeFilterCount={activeFilterCount}
+              activeTab={activeTab}
+              currentFilterLabel={currentFilterLabel}
+              currentTabLabel={currentTabLabel}
+              dateFilter={dateFilter}
+              deletingId={deletingId}
+              featureRequestCount={featureRequestItems.length}
+              filter={filter}
+              focusedIndex={focusedIndex}
+              issueCount={issueItems.length}
+              items={visibleItems}
+              leftCollapsed={leftCollapsed}
+              leftWidth={leftWidth}
+              listPanelRef={listPanelRef}
+              loading={loading}
+              searchValue={searchValue}
+              selectedId={selectedId}
+              sortBy={sortBy}
+              submitterFilter={submitterFilter}
+              submitterOptions={submitterOptions}
+              toolFilter={toolFilter}
+              toolOptions={toolOptions}
+              totalCount={dispatchScoped(items).length}
+              viewMode={viewMode}
+              onDelete={deleteItem}
+              onDateFilterChange={setDateFilter}
+              onFilterChange={handleFilterTabClick}
+              onInboxTabChange={handleInboxTabClick}
+              onResizeStart={handleResizeStart}
+              onSearchChange={setSearchValue}
+              onSelect={selectItem}
+              onSendToGitHub={sendToGitHub}
+              onSortChange={setSortBy}
+              onSubmitterFilterChange={setSubmitterFilter}
+              onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
+              onToolFilterChange={setToolFilter}
+              onUpdateStatus={updateStatus}
+              onViewModeChange={setViewMode}
+            />
+            <FeedbackDetailPane
+              commentInputRef={commentInputRef}
+              deletingId={deletingId}
+              item={selected}
+              sendingToGitHub={sendingToGitHub}
+              updatingId={updatingId}
+              onDelete={deleteItem}
+              onSendToGitHub={sendToGitHub}
+              onUpdateStatus={updateStatus}
+            />
+          </SplitPage>
+        )}
       </SplitPageFrame>
     </PageShell>
   );
@@ -689,6 +777,7 @@ function FeedbackListPane({
   toolFilter,
   toolOptions,
   totalCount,
+  viewMode,
   onDelete,
   onDateFilterChange,
   onFilterChange,
@@ -702,6 +791,7 @@ function FeedbackListPane({
   onToggleCollapsed,
   onToolFilterChange,
   onUpdateStatus,
+  onViewModeChange,
 }: {
   activeFilterCount: number;
   activeTab: FeedbackInboxTab;
@@ -726,6 +816,7 @@ function FeedbackListPane({
   toolFilter: string;
   toolOptions: { value: string; label: string }[];
   totalCount: number;
+  viewMode: FeedbackViewMode;
   onDelete: (id: string) => void;
   onDateFilterChange: (value: FeedbackDateFilter) => void;
   onFilterChange: (value: string) => void;
@@ -739,6 +830,7 @@ function FeedbackListPane({
   onToggleCollapsed: () => void;
   onToolFilterChange: (value: string) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   const splitPage = useSplitPage();
 
@@ -788,6 +880,10 @@ function FeedbackListPane({
             >
               <PanelLeftClose className="h-4 w-4" />
             </Button>
+            <FeedbackViewMenu
+              value={viewMode}
+              onValueChange={onViewModeChange}
+            />
             <FeedbackFilterPopover
               activeCount={activeFilterCount}
               activeTab={activeTab}
@@ -845,6 +941,278 @@ function FeedbackListPane({
         onMouseDown={onResizeStart}
       />
     </div>
+  );
+}
+
+function FeedbackBoardPane({
+  activeFilterCount,
+  activeTab,
+  currentFilterLabel,
+  currentTabLabel,
+  dateFilter,
+  featureRequestCount,
+  filter,
+  issueCount,
+  items,
+  loading,
+  searchValue,
+  selectedId,
+  sortBy,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
+  totalCount,
+  viewMode,
+  onDateFilterChange,
+  onFilterChange,
+  onInboxTabChange,
+  onSearchChange,
+  onSelect,
+  onSortChange,
+  onSubmitterFilterChange,
+  onToolFilterChange,
+  onViewModeChange,
+}: {
+  activeFilterCount: number;
+  activeTab: FeedbackInboxTab;
+  currentFilterLabel: string;
+  currentTabLabel: string;
+  dateFilter: FeedbackDateFilter;
+  featureRequestCount: number;
+  filter: StatusFilter;
+  issueCount: number;
+  items: FeedbackItem[];
+  loading: boolean;
+  searchValue: string;
+  selectedId: string | null;
+  sortBy: FeedbackSortValue;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
+  totalCount: number;
+  viewMode: FeedbackViewMode;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onFilterChange: (value: string) => void;
+  onInboxTabChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  onSelect: (id: string) => void;
+  onSortChange: (value: FeedbackSortValue) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToolFilterChange: (value: string) => void;
+  onViewModeChange: (value: FeedbackViewMode) => void;
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="shrink-0 bg-background/90 px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
+              Feedback
+            </h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <FeedbackViewMenu
+              value={viewMode}
+              onValueChange={onViewModeChange}
+            />
+            <FeedbackFilterPopover
+              activeCount={activeFilterCount}
+              activeTab={activeTab}
+              dateFilter={dateFilter}
+              featureRequestCount={featureRequestCount}
+              issueCount={issueCount}
+              submitterFilter={submitterFilter}
+              submitterOptions={submitterOptions}
+              toolFilter={toolFilter}
+              toolOptions={toolOptions}
+              totalCount={totalCount}
+              onDateFilterChange={onDateFilterChange}
+              onInboxTabChange={onInboxTabChange}
+              onSubmitterFilterChange={onSubmitterFilterChange}
+              onToolFilterChange={onToolFilterChange}
+            />
+            <ExpandableSearch
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder="Search feedback"
+              ariaLabel="Search feedback"
+            />
+            <FeedbackSortPopover
+              sortBy={sortBy}
+              onSortChange={onSortChange}
+            />
+            <VeltCommentToolbar />
+          </div>
+        </div>
+        <FeedbackStatusTabs
+          value={filter}
+          onValueChange={onFilterChange}
+        />
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-auto p-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex h-full min-h-48 items-center justify-center px-6 text-center">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">No feedback items</p>
+              <p className="text-sm text-muted-foreground">
+                No {`${currentFilterLabel} ${currentTabLabel}`.toLowerCase()} items found.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <BoardView
+            columns={FEEDBACK_BOARD_COLUMNS}
+            items={items}
+            getItemId={(item) => item.id}
+            getColumnId={feedbackBoardColumnId}
+            renderCard={(item) => (
+              <FeedbackBoardCard
+                item={item}
+                selectedId={selectedId}
+                onSelect={onSelect}
+              />
+            )}
+            className="min-w-full"
+            columnsClassName="min-w-72"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeedbackBoardCard({
+  item,
+  selectedId,
+  onSelect,
+}: {
+  item: FeedbackItem;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const displayStatus = toDisplayStatus(item.status);
+  const meta = STATUS_META[displayStatus];
+  const title = displayAdminFeedbackTitle({
+    storedTitle: item.title,
+    requestType: item.request_type,
+    comment: item.comment,
+    targetText: item.target_text,
+    pageTitle: item.page_title,
+  });
+  const sourceLabel = toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
+  const showCommentPreview = !isCommentRedundantWithTitle(title, item.comment);
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="default"
+      onClick={() => onSelect(item.id)}
+      className={cn(
+        "h-auto w-full min-w-0 flex-col items-start justify-start rounded-md border border-border/60 bg-background p-3 text-left shadow-none hover:bg-muted/40",
+        selectedId === item.id && "border-primary/40 bg-primary/5",
+      )}
+    >
+      <span className="flex w-full min-w-0 items-start justify-between gap-3">
+        <span className="line-clamp-2 min-w-0 text-[13px] font-semibold leading-snug text-foreground">
+          {title}
+        </span>
+        <span className="shrink-0 text-[11px] font-normal text-muted-foreground">
+          {relativeTime(item.created_at)}
+        </span>
+      </span>
+      {showCommentPreview ? (
+        <span className="mt-1 line-clamp-2 text-[12px] font-normal leading-snug text-muted-foreground">
+          {item.comment}
+        </span>
+      ) : null}
+      <span className="mt-3 flex w-full min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+        <span
+          className={cn("h-2 w-2 shrink-0 rounded-full", meta.dotClassName)}
+          aria-label={meta.label}
+          title={meta.label}
+        />
+        <span className="min-w-0 shrink truncate">{submitterLabel(item)}</span>
+        <span aria-hidden className="text-border">
+          /
+        </span>
+        {item.severity === "high" ? (
+          <>
+            <span className="shrink-0 font-medium text-status-error">
+              High priority
+            </span>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+          </>
+        ) : null}
+        <span className="min-w-0 truncate">{sourceLabel}</span>
+      </span>
+    </Button>
+  );
+}
+
+function FeedbackViewMenu({
+  value,
+  onValueChange,
+}: {
+  value: FeedbackViewMode;
+  onValueChange: (value: FeedbackViewMode) => void;
+}) {
+  const TriggerIcon = value === "board" ? Columns3 : PanelRight;
+  const options: {
+    value: FeedbackViewMode;
+    label: string;
+    icon: typeof PanelRight;
+  }[] = [
+    { value: "split", label: "Split page", icon: PanelRight },
+    { value: "board", label: "Board", icon: Columns3 },
+  ];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Change feedback view"
+          className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+        >
+          <TriggerIcon className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        {options.map((option) => {
+          const Icon = option.icon;
+          return (
+            <DropdownMenuItem
+              key={option.value}
+              onClick={() => onValueChange(option.value)}
+              className={cn(
+                "gap-2",
+                value === option.value
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{option.label}</span>
+              {value === option.value ? (
+                <Check className="ml-auto h-3.5 w-3.5" />
+              ) : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
