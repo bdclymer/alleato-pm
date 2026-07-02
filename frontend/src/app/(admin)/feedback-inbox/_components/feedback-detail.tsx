@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Link2, Plus, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CircleDot,
+  Github,
+  Link2,
+  Tag,
+  Trash2,
+  User,
+  XCircle,
+} from "lucide-react";
 import {
   Button,
   Select,
@@ -11,6 +21,10 @@ import {
   SelectValue,
 } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
 import { useConfirm } from "@/hooks/use-confirm";
 import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -118,10 +132,12 @@ export function FeedbackDetail({
             </span>
           </div>
 
-          {/* Properties row — icon + field pattern */}
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-            {/* Status pill */}
-            <div className="flex items-center gap-3">
+          <DetailPropertyBar className="mt-6 mb-0 gap-x-4 gap-y-2 overflow-hidden pb-0 sm:flex-nowrap">
+            <DetailPropertyItem
+              icon={CircleDot}
+              className="shrink-0"
+              contentClassName="overflow-visible"
+            >
               <Select
                 value={displayStatus}
                 onValueChange={(value) =>
@@ -133,13 +149,13 @@ export function FeedbackDetail({
                   aria-label="Feedback status"
                   size="sm"
                   className={cn(
-                    "h-auto w-auto min-w-0 gap-1 rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-medium shadow-none hover:bg-muted/80 focus-visible:ring-1",
+                    "h-auto w-auto min-w-0 gap-1 border-0 bg-transparent p-0 text-xs font-medium text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-1",
                     displayStatus === "resolved" &&
-                      "bg-status-success/10 text-status-success hover:bg-status-success/15",
+                      "text-muted-foreground hover:text-foreground",
                     (displayStatus === "in_progress" || displayStatus === "pr_created") &&
-                      "bg-status-info/10 text-status-info hover:bg-status-info/15",
+                      "text-muted-foreground hover:text-foreground",
                     displayStatus === "deferred" &&
-                      "bg-muted text-muted-foreground",
+                      "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <SelectValue />
@@ -152,83 +168,61 @@ export function FeedbackDetail({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </DetailPropertyItem>
 
-            {/* GitHub issue link */}
             {item.github_issue_url && (
-              <div className="flex items-center gap-3">
-                <Github className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a
-                  href={item.github_issue_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline"
-                >
-                  #{item.github_issue_number}
-                </a>
-              </div>
-            )}
-
-            {/* Priority */}
-            {item.severity && (
-              <div className="flex items-center gap-3">
-                <AlertCircle className={cn(
-                  "h-4 w-4 shrink-0",
-                  item.severity === "high" && "text-status-error",
-                  item.severity === "medium" && "text-status-warning",
-                  item.severity === "low" && "text-muted-foreground",
-                )} />
-                <span className="text-xs text-foreground">
-                  {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
-                </span>
-              </div>
-            )}
-
-            {/* Type */}
-            <div className="flex items-center gap-3">
-              <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-foreground">
-                {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-              </span>
-            </div>
-
-            <div className="flex min-w-0 items-center gap-3">
-              <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-              <a
-                href={item.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="truncate text-xs font-medium text-primary hover:underline"
+              <DetailPropertyItem
+                icon={Github}
+                href={item.github_issue_url}
+                external
+                className="shrink-0"
               >
-                Open submitted page
-              </a>
-            </div>
+                #{item.github_issue_number}
+              </DetailPropertyItem>
+            )}
 
-            {/* Submitter */}
-            <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-foreground">
-                {submitterLabel(item)}
-              </span>
-            </div>
+            {item.severity && (
+              <DetailPropertyItem icon={AlertCircle} className="shrink-0">
+                {item.severity.charAt(0).toUpperCase() +
+                  item.severity.slice(1)}{" "}
+                priority
+              </DetailPropertyItem>
+            )}
 
-            {/* Create GitHub issue button */}
+            <DetailPropertyItem icon={Tag} className="shrink-0">
+              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
+              icon={Link2}
+              href={item.page_url}
+              external
+              className="min-w-32 flex-1"
+              title={item.page_url}
+            >
+              Open submitted page
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
+              icon={User}
+              className="min-w-0 max-w-40 shrink"
+              title={submitterLabel(item)}
+            >
+              {submitterLabel(item)}
+            </DetailPropertyItem>
+
             {!item.github_issue_number && (
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
+              <DetailPropertyItem
+                icon={Github}
                 onClick={() => onSendToGitHub(item.id)}
                 disabled={sendingToGitHub}
-                className="h-6 gap-1.5 px-2 text-xs font-medium shadow-none"
+                className="shrink-0"
                 aria-label="Create GitHub issue"
               >
-                <Plus className="h-3 w-3" />
-                <Github className="h-3 w-3" />
-                <span>{sendingToGitHub ? "Creating" : "Issue"}</span>
-              </Button>
+                {sendingToGitHub ? "Creating" : "Issue"}
+              </DetailPropertyItem>
             )}
-          </div>
+          </DetailPropertyBar>
         </div>
 
         {/* Description */}
