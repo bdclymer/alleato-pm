@@ -22,9 +22,8 @@ import {
   toDisplayStatus,
   toolLabelFromPath,
 } from "../helpers";
-import type { AgentTarget, DisplayStatus, FeedbackItem } from "../types";
+import type { DisplayStatus, FeedbackItem } from "../types";
 
-import { AgentDispatchSection } from "./agent-dispatch-section";
 import { CollapsibleDetailSection } from "./collapsible-detail-section";
 import { CommentsSection } from "./comments-section";
 import { GitHubActivitySection } from "./github-activity-section";
@@ -34,11 +33,9 @@ export function FeedbackDetail({
   item,
   updatingId,
   sendingToGitHub,
-  dispatchingId,
   deletingId,
   onUpdateStatus,
   onSendToGitHub,
-  onDispatchToAgent,
   onDelete,
   onBack,
   commentInputRef,
@@ -46,11 +43,9 @@ export function FeedbackDetail({
   item: FeedbackItem;
   updatingId: string | null;
   sendingToGitHub: boolean;
-  dispatchingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
-  onDispatchToAgent: (id: string, target: AgentTarget) => void;
   onDelete: (id: string) => void;
   onBack?: () => void;
   commentInputRef?: RefObject<HTMLTextAreaElement | null>;
@@ -124,7 +119,7 @@ export function FeedbackDetail({
           </div>
 
           {/* Properties row — icon + field pattern */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
             {/* Status pill */}
             <div className="flex items-center gap-3">
               <Select
@@ -224,26 +219,15 @@ export function FeedbackDetail({
 
             {/* Create GitHub issue button */}
             {!item.github_issue_number && (
-              <div className="pt-2">
-                <Button
-                  size="sm"
-                  onClick={() => onSendToGitHub(item.id)}
-                  disabled={sendingToGitHub}
-                  className="h-auto text-xs font-medium"
-                >
-                  {sendingToGitHub ? "Creating..." : "Create GitHub Issue"}
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                onClick={() => onSendToGitHub(item.id)}
+                disabled={sendingToGitHub}
+                className="h-auto text-xs font-medium"
+              >
+                {sendingToGitHub ? "Creating..." : "Create GitHub Issue"}
+              </Button>
             )}
-          </div>
-
-          {/* Agent Dispatch — always visible, one click from any item. */}
-          <div className="mt-3">
-            <AgentDispatchSection
-              item={item}
-              dispatching={dispatchingId === item.id}
-              onDispatch={onDispatchToAgent}
-            />
           </div>
         </div>
 

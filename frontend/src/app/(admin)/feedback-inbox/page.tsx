@@ -34,14 +34,12 @@ import {
   STATUS_OPTIONS,
 } from "./constants";
 import {
-  agentLabel,
   getAssignedAgent,
   getDispatchStatus,
   notifyFeedbackInboxFailure,
   toDisplayStatus,
 } from "./helpers";
 import type {
-  AgentTarget,
   DisplayStatus,
   FeedbackInboxTab,
   FeedbackItem,
@@ -56,7 +54,6 @@ export default function FeedbackInboxPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
-  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -303,56 +300,6 @@ export default function FeedbackInboxPage() {
     }
   }
 
-  // ---- Dispatch to agent ----
-  async function dispatchToAgent(id: string, target: AgentTarget) {
-    setDispatchingId(id);
-    try {
-      const data = await apiFetch<{
-        cliCommand?: string;
-        githubIssue?: { number?: number; url?: string } | null;
-        trigger?: "github" | "metadata_queue";
-      }>("/api/admin/feedback/dispatch", {
-        method: "POST",
-        body: JSON.stringify({ id, target, markInProgress: true }),
-      });
-
-      if (data.cliCommand) {
-        try {
-          await navigator.clipboard.writeText(data.cliCommand);
-        } catch (clipboardError) {
-          notifyFeedbackInboxFailure({
-            operation: "copy-dispatch-command",
-            title: "Dispatch succeeded, but command could not be copied",
-            fallback: "Dispatch succeeded, but the command could not be copied.",
-            error: clipboardError,
-            metadata: { feedbackId: id, target },
-          });
-        }
-      }
-
-      const triggerLabel = data.trigger === "github" ? "GitHub" : "dispatch queue";
-      const issueLabel = data.githubIssue?.number
-        ? ` #${data.githubIssue.number}`
-        : "";
-      toast.success(`Dispatched to ${agentLabel(target)}`, {
-        description: `${triggerLabel}${issueLabel}`,
-      });
-      setFilter("dispatched");
-      setSelectedId(id);
-      fetchItems();
-    } catch (err) {
-      notifyFeedbackInboxFailure({
-        operation: "dispatch-feedback-agent",
-        title: `Could not dispatch to ${agentLabel(target)}`,
-        fallback: "The feedback item could not be queued for agent work.",
-        error: err,
-        metadata: { feedbackId: id, target },
-      });
-    } finally {
-      setDispatchingId(null);
-    }
-  }
-
   // ---- Delete ----
   async function deleteItem(id: string) {
     const previousItems = items;
@@ -476,10 +423,8 @@ export default function FeedbackInboxPage() {
               item={selected}
               updatingId={updatingId}
               sendingToGitHub={sendingToGitHub}
-              dispatchingId={dispatchingId}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
-              onDispatchToAgent={dispatchToAgent}
               deletingId={deletingId}
               onDelete={deleteItem}
               onBack={handleMobileBack}
@@ -582,11 +527,9 @@ export default function FeedbackInboxPage() {
                   item={selected}
                   updatingId={updatingId}
                   sendingToGitHub={sendingToGitHub}
-                  dispatchingId={dispatchingId}
                   deletingId={deletingId}
                   onUpdateStatus={updateStatus}
                   onSendToGitHub={sendToGitHub}
-                  onDispatchToAgent={dispatchToAgent}
                   onDelete={deleteItem}
                   commentInputRef={commentInputRef}
                 />
