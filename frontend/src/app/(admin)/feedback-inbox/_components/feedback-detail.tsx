@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
+import { ArrowLeft, Github, Link2, Plus, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
 import {
   Button,
   Select,
@@ -136,8 +136,6 @@ export function FeedbackDetail({
                     "h-auto w-auto min-w-0 gap-1 rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-medium shadow-none hover:bg-muted/80 focus-visible:ring-1",
                     displayStatus === "resolved" &&
                       "bg-status-success/10 text-status-success hover:bg-status-success/15",
-                    displayStatus === "open" &&
-                      "bg-status-warning/10 text-status-warning hover:bg-status-warning/15",
                     (displayStatus === "in_progress" || displayStatus === "pr_created") &&
                       "bg-status-info/10 text-status-info hover:bg-status-info/15",
                     displayStatus === "deferred" &&
@@ -217,12 +215,17 @@ export function FeedbackDetail({
             {/* Create GitHub issue button */}
             {!item.github_issue_number && (
               <Button
-                size="sm"
+                type="button"
+                variant="outline"
+                size="xs"
                 onClick={() => onSendToGitHub(item.id)}
                 disabled={sendingToGitHub}
-                className="h-auto text-xs font-medium"
+                className="h-6 gap-1.5 px-2 text-xs font-medium shadow-none"
+                aria-label="Create GitHub issue"
               >
-                {sendingToGitHub ? "Creating..." : "Create GitHub Issue"}
+                <Plus className="h-3 w-3" />
+                <Github className="h-3 w-3" />
+                <span>{sendingToGitHub ? "Creating" : "Issue"}</span>
               </Button>
             )}
           </div>

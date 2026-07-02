@@ -11,9 +11,9 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react";
-import { Loader2, Send, XCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Send, XCircle } from "lucide-react";
 import { Button, Textarea } from "@/components/ds";
-import { SectionAction, SectionRuleHeading } from "@/components/layout/spacing";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -421,13 +421,21 @@ export function CommentsSection({
         label="Comments"
         className="mb-0 pb-0"
         actions={
-          <SectionAction
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
             onClick={() => setCollapsed((value) => !value)}
             aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand comments" : "Collapse comments"}
+            className="text-muted-foreground hover:text-foreground"
           >
-            {collapsed ? "Expand" : "Collapse"}
-          </SectionAction>
+            {collapsed ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronUp className="h-3.5 w-3.5" />
+            )}
+          </Button>
         }
       />
 
