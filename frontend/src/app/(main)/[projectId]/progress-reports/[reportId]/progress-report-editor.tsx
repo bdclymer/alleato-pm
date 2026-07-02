@@ -19,8 +19,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { apiFetch } from "@/lib/api-client";
 import { downloadPdf } from "@/hooks/use-pdf-export";
+import {
+  PROGRESS_REPORT_LOADING_STATES,
+  PROGRESS_REPORT_LOADING_STEP_DURATION,
+} from "@/lib/progress-reports/loading-states";
 import {
   useProgressReport,
   useUpdateProgressReport,
@@ -515,6 +520,12 @@ export function ProgressReportEditor({
   if (isEditing) {
     return (
       <div className="space-y-8">
+        <MultiStepLoader
+          loadingStates={PROGRESS_REPORT_LOADING_STATES}
+          loading={isGenerating}
+          duration={PROGRESS_REPORT_LOADING_STEP_DURATION}
+          loop={false}
+        />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-foreground">{draft.title}</p>

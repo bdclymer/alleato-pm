@@ -43,7 +43,7 @@ const LoaderCore = ({
   loadingStates,
   value = 0,
 }: {
-  loadingStates: LoadingState[];
+  loadingStates: readonly LoadingState[];
   value?: number;
 }) => {
   return (
@@ -62,22 +62,21 @@ const LoaderCore = ({
           >
             <div>
               {index > value && (
-                <CheckIcon className="text-black dark:text-white" />
+                <CheckIcon className="text-muted-foreground" />
               )}
               {index <= value && (
                 <CheckFilled
                   className={cn(
-                    "text-black dark:text-white",
-                    value === index &&
-                      "text-black dark:text-lime-500 opacity-100"
+                    "text-muted-foreground",
+                    value === index && "text-primary opacity-100"
                   )}
                 />
               )}
             </div>
             <span
               className={cn(
-                "text-black dark:text-white",
-                value === index && "text-black dark:text-lime-500 opacity-100"
+                "text-sm text-muted-foreground",
+                value === index && "font-medium text-foreground opacity-100"
               )}
             >
               {loadingState.text}
@@ -95,7 +94,7 @@ export const MultiStepLoader = ({
   duration = 2000,
   loop = true,
 }: {
-  loadingStates: LoadingState[];
+  loadingStates: readonly LoadingState[];
   loading?: boolean;
   duration?: number;
   loop?: boolean;
@@ -138,7 +137,7 @@ export const MultiStepLoader = ({
             <LoaderCore value={currentState} loadingStates={loadingStates} />
           </div>
 
-          <div className="bg-gradient-to-t inset-x-0 z-20 bottom-0 bg-white dark:bg-black h-full absolute [mask-image:radial-gradient(900px_at_center,transparent_30%,white)]" />
+          <div className="bg-gradient-to-t inset-x-0 z-20 bottom-0 bg-background h-full absolute [mask-image:radial-gradient(900px_at_center,transparent_30%,white)]" />
         </motion.div>
       )}
     </AnimatePresence>

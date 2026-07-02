@@ -7,8 +7,13 @@ import { SectionRuleHeading } from "@/components/layout/spacing";
 import { EmptyState } from "@/components/ds/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { useCreateProgressReport, useProgressReports } from "@/hooks/use-progress-reports";
 import { formatProgressReportDate } from "@/lib/progress-reports/date-format";
+import {
+  PROGRESS_REPORT_LOADING_STATES,
+  PROGRESS_REPORT_LOADING_STEP_DURATION,
+} from "@/lib/progress-reports/loading-states";
 
 
 function statusVariant(status: string) {
@@ -32,19 +37,27 @@ export function ProgressReportCreateAction({ projectId }: { projectId: number })
   }
 
   return (
-    <Button
-      size="sm"
-      className="gap-2"
-      onClick={handleCreateReport}
-      disabled={createMutation.isPending}
-    >
-      {createMutation.isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Plus className="h-4 w-4" />
-      )}
-      Create This Week&apos;s Draft
-    </Button>
+    <>
+      <Button
+        size="sm"
+        className="gap-2"
+        onClick={handleCreateReport}
+        disabled={createMutation.isPending}
+      >
+        {createMutation.isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+        Create This Week&apos;s Draft
+      </Button>
+      <MultiStepLoader
+        loadingStates={PROGRESS_REPORT_LOADING_STATES}
+        loading={createMutation.isPending}
+        duration={PROGRESS_REPORT_LOADING_STEP_DURATION}
+        loop={false}
+      />
+    </>
   );
 }
 
