@@ -188,7 +188,9 @@ function saveFeedbackViewMode(viewMode: FeedbackViewMode) {
 function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "all") return ALL_STATUS_QUERY;
   if (filter === "active") return null;
-  if (filter === "open") return "open,submitted,github_failed";
+  if (filter === "open") {
+    return "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+  }
   if (filter === "in_progress")
     return "in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
   if (filter === "dispatched") return ALL_STATUS_QUERY;
@@ -400,6 +402,7 @@ export default function FeedbackInboxPage() {
       const params = new URLSearchParams();
       const statusQuery = feedbackStatusQuery(filter);
       const excludedStatusQuery = feedbackExcludedStatusQuery(filter);
+      params.set("excludeBoardItems", "true");
       if (statusQuery) params.set("status", statusQuery);
       if (excludedStatusQuery) params.set("excludeStatus", excludedStatusQuery);
       const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(
