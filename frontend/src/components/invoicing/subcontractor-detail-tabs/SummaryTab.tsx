@@ -408,6 +408,10 @@ export function SummaryTab({
         {invoice.rollup && (
           <div className="space-y-4">
             <SectionRuleHeading label="Subcontractor's Application for Payment" />
+            <p className="text-sm text-muted-foreground">
+              Application is made for payment, as shown below, in connection
+              with the Contract. Continuation sheet is attached.
+            </p>
             <dl className="divide-y divide-border text-sm">
               {[
                 {
