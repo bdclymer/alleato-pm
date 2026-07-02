@@ -619,32 +619,27 @@ function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
       )
       .join("");
 
-  return `
-    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
-    <p align="justify" style="line-height:100%;margin-bottom:0in">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>If to Subcontractor:</b></span></font></font></span></font>
+  const renderNoticeBlock = (label: string, notice: CommitmentContractTemplateData["contractorNotice"]) => `
+    <p align="justify" style="line-height:100%;margin:0 0 8px;">
+      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>${label}</b></span></font></font></span></font>
     </p>
-    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
-    <table width="682" cellpadding="0" cellspacing="0">
-      <col width="146" />
-      <col width="535" />
+    <table width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;">
+      <col style="width:21%" />
+      <col style="width:79%" />
       <tr valign="top">
-        <td width="146" style="border:none;padding:0in"></td>
-        <td width="535" style="border:none;padding:0in">
-          ${renderNoticeLines(counterpartyNotice)}
-        </td>
-      </tr>
-      <tr valign="top">
-        <td width="146" style="border:none;padding:0in">
-          <p align="justify" style="margin:0;">
-            <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">If to Contractor:</span></span></font></font></span></font>
-          </p>
-        </td>
-        <td width="535" style="border:none;padding:0in">
-          ${renderNoticeLines(contractorNotice)}
+        <td style="border:none;padding:0in"></td>
+        <td style="border:none;padding:0in">
+          ${renderNoticeLines(notice)}
         </td>
       </tr>
     </table>
+  `;
+
+  return `
+    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+    ${renderNoticeBlock("If to Subcontractor:", counterpartyNotice)}
+    <p align="justify" style="line-height:100%;margin-bottom:0.14in"><br /></p>
+    ${renderNoticeBlock("If to Contractor:", contractorNotice)}
     <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
   `;
 }
@@ -718,12 +713,12 @@ function buildCommitmentExhibitAHtml(bundle: DocumentBundle): string {
     <p style="margin:18px 0 8px 0;">
       <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Scope line items</b></span></font></font></span></font>
     </p>
-    <table width="682" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px 0;">
-      <col width="72" />
-      <col width="370" />
-      <col width="80" />
-      <col width="70" />
-      <col width="90" />
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px 0;table-layout:fixed;">
+      <col style="width:10%" />
+      <col style="width:54%" />
+      <col style="width:12%" />
+      <col style="width:10%" />
+      <col style="width:14%" />
       <tr>
         <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Line</th>
         <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Description</th>

@@ -131,7 +131,8 @@ export function buildBrandedFooterTemplate(): string {
 
   return (
     `<div style="width:100%;margin:0;font-family:Arial, Helvetica, sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">` +
-    `<div style="width:600px;max-width:100%;margin:0 auto;padding:7px 0 0;border-top:1px solid #ece7e2;text-align:center;font-size:9px;color:#807b76;">${contact}</div>` +
+    `<div style="width:600px;max-width:100%;margin:0 auto;padding:6px 0 0;text-align:right;font-size:8px;color:#a09a94;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>` +
+    `<div style="width:600px;max-width:100%;margin:0 auto;padding:3px 0 0;border-top:1px solid #ece7e2;text-align:center;font-size:9px;color:#807b76;">${contact}</div>` +
     `<div style="text-align:center;font-size:8px;color:#77716b;padding:4px 24px 7px;">${esc(COMPANY_LOCATIONS.join(" · "))}</div>` +
     `<img src="${footerRuleSvgDataUri()}" style="display:block;width:100%;height:14px;" alt="" />` +
     `</div>`
@@ -361,6 +362,17 @@ export function buildBrandedDocumentHtml({
       .section, .photo-card, .contact, .dates-grid {
         break-inside: avoid;
       }
+    }
+    /*
+     * Full-justified text in a ~640px column with a proportional serif font
+     * produces uneven "rivers" of whitespace between words. The legal
+     * contract template (a raw LibreOffice export) hardcodes align="justify"
+     * on nearly every paragraph; override it to a left/ragged-right layout,
+     * which is the standard, more legible convention for contracts at this
+     * column width.
+     */
+    .document-content p[align="justify"] {
+      text-align: left;
     }
   </style>
 </head>
