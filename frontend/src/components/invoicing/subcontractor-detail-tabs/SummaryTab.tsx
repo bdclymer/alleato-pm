@@ -240,6 +240,9 @@ export function SummaryTab({
   );
 
   const coSummary = invoice.co_summary;
+  const changeOrderAdditions = coSummary?.additions ?? 0;
+  const changeOrderDeductions = coSummary?.deductions ?? 0;
+  const changeOrderNet = coSummary?.net ?? 0;
 
   return (
     <div className="space-y-8">
@@ -490,36 +493,67 @@ export function SummaryTab({
           </div>
         )}
 
-        {/* Change Order Summary Table */}
-        {coSummary && (coSummary.additions !== 0 || coSummary.deductions !== 0) && (
-          <div className="space-y-4">
-            <SectionRuleHeading label="Change Order Summary" />
+        <div className="space-y-4">
+          <SectionRuleHeading label="Change Order Summary" />
+          <div className="overflow-hidden border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Type</TableHead>
-                  <TableHead className="text-right text-xs">Additions</TableHead>
-                  <TableHead className="text-right text-xs">Deductions</TableHead>
-                  <TableHead className="text-right text-xs">Net Change</TableHead>
+                  <TableHead className="w-1/2 align-bottom text-xs uppercase text-foreground">
+                    Change Order Summary
+                  </TableHead>
+                  <TableHead className="w-1/4 text-xs uppercase text-foreground">
+                    Additions
+                  </TableHead>
+                  <TableHead className="w-1/4 text-xs uppercase text-foreground">
+                    Deductions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {[
+                  {
+                    label:
+                      "Total changes approved in previous months by Owner/Client:",
+                    additions: changeOrderAdditions,
+                    deductions: changeOrderDeductions,
+                  },
+                  {
+                    label: "Total approved this Month:",
+                    additions: 0,
+                    deductions: 0,
+                  },
+                  {
+                    label: "Totals:",
+                    additions: changeOrderAdditions,
+                    deductions: changeOrderDeductions,
+                  },
+                ].map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell className="text-sm">{row.label}</TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {formatCurrency(row.additions)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {formatCurrency(row.deductions)}
+                    </TableCell>
+                  </TableRow>
+                ))}
                 <TableRow>
-                  <TableCell className="text-sm">Approved Change Orders</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {formatCurrency(coSummary.additions)}
+                  <TableCell className="text-sm font-medium">
+                    Net changes by change order:
                   </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {formatCurrency(coSummary.deductions)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm font-semibold">
-                    {formatCurrency(coSummary.net)}
+                  <TableCell
+                    colSpan={2}
+                    className="text-center tabular-nums text-sm font-medium"
+                  >
+                    {formatCurrency(changeOrderNet)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
-        )}
+        </div>
       </section>
 
       {/* ── Section 3: Attachments ── */}
