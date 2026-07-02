@@ -116,6 +116,14 @@ export const GET = withApiGuardrails(
 
     const { projectId, changeEventId } = await params;
     assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]#GET");
+
+    // Unauthenticated requests must 401 before touching the DB — this query
+    // embeds budget_lines, which hard-errors for the anon role.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]#GET", message: "Authentication required." });
+    }
+
     const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 

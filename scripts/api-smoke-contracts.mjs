@@ -34,8 +34,16 @@ const BACKEND_URL =
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
 
 // ─── Endpoint definitions ───────────────────────────────────────────────────
-// [method, path, description, expectedStatuses?]
+// [method, path, description, expectedStatuses?, requestBody?, options?]
 // If expectedStatuses is omitted, defaults to: any non-500, non-000 status
+//
+// options.graceUntil ("YYYY-MM-DD") + options.graceStatuses: extra statuses
+// tolerated through that date (inclusive). This exists because the PR gate
+// (changed-quality) probes PRODUCTION — a PR that tightens an endpoint's
+// behavior would otherwise deadlock: the strict contract can't pass until the
+// fix deploys, and the fix can't merge until the contract passes. Give the
+// old behavior a short grace window instead of loosening the contract or
+// admin-merging. After the date the strict contract enforces automatically.
 const ENDPOINTS = [
   // Health — must be 200 with specific body shape
   ["GET", "/api/health", "Health check", [200]],
@@ -65,7 +73,10 @@ const ENDPOINTS = [
 
   // Change Events
   ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (fake id)", [200, 401, 404]],
+  // Detail — must 401 unauthenticated (guard added 2026-07-02). The embedded
+  // budget_lines join hard-errors for the anon role, so an unguarded handler
+  // surfaces as Postgres "permission denied for table budget_lines" noise.
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200, 404] }],
   ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
   // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
@@ -87,7 +98,10 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/export`, "Prime contract change orders CSV export", [200, 401]],
 
   // Commitment Change Orders (canonical routes)
-  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list", [200, 401]],
+  // List — must 401 unauthenticated (guard added 2026-07-02): reads budget_lines,
+  // which hard-errors for the anon role when the handler runs unauthenticated.
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/${FAKE_UUID}/line-items`, "Commitment CO line items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/export`, "Commitment change orders CSV export", [200, 401]],
 
   // Contracts
@@ -240,7 +254,11 @@ const ENDPOINTS = [
   // Punch Items
   ["GET", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items", [200, 401]],
   ["POST", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items create (auth check)", [400, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/checklist`, "Checklist", [200, 401]],
+  // Checklist — must 401 unauthenticated, never 200. Before 2026-07-02 the route
+  // had no auth guard: anon-role queries made budget_lines throw "permission
+  // denied" in Postgres while every other count silently returned 0 (a 200 with
+  // all-false statuses). Strict [401] guards both the noisy and the silent half.
+  ["GET", `/api/projects/${PROJECT_ID}/checklist`, "Checklist (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
 
   // Other project-scoped
   ["GET", `/api/projects/${PROJECT_ID}/vendors`, "Vendors", [200, 401]],
@@ -471,7 +489,16 @@ async function run() {
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Endpoints: ${total}\n`);
 
-  for (const [method, path, description, expectedStatuses, requestBody] of ENDPOINTS) {
+  const today = new Date().toISOString().slice(0, 10);
+  for (const [method, path, description, baseExpected, requestBody, options] of ENDPOINTS) {
+    const inGrace =
+      baseExpected &&
+      options?.graceUntil &&
+      today <= options.graceUntil &&
+      options.graceStatuses?.length;
+    const expectedStatuses = inGrace
+      ? [...baseExpected, ...options.graceStatuses]
+      : baseExpected;
     const url = `${BASE_URL}${path}`;
     let status = 0;
     let body = null;

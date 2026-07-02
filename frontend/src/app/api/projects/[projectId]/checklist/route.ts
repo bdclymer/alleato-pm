@@ -1,14 +1,23 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/checklist#GET",
   async ({ request, params }) => {
-  
+
     const { projectId: projectIdStr } = await params;
     const projectId = parseInt(projectIdStr, 10);
+
+    // Unauthenticated requests must 401 here. Without this guard the queries
+    // below run as the anon role: budget_lines hard-errors (anon is revoked on
+    // financial tables) and every other count silently returns 0.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/checklist#GET", message: "Authentication required." });
+    }
+
     const supabase = await createClient();
 
     // Check each feature for data existence

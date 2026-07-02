@@ -30,6 +30,14 @@ export const GET = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders#GET",
   async ({ request, params }) => {
     const { projectId } = await params;
+
+    // Unauthenticated requests must 401 before touching the DB — the queries
+    // below read budget_lines, which hard-errors for the anon role.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders#GET", message: "Authentication required." });
+    }
+
     const supabase = await createClient();
 
     const { data: commitments, error: commitmentsError } = await supabase
