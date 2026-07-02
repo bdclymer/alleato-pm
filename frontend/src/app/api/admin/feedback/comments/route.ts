@@ -8,6 +8,7 @@ import { ADMIN_FEEDBACK_BUCKET } from "@/lib/admin-feedback/constants";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
+const MAX_COMMENT_IMAGE_BYTES = 10 * 1024 * 1024;
 
 async function requireAdminUser() {
   const requestUser = await getApiRouteUser();
@@ -90,6 +91,7 @@ const postSchema = z.object({
   body: z.string().trim().min(1).max(5000),
   mentions: z.array(z.string().uuid()).optional(),
   screenshotDataUrl: z.string().trim().nullable().optional(),
+  screenshotDataUrls: z.array(z.string().trim()).max(8).optional(),
 });
 
 function decodeScreenshot(dataUrl: string) {
@@ -125,6 +127,9 @@ async function uploadCommentScreenshot(userId: string, screenshotDataUrl: string
   await ensureFeedbackBucket();
   const svc = createServiceClient();
   const screenshot = decodeScreenshot(screenshotDataUrl);
+  if (screenshot.buffer.byteLength > MAX_COMMENT_IMAGE_BYTES) {
+    throw new Error("Comment image must be under 10MB");
+  }
   const extension = screenshot.mimeType.split("/")[1] ?? "png";
   const filePath = `comments/${userId}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}.${extension}`;
 
@@ -161,6 +166,9 @@ export const POST = withApiGuardrails("/api/admin/feedback/comments#POST", async
   }
 
   const { feedbackItemId, body, mentions = [], screenshotDataUrl } = parsed.data;
+  const screenshotDataUrls =
+    parsed.data.screenshotDataUrls?.filter(Boolean) ??
+    (screenshotDataUrl ? [screenshotDataUrl] : []);
   const supabase = createServiceClient();
 
   // Verify the feedback item exists
@@ -174,29 +182,37 @@ export const POST = withApiGuardrails("/api/admin/feedback/comments#POST", async
     return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
   }
 
-  // Upload screenshot if provided
-  let screenshotUrl: string | null = null;
-  let screenshotPath: string | null = null;
+  const uploadedScreenshots = await Promise.all(
+    screenshotDataUrls.map((dataUrl) =>
+      uploadCommentScreenshot(user.id, dataUrl),
+    ),
+  );
+  const commentRows =
+    uploadedScreenshots.length > 0
+      ? uploadedScreenshots.map((uploaded, index) => ({
+          feedback_item_id: feedbackItemId,
+          author_id: user.id,
+          body: index === 0 ? body : "(image)",
+          mentions: index === 0 ? mentions : [],
+          screenshot_url: uploaded.screenshotUrl,
+          screenshot_path: uploaded.screenshotPath,
+        }))
+      : [
+          {
+            feedback_item_id: feedbackItemId,
+            author_id: user.id,
+            body,
+            mentions,
+            screenshot_url: null,
+            screenshot_path: null,
+          },
+        ];
 
-  if (screenshotDataUrl) {
-    const uploaded = await uploadCommentScreenshot(user.id, screenshotDataUrl);
-    screenshotUrl = uploaded.screenshotUrl;
-    screenshotPath = uploaded.screenshotPath;
-  }
-
-  // Insert comment
-  const { data: comment, error: insertError } = await supabase
+  const { data: comments, error: insertError } = await supabase
     .from("admin_feedback_comments")
-    .insert({
-      feedback_item_id: feedbackItemId,
-      author_id: user.id,
-      body,
-      mentions,
-      screenshot_url: screenshotUrl,
-      screenshot_path: screenshotPath,
-    })
+    .insert(commentRows)
     .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
-    .single();
+    .order("created_at", { ascending: true });
 
   if (insertError) {
     throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback/comments#POST", message: insertError.message });
@@ -209,10 +225,13 @@ export const POST = withApiGuardrails("/api/admin/feedback/comments#POST", async
     .eq("id", user.id)
     .maybeSingle();
 
+  const commentsWithAuthor = (comments ?? []).map((comment) => ({
+    ...comment,
+    author: profile ?? { id: user.id, email: "unknown", full_name: null },
+  }));
+
   return NextResponse.json({
-    comment: {
-      ...comment,
-      author: profile ?? { id: user.id, email: "unknown", full_name: null },
-    },
+    comment: commentsWithAuthor[0],
+    comments: commentsWithAuthor,
   });
 });

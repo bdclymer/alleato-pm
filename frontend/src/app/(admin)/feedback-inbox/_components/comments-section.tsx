@@ -8,6 +8,7 @@ import {
   useState,
   type ChangeEvent,
   type ClipboardEvent,
+  type DragEvent,
   type KeyboardEvent,
   type RefObject,
 } from "react";
@@ -27,6 +28,14 @@ import {
   relativeTime,
 } from "../helpers";
 
+type PendingImage = {
+  id: string;
+  dataUrl: string;
+  name: string;
+};
+
+const MAX_COMMENT_IMAGES = 8;
+
 function CommentInput({
   onSubmit,
   users,
@@ -36,7 +45,7 @@ function CommentInput({
   onSubmit: (
     body: string,
     mentions: string[],
-    screenshotDataUrl: string | null,
+    screenshotDataUrls: string[],
   ) => void;
   users: UserProfile[];
   submitting: boolean;
@@ -46,24 +55,35 @@ function CommentInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [attachedImages, setAttachedImages] = useState<PendingImage[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   const localInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = externalInputRef ?? localInputRef;
 
-  function attachImageFile(file: File, source: "file-picker" | "paste") {
+  function attachImageFile(
+    file: File,
+    source: "file-picker" | "paste" | "drop",
+  ) {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file.");
-      return;
+      return false;
     }
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image must be under 10MB.");
-      return;
+      return false;
     }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        setScreenshotDataUrl(reader.result);
+        setAttachedImages((current) => [
+          ...current,
+          {
+            id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+            dataUrl: reader.result as string,
+            name: file.name,
+          },
+        ]);
       }
     };
     reader.onerror = () => {
@@ -83,25 +103,76 @@ function CommentInput({
       });
     };
     reader.readAsDataURL(file);
+    return true;
+  }
+
+  function attachImageFiles(
+    files: Iterable<File>,
+    source: "file-picker" | "paste" | "drop",
+  ) {
+    const imageFiles = Array.from(files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+
+    if (imageFiles.length === 0) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    const remainingSlots = MAX_COMMENT_IMAGES - attachedImages.length;
+    if (remainingSlots <= 0) {
+      toast.error(`You can attach up to ${MAX_COMMENT_IMAGES} images.`);
+      return;
+    }
+
+    const filesToAttach = imageFiles.slice(0, remainingSlots);
+    if (imageFiles.length > remainingSlots) {
+      toast.error(`Only ${MAX_COMMENT_IMAGES} images can be attached.`);
+    }
+
+    filesToAttach.forEach((file) => attachImageFile(file, source));
   }
 
   function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    attachImageFile(file, "file-picker");
+    if (!e.target.files?.length) return;
+    attachImageFiles(e.target.files, "file-picker");
     e.target.value = "";
   }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
-    const imageItem = Array.from(e.clipboardData.items).find((item) =>
-      item.type.startsWith("image/"),
-    );
-    if (!imageItem) return;
+    const imageFiles = Array.from(e.clipboardData.items)
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => Boolean(file));
 
-    const file = imageItem.getAsFile();
-    if (!file) return;
+    if (imageFiles.length === 0) return;
     e.preventDefault();
-    attachImageFile(file, "paste");
+    attachImageFiles(imageFiles, "paste");
+  }
+
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!Array.from(e.dataTransfer.items).some((item) => item.type.startsWith("image/"))) {
+      return;
+    }
+
+    e.preventDefault();
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setDragActive(false);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    const imageFiles = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+    setDragActive(false);
+    attachImageFiles(imageFiles, "drop");
   }
 
   const filteredUsers = useMemo(() => {
@@ -179,11 +250,15 @@ function CommentInput({
 
   function handleSubmit() {
     const trimmed = value.trim();
-    if ((!trimmed && !screenshotDataUrl) || submitting) return;
+    if ((!trimmed && attachedImages.length === 0) || submitting) return;
     const mentions = extractMentionIds(trimmed, users);
-    onSubmit(trimmed || "(screenshot)", mentions, screenshotDataUrl);
+    onSubmit(
+      trimmed || "(image)",
+      mentions,
+      attachedImages.map((image) => image.dataUrl),
+    );
     setValue("");
-    setScreenshotDataUrl(null);
+    setAttachedImages([]);
     setShowMentions(false);
   }
 
@@ -221,23 +296,31 @@ function CommentInput({
         </div>
       )}
 
-      {screenshotDataUrl && (
-        <div className="mb-2 relative inline-block">
-          <img
-            src={screenshotDataUrl}
-            alt="Comment screenshot"
-            className="h-24 max-w-48 rounded-lg border border-border object-cover"
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon-xs"
-            onClick={() => setScreenshotDataUrl(null)}
-            className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full shadow-sm transition-colors hover:bg-destructive/90"
-            aria-label="Remove screenshot"
-          >
-            <XCircle className="h-3 w-3" />
-          </Button>
+      {attachedImages.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {attachedImages.map((image) => (
+            <div key={image.id} className="relative inline-block">
+              <img
+                src={image.dataUrl}
+                alt={image.name}
+                className="h-20 w-20 rounded-md border border-border object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-xs"
+                onClick={() =>
+                  setAttachedImages((current) =>
+                    current.filter((item) => item.id !== image.id),
+                  )
+                }
+                className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full shadow-sm transition-colors hover:bg-destructive/90"
+                aria-label={`Remove ${image.name}`}
+              >
+                <XCircle className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -245,11 +328,20 @@ function CommentInput({
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple
         aria-label="Attach image"
         className="hidden"
         onChange={handleFileUpload}
       />
-      <div className="rounded-md border border-border bg-background p-3 focus-within:ring-1 focus-within:ring-ring">
+      <div
+        className={cn(
+          "rounded-md border border-border bg-background p-3 focus-within:ring-1 focus-within:ring-ring",
+          dragActive && "border-primary/50 ring-1 ring-primary/30",
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <Textarea
           ref={inputRef}
           value={value}
@@ -274,7 +366,7 @@ function CommentInput({
             size="icon-xs"
             variant="ghost"
             onClick={handleSubmit}
-            disabled={(!value.trim() && !screenshotDataUrl) || submitting}
+            disabled={(!value.trim() && attachedImages.length === 0) || submitting}
             aria-label={submitting ? "Sending comment" : "Send comment"}
           >
             {submitting ? (
@@ -361,11 +453,14 @@ export function CommentsSection({
   async function handleSubmit(
     body: string,
     mentions: string[],
-    screenshotDataUrl: string | null,
+    screenshotDataUrls: string[],
   ) {
     setSubmitting(true);
     try {
-      const data = await apiFetch<{ comment: FeedbackComment }>(
+      const data = await apiFetch<{
+        comment?: FeedbackComment;
+        comments?: FeedbackComment[];
+      }>(
         "/api/admin/feedback/comments",
         {
           method: "POST",
@@ -373,11 +468,12 @@ export function CommentsSection({
             feedbackItemId,
             body,
             mentions,
-            screenshotDataUrl,
+            screenshotDataUrls,
           }),
         },
       );
-      setComments((prev) => [...prev, data.comment]);
+      const newComments = data.comments ?? (data.comment ? [data.comment] : []);
+      setComments((prev) => [...prev, ...newComments]);
       scrollToBottom();
       if (mentions.length > 0) {
         toast.success(
@@ -393,7 +489,7 @@ export function CommentsSection({
         metadata: {
           feedbackItemId,
           mentionCount: mentions.length,
-          hasScreenshot: Boolean(screenshotDataUrl),
+          imageCount: screenshotDataUrls.length,
         },
       });
     } finally {
