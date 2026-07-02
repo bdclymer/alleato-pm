@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Mail } from "lucide-react";
 
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
   Table,
   TableBody,
@@ -52,13 +53,7 @@ export function EmailsTab({
 
   return (
     <section className="space-y-4">
-      <div>
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-sm font-semibold text-foreground">Emails</h2>
-        <p className="text-xs text-muted-foreground">
-          History of emails sent for this invoice.
-        </p>
-      </div>
+      <SectionRuleHeading label="Emails" />
       {loading ? (
         <div className="py-8 text-center text-sm text-muted-foreground">
           Loading…
