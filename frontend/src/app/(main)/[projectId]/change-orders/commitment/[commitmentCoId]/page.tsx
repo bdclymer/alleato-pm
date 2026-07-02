@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Check, Edit, FileDown, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Edit, FileDown, Mail, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -27,6 +27,7 @@ import {
   DetailActions,
 } from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import { useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { ContentSectionStack, DetailPanel, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
@@ -41,6 +42,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import {
   Form,
   FormControl,
@@ -579,6 +581,7 @@ export default function CommitmentCODetailPage() {
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   const handleReject = useCallback(async () => {
     if (!co || !contractId || !rejectionReason.trim()) {
@@ -971,6 +974,7 @@ export default function CommitmentCODetailPage() {
         onBack={handleBack}
         actions={
           <div className="flex items-center gap-1.5">
+            <CommitmentsHelpSheet buttonVariant="ghost" />
             {co.status === "pending" && (
               <>
                 <Button
@@ -998,6 +1002,11 @@ export default function CommitmentCODetailPage() {
             <DetailActions
               onDelete={handleDelete}
               extraActions={[
+                {
+                  label: "Email PDF",
+                  icon: <Mail className="h-4 w-4" />,
+                  onClick: () => setDeliveryDialogOpen(true),
+                },
                 {
                   label: "Export PDF",
                   icon: <FileDown className="h-4 w-4" />,
@@ -1406,6 +1415,20 @@ export default function CommitmentCODetailPage() {
       </PageShell>
 
       {ConfirmDialog}
+
+      <DocumentDeliveryDialog
+        open={deliveryDialogOpen}
+        onOpenChange={setDeliveryDialogOpen}
+        recordType="commitment"
+        recordId={commitmentCoId}
+        title={co.title || co.description || "Commitment Change Order"}
+        number={co.change_order_number || "CCO"}
+        initialTab="email"
+        allowedTabs={["email"]}
+        recipientsEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/recipients`}
+        emailEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/email`}
+        downloadEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/pdf`}
+      />
 
       {/* Rejection dialog */}
       {showRejectDialog && (

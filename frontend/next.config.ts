@@ -226,6 +226,7 @@ const nextConfig: NextConfig = {
     "/site-map": ["../docs/reports/route-inventory.csv"],
     "/api/commitments/[commitmentId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/commitments/[commitmentId]/export": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/estimates/[estimateId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/change-events/[changeEventId]/pdf": CHROMIUM_TRACE_GLOBS,

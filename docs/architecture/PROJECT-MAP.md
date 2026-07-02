@@ -343,7 +343,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (735)
+## API Endpoints (736)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -523,7 +523,6 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -713,9 +712,11 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments` | GET, POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]` | DELETE | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts |
+| `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items` | GET, POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]` | PUT, DELETE | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf/route.ts |
+| `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/recipients` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/recipients/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/export` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/export/route.ts |
 | `/api/projects/[projectId]/commitment-options` | GET | frontend/src/app/api/projects/[projectId]/commitment-options/route.ts |

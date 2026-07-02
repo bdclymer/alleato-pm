@@ -423,7 +423,7 @@
     },
     {
       "url": "/[projectId]/prime-contract-pcos/new",
-      "title": null,
+      "title": "New Prime Contract Potential Change Order",
       "description": "Create prime contract PCO from change events or standalone for conversion to CO"
     },
     {
