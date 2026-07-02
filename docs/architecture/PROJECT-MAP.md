@@ -343,7 +343,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (734)
+## API Endpoints (735)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -387,6 +387,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/deep-research/archive` | GET | frontend/src/app/api/admin/deep-research/archive/route.ts |
 | `/api/admin/eval-runs` | GET | frontend/src/app/api/admin/eval-runs/route.ts |
 | `/api/admin/feedback` | GET, POST, PUT, PATCH, DELETE | frontend/src/app/api/admin/feedback/route.ts |
+| `/api/admin/feedback/[feedbackId]/resources` | POST, DELETE | frontend/src/app/api/admin/feedback/[feedbackId]/resources/route.ts |
 | `/api/admin/feedback/board` | GET | frontend/src/app/api/admin/feedback/board/route.ts |
 | `/api/admin/feedback/board/[itemId]` | PATCH, DELETE | frontend/src/app/api/admin/feedback/board/[itemId]/route.ts |
 | `/api/admin/feedback/board/[itemId]/comments` | GET, POST | frontend/src/app/api/admin/feedback/board/[itemId]/comments/route.ts |

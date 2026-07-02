@@ -33,6 +33,21 @@ export type FeedbackItem = {
   submitter: UserProfile;
 };
 
+export type FeedbackResourceKind = "file" | "link";
+
+export type FeedbackResource = {
+  id: string;
+  kind: FeedbackResourceKind;
+  label: string;
+  url: string;
+  path: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  createdAt: string;
+  createdBy: string | null;
+};
+
 export type FeedbackComment = {
   id: string;
   feedback_item_id: string;

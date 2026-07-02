@@ -471,6 +471,7 @@ const listQuerySchema = z.object({
   status: z.string().optional(),
   excludeStatus: z.string().optional(),
   requestType: z.string().optional(),
+  excludeBoardItems: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -487,7 +488,14 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     );
   }
 
-  const { status, excludeStatus, requestType, limit = 100, offset = 0 } = parsed.data;
+  const {
+    status,
+    excludeStatus,
+    requestType,
+    excludeBoardItems,
+    limit = 100,
+    offset = 0,
+  } = parsed.data;
   const serviceSupabase = createServiceClient();
 
   let query = serviceSupabase
@@ -520,6 +528,10 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
   if (requestType) {
     query = query.eq("request_type", requestType);
+  }
+
+  if (excludeBoardItems) {
+    query = query.neq("page_path", "/product-board");
   }
 
   const { data, error, count } = await query;

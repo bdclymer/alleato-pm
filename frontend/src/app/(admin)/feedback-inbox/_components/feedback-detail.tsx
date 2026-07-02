@@ -40,6 +40,7 @@ import type { DisplayStatus, FeedbackItem } from "../types";
 
 import { CollapsibleDetailSection } from "./collapsible-detail-section";
 import { CommentsSection } from "./comments-section";
+import { FeedbackResourcesSection } from "./feedback-resources-section";
 import { GitHubActivitySection } from "./github-activity-section";
 import { ToolContextSection } from "./tool-context-section";
 
@@ -51,6 +52,7 @@ export function FeedbackDetail({
   onUpdateStatus,
   onSendToGitHub,
   onDelete,
+  onRefresh,
   onBack,
   commentInputRef,
 }: {
@@ -61,6 +63,7 @@ export function FeedbackDetail({
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
+  onRefresh: () => void;
   onBack?: () => void;
   commentInputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -265,6 +268,11 @@ export function FeedbackDetail({
             </Button>
           )}
         </div>
+
+        <FeedbackResourcesSection
+          item={item}
+          onResourcesChanged={onRefresh}
+        />
 
         {/* Comments */}
         <div>

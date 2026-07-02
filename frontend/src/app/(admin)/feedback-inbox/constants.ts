@@ -18,7 +18,7 @@ import type {
 
 export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "active", label: "Active" },
-  { value: "open", label: "Submitted" },
+  { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
@@ -28,8 +28,7 @@ export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 
 export const FEEDBACK_STATUS_TABS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "open", label: "Submitted" },
-  { value: "in_progress", label: "In Progress" },
+  { value: "open", label: "Open" },
   { value: "resolved", label: "Resolved" },
   { value: "deferred", label: "Deferred" },
 ];

@@ -746,6 +746,7 @@ export default function FeedbackInboxPage() {
               onDelete={deleteItem}
               onSendToGitHub={sendToGitHub}
               onUpdateStatus={updateStatus}
+              onRefresh={fetchItems}
             />
           </SplitPage>
         )}
@@ -1525,6 +1526,7 @@ function FeedbackDetailPane({
   onDelete,
   onSendToGitHub,
   onUpdateStatus,
+  onRefresh,
 }: {
   commentInputRef: RefObject<HTMLTextAreaElement | null>;
   deletingId: string | null;
@@ -1534,6 +1536,7 @@ function FeedbackDetailPane({
   onDelete: (id: string) => void;
   onSendToGitHub: (id: string) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onRefresh: () => void;
 }) {
   const splitPage = useSplitPage();
 
@@ -1555,6 +1558,7 @@ function FeedbackDetailPane({
         onUpdateStatus={onUpdateStatus}
         onSendToGitHub={onSendToGitHub}
         onDelete={onDelete}
+        onRefresh={onRefresh}
         onBack={splitPage.isDesktop ? undefined : splitPage.onOpen}
         commentInputRef={commentInputRef}
       />
