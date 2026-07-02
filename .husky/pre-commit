@@ -122,6 +122,17 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Intelligence SELECT * guard ──────────────────────────────────
+# Block .select("*") anywhere in backend/src/services/intelligence.
+# Unbounded compiler reads were the biggest legitimate load in the
+# 2026-07-02 PM APP saturation incident, and service_role now enforces
+# statement_timeout=30s. See scripts/audits/check-no-select-star-intelligence.mjs.
+node scripts/audits/check-no-select-star-intelligence.mjs
+if [ $? -ne 0 ]; then
+  echo "SELECT * in intelligence services. Use an explicit column list before committing."
+  exit 1
+fi
+
 # ── Broken symlink guard ─────────────────────────────────────────
 # Block staged symlinks that are dangling or use absolute paths.
 # These have repeatedly crashed the Claude Code Action skill scanner

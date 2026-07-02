@@ -37,7 +37,12 @@ from ..supabase_helpers import (
     get_rag_write_client,
     get_supabase_client,
 )
-from ..ops.db_pressure_guard import AppDbProjectionError, enforce_pm_app_final_projection_guard
+from ..ops.db_pressure_guard import (
+    AppDbPressureError,
+    AppDbProjectionError,
+    enforce_app_db_pressure_guard,
+    enforce_pm_app_final_projection_guard,
+)
 from ..pipeline import llm
 from ..pipeline.extractor import _fetch_project_state, _upsert_task
 from ..pipeline.source_processing import SourceProcessingContext, record_source_processing_status
@@ -837,6 +842,13 @@ def synthesize_new_comms_since(
     means L2 only pays for projects that actually changed. Bounded so one sync can
     never blow its time/cost budget; the daily backstop sweep catches any overflow.
     """
+    try:
+        enforce_app_db_pressure_guard("project_synthesizer_event_driven")
+    except AppDbPressureError as exc:
+        # Inline post-sync work must never pile onto an already-saturated app
+        # DB; the daily backstop sweep re-covers anything skipped here.
+        logger.warning("[ProjectSynthesizer] event-driven synthesis skipped: %s", exc)
+        return {"since": since, "projects": 0, "skipped_db_pressure": str(exc)}
     client = get_supabase_client()
     projection_counts: Dict[str, int] = {}
     try:
@@ -934,6 +946,11 @@ def run_synthesis_sweep(
     the synthesis packet is the product the page reads. Bounded: one LLM call per
     swept project.
     """
+    # The daily sweep is a background crawler of the production app DB — it
+    # must never start while the DB/pooler is already saturated (2026-07-02
+    # incident). Raising here makes the Render cron exit non-zero and retry on
+    # its next scheduled run.
+    enforce_app_db_pressure_guard("project_synthesis_sweep")
     client = get_supabase_client()
     projection_counts: Dict[str, int] = {}
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()

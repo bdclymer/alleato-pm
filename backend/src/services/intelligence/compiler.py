@@ -18,7 +18,10 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from src.services.ops.db_pressure_guard import enforce_pm_app_final_projection_guard
+from src.services.ops.db_pressure_guard import (
+    enforce_app_db_pressure_guard,
+    enforce_pm_app_final_projection_guard,
+)
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 logger = logging.getLogger(__name__)
@@ -41,6 +44,59 @@ SOURCE_CATEGORY_LABELS = {
     "task": "Tasks",
     "risk": "Risks",
 }
+
+
+# --- Explicit select column lists -------------------------------------------
+# SELECT * is banned in this package: the 2026-07-02 PM APP saturation incident
+# traced the biggest legitimate production-DB load to unbounded compiler reads,
+# and service_role now runs with statement_timeout=30s. Every select names its
+# columns so heavy payload columns (projection_payload, content/raw_text, large
+# jsonb) are only fetched where they are actually consumed. Enforced by
+# scripts/audits/check-no-select-star-intelligence.mjs (pre-commit).
+
+INTELLIGENCE_TARGET_COLUMNS = (
+    "id,target_type,name,slug,description,status,priority,owner_person_id,"
+    "project_id,metadata,last_signal_at,created_at,updated_at"
+)
+SIGNAL_CANDIDATE_COLUMNS = (
+    "id,source_document_id,source_chunk_id,target_id,project_id,signal_type,"
+    "title,summary,why_it_matters,current_status,confidence_score,confidence,"
+    "status,suggested_owner_person_id,suggested_owner_label,next_action,"
+    "stale_after,source_occurred_at,excerpt,normalized_signal_key,"
+    "promoted_insight_card_id,extraction_json,compiler_version,created_at,updated_at"
+)
+SOURCE_JOB_COLUMNS = (
+    "id,source_document_id,source_hash,job_type,status,priority,target_id,"
+    "project_id,compiler_version,attempt_count,last_error,input_snapshot,"
+    "output_summary,queued_at,started_at,finished_at,created_at,updated_at"
+)
+SOURCE_SYNTHESIS_COLUMNS = (
+    "id,source_document_id,source_family,project_id,source_occurred_at,"
+    "source_title,source_url,full_source_hash,synthesis_model,synthesis_status,"
+    "executive_summary,what_changed,decisions,risks,commitments,tasks,"
+    "financial_signals,schedule_signals,change_event_signals,daily_log_signals,"
+    "progress_report_signals,confidence,confidence_notes,source_quotes,"
+    "metadata,completed_at,created_at,updated_at"
+)
+# packet_refresh_jobs WITHOUT projection_payload — the staged projection blob
+# can be very large; only project_pm_intelligence_packet_job fetches it.
+PACKET_REFRESH_JOB_COLUMNS = (
+    "id,target_id,reason,trigger_source_document_id,trigger_insight_card_id,"
+    "status,priority,compiler_version,attempt_count,last_error,output_packet_id,"
+    "queued_at,started_at,finished_at,projection_status,projection_error,"
+    "projection_attempt_count,projected_output_packet_id,projected_at,"
+    "created_at,updated_at"
+)
+PROJECT_SNAPSHOT_PROJECT_COLUMNS = (
+    "id,name,project_number,company_id,health_status,budget,budget_used,"
+    '"est revenue","est profit","est completion","start date",'
+    "completion_percentage,stage,phase,erp_sync_status,erp_system,"
+    "erp_last_direct_cost_sync,erp_last_job_cost_sync"
+)
+PACKET_CARD_COLUMNS = (
+    "id,title,card_type,summary,why_it_matters,current_status,confidence,"
+    "attribution_status,next_action,last_seen_at"
+)
 
 
 def _utc_now() -> str:
@@ -448,7 +504,7 @@ def _record_document_compiler_status(
 def _fetch_signal_candidate(supabase: Any, candidate_id: str) -> Dict[str, Any]:
     row = _single_row(
         _rag_read().table("source_signal_candidates")
-        .select("*")
+        .select(SIGNAL_CANDIDATE_COLUMNS)
         .eq("id", candidate_id)
         .limit(1)
         .execute()
@@ -490,7 +546,7 @@ def _same_project_id(left: Any, right: Any) -> bool:
 def _fetch_target(supabase: Any, target_id: str) -> Dict[str, Any]:
     row = _single_row(
         supabase.table("intelligence_targets")
-        .select("*")
+        .select(INTELLIGENCE_TARGET_COLUMNS)
         .eq("id", target_id)
         .limit(1)
         .execute()
@@ -577,8 +633,23 @@ def _best_confidence(cards: List[Dict[str, Any]]) -> str:
     return best
 
 
-def _table_rows(supabase: Any, table_name: str, select: str = "*") -> List[Dict[str, Any]]:
-    """Fetch all rows for health checks instead of Supabase's first 1,000 rows."""
+def _table_rows(
+    supabase: Any,
+    table_name: str,
+    select: str,
+    *,
+    max_rows: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """Fetch rows for health checks past Supabase's first-1,000 page, bounded.
+
+    max_rows (default INTELLIGENCE_HEALTH_MAX_ROWS_PER_TABLE=20000) is a hard
+    ceiling so a health probe can never turn into an unbounded full-table crawl
+    of the production DB; hitting the cap logs a warning so partial counts are
+    visible instead of silent.
+    """
+    cap = max_rows if max_rows is not None else _env_int(
+        "INTELLIGENCE_HEALTH_MAX_ROWS_PER_TABLE", 20000
+    )
     rows: List[Dict[str, Any]] = []
     page_size = 1000
     start = 0
@@ -593,6 +664,13 @@ def _table_rows(supabase: Any, table_name: str, select: str = "*") -> List[Dict[
         ) or []
         rows.extend(batch)
         if len(batch) < page_size:
+            break
+        if len(rows) >= cap:
+            logger.warning(
+                "[Compiler] health scan of %s capped at %d rows; counts may be partial",
+                table_name,
+                cap,
+            )
             break
         start += page_size
     return rows
@@ -816,7 +894,7 @@ def ensure_client_project_target(
     """Return or create the packet target for a client project."""
     existing = _single_row(
         supabase.table("intelligence_targets")
-        .select("*")
+        .select(INTELLIGENCE_TARGET_COLUMNS)
         .eq("target_type", "client_project")
         .eq("project_id", int(project_id))
         .limit(1)
@@ -866,7 +944,7 @@ def ensure_client_project_target(
     # deterministic project-id suffix so a duplicate slug never poisons the job.
     existing = _single_row(
         supabase.table("intelligence_targets")
-        .select("*")
+        .select(INTELLIGENCE_TARGET_COLUMNS)
         .eq("target_type", "client_project")
         .eq("project_id", int(project_id))
         .limit(1)
@@ -885,7 +963,7 @@ def ensure_client_project_target(
             raise
         existing_by_slug = _single_row(
             supabase.table("intelligence_targets")
-            .select("*")
+            .select(INTELLIGENCE_TARGET_COLUMNS)
             .eq("slug", payload["slug"])
             .limit(1)
             .execute()
@@ -1014,7 +1092,7 @@ def enqueue_source_intelligence_job(
     job_client = _rag_write()
     query = (
         job_client.table("source_intelligence_jobs")
-        .select("*")
+        .select(SOURCE_JOB_COLUMNS)
         .eq("source_document_id", source_document_id)
         .eq("job_type", job_type)
         .eq("compiler_version", compiler_version)
@@ -1059,7 +1137,7 @@ def claim_queued_source_jobs(
     job_client = _rag_write()
     query = (
         job_client.table("source_intelligence_jobs")
-        .select("*")
+        .select("id,attempt_count")
         .eq("status", "queued")
         .eq("compiler_version", compiler_version)
         .order("priority", desc=True)
@@ -1427,7 +1505,7 @@ def write_source_synthesis(
     existing = _single_row(
         _rag_read()
         .table("source_syntheses")
-        .select("*")
+        .select("id")
         .eq("source_document_id", source_document_id)
         .eq("full_source_hash", source_hash)
         .limit(1)
@@ -1535,7 +1613,7 @@ def build_project_operating_snapshot_payload(
 ) -> Dict[str, Any]:
     project = _single_row(
         supabase.table("projects")
-        .select("*")
+        .select(PROJECT_SNAPSHOT_PROJECT_COLUMNS)
         .eq("id", int(project_id))
         .limit(1)
         .execute()
@@ -1798,7 +1876,7 @@ def compile_project_daily_delta(
     existing = _single_row(
         _rag_read()
         .table("project_daily_deltas")
-        .select("*")
+        .select("id,metadata")
         .eq("project_id", int(project_id))
         .eq("business_date", business_date.isoformat())
         .neq("status", "superseded")
@@ -1950,7 +2028,7 @@ def _upsert_project_timeline_event(
     source_document_id = str(document["id"])
     existing = _single_row(
         supabase.table("project_intelligence_timeline_events")
-        .select("*")
+        .select("id")
         .eq("project_id", int(project_id))
         .eq("source_document_id", source_document_id)
         .eq("source_synthesis_id", source_synthesis.get("id"))
@@ -2005,7 +2083,7 @@ def _upsert_timeline_event_source(
 ) -> Dict[str, Any]:
     existing = _single_row(
         supabase.table("project_intelligence_timeline_event_sources")
-        .select("*")
+        .select("id")
         .eq("timeline_event_id", timeline_event["id"])
         .eq("source_document_id", str(document["id"]))
         .limit(1)
@@ -2049,7 +2127,7 @@ def _upsert_change_event_candidate(
     title = f"Potential change: {signal.get('title') or document.get('title') or 'source update'}"[:180]
     existing = _single_row(
         supabase.table("change_event_candidates")
-        .select("*")
+        .select("id,source_synthesis_ids,timeline_event_ids")
         .eq("project_id", int(project_id))
         .eq("title", title)
         .in_("status", ["candidate", "reviewing", "draft_created"])
@@ -2123,7 +2201,7 @@ def _upsert_project_report_suggestions(
     for suggestion in suggestions:
         existing_query = (
             supabase.table("project_report_suggestions")
-            .select("*")
+            .select("id")
             .eq("project_id", int(project_id))
             .eq("report_type", suggestion["report_type"])
             .eq("source_delta_id", daily_delta.get("id"))
@@ -2320,7 +2398,7 @@ def enqueue_packet_refresh(
     job_client = _rag_write()
     existing = _single_row(
         job_client.table("packet_refresh_jobs")
-        .select("*")
+        .select(PACKET_REFRESH_JOB_COLUMNS)
         .eq("target_id", target_id)
         .eq("compiler_version", compiler_version)
         .in_("status", list(ACTIVE_REFRESH_STATUSES))
@@ -2371,7 +2449,7 @@ def _find_existing_insight_card(
 ) -> Optional[Dict[str, Any]]:
     rows = getattr(
         supabase.table("insight_cards")
-        .select("*")
+        .select("id,metadata,current_status,confidence,source_count")
         .eq("primary_target_id", target_id)
         .eq("card_type", signal_type)
         .eq("compiler_version", compiler_version)
@@ -2519,7 +2597,7 @@ def _ensure_insight_card_target(
 ) -> Dict[str, Any]:
     existing = _single_row(
         supabase.table("insight_card_targets")
-        .select("*")
+        .select("id")
         .eq("insight_card_id", insight_card_id)
         .eq("relationship", "primary")
         .limit(1)
@@ -2555,7 +2633,7 @@ def _write_insight_card_evidence(
 ) -> Dict[str, Any]:
     existing = _single_row(
         supabase.table("insight_card_evidence")
-        .select("*")
+        .select("id")
         .eq("insight_card_id", card["id"])
         .eq("source_document_id", candidate["source_document_id"])
         .limit(1)
@@ -2594,15 +2672,19 @@ def _load_packet_cards_for_target(
     *,
     limit: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
+    # Bounded: a target with a long card history must never become a full
+    # PM-table read. Callers can still pass an explicit limit.
+    max_cards = limit if limit is not None else _env_int(
+        "INTELLIGENCE_PACKET_MAX_CARDS", 200
+    )
     query = (
         supabase.table("insight_cards")
-        .select("*")
+        .select(PACKET_CARD_COLUMNS)
         .eq("primary_target_id", target_id)
         .in_("current_status", list(ACTIVE_CARD_STATUSES))
         .order("last_seen_at", desc=True)
+        .limit(max_cards)
     )
-    if limit is not None:
-        query = query.limit(limit)
     rows = getattr(query.execute(), "data", None) or []
     return [row for row in rows if row.get("attribution_status") != "rejected"]
 
@@ -2615,9 +2697,10 @@ def _load_evidence_for_cards(
         return []
     return getattr(
         supabase.table("insight_card_evidence")
-        .select("*")
+        .select("id,insight_card_id,source_type,source_occurred_at")
         .in_("insight_card_id", card_ids)
         .order("source_occurred_at", desc=True)
+        .limit(_env_int("INTELLIGENCE_PACKET_MAX_EVIDENCE", 2000))
         .execute(),
         "data",
         None,
@@ -2784,7 +2867,7 @@ def apply_current_packet_projection(
 
     existing = _single_row(
         supabase.table("intelligence_packets")
-        .select("*")
+        .select("id")
         .eq("target_id", target_id)
         .eq("packet_type", "current")
         .limit(1)
@@ -2832,7 +2915,7 @@ def stage_current_packet_projection_job(
     """Stage a final PM packet projection payload on the RAG packet job."""
     job = _single_row(
         _rag_read().table("packet_refresh_jobs")
-        .select("*")
+        .select(PACKET_REFRESH_JOB_COLUMNS)
         .eq("id", job_id)
         .limit(1)
         .execute()
@@ -2997,7 +3080,7 @@ def claim_queued_packet_refresh_jobs(
     job_client = _rag_write()
     query = (
         job_client.table("packet_refresh_jobs")
-        .select("*")
+        .select("id,attempt_count")
         .eq("status", "queued")
         .eq("compiler_version", compiler_version)
         .order("priority", desc=True)
@@ -3083,7 +3166,7 @@ def claim_staged_pm_projection_jobs(
     job_client = _rag_write()
     query = (
         job_client.table("packet_refresh_jobs")
-        .select("*")
+        .select("id,projection_attempt_count")
         .eq("status", "succeeded")
         .eq("projection_status", "staged")
         .eq("compiler_version", compiler_version)
@@ -3120,7 +3203,10 @@ def project_pm_intelligence_packet_job(
     """Drain one staged RAG packet job into PM through the projection guard."""
     job = _single_row(
         _rag_read().table("packet_refresh_jobs")
-        .select("*")
+        .select(
+            "id,target_id,status,projection_status,projection_attempt_count,"
+            "projection_payload"
+        )
         .eq("id", job_id)
         .limit(1)
         .execute()
@@ -3179,6 +3265,7 @@ def run_pm_intelligence_projection_batch(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Drain staged PM packet projections from RAG in a bounded batch."""
+    enforce_app_db_pressure_guard("pm_intelligence_projection_batch")
     started = time.monotonic()
     limit = max(0, min(int(limit or 0), 25))
     stats: Dict[str, Any] = {
@@ -3221,7 +3308,7 @@ def process_packet_refresh_job(
     """Run one packet refresh job and record the output packet id."""
     job = _single_row(
         _rag_read().table("packet_refresh_jobs")
-        .select("*")
+        .select(PACKET_REFRESH_JOB_COLUMNS)
         .eq("id", job_id)
         .limit(1)
         .execute()
@@ -3367,6 +3454,7 @@ def run_intelligence_compiler_batch(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Process queued source compiler and packet refresh jobs in a bounded batch."""
+    enforce_app_db_pressure_guard("intelligence_compiler_batch")
     started = time.monotonic()
     run_started_at = datetime.now(timezone.utc)
     source_limit = max(0, min(int(source_limit or 0), 100))
@@ -3565,7 +3653,7 @@ def process_source_document(
         existing_source_synthesis = _single_row(
             _rag_read()
             .table("source_syntheses")
-            .select("*")
+            .select(SOURCE_SYNTHESIS_COLUMNS)
             .eq("source_document_id", source_document_id)
             .eq("full_source_hash", source_hash)
             .limit(1)

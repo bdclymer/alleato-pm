@@ -132,6 +132,10 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
         "src.services.supabase_helpers": mock_supabase_helpers_mod,
         "src.services.ingestion": MagicMock(),
         "src.services.ingestion.fireflies_pipeline": mock_fireflies_mod,
+        # main.py also imports fireflies_reprocessing; the stubbed parent above
+        # is not a real package, so every un-stubbed submodule import breaks
+        # conftest loading for the ENTIRE backend suite. Stub it explicitly.
+        "src.services.ingestion.fireflies_reprocessing": MagicMock(),
         "src.workers": MagicMock(),
         "src.workers.scripts": MagicMock(),
         "src.api.admin_endpoints": MagicMock(),

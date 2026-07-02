@@ -75,6 +75,26 @@ class _TableQuery:
         self.rows = [row for row in self.rows if row.get(key) in allowed]
         return self
 
+    def neq(self, key, value):
+        self.rows = [row for row in self.rows if row.get(key) != value]
+        return self
+
+    def gte(self, key, value):
+        self.rows = [
+            row
+            for row in self.rows
+            if row.get(key) is not None and str(row.get(key)) >= str(value)
+        ]
+        return self
+
+    def lt(self, key, value):
+        self.rows = [
+            row
+            for row in self.rows
+            if row.get(key) is not None and str(row.get(key)) < str(value)
+        ]
+        return self
+
     def order(self, key, desc=False):
         self.rows = sorted(self.rows, key=lambda row: row.get(key) or "", reverse=desc)
         return self
@@ -427,6 +447,21 @@ def test_promote_signal_candidate_creates_card_evidence_and_refresh():
     process_result = process_source_document(supabase, "doc-1")
     candidate_id = process_result["signal_candidate_id"]
 
+    # The deterministic classify_basic_signal staging output carries the
+    # placeholder why_it_matters, which promote_signal_candidate must refuse.
+    unenriched = promote_signal_candidate(supabase, candidate_id)
+    assert unenriched["status"] == "needs_review"
+
+    # Simulate the model enrichment pass that turns the staged signal into a
+    # real synthesis; only then may it become a user-facing insight card.
+    staged = supabase.tables["source_signal_candidates"][0]
+    staged["status"] = "candidate"
+    staged["title"] = "Confirm schedule recovery follow-up"
+    staged["summary"] = "Brandon must confirm the recovery path before Friday."
+    staged["why_it_matters"] = (
+        "Missing this follow-up risks the schedule recovery commitment."
+    )
+
     result = promote_signal_candidate(supabase, candidate_id)
 
     assert result["status"] == "promoted"
@@ -580,13 +615,15 @@ def test_process_source_document_to_packet_records_status_metadata():
     result = process_source_document_to_packet(supabase, "doc-1")
 
     assert result["status"] == "succeeded"
-    assert result["promotion"]["status"] == "promoted"
-    assert result["packet"]["status"] == "succeeded"
+    # The deterministic staging signal carries the placeholder why_it_matters,
+    # so the promotion chokepoint routes it to review instead of a card.
+    assert result["promotion"]["status"] == "needs_review"
+    assert result["packet"] is None
     compiler_metadata = supabase.tables["document_metadata"][0]["source_metadata"][
         "intelligence_compiler"
     ]
     assert compiler_metadata["status"] == "succeeded"
-    assert compiler_metadata["result"]["packet"]["packet_id"]
+    assert compiler_metadata["result"]["promotion"]["status"] == "needs_review"
 
 
 def test_run_intelligence_compiler_batch_drains_source_jobs():
@@ -632,7 +669,10 @@ def test_run_intelligence_compiler_batch_drains_source_jobs():
     assert result["source_jobs_succeeded"] == 1
     assert result["source_jobs_failed"] == 0
     assert supabase.tables["source_intelligence_jobs"][0]["status"] == "succeeded"
-    assert len(supabase.tables["intelligence_packets"]) == 1
+    # The deterministic signal is staged but never auto-promoted, so no packet
+    # is projected from this batch (packet_limit=0 leaves the refresh queued).
+    assert supabase.tables["source_signal_candidates"][0]["status"] == "needs_review"
+    assert supabase.tables.get("intelligence_packets", []) == []
 
 
 def test_run_intelligence_compiler_batch_drains_packet_jobs():
