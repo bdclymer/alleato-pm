@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,20 @@ export function VendorCombobox({
           <span className="truncate text-left">
             {selected ? selected.vendor_name : "Select vendor..."}
           </span>
-          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          <span className="ml-2 flex shrink-0 items-center gap-1">
+            {selected && (
+              <X
+                className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground"
+                aria-label="Clear vendor"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange("");
+                  setOpen(false);
+                }}
+              />
+            )}
+            <ChevronsUpDown className="h-3 w-3 opacity-50" />
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start" sideOffset={0}>
@@ -82,7 +95,8 @@ export function VendorCombobox({
                   key={vendor.id}
                   value={vendor.id}
                   onSelect={() => {
-                    onChange(vendor.id);
+                    // Selecting the already-chosen vendor again deselects it.
+                    onChange(value === vendor.id ? "" : vendor.id);
                     setOpen(false);
                     setSearch("");
                   }}

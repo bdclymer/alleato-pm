@@ -150,7 +150,9 @@ describe("/api/projects/[projectId]/change-events", () => {
       data: [
         {
           id: changeEventId,
-          commitment: "SC-104",
+          // "commitment" is the committed-cost dollar amount (sum of cost_rom
+          // for line items assigned to a commitment), not the contract number.
+          commitment: "75.00",
           commitment_id: commitmentId,
           commitment_title: "Assigned Demo Subcontract",
         },

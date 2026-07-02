@@ -38,31 +38,6 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
   const [contracts, setContracts] = React.useState<ContractOption[]>([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCodeOption[]>([]);
 
-  // Re-fetches the ERP-synced vendor list. Merges with the existing
-  // contract-derived list.
-  const fetchVendors = React.useCallback(async () => {
-    try {
-      const data = await apiFetch<VendorOption[] | { data?: VendorOption[] }>(
-        `/api/projects/${projectId}/vendors`,
-      );
-      const apiVendors: VendorOption[] = Array.isArray(data) ? data : data.data || [];
-      setVendors((prev) => {
-        const existingIds = new Set(prev.map((v) => v.id));
-        const incoming = apiVendors.filter((v) => !existingIds.has(v.id));
-        return incoming.length > 0 ? [...prev, ...incoming] : prev;
-      });
-    } catch (error) {
-      reportNonCriticalFailure({
-        area: "change-event-dropdown-data",
-        operation: "load-vendors",
-        error,
-        userVisibleFallback:
-          "Vendor options could not be refreshed. Existing vendor options were kept.",
-        metadata: { projectId },
-      });
-    }
-  }, [projectId]);
-
   const fetchBudgetCodes = React.useCallback(async () => {
     try {
       const payload = await apiFetch<{
@@ -286,7 +261,6 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
     budgetCodes,
     primeContractOptions,
     primeContractSelectOptions,
-    fetchVendors,
     fetchBudgetCodes,
   };
 }

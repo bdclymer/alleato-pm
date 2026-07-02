@@ -90,7 +90,6 @@ export function useChangeEventFormData({
     budgetCodes,
     primeContractOptions,
     primeContractSelectOptions,
-    fetchVendors,
     fetchBudgetCodes,
   } = useDropdownData({ projectId });
 
@@ -518,7 +517,6 @@ export function useChangeEventFormData({
     attachmentsAsInfo,
     setFormData,
     handleBudgetCodeCreated,
-    fetchVendors,
     validate,
   };
 }

@@ -794,7 +794,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
           projectId={projectId}
           colSpan={colSpan}
           context={context}
-          expectingRevenue={item.expecting_revenue !== false}
           onEditLineItem={(lineItemId) => {
             router.push(`/${projectId}/change-events/${item.id}?edit=1&lineItem=${lineItemId}`);
           }}
@@ -943,19 +942,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
       }}
       footerTotals={{
         label: "Grand Totals",
+        // Only the monetary columns get a total — non-monetary columns
+        // render nothing rather than a placeholder dash (noise gate).
         values: {
           revenue_prime_pco: <span className="tabular-nums">{grandTotals.revenue_prime_pco}</span>,
           cost_rom: <span className="tabular-nums">{grandTotals.cost_rom}</span>,
           commitment: <span className="tabular-nums">{grandTotals.commitment}</span>,
-          // Placeholder dashes for non-monetary columns
-          status: <span>--</span>,
-          scope: <span>--</span>,
-          type: <span>--</span>,
-          reason: <span>--</span>,
-          origin: <span>--</span>,
-          prime_pco_title: <span>--</span>,
-          rfq_title: <span>--</span>,
-          commitment_title: <span>--</span>,
         },
       }}
       columnGroups={[

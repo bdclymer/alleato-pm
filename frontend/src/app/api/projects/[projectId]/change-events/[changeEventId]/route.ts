@@ -21,12 +21,6 @@ interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
 }
 
-interface VerticalMarkupRow {
-  percentage: number | null;
-  calculation_order: number | null;
-  compound: boolean | null;
-}
-
 interface ChangeEventLineItemRow {
   id?: string | null;
   budget_code_id?: string | null;
@@ -37,44 +31,6 @@ interface RfqResponseAmountRow {
   extended_amount: number | string | null;
   submitted_at: string | null;
   created_at: string | null;
-}
-
-function computeMarkupAdditions(
-  _baseCost: number,
-  baseRevenue: number,
-  markups: VerticalMarkupRow[],
-): { cost: number; revenue: number } {
-  if (markups.length === 0) {
-    return { cost: 0, revenue: 0 };
-  }
-
-  const sortedMarkups = [...markups].sort(
-    (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0),
-  );
-
-  let runningRevenueBase = baseRevenue;
-  let totalRevenueMarkup = 0;
-
-  for (const markup of sortedMarkups) {
-    const percentage = Number(markup.percentage || 0);
-    if (!Number.isFinite(percentage) || percentage <= 0) {
-      continue;
-    }
-
-    const rate = percentage / 100;
-    // Markups (contractor fee, insurance) apply to Revenue ROM only
-    const revenueMarkup = runningRevenueBase * rate;
-    totalRevenueMarkup += revenueMarkup;
-
-    if (markup.compound) {
-      runningRevenueBase += revenueMarkup;
-    }
-  }
-
-  return {
-    cost: 0,
-    revenue: totalRevenueMarkup,
-  };
 }
 
 
@@ -386,22 +342,13 @@ export const GET = withApiGuardrails(
       0,
     );
 
-    const { data: projectMarkups } = await supabase
-      .from("vertical_markup")
-      .select("percentage, calculation_order, compound")
-      .eq("project_id", parseInt(projectId, 10));
-
-    const applyMarkup = changeEvent.expecting_revenue !== false;
-    const markupAdditions = computeMarkupAdditions(
-      baseCostRom,
-      baseRevenueRom,
-      applyMarkup ? ((projectMarkups || []) as VerticalMarkupRow[]) : [],
-    );
-
-    // Calculate totals from line items + project financial markup
+    // Totals reflect the change event's own line items only. Project
+    // vertical markup (contractor fee, insurance, etc.) is a Prime PCO
+    // conversion concern — it's surfaced explicitly in the "Add to Prime
+    // PCO" preview, not baked silently into the change event's own numbers.
     const totals = {
-      revenueRom: (baseRevenueRom + markupAdditions.revenue).toFixed(2),
-      costRom: (baseCostRom + markupAdditions.cost).toFixed(2),
+      revenueRom: baseRevenueRom.toFixed(2),
+      costRom: baseCostRom.toFixed(2),
       nonCommittedCost: baseNonCommittedCost.toFixed(2),
       lineItemsCount: lineItems.length,
     };
