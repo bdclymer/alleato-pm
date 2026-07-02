@@ -3,6 +3,10 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  stampSubcontractorInvoiceStatusAuditActor,
+  type SubcontractorInvoiceStatus,
+} from "@/lib/invoicing/subcontractor-invoice-audit";
 
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Fetch a single subcontractor invoice with line items, commitment, and billing period joins
@@ -516,6 +520,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
       .eq("id", invoiceIdNum)
       .single();
 
+    const transitionStartedAt = new Date().toISOString();
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")
       .update(updatePayload)
@@ -536,7 +541,31 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
       );
     }
 
-    // Log field-level edits to audit log (status changes handled by DB trigger)
+    const nextStatus =
+      typeof updatePayload.status === "string"
+        ? (updatePayload.status as SubcontractorInvoiceStatus)
+        : null;
+
+    if (nextStatus && nextStatus !== existing.status) {
+      const auditStamp = await stampSubcontractorInvoiceStatusAuditActor({
+        supabase,
+        invoiceId: invoiceIdNum,
+        fromStatus: existing.status,
+        toStatus: nextStatus,
+        transitionStartedAt,
+        actor: user,
+      });
+      if (!auditStamp.ok) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#PATCH",
+          message: "Invoice status changed, but the audit actor could not be recorded.",
+          details: { reason: auditStamp.reason },
+        });
+      }
+    }
+
+    // Log field-level edits to audit log.
     if (currentData) {
       const fieldsToLog = ["invoice_number", "period_start", "period_end", "billing_date", "notes"];
       const toJsonValue = (v: unknown): string | number | boolean | null =>

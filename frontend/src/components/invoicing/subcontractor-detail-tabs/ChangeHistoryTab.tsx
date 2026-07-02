@@ -24,6 +24,7 @@ interface AuditRow {
   new_value: unknown;
   notes: string | null;
   created_at: string;
+  actor_display_name?: string | null;
 }
 
 function describe(row: AuditRow): string {
@@ -104,7 +105,9 @@ export function ChangeHistoryTab({
                 <TableCell className="text-muted-foreground whitespace-nowrap">
                   {formatDateTime(r.created_at)}
                 </TableCell>
-                <TableCell>{r.actor_email ?? "—"}</TableCell>
+                <TableCell>
+                  {r.actor_display_name ?? r.actor_email ?? "Not recorded"}
+                </TableCell>
                 <TableCell className="font-medium">{describe(r)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs">
                   {r.notes ??

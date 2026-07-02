@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { notifySubcontractorOfInvoiceDecision } from "@/lib/invoicing/subcontractor-invoice-notifications";
+import { stampSubcontractorInvoiceStatusAuditActor } from "@/lib/invoicing/subcontractor-invoice-audit";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/revise
 // Transition invoice to revise_and_resubmit. Pre-condition: must be under_review.
@@ -74,6 +75,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
+    const transitionStartedAt = new Date().toISOString();
     const updatePayload: Record<string, unknown> = { status: "revise_and_resubmit" };
     const reviewNotes = reason?.trim() || notes?.trim();
     if (reviewNotes) updatePayload.notes = reviewNotes;
@@ -101,6 +103,23 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         message: "Failed to request revision",
         details: { reason: updateError.message },
         cause: updateError,
+      });
+    }
+
+    const auditStamp = await stampSubcontractorInvoiceStatusAuditActor({
+      supabase,
+      invoiceId: invoiceIdNum,
+      fromStatus: invoice.status,
+      toStatus: "revise_and_resubmit",
+      transitionStartedAt,
+      actor: user,
+    });
+    if (!auditStamp.ok) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/revise#POST",
+        message: "Invoice returned for revision, but the audit actor could not be recorded.",
+        details: { reason: auditStamp.reason },
       });
     }
 

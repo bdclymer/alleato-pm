@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
+import { stampSubcontractorInvoiceStatusAuditActor } from "@/lib/invoicing/subcontractor-invoice-audit";
 
 interface NotificationResult {
   sent: string[];
@@ -80,6 +81,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
+    const transitionStartedAt = new Date().toISOString();
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")
       .update({
@@ -106,6 +108,23 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         message: "Failed to submit invoice",
         details: { reason: updateError.message },
         cause: updateError,
+      });
+    }
+
+    const auditStamp = await stampSubcontractorInvoiceStatusAuditActor({
+      supabase,
+      invoiceId: invoiceIdNum,
+      fromStatus: invoice.status,
+      toStatus: "under_review",
+      transitionStartedAt,
+      actor: user,
+    });
+    if (!auditStamp.ok) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+        message: "Invoice submitted, but the audit actor could not be recorded.",
+        details: { reason: auditStamp.reason },
       });
     }
 

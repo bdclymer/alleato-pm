@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { stampSubcontractorInvoiceStatusAuditActor } from "@/lib/invoicing/subcontractor-invoice-audit";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/pending-owner-approval
 // Transition invoice to pending_owner_approval. Pre-condition: must be under_review.
@@ -74,6 +75,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
+    const transitionStartedAt = new Date().toISOString();
     const updatePayload: Record<string, unknown> = {
       status: "pending_owner_approval",
     };
@@ -104,6 +106,23 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         message: "Failed to send invoice for owner approval",
         details: { reason: updateError.message },
         cause: updateError,
+      });
+    }
+
+    const auditStamp = await stampSubcontractorInvoiceStatusAuditActor({
+      supabase,
+      invoiceId: invoiceIdNum,
+      fromStatus: invoice.status,
+      toStatus: "pending_owner_approval",
+      transitionStartedAt,
+      actor: user,
+    });
+    if (!auditStamp.ok) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/pending-owner-approval#POST",
+        message: "Invoice sent for owner approval, but the audit actor could not be recorded.",
+        details: { reason: auditStamp.reason },
       });
     }
 
