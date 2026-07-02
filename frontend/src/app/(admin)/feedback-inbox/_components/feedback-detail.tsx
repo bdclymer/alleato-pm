@@ -86,7 +86,7 @@ export function FeedbackDetail({
   return (
     <>
       {DetailConfirmDialog}
-      <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 lg:px-0">
+      <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
         {onBack && (
           <Button
             type="button"
