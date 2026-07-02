@@ -475,10 +475,10 @@ export async function findLinkedPullRequests(
       body?: string | null;
     };
     if (!item.pull_request) continue;
-    // GitHub's quoted search on `#N` is fuzzy (it ignores `#` and can match
-    // unrelated PRs, or `#57` matching `#571`). Post-filter to an EXACT,
-    // word-boundary `#N` reference in the title/body.
-    if (!referencesIssue(`${item.title ?? ""}\n${item.body ?? ""}`, issueNumber)) {
+    // GitHub's quoted search on `#N` is fuzzy (it ignores `#`, matches unrelated
+    // PRs, or `#57` matching `#571`) and includes bare mentions. Keep only PRs
+    // that actually CLOSE this issue via a closing keyword.
+    if (!extractClosingIssueNumbers(`${item.title ?? ""}\n${item.body ?? ""}`).includes(issueNumber)) {
       continue;
     }
 
@@ -495,8 +495,7 @@ export async function findLinkedPullRequests(
 
 /**
  * True when `text` contains an exact, word-boundary reference to `#issueNumber`
- * (so `#57` does NOT match `#571`). Used to filter GitHub's fuzzy PR search and
- * to parse closing references out of PR bodies.
+ * (so `#57` does NOT match `#571`). Used to filter GitHub's fuzzy PR search.
  */
 export function referencesIssue(text: string, issueNumber: number): boolean {
   return new RegExp(`#${issueNumber}(?!\\d)`).test(text);
@@ -506,6 +505,25 @@ export function referencesIssue(text: string, issueNumber: number): boolean {
 export function extractReferencedIssueNumbers(text: string): number[] {
   const found = new Set<number>();
   for (const match of text.matchAll(/#(\d+)(?!\d)/g)) {
+    const n = Number.parseInt(match[1], 10);
+    if (Number.isFinite(n) && n > 0) found.add(n);
+  }
+  return [...found];
+}
+
+// A PR "fixes" an item only when it uses a GitHub closing keyword before the
+// reference. A bare mention (e.g. an autofix infra PR that says "similar to
+// #570 …") must NOT link, or unrelated PRs would falsely resolve items.
+const CLOSING_REF = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)(?!\d)/gi;
+
+/**
+ * Issue numbers this text CLOSES via a GitHub closing keyword
+ * (`Closes/Fixes/Resolves #N`). This is the reliable "this PR fixes issue N"
+ * signal — bare `#N` mentions are deliberately excluded.
+ */
+export function extractClosingIssueNumbers(text: string): number[] {
+  const found = new Set<number>();
+  for (const match of text.matchAll(CLOSING_REF)) {
     const n = Number.parseInt(match[1], 10);
     if (Number.isFinite(n) && n > 0) found.add(n);
   }
@@ -585,7 +603,9 @@ export async function buildFeedbackPullRequestIndex(
   const closedPulls = await listPulls("closed", maxClosedPages);
 
   for (const pr of [...openPulls, ...closedPulls]) {
-    const refs = extractReferencedIssueNumbers(`${pr.title}\n${pr.body ?? ""}`);
+    // Only a closing keyword ("Closes #N") links a PR to a feedback item —
+    // bare mentions in prose would false-positive against unrelated PRs.
+    const refs = extractClosingIssueNumbers(`${pr.title}\n${pr.body ?? ""}`);
     if (refs.length === 0) continue;
     const status: LinkedPullRequestStatus = {
       number: pr.number,

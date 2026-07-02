@@ -1,6 +1,7 @@
 import {
   buildFeedbackPullRequestIndex,
   checkGitHubIssueExistence,
+  extractClosingIssueNumbers,
   extractReferencedIssueNumbers,
   findLinkedPullRequests,
   referencesIssue,
@@ -138,6 +139,16 @@ describe("referencesIssue / extractReferencedIssueNumbers", () => {
     ).toEqual(expect.arrayContaining([551, 552]));
     expect(extractReferencedIssueNumbers("Closes #551\nCloses #552").length).toBe(2);
     expect(extractReferencedIssueNumbers("no refs")).toEqual([]);
+  });
+
+  it("extractClosingIssueNumbers only counts closing-keyword references, not bare mentions", () => {
+    expect(extractClosingIssueNumbers("Closes #551\nFixes #552\nresolved #553")).toEqual(
+      expect.arrayContaining([551, 552, 553]),
+    );
+    // Bare mention (like an autofix infra PR discussing another issue) must NOT link.
+    expect(extractClosingIssueNumbers("similar to #570, see also #605")).toEqual([]);
+    expect(extractClosingIssueNumbers("fix: some title (#644)")).toEqual([]); // squash suffix, no keyword+space
+    expect(extractClosingIssueNumbers("Fix #123 now")).toEqual([123]);
   });
 });
 
