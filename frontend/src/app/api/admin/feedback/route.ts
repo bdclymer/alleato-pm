@@ -469,6 +469,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
 
 const listQuerySchema = z.object({
   status: z.string().optional(),
+  excludeStatus: z.string().optional(),
   requestType: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),
@@ -486,7 +487,7 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     );
   }
 
-  const { status, requestType, limit = 100, offset = 0 } = parsed.data;
+  const { status, excludeStatus, requestType, limit = 100, offset = 0 } = parsed.data;
   const serviceSupabase = createServiceClient();
 
   let query = serviceSupabase
@@ -504,6 +505,13 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
       query = query.eq("status", statuses[0]);
     } else if (statuses.length > 1) {
       query = query.in("status", statuses);
+    }
+  } else if (excludeStatus) {
+    const excludedStatuses = excludeStatus.split(",").map((s) => s.trim()).filter(Boolean);
+    if (excludedStatuses.length === 1) {
+      query = query.neq("status", excludedStatuses[0]);
+    } else if (excludedStatuses.length > 1) {
+      query = query.not("status", "in", `(${excludedStatuses.join(",")})`);
     }
   } else {
     // Always exclude archived items unless explicitly requested

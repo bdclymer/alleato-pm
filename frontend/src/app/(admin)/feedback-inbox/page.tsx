@@ -68,8 +68,7 @@ import type {
   StatusFilter,
 } from "./types";
 
-const ACTIVE_STATUS_QUERY =
-  "open,submitted,github_failed,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+const ACTIVE_EXCLUDED_STATUS_QUERY = "resolved,closed,deferred,archived";
 const ALL_STATUS_QUERY =
   "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed";
 const FEEDBACK_LAYOUT_STORAGE_KEY = "alleato-feedback-inbox-layout";
@@ -137,7 +136,7 @@ function saveFeedbackLayout(preference: {
 
 function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "all") return ALL_STATUS_QUERY;
-  if (filter === "active") return ACTIVE_STATUS_QUERY;
+  if (filter === "active") return null;
   if (filter === "open") return "open,submitted,github_failed";
   if (filter === "in_progress")
     return "in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
@@ -145,6 +144,11 @@ function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "deferred") return "deferred";
   if (filter === "resolved") return "resolved,closed";
   return filter;
+}
+
+function feedbackExcludedStatusQuery(filter: StatusFilter): string | null {
+  if (filter === "active") return ACTIVE_EXCLUDED_STATUS_QUERY;
+  return null;
 }
 
 function sortRank(item: FeedbackItem): number {
@@ -278,7 +282,9 @@ export default function FeedbackInboxPage() {
     try {
       const params = new URLSearchParams();
       const statusQuery = feedbackStatusQuery(filter);
+      const excludedStatusQuery = feedbackExcludedStatusQuery(filter);
       if (statusQuery) params.set("status", statusQuery);
+      if (excludedStatusQuery) params.set("excludeStatus", excludedStatusQuery);
       const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(
         `/api/admin/feedback?${params.toString()}`,
       );
