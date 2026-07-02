@@ -426,18 +426,84 @@ jobs:
           claude_args: |
             --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(pnpm:*),Bash(npm run:*),Bash(node:*),Bash(npx:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(rg:*),Bash(mkdir:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
 
+      # claude-code-action can exit 0 even when the underlying Claude Code run
+      # errored (e.g. rate limits kill it seconds in with is_error=true) — issue
+      # #569 sat in limbo because such a run read as "success, no changes".
+      # The action exposes no conclusion output; the truth is the final result
+      # entry (is_error) inside its execution_file JSON.
+      - name: Evaluate Claude run
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'claude'
+        id: claude_result
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.run_claude.outcome }}
+          EXEC_FILE: ${{ steps.run_claude.outputs.execution_file }}
+        run: |
+          ok=false
+          if [ "$STEP_OUTCOME" = "success" ] && [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
+            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error // true' "$EXEC_FILE" 2>/dev/null || echo "true")
+            [ "$is_error" = "false" ] && ok=true
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          echo "First Claude attempt ok=$ok"
+
+      - name: Wait before Claude retry
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'claude' && steps.claude_result.outputs.ok != 'true'
+        run: sleep 90
+
+      - name: Run Claude Code (retry)
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'claude' && steps.claude_result.outputs.ok != 'true'
+        id: run_claude_retry
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ steps.build_prompt.outputs.prompt }}
+          claude_args: |
+            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(pnpm:*),Bash(npm run:*),Bash(node:*),Bash(npx:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(rg:*),Bash(mkdir:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
+
+      - name: Evaluate Claude retry
+        if: steps.prepare.outputs.blocked != 'true' && env.AUTOFIX_ENGINE_CHOICE == 'claude' && steps.claude_result.outputs.ok != 'true'
+        id: claude_retry_result
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.run_claude_retry.outcome }}
+          EXEC_FILE: ${{ steps.run_claude_retry.outputs.execution_file }}
+        run: |
+          ok=false
+          if [ "$STEP_OUTCOME" = "success" ] && [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
+            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error // true' "$EXEC_FILE" 2>/dev/null || echo "true")
+            [ "$is_error" = "false" ] && ok=true
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          echo "Claude retry ok=$ok"
+
       - name: Determine agent outcome
         if: steps.prepare.outputs.blocked != 'true'
         id: agent
         env:
           CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
-          CLAUDE_OUTCOME: ${{ steps.run_claude.outcome }}
+          CLAUDE_OK: ${{ steps.claude_result.outputs.ok }}
+          CLAUDE_RETRY_OK: ${{ steps.claude_retry_result.outputs.ok }}
+          CLAUDE_EXEC_FILE: ${{ steps.run_claude.outputs.execution_file }}
+          CLAUDE_RETRY_EXEC_FILE: ${{ steps.run_claude_retry.outputs.execution_file }}
         run: |
-          if [ "$CODEX_OUTCOME" = "success" ] || [ "$CLAUDE_OUTCOME" = "success" ]; then
-            echo "outcome=success" >> "$GITHUB_OUTPUT"
-          else
-            echo "outcome=failure" >> "$GITHUB_OUTPUT"
+          outcome=failure
+          if [ "$CODEX_OUTCOME" = "success" ] || [ "$CLAUDE_OK" = "true" ] || [ "$CLAUDE_RETRY_OK" = "true" ]; then
+            outcome=success
           fi
+
+          # Surface Claude's final result text (error messages included) so
+          # failure comments explain WHY instead of a generic "did not complete".
+          for exec_file in "$CLAUDE_RETRY_EXEC_FILE" "$CLAUDE_EXEC_FILE"; do
+            if [ -n "$exec_file" ] && [ -f "$exec_file" ] && [ ! -f .github/autofix-artifacts/final-message.md ]; then
+              jq -r '[.[] | select(.type == "result")] | last | .result // "Claude run ended without a result message."' \
+                "$exec_file" > .github/autofix-artifacts/final-message.md 2>/dev/null || true
+              break
+            fi
+          done
+
+          echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
 
       - name: Check changed files
         if: steps.prepare.outputs.blocked != 'true' && steps.agent.outputs.outcome == 'success'
@@ -627,8 +693,16 @@ jobs:
               cat .github/autofix-artifacts/BLOCKED.md
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
+          elif [ -f .github/autofix-artifacts/final-message.md ]; then
+            {
+              echo "reason<<EOF"
+              echo "The agent made no changes and wrote no BLOCKED.md — it did not follow the output contract, which usually means the run degraded partway. Its final message:"
+              echo
+              head -c 3000 .github/autofix-artifacts/final-message.md
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "reason=The agent finished without making changes." >> "$GITHUB_OUTPUT"
+            echo "reason=The agent made no changes and wrote no BLOCKED.md — it did not follow the output contract, which usually means the run errored early (rate limit / API failure). Check the run logs." >> "$GITHUB_OUTPUT"
           fi
 
       - name: Capture validation log excerpt
@@ -757,6 +831,7 @@ jobs:
           VALIDATION_EXCERPT: ${{ steps.validation_log.outputs.excerpt }}
           FINAL_MESSAGE: ${{ steps.final_message.outputs.text }}
           ENGINE: ${{ needs.resolve-engine.outputs.engine }}
+          TRIGGER_LABEL: ${{ github.event.label.name }}
         with:
           script: |
             const engine = process.env.ENGINE;
@@ -817,9 +892,38 @@ jobs:
               ].join("\n");
             }
 
+            // Terminal failures must never strand the issue in silent limbo
+            // (issue #569): escalate visibly and reset the trigger so a clean
+            // re-run is one label away.
+            const triggerLabel = process.env.TRIGGER_LABEL;
+            body += [
+              "",
+              "",
+              "---",
+              `This issue is now labeled \`autofix:needs-human\`. To retry automation after addressing the cause: remove \`autofix:needs-human\`, then re-apply the \`${triggerLabel}\` label.`,
+            ].join("\n");
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body,
             });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ["autofix:needs-human"],
+            });
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: triggerLabel,
+              });
+            } catch (error) {
+              core.info(`Trigger label ${triggerLabel} was already removed: ${error.message}`);
+            }

@@ -90,11 +90,22 @@ unless the variable is `off`.
   would never fire), and Vercel Hobby only deploys commits authored by the project owner
   (see `.github/vercel-author-allowlist.json`).
 
-## Failure visibility (no silent failures)
+## Failure visibility (no silent failures, no silent limbo)
 
 Every non-happy path posts a structured comment on the issue or PR: blocked issue
 payloads, agent run failures, out-of-scope diffs, empty diffs, validation failures,
 exhausted review loops, and unfixable CI failures.
+
+Terminal failures also **escalate**: the issue gets the `autofix:needs-human` label and
+the triggering engine label is removed, so a failed run can never leave an issue looking
+"in progress" while nothing is running (the issue-#569 limbo). To retry after fixing the
+cause: remove `autofix:needs-human`, re-apply the engine label.
+
+The Claude engine additionally guards against claude-code-action's exit-0-on-error
+behavior (rate limits can kill the run seconds in while the step reports success): the
+workflow reads `is_error` from the action's execution file, retries once after 90s, and
+treats a still-errored run as an agent failure — with Claude's real error message
+surfaced in the issue comment.
 
 ## Related files
 
