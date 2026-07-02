@@ -296,6 +296,96 @@ export async function addGitHubIssueLabels(issueNumber: number, labels: string[]
   return true;
 }
 
+export type FeedbackIssueWriteHealth =
+  | { ok: true }
+  | {
+      ok: false;
+      code:
+        | "not_configured"
+        | "invalid_credentials"
+        | "insufficient_permissions"
+        | "repo_not_found"
+        | "unknown";
+      status: number | null;
+      details?: string;
+    };
+
+/**
+ * Verifies the configured feedback token can actually CREATE issues, WITHOUT
+ * creating one. It POSTs an intentionally-invalid payload (empty title):
+ * GitHub authorizes the token BEFORE validating the body, so
+ *   - 422 (Unprocessable) → token HAS Issues:write; the body was rejected. Healthy.
+ *   - 403 (Forbidden)     → token is valid but lacks Issues:write. THIS is the
+ *                            failure that silently broke the feedback pipeline
+ *                            when the fine-grained PAT's permission was dropped.
+ *   - 401                 → bad/expired credentials.
+ *   - 404                 → repo/owner misconfigured.
+ * No issue is ever created (empty title always fails validation); as a defensive
+ * measure, if GitHub ever returns 2xx we close the created issue immediately.
+ */
+export async function probeFeedbackIssueWritePermission(): Promise<FeedbackIssueWriteHealth> {
+  const config = getRepoConfig();
+  if (!config) {
+    return { ok: false, code: "not_configured", status: null };
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      // Empty title is always rejected with 422 by a write-capable token.
+      body: JSON.stringify({ title: "" }),
+    },
+  );
+
+  // 422 = write allowed, payload rejected as designed → healthy.
+  if (response.status === 422) {
+    return { ok: true };
+  }
+
+  // Extremely unlikely (empty title should never succeed), but never leave a
+  // stray probe issue behind if GitHub's validation ever changes.
+  if (response.ok) {
+    const created = await response.json().catch(() => null);
+    const number = created?.number as number | undefined;
+    if (number) {
+      await fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${number}`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${config.token}`,
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          body: JSON.stringify({ state: "closed" }),
+        },
+      ).catch(() => {});
+    }
+    return { ok: true };
+  }
+
+  const details = (await response.text().catch(() => "")).slice(0, 300);
+
+  if (response.status === 401) {
+    return { ok: false, code: "invalid_credentials", status: 401, details };
+  }
+  if (response.status === 403) {
+    return { ok: false, code: "insufficient_permissions", status: 403, details };
+  }
+  if (response.status === 404) {
+    return { ok: false, code: "repo_not_found", status: 404, details };
+  }
+  return { ok: false, code: "unknown", status: response.status, details };
+}
+
 export async function addGitHubIssueComment(issueNumber: number, body: string) {
   const config = getRepoConfig();
   if (!config) {
