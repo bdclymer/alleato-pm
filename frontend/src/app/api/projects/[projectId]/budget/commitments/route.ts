@@ -150,6 +150,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             type: "subcontract" as const,
             executedDate: parent?.created_at || null,
             changeOrders: 0,
+            detailHref: parent?.id ? `/${projectIdNum}/commitments/${parent.id}` : null,
           };
         }),
       ...(purchaseOrdersRes.data ?? [])
@@ -177,6 +178,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             type: "purchase_order" as const,
             executedDate: parent?.created_at || null,
             changeOrders: 0,
+            detailHref: parent?.id ? `/${projectIdNum}/commitments/${parent.id}` : null,
           };
         }),
     ] as Array<{
@@ -189,6 +191,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       type: "subcontract" | "purchase_order" | "change_order";
       executedDate: string | null;
       changeOrders: number;
+      detailHref: string | null;
     }>;
 
     // Approved commitment change orders also count towards Committed Costs
@@ -256,6 +259,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           type: "change_order",
           executedDate: parent.approved_date || null,
           changeOrders: 0,
+          detailHref: `/${projectIdNum}/change-orders/commitment/${parent.id}`,
         });
       }
     }

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
   SidebarStats,
   SidebarTabs,
 } from "./BaseSidebar";
@@ -22,6 +21,7 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface DirectCostItem {
   id: string;
@@ -33,6 +33,7 @@ interface DirectCostItem {
   invoiceNumber: string | null;
   costType: string | null;
   payments: number;
+  detailHref?: string | null;
 }
 
 interface DirectCostsModalProps {
@@ -229,7 +230,9 @@ export function DirectCostsModal({
                         className="max-w-xs truncate"
                         title={cost.description || ""}
                       >
-                        {cost.description || ""}
+                        <BudgetDrilldownRecordLink href={cost.detailHref}>
+                          {cost.description || cost.invoiceNumber || "Open direct cost"}
+                        </BudgetDrilldownRecordLink>
                       </InlineTableCell>
                       <InlineTableCell>
                         {cost.costType || ""}
@@ -304,13 +307,6 @@ export function DirectCostsModal({
         )}
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

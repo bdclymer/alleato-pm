@@ -343,7 +343,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (728)
+## API Endpoints (734)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -522,6 +522,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
+| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -823,6 +824,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/drawings/areas/[areaId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/drawings/areas/[areaId]/route.ts |
 | `/api/projects/[projectId]/drawings/bulk-download` | POST | frontend/src/app/api/projects/[projectId]/drawings/bulk-download/route.ts |
 | `/api/projects/[projectId]/drawings/bulk-status` | PATCH | frontend/src/app/api/projects/[projectId]/drawings/bulk-status/route.ts |
+| `/api/projects/[projectId]/drawings/pdf` | GET | frontend/src/app/api/projects/[projectId]/drawings/pdf/route.ts |
 | `/api/projects/[projectId]/drawings/recycle-bin` | GET | frontend/src/app/api/projects/[projectId]/drawings/recycle-bin/route.ts |
 | `/api/projects/[projectId]/drawings/sets` | GET, POST | frontend/src/app/api/projects/[projectId]/drawings/sets/route.ts |
 | `/api/projects/[projectId]/drawings/sets/[setId]` | POST, PATCH | frontend/src/app/api/projects/[projectId]/drawings/sets/[setId]/route.ts |
@@ -962,7 +964,9 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/purchase-orders` | GET, POST | frontend/src/app/api/projects/[projectId]/purchase-orders/route.ts |
 | `/api/projects/[projectId]/rfis` | GET, POST | frontend/src/app/api/projects/[projectId]/rfis/route.ts |
 | `/api/projects/[projectId]/rfis/[rfiId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/route.ts |
+| `/api/projects/[projectId]/rfis/[rfiId]/pdf` | GET | frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/pdf/route.ts |
 | `/api/projects/[projectId]/rfis/[rfiId]/responses` | GET, PATCH | frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/responses/route.ts |
+| `/api/projects/[projectId]/rfis/pdf` | GET | frontend/src/app/api/projects/[projectId]/rfis/pdf/route.ts |
 | `/api/projects/[projectId]/scheduling/related-action-items` | GET | frontend/src/app/api/projects/[projectId]/scheduling/related-action-items/route.ts |
 | `/api/projects/[projectId]/scheduling/tasks` | GET, POST | frontend/src/app/api/projects/[projectId]/scheduling/tasks/route.ts |
 | `/api/projects/[projectId]/scheduling/tasks/[taskId]` | GET, PUT, DELETE | frontend/src/app/api/projects/[projectId]/scheduling/tasks/[taskId]/route.ts |
@@ -997,6 +1001,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/submittals/[submittalId]/duplicate` | POST | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/duplicate/route.ts |
 | `/api/projects/[projectId]/submittals/[submittalId]/linked-drawings` | GET, POST | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/route.ts |
 | `/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/[drawingId]` | DELETE | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/linked-drawings/[drawingId]/route.ts |
+| `/api/projects/[projectId]/submittals/[submittalId]/pdf` | GET | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/pdf/route.ts |
 | `/api/projects/[projectId]/submittals/[submittalId]/related-items` | GET, POST, DELETE | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/related-items/route.ts |
 | `/api/projects/[projectId]/submittals/[submittalId]/restore` | PATCH | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/restore/route.ts |
 | `/api/projects/[projectId]/submittals/[submittalId]/revisions` | GET, POST | frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/revisions/route.ts |
@@ -1006,6 +1011,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/submittals/export` | GET | frontend/src/app/api/projects/[projectId]/submittals/export/route.ts |
 | `/api/projects/[projectId]/submittals/packages` | GET, POST | frontend/src/app/api/projects/[projectId]/submittals/packages/route.ts |
 | `/api/projects/[projectId]/submittals/packages/[packageId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/submittals/packages/[packageId]/route.ts |
+| `/api/projects/[projectId]/submittals/pdf` | GET | frontend/src/app/api/projects/[projectId]/submittals/pdf/route.ts |
 | `/api/projects/[projectId]/submittals/required` | GET | frontend/src/app/api/projects/[projectId]/submittals/required/route.ts |
 | `/api/projects/[projectId]/submittals/settings` | GET, PUT | frontend/src/app/api/projects/[projectId]/submittals/settings/route.ts |
 | `/api/projects/[projectId]/submittals/specs` | GET | frontend/src/app/api/projects/[projectId]/submittals/specs/route.ts |

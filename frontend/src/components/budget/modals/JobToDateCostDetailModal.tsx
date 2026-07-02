@@ -4,11 +4,9 @@ import { useState, useEffect } from "react";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
   SidebarStats,
   SidebarTabs,
 } from "./BaseSidebar";
-import { Button } from "@/components/ui/button";
 import {
   InlineTable,
   InlineTableHeader,
@@ -19,6 +17,8 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { apiFetch } from "@/lib/api-client";
+import { formatCurrency, formatPercent } from "@/lib/format";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface DirectCostItem {
   id: string;
@@ -28,6 +28,7 @@ interface DirectCostItem {
   vendor: string | null;
   invoiceNumber: string | null;
   costType: string | null;
+  detailHref?: string | null;
 }
 
 interface JobToDateCostDetailModalProps {
@@ -66,19 +67,6 @@ export function JobToDateCostDetailModal({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (value: number): string => {
-    const isNegative = value < 0;
-    const formatted = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Math.abs(value));
-
-    if (isNegative) {
-      return `($${formatted})`;
-    }
-    return `$${formatted}`;
   };
 
   const formatDate = (dateString: string | null): string => {
@@ -174,7 +162,9 @@ export function JobToDateCostDetailModal({
                         className="max-w-xs truncate"
                         title={cost.description || ""}
                       >
-                        {cost.description || ""}
+                        <BudgetDrilldownRecordLink href={cost.detailHref}>
+                          {cost.description || cost.invoiceNumber || "Open direct cost"}
+                        </BudgetDrilldownRecordLink>
                       </InlineTableCell>
                       <InlineTableCell>
                         <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
@@ -232,10 +222,7 @@ export function JobToDateCostDetailModal({
                       {formatCurrency(data.total)}
                     </InlineTableCell>
                     <InlineTableCell align="right">
-                      {totalAmount > 0
-                        ? ((data.total / totalAmount) * 100).toFixed(1)
-                        : "0.0"}
-                      %
+                      {formatPercent(totalAmount > 0 ? (data.total / totalAmount) * 100 : 0)}
                     </InlineTableCell>
                   </InlineTableRow>
                 ))}
@@ -245,13 +232,6 @@ export function JobToDateCostDetailModal({
         )}
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

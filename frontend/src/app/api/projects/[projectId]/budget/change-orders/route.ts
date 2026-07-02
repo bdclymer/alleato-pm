@@ -86,7 +86,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     let pcoParentQuery = supabase
       .from("prime_contract_pcos")
       .select(
-        "id, pco_number, title, status, approved_at, approved_by, promoted_to_co_id, created_at",
+        "id, pco_number, title, status, approved_at, approved_by, promoted_to_co_id, prime_contract_id, created_at",
       )
       .eq("project_id", projectIdNum);
 
@@ -151,6 +151,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           ? (approverNames.get(pco.approved_by) ?? null)
           : null,
         contractNumber: "-",
+        detailHref:
+          pco?.promoted_to_co_id != null
+            ? `/${projectIdNum}/change-orders/prime/${pco.promoted_to_co_id}`
+            : pco?.prime_contract_id
+              ? `/${projectIdNum}/prime-contracts/${pco.prime_contract_id}/change-orders/pcos/${pco.id}`
+              : null,
       };
     });
 
@@ -234,6 +240,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           approvedDate: co?.approved_at || null,
           approvedBy: null,
           contractNumber: "-",
+          detailHref: co?.id != null ? `/${projectIdNum}/change-orders/prime/${co.id}` : null,
         };
       });
 

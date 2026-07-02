@@ -336,6 +336,154 @@ function CurrencyCell({ value }: { value: number }) {
   );
 }
 
+type FormulaLine = {
+  label: string;
+  value: number;
+  operator?: "+" | "-";
+};
+
+function FormulaTooltip({
+  title,
+  formula,
+  lines,
+  resultLabel,
+  resultValue,
+}: {
+  title: string;
+  formula: string;
+  lines: FormulaLine[];
+  resultLabel: string;
+  resultValue: number;
+}) {
+  return (
+    <div className="w-72 space-y-2 text-xs">
+      <div>
+        <p className="font-medium text-foreground">{title}</p>
+        <p className="text-muted-foreground">{formula}</p>
+      </div>
+      <div className="space-y-1">
+        {lines.map((line, index) => (
+          <div key={line.label} className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-muted-foreground">
+              {index > 0 && line.operator ? `${line.operator} ` : ""}
+              {line.label}
+            </span>
+            <span className="shrink-0 tabular-nums text-foreground">
+              {formatCurrency(line.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-border/70 pt-1.5">
+        <div className="flex items-center justify-between gap-3 font-medium">
+          <span>{resultLabel}</span>
+          <span className="tabular-nums">{formatCurrency(resultValue)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getCalculatedColumnTooltip(
+  columnId: keyof Pick<
+    BudgetLineItem,
+    | "revisedBudget"
+    | "projectedBudget"
+    | "projectedCosts"
+    | "forecastToComplete"
+    | "estimatedCostAtCompletion"
+    | "projectedOverUnder"
+  >,
+  lineItem: BudgetLineItem,
+) {
+  switch (columnId) {
+    case "revisedBudget":
+      return (
+        <FormulaTooltip
+          title="Revised Budget"
+          formula="Original Budget + Budget Mods + Approved COs"
+          lines={[
+            { label: "Original Budget", value: lineItem.originalBudgetAmount },
+            { label: "Budget Mods", value: lineItem.budgetModifications, operator: "+" },
+            { label: "Approved COs", value: lineItem.approvedCOs, operator: "+" },
+          ]}
+          resultLabel="Revised Budget"
+          resultValue={lineItem.revisedBudget}
+        />
+      );
+    case "projectedBudget":
+      return (
+        <FormulaTooltip
+          title="Projected Budget"
+          formula="Revised Budget + Pending COs"
+          lines={[
+            { label: "Revised Budget", value: lineItem.revisedBudget },
+            { label: "Pending COs", value: lineItem.pendingChanges, operator: "+" },
+          ]}
+          resultLabel="Projected Budget"
+          resultValue={lineItem.projectedBudget}
+        />
+      );
+    case "projectedCosts":
+      return (
+        <FormulaTooltip
+          title="Projected Costs"
+          formula="Committed Costs + Direct Costs + Pending Cost Changes"
+          lines={[
+            { label: "Committed Costs", value: lineItem.committedCosts },
+            { label: "Direct Costs", value: lineItem.directCosts, operator: "+" },
+            { label: "Pending Cost Changes", value: lineItem.pendingCostChanges, operator: "+" },
+          ]}
+          resultLabel="Projected Costs"
+          resultValue={lineItem.projectedCosts}
+        />
+      );
+    case "forecastToComplete":
+      return (
+        <FormulaTooltip
+          title="Forecast To Complete"
+          formula="Projected Budget - Projected Costs, floored at $0.00"
+          lines={[
+            { label: "Projected Budget", value: lineItem.projectedBudget },
+            { label: "Projected Costs", value: lineItem.projectedCosts, operator: "-" },
+          ]}
+          resultLabel="Forecast To Complete"
+          resultValue={lineItem.forecastToComplete}
+        />
+      );
+    case "estimatedCostAtCompletion":
+      return (
+        <FormulaTooltip
+          title="Estimated Cost at Completion"
+          formula="Projected Costs + Forecast To Complete"
+          lines={[
+            { label: "Projected Costs", value: lineItem.projectedCosts },
+            { label: "Forecast To Complete", value: lineItem.forecastToComplete, operator: "+" },
+          ]}
+          resultLabel="Est. Cost at Completion"
+          resultValue={lineItem.estimatedCostAtCompletion}
+        />
+      );
+    case "projectedOverUnder":
+      return (
+        <FormulaTooltip
+          title="Projected +/-"
+          formula="Projected Budget - Estimated Cost at Completion"
+          lines={[
+            { label: "Projected Budget", value: lineItem.projectedBudget },
+            {
+              label: "Est. Cost at Completion",
+              value: lineItem.estimatedCostAtCompletion,
+              operator: "-",
+            },
+          ]}
+          resultLabel="Projected +/-"
+          resultValue={lineItem.projectedOverUnder}
+        />
+      );
+  }
+}
+
 export function getBudgetLineLabel(lineItem: BudgetLineItem) {
   const { costCode, costCodeDescription, costType, description } = lineItem;
   const codeLabelBase = costCode
@@ -395,36 +543,47 @@ function EditableCurrencyCell({
   value,
   onEdit,
   editable = false,
+  tooltip,
 }: {
   value: number;
   hasChildren?: boolean;
   onEdit?: () => void;
   editable?: boolean;
+  tooltip?: React.ReactNode;
 }) {
   // Allow clicking on both parent and child rows when onEdit is provided
   const isClickable = onEdit && editable;
 
-  if (isClickable) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        aria-label={`Edit ${formatCurrency(value)}`}
-        className={cn(
-          "flex h-auto w-full cursor-pointer justify-end rounded px-1 py-0.5 text-right font-normal transition-colors",
-          "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
-        )}
-        onClick={onEdit}
-      >
-        <CurrencyCell value={value} />
-      </Button>
-    );
+  const cell = isClickable ? (
+    <Button
+      type="button"
+      variant="ghost"
+      aria-label={`Edit ${formatCurrency(value)}`}
+      className={cn(
+        "flex h-auto w-full cursor-pointer justify-end rounded px-1 py-0.5 text-right font-normal transition-colors",
+        "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
+      )}
+      onClick={onEdit}
+    >
+      <CurrencyCell value={value} />
+    </Button>
+  ) : (
+    <div className={cn("text-right", tooltip && "cursor-help")}>
+      <CurrencyCell value={value} />
+    </div>
+  );
+
+  if (!tooltip) {
+    return cell;
   }
 
   return (
-    <div className="text-right">
-      <CurrencyCell value={value} />
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>{cell}</TooltipTrigger>
+      <TooltipContent side="top" align="end" className="max-w-none">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -809,6 +968,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("revisedBudget", row.original)}
           />
         );
       },
@@ -863,6 +1023,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedBudget", row.original)}
           />
         );
       },
@@ -995,6 +1156,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedCosts", row.original)}
           />
         );
       },
@@ -1028,6 +1190,7 @@ export function BudgetTable({
               { allowWhenLocked: true },
             )}
             editable={!hasChildren}
+            tooltip={getCalculatedColumnTooltip("forecastToComplete", row.original)}
           />
         );
       },
@@ -1053,6 +1216,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("estimatedCostAtCompletion", row.original)}
           />
         );
       },
@@ -1078,6 +1242,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedOverUnder", row.original)}
           />
         );
       },

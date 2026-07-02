@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BaseSidebar, SidebarBody, SidebarFooter, SidebarStats } from "./BaseSidebar";
-import { Button } from "@/components/ui/button";
+import { BaseSidebar, SidebarBody, SidebarStats } from "./BaseSidebar";
 import {
   InlineTable,
   InlineTableHeader,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface ChangeOrder {
   id: string;
@@ -24,6 +24,7 @@ interface ChangeOrder {
   approvedBy: string | null;
   requestedDate: string;
   contractNumber: string;
+  detailHref?: string | null;
 }
 
 interface ApprovedCOsModalProps {
@@ -153,8 +154,10 @@ export function ApprovedCOsModal({
               ) : (
                 changeOrders.map((co) => (
                   <InlineTableRow key={co.id}>
-                    <InlineTableCell className="font-medium text-primary">
-                      {co.changeOrderNumber}
+                    <InlineTableCell>
+                      <BudgetDrilldownRecordLink href={co.detailHref}>
+                        {co.changeOrderNumber}
+                      </BudgetDrilldownRecordLink>
                     </InlineTableCell>
                     <InlineTableCell
                       className="max-w-xs truncate"
@@ -191,13 +194,6 @@ export function ApprovedCOsModal({
         </div>
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

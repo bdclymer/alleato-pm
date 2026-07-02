@@ -169,7 +169,7 @@ export function BudgetOverlayHeader({
   return (
     <div
       className={cn(
-        "shrink-0 border-b border-border bg-background px-4 py-4 sm:px-6 sm:py-5",
+        "shrink-0 bg-background px-4 py-4 sm:px-6 sm:py-5",
         className,
       )}
     >

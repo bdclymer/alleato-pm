@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
   SidebarStats,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface PendingCostChange {
   id: string;
@@ -29,6 +29,7 @@ interface PendingCostChange {
   type: "commitment" | "commitment_change_order";
   commitmentType?: "subcontract" | "purchase_order";
   requestedDate: string;
+  detailHref?: string | null;
 }
 
 interface PendingCostChangesModalProps {
@@ -208,8 +209,10 @@ export function PendingCostChangesModal({
                 ) : (
                   changes.map((change) => (
                     <InlineTableRow key={change.id}>
-                      <InlineTableCell className="font-medium text-primary">
-                        {change.number}
+                      <InlineTableCell>
+                        <BudgetDrilldownRecordLink href={change.detailHref}>
+                          {change.number}
+                        </BudgetDrilldownRecordLink>
                       </InlineTableCell>
                       <InlineTableCell>{getTypeBadge(change)}</InlineTableCell>
                       <InlineTableCell
@@ -244,13 +247,6 @@ export function PendingCostChangesModal({
         </div>
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

@@ -11,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { BarChart3, Calculator, Plus, TrendingUp, Trash2 } from "lucide-react";
-import { budgetRadioCardClass } from "./style-tokens";
+import { Plus, Trash2 } from "lucide-react";
 
 type ForecastMethod =
   | "automatic"
@@ -74,25 +73,21 @@ const METHODS = [
     value: "automatic" as const,
     label: "Automatic Calculation",
     description: "Projected Budget - Projected Costs.",
-    icon: TrendingUp,
   },
   {
     value: "lump_sum" as const,
     label: "Lump Sum Entry",
     description: "Fixed amount to complete.",
-    icon: Calculator,
   },
   {
     value: "manual" as const,
     label: "Manual Entry",
     description: "Build forecast from editable line items.",
-    icon: BarChart3,
   },
   {
     value: "monitored_resources" as const,
     label: "Monitored Resources",
     description: "Track time-phased resources with drawdown.",
-    icon: BarChart3,
   },
 ];
 
@@ -479,24 +474,29 @@ export function ForecastToCompleteModal({
               <RadioGroup
                 value={forecastMethod}
                 onValueChange={(value) => setForecastMethod(value as ForecastMethod)}
-                className="mt-2 space-y-0.5"
+                className="mt-2 grid gap-1 sm:grid-cols-2"
                 disabled={isLoading}
               >
-                {METHODS.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <label
-                      key={method.value}
-                      htmlFor={method.value}
-                      className={budgetRadioCardClass(forecastMethod === method.value)}
-                    >
-                      <RadioGroupItem value={method.value} id={method.value} />
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium text-foreground">{method.label}</span>
-                      <span className="text-xs text-muted-foreground">{method.description}</span>
-                    </label>
-                  );
-                })}
+                {METHODS.map((method) => (
+                  <label
+                    key={method.value}
+                    htmlFor={method.value}
+                    className={cn(
+                      "flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted/60",
+                      forecastMethod === method.value && "bg-primary/5 text-foreground",
+                    )}
+                  >
+                    <RadioGroupItem value={method.value} id={method.value} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-foreground">
+                        {method.label}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {method.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
               </RadioGroup>
             </div>
 

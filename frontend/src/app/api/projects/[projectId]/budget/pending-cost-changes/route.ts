@@ -78,6 +78,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
               subcontract_id,
               subcontracts!inner(
                 project_id,
+                id,
                 status,
                 contract_number,
                 created_at
@@ -107,6 +108,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
               purchase_order_id,
               purchase_orders!inner(
                 project_id,
+                id,
                 status,
                 contract_number,
                 created_at
@@ -143,6 +145,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       type: "commitment" | "commitment_change_order";
       commitmentType?: "subcontract" | "purchase_order";
       requestedDate: string | null;
+      detailHref: string | null;
     }> = [];
 
     if (typeFilter === "all" || typeFilter === "commitment") {
@@ -156,6 +159,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           ? row.subcontracts[0]
           : row.subcontracts;
         const parentObj = parent as Record<string, unknown> | null;
+        const parentId = typeof parentObj?.id === "string" ? parentObj.id : null;
         changes.push({
           id: String(row.id),
           number: String(parentObj?.contract_number ?? ""),
@@ -165,6 +169,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           type: "commitment",
           commitmentType: "subcontract",
           requestedDate: (parentObj?.created_at as string | null) ?? null,
+          detailHref: parentId ? `/${projectIdNum}/commitments/${parentId}` : null,
         });
       }
 
@@ -173,6 +178,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           ? row.purchase_orders[0]
           : row.purchase_orders;
         const parentObj = parent as Record<string, unknown> | null;
+        const parentId = typeof parentObj?.id === "string" ? parentObj.id : null;
         changes.push({
           id: String(row.id),
           number: String(parentObj?.contract_number ?? ""),
@@ -182,6 +188,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           type: "commitment",
           commitmentType: "purchase_order",
           requestedDate: (parentObj?.created_at as string | null) ?? null,
+          detailHref: parentId ? `/${projectIdNum}/commitments/${parentId}` : null,
         });
       }
     }
@@ -272,6 +279,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             status: parent.status ?? "pending",
             type: "commitment_change_order",
             requestedDate: parent.requested_date ?? parent.created_at ?? null,
+            detailHref: `/${projectIdNum}/change-orders/commitment/${parent.id}`,
           });
         }
       }
