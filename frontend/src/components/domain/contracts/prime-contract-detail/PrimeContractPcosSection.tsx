@@ -1,20 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import { toast } from "sonner";
 
-import { SectionRuleHeading } from "@/components/layout/spacing";
-import { StatusBadge } from "@/components/ds/status-badge";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
-import { formatDate } from "@/lib/table-config/formatters";
 import { apiFetch } from "@/lib/api-client";
+import { formatDate } from "@/lib/table-config/formatters";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import {
+  PrimeContractQuickViewSection,
+  type QuickViewRecord,
+} from "./PrimeContractQuickViewSection";
 
 interface PrimePco {
   id: string;
+  prime_contract_id?: string | null;
   pco_number: string | null;
   title: string;
   status: string;
@@ -37,10 +37,6 @@ interface PrimeContractPcosSectionProps {
   formatCurrency: (value: number | null | undefined) => string;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export function PrimeContractPcosSection({
   projectId,
   contractId,
@@ -57,12 +53,9 @@ export function PrimeContractPcosSection({
           `/api/projects/${projectId}/prime-contract-pcos`,
         );
         const allPcos: PrimePco[] = Array.isArray(json) ? json : (json.data ?? []);
-        // Filter client-side to only show PCOs belonging to this prime contract
         setPcos(
           contractId
-            ? allPcos.filter(
-                (p) => (p as unknown as Record<string, unknown>).prime_contract_id === contractId,
-              )
+            ? allPcos.filter((pco) => pco.prime_contract_id === contractId)
             : allPcos,
         );
       } catch (error) {
@@ -72,169 +65,47 @@ export function PrimeContractPcosSection({
         setIsLoading(false);
       }
     };
-    fetchPcos();
-  }, [projectId, contractId]);
 
-  // Build the canonical nested prime-contract PCO detail route.
-  const buildPcoHref = useCallback(
-    (pcoId: string) => `/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pcoId}`,
-    [projectId, contractId],
-  );
+    void fetchPcos();
+  }, [contractId, projectId]);
 
-  // Navigate reliably even when table row click delegation is interrupted by nested UI handlers.
-  const navigateToPco = useCallback(
-    (pcoId: string) => {
-      if (!pcoId) return;
-      const href = buildPcoHref(pcoId);
-      window.location.assign(href);
-      window.setTimeout(() => {
-        if (window.location.pathname !== href) {
-          window.location.assign(href);
-        }
-      }, 150);
-    },
-    [buildPcoHref],
-  );
-
-  const columns: TableColumn<PrimePco>[] = useMemo(
-    () => [
-      {
-        id: "pco_number",
-        label: "Number",
-        alwaysVisible: true,
-        render: (pco) => (
-          <a
-            href={buildPcoHref(pco.id)}
-            className="text-primary hover:underline font-medium"
-            data-row-interactive="true"
-            onClick={(event) => {
-              event.stopPropagation();
-              navigateToPco(pco.id);
-            }}
-          >
-            {pco.pco_number ?? null}
-          </a>
-        ),
-      },
-      {
-        id: "revision",
-        label: "Revision",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.revision ?? null}
-          </span>
-        ),
-      },
-      {
-        id: "title",
-        label: "Title",
-        render: (pco) => (
-          <a
-            href={buildPcoHref(pco.id)}
-            className="text-foreground hover:underline"
-            data-row-interactive="true"
-            onClick={(event) => {
-              event.stopPropagation();
-              navigateToPco(pco.id);
-            }}
-          >
-            {pco.title}
-          </a>
-        ),
-      },
-      {
-        id: "status",
-        label: "Status",
-        render: (pco) => <StatusBadge status={pco.status} />,
-      },
-      {
-        id: "total_amount",
-        label: "Executed Amount",
-        render: (pco) => (
-          <div className="text-right tabular-nums">
-            {formatCurrency(pco.total_amount)}
-          </div>
-        ),
-      },
-      {
-        id: "schedule_impact",
-        label: "Schedule Impact",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : null}
-          </span>
-        ),
-      },
-      {
-        id: "created_at",
-        label: "Date Initiated",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">{formatDate(pco.created_at)}</span>
-        ),
-      },
-      {
-        id: "change_reason",
-        label: "Change Reason",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">{pco.change_reason || null}</span>
-        ),
-      },
-      {
-        id: "promoted_co_number",
-        label: "PCCO",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">
-            {pco.promoted_co_number ?? null}
-          </span>
-        ),
-      },
-    ],
-    [buildPcoHref, formatCurrency, navigateToPco],
+  const records = useMemo<QuickViewRecord[]>(
+    () =>
+      pcos.map((pco) => ({
+        id: pco.id,
+        eyebrow: pco.pco_number ?? "Potential change order",
+        title: pco.title || "Untitled PCO",
+        status: pco.status,
+        summary: pco.description,
+        meta: [
+          formatCurrency(pco.total_amount),
+          pco.schedule_impact != null ? `${pco.schedule_impact}d schedule impact` : "No schedule impact",
+          pco.change_reason || "No reason recorded",
+        ],
+        href: `/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pco.id}`,
+        linkLabel: "Open PCO",
+        fields: [
+          { label: "Revision", value: pco.revision ?? "—" },
+          { label: "Executed Amount", value: formatCurrency(pco.total_amount) },
+          {
+            label: "Schedule Impact",
+            value: pco.schedule_impact != null ? `${pco.schedule_impact} day${pco.schedule_impact === 1 ? "" : "s"}` : "None",
+          },
+          { label: "Date Initiated", value: formatDate(pco.created_at) },
+          { label: "Change Reason", value: pco.change_reason || "—" },
+          { label: "Promoted Change Order", value: pco.promoted_co_number || "Not promoted" },
+          { label: "Description", value: pco.description || "No description provided.", fullWidth: true },
+        ],
+      })),
+    [contractId, formatCurrency, pcos, projectId],
   );
 
   return (
-    <div className="space-y-3">
-      <SectionRuleHeading label="Potential Change Orders" />
-      <UnifiedTablePage
-        header={{ title: "" }}
-        toolbar={{
-          totalItems: pcos.length,
-          filteredItems: pcos.length,
-          selectedCount: 0,
-          searchValue: "",
-          onSearchChange: () => {},
-          currentView: "table",
-          onViewChange: () => {},
-        }}
-        data={{ items: pcos, isLoading }}
-        table={{
-          columns,
-          getRowId: (pco) => pco.id,
-          onRowClick: (pco) => {
-            navigateToPco(pco.id);
-          },
-        }}
-        features={{
-          enableSearch: false,
-          enableViews: false,
-          enableFilters: false,
-          enableColumnToggle: false,
-          enableExport: false,
-          enableBulkDelete: false,
-          enableRowSelection: false,
-        }}
-        layout={{
-          containerPadding: false,
-          toolbarInlineWithHeader: true,
-          containerClassName: "min-h-0 pb-0",
-        }}
-        emptyState={{
-          title: "No potential change orders",
-          description: "PCOs will appear here when created for this contract.",
-          filteredDescription: "No potential change orders found.",
-          isFiltered: false,
-        }}
-      />
-    </div>
+    <PrimeContractQuickViewSection
+      label="Potential Change Orders"
+      items={records}
+      isLoading={isLoading}
+      emptyMessage="No potential change orders created yet."
+    />
   );
 }

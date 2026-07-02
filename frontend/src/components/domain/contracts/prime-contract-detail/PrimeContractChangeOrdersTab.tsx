@@ -6,12 +6,18 @@ import { Check, Download, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import type { PrimeContractCO } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api-client";
-import { downloadPdf } from "@/hooks/use-pdf-export";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +25,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { downloadPdf } from "@/hooks/use-pdf-export";
+import { apiFetch } from "@/lib/api-client";
 
 interface PrimeContractChangeOrdersTabProps {
   projectId: string;
@@ -42,9 +50,13 @@ function downloadPrimeContractChangeOrderPdf(
   });
 }
 
+function formatShortDate(value: string | null | undefined) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString();
+}
+
 export function PrimeContractChangeOrdersTab({
   projectId,
-  contractId,
   changeOrders,
   setChangeOrders,
   formatCurrency,
@@ -74,187 +86,141 @@ export function PrimeContractChangeOrdersTab({
       console.error("Failed to approve change order:", error);
       toast.error("Failed to approve change order. Please try again.");
     }
-  }, [contractId, projectId, setChangeOrders]);
-
-  const columns: TableColumn<PrimeContractCO>[] = useMemo(
-    () => [
-      {
-        id: "change_order_number",
-        label: "Number",
-        alwaysVisible: true,
-        render: (co) => (
-          <div className="font-medium">{co.change_order_number}</div>
-        ),
-      },
-      {
-        id: "revision",
-        label: "Revision",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {co.revision ?? null}
-          </span>
-        ),
-      },
-      {
-        id: "title",
-        label: "Title",
-        render: (co) => (
-          <span className="text-foreground">{co.title || co.description || null}</span>
-        ),
-      },
-      {
-        id: "status",
-        label: "Status",
-        render: (co) => <StatusBadge status={co.status ?? "pending"} />,
-      },
-      {
-        id: "executed",
-        label: "Executed",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground">
-            {co.executed ? "Yes" : null}
-          </span>
-        ),
-      },
-      {
-        id: "amount",
-        label: "Amount",
-        render: (co) => (
-          <div className="text-right tabular-nums">
-            <span className={(co.amount ?? 0) < 0 ? "text-destructive" : ""}>
-              {formatCurrency(co.amount ?? 0)}
-            </span>
-          </div>
-        ),
-      },
-      {
-        id: "requested_date",
-        label: "Date Initiated",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground">
-            {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : null}
-          </span>
-        ),
-      },
-      {
-        id: "due_date",
-        label: "Due Date",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground">
-            {co.due_date ? new Date(co.due_date).toLocaleDateString() : null}
-          </span>
-        ),
-      },
-      {
-        id: "review_date",
-        label: "Review Date",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground">
-            {co.review_date ? new Date(co.review_date).toLocaleDateString() : null}
-          </span>
-        ),
-      },
-      {
-        id: "designated_reviewer",
-        label: "Designated Reviewer",
-        render: (co) => (
-          <span className="text-sm text-muted-foreground">
-            {co.designated_reviewer || null}
-          </span>
-        ),
-      },
-    ],
-    [formatCurrency],
-  );
+  }, [projectId, setChangeOrders]);
 
   return (
-    <div className="space-y-3">
+    <section className="space-y-3">
       <SectionRuleHeading label="Change Orders" />
-      <UnifiedTablePage
-        header={{ title: "" }}
-        toolbar={{
-          totalItems: changeOrders.length,
-          filteredItems: changeOrders.length,
-          selectedCount: 0,
-          searchValue: "",
-          onSearchChange: () => {},
-          currentView: "table",
-          onViewChange: () => {},
-        }}
-        data={{ items: changeOrders, isLoading: false }}
-        table={{
-          columns,
-          getRowId: (co) => co.id,
-          rowActions: (co) => (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                  <MoreVertical className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem onClick={() => onStartEditCo(co)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => void downloadPrimeContractChangeOrderPdf(co)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </DropdownMenuItem>
-                {co.status !== "approved" && co.status !== "rejected" && (
-                  <>
-                    <DropdownMenuItem onClick={() => void handleApproveCo(co.id)}>
-                      <Check className="h-4 w-4 mr-2" />
-                      Approve
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => { onSetRejectingCoId(co.id); onShowRejectCoDialog(); }}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Reject
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onSetDeletingCo(co)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-        }}
-        features={{
-          enableSearch: false,
-          enableViews: false,
-          enableFilters: false,
-          enableColumnToggle: false,
-          enableExport: false,
-          enableBulkDelete: false,
-          enableRowSelection: false,
-        }}
-        layout={{
-          containerPadding: false,
-          toolbarInlineWithHeader: true,
-          containerClassName: "min-h-0 pb-0",
-        }}
-        emptyState={{
-          title: "No change orders",
-          description: "Change orders will appear here when created.",
-          filteredDescription: "No change orders found.",
-          isFiltered: false,
-        }}
-        footerTotals={{
-          label: "Total",
-          values: {
-            amount: <span className="font-semibold">{formatCurrency(totalChangeOrderAmount)}</span>,
-          },
-        }}
-      />
-    </div>
+      <InlineTable variant="read" tableClassName="min-w-full">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Revision</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Executed</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Date Initiated</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Due Date</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Review Date</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Reviewer</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right" className="w-12">
+              <span className="sr-only">Actions</span>
+            </InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+
+        <InlineTableBody>
+          {changeOrders.length === 0 ? (
+            <InlineTableRow>
+              <InlineTableCell colSpan={11} className="py-5 text-sm text-muted-foreground">
+                No change orders created yet.
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : (
+            changeOrders.map((co) => (
+              <InlineTableRow key={co.id}>
+                <InlineTableCell className="font-medium text-foreground">
+                  {co.change_order_number}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {co.revision ?? "—"}
+                </InlineTableCell>
+                <InlineTableCell className="max-w-sm">
+                  <div className="text-foreground">{co.title || co.description || "—"}</div>
+                </InlineTableCell>
+                <InlineTableCell>
+                  <StatusBadge status={co.status ?? "pending"} />
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {co.executed ? "Yes" : "—"}
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric>
+                  <span className={(co.amount ?? 0) < 0 ? "text-destructive" : undefined}>
+                    {formatCurrency(co.amount ?? 0)}
+                  </span>
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {formatShortDate(co.requested_date)}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {formatShortDate(co.due_date)}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {formatShortDate(co.review_date)}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {co.designated_reviewer || "—"}
+                </InlineTableCell>
+                <InlineTableCell align="right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                      <DropdownMenuItem onClick={() => onStartEditCo(co)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void downloadPrimeContractChangeOrderPdf(co)}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download PDF
+                      </DropdownMenuItem>
+                      {co.status !== "approved" && co.status !== "rejected" ? (
+                        <>
+                          <DropdownMenuItem onClick={() => void handleApproveCo(co.id)}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Approve
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              onSetRejectingCoId(co.id);
+                              onShowRejectCoDialog();
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Reject
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onSetDeletingCo(co)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </InlineTableCell>
+              </InlineTableRow>
+            ))
+          )}
+        </InlineTableBody>
+
+        {changeOrders.length > 0 ? (
+          <tfoot>
+            <tr className="border-t border-border/60">
+              <td className="px-3 py-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground" colSpan={5}>
+                Total
+              </td>
+              <td className="px-3 py-3 text-right text-sm font-semibold tabular-nums">
+                {formatCurrency(totalChangeOrderAmount)}
+              </td>
+              <td colSpan={5} />
+            </tr>
+          </tfoot>
+        ) : null}
+      </InlineTable>
+    </section>
   );
 }
