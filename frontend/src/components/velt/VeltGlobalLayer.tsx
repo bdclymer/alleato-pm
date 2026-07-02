@@ -22,8 +22,6 @@ interface VeltCommentElement {
   enableScreenshot?: () => void;
   enableRecordingTranscription?: () => void;
   enableRecordingCountdown?: () => void;
-  enablePersistentCommentMode?: () => void;
-  enableCommentPinHighlighter?: () => void;
   enableEnterKeyToSubmit?: () => void;
   allowedElementQuerySelectors?: (selectors: string[]) => void;
   commentToNearestAllowedElement?: (enabled: boolean) => void;
@@ -50,8 +48,6 @@ function VeltCommentConfiguration() {
     commentElement.enableScreenshot?.();
     commentElement.enableRecordingTranscription?.();
     commentElement.enableRecordingCountdown?.();
-    commentElement.enablePersistentCommentMode?.();
-    commentElement.enableCommentPinHighlighter?.();
     // NOTE: enableSidebarButtonOnCommentDialog() intentionally removed — it
     // rendered the full-width "All comments" footer band that duplicated
     // all-comments access (still reachable via the global Comments button) and
@@ -227,16 +223,19 @@ export function VeltGlobalLayer() {
       <VeltComments
         shadowDom={false}
         textMode={false}
+        bubbleOnPinHover
+        collapsedComments
+        dialogOnHover
         attachments
         screenshot
         recordings="all"
         recordingTranscription
         recordingCountdown
-        persistentCommentMode
-        commentPinHighlighter
         commentIndex={false}
         status={false}
         priority={false}
+        ghostComments
+        ghostCommentsIndicator
         attachmentNameInMessage
         allowedElementIds={["app-main-content"]}
         commentToNearestAllowedElement

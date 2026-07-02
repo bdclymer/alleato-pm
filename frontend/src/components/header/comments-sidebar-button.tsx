@@ -8,8 +8,7 @@ import {
   Eye,
   EyeOff,
   MessageSquare,
-  MessageSquarePlus,
-  PanelRightOpen,
+  Plus,
 } from "lucide-react";
 import {
   VeltCommentTool,
@@ -115,7 +114,7 @@ function CommentIconButton({
       className={cn(
         "relative h-8 w-8",
         active
-          ? "bg-primary/10 text-primary hover:bg-primary/20"
+          ? "text-foreground hover:bg-accent hover:text-foreground"
           : unread || unresolved
             ? "text-foreground hover:bg-accent hover:text-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -179,6 +178,7 @@ export function CommentsSidebarButton() {
   );
   const collaborationRuntimeActive =
     collaborationRuntimeEnabled || shouldForceCollaborationRuntime(pathname);
+  const commentsVisible = useCommentsVisibilityStore((state) => state.visible);
   const setCommentsVisible = useCommentsVisibilityStore(
     (state) => state.setVisible,
   );
@@ -197,42 +197,28 @@ export function CommentsSidebarButton() {
     [pathname, summary.comments],
   );
 
-  if (!collaborationRuntimeActive) {
-    return (
-      <>
-        <InactiveCommentsSidebarButton
-          hasUnread={hasUnread}
-          hasUnresolved={hasUnresolved}
-          onEnableCommentMode={() => {
-            setCollaborationRuntimeEnabled(true);
-            setCommentsVisible(true);
-            setPendingCommentMode(true);
-          }}
-          onEnableSidebar={() => {
-            setCollaborationRuntimeEnabled(true);
-            setCommentsVisible(true);
-            setPageSheetOpen(true);
-          }}
-        />
-        <PageDiscussionSheet
-          open={pageSheetOpen}
-          onOpenChange={setPageSheetOpen}
-          comments={pageComments}
-        />
-      </>
-    );
-  }
+  const openPageDiscussion = React.useCallback(() => {
+    window.setTimeout(() => {
+      setPageSheetOpen(true);
+    }, 120);
+  }, []);
 
   return (
     <>
       <ActiveCommentsSidebarButton
         hasUnread={hasUnread}
         hasUnresolved={hasUnresolved}
+        collaborationRuntimeActive={collaborationRuntimeActive}
         startCommentOnMount={pendingCommentMode}
         onCommentModeStarted={() => setPendingCommentMode(false)}
+        onRequestCommentMode={() => {
+          setCollaborationRuntimeEnabled(true);
+          setCommentsVisible(true);
+          setPendingCommentMode(true);
+        }}
         onOpenPageSheet={() => {
           setCommentsVisible(true);
-          setPageSheetOpen(true);
+          openPageDiscussion();
         }}
       />
       <PageDiscussionSheet
@@ -244,75 +230,21 @@ export function CommentsSidebarButton() {
   );
 }
 
-function InactiveCommentsSidebarButton({
-  hasUnread,
-  hasUnresolved,
-  onEnableCommentMode,
-  onEnableSidebar,
-}: {
-  hasUnread: boolean;
-  hasUnresolved: boolean;
-  onEnableCommentMode: () => void;
-  onEnableSidebar: () => void;
-}) {
-  const [open, setOpen] = React.useState(false);
-
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <CommentIconButton
-          unread={hasUnread}
-          unresolved={hasUnresolved}
-          expanded={open}
-          onClick={() => setOpen((current) => !current)}
-          onKeyDown={(event) => handleDiscussionTriggerKeyDown(event, open, setOpen)}
-        />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-56">
-        <DropdownMenuItem
-          onSelect={() => {
-            setOpen(false);
-            onEnableCommentMode();
-          }}
-        >
-          <MessageSquarePlus className="h-4 w-4" />
-          Add comment on this page
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => {
-            setOpen(false);
-            onEnableSidebar();
-          }}
-        >
-          <PanelRightOpen className="h-4 w-4" />
-          Open page discussion
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
-            setOpen(false);
-            onEnableSidebar();
-          }}
-        >
-          <Eye className="h-4 w-4" />
-          Show page comments
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function ActiveCommentsSidebarButton({
   hasUnread,
   hasUnresolved,
+  collaborationRuntimeActive,
   startCommentOnMount,
   onCommentModeStarted,
+  onRequestCommentMode,
   onOpenPageSheet,
 }: {
   hasUnread: boolean;
   hasUnresolved: boolean;
+  collaborationRuntimeActive: boolean;
   startCommentOnMount?: boolean;
   onCommentModeStarted?: () => void;
+  onRequestCommentMode: () => void;
   onOpenPageSheet: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -322,6 +254,10 @@ function ActiveCommentsSidebarButton({
     (state) => state.setVisible,
   );
   const addCommentTriggerRef = React.useRef<HTMLButtonElement | null>(null);
+  const handleOpenDiscussion = React.useCallback(() => {
+    setOpen(false);
+    onOpenPageSheet();
+  }, [onOpenPageSheet]);
 
   React.useEffect(() => {
     if (commentModeActive) setOpen(false);
@@ -340,23 +276,25 @@ function ActiveCommentsSidebarButton({
 
   return (
     <>
-      <VeltCommentTool
-        sourceId="site-header-comment-mode"
-        targetElementId="app-main-content"
-        shadowDom={false}
-      >
-        <Button
-          ref={addCommentTriggerRef}
-          type="button"
-          variant="ghost"
-          size="sm"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="sr-only"
+      {collaborationRuntimeActive ? (
+        <VeltCommentTool
+          sourceId="site-header-comment-mode"
+          targetElementId="app-main-content"
+          shadowDom={false}
         >
-          Start comment mode
-        </Button>
-      </VeltCommentTool>
+          <Button
+            ref={addCommentTriggerRef}
+            type="button"
+            variant="ghost"
+            size="sm"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          >
+            Start comment mode
+          </Button>
+        </VeltCommentTool>
+      ) : null}
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <CommentIconButton
@@ -371,26 +309,32 @@ function ActiveCommentsSidebarButton({
         <DropdownMenuContent align="end" sideOffset={6} className="w-56">
           <DropdownMenuItem
             onSelect={() => {
-              setCommentsVisible(true);
               setOpen(false);
+              if (!collaborationRuntimeActive) {
+                onRequestCommentMode();
+                return;
+              }
+              setCommentsVisible(true);
               addCommentTriggerRef.current?.click();
             }}
           >
-            <MessageSquarePlus className="h-4 w-4" />
-            Add comment on this page
+            <Plus className="h-4 w-4" />
+            Add comment
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => {
-              setOpen(false);
-              onOpenPageSheet();
+            onClick={handleOpenDiscussion}
+            onSelect={(event) => {
+              event.preventDefault();
+              handleOpenDiscussion();
             }}
           >
-            <PanelRightOpen className="h-4 w-4" />
-            Open page discussion
+            <MessageSquare className="h-4 w-4" />
+            View discussion
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
+              setOpen(false);
               setCommentsVisible(!commentsVisible);
             }}
           >
@@ -399,7 +343,7 @@ function ActiveCommentsSidebarButton({
             ) : (
               <Eye className="h-4 w-4" />
             )}
-            {commentsVisible ? "Hide page comments" : "Show page comments"}
+            {commentsVisible ? "Hide comments" : "View comments"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

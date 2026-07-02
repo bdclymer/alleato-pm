@@ -1829,20 +1829,20 @@
   /* Typeface → app font (Inter). */
   --velt-default-font-family: var(--font-sans) !important;
 
-  /* Accent → brand primary (orange), not Velt purple. Drives the status pill,
-     send button, links, mentions, and the "all comments" affordance. */
-  --velt-light-mode-accent: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-text: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-hover: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
-  --velt-light-mode-accent-light: hsl(var(--primary) / 0.1) !important;
-  --velt-light-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
-  --velt-dark-mode-accent: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-text: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-hover: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
-  --velt-dark-mode-accent-light: hsl(var(--primary) / 0.1) !important;
-  --velt-dark-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
+  /* Accent → quiet neutral, not brand orange. Comments should feel like
+     annotations, not marketing chrome. */
+  --velt-light-mode-accent: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-text: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-hover: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-foreground: hsl(var(--background)) !important;
+  --velt-light-mode-accent-light: hsl(var(--foreground) / 0.08) !important;
+  --velt-light-mode-accent-transparent: hsl(var(--foreground) / 0.06) !important;
+  --velt-dark-mode-accent: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-text: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-hover: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-foreground: hsl(var(--background)) !important;
+  --velt-dark-mode-accent-light: hsl(var(--foreground) / 0.1) !important;
+  --velt-dark-mode-accent-transparent: hsl(var(--foreground) / 0.08) !important;
 
   /* Neutral/border gray → app border token (was #EBEBEB). */
   --velt-light-mode-gray: hsl(var(--border)) !important;
@@ -1854,6 +1854,36 @@
    shadow only). Strip it; keep the shadow. */
 velt-comment-dialog-internal .velt-comment-dialog {
   border-color: transparent !important;
+}
+
+/* Keep on-page annotations quiet. The marker should read as a lightweight
+   anchor, not a colored badge that competes with the document. */
+velt-comment-annotation-pin,
+velt-comment-pin,
+[data-velt-annotation],
+[data-annotation-id] {
+  box-shadow: none !important;
+}
+
+[data-testid="velt-comment-pin"] .velt-comment-pin--marker,
+[data-testid="velt-comment-pin"] .velt-comment-pin--marker-default,
+[data-testid="velt-comment-pin"] .velt-comment-pin--status-default {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: none !important;
+}
+
+.snippyly-highlight,
+[snippyly-highlight="true"] {
+  outline: 1px solid hsl(var(--border)) !important;
+  outline-offset: 0 !important;
+}
+
+.velt-persistent-comment-mode-frame,
+.app-persistent-comment-mode .velt-persistent-comment-mode-frame {
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Velt hardcodes #EBEBEB on the composer input box and divider lines (it ignores
