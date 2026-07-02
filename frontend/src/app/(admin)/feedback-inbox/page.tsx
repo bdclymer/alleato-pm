@@ -87,7 +87,7 @@ import type {
   StatusFilter,
 } from "./types";
 
-const ACTIVE_EXCLUDED_STATUS_QUERY = "resolved,closed,deferred,archived";
+const ACTIVE_EXCLUDED_STATUS_QUERY = "in_review,resolved,closed,deferred,archived";
 const ALL_STATUS_QUERY =
   "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed";
 const FEEDBACK_LAYOUT_STORAGE_KEY = "alleato-feedback-inbox-layout";
@@ -189,13 +189,14 @@ function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "all") return ALL_STATUS_QUERY;
   if (filter === "active") return null;
   if (filter === "open") {
-    return "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+    return "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,pr_created";
   }
   if (filter === "in_progress")
-    return "in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+    return "in_progress,triaged,diagnosing,fixing,verifying,pr_created";
+  if (filter === "in_review") return "resolved,in_review";
+  if (filter === "verified") return "closed";
   if (filter === "dispatched") return ALL_STATUS_QUERY;
   if (filter === "deferred") return "deferred";
-  if (filter === "resolved") return "resolved,closed";
   return filter;
 }
 
@@ -515,9 +516,15 @@ export default function FeedbackInboxPage() {
   async function updateStatus(id: string, status: DisplayStatus) {
     setUpdatingId(id);
     try {
+      const persistedStatus =
+        status === "in_review"
+          ? "resolved"
+          : status === "verified"
+            ? "closed"
+            : status;
       await apiFetch("/api/admin/feedback", {
         method: "PATCH",
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, status: persistedStatus }),
       });
       const statusLabel =
         STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
@@ -529,7 +536,7 @@ export default function FeedbackInboxPage() {
         title: "Could not update status",
         fallback: "The feedback item status could not be updated.",
         error: err,
-        metadata: { feedbackId: id, status },
+        metadata: { feedbackId: id, status: persistedStatus },
       });
     } finally {
       setUpdatingId(null);

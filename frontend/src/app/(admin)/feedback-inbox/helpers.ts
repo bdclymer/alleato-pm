@@ -4,9 +4,10 @@ import { appToast as toast } from "@/lib/toast/app-toast";
 import {
   ARCHIVED_STATUSES,
   DEFERRED_STATUSES,
+  IN_REVIEW_STATUSES,
   IN_PROGRESS_STATUSES,
   PR_CREATED_STATUSES,
-  RESOLVED_STATUSES,
+  VERIFIED_STATUSES,
 } from "./constants";
 import type {
   AgentTarget,
@@ -81,7 +82,8 @@ export function relativeTime(dateStr: string) {
 
 export function toDisplayStatus(status: string): DisplayStatus {
   if (ARCHIVED_STATUSES.has(status)) return "archived";
-  if (RESOLVED_STATUSES.has(status)) return "resolved";
+  if (VERIFIED_STATUSES.has(status)) return "verified";
+  if (IN_REVIEW_STATUSES.has(status)) return "in_review";
   if (DEFERRED_STATUSES.has(status)) return "deferred";
   if (PR_CREATED_STATUSES.has(status)) return "pr_created";
   if (IN_PROGRESS_STATUSES.has(status)) return "in_progress";

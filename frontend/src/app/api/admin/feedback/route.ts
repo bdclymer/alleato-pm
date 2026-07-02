@@ -471,6 +471,7 @@ const listQuerySchema = z.object({
   status: z.string().optional(),
   excludeStatus: z.string().optional(),
   requestType: z.string().optional(),
+  excludeBoardItems: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -487,7 +488,14 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     );
   }
 
-  const { status, excludeStatus, requestType, limit = 100, offset = 0 } = parsed.data;
+  const {
+    status,
+    excludeStatus,
+    requestType,
+    excludeBoardItems,
+    limit = 100,
+    offset = 0,
+  } = parsed.data;
   const serviceSupabase = createServiceClient();
 
   let query = serviceSupabase
@@ -520,6 +528,10 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
   if (requestType) {
     query = query.eq("request_type", requestType);
+  }
+
+  if (excludeBoardItems) {
+    query = query.neq("page_path", "/product-board");
   }
 
   const { data, error, count } = await query;
@@ -573,9 +585,7 @@ const patchSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
-  resolved: "closed",
-};
+const LEGACY_STATUS_FALLBACKS: Record<string, string> = {};
 
 export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
   await requireAdminUser("/api/admin/feedback#PATCH");
@@ -654,7 +664,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
     throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PATCH", message: details.message });
   }
 
-  if (data?.status === "resolved") {
+  if (data?.status === "closed") {
     try {
       const { data: fullItem } = await serviceSupabase
         .from("admin_feedback_items")
@@ -686,7 +696,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
         });
       }
     } catch (learningError) {
-      logger.error({ msg: "[AdminFeedback] Resolved learning ingestion failed", data: learningError });
+      logger.error({ msg: "[AdminFeedback] Verified learning ingestion failed", data: learningError });
     }
   }
 

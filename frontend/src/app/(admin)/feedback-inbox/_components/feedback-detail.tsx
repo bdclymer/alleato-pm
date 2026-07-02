@@ -153,7 +153,9 @@ export function FeedbackDetail({
                   size="sm"
                   className={cn(
                     "h-auto w-auto min-w-0 gap-1 border-0 bg-transparent p-0 text-xs font-medium text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-1",
-                    displayStatus === "resolved" &&
+                    displayStatus === "verified" &&
+                      "text-muted-foreground hover:text-foreground",
+                    displayStatus === "in_review" &&
                       "text-muted-foreground hover:text-foreground",
                     (displayStatus === "in_progress" || displayStatus === "pr_created") &&
                       "text-muted-foreground hover:text-foreground",

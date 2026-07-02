@@ -77,17 +77,19 @@ export type StatusFilter =
   | "active"
   | "open"
   | "in_progress"
+  | "in_review"
+  | "verified"
   | "dispatched"
   | "deferred"
-  | "resolved"
   | "all";
 
 export type DisplayStatus =
   | "open"
   | "in_progress"
   | "pr_created"
+  | "in_review"
+  | "verified"
   | "deferred"
-  | "resolved"
   | "archived";
 
 export type AgentTarget = "codex" | "claude_code";
