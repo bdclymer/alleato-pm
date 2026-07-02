@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Github } from "lucide-react";
+import { Github } from "lucide-react";
 import { Button } from "@/components/ds";
 import { displayAdminFeedbackTitle, isCommentRedundantWithTitle } from "@/lib/admin-feedback/title";
 import { cn } from "@/lib/utils";
@@ -105,8 +105,7 @@ function FeedbackQueueItem({
               </>
             )}
             {sourceLabel && (
-              <span className="inline-flex min-w-0 items-center gap-1 truncate">
-                <ExternalLink className="h-3 w-3 shrink-0" />
+              <span className="inline-flex min-w-0 items-center truncate">
                 <span className="truncate">{sourceLabel}</span>
               </span>
             )}
