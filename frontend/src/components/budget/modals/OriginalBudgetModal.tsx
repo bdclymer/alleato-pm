@@ -159,18 +159,13 @@ export function OriginalBudgetModal({
         <SidebarBody>
           {/* Original Budget Tab */}
           <TabsContent value="budget" className="m-0">
-            <div className="px-4 py-4 sm:px-8 space-y-6 bg-background">
+            <div className="p-4 sm:p-6 space-y-6 bg-background">
               {/* Calculation Method */}
               <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <Label className="text-xs uppercase tracking-widest text-muted-foreground block">
-                      Calculation Method
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Choose how this line is calculated.
-                    </p>
-                  </div>
+                  <Label className="text-xs uppercase tracking-widest text-muted-foreground block">
+                    Calculation Method
+                  </Label>
                   <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
                     {costCode}
                   </span>
@@ -321,31 +316,12 @@ export function OriginalBudgetModal({
                   />
                 </div>
               </div>
-
-              {/* Calculation Formula */}
-              {calculationMethod === "unit_price" && (
-                <div className="rounded-lg border border-border bg-muted/40 p-4">
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">Formula:</span> Original
-                    Budget = Unit Qty x Unit Cost
-                    {unitQty && unitCost && (
-                      <span className="ml-2 text-muted-foreground">
-                        ({unitQty} x ${unitCost} = ${originalBudget.toFixed(2)})
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
             </div>
           </TabsContent>
 
           {/* History Tab */}
           <TabsContent value="history" className="m-0">
-            <div className="px-4 py-4 sm:px-8 space-y-4 bg-background">
-              <p className="text-sm text-muted-foreground">
-                View the audit trail of every change to this budget line.
-              </p>
-
+            <div className="p-4 sm:p-6 space-y-3 bg-background">
               <InlineTable variant="read">
                 <InlineTableHeader>
                   <InlineTableHeaderRow>

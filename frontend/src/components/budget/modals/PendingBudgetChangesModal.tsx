@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
+import { BaseSidebar, SidebarBody, SidebarFooter, SidebarStats } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
 import {
   InlineTable,
@@ -14,7 +14,6 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { Info } from "lucide-react";
 
 interface PendingChangeOrder {
   id: string;
@@ -40,6 +39,7 @@ export function PendingBudgetChangesModal({
   onClose,
   budgetLineId,
   projectId,
+  costCode,
 }: PendingBudgetChangesModalProps) {
   const [changeOrders, setChangeOrders] = useState<PendingChangeOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ export function PendingBudgetChangesModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -107,45 +107,18 @@ export function PendingBudgetChangesModal({
       size="xl"
     >
       <SidebarBody className="bg-background">
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Total Summary */}
-          <div className="rounded-lg border border-border p-4 bg-muted/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Total Pending Changes
-                </p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {formatCurrency(totalAmount)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Count</p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {changeOrders.length}
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="p-4 sm:p-6 space-y-3">
+          <SidebarStats
+            summary={
+              <>
+                {costCode ? `${costCode} · ` : ""}
+                {changeOrders.length} pending budget change
+                {changeOrders.length === 1 ? "" : "s"}
+              </>
+            }
+            value={formatCurrency(totalAmount)}
+          />
 
-          {/* Info Box */}
-          <div className="rounded-lg bg-muted/40 border border-border p-4">
-            <div className="flex items-start gap-4">
-              <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-foreground">
-                  About Pending Budget Changes
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  These are change orders from your prime contract that are
-                  pending approval. They will be included in projected budget
-                  calculations but not in the revised budget until approved.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Change Orders Table */}
           <InlineTable variant="read">
             <InlineTableHeader>
               <InlineTableHeaderRow>

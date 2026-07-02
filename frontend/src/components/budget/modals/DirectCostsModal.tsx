@@ -5,6 +5,7 @@ import {
   BaseSidebar,
   SidebarBody,
   SidebarFooter,
+  SidebarStats,
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,6 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { Receipt } from "lucide-react";
 
 interface DirectCostItem {
   id: string;
@@ -91,7 +91,7 @@ export function DirectCostsModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -174,53 +174,19 @@ export function DirectCostsModal({
 
       <SidebarBody className="bg-background">
         {activeTab === "costs" ? (
-          <div className="p-4 sm:p-6 space-y-4">
-            {/* Total Summary */}
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Total Direct Costs
-                  </p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(totalAmount)}
-                  </p>
-                </div>
-                {showPayments && (
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Total Payments
-                    </p>
-                    <p className="text-2xl font-bold text-foreground mt-1">
-                      {formatCurrency(totalPayments)}
-                    </p>
-                  </div>
-                )}
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Count</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {costs.length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="rounded-lg bg-muted/40 border border-border p-4">
-              <div className="flex items-start gap-4">
-                <Receipt className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">
-                    About Direct Costs
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    Direct costs include invoices, expenses, and payroll in
-                    pending, revise and resubmit, or approved status. These costs
-                    directly impact your budget line.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="p-4 sm:p-6 space-y-3">
+            <SidebarStats
+              summary={
+                <>
+                  {costCode ? `${costCode} · ` : ""}
+                  {costs.length} cost{costs.length === 1 ? "" : "s"}
+                  {showPayments
+                    ? ` · ${formatCurrency(totalPayments)} paid`
+                    : ""}
+                </>
+              }
+              value={formatCurrency(totalAmount)}
+            />
 
             {/* Costs Table */}
             <InlineTable variant="read">
@@ -261,18 +227,18 @@ export function DirectCostsModal({
                     <InlineTableRow key={cost.id}>
                       <InlineTableCell
                         className="max-w-xs truncate"
-                        title={cost.description || "-"}
+                        title={cost.description || ""}
                       >
-                        {cost.description || "-"}
+                        {cost.description || ""}
                       </InlineTableCell>
                       <InlineTableCell>
-                        {cost.costType || "-"}
+                        {cost.costType || ""}
                       </InlineTableCell>
                       <InlineTableCell>
                         {getStatusBadge(cost.status)}
                       </InlineTableCell>
                       <InlineTableCell>
-                        {cost.vendor || "-"}
+                        {cost.vendor || ""}
                       </InlineTableCell>
                       <InlineTableCell align="right" numeric className="font-semibold">
                         {formatCurrency(cost.amount)}
@@ -292,38 +258,48 @@ export function DirectCostsModal({
             </InlineTable>
           </div>
         ) : (
-          <div className="p-4 sm:p-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Summary breakdown of direct costs by status.
-            </p>
+          <div className="p-4 sm:p-6 space-y-3">
+            <SidebarStats
+              summary={
+                <>
+                  {costCode ? `${costCode} · ` : ""}by status
+                </>
+              }
+              value={formatCurrency(totalAmount)}
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(["approved", "pending", "revise_and_resubmit"] as const).map(
-                (status) => {
-                  const statusCosts = costs.filter((c) => c.status === status);
-                  const statusTotal = statusCosts.reduce(
-                    (sum, c) => sum + c.amount,
-                    0,
-                  );
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Count</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Total Amount</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {(["approved", "pending", "revise_and_resubmit"] as const).map(
+                  (status) => {
+                    const statusCosts = costs.filter((c) => c.status === status);
+                    const statusTotal = statusCosts.reduce(
+                      (sum, c) => sum + c.amount,
+                      0,
+                    );
 
-                  return (
-                    <div
-                      key={status}
-                      className="rounded-lg border border-border p-4 bg-muted/30"
-                    >
-                      <div className="mb-2">{getStatusBadge(status)}</div>
-                      <p className="text-2xl font-bold text-foreground mt-2">
-                        {formatCurrency(statusTotal)}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {statusCosts.length}{" "}
-                        {statusCosts.length === 1 ? "cost" : "costs"}
-                      </p>
-                    </div>
-                  );
-                },
-              )}
-            </div>
+                    return (
+                      <InlineTableRow key={status}>
+                        <InlineTableCell>{getStatusBadge(status)}</InlineTableCell>
+                        <InlineTableCell align="right">
+                          {statusCosts.length}
+                        </InlineTableCell>
+                        <InlineTableCell align="right" numeric className="font-semibold">
+                          {formatCurrency(statusTotal)}
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    );
+                  },
+                )}
+              </InlineTableBody>
+            </InlineTable>
           </div>
         )}
       </SidebarBody>

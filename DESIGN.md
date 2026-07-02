@@ -937,6 +937,48 @@ A leading icon or avatar in front of a title, heading, or name is decoration. It
 
 Rule of thumb: if removing the icon or avatar makes the layout calmer without losing meaning, remove it. The name itself is the affordance.
 
+### Prefer composition over invention (component proliferation)
+
+**Every new component introduced into the product creates design debt.** A new
+component must solve a genuinely new *interaction* problem — not simply present
+familiar information in a different visual style. When each screen invents its
+own visual language, the product stops feeling like one application.
+
+Before introducing ANY new UI element, ask: can this be built from existing
+primitives?
+- Existing typography scale
+- Existing property row / `DetailField`
+- Existing badges
+- Existing table (`InlineTable` / `UnifiedTablePage`)
+- Existing spacing and dividers
+- Existing `KpiBlock` / `KpiRow`
+
+If yes — do not invent. If a new component is introduced, the PR must justify
+why an existing component could not be used.
+
+### No card-within-card
+
+Inside a panel, sheet, or page section, content renders as **plain typography
+separated by spacing**. A bordered container is earned only by interaction (a
+form region, a clickable group). **Borders define interactive boundaries;
+spacing separates content.** A bordered box holding one static number, or a
+paragraph, is banned.
+
+### Never permanently display once-needed information
+
+No "About X" boxes or explainer paragraphs inside workflow surfaces. Users need
+a definition at most once; after that it is permanent noise pushing real data
+below the fold. If a definition is genuinely needed, use a `?` tooltip or a
+docs link. **Data always outranks explanation** (progressive disclosure).
+
+### Drilldown/detail summary = one caption+value line
+
+A drilldown panel's summary is a single line — muted caption on the left
+(context: cost code, count), `text-sm font-semibold tabular-nums` value on the
+right. Never a hero `text-2xl` stat. Hero metrics exist only via
+`KpiBlock`/`KpiRow` on dashboard surfaces. Reference: `SidebarStats` in
+`frontend/src/components/budget/modals/BaseSidebar.tsx`.
+
 ---
 
 ## 14a. MetricCard vs KpiBlock: When to Use Each

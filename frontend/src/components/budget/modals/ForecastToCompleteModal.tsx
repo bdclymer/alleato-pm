@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { BarChart3, Calculator, Plus, TrendingUp, Trash2 } from "lucide-react";
-import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
-  budgetRadioCardClass,
-} from "./style-tokens";
+import { budgetRadioCardClass } from "./style-tokens";
 
 type ForecastMethod =
   | "automatic"
@@ -451,39 +447,29 @@ export function ForecastToCompleteModal({
 
   return (
     <BaseSidebar open={open} onClose={handleClose} title="Forecast To Complete" size="lg">
+      {/* Single view — no tabs. A "History" tab existed but led to a
+          "coming soon" placeholder (noise-gate rule 18: no destination →
+          no affordance). Restore tabs only when history ships. */}
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <div className="shrink-0 px-4 sm:px-8">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger value="forecast" className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}>
-              Forecast
-            </TabsTrigger>
-            <TabsTrigger value="history" className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}>
-              History
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
         <SidebarBody>
           <TabsContent value="forecast" className="px-4 py-4 sm:px-8 space-y-4">
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Projected Budget</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(projectedBudget)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Projected Costs</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(projectedCosts)}
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-baseline justify-between gap-4 text-sm">
+              <p className="text-muted-foreground">
+                Projected Budget{" "}
+                <span className="ml-1 font-semibold tabular-nums text-foreground">
+                  {formatCurrency(projectedBudget)}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Projected Costs{" "}
+                <span className="ml-1 font-semibold tabular-nums text-foreground">
+                  {formatCurrency(projectedCosts)}
+                </span>
+              </p>
             </div>
 
             <div>
@@ -737,12 +723,6 @@ export function ForecastToCompleteModal({
                 </span>
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="history" className="px-4 py-5 sm:px-8">
-            <p className="text-sm text-muted-foreground text-center py-12">
-              Forecast history coming soon.
-            </p>
           </TabsContent>
         </SidebarBody>
       </Tabs>

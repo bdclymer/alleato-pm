@@ -90,6 +90,32 @@ export function SidebarFooter({
 }
 
 /**
+ * SidebarStats - the single summary line every drilldown panel renders above
+ * its table: muted context on the left (cost code · count), the total on the
+ * right. Plain typography from the type scale — no cards, no borders, no hero
+ * metrics (noise-gate rules 15/17: spacing separates content; borders are
+ * earned by interaction).
+ */
+export function SidebarStats({
+  summary,
+  value,
+}: {
+  summary: ReactNode;
+  value?: ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <p className="text-sm text-muted-foreground">{summary}</p>
+      {value != null && (
+        <p className="whitespace-nowrap text-sm font-semibold tabular-nums text-foreground">
+          {value}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * SidebarTabs - Tab navigation for sidebar using standard line tabs
  */
 export function SidebarTabs({

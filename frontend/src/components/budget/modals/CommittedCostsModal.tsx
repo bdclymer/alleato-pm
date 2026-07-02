@@ -5,6 +5,7 @@ import {
   BaseSidebar,
   SidebarBody,
   SidebarFooter,
+  SidebarStats,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,7 +86,7 @@ export function CommittedCostsModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -104,15 +105,16 @@ export function CommittedCostsModal({
     >
       <SidebarBody className="bg-background">
         <div className="p-4 sm:p-6 space-y-3">
-          {/* Inline stats */}
-          <div className="flex items-baseline justify-between">
-            <p className="text-sm text-muted-foreground">
-              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""} · Approved subcontracts, purchase orders, and commitment change orders for this cost code.
-            </p>
-            <p className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap ml-4">
-              {formatCurrency(totalAmount)}
-            </p>
-          </div>
+          <SidebarStats
+            summary={
+              <>
+                {costCode ? `${costCode} · ` : ""}
+                {commitments.length} commitment
+                {commitments.length === 1 ? "" : "s"}
+              </>
+            }
+            value={formatCurrency(totalAmount)}
+          />
 
           {/* Commitments Table */}
           <InlineTable variant="read">
@@ -171,7 +173,7 @@ export function CommittedCostsModal({
                       </span>
                     </InlineTableCell>
                     <InlineTableCell>
-                      {commitment.vendor || "-"}
+                      {commitment.vendor || ""}
                     </InlineTableCell>
                     <InlineTableCell
                       className="max-w-xs truncate"
@@ -187,9 +189,7 @@ export function CommittedCostsModal({
                         <span className="text-foreground text-xs font-medium">
                           {commitment.changeOrders}
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      ) : null}
                     </InlineTableCell>
                     <InlineTableCell>
                       {formatDate(commitment.executedDate)}

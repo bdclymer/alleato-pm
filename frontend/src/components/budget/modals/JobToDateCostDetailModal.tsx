@@ -5,6 +5,7 @@ import {
   BaseSidebar,
   SidebarBody,
   SidebarFooter,
+  SidebarStats,
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,7 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
-import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { DollarSign } from "lucide-react";
 
 interface DirectCostItem {
   id: string;
@@ -83,7 +82,7 @@ export function JobToDateCostDetailModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -126,43 +125,16 @@ export function JobToDateCostDetailModal({
 
       <SidebarBody className="bg-background">
         {activeTab === "costs" ? (
-          <div className="p-4 sm:p-6 space-y-4">
-            {/* Total Summary */}
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Total Job to Date Costs
-                  </p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(totalAmount)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Transactions</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {costs.length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="rounded-lg bg-muted/40 border border-border p-4">
-              <div className="flex items-start gap-4">
-                <DollarSign className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">
-                    About Job to Date Costs
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    These are approved direct costs including invoices, expenses,
-                    payroll, and subcontractor invoices that have been incurred
-                    and approved for this cost code.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="p-4 sm:p-6 space-y-3">
+            <SidebarStats
+              summary={
+                <>
+                  {costCode ? `${costCode} · ` : ""}
+                  {costs.length} transaction{costs.length === 1 ? "" : "s"}
+                </>
+              }
+              value={formatCurrency(totalAmount)}
+            />
 
             {/* Costs Table */}
             <InlineTable variant="read">
@@ -200,9 +172,9 @@ export function JobToDateCostDetailModal({
                     <InlineTableRow key={cost.id}>
                       <InlineTableCell
                         className="max-w-xs truncate"
-                        title={cost.description || "-"}
+                        title={cost.description || ""}
                       >
-                        {cost.description || "-"}
+                        {cost.description || ""}
                       </InlineTableCell>
                       <InlineTableCell>
                         <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
@@ -210,10 +182,10 @@ export function JobToDateCostDetailModal({
                         </span>
                       </InlineTableCell>
                       <InlineTableCell>
-                        {cost.vendor || "-"}
+                        {cost.vendor || ""}
                       </InlineTableCell>
                       <InlineTableCell className="font-mono">
-                        {cost.invoiceNumber || "-"}
+                        {cost.invoiceNumber || ""}
                       </InlineTableCell>
                       <InlineTableCell align="right" numeric className="font-semibold">
                         {formatCurrency(cost.amount)}
@@ -228,10 +200,15 @@ export function JobToDateCostDetailModal({
             </InlineTable>
           </div>
         ) : (
-          <div className="p-4 sm:p-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Cost breakdown by type for this budget line.
-            </p>
+          <div className="p-4 sm:p-6 space-y-3">
+            <SidebarStats
+              summary={
+                <>
+                  {costCode ? `${costCode} · ` : ""}by cost type
+                </>
+              }
+              value={formatCurrency(totalAmount)}
+            />
 
             <InlineTable variant="read">
               <InlineTableHeader>
