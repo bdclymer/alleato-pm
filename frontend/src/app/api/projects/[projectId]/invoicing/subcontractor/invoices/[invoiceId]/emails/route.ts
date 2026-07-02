@@ -8,6 +8,29 @@ import { sendDocumentEmail } from "@/lib/documents/email";
 import { fetchSubcontractorInvoicePdfData } from "../pdf/route";
 import { renderSubcontractorInvoicePdfBuffer } from "@/lib/subcontractor-invoice-pdf";
 
+function metadataRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function metadataText(value: unknown): string | null {
+  const metadata = metadataRecord(value);
+  for (const key of ["body", "body_text", "message", "text"]) {
+    const text = metadata[key];
+    if (typeof text === "string" && text.trim()) {
+      return text;
+    }
+  }
+  return null;
+}
+
 // GET → list emails sent for this invoice
 // POST → log a sent email { to_recipients[], cc_recipients?[], subject, body, email_type }
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
@@ -40,7 +63,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const serviceClient = createServiceClient();
     const { data: emailEvents, error: emailEventsError } = await serviceClient
       .from("email_events")
-      .select("id, from_email, to_email, subject, template, status, sent_at, created_at")
+      .select("id, from_email, to_email, subject, template, status, sent_at, created_at, metadata")
       .eq("entity_type", "subcontractor_invoice")
       .eq("entity_id", String(invoiceIdNum))
       .order("created_at", { ascending: false });
@@ -52,18 +75,39 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       );
     }
 
-    const eventRows = (emailEvents ?? []).map((event) => ({
-      id: event.id,
-      sent_by_email: event.from_email,
-      to_recipients: [event.to_email],
-      cc_recipients: [],
-      subject: event.subject,
-      email_type: event.template,
-      sent_at: event.sent_at ?? event.created_at,
-      status: event.status,
+    const loggedRows = (data ?? []).map((row) => ({
+      ...row,
+      id: `invoice-email-${row.id}`,
+      body_missing_reason: null,
     }));
 
-    return NextResponse.json({ data: [...(data ?? []), ...eventRows] });
+    const eventRows = (emailEvents ?? []).map((event) => {
+      const metadata = metadataRecord(event.metadata);
+      const body = metadataText(event.metadata);
+      return {
+        id: `email-event-${event.id}`,
+        sent_by_email: event.from_email,
+        to_recipients: stringArray(metadata.recipient_emails).length > 0
+          ? stringArray(metadata.recipient_emails)
+          : [event.to_email],
+        cc_recipients: stringArray(metadata.cc_emails),
+        subject: event.subject,
+        body,
+        body_missing_reason: body
+          ? null
+          : "The original body was not captured for this transactional email event.",
+        email_type: event.template,
+        sent_at: event.sent_at ?? event.created_at,
+        status: event.status,
+      };
+    });
+
+    const rows = [...loggedRows, ...eventRows].sort(
+      (a, b) =>
+        new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime(),
+    );
+
+    return NextResponse.json({ data: rows });
     },
 );
 
