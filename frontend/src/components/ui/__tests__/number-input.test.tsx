@@ -5,6 +5,21 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NumberInput } from "../number-input";
 
 describe("NumberInput", () => {
+  it("renders zero as placeholder content when clearZeroOnFocus is enabled", () => {
+    render(
+      <NumberInput
+        value="0"
+        onChange={() => undefined}
+        formatOnBlur={false}
+        clearZeroOnFocus
+        placeholder="0"
+      />,
+    );
+
+    const input = screen.getByPlaceholderText("0");
+    expect(input).toHaveValue("");
+  });
+
   it("replaces a focused zero value when the browser appends instead of replacing", () => {
     function Harness() {
       const [value, setValue] = React.useState("0");

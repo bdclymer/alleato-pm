@@ -13,6 +13,10 @@ interface NumberInputProps extends Omit<React.ComponentProps<"input">, "type" | 
   decimals?: number;
 }
 
+function isZeroLike(raw: string): boolean {
+  return raw === "0" || raw === "0.0" || raw === "0.00";
+}
+
 /**
  * Enhanced number input for non-currency numeric data entry (quantities, sq ft, etc.)
  *
@@ -85,6 +89,10 @@ function NumberInput({
   React.useEffect(() => {
     if (isFocusedRef.current) return
     const strVal = value === undefined || value === null ? "" : String(value)
+    if (clearZeroOnFocus && isZeroLike(strVal)) {
+      setDisplayValue("")
+      return
+    }
     if (formatOnBlur && strVal) {
       setDisplayValue(formatForDisplay(strVal))
     } else {
@@ -127,17 +135,14 @@ function NumberInput({
     isFocusedRef.current = true
     // Switch to raw number for clean editing
     const raw = sanitize(String(value ?? ""))
+    const startsAsPlaceholderZero = clearZeroOnFocus && isZeroLike(raw)
     focusedRawValueRef.current = raw
     replaceOnNextInputRef.current = raw.length > 0
-    setDisplayValue(raw)
+    setDisplayValue(startsAsPlaceholderZero ? "" : raw)
 
     if (autoSelectOnFocus) {
       e.target.setSelectionRange(0, e.target.value.length)
       requestAnimationFrame(() => e.target.select())
-    } else if (clearZeroOnFocus) {
-      if (raw === "0" || raw === "0.00" || raw === "0.0") {
-        setDisplayValue("")
-      }
     }
 
     onFocus?.(e)
@@ -149,6 +154,11 @@ function NumberInput({
     focusedRawValueRef.current = ""
     if (formatOnBlur) {
       const raw = sanitize(e.target.value)
+      if (clearZeroOnFocus && isZeroLike(raw)) {
+        setDisplayValue("")
+        onBlur?.(e)
+        return
+      }
       setDisplayValue(raw ? formatForDisplay(raw) : "")
     }
     onBlur?.(e)
