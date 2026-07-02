@@ -407,6 +407,9 @@ interface CellLinkProps {
   className?: string;
 }
 
+export const TABLE_LINK_CLASSNAME =
+  "text-foreground underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground/40";
+
 /** Clickable text that navigates to a detail page. Falls back to plain text when href is absent. */
 export function CellLink({
   value,
@@ -430,7 +433,7 @@ export function CellLink({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={cn("text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors", className)}
+        className={cn(TABLE_LINK_CLASSNAME, className)}
         onClick={(e) => e.stopPropagation()}
       >
         {display}
@@ -441,7 +444,7 @@ export function CellLink({
   return (
     <Link
       href={href}
-      className={cn("text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors", className)}
+      className={cn(TABLE_LINK_CLASSNAME, className)}
       onClick={(e) => e.stopPropagation()}
     >
       {display}

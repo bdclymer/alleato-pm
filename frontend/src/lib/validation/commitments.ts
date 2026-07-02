@@ -31,6 +31,7 @@ export const commitmentListItemSchema = z
     erp_status: z.string().nullable(),
     ssov_status: z.string().nullable(),
     approved_change_orders: z.number(),
+    change_order_count: z.number().int().nonnegative().optional(),
     pending_change_orders: z.number(),
     draft_change_orders: z.number(),
     invoiced_amount: z.number(),

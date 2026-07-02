@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { StatusBadge, type StatusVariant } from "@/components/ds/status-badge";
 import {
+  CellLink,
   type ColumnConfig,
   type FilterConfig,
   type TableColumn,
@@ -960,13 +961,11 @@ export function buildMeetingTableColumns(
               status={embeddingStatus.variant === "neutral" ? null : embeddingStatus.label}
               fallbackLabel={`Embedding: ${embeddingStatus.label}`}
             />
-            <a
+            <CellLink
+              value={titleText}
               href={getMeetingHref(item)}
-              className="font-medium truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-              onClick={(event) => event.stopPropagation()}
-            >
-              {titleText}
-            </a>
+              className="font-medium truncate"
+            />
             <Button
               variant="ghost"
               size="icon"

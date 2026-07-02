@@ -16,6 +16,7 @@ import {
   DOCUMENT_TYPE_OPTIONS,
   documentTypeLabel,
 } from "@/features/documents/document-types";
+import { TABLE_LINK_CLASSNAME } from "@/components/tables/unified";
 import type {
   ColumnConfig,
   FilterConfig,
@@ -282,18 +283,16 @@ export function buildDocumentTableColumns(opts?: {
       render: (item) => {
         if (onTitleClick) {
           return (
-            <Button
+            <button
               type="button"
-              variant="link"
-              size="sm"
               onClick={(event) => {
                 event.stopPropagation();
                 onTitleClick(item);
               }}
-              className="h-auto justify-start p-0 text-left font-medium text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
+              className={`h-auto max-w-full truncate p-0 text-left font-medium ${TABLE_LINK_CLASSNAME}`}
             >
               {item.title || "Untitled Document"}
-            </Button>
+            </button>
           );
         }
 
@@ -310,7 +309,7 @@ export function buildDocumentTableColumns(opts?: {
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
-            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
+            className={`font-medium ${TABLE_LINK_CLASSNAME}`}
           >
             {item.title || "Untitled Document"}
           </a>

@@ -32,6 +32,7 @@ export {
   CellStatus,
   CellBadge,
   CellLink,
+  TABLE_LINK_CLASSNAME,
   CellEmail,
   TruncatedCell,
   formatParticipantDisplayName,

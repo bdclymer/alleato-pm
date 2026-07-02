@@ -90,6 +90,7 @@ interface CoTotals {
   approved: number;
   pending: number;
   draft: number;
+  count: number;
 }
 
 interface PurchaseOrderScopeRow {
@@ -163,6 +164,7 @@ function mapRowToCommitment(
     updated_at: row.updated_at || new Date().toISOString(),
     erp_status: erpStatus,
     ssov_status: ssovStatus,
+    change_order_count: coTotals.count,
     pending_change_orders: pendingCOs,
     draft_change_orders: draftCOs,
     invoiced_amount: invoicedAmount,
@@ -451,9 +453,15 @@ export const GET = withApiGuardrails(
     const coTotalsById = new Map<string, CoTotals>();
     for (const co of (changeOrderRows.data || []) as CoAggRow[]) {
       if (!co.contract_id) continue;
-      const existing = coTotalsById.get(co.contract_id) ?? { approved: 0, pending: 0, draft: 0 };
+      const existing = coTotalsById.get(co.contract_id) ?? {
+        approved: 0,
+        pending: 0,
+        draft: 0,
+        count: 0,
+      };
       const amount = Number(co.amount) || 0;
       const status = (co.status || "draft").toLowerCase();
+      existing.count += 1;
       if (status === "approved" || status === "executed") {
         existing.approved += amount;
       } else if (status === "pending") {
@@ -464,7 +472,12 @@ export const GET = withApiGuardrails(
       coTotalsById.set(co.contract_id, existing);
     }
 
-    const emptyCoTotals: CoTotals = { approved: 0, pending: 0, draft: 0 };
+    const emptyCoTotals: CoTotals = {
+      approved: 0,
+      pending: 0,
+      draft: 0,
+      count: 0,
+    };
     const purchaseOrderScopeById = new Map<string, PurchaseOrderScopeRow>();
     for (const row of (purchaseOrderScopeRows.data || []) as PurchaseOrderScopeRow[]) {
       if (row.id) purchaseOrderScopeById.set(row.id, row);
