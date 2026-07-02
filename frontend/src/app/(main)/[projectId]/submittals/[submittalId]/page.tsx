@@ -71,6 +71,7 @@ export default async function SubmittalDetailPage({ params }: Props) {
     )
     .eq("project_id", parseInt(projectId, 10))
     .eq("id", submittalId)
+    .order("step_order", { foreignTable: "submittal_workflow_steps", ascending: true })
     .single();
 
   if (error || !submittal) {

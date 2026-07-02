@@ -6,9 +6,11 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
+  Eye,
   ExternalLink,
   Mail,
   MoreHorizontal,
+  Pencil,
   Trash2,
 } from "lucide-react";
 
@@ -91,7 +93,7 @@ const RESPONSE_STATUSES = [
   "Reviewed - No Exception",
 ] as const;
 
-const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
+const STEP_TYPES = ["Submitter", "Approver", "Reviewer"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -178,6 +180,27 @@ function getStepState(
   const hasPending = responses.some((r) => r.response_status === "Pending");
   if (hasPending) return "in-progress";
   return "done";
+}
+
+/**
+ * A step can only be actionable once every earlier step is done — workflow
+ * steps get a Pending response row as soon as they're added (see
+ * workflow-steps#POST), so an approver's own state is "in-progress" the
+ * moment they're added even if a submitter/reviewer ahead of them hasn't
+ * responded yet. This folds in step order so only the current step shows
+ * as active; later steps are forced back to "not-started" (greyed out)
+ * until their turn.
+ */
+function getEffectiveStepState(
+  steps: SubmittalDetail["submittal_workflow_steps"],
+  index: number,
+): StepState {
+  const ownState = getStepState(steps[index]);
+  if (ownState !== "in-progress") return ownState;
+  const priorStepsDone = steps
+    .slice(0, index)
+    .every((step) => getStepState(step) === "done");
+  return priorStepsDone ? "in-progress" : "not-started";
 }
 
 function getHistoryRecordMetadata(
@@ -323,7 +346,11 @@ function WorkflowBuilder({
 }: WorkflowBuilderProps) {
   const router = useRouter();
   const [userId, setUserId] = React.useState("");
-  const [stepType, setStepType] = React.useState<string>("Approver");
+  // The first step in a workflow is the submitter; every step after that
+  // defaults to an approver.
+  const [stepType, setStepType] = React.useState<string>(
+    currentSteps.length === 0 ? "Submitter" : "Approver",
+  );
   const [templateName, setTemplateName] = React.useState("");
   const [savingTemplate, setSavingTemplate] = React.useState(false);
   const mutation = useAddWorkflowStep(projectId, submittalId);
@@ -546,6 +573,7 @@ export function SubmittalDetailClient({
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
+  const [isEditMode, setIsEditMode] = React.useState(false);
   const { profile: currentUserProfile } = useCurrentUserProfile();
 
   const { users, allUsers } = useAuthUsers(String(projectId));
@@ -639,8 +667,8 @@ export function SubmittalDetailClient({
   const currentUser = allUsers.find((user) => user.id === currentUserId) ?? null;
   const currentUserPersonId =
     currentUser?.person_id ?? currentUserProfile?.personId ?? null;
-  const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
-    const isActive = getStepState(step) === "in-progress";
+  const aiReviewWorkflowResponseStep = workflowSteps.find((step, index) => {
+    const isActive = getEffectiveStepState(workflowSteps, index) === "in-progress";
     return (
       isActive &&
       currentUserId &&
@@ -813,6 +841,26 @@ export function SubmittalDetailClient({
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
+            {!submittal.deleted_at && (
+              <Button
+                variant={isEditMode ? "default" : "outline"}
+                size="sm"
+                aria-label={isEditMode ? "Switch to view mode" : "Switch to edit mode"}
+                onClick={() => setIsEditMode((v) => !v)}
+              >
+                {isEditMode ? (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Done editing
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </>
+                )}
+              </Button>
+            )}
             {submittal.status !== "Closed" && !submittal.deleted_at && (
               <Button
                 variant="ghost"
@@ -879,7 +927,7 @@ export function SubmittalDetailClient({
                         <SectionRuleHeading label="Workflow Progress" />
                         <div className="space-y-3 text-sm">
                           {workflowSteps.map((step, i) => {
-                            const state = getStepState(step);
+                            const state = getEffectiveStepState(workflowSteps, i);
                             return (
                               <SummaryValueRow
                                 key={step.id}
@@ -911,6 +959,7 @@ export function SubmittalDetailClient({
                         emptyPlaceholder="Select contractor"
                         options={companyOptions}
                         onSave={(v) => handleSaveField("responsible_contractor_id", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Submitted By"
@@ -929,6 +978,7 @@ export function SubmittalDetailClient({
                         }
                         options={receivedFromOptions}
                         onSave={(v) => handleSaveField("received_from_id", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Manager"
@@ -944,6 +994,7 @@ export function SubmittalDetailClient({
                           })),
                         ]}
                         onSave={(v) => handleSaveField("submittal_manager_id", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Ball in Court"
@@ -959,6 +1010,7 @@ export function SubmittalDetailClient({
                           })),
                         ]}
                         onSave={(v) => handleSaveField("ball_in_court", v || null)}
+                        disabled={!isEditMode}
                       />
                     </div>
                   </DetailPanel>
@@ -974,6 +1026,7 @@ export function SubmittalDetailClient({
                         display={submittal.sent_date ? formatDate(submittal.sent_date) : undefined}
                         emptyPlaceholder="Set date"
                         onSave={(v) => handleSaveField("sent_date", v || null)}
+                        disabled={!isEditMode}
                       />
                       <DetailField
                         label="Receive Date"
@@ -987,6 +1040,7 @@ export function SubmittalDetailClient({
                         display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
                         emptyPlaceholder="Set date"
                         onSave={(v) => handleSaveField("final_due_date", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Lead Time"
@@ -995,6 +1049,7 @@ export function SubmittalDetailClient({
                         display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
                         emptyPlaceholder="Set days"
                         onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Required on Site Date"
@@ -1003,6 +1058,7 @@ export function SubmittalDetailClient({
                         display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
                         emptyPlaceholder="Set date"
                         onSave={(v) => handleSaveField("required_on_site_date", v || null)}
+                        disabled={!isEditMode}
                       />
                     </div>
                   </DetailPanel>
@@ -1013,7 +1069,10 @@ export function SubmittalDetailClient({
                   <SectionRuleHeading
                     label="Workflow"
                     actions={
-                      <SectionAction onClick={() => setShowAddStep(s => !s)}>
+                      <SectionAction
+                        onClick={() => setShowAddStep((s) => !s)}
+                        disabled={!isEditMode}
+                      >
                         {showAddStep ? "Cancel" : "+ Add Step"}
                       </SectionAction>
                     }
@@ -1021,7 +1080,7 @@ export function SubmittalDetailClient({
                   {workflowSteps.length > 0 ? (
                     <div className="mt-1 overflow-hidden rounded-md border border-border">
                       {workflowSteps.map((step, idx) => {
-                        const state = getStepState(step);
+                        const state = getEffectiveStepState(workflowSteps, idx);
                         const responder = step.submittal_responses?.[0]?.responder_id;
                         const responderName = responder ? resolveUserName(allUsers, responder) : null;
                         const isActive = state === "in-progress";
@@ -1119,12 +1178,14 @@ export function SubmittalDetailClient({
                         label="Number"
                         value={submittal.submittal_number ?? ""}
                         onSave={(v) => handleSaveField("submittal_number", v)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Spec Section"
                         value={submittal.specification_section ?? ""}
                         emptyPlaceholder="e.g. 08-1113"
                         onSave={(v) => handleSaveField("specification_section", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Package"
@@ -1137,6 +1198,7 @@ export function SubmittalDetailClient({
                           ...submittalPackages.map((p) => ({ value: p.id, label: p.name })),
                         ]}
                         onSave={(v) => handleSaveField("submittal_package_id", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Revision"
@@ -1144,6 +1206,7 @@ export function SubmittalDetailClient({
                         value={submittal.revision != null ? String(submittal.revision) : ""}
                         display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
                         onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
+                        disabled={!isEditMode}
                       />
                       <DetailField label="Linked Drawings">
                         <DropdownMenu>
@@ -1151,6 +1214,7 @@ export function SubmittalDetailClient({
                             <Button
                               type="button"
                               variant="link"
+                              disabled={!isEditMode}
                               className="h-auto px-0 text-sm text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
                             >
                               Drawing
@@ -1196,6 +1260,7 @@ export function SubmittalDetailClient({
                         value={submittal.description ?? ""}
                         emptyPlaceholder="Add a description"
                         onSave={(v) => handleSaveField("description", v || null)}
+                        disabled={!isEditMode}
                       />
                     </div>
                   </DetailPanel>

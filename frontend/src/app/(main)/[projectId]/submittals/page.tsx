@@ -15,6 +15,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  Settings,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -2091,6 +2092,15 @@ export default function SubmittalsPage(): ReactElement {
           description: "Manage submittal items, packages, and review workflows",
           actions: (
             <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Submittal settings"
+                title="Submittal settings"
+                onClick={() => router.push(`/${projectId}/submittals?tab=settings`)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               {activeTab === "packages" && (
                 <Button
                   size="sm"

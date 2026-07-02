@@ -46,4 +46,10 @@ test.describe('Submittals smoke', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Select a Package' })).toBeVisible();
   });
+
+  test('settings gear navigates to submittal settings', async ({ page }) => {
+    await page.getByRole('button', { name: 'Submittal settings' }).click();
+    await expect(page).toHaveURL(new RegExp('tab=settings'));
+    await expect(page.getByTestId('submittals-tab-settings')).toBeVisible();
+  });
 });
