@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Trash2, XCircle } from "lucide-react";
+import { ArrowLeft, Github, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
 import {
   Button,
   Select,
@@ -20,6 +20,7 @@ import { STATUS_OPTIONS, REQUEST_TYPE_LABELS } from "../constants";
 import {
   submitterLabel,
   toDisplayStatus,
+  toolLabelFromPath,
 } from "../helpers";
 import type { AgentTarget, DisplayStatus, FeedbackItem } from "../types";
 
@@ -65,6 +66,7 @@ export function FeedbackDetail({
     targetText: item.target_text,
     pageTitle: item.page_title,
   });
+  const toolLabel = toolLabelFromPath(item.page_path);
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -109,35 +111,6 @@ export function FeedbackDetail({
               <h2 className="text-lg font-semibold leading-snug text-foreground">
                 {displayTitle}
               </h2>
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-foreground">
-                {item.github_issue_url && (
-                  <a
-                    href={item.github_issue_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-foreground transition-colors hover:text-muted-foreground"
-                  >
-                    <Github className="h-3.5 w-3.5" />
-                    {item.github_issue_number}
-                  </a>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  className="h-auto rounded px-0 py-0 text-xs font-normal text-foreground transition-colors hover:bg-transparent hover:text-muted-foreground"
-                  onClick={() => {
-                    navigator.clipboard.writeText(item.id);
-                    toast.success("ID copied to clipboard");
-                  }}
-                  title={`Copy full ID: ${item.id}`}
-                >
-                  <span className="font-sans text-xs font-normal text-foreground">
-                    ID:
-                  </span>
-                  {item.id.slice(0, 8)}
-                </Button>
-              </div>
             </div>
             <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-muted-foreground">
               {new Date(item.created_at).toLocaleDateString("en-US", {
@@ -150,74 +123,116 @@ export function FeedbackDetail({
             </span>
           </div>
 
-          {/* Inline metadata row.
-              Status is the only interactive field. Request type and severity
-              are static — no fake chevrons. */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <Select
-              value={displayStatus}
-              onValueChange={(value) =>
-                onUpdateStatus(item.id, value as DisplayStatus)
-              }
-              disabled={updatingId === item.id}
-            >
-              <SelectTrigger
-                aria-label="Feedback status"
-                size="sm"
-                className={cn(
-                  "h-auto w-auto min-w-0 gap-1 rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-medium shadow-none hover:bg-muted/80 focus-visible:ring-1",
-                  displayStatus === "resolved" &&
-                    "bg-status-success/10 text-status-success hover:bg-status-success/15",
-                  displayStatus === "open" &&
-                    "bg-status-warning/10 text-status-warning hover:bg-status-warning/15",
-                  (displayStatus === "in_progress" || displayStatus === "pr_created") &&
-                    "bg-status-info/10 text-status-info hover:bg-status-info/15",
-                  displayStatus === "deferred" &&
-                    "bg-muted text-muted-foreground",
-                )}
+          {/* Properties row — icon + field pattern */}
+          <div className="mt-6 space-y-3">
+            {/* Status pill */}
+            <div className="flex items-center gap-3">
+              <Select
+                value={displayStatus}
+                onValueChange={(value) =>
+                  onUpdateStatus(item.id, value as DisplayStatus)
+                }
+                disabled={updatingId === item.id}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  aria-label="Feedback status"
+                  size="sm"
+                  className={cn(
+                    "h-auto w-auto min-w-0 gap-1 rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-medium shadow-none hover:bg-muted/80 focus-visible:ring-1",
+                    displayStatus === "resolved" &&
+                      "bg-status-success/10 text-status-success hover:bg-status-success/15",
+                    displayStatus === "open" &&
+                      "bg-status-warning/10 text-status-warning hover:bg-status-warning/15",
+                    (displayStatus === "in_progress" || displayStatus === "pr_created") &&
+                      "bg-status-info/10 text-status-info hover:bg-status-info/15",
+                    displayStatus === "deferred" &&
+                      "bg-muted text-muted-foreground",
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <span className="inline-flex items-center text-xs text-muted-foreground">
-              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-            </span>
+            {/* GitHub issue link */}
+            {item.github_issue_url && (
+              <div className="flex items-center gap-3">
+                <Github className="h-4 w-4 text-muted-foreground shrink-0" />
+                <a
+                  href={item.github_issue_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline"
+                >
+                  #{item.github_issue_number}
+                </a>
+              </div>
+            )}
 
+            {/* Priority */}
             {item.severity && (
-              <span
-                className={cn(
-                  "inline-flex items-center text-xs",
+              <div className="flex items-center gap-3">
+                <AlertCircle className={cn(
+                  "h-4 w-4 shrink-0",
                   item.severity === "high" && "text-status-error",
                   item.severity === "medium" && "text-status-warning",
                   item.severity === "low" && "text-muted-foreground",
-                )}
-              >
-                Priority: {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-              </span>
+                )} />
+                <span className="text-xs text-foreground">
+                  {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
+                </span>
+              </div>
             )}
 
-            <span className="text-xs text-foreground">
-              {submitterLabel(item)}
-            </span>
+            {/* Type */}
+            <div className="flex items-center gap-3">
+              <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-xs text-foreground">
+                {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+              </span>
+            </div>
 
+            {/* Tool */}
+            {toolLabel && (
+              <div className="flex items-center gap-3">
+                <a
+                  href={item.page_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <span className="text-xs text-muted-foreground font-medium">{toolLabel}</span>
+                </a>
+              </div>
+            )}
+
+            {/* Submitter */}
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-xs text-foreground">
+                {submitterLabel(item)}
+              </span>
+            </div>
+
+            {/* Create GitHub issue button */}
             {!item.github_issue_number && (
-              <Button
-                size="xs"
-                variant="link"
-                onClick={() => onSendToGitHub(item.id)}
-                disabled={sendingToGitHub}
-                className="h-auto p-0 text-xs font-medium"
-              >
-                {sendingToGitHub ? "Sending..." : "Create Issue"}
-              </Button>
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  onClick={() => onSendToGitHub(item.id)}
+                  disabled={sendingToGitHub}
+                  className="h-auto text-xs font-medium"
+                >
+                  {sendingToGitHub ? "Creating..." : "Create GitHub Issue"}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -262,13 +277,6 @@ export function FeedbackDetail({
           )}
         </div>
 
-        {/* Tool Context — promoted out of Developer accordion.
-            For an admin triaging Procore feedback, the tool IS the work. */}
-        <section className="space-y-3">
-          <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
-          <ToolContextSection item={item} />
-        </section>
-
         {/* Comments */}
         <div>
           <CommentsSection
@@ -288,12 +296,34 @@ export function FeedbackDetail({
           </section>
         )}
 
-        {/* Debug — selector, raw metadata, dangerous actions */}
+        {/* Debug — tool context, page context, metadata, dangerous actions */}
         <CollapsibleDetailSection key={`${item.id}-debug`} label="Debug">
           <div className="space-y-8">
+            {/* Tool Context */}
+            <section className="space-y-3">
+              <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
+              <ToolContextSection item={item} />
+            </section>
+
             <section className="space-y-3">
               <SectionRuleHeading label="Page Context" className="mb-0 pb-0" />
               <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">ID</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-auto rounded px-0 py-0 text-xs font-normal text-foreground transition-colors hover:bg-transparent hover:text-muted-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.id);
+                      toast.success("ID copied to clipboard");
+                    }}
+                    title={`Copy full ID: ${item.id}`}
+                  >
+                    <code className="font-mono text-xs">{item.id}</code>
+                  </Button>
+                </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="w-16 shrink-0 text-muted-foreground">Page</span>
                   <a

@@ -1,5 +1,6 @@
 "use client";
 
+import { Github } from "lucide-react";
 import { Button } from "@/components/ds";
 import { displayAdminFeedbackTitle, isCommentRedundantWithTitle } from "@/lib/admin-feedback/title";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,6 @@ function FeedbackQueueItem({
     pageTitle: item.page_title,
   });
   const toolLabel = toolLabelFromPath(item.page_path);
-  const shouldShowStatus = displayStatus !== "open";
   const showCommentPreview = !isCommentRedundantWithTitle(itemDisplayTitle, item.comment);
 
   return (
@@ -83,30 +83,44 @@ function FeedbackQueueItem({
             </span>
           </span>
 
-          <span className="mt-1.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            {shouldShowStatus && (
-              <>
-                <span className="font-medium text-foreground">{meta.label}</span>
-                <span aria-hidden="true">/</span>
-              </>
-            )}
-            {toolLabel && (
-              <>
-                <span className="truncate">{toolLabel}</span>
-                <span aria-hidden="true">/</span>
-              </>
-            )}
-            <span className="truncate">{submitterLabel(item)}</span>
-            {item.github_issue_number && (
-              <span className="ml-auto shrink-0">
-                #{item.github_issue_number}
+          {/* Pills for status, priority, tool, GitHub issue */}
+          <span className="mt-2 flex flex-wrap items-center gap-2">
+            {/* Status pill */}
+            <span className={cn(
+              "inline-flex items-center text-xs font-medium px-2 py-1 rounded-full",
+              displayStatus === "resolved" && "bg-status-success/10 text-status-success",
+              displayStatus === "open" && "bg-status-warning/10 text-status-warning",
+              (displayStatus === "in_progress" || displayStatus === "pr_created") && "bg-status-info/10 text-status-info",
+              displayStatus === "deferred" && "bg-muted text-muted-foreground",
+            )}>
+              {meta.label}
+            </span>
+
+            {/* Priority pill */}
+            {item.severity === "high" && (
+              <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-status-error/10 text-status-error">
+                High priority
               </span>
             )}
-            {item.severity === "high" && (
-              <>
-                <span aria-hidden="true">/</span>
-                <span className="shrink-0 font-medium text-status-error">High</span>
-              </>
+
+            {/* Tool pill */}
+            {toolLabel && (
+              <span className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                {toolLabel}
+              </span>
+            )}
+
+            {/* GitHub issue link */}
+            {item.github_issue_number && (
+              <a
+                href={item.github_issue_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
+              >
+                <Github className="h-3 w-3" />
+                #{item.github_issue_number}
+              </a>
             )}
           </span>
         </span>
