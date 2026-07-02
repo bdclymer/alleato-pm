@@ -357,7 +357,7 @@ export function SubcontractorInvoiceDetail({
 
   if (isLoading) {
     return (
-      <PageShell variant="detailWide" title="Loading invoice…">
+      <PageShell variant="detail" title="Loading invoice…">
         <div className="px-6 py-4">
           <p className="text-sm text-muted-foreground">Loading…</p>
         </div>
@@ -367,7 +367,7 @@ export function SubcontractorInvoiceDetail({
 
   if (error || !invoice) {
     return (
-      <PageShell variant="detailWide" title="Invoice not found">
+      <PageShell variant="detail" title="Invoice not found">
         <div className="px-6 py-4 space-y-3">
           <p className="text-sm text-muted-foreground">
             {error instanceof Error
@@ -413,7 +413,7 @@ export function SubcontractorInvoiceDetail({
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="detail"
       title={title}
       description={
         invoice.contract_number
