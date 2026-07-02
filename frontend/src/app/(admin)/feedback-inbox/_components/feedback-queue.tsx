@@ -85,12 +85,15 @@ function FeedbackQueueItem({
             </span>
           </span>
 
-          <span className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <span className="mt-2 flex min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
             <span
               className={cn("h-2 w-2 shrink-0 rounded-full", meta.dotClassName)}
-              aria-hidden
+              aria-label={meta.label}
+              title={meta.label}
             />
-            <span className="shrink-0">{meta.label}</span>
+            <span className="min-w-0 shrink truncate">
+              {submitterLabel(item)}
+            </span>
             <span aria-hidden className="text-border">
               /
             </span>

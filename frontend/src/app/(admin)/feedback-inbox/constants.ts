@@ -27,6 +27,7 @@ export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 ];
 
 export const FEEDBACK_STATUS_TABS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All" },
   { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
