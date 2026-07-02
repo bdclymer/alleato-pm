@@ -1873,11 +1873,22 @@ velt-comments-sidebar velt-comment-dialog-status-dropdown-wireframe,
 velt-comments-sidebar-v2 velt-comment-dialog-status-dropdown-wireframe,
 velt-comments-sidebar velt-comment-dialog-status-wireframe,
 velt-comments-sidebar-v2 velt-comment-dialog-status-wireframe,
-velt-comments-sidebar velt-comment-dialog-resolve-button-wireframe,
-velt-comments-sidebar-v2 velt-comment-dialog-resolve-button-wireframe,
 velt-comments-sidebar velt-comment-dialog-thread-card-reply-wireframe,
 velt-comments-sidebar-v2 velt-comment-dialog-thread-card-reply-wireframe {
   display: none !important;
+}
+
+/* Give the discussion rail enough width to read naturally, and keep the single
+   resolve action available without bringing back status dropdown noise. */
+velt-comments-sidebar,
+velt-comments-sidebar-v2 {
+  width: min(32rem, calc(100vw - 1.5rem)) !important;
+  max-width: min(32rem, calc(100vw - 1.5rem)) !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-resolve-button-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-resolve-button-wireframe {
+  display: inline-flex !important;
 }
 
 /* Strip the giant orange "Assigned to" banner block if the SDK still renders
@@ -1902,6 +1913,15 @@ velt-comments-sidebar velt-comment-dialog-thread-card-message,
 velt-comments-sidebar-v2 velt-comment-dialog-thread-card-message {
   font-size: 0.975rem !important;
   line-height: 1.6 !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card + velt-comment-dialog-thread-card,
+velt-comments-sidebar-v2
+  velt-comment-dialog-thread-card
+  + velt-comment-dialog-thread-card {
+  border-top: 1px solid hsl(var(--border) / 0.6) !important;
+  margin-top: 1rem !important;
+  padding-top: 1rem !important;
 }
 
 velt-comments-sidebar velt-comment-dialog-thread-card-time,

@@ -2,21 +2,35 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Inbox, MessageCircle, PanelLeft } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Inbox,
+  MessageCircle,
+  PanelLeft,
+} from "lucide-react";
 import useSWR from "swr";
+
 import { apiFetch } from "@/lib/api-client";
 import type { AllCommentItem } from "@/app/api/comments/all/route";
 import { EmptyState, ErrorState } from "@/components/ds";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
+import {
+  SplitPage,
+  SplitPageFrame,
+  useSplitPage,
+} from "@/components/ui/split-page";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { cn } from "@/lib/utils";
 import {
+  cleanCommentPreview,
   type CommentScope,
   documentLabel,
   filterComments,
   isResolved,
+  matchesCurrentUser,
   relativeTimeLabel,
   sanitizeComments,
   scopeLabels,
@@ -24,6 +38,11 @@ import {
   statusLabel,
   timeLabel,
 } from "@/app/(main)/comments/comments-page-utils";
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
+
+const PRIMARY_SCOPES: CommentScope[] = ["all", "mine", "mentions", "unresolved"];
+const SECONDARY_SCOPES: CommentScope[] = ["resolved"];
 
 function initials(name: string): string {
   return (
@@ -42,6 +61,7 @@ function CommentsListPane({
   scope,
   scopeCounts,
   query,
+  currentUserName,
   onQueryChange,
   onScopeChange,
   onSelect,
@@ -51,6 +71,7 @@ function CommentsListPane({
   scope: CommentScope;
   scopeCounts: Record<CommentScope, number>;
   query: string;
+  currentUserName: string | null;
   onQueryChange: (value: string) => void;
   onScopeChange: (scope: CommentScope) => void;
   onSelect: (comment: AllCommentItem) => void;
@@ -59,13 +80,13 @@ function CommentsListPane({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border/70 px-5 py-4">
+      <div className="border-b border-border/60 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
-            Comments
+          <p className="text-xl font-semibold tracking-tight text-foreground">
+            Discussion
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Scan open discussion and jump back to the source page.
+            {comments.length} visible threads
           </p>
         </div>
 
@@ -75,18 +96,49 @@ function CommentsListPane({
             onChange={onQueryChange}
             placeholder="Search comments"
             ariaLabel="Search comments"
+            defaultExpanded
           />
         </div>
 
-        <div className="mt-4 flex gap-1">
-          {(Object.keys(scopeLabels) as CommentScope[]).map((value) => (
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {PRIMARY_SCOPES.map((value) => (
             <Button
               key={value}
               type="button"
-              variant={scope === value ? "secondary" : "ghost"}
+              variant="ghost"
               size="sm"
               onClick={() => onScopeChange(value)}
-              className="h-8 flex-1 px-2 text-xs"
+              className={cn(
+                "h-8 rounded-full px-3 text-xs font-medium",
+                scope === value
+                  ? "bg-foreground text-background hover:bg-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {scopeLabels[value]}
+              <span
+                className={cn(
+                  "ml-1 text-[11px]",
+                  scope === value ? "text-background/70" : "text-muted-foreground",
+                )}
+              >
+                {scopeCounts[value]}
+              </span>
+            </Button>
+          ))}
+          {SECONDARY_SCOPES.map((value) => (
+            <Button
+              key={value}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onScopeChange(value)}
+              className={cn(
+                "h-8 rounded-full px-3 text-xs font-medium",
+                scope === value
+                  ? "bg-muted text-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
             >
               {scopeLabels[value]}
               <span className="ml-1 text-[11px] text-muted-foreground">
@@ -116,12 +168,22 @@ function CommentsListPane({
                 }}
                 variant="ghost"
                 className={cn(
-                  "h-auto w-full justify-start rounded-none border-b border-border/60 px-5 py-4 text-left font-normal transition-colors",
+                  "h-auto w-full justify-start rounded-none px-5 py-4 text-left font-normal transition-colors",
                   selected ? "bg-muted/50 hover:bg-muted/50" : "hover:bg-muted/30",
                 )}
               >
-                <Avatar className="mt-0.5 h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
+                <span
+                  className={cn(
+                    "mt-1 h-2 w-2 shrink-0 rounded-full",
+                    isResolved(comment)
+                      ? "bg-border"
+                      : matchesCurrentUser(comment, currentUserName)
+                        ? "bg-primary/65"
+                        : "bg-foreground/40",
+                  )}
+                />
+                <Avatar className="mt-0.5 h-6 w-6 shrink-0">
+                  <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
                     {initials(comment.authorName)}
                   </AvatarFallback>
                 </Avatar>
@@ -135,11 +197,11 @@ function CommentsListPane({
                     </span>
                   </span>
                   <span className="mt-1 block line-clamp-2 text-sm text-foreground">
-                    {comment.preview}
+                    {cleanCommentPreview(comment.preview)}
                   </span>
                   <span className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>{documentLabel(comment.documentId)}</span>
-                    <span>{statusLabel(comment)}</span>
+                    {!isResolved(comment) ? <span>{statusLabel(comment)}</span> : null}
                     {comment.replyCount > 0 ? (
                       <span>
                         {comment.replyCount}{" "}
@@ -168,7 +230,7 @@ function CommentsDetailWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border/70 px-5 py-4">
+      <div className="border-b border-border/60 px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -188,11 +250,11 @@ function CommentsDetailWorkspace({
               )}
               <div className="min-w-0">
                 <p className="text-lg font-semibold text-foreground">
-                  {selectedComment ? selectedComment.authorName : "Comment details"}
+                  Discussion
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {selectedComment
-                    ? documentLabel(selectedComment.documentId)
+                    ? `${selectedComment.authorName} · ${documentLabel(selectedComment.documentId)}`
                     : `${total} comments across Alleato`}
                 </p>
               </div>
@@ -212,11 +274,11 @@ function CommentsDetailWorkspace({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {selectedComment ? (
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-5 py-8 lg:px-8">
-            <section className="space-y-4">
+          <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-8 lg:px-10">
+            <section className="space-y-5">
               <div className="flex items-start gap-3">
-                <Avatar className="mt-0.5 h-10 w-10 shrink-0">
-                  <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
+                <Avatar className="mt-0.5 h-7 w-7 shrink-0">
+                  <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
                     {initials(selectedComment.authorName)}
                   </AvatarFallback>
                 </Avatar>
@@ -231,11 +293,11 @@ function CommentsDetailWorkspace({
               </div>
 
               <div className="max-w-3xl whitespace-pre-wrap text-sm leading-7 text-foreground">
-                {selectedComment.preview}
+                {cleanCommentPreview(selectedComment.preview)}
               </div>
             </section>
 
-            <section className="border-t border-border/70 pt-6 text-sm sm:flex sm:flex-wrap sm:gap-10">
+            <section className="border-t border-border/60 pt-6 text-sm sm:flex sm:flex-wrap sm:gap-10">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Status
@@ -294,22 +356,60 @@ function CommentsPageEmptyState() {
     <div className="flex h-svh w-full items-center justify-center bg-background p-6">
       <EmptyState
         icon={<MessageCircle className="h-6 w-6" />}
-        title="No comments yet"
-        description="Comments left from page headers will collect here."
+        title="No discussion yet."
+        description="Add the first comment."
       />
     </div>
   );
 }
 
 export function CommentsSplitPage() {
-  const [scope, setScope] = React.useState<CommentScope>("active");
-  const [query, setQuery] = React.useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [currentUserName, setCurrentUserName] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+
+  const scopeParam = searchParams.get("scope");
+  const query = searchParams.get("q") ?? "";
+  const scope = React.useMemo<CommentScope>(() => {
+    return (Object.keys(scopeLabels) as CommentScope[]).includes(
+      scopeParam as CommentScope,
+    )
+      ? (scopeParam as CommentScope)
+      : "unresolved";
+  }, [scopeParam]);
 
   const { data, error, isLoading } = useSWR<{ comments: AllCommentItem[] }>(
     "/api/comments/all",
     (url: string) => apiFetch<{ comments: AllCommentItem[] }>(url),
   );
+
+  React.useEffect(() => {
+    let active = true;
+
+    const loadCurrentUser = async () => {
+      try {
+        const supabase = createClient();
+        const user = await getCurrentBrowserUser(supabase);
+        if (!active) return;
+
+        setCurrentUserName(
+          user?.user_metadata?.full_name ??
+            user?.user_metadata?.name ??
+            user?.email ??
+            null,
+        );
+      } catch {
+        if (active) setCurrentUserName(null);
+      }
+    };
+
+    void loadCurrentUser();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const comments = React.useMemo(() => {
     const rows = sanitizeComments(data?.comments ?? []);
@@ -317,8 +417,34 @@ export function CommentsSplitPage() {
   }, [data]);
 
   const filteredComments = React.useMemo(() => {
-    return filterComments(comments, scope, query);
-  }, [comments, query, scope]);
+    return filterComments(comments, scope, query, currentUserName);
+  }, [comments, currentUserName, query, scope]);
+
+  const updateUrlState = React.useCallback(
+    (next: { scope?: CommentScope; query?: string }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const nextScope = next.scope ?? scope;
+      const nextQuery = next.query ?? query;
+
+      if (nextScope === "unresolved") {
+        params.delete("scope");
+      } else {
+        params.set("scope", nextScope);
+      }
+
+      if (nextQuery.trim()) {
+        params.set("q", nextQuery.trim());
+      } else {
+        params.delete("q");
+      }
+
+      const nextUrl = params.toString()
+        ? `${pathname}?${params.toString()}`
+        : pathname;
+      router.replace(nextUrl, { scroll: false });
+    },
+    [pathname, query, router, scope, searchParams],
+  );
 
   React.useEffect(() => {
     if (!selectedId && filteredComments.length > 0) {
@@ -338,13 +464,24 @@ export function CommentsSplitPage() {
     filteredComments.find((comment) => comment.annotationId === selectedId) ?? null;
 
   const total = comments.length;
-  const activeCount = comments.filter((comment) => !isResolved(comment)).length;
-  const resolvedCount = total - activeCount;
+  const unresolvedCount = comments.filter((comment) => !isResolved(comment)).length;
+  const resolvedCount = total - unresolvedCount;
+  const mineCount = comments.filter((comment) =>
+    matchesCurrentUser(comment, currentUserName),
+  ).length;
+  const mentionCount = filterComments(
+    comments,
+    "mentions",
+    "",
+    currentUserName,
+  ).length;
 
   const scopeCounts: Record<CommentScope, number> = {
-    active: activeCount,
-    resolved: resolvedCount,
+    unresolved: unresolvedCount,
     all: total,
+    mine: mineCount,
+    mentions: mentionCount,
+    resolved: resolvedCount,
   };
 
   if (isLoading) {
@@ -365,7 +502,7 @@ export function CommentsSplitPage() {
         breakpoint="lg"
         defaultIsOpen
         className="min-h-0 flex-1"
-        firstPaneClassName="w-full lg:w-[24rem] lg:border-r lg:border-border/70"
+        firstPaneClassName="w-full lg:w-[25rem] lg:border-r lg:border-border/60"
       >
         <CommentsListPane
           comments={filteredComments}
@@ -373,8 +510,9 @@ export function CommentsSplitPage() {
           scope={scope}
           scopeCounts={scopeCounts}
           query={query}
-          onQueryChange={setQuery}
-          onScopeChange={setScope}
+          currentUserName={currentUserName}
+          onQueryChange={(value) => updateUrlState({ query: value })}
+          onScopeChange={(value) => updateUrlState({ scope: value })}
           onSelect={(comment) => setSelectedId(comment.annotationId)}
         />
         <CommentsDetailWorkspace selectedComment={selectedComment} total={total} />

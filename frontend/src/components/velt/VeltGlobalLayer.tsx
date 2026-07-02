@@ -237,8 +237,6 @@ export function VeltGlobalLayer() {
         commentIndex={false}
         status={false}
         priority={false}
-        resolveButton={false}
-        sidebarButtonOnCommentDialog
         attachmentNameInMessage
         allowedElementIds={["app-main-content"]}
         commentToNearestAllowedElement

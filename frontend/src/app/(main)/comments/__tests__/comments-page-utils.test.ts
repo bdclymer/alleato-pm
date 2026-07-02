@@ -1,7 +1,9 @@
 import type { AllCommentItem } from "@/app/api/comments/all/route";
 import {
+  cleanCommentPreview,
   documentLabel,
   filterComments,
+  matchesMention,
   relativeTimeLabel,
   sanitizeComments,
   sortComments,
@@ -54,9 +56,19 @@ describe("comments page utilities", () => {
     ]);
   });
 
-  it("filters by active, resolved, all, and source text search", () => {
+  it("filters by unresolved, resolved, all, mine, mentions, and source text search", () => {
     const rows = [
       comment({ annotationId: "open", preview: "KPI cards should link to home" }),
+      comment({
+        annotationId: "mine",
+        authorName: "Megan Harrison",
+        preview: "I can take this thread",
+      }),
+      comment({
+        annotationId: "mention",
+        authorName: "Brandon C.",
+        preview: "@Megan Harrison can you review this row?",
+      }),
       comment({
         annotationId: "resolved",
         preview: "Old thread",
@@ -65,13 +77,27 @@ describe("comments page utilities", () => {
       }),
     ];
 
-    expect(filterComments(rows, "active", "").map((row) => row.annotationId)).toEqual(["open"]);
+    expect(filterComments(rows, "unresolved", "").map((row) => row.annotationId)).toEqual([
+      "open",
+      "mine",
+      "mention",
+    ]);
     expect(filterComments(rows, "resolved", "").map((row) => row.annotationId)).toEqual([
       "resolved",
     ]);
     expect(filterComments(rows, "all", "67 / submittals").map((row) => row.annotationId)).toEqual([
       "resolved",
     ]);
+    expect(
+      filterComments(rows, "mine", "", "Megan Harrison").map(
+        (row) => row.annotationId,
+      ),
+    ).toEqual(["open", "mine", "resolved"]);
+    expect(
+      filterComments(rows, "mentions", "", "Megan Harrison").map(
+        (row) => row.annotationId,
+      ),
+    ).toEqual(["mention"]);
   });
 
   it("removes excluded annotation ids from the inbox feed", () => {
@@ -89,7 +115,24 @@ describe("comments page utilities", () => {
     const now = Date.UTC(2026, 5, 25, 12, 10, 0);
 
     expect(statusLabel(comment({ statusName: null }))).toBe("Open");
-    expect(relativeTimeLabel(Date.UTC(2026, 5, 25, 12, 5, 0), now)).toBe("5m ago");
+    expect(relativeTimeLabel(Date.UTC(2026, 5, 25, 12, 5, 0), now)).toBe("5m");
     expect(relativeTimeLabel(null, now)).toBe("Unknown");
+  });
+
+  it("detects lightweight @mentions from preview text", () => {
+    expect(
+      matchesMention(comment({ preview: "@Megan please review" }), "Megan Harrison"),
+    ).toBe(true);
+    expect(
+      matchesMention(comment({ preview: "No direct mention here" }), "Megan Harrison"),
+    ).toBe(false);
+  });
+
+  it("strips Velt placeholder tokens from previews", () => {
+    expect(
+      cleanCommentPreview(
+        "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Page should look cleaner",
+      ),
+    ).toBe("Page should look cleaner");
   });
 });
