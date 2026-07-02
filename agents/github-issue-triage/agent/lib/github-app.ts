@@ -84,22 +84,32 @@ export async function issueAlreadyTriaged(repoRef: RepoRef, issueNumber: number)
     : false;
 }
 
-export async function upsertTriageComment(
+export async function findExistingTriageComment(
   repoRef: RepoRef,
   issueNumber: number,
-  body: string,
-): Promise<"created" | "updated"> {
+): Promise<GitHubIssueComment | null> {
   const installation = await getInstallationContext(repoRef);
   const comments = await githubInstallationRequest<unknown[]>(
     installation.token,
     `/repos/${repoRef.owner}/${repoRef.repo}/issues/${issueNumber}/comments?per_page=100`,
   );
 
-  const existing = Array.isArray(comments)
-    ? comments.map(normalizeComment).filter((comment): comment is GitHubIssueComment => comment !== null)
-      .reverse()
-      .find((comment) => comment.body.includes("## Eve GitHub Triage"))
+  return Array.isArray(comments)
+    ? comments
+        .map(normalizeComment)
+        .filter((comment): comment is GitHubIssueComment => comment !== null)
+        .reverse()
+        .find((comment) => comment.body.includes("## Eve GitHub Triage")) ?? null
     : null;
+}
+
+export async function upsertTriageComment(
+  repoRef: RepoRef,
+  issueNumber: number,
+  body: string,
+): Promise<"created" | "updated"> {
+  const installation = await getInstallationContext(repoRef);
+  const existing = await findExistingTriageComment(repoRef, issueNumber);
 
   if (existing) {
     await githubInstallationRequest(
