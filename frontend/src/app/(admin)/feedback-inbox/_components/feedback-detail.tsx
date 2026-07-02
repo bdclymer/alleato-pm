@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
+import { ArrowLeft, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
 import {
   Button,
   Select,
@@ -199,16 +199,17 @@ export function FeedbackDetail({
               </span>
             </div>
 
-            {/* Tool */}
+            {/* Tool — links to the page the feedback was submitted from */}
             {toolLabel && (
               <div className="flex items-center gap-3">
+                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
                 <a
                   href={item.page_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                  className="text-xs text-foreground hover:text-primary hover:underline"
                 >
-                  <span className="text-xs text-muted-foreground font-medium">{toolLabel}</span>
+                  {toolLabel}
                 </a>
               </div>
             )}
@@ -248,14 +249,6 @@ export function FeedbackDetail({
 
         {/* Description */}
         <div className="space-y-8">
-          <a
-            href={item.page_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block break-all text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {item.page_url}
-          </a>
           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
             {item.comment}
           </p>

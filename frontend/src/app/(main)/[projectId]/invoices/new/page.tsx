@@ -10,6 +10,18 @@ import { FormActions } from "@/components/forms/FormActions";
 import { FormGrid, FormSection } from "@/components/forms";
 import { PageShell } from "@/components/layout";
 import { InfoAlert } from "@/components/ds/InfoAlert";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCommitments } from "@/hooks/use-commitments-query";
@@ -19,6 +31,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Popover,
   PopoverContent,
@@ -31,14 +44,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
 type ContractType = "prime" | "commitment";
@@ -439,10 +444,7 @@ export default function NewInvoicePage() {
             {formError}
           </InfoAlert>
         ) : null}
-        <FormSection
-          title="Invoice Information"
-          description="Define invoice metadata, billing period, and contract source."
-        >
+        <FormSection title="Invoice Information">
           <FormGrid columns={2}>
             <div className="space-y-2">
               <Label htmlFor="invoiceNumber">Invoice Number *</Label>
@@ -621,9 +623,8 @@ export default function NewInvoicePage() {
             {includeRetention ? (
               <div className="flex items-center gap-2">
                 <Label htmlFor="retention-rate">Retention %</Label>
-                <Input
+                <NumberInput
                   id="retention-rate"
-                  type="number"
                   min="0"
                   max="100"
                   step="0.01"
@@ -636,70 +637,66 @@ export default function NewInvoicePage() {
           </div>
         </FormSection>
 
-        <FormSection
-          title="Invoice Line Items"
-          description="Enter schedule of values amounts for this billing cycle."
-        >
+        <FormSection title="Invoice Line Items">
           <div className="space-y-4">
-            <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
-              <Table>
-                <TableHeader className="border-y-0 [&_tr]:border-b-0">
-                  <TableRow className="bg-muted/70 hover:bg-muted/70">
-                    <TableHead className="min-w-24 px-2 py-1.5 text-[11px] font-normal normal-case text-muted-foreground">
+            <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20 px-2">
+              <InlineTable variant="edit" tableClassName="min-w-[1040px]">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow className="border-b border-border/60">
+                    <InlineTableHeaderCell className="min-w-24">
                       Cost Code
-                    </TableHead>
-                    <TableHead className="min-w-56 px-2 py-1.5 text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="min-w-56">
                       Description
-                    </TableHead>
-                    <TableHead className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-32">
                       Contract
-                    </TableHead>
-                    <TableHead className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-32">
                       Previously
-                    </TableHead>
-                    <TableHead className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-32">
                       This Month
-                    </TableHead>
-                    <TableHead className="min-w-20 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-20">
                       This %
-                    </TableHead>
-                    <TableHead className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-32">
                       Total
-                    </TableHead>
-                    <TableHead className="min-w-24 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-24">
                       Complete %
-                    </TableHead>
-                    <TableHead className="min-w-24 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-24">
                       Retention
-                    </TableHead>
-                    <TableHead className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal normal-case text-muted-foreground">
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="min-w-32">
                       Net Due
-                    </TableHead>
-                    <TableHead className="w-12 px-2 py-1.5" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-12" />
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
                   {lineItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="px-2 py-1.5 align-top">
+                    <InlineTableRow key={item.id}>
+                      <InlineTableCell className="align-top">
                         <Input
                           value={item.costCode}
                           onChange={(event) => updateLineItem(item.id, "costCode", event.target.value)}
                           placeholder="01-000"
                           className="h-9 min-w-20"
                         />
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 align-top">
+                      </InlineTableCell>
+                      <InlineTableCell className="align-top">
                         <Input
                           value={item.description}
                           onChange={(event) => updateLineItem(item.id, "description", event.target.value)}
                           placeholder="Line item description"
                           className="h-9 min-w-48"
                         />
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 align-top">
-                        <Input
-                          type="number"
+                      </InlineTableCell>
+                      <InlineTableCell align="right" className="align-top">
+                        <NumberInput
                           step="0.01"
                           value={item.contractAmount}
                           onChange={(event) =>
@@ -707,10 +704,9 @@ export default function NewInvoicePage() {
                           }
                           className="h-9 min-w-24 text-right"
                         />
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 align-top">
-                        <Input
-                          type="number"
+                      </InlineTableCell>
+                      <InlineTableCell align="right" className="align-top">
+                        <NumberInput
                           step="0.01"
                           value={item.previouslyBilled}
                           onChange={(event) =>
@@ -718,10 +714,9 @@ export default function NewInvoicePage() {
                           }
                           className="h-9 min-w-24 text-right"
                         />
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 align-top">
-                        <Input
-                          type="number"
+                      </InlineTableCell>
+                      <InlineTableCell align="right" className="align-top">
+                        <NumberInput
                           step="0.01"
                           value={item.thisMonthAmount}
                           onChange={(event) =>
@@ -729,23 +724,27 @@ export default function NewInvoicePage() {
                           }
                           className="h-9 min-w-24 text-right"
                         />
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right text-sm tabular-nums">
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="text-sm">
                         {item.thisMonthPercent}%
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right text-sm tabular-nums">
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="text-sm">
                         {formatCurrency(item.totalCompleted)}
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right text-sm tabular-nums">
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="text-sm">
                         {item.percentComplete}%
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right text-sm tabular-nums">
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="text-sm">
                         {formatCurrency(item.retention)}
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right text-sm font-medium tabular-nums">
+                      </InlineTableCell>
+                      <InlineTableCell
+                        align="right"
+                        numeric
+                        className="text-sm font-medium text-foreground"
+                      >
                         {formatCurrency(item.netDue)}
-                      </TableCell>
-                      <TableCell className="px-2 py-1.5 text-right">
+                      </InlineTableCell>
+                      <InlineTableCell align="right">
                         {lineItems.length > 1 ? (
                           <Button
                             type="button"
@@ -756,29 +755,30 @@ export default function NewInvoicePage() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         ) : null}
-                      </TableCell>
-                    </TableRow>
+                      </InlineTableCell>
+                    </InlineTableRow>
                   ))}
-
-                  <TableRow className="hover:bg-muted">
-                    <TableCell className="px-2 py-2" />
-                    <TableCell colSpan={5} className="px-2 py-3 text-xs font-semibold text-foreground">
+                </InlineTableBody>
+                <InlineTableFooter>
+                  <InlineTableFooterRow type="totals">
+                    <InlineTableFooterCell />
+                    <InlineTableFooterCell colSpan={5} className="text-xs">
                       Totals
-                    </TableCell>
-                    <TableCell className="px-2 py-2 text-right text-sm font-semibold tabular-nums">
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell align="right" numeric>
                       {formatCurrency(totals.totalCompleted)}
-                    </TableCell>
-                    <TableCell className="px-2 py-2" />
-                    <TableCell className="px-2 py-2 text-right text-sm font-semibold tabular-nums">
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell />
+                    <InlineTableFooterCell align="right" numeric>
                       {formatCurrency(totals.retentionAmount)}
-                    </TableCell>
-                    <TableCell className="px-2 py-2 text-right text-sm font-semibold tabular-nums">
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell align="right" numeric className="text-foreground">
                       {formatCurrency(totals.netDue)}
-                    </TableCell>
-                    <TableCell className="px-2 py-2" />
-                  </TableRow>
-                </TableBody>
-              </Table>
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell />
+                  </InlineTableFooterRow>
+                </InlineTableFooter>
+              </InlineTable>
             </div>
 
             <Button type="button" variant="outline" onClick={addLineItem}>
@@ -788,11 +788,8 @@ export default function NewInvoicePage() {
           </div>
         </FormSection>
 
-        <FormSection
-          title="Invoice Summary"
-          description="Review financial totals before saving this invoice."
-        >
-          <div className="grid gap-8 md:grid-cols-2">
+        <FormSection title="Invoice Summary">
+          <FormGrid columns={2} className="gap-y-8">
             <div className="space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Contract Amount</span>
@@ -844,7 +841,7 @@ export default function NewInvoicePage() {
                 </span>
               </div>
             </div>
-          </div>
+          </FormGrid>
         </FormSection>
 
         <FormActions

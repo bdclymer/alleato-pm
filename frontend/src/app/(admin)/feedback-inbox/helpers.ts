@@ -40,27 +40,29 @@ export function notifyFeedbackInboxFailure({
   toast.error(title, { description });
 }
 
+// Segments that are record identifiers, not tool names: numeric ids, UUIDs, long hex ids.
+const ID_SEGMENT =
+  /^(\d+|[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}|[0-9a-f]{16,})$/i;
+// Trailing action segments that sit after the tool name in the path.
+const ACTION_SEGMENTS = new Set(["new", "edit", "create", "view", "detail", "details"]);
+
 export function toolLabelFromPath(pagePath: string): string | null {
-  const parts = pagePath.split("/").filter(Boolean);
-  const projectsIdx = parts.indexOf("projects");
-  if (projectsIdx >= 0 && parts.length > projectsIdx + 2) {
-    const toolSlug = parts[projectsIdx + 2];
-    if (!/^\d+$/.test(toolSlug)) {
-      return toolSlug
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
-    }
+  const parts = pagePath
+    .split("/")
+    .filter(Boolean)
+    .filter((p) => !ID_SEGMENT.test(p));
+  while (
+    parts.length > 1 &&
+    ACTION_SEGMENTS.has(parts[parts.length - 1].toLowerCase())
+  ) {
+    parts.pop();
   }
-  const nonNumeric = parts.filter((p) => !/^\d+$/.test(p));
-  if (nonNumeric.length > 0) {
-    const last = nonNumeric[nonNumeric.length - 1];
-    return last
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-  }
-  return null;
+  const last = parts[parts.length - 1];
+  if (!last || ACTION_SEGMENTS.has(last.toLowerCase())) return null;
+  return last
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 export function relativeTime(dateStr: string) {
