@@ -261,7 +261,7 @@ export function SummaryTab({
   const isErpLinked = Boolean(invoice.acumatica_sync_at || erpRefNbr);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* Edit actions bar */}
       {editing && (
         <div className="flex items-center justify-end gap-2">
