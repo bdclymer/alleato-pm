@@ -3,43 +3,52 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, MessageSquarePlus, PanelRight } from "lucide-react";
+import {
+  ExternalLink,
+  Eye,
+  EyeOff,
+  MessageSquare,
+  MessageSquarePlus,
+  PanelRightOpen,
+} from "lucide-react";
 import {
   VeltCommentTool,
-  VeltSidebarButton,
   useCommentModeState,
 } from "@veltdev/react";
 import useSWR from "swr";
 
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
-import type { AllCommentItem } from "@/app/api/comments/all/route";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
-  cleanCommentPreview,
-  isResolved,
-  sortComments,
-} from "@/app/(main)/comments/comments-page-utils";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
+import type { AllCommentItem } from "@/app/api/comments/all/route";
+import { cleanCommentPreview, sortComments } from "@/app/(main)/comments/comments-page-utils";
 import { apiFetch } from "@/lib/api-client";
 import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
 import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
 import { cn } from "@/lib/utils";
 import { useVeltCommentUnreadCount } from "@/components/notifications/velt-comment-notifications";
-
-const rowClass =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-normal text-foreground transition-colors hover:bg-accent hover:text-foreground";
-
-const QUICK_SCOPES = [
-  { label: "All", href: "/comments?scope=all" },
-  { label: "Mine", href: "/comments?scope=mine" },
-  { label: "Mentions", href: "/comments?scope=mentions" },
-  { label: "Unresolved", href: "/comments" },
-] as const;
 
 function useCommentSummary() {
   const { data } = useSWR<{ comments: AllCommentItem[] }>(
@@ -50,10 +59,9 @@ function useCommentSummary() {
 
   return React.useMemo(() => {
     const comments = [...(data?.comments ?? [])].sort(sortComments);
-    const unresolvedComments = comments.filter((comment) => !isResolved(comment));
     return {
-      unresolved: unresolvedComments.length,
-      recent: unresolvedComments.slice(0, 4),
+      comments,
+      unresolved: comments.filter((comment) => comment.statusName !== "resolved").length,
     };
   }, [data?.comments]);
 }
@@ -77,75 +85,25 @@ function CommentStatusDot({
   );
 }
 
-function QuickScopeLinks({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <div className="grid grid-cols-4 gap-1 px-1 pb-2">
-      {QUICK_SCOPES.map((scope) => (
-        <Link
-          key={scope.href}
-          href={scope.href}
-          onClick={onNavigate}
-          className="rounded-full px-2 py-1 text-center text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          {scope.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
+type CommentIconButtonProps = React.ComponentProps<typeof Button> & {
+  active?: boolean;
+  unread: boolean;
+  unresolved: boolean;
+  expanded?: boolean;
+};
 
-function RecentComments({
-  comments,
-  onNavigate,
-}: {
-  comments: AllCommentItem[];
-  onNavigate?: () => void;
-}) {
-  return (
-    <>
-      <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Recent comments
-      </div>
-      <div className="space-y-1 px-1">
-        {comments.length === 0 ? (
-          <p className="px-2 py-3 text-sm text-muted-foreground">
-            No discussion yet.
-          </p>
-        ) : (
-          comments.map((comment) => (
-            <Link
-              key={comment.annotationId}
-              href={`/comments?scope=${isResolved(comment) ? "resolved" : "all"}`}
-              onClick={onNavigate}
-              className="block rounded-md px-2 py-2 hover:bg-muted"
-            >
-              <p className="truncate text-sm text-foreground">
-                {cleanCommentPreview(comment.preview)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{comment.authorName}</p>
-            </Link>
-          ))
-        )}
-      </div>
-    </>
-  );
-}
-
+const CommentIconButton = React.forwardRef<HTMLButtonElement, CommentIconButtonProps>(
 function CommentIconButton({
   active,
   unread,
   unresolved,
   expanded,
-  onClick,
-}: {
-  active?: boolean;
-  unread: boolean;
-  unresolved: boolean;
-  expanded?: boolean;
-  onClick?: () => void;
-}) {
+  className,
+  ...props
+}, ref) {
   return (
     <Button
+      ref={ref}
       type="button"
       variant="ghost"
       size="icon-sm"
@@ -153,7 +111,7 @@ function CommentIconButton({
       aria-pressed={active ? "true" : "false"}
       aria-expanded={expanded}
       aria-haspopup="dialog"
-      onClick={onClick}
+      {...props}
       className={cn(
         "relative h-8 w-8",
         active
@@ -161,16 +119,57 @@ function CommentIconButton({
           : unread || unresolved
             ? "text-foreground hover:bg-accent hover:text-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
+        className,
       )}
     >
       <MessageSquare className="h-4 w-4" />
       <CommentStatusDot unread={unread} unresolved={unresolved} />
     </Button>
   );
+});
+
+function handleDiscussionTriggerKeyDown(
+  event: React.KeyboardEvent<HTMLButtonElement>,
+  open: boolean,
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen((current) => !current);
+    return;
+  }
+
+  if (event.key === "Escape" && open) {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(false);
+  }
+}
+
+function SiteCommentsLink({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href="/comments"
+            onClick={onNavigate}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            View all site comments
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-56">
+          Listing of all comments throughout the site.
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
 }
 
 export function CommentsSidebarButton() {
-  const [inactiveOpen, setInactiveOpen] = React.useState(false);
   const pathname = usePathname();
   const collaborationRuntimeEnabled = useCollaborationRuntimeStore(
     (state) => state.enabled,
@@ -183,65 +182,138 @@ export function CommentsSidebarButton() {
   const setCommentsVisible = useCommentsVisibilityStore(
     (state) => state.setVisible,
   );
+  const [pendingCommentMode, setPendingCommentMode] = React.useState(false);
+  const [pageSheetOpen, setPageSheetOpen] = React.useState(false);
   const unreadCount = useVeltCommentUnreadCount();
   const summary = useCommentSummary();
   const hasUnread = unreadCount > 0;
   const hasUnresolved = summary.unresolved > 0;
+  const pageComments = React.useMemo(
+    () =>
+      summary.comments.filter((comment) => {
+        if (!pathname) return false;
+        return comment.documentId === pathname;
+      }),
+    [pathname, summary.comments],
+  );
 
   if (!collaborationRuntimeActive) {
     return (
-      <Popover open={inactiveOpen} onOpenChange={setInactiveOpen}>
-        <PopoverTrigger asChild>
-          <CommentIconButton
-            unread={hasUnread}
-            unresolved={hasUnresolved}
-            expanded={inactiveOpen}
-            onClick={() => setInactiveOpen((open) => !open)}
-          />
-        </PopoverTrigger>
-        <PopoverContent align="end" sideOffset={6} className="w-80 p-2 shadow-sm">
-          <div className="px-2 pb-2 pt-1">
-            <p className="text-sm font-semibold text-foreground">Discussion</p>
-          </div>
-          <QuickScopeLinks />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setInactiveOpen(false);
-              setCollaborationRuntimeEnabled(true);
-              setCommentsVisible(true);
-            }}
-            className={rowClass}
-          >
-            <MessageSquarePlus className="h-4 w-4 shrink-0" />
-            Show annotations
-          </Button>
-          <div className="my-2 h-px bg-border/50" />
-          <RecentComments comments={summary.recent} />
-        </PopoverContent>
-      </Popover>
+      <>
+        <InactiveCommentsSidebarButton
+          hasUnread={hasUnread}
+          hasUnresolved={hasUnresolved}
+          onEnableCommentMode={() => {
+            setCollaborationRuntimeEnabled(true);
+            setCommentsVisible(true);
+            setPendingCommentMode(true);
+          }}
+          onEnableSidebar={() => {
+            setCollaborationRuntimeEnabled(true);
+            setCommentsVisible(true);
+            setPageSheetOpen(true);
+          }}
+        />
+        <PageDiscussionSheet
+          open={pageSheetOpen}
+          onOpenChange={setPageSheetOpen}
+          comments={pageComments}
+        />
+      </>
     );
   }
 
   return (
-    <ActiveCommentsSidebarButton
-      summary={summary}
-      hasUnread={hasUnread}
-      hasUnresolved={hasUnresolved}
-    />
+    <>
+      <ActiveCommentsSidebarButton
+        hasUnread={hasUnread}
+        hasUnresolved={hasUnresolved}
+        startCommentOnMount={pendingCommentMode}
+        onCommentModeStarted={() => setPendingCommentMode(false)}
+        onOpenPageSheet={() => {
+          setCommentsVisible(true);
+          setPageSheetOpen(true);
+        }}
+      />
+      <PageDiscussionSheet
+        open={pageSheetOpen}
+        onOpenChange={setPageSheetOpen}
+        comments={pageComments}
+      />
+    </>
+  );
+}
+
+function InactiveCommentsSidebarButton({
+  hasUnread,
+  hasUnresolved,
+  onEnableCommentMode,
+  onEnableSidebar,
+}: {
+  hasUnread: boolean;
+  hasUnresolved: boolean;
+  onEnableCommentMode: () => void;
+  onEnableSidebar: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <CommentIconButton
+          unread={hasUnread}
+          unresolved={hasUnresolved}
+          expanded={open}
+          onClick={() => setOpen((current) => !current)}
+          onKeyDown={(event) => handleDiscussionTriggerKeyDown(event, open, setOpen)}
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-56">
+        <DropdownMenuItem
+          onSelect={() => {
+            setOpen(false);
+            onEnableCommentMode();
+          }}
+        >
+          <MessageSquarePlus className="h-4 w-4" />
+          Add comment on this page
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            setOpen(false);
+            onEnableSidebar();
+          }}
+        >
+          <PanelRightOpen className="h-4 w-4" />
+          Open page discussion
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => {
+            setOpen(false);
+            onEnableSidebar();
+          }}
+        >
+          <Eye className="h-4 w-4" />
+          Show page comments
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 function ActiveCommentsSidebarButton({
-  summary,
   hasUnread,
   hasUnresolved,
+  startCommentOnMount,
+  onCommentModeStarted,
+  onOpenPageSheet,
 }: {
-  summary: { unresolved: number; recent: AllCommentItem[] };
   hasUnread: boolean;
   hasUnresolved: boolean;
+  startCommentOnMount?: boolean;
+  onCommentModeStarted?: () => void;
+  onOpenPageSheet: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const commentModeActive = useCommentModeState();
@@ -249,79 +321,149 @@ function ActiveCommentsSidebarButton({
   const setCommentsVisible = useCommentsVisibilityStore(
     (state) => state.setVisible,
   );
+  const addCommentTriggerRef = React.useRef<HTMLButtonElement | null>(null);
 
   React.useEffect(() => {
     if (commentModeActive) setOpen(false);
   }, [commentModeActive]);
 
+  React.useEffect(() => {
+    if (!startCommentOnMount || commentModeActive) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      addCommentTriggerRef.current?.click();
+      onCommentModeStarted?.();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [commentModeActive, onCommentModeStarted, startCommentOnMount]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <CommentIconButton
-          active={commentModeActive}
-          unread={hasUnread}
-          unresolved={hasUnresolved}
-          expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        />
-      </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={6} className="w-80 p-2 shadow-sm">
-        <div className="px-2 pb-2 pt-1">
-          <p className="text-sm font-semibold text-foreground">Discussion</p>
-        </div>
-        <QuickScopeLinks onNavigate={() => setOpen(false)} />
-
-        <VeltCommentTool
-          sourceId="site-header-comment-mode"
-          targetElementId="app-main-content"
-          shadowDom={false}
+    <>
+      <VeltCommentTool
+        sourceId="site-header-comment-mode"
+        targetElementId="app-main-content"
+        shadowDom={false}
+      >
+        <Button
+          ref={addCommentTriggerRef}
+          type="button"
+          variant="ghost"
+          size="sm"
+          tabIndex={-1}
+          aria-hidden="true"
+          className="sr-only"
         >
-          <span
-            onClick={() => setCommentsVisible(true)}
-            className={cn(rowClass, commentModeActive && "text-primary")}
-            aria-label="Add comment"
-          >
-            <MessageSquarePlus className="h-4 w-4 shrink-0" />
-            Add comment
-          </span>
-        </VeltCommentTool>
-
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => setCommentsVisible(!commentsVisible)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              setCommentsVisible(!commentsVisible);
-            }
-          }}
-          className={cn(rowClass, "justify-between")}
-          aria-label="Show annotations on this page"
-        >
-          <span className="whitespace-nowrap">Show annotations</span>
-          <Switch
-            checked={commentsVisible}
-            className="pointer-events-none"
-            tabIndex={-1}
-            aria-hidden
+          Start comment mode
+        </Button>
+      </VeltCommentTool>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <CommentIconButton
+            active={commentModeActive}
+            unread={hasUnread}
+            unresolved={hasUnresolved}
+            expanded={open}
+            onClick={() => setOpen((current) => !current)}
+            onKeyDown={(event) => handleDiscussionTriggerKeyDown(event, open, setOpen)}
           />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={6} className="w-56">
+          <DropdownMenuItem
+            onSelect={() => {
+              setCommentsVisible(true);
+              setOpen(false);
+              addCommentTriggerRef.current?.click();
+            }}
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+            Add comment on this page
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setOpen(false);
+              onOpenPageSheet();
+            }}
+          >
+            <PanelRightOpen className="h-4 w-4" />
+            Open page discussion
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              setCommentsVisible(!commentsVisible);
+            }}
+          >
+            {commentsVisible ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            {commentsVisible ? "Hide page comments" : "Show page comments"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
+}
+
+function PageDiscussionSheet({
+  open,
+  onOpenChange,
+  comments,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  comments: AllCommentItem[];
+}) {
+  return (
+    <SidePanel open={open} onOpenChange={onOpenChange}>
+      <SidePanelContent side="right" size="md">
+        <SidePanelHeader className="border-b border-border/60 text-left">
+          <SidePanelTitle>Discussion</SidePanelTitle>
+          <SheetDescription className="text-sm text-muted-foreground">
+            {comments.length === 1 ? "1 comment" : `${comments.length} comments`}
+          </SheetDescription>
+        </SidePanelHeader>
+        <div className="flex h-full flex-col">
+          <SidePanelBody className="py-4">
+            {comments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No page discussion yet.
+              </p>
+            ) : (
+              <div className="space-y-0">
+                {comments.map((comment, index) => (
+                  <div
+                    key={comment.annotationId}
+                    className={cn(
+                      "py-4",
+                      index > 0 && "border-t border-border/60",
+                    )}
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium text-foreground">
+                        {comment.authorName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {comment.replyCount > 0
+                          ? `${comment.replyCount + 1} messages`
+                          : "1 message"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-foreground">
+                      {cleanCommentPreview(comment.preview)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SidePanelBody>
+          <SidePanelFooter className="border-t border-border/60 py-3">
+            <SiteCommentsLink />
+          </SidePanelFooter>
         </div>
-
-        <div className="my-2 h-px bg-border/50" />
-
-        <div onClick={() => setOpen(false)}>
-          <VeltSidebarButton shadowDom={false}>
-            <span className={rowClass} aria-label="Open page discussion">
-              <PanelRight className="h-4 w-4 shrink-0" />
-              Open page discussion
-            </span>
-          </VeltSidebarButton>
-        </div>
-
-        <div className="my-2 h-px bg-border/50" />
-        <RecentComments comments={summary.recent} onNavigate={() => setOpen(false)} />
-      </PopoverContent>
-    </Popover>
+      </SidePanelContent>
+    </SidePanel>
   );
 }

@@ -57,8 +57,8 @@ export function RootClientWidgets() {
     (state) => state.enabled,
   );
   const shouldMountCollaborationWidgets =
-    shouldMountDeferredWidgets &&
-    (userEnabledCollaboration || shouldForceCollaborationRuntime(pathname));
+    userEnabledCollaboration ||
+    (shouldMountDeferredWidgets && shouldForceCollaborationRuntime(pathname));
 
   return (
     <Suspense fallback={null}>
