@@ -47,7 +47,6 @@ import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates
 import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
 import { cn } from "@/lib/utils";
-import { useVeltCommentUnreadCount } from "@/components/notifications/velt-comment-notifications";
 
 function useCommentSummary() {
   const { data } = useSWR<{ comments: AllCommentItem[] }>(
@@ -58,44 +57,18 @@ function useCommentSummary() {
 
   return React.useMemo(() => {
     const comments = [...(data?.comments ?? [])].sort(sortComments);
-    return {
-      comments,
-      unresolved: comments.filter((comment) => comment.statusName !== "resolved").length,
-    };
+    return { comments };
   }, [data?.comments]);
-}
-
-function CommentStatusDot({
-  unread,
-  unresolved,
-}: {
-  unread: boolean;
-  unresolved: boolean;
-}) {
-  if (!unread && !unresolved) return null;
-
-  return (
-    <span
-      className={cn(
-        "absolute right-1 top-1 h-1.5 w-1.5 rounded-full",
-        unread ? "bg-primary" : "bg-foreground/45",
-      )}
-    />
-  );
 }
 
 type CommentIconButtonProps = React.ComponentProps<typeof Button> & {
   active?: boolean;
-  unread: boolean;
-  unresolved: boolean;
   expanded?: boolean;
 };
 
 const CommentIconButton = React.forwardRef<HTMLButtonElement, CommentIconButtonProps>(
 function CommentIconButton({
   active,
-  unread,
-  unresolved,
   expanded,
   className,
   ...props
@@ -115,14 +88,11 @@ function CommentIconButton({
         "relative h-8 w-8",
         active
           ? "text-foreground hover:bg-accent hover:text-foreground"
-          : unread || unresolved
-            ? "text-foreground hover:bg-accent hover:text-foreground"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
         className,
       )}
     >
       <MessageSquare className="h-4 w-4" />
-      <CommentStatusDot unread={unread} unresolved={unresolved} />
     </Button>
   );
 });
@@ -184,10 +154,7 @@ export function CommentsSidebarButton() {
   );
   const [pendingCommentMode, setPendingCommentMode] = React.useState(false);
   const [pageSheetOpen, setPageSheetOpen] = React.useState(false);
-  const unreadCount = useVeltCommentUnreadCount();
   const summary = useCommentSummary();
-  const hasUnread = unreadCount > 0;
-  const hasUnresolved = summary.unresolved > 0;
   const pageComments = React.useMemo(
     () =>
       summary.comments.filter((comment) => {
@@ -206,8 +173,6 @@ export function CommentsSidebarButton() {
   return (
     <>
       <ActiveCommentsSidebarButton
-        hasUnread={hasUnread}
-        hasUnresolved={hasUnresolved}
         collaborationRuntimeActive={collaborationRuntimeActive}
         startCommentOnMount={pendingCommentMode}
         onCommentModeStarted={() => setPendingCommentMode(false)}
@@ -231,16 +196,12 @@ export function CommentsSidebarButton() {
 }
 
 function ActiveCommentsSidebarButton({
-  hasUnread,
-  hasUnresolved,
   collaborationRuntimeActive,
   startCommentOnMount,
   onCommentModeStarted,
   onRequestCommentMode,
   onOpenPageSheet,
 }: {
-  hasUnread: boolean;
-  hasUnresolved: boolean;
   collaborationRuntimeActive: boolean;
   startCommentOnMount?: boolean;
   onCommentModeStarted?: () => void;
@@ -299,8 +260,6 @@ function ActiveCommentsSidebarButton({
         <DropdownMenuTrigger asChild>
           <CommentIconButton
             active={commentModeActive}
-            unread={hasUnread}
-            unresolved={hasUnresolved}
             expanded={open}
             onClick={() => setOpen((current) => !current)}
             onKeyDown={(event) => handleDiscussionTriggerKeyDown(event, open, setOpen)}
