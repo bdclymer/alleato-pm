@@ -104,6 +104,9 @@ Failure-loudly behavior: API load failure remains a toast/error state; missing s
 | Production deploy check | `npx vercel inspect dpl_2KzaUsH5pebhapVL8Brp9wzdmNd3 --logs` | Failed | Vercel build failed because `@/components/ui/detail-property-bar` was untracked locally and omitted from the first scoped commit. Cause: local dev resolved an untracked shared primitive. Detection gap: the scoped finish command did not include that dependency. Prevention: add the shared primitive as a task-owned file and rerun publish/deploy verification. |
 | Follow-up design audit | `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs 'frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx' frontend/src/components/ui/detail-property-bar.tsx` | Pass | Page and shared primitive pass the design doctrine surface audit. |
 | Follow-up static/lint check | `./node_modules/.bin/eslint 'src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx' 'src/components/ui/detail-property-bar.tsx'` from `frontend/` | Pass | Page and shared primitive lint cleanly. |
+| Follow-up publish proof | `npm run codex:finish -- --message "Add detail property bar primitive" --files frontend/src/components/ui/detail-property-bar.tsx docs/ops/tasks/2026-07-02-direct-cost-invoice-detail-design.md` | Pass | Published commit `bdca3704a` to `origin/main`. |
+| Production deploy proof | `npx vercel inspect dpl_FHCaSArkSFAVgYcPw1uvrS8kGxSe` | Pass | Deployment is Ready and assigned to `https://projects.alleatogroup.com`. |
+| Production visual proof | `docs/ops/evidence/2026-07-02-direct-cost-invoice-detail-design/direct-cost-production-after.png` | Pass | Exact production route shows `Invoice #1500`, compact property row, quiet invoice details, and the line-items table. |
 
 ## Files Changed
 
@@ -113,7 +116,7 @@ Failure-loudly behavior: API load failure remains a toast/error state; missing s
 
 ## Risks / Gaps
 
-- First production deployment failed because the shared property-bar primitive was not included in the scoped commit; follow-up commit includes it.
+- First production deployment failed because the shared property-bar primitive was not included in the scoped commit; follow-up commit includes it and the production deployment is Ready.
 - The page is read-only by product design because direct costs sync from Acumatica.
 
 ## Final Status
