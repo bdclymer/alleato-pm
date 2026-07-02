@@ -198,6 +198,15 @@ Never debug routing before clearing the cache.
 ### Browser Verification
 Never claim UI work complete without verifying in `agent-browser`. Take a screenshot, read it, then report.
 
+### Visual Proof on Completion (Mandatory — `.claude/rules/VISUAL-PROOF-GATE.md`)
+A task cannot be marked completed or closed out without **showing the user visual
+proof it works**: a screenshot of the fixed behavior per item (for data-parity
+fixes, both sides — e.g. each drilldown panel AND the table value it matches).
+Only if the fix is genuinely not visual (rare): a link to the live page; last
+resort: a link to the file plus a screenshot of the edited code. Passing tests,
+green CI, and a text summary are never sufficient. Full rule:
+`.claude/rules/VISUAL-PROOF-GATE.md`.
+
 ### Authentication
 Never ask the user to log in. Credentials are in `.env`:
 - App: `TEST_USER_1` / `TEST_PASSWORD_1`

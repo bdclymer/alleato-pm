@@ -140,8 +140,15 @@ function main() {
     /placeholder\s*=\s*["']\$0\.00["']/g,
   ];
 
+  // NumberInput's clearZeroOnFocus renders a zero VALUE as greyed placeholder
+  // text ("Treat zero as placeholder in percent inputs") — files using that
+  // pattern legitimately pair it with placeholder="0".
+  const usesClearZeroOnFocus = (source: string) => source.includes("clearZeroOnFocus");
+  const isZeroLikePlaceholder = (value: string) => /^\$?0(\.0{1,2})?$/.test(value.trim());
+
   for (const file of allFiles) {
     const source = fs.readFileSync(file, "utf8");
+    if (usesClearZeroOnFocus(source)) continue;
     for (const pattern of placeholderPatterns) {
       if (!pattern.test(source)) continue;
       issues.push({
@@ -157,7 +164,9 @@ function main() {
   for (const file of allFiles.filter(isSharedFormPrimitive)) {
     const source = fs.readFileSync(file, "utf8");
     const invalidPlaceholders = extractStaticPlaceholderValues(source).filter(
-      (value) => !isAllowedPlaceholderCopy(value),
+      (value) =>
+        !isAllowedPlaceholderCopy(value) &&
+        !(usesClearZeroOnFocus(source) && isZeroLikePlaceholder(value)),
     );
     if (!invalidPlaceholders.length) continue;
 
