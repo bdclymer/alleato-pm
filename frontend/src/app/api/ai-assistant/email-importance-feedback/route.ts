@@ -10,6 +10,7 @@ import {
   EMAIL_IMPORTANCE_SIGNALS,
 } from "@/lib/ai/email-importance-feedback-types";
 import {
+  clearEmailImportanceFeedback,
   getLatestEmailImportanceFeedback,
   recordEmailImportanceFeedback,
 } from "@/lib/ai/services/email-importance-feedback-service";
@@ -25,6 +26,12 @@ const postBodySchema = z.object({
     .optional(),
   reason: z.string().max(1000).nullable().optional(),
   emailSnapshot: z.record(z.string(), z.unknown()),
+});
+
+const deleteBodySchema = z.object({
+  emailId: z.number().int().positive(),
+  projectId: z.number().int().positive().nullable().optional(),
+  emailSnapshot: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const GET = withApiGuardrails(
@@ -94,5 +101,43 @@ export const POST = withApiGuardrails(
     });
 
     return Response.json({ success: true, id: event.id });
+  },
+);
+
+export const DELETE = withApiGuardrails(
+  "/api/ai-assistant/email-importance-feedback#DELETE",
+  async ({ request }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "/api/ai-assistant/email-importance-feedback#DELETE",
+        message: "Authentication required.",
+        status: 401,
+      });
+    }
+
+    const body = await request.json();
+    const parsed = deleteBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new GuardrailError({
+        code: "VALIDATION_ERROR",
+        where: "/api/ai-assistant/email-importance-feedback#DELETE",
+        message: "Invalid request body.",
+        details: parsed.error.flatten(),
+        status: 400,
+      });
+    }
+
+    const { emailId, projectId, emailSnapshot } = parsed.data;
+
+    const event = await clearEmailImportanceFeedback({
+      userId: user.id,
+      emailId,
+      projectId: projectId ?? null,
+      emailSnapshot: emailSnapshot ? (emailSnapshot as Json) : undefined,
+    });
+
+    return Response.json({ success: true, id: event.id, feedback: null });
   },
 );

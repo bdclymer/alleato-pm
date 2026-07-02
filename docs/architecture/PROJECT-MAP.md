@@ -442,7 +442,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/ai-assistant/conversations` | GET, POST | frontend/src/app/api/ai-assistant/conversations/route.ts |
 | `/api/ai-assistant/conversations/[sessionId]` | PATCH, DELETE | frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts |
 | `/api/ai-assistant/email-draft-feedback` | POST | frontend/src/app/api/ai-assistant/email-draft-feedback/route.ts |
-| `/api/ai-assistant/email-importance-feedback` | GET, POST | frontend/src/app/api/ai-assistant/email-importance-feedback/route.ts |
+| `/api/ai-assistant/email-importance-feedback` | GET, POST, DELETE | frontend/src/app/api/ai-assistant/email-importance-feedback/route.ts |
 | `/api/ai-assistant/feedback` | POST | frontend/src/app/api/ai-assistant/feedback/route.ts |
 | `/api/ai-assistant/marketing/assets` | POST | frontend/src/app/api/ai-assistant/marketing/assets/route.ts |
 | `/api/ai-assistant/marketing/assets/[assetId]` | PATCH | frontend/src/app/api/ai-assistant/marketing/assets/[assetId]/route.ts |

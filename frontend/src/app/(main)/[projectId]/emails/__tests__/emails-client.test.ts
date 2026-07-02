@@ -1,6 +1,8 @@
 import type { ProjectEmail } from "@/hooks/use-emails";
 import {
+  matchesEmailImportanceVisibility,
   getEmailsRefreshInterval,
+  normalizeEmailImportanceVisibilityFilter,
   reconcileSelectedEmail,
 } from "@/app/(main)/[projectId]/emails/emails-client.helpers";
 import {
@@ -114,6 +116,53 @@ describe("getEmailsRefreshInterval", () => {
   it("polls only for mailbox review mode", () => {
     expect(getEmailsRefreshInterval(true)).toBe(60 * 60 * 1000);
     expect(getEmailsRefreshInterval(false)).toBe(false);
+  });
+});
+
+describe("email importance visibility", () => {
+  it("normalizes unsupported relevance filters to the default inbox", () => {
+    expect(normalizeEmailImportanceVisibilityFilter("not_important")).toBe(
+      "not_important",
+    );
+    expect(normalizeEmailImportanceVisibilityFilter("all")).toBe("all");
+    expect(normalizeEmailImportanceVisibilityFilter("bad")).toBe("default");
+    expect(normalizeEmailImportanceVisibilityFilter(null)).toBe("default");
+  });
+
+  it("hides not-important emails from the default inbox and exposes filter views", () => {
+    const important = buildEmail("normal", { id: 1 });
+    const notImportant = buildEmail("low", { id: 2 });
+    const unmarked = buildEmail("normal", { id: 3 });
+    const feedback = {
+      "1": {
+        signal: "important",
+        reasonCategory: "decision_needed",
+        reason: "Needs a response",
+        createdAt: "2026-07-02T12:00:00.000Z",
+      },
+      "2": {
+        signal: "not_important",
+        reasonCategory: "marketing_noise",
+        reason: "Vendor blast",
+        createdAt: "2026-07-02T12:01:00.000Z",
+      },
+    } as const;
+
+    expect(
+      [important, notImportant, unmarked].filter((email) =>
+        matchesEmailImportanceVisibility(email, feedback, "default"),
+      ),
+    ).toEqual([important, unmarked]);
+    expect(
+      [important, notImportant, unmarked].filter((email) =>
+        matchesEmailImportanceVisibility(email, feedback, "not_important"),
+      ),
+    ).toEqual([notImportant]);
+    expect(
+      [important, notImportant, unmarked].filter((email) =>
+        matchesEmailImportanceVisibility(email, feedback, "all"),
+      ),
+    ).toEqual([important, notImportant, unmarked]);
   });
 });
 

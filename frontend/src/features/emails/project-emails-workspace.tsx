@@ -91,12 +91,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { cn } from "@/lib/utils";
 import type { EmailSource, ProjectEmail } from "@/hooks/use-emails";
 import { useProjects, type Project } from "@/hooks/use-projects";
-import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importance-feedback-dialog";
-import type { EmailImportanceFeedbackState } from "@/lib/ai/email-importance-feedback-types";
+import {
+  buildEmailImportanceSnapshot,
+  EmailImportanceFeedbackDialog,
+} from "@/features/emails/email-importance-feedback-dialog";
+import {
+  EMAIL_IMPORTANCE_REASON_LABELS,
+  type EmailImportanceFeedbackState,
+  type EmailImportanceSignal,
+} from "@/lib/ai/email-importance-feedback-types";
 import {
   EmailDetailSheet,
   projectEmailToDetailRecord,
@@ -170,6 +178,12 @@ interface ProjectEmailsWorkspaceProps {
   draftFeedbackMode?: boolean;
   /** Called after AI training feedback is saved so callers can refresh email rows. */
   onDraftFeedbackSaved?: () => void;
+  importanceFeedbackByEmailId?: Record<string, EmailImportanceFeedbackState>;
+  onImportanceRecorded?: (
+    emailId: number,
+    feedback: EmailImportanceFeedbackState,
+  ) => void;
+  onImportanceCleared?: (emailId: number) => void;
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
@@ -1081,24 +1095,48 @@ interface EmailReadingPanelProps {
     emailId: number,
     feedback: EmailImportanceFeedbackState,
   ) => void;
+  onImportanceCleared?: (emailId: number) => void;
   className?: string;
 }
 
 interface EmailActionControlsProps {
   onSummarize?: () => void;
-  onImportanceIntent: (signal: "important" | "not_important") => void;
+  importanceFeedback?: EmailImportanceFeedbackState | null;
+  onImportanceIntent: (signal: EmailImportanceSignal) => void;
+  onImportanceClear?: () => void;
+  isClearingImportance?: boolean;
   onCreateTask?: () => void;
   className?: string;
   orientation?: "row" | "column";
 }
 
+function importanceSignalLabel(signal: EmailImportanceSignal): string {
+  return signal === "important" ? "Marked important" : "Marked not important";
+}
+
+function oppositeImportanceSignal(
+  signal: EmailImportanceSignal,
+): EmailImportanceSignal {
+  return signal === "important" ? "not_important" : "important";
+}
+
 function EmailActionControls({
   onSummarize,
+  importanceFeedback,
   onImportanceIntent,
+  onImportanceClear,
+  isClearingImportance = false,
   onCreateTask,
   className,
   orientation = "row",
 }: EmailActionControlsProps) {
+  const oppositeSignal = importanceFeedback
+    ? oppositeImportanceSignal(importanceFeedback.signal)
+    : null;
+  const reasonLabel = importanceFeedback?.reasonCategory
+    ? EMAIL_IMPORTANCE_REASON_LABELS[importanceFeedback.reasonCategory]
+    : null;
+
   return (
     <div
       className={cn(
@@ -1124,32 +1162,92 @@ function EmailActionControls({
         </Button>
       ) : null}
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => onImportanceIntent("important")}
-        className={cn(
-          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
-          orientation === "column" && "justify-start",
-        )}
-      >
-        <Star className="h-3.5 w-3.5" />
-        Mark important
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => onImportanceIntent("not_important")}
-        className={cn(
-          "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
-          orientation === "column" && "justify-start",
-        )}
-      >
-        <StarOff className="h-3.5 w-3.5" />
-        Not important
-      </Button>
+      {importanceFeedback ? (
+        <div
+          className={cn(
+            "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs",
+            orientation === "column" && "items-start",
+          )}
+        >
+          <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-foreground">
+            {importanceFeedback.signal === "important" ? (
+              <Star className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <StarOff className="h-3.5 w-3.5 shrink-0" />
+            )}
+            {importanceSignalLabel(importanceFeedback.signal)}
+          </span>
+          {reasonLabel ? (
+            <span className="text-muted-foreground">{reasonLabel}</span>
+          ) : null}
+          {importanceFeedback.reason ? (
+            <span className="min-w-0 truncate text-muted-foreground">
+              {importanceFeedback.reason}
+            </span>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onImportanceIntent(importanceFeedback.signal)}
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Edit
+          </Button>
+          {oppositeSignal ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onImportanceIntent(oppositeSignal)}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {oppositeSignal === "important" ? "Mark important" : "Not important"}
+            </Button>
+          ) : null}
+          {onImportanceClear ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onImportanceClear}
+              disabled={isClearingImportance}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {isClearingImportance ? "Reverting..." : "Revert"}
+            </Button>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onImportanceIntent("important")}
+            className={cn(
+              "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+              orientation === "column" && "justify-start",
+            )}
+          >
+            <Star className="h-3.5 w-3.5" />
+            Mark important
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onImportanceIntent("not_important")}
+            className={cn(
+              "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+              orientation === "column" && "justify-start",
+            )}
+          >
+            <StarOff className="h-3.5 w-3.5" />
+            Not important
+          </Button>
+        </>
+      )}
 
       {onCreateTask ? (
         <Button
@@ -1183,13 +1281,15 @@ export function EmailReadingPanel({
   onOpenDetails,
   importanceFeedback = null,
   onImportanceRecorded,
+  onImportanceCleared,
   className,
 }: EmailReadingPanelProps) {
   const router = useRouter();
   const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
   const [importanceSignal, setImportanceSignal] = React.useState<
-    "important" | "not_important" | null
+    EmailImportanceSignal | null
   >(null);
+  const [isClearingImportance, setIsClearingImportance] = React.useState(false);
   const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState("");
   const [taskDescription, setTaskDescription] = React.useState("");
@@ -1248,12 +1348,34 @@ export function EmailReadingPanel({
   );
 
   const handleImportanceIntent = React.useCallback(
-    (signal: "important" | "not_important") => {
+    (signal: EmailImportanceSignal) => {
       setImportanceSignal(signal);
       setImportanceDialogOpen(true);
     },
     [],
   );
+
+  const handleImportanceClear = React.useCallback(async () => {
+    if (!email || isClearingImportance) return;
+
+    setIsClearingImportance(true);
+    try {
+      await apiFetch("/api/ai-assistant/email-importance-feedback", {
+        method: "DELETE",
+        body: JSON.stringify({
+          emailId: email.id,
+          projectId: email.project_id,
+          emailSnapshot: buildEmailImportanceSnapshot(email),
+        }),
+      });
+      onImportanceCleared?.(email.id);
+      toast.success("Importance feedback reverted.");
+    } catch (error) {
+      handleFormError(error, { entity: "email feedback", action: "update" });
+    } finally {
+      setIsClearingImportance(false);
+    }
+  }, [email, isClearingImportance, onImportanceCleared]);
 
   const handleAttachmentTypeUpdate = React.useCallback(
     (attachmentId: number, nextType: string | null) => {
@@ -1635,7 +1757,14 @@ export function EmailReadingPanel({
                       ? () => void handleSummarize()
                       : undefined
                   }
+                  importanceFeedback={importanceFeedback}
                   onImportanceIntent={handleImportanceIntent}
+                  onImportanceClear={
+                    importanceFeedback
+                      ? () => void handleImportanceClear()
+                      : undefined
+                  }
+                  isClearingImportance={isClearingImportance}
                   onCreateTask={
                     canProjectEmailActions ? handleOpenCreateTask : undefined
                   }
@@ -1690,7 +1819,12 @@ export function EmailReadingPanel({
                   ? () => void handleSummarize()
                   : undefined
               }
+              importanceFeedback={importanceFeedback}
               onImportanceIntent={handleImportanceIntent}
+              onImportanceClear={
+                importanceFeedback ? () => void handleImportanceClear() : undefined
+              }
+              isClearingImportance={isClearingImportance}
               onCreateTask={
                 canProjectEmailActions ? handleOpenCreateTask : undefined
               }
@@ -2844,6 +2978,9 @@ export function ProjectEmailsWorkspace({
   onSortChange,
   draftFeedbackMode = false,
   onDraftFeedbackSaved,
+  importanceFeedbackByEmailId = {},
+  onImportanceRecorded,
+  onImportanceCleared,
   onCompose,
   onEdit,
   onDelete,
@@ -3315,6 +3452,13 @@ export function ProjectEmailsWorkspace({
               onDelete={onDelete}
               showDetailsButton
               onOpenDetails={() => setIsDetailsPanelOpen(true)}
+              importanceFeedback={
+                selectedEmail
+                  ? importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
+                  : null
+              }
+              onImportanceRecorded={onImportanceRecorded}
+              onImportanceCleared={onImportanceCleared}
             />
           </div>
 

@@ -5,6 +5,8 @@ export const EMAIL_IMPORTANCE_SIGNALS = [
 
 export type EmailImportanceSignal = (typeof EMAIL_IMPORTANCE_SIGNALS)[number];
 
+export const EMAIL_IMPORTANCE_CLEARED_SIGNAL = "cleared" as const;
+
 export const EMAIL_IMPORTANCE_REASON_CATEGORIES = [
   "client_deadline",
   "decision_needed",

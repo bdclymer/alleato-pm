@@ -65,7 +65,10 @@ import {
   normalizeMailboxPriorityFilter,
 } from "@/features/emails/mailbox-priority-tabs";
 import {
+  EMAIL_IMPORTANCE_DEFAULT_FILTER,
   getEmailsRefreshInterval,
+  matchesEmailImportanceVisibility,
+  normalizeEmailImportanceVisibilityFilter,
   reconcileSelectedEmail,
 } from "./emails-client.helpers";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
@@ -84,6 +87,7 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
   to: undefined,
   has_attachments: undefined,
   is_starred: undefined,
+  importance: undefined,
   sent_at_from: undefined,
   sent_at_to: undefined,
 };
@@ -167,6 +171,9 @@ export function EmailsClient({
   const initialIsStarred = searchParams.get("is_starred") === "true";
   const initialSentAtFrom = searchParams.get("sent_at_from") ?? "";
   const initialSentAtTo = searchParams.get("sent_at_to") ?? "";
+  const initialImportance = normalizeEmailImportanceVisibilityFilter(
+    searchParams.get("importance"),
+  );
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
     project_id: initialProjectId || undefined,
@@ -174,6 +181,10 @@ export function EmailsClient({
     to: initialTo || undefined,
     has_attachments: initialHasAttachments || undefined,
     is_starred: initialIsStarred || undefined,
+    importance:
+      initialImportance === EMAIL_IMPORTANCE_DEFAULT_FILTER
+        ? undefined
+        : initialImportance,
     sent_at_from: initialSentAtFrom || undefined,
     sent_at_to: initialSentAtTo || undefined,
   };
@@ -302,6 +313,9 @@ export function EmailsClient({
   }, [emails]);
 
   React.useEffect(() => {
+    const nextImportance = normalizeEmailImportanceVisibilityFilter(
+      searchParams.get("importance"),
+    );
     const nextFilters: FilterState = {
       status: searchParams.get("status") || undefined,
       project_id: searchParams.get("project_id") || undefined,
@@ -310,6 +324,10 @@ export function EmailsClient({
       has_attachments:
         searchParams.get("has_attachments") === "true" ? true : undefined,
       is_starred: searchParams.get("is_starred") === "true" ? true : undefined,
+      importance:
+        nextImportance === EMAIL_IMPORTANCE_DEFAULT_FILTER
+          ? undefined
+          : nextImportance,
       sent_at_from: searchParams.get("sent_at_from") || undefined,
       sent_at_to: searchParams.get("sent_at_to") || undefined,
     };
@@ -359,6 +377,9 @@ export function EmailsClient({
   const isStarredFilter = activeFilters.is_starred === true;
   const sentAtFromFilter = activeFilters.sent_at_from as string | undefined;
   const sentAtToFilter = activeFilters.sent_at_to as string | undefined;
+  const importanceFilter = normalizeEmailImportanceVisibilityFilter(
+    activeFilters.importance as string | undefined,
+  );
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
   const priorityFilter = normalizeMailboxPriorityFilter(
     searchParams.get("priority"),
@@ -407,6 +428,15 @@ export function EmailsClient({
     }
     if (hasAttachmentsFilter && !email.has_attachments) return false;
     if (isStarredFilter && !email.is_starred) return false;
+    if (
+      !matchesEmailImportanceVisibility(
+        email,
+        importanceFeedbackByEmailId,
+        importanceFilter,
+      )
+    ) {
+      return false;
+    }
     if (sentAtFromFilter || sentAtToFilter) {
       const emailDateRaw = email.sent_at || email.received_at || email.created_at;
       if (!emailDateRaw) return false;
@@ -477,12 +507,10 @@ export function EmailsClient({
     () =>
       Array.from(
         new Set(
-          [selectedEmail, ...pagedEmails]
-            .filter((email): email is ProjectEmail => Boolean(email))
-            .map((email) => String(email.id)),
+          emails.map((email) => String(email.id)),
         ),
       ),
-    [pagedEmails, selectedEmail],
+    [emails],
   );
 
   React.useEffect(() => {
@@ -493,7 +521,6 @@ export function EmailsClient({
   }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
   React.useEffect(() => {
-    if (!isOutlook) return;
     if (importanceFeedbackEmailIds.length === 0) return;
 
     const controller = new AbortController();
@@ -537,7 +564,7 @@ export function EmailsClient({
     })();
 
     return () => controller.abort();
-  }, [importanceFeedbackEmailIds, isOutlook, projectId, scope]);
+  }, [importanceFeedbackEmailIds, projectId, scope]);
 
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setActiveFilters(nextFilters);
@@ -551,6 +578,10 @@ export function EmailsClient({
       to: typeof nextFilters.to === "string" ? nextFilters.to : null,
       has_attachments: nextFilters.has_attachments === true ? "true" : null,
       is_starred: nextFilters.is_starred === true ? "true" : null,
+      importance:
+        typeof nextFilters.importance === "string"
+          ? nextFilters.importance
+          : null,
       sent_at_from:
         typeof nextFilters.sent_at_from === "string"
           ? nextFilters.sent_at_from
@@ -645,6 +676,14 @@ export function EmailsClient({
       ...prev,
       [String(emailId)]: feedback,
     }));
+  };
+
+  const handleImportanceCleared = (emailId: number) => {
+    setImportanceFeedbackByEmailId((prev) => {
+      const next = { ...prev };
+      delete next[String(emailId)];
+      return next;
+    });
   };
 
   const handleJunkRuleCreated = async (item: ProjectEmail) => {
@@ -805,6 +844,9 @@ export function EmailsClient({
           onDraftFeedbackSaved={() => {
             void refetchEmails();
           }}
+          importanceFeedbackByEmailId={importanceFeedbackByEmailId}
+          onImportanceRecorded={handleImportanceRecorded}
+          onImportanceCleared={handleImportanceCleared}
           viewSwitcher={
             <EmailViewSwitcher
               value={emailView}
@@ -1049,6 +1091,7 @@ export function EmailsClient({
                         importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
                       }
                       onImportanceRecorded={handleImportanceRecorded}
+                      onImportanceCleared={handleImportanceCleared}
                       className="h-full"
                     />
                   )
