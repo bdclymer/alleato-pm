@@ -1226,6 +1226,7 @@ function BudgetPageContent() {
             costCode={selectedLineItem.costCode}
             budgetLineId={selectedLineItem.id}
             projectId={projectId}
+            onModificationChanged={handleLineItemSuccess}
           />
 
           <ApprovedCOsModal

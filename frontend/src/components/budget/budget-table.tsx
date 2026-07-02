@@ -734,7 +734,7 @@ export function BudgetTable({
               onEditLineItem ? () => onEditLineItem(row.original) : undefined,
               { hideWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -760,7 +760,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -786,7 +786,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -837,7 +837,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -888,7 +888,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -917,7 +917,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -943,7 +943,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -972,7 +972,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -1022,10 +1022,12 @@ export function BudgetTable({
                 ? () => onForecastToCompleteClick(row.original)
                 : undefined,
               // Procore parity: forecasting stays editable after budget lock —
-              // the lock freezes the budget, not the forecast.
+              // the lock freezes the budget, not the forecast. Forecast to
+              // Complete is a forward-looking cost projection, not a committed
+              // budget dollar.
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -1100,19 +1102,15 @@ export function BudgetTable({
           () => onEditLineItem(row.original)
         );
 
-        // Procore-parity delete rules (tests 1.3.1–1.3.4):
-        //  • Allowed only when original budget is $0
-        //  • Blocked when budget is locked
-        //  • Server also blocks when active budget modifications reference
-        //    the line's cost code (LINE_HAS_ACTIVE_MODIFICATIONS)
+        // Procore-parity delete rule (tests 1.3.1–1.3.4): allowed only when
+        // original budget is $0. Server also blocks when active budget
+        // modifications reference the line's cost code (LINE_HAS_ACTIVE_MODIFICATIONS).
         const originalAmount = Number(row.original.originalBudgetAmount ?? 0);
         const hasOriginalBudget = originalAmount !== 0;
-        const deleteDisabled = isLocked || hasOriginalBudget;
-        const deleteDisabledReason = isLocked
-          ? "Budget is locked. Unlock the budget to delete line items."
-          : hasOriginalBudget
-            ? "Cannot delete a line with an original budget. Use a budget modification to remove or zero out funded lines."
-            : "";
+        const deleteDisabled = hasOriginalBudget;
+        const deleteDisabledReason = hasOriginalBudget
+          ? "Cannot delete a line with an original budget. Use a budget modification to remove or zero out funded lines."
+          : "";
 
         return (
           <div className="flex items-center justify-end gap-0.5">
@@ -1401,7 +1399,7 @@ export function BudgetTable({
                   </p>
                 </div>
 
-                {!hasChildren && (onEditLineItem || canDelete) ? (
+                {!hasChildren && !isLocked && (onEditLineItem || canDelete) ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -1440,26 +1438,30 @@ export function BudgetTable({
                 <MobileMetricButton
                   label="Original"
                   value={lineItem.originalBudgetAmount}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
                 <MobileMetricButton
                   label="Revised"
                   value={lineItem.revisedBudget}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
                 <MobileMetricButton
                   label="Committed"
                   value={lineItem.committedCosts}
-                  onClick={createSafeClickHandler(
-                    isLocked,
-                    "view committed costs",
-                    onCommittedCostsClick ? () => onCommittedCostsClick(lineItem) : undefined,
-                  )}
+                  onClick={
+                    hasChildren
+                      ? undefined
+                      : createSafeClickHandler(
+                          isLocked,
+                          "view committed costs",
+                          onCommittedCostsClick ? () => onCommittedCostsClick(lineItem) : undefined,
+                        )
+                  }
                 />
                 <MobileMetricButton
                   label="Projected cost"
                   value={lineItem.projectedCosts}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
               </div>
 
