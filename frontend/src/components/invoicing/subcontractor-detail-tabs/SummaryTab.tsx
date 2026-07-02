@@ -382,7 +382,7 @@ export function SummaryTab({
           </div>
 
           {/* Right column: Project / Application metadata */}
-          <DetailFieldGrid columns={2} className="gap-x-6 gap-y-3">
+          <DetailFieldGrid columns={1} className="gap-y-2">
             <DetailField label="Project">
               {invoice.project_name ?? "—"}
             </DetailField>
