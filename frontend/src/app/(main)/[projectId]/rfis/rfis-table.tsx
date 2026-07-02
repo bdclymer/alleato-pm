@@ -133,7 +133,7 @@ export function RfisTable({ projectId }: RfisTableProps) {
 
   // Person/role filter options come from the project directory (RFI rows store
   // display names, so the filter value matches the stored name).
-  const { userOptions, directoryOptions } = useRfiPeopleOptions();
+  const { userOptions, directoryOptions } = useRfiPeopleOptions(projectId);
 
   const filters = React.useMemo<FilterConfig[]>(() => {
     const toOpts = (opts: { value: string; label: string }[]) =>

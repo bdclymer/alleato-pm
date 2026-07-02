@@ -20,6 +20,7 @@ import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { usePeople } from "@/hooks/use-people";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 import { useSpecifications } from "@/hooks/use-specifications";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
@@ -28,7 +29,7 @@ interface DirectoryPerson {
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
-  person_type?: "user" | "contact";
+  person_type?: "user" | "contact" | "employee";
   company?: { id: string; name: string } | null;
 }
 
@@ -57,32 +58,66 @@ function buildPersonOptions(people: DirectoryPerson[]): PersonOption[] {
 
 /**
  * Person/company option sources for RFI forms, modeled on Procore's field rules:
- *  - `userOptions`      → RFI Manager + Assignees (internal users only)
+ *  - `userOptions`      → RFI Manager + Assignees (internal users who are
+ *                         members of THIS project — see below)
  *  - `directoryOptions` → Received From + Distribution List (full people directory)
  *  - `companyForPerson` → maps a Received-From display name to that person's
  *                         company, used to auto-prefill the read-only
  *                         Responsible Contractor field.
  *
- * Sourced from the company-wide directory, not project_directory_memberships —
- * the latter is empty for most projects, which left these fields blank.
+ * RFI Manager and Assignees are scoped to `project_directory_memberships` for
+ * `projectId` (client feedback: assignees must only be people on the project,
+ * not the whole company roster). Access to a project already requires an
+ * active `project_directory_memberships` row (see `auth-guard.ts`), so any
+ * project with real users working on it has this populated — an empty result
+ * here means no one has been added to the project's directory yet, not a data
+ * gap to paper over with the full company list.
+ *
+ * Received From / Distribution List stay sourced from the company-wide
+ * directory — out of scope for this fix.
  */
-export function useRfiPeopleOptions() {
-  // "Internal users" for RFI Manager / Assignees = all internal staff, not just
-  // the handful of accounts with a login. type:"employee" resolves to
-  // person_type IN ('employee','user') in /api/people, so employees added to the
-  // directory (e.g. Jesse Remillard) are selectable. type:"user" alone returned
-  // only the 3 login accounts.
-  const { people: users, isLoading: isLoadingUsers } = usePeople({ type: "employee" });
+export function useRfiPeopleOptions(projectId: number) {
+  const { users: projectMembersRaw, isLoading: isLoadingUsers } = useProjectUsers(
+    String(projectId),
+    { type: "all" },
+  );
   const { people: directory, isLoading: isLoadingDirectory } = usePeople({ type: "all" });
 
+  // PersonWithDetails (directoryService) types person_type/company loosely
+  // (plain `string` / full `Company` row) — map to the local DirectoryPerson
+  // shape used by buildPersonOptions. Explicit mapping (not a double-cast) so
+  // the quality gate stays happy and the field narrowing is visible.
+  const projectMembers = useMemo<DirectoryPerson[]>(
+    () =>
+      projectMembersRaw.map((person) => ({
+        first_name: person.first_name,
+        last_name: person.last_name,
+        email: person.email,
+        person_type: person.person_type as DirectoryPerson["person_type"],
+        company: person.company
+          ? { id: person.company.id, name: person.company.name }
+          : null,
+      })),
+    [projectMembersRaw],
+  );
+
+  // "Internal users" for RFI Manager / Assignees = project members whose
+  // person_type is employee or user (excludes external contacts added to the
+  // project directory, e.g. the client or a subcontractor's PM).
   const userOptions = useMemo(
-    () => buildPersonOptions(users as DirectoryPerson[]),
-    [users],
+    () =>
+      buildPersonOptions(
+        projectMembers.filter(
+          (person) =>
+            person.person_type === "employee" || person.person_type === "user",
+        ),
+      ),
+    [projectMembers],
   );
 
   const { directoryOptions, companyForPerson } = useMemo(() => {
     const merged = [
-      ...(users as DirectoryPerson[]),
+      ...projectMembers,
       ...(directory as DirectoryPerson[]),
     ];
     const companies = new Map<string, string>();
@@ -96,7 +131,7 @@ export function useRfiPeopleOptions() {
       directoryOptions: buildPersonOptions(merged),
       companyForPerson: companies,
     };
-  }, [users, directory]);
+  }, [projectMembers, directory]);
 
   return {
     userOptions,
@@ -184,7 +219,7 @@ export function RfiFormFields({
   withFormProvider = true,
 }: RfiFormFieldsProps) {
   const { userOptions, directoryOptions, companyForPerson, isLoading: isLoadingPeople } =
-    useRfiPeopleOptions();
+    useRfiPeopleOptions(projectId);
   const { specificationOptions, isLoadingSpecifications } =
     useSpecificationOptions(projectId);
   const { costCodeOptions, isLoadingCostCodes } = useCostCodeOptions(projectId);
