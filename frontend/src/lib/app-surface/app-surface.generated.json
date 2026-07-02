@@ -123,8 +123,8 @@
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]/edit",
-      "title": null,
-      "description": "Edit subcontract or purchase order details including attachments and schedule of values"
+      "title": "Approved commitments cannot be edited",
+      "description": "Change the commitment status back to Draft on the detail page before editing fields or line items."
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]",
@@ -243,8 +243,8 @@
     },
     {
       "url": "/[projectId]/drawings/viewer-v2/[drawingId]",
-      "title": "Drawing Viewer (v2 prototype)",
-      "description": "Try a different search term."
+      "title": "Redirecting to Drawing Viewer",
+      "description": null
     },
     {
       "url": "/[projectId]/drawings/viewer-v3/[drawingId]",
@@ -293,7 +293,7 @@
     },
     {
       "url": "/[projectId]/intelligence",
-      "title": "Operating record",
+      "title": "Executive focus",
       "description": "AI-powered project intelligence with insights, timeline, and source document references"
     },
     {
@@ -804,7 +804,7 @@
     {
       "url": "/analytics",
       "title": "Platform Analytics",
-      "description": "User logins, activity, app error trends, AI engagement, and sync health — live platform visibility for administrators."
+      "description": null
     },
     {
       "url": "/annotation-inbox",
@@ -822,9 +822,19 @@
       "description": "View and manage assigned tasks and action items across projects"
     },
     {
+      "url": "/auth/ai-change-event-preview-card",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/auth/ai-widget-gallery",
       "title": null,
       "description": "Gallery of AI-powered interactive widgets and components"
+    },
+    {
+      "url": "/auth/confirm",
+      "title": null,
+      "description": null
     },
     {
       "url": "/auth/error",
@@ -893,8 +903,8 @@
     },
     {
       "url": "/comments",
-      "title": "Comment details",
-      "description": "Clear search or switch filters."
+      "title": null,
+      "description": null
     },
     {
       "url": "/create-project",
@@ -938,7 +948,7 @@
     },
     {
       "url": "/deep-research",
-      "title": "Deep Research Archive",
+      "title": "Couldn't load the archive",
       "description": "Run an LLM wiki workflow, then refresh this archive."
     },
     {
@@ -1192,6 +1202,11 @@
       "description": "Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking"
     },
     {
+      "url": "/intelligence-vision",
+      "title": "Alleato Intelligence — The Vision",
+      "description": "How AI is woven through the life of a project — from chasing the work to closing it out — built like a building, floor by floor. What's live today, what's framing up, and where it all goes."
+    },
+    {
       "url": "/invoice/add",
       "title": null,
       "description": "Create a new invoice"
@@ -1217,9 +1232,39 @@
       "description": "Search and browse the knowledge base of project documents and information"
     },
     {
+      "url": "/knowledge/app",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/knowledge/app/[toolCategory]",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/knowledge/app/[toolCategory]/[docSlug]",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/knowledge/app/screenshots",
+      "title": "App Page Screenshots",
+      "description": null
+    },
+    {
+      "url": "/knowledge/company",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/knowledge/manage",
       "title": null,
       "description": "Admin table to manage knowledge base entries, documents, and content"
+    },
+    {
+      "url": "/learning-feedback",
+      "title": "Learning & Feedback",
+      "description": "What the AI needs you to look at — review queue, feedback coverage, and the learning pipeline in one place."
     },
     {
       "url": "/manpower",
@@ -1242,6 +1287,11 @@
       "description": "Meeting detail page with transcript, segments, extracted items, and related meetings"
     },
     {
+      "url": "/my-feedback",
+      "title": "You haven't submitted any feedback yet",
+      "description": "Thumbs-up/down, ratings, and corrections you give the AI anywhere in the app show up here so you can review or fix them."
+    },
+    {
       "url": "/notifications",
       "title": "No notifications",
       "description": "You'll be notified about comments, mentions, and project activity."
@@ -1253,8 +1303,8 @@
     },
     {
       "url": "/outlook-draft-feedback",
-      "title": "Outlook Draft Feedback",
-      "description": "Review Brandon draft feedback captured from assistant Outlook draft widgets."
+      "title": null,
+      "description": null
     },
     {
       "url": "/outlook-intake",
@@ -1278,8 +1328,18 @@
     },
     {
       "url": "/pipeline-health",
-      "title": "Pipeline health map",
-      "description": "Live view of the ingestion pipeline — each source flows left to right through sync, embed, project attribution, task extraction, and intelligence compilation. Red nodes and dashed edges are where data stops flowing."
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/potential-change-orders",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/prime-contract-change-order-orphans",
+      "title": "Prime Change Order Orphans",
+      "description": "Repair prime change orders that are missing both parent links."
     },
     {
       "url": "/prime-contracts",
@@ -1308,7 +1368,7 @@
     },
     {
       "url": "/product-board",
-      "title": "Product Board",
+      "title": "Roadmap",
       "description": "Dashboard for product planning and feature tracking across the development roadmap"
     },
     {
@@ -1512,6 +1572,26 @@
       "description": "Catalog of all Procore tools grouped by category with status badges and external links"
     },
     {
+      "url": "/training-docs",
+      "title": null,
+      "description": "Admin editor for drafting, reviewing, and publishing training SOPs to the docs site"
+    },
+    {
+      "url": "/training-docs/[docId]",
+      "title": "Training Doc",
+      "description": "Edit the SOP content, screenshots, review notes, and publish state."
+    },
+    {
+      "url": "/training-docs/[docId]/preview",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/training-map",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/ui-library",
       "title": null,
       "description": "Disclosure primitive for secondary detail. Keep primary labels and status visible outside the collapsed body."
@@ -1527,7 +1607,7 @@
       "description": "Manage app users, project access, and permission templates with granular capability controls"
     },
     {
-      "url": "/user-management/users/[personId]",
+      "url": "/user-management/users/[userSlug]",
       "title": "Unable to load user access",
       "description": "User Management rejected this request. Admin permission is required before this profile can load."
     }
@@ -1535,7 +1615,7 @@
   "tools": [
     {
       "name": "createChangeOrder",
-      "description": "Create a new prime contract change order (PCCO). Use when the user says 'create a change order', 'add a CO', or describes a scope change that needs to be documented as a change order. Always show a preview and ask for confirmation before writing. If projectId is unknown, call getPortfolioOverview first."
+      "description": null
     },
     {
       "name": "createChangeEvent",
@@ -1543,27 +1623,27 @@
     },
     {
       "name": "updateProjectStatus",
-      "description": "Update a project's health status or phase. Use when the user says 'mark [project] as at-risk', 'update status to [value]', or '[project] is now in [phase]'. Always confirm before writing."
+      "description": null
     },
     {
       "name": "createRFI",
-      "description": "Create a new Request for Information (RFI). Use when the user says 'create an RFI', 'log an RFI about [topic]', or describes a field question that needs a formal answer from the design team. Preview before writing."
+      "description": null
     },
     {
       "name": "createTask",
-      "description": "Create a schedule/Gantt task backed by schedule_tasks. Use only when the user is creating a project schedule activity, milestone, or Gantt item. For action items, follow-ups, reminders, or Tasks page records, use createGeneratedTask instead. Always show a preview and ask for confirmation before writing."
+      "description": null
     },
     {
       "name": "createGeneratedTask",
-      "description": "Create an action item in the main Tasks page task register (public.tasks). Use this for AI-generated follow-ups, reminders, accountability items, or user-created action items that should appear on /tasks or /[projectId]/tasks. If the action item supports a known schedule/Gantt task, pass scheduleTaskId to link it. Preview before writing."
+      "description": null
     },
     {
       "name": "createProjectCompany",
-      "description": "Add a company to a project's directory. Use when the user says 'add [company] to this project', 'add a vendor/subcontractor/supplier', or provides company directory details. Reuses an existing global company by exact name when possible, assigns it to the project, and previews before writing."
+      "description": null
     },
     {
       "name": "createProjectContact",
-      "description": "Add a contact to a project's directory. Use when the user says 'add [person] as a contact', 'add this vendor contact to the project', or provides contact details. Reuses an existing person by email, links them to the project directory, optionally links their company, and previews before writing."
+      "description": null
     },
     {
       "name": "createContact",
@@ -1571,35 +1651,35 @@
     },
     {
       "name": "updateGeneratedTask",
-      "description": "Update an existing task in the main Tasks page task register (public.tasks). Use when the user asks to modify, reassign, reprioritize, close, or change a due date for a Tasks page item. Preview before writing."
+      "description": null
     },
     {
       "name": "deleteGeneratedTask",
-      "description": "Delete an existing task from the main Tasks page task register (public.tasks). Preview before writing."
+      "description": null
     },
     {
       "name": "flagProjectRisk",
-      "description": "Flag a project risk or insight. Use when the user says 'flag a risk', 'log an issue', or 'mark this as a concern'. Creates an AI insight record that shows up in the risk dashboard. Preview before writing."
+      "description": null
     },
     {
       "name": "updateRFIStatus",
-      "description": "Update the status of an existing RFI. Use when the user says 'close RFI #[n]', 'mark RFI [n] as answered', or 'RFI [n] is resolved'. Always preview before writing."
+      "description": null
     },
     {
       "name": "createMeetingNote",
-      "description": "Log notes from a meeting into the project record. Use when the user says 'log notes from today's meeting', 'record what we discussed', or 'save meeting notes for [project]'. Can pre-fill from Fireflies context if available. Always preview before writing."
+      "description": null
     },
     {
       "name": "createSubmittal",
-      "description": "Create a new submittal. Use when the user says 'create a submittal for [spec section]', 'log a submittal', or 'we need to submit [material/equipment]'. Always preview before writing."
+      "description": null
     },
     {
       "name": "logDailyReport",
-      "description": "Create a daily log entry for a project. Use when the user says 'log today's daily report', 'record site activity for [date]', or 'add a daily log entry'. Weather conditions and notes are stored as JSON. Always preview before writing."
+      "description": null
     },
     {
       "name": "generateProjectSummary",
-      "description": "Generate a comprehensive project status summary by pulling budget, schedule, RFI, change order, and meeting data — then synthesizing it into a stored document. Use when the user says 'give me a status summary', 'project report', or 'what's the status of [project]'. This creates a reusable document, not just a chat response."
+      "description": null
     },
     {
       "name": "createInitiativeCard",
@@ -1607,7 +1687,7 @@
     },
     {
       "name": "createCommitment",
-      "description": "Create a new commitment — either a subcontract (for labor/trade work) or a purchase order (for materials or equipment). Use when the user says 'create a subcontract', 'add a PO', 'set up a commitment with [vendor]', or describes awarding work to a subcontractor or supplier. Always show a preview and ask for confirmation before writing. If projectId is unknown, call getPortfolioOverview first."
+      "description": null
     },
     {
       "name": "submitFeedback",
@@ -1615,55 +1695,55 @@
     },
     {
       "name": "addBoardItem",
-      "description": "Add a feature idea, initiative, or product improvement directly to the Product Board kanban. Use when the user says 'add this to the board', 'put this on the product board', 'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track a product idea with a specific status column. Always show a preview and ask for confirmation before writing."
+      "description": "Add a feature idea, initiative, or product improvement directly to the Roadmap kanban. Use when the user says 'add this to the board', 'put this on the roadmap', 'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track a product idea with a specific status column. Always show a preview and ask for confirmation before writing."
     },
     {
       "name": "createOutlookCalendarInvite",
-      "description": "Create an Outlook calendar invite through Microsoft Graph. Use when the user asks to schedule a meeting, send a calendar invite, add something to Outlook, or create a Teams meeting invite. Always return a preview first with the adaptive-card calendar widget, then write only after confirmation."
+      "description": null
     },
     {
       "name": "draftOutlookEmail",
-      "description": "Create a draft email in Outlook through Microsoft Graph. Use when the user asks to draft an email, draft a reply, prepare an Outlook response, or write a message for later review. Always preview first and never send. For reply drafts, ground the response through the Microsoft Executive Assistant specialist or a live Graph message/thread lookup before calling this tool. When drafting from Brandon's mailbox, apply the Brandon communication resources: docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md for voice, docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md for owner/operator judgment, and docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md for reply patterns. Drafts must be short, direct, action-oriented, grounded in the current thread, and must ask for confirmation when cost, scope, schedule, owner, or attachment evidence is missing."
+      "description": null
     },
     {
       "name": "sendTeamsMessage",
-      "description": "Send a direct Teams message to a person via the Archon bot. Use when the user says 'send [person] a Teams message', 'message [person] on Teams', 'follow up with [person] about [topic]', 'ping [person]', or describes wanting to communicate with a team member via Teams. Look up the person by name first, then preview the message before sending. The recipient must have linked their Alleato account to Teams (messaged the Archon bot before)."
+      "description": null
     },
     {
       "name": "getAPAgingReport",
-      "description": "Get Accounts Payable (AP) aging report from the Acumatica ERP system. Shows outstanding bills grouped by how many days past due they are (Current, 1-30, 31-60, 61-90, 90+ days). This is LIVE accounting data. Use when asked about: AP aging, outstanding bills, what we owe vendors, overdue payables, accounts payable status, or vendor payment obligations."
+      "description": null
     },
     {
       "name": "getARAgingReport",
-      "description": "Get Accounts Receivable (AR) aging report from Acumatica ERP. Shows outstanding invoices grouped by how many days past due they are. This is LIVE accounting data. Use when asked about: AR aging, outstanding invoices, what clients owe us, overdue receivables, collections, or accounts receivable status."
+      "description": null
     },
     {
       "name": "getCashPositionReport",
-      "description": "Get cash position summary from Acumatica ERP. Shows net cash flow over a rolling window: total AR payments received (inflows) vs AP checks issued (outflows). This is LIVE accounting data. Use when asked about: cash position, cash flow, liquidity, how much cash we have, net inflows/outflows, or working capital."
+      "description": null
     },
     {
       "name": "getVendorSpendReport",
-      "description": "Get vendor spend analysis from Acumatica ERP. Shows how much has been invoiced by vendors, how much is still outstanding, and how much has been paid. Can filter to a specific vendor or show top vendors by total spend. This is LIVE accounting data. Use when asked about: vendor spend, vendor payments, top vendors, how much we've paid a vendor, or vendor cost analysis."
+      "description": null
     },
     {
       "name": "getRecentBills",
-      "description": "Get recent AP bills (vendor invoices) from Acumatica ERP. Shows the latest bills with vendor, amount, balance, and status. This is LIVE accounting data. Use when asked about: recent bills, vendor invoices, AP transactions, or what bills came in recently."
+      "description": null
     },
     {
       "name": "getRecentInvoices",
-      "description": "Get recent AR invoices (customer billings) from Acumatica ERP. Shows customer invoices with amounts, balances, and status. This is LIVE accounting data. Use when asked about: invoices, customer billings, AR transactions, pay applications, or what we've billed recently."
+      "description": null
     },
     {
       "name": "getAcumaticaProjectBudget",
-      "description": "Get a comprehensive project budget from the Acumatica ERP system. Returns budget line items with original budget, revised budget, actual costs, committed costs, cost to complete, cost at completion, variance, and change order amounts. This is LIVE accounting data from the official financial system of record. Use when asked about: ERP budget, Acumatica budget, official project budget, accounting budget, project financials from ERP, cost codes from Acumatica, or when the user wants the 'real' budget numbers from the accounting system. The projectId is the Acumatica project code (e.g., '25108'), NOT the Supabase project ID (which is a number like 67)."
+      "description": null
     },
     {
       "name": "getAcumaticaProjectList",
-      "description": "Get a list of all projects from the Acumatica ERP system with high-level financial totals (income, expenses, net position). This is LIVE accounting data. Use when asked about: all projects in Acumatica, project portfolio from ERP, which projects are active in the accounting system, or for a financial overview across all projects from the official books."
+      "description": null
     },
     {
       "name": "getPurchaseOrderSummary",
-      "description": "Get purchase order summary from Acumatica ERP. Shows POs by vendor with totals, billed amounts, and status. This is LIVE accounting data. Use when asked about: purchase orders, POs, what we've ordered, procurement status, or vendor commitments."
+      "description": null
     },
     {
       "name": "searchAppHelp",
@@ -1783,7 +1863,7 @@
     },
     {
       "name": "semanticSearch",
-      "description": "Search across ALL project knowledge using semantic similarity: meeting transcripts (full chunked transcripts, segment summaries, meeting summaries), emails, Teams messages, OneDrive documents, insights (decisions/risks/opportunities), company knowledge base entries (lessons learned, pricing intel, vendor intel), and other indexed content. Uses unified document_chunks table (24K+ chunks) + insights + knowledge base. Works CROSS-PROJECT by default — no project filter needed. Optionally filter by project name or ID, or by source type. Use when the user asks a broad question that could span multiple data types, or when keyword search isn't finding results."
+      "description": null
     },
     {
       "name": "getCompanyKnowledge",
@@ -1795,11 +1875,11 @@
     },
     {
       "name": "searchMeetingsByTopic",
-      "description": "Search for meetings about a specific topic across ALL projects. Returns enriched results with speaker quotes, decisions, risks, and action items from meeting digests and segments. Use this when the user asks 'find meetings about X' or 'what have we discussed about Y'. Works cross-project by default. Combines keyword search AND semantic search for best coverage."
+      "description": null
     },
     {
       "name": "getMeetingDetails",
-      "description": "Get the FULL details of a specific meeting including its digest, segments with speaker discussion topics, decisions, risks, and action items. Provide EITHER meetingId (exact DB id from a prior search) OR meetingTitle (the meeting name — will be looked up automatically). NEVER guess or construct a meetingId from a date or title string. If you only know the title, pass meetingTitle and the ID will be resolved."
+      "description": null
     },
     {
       "name": "saveToKnowledgeBase",
@@ -1823,19 +1903,19 @@
     },
     {
       "name": "getRecentEmails",
-      "description": "Get a list of Outlook emails received within a specific date range. Use this when the user asks a time-based question about emails: 'what emails did I receive today?', 'show me emails from this week', 'any emails received yesterday?', 'how many emails came in today?'. This queries the backend Microsoft Graph live inbox first. Synced Outlook intake rows are fallback only — never treat them as live inbox truth. By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. Always summarize results by thread, not as a raw individual-message dump."
+      "description": null
     },
     {
       "name": "searchEmails",
-      "description": "Semantic search across Outlook email content synced from Microsoft 365. Use this when the user asks about a TOPIC in emails — not a date range. Examples: 'any emails about the permit delay?', 'what did we send to the GC about change orders?', 'find emails mentioning the subcontractor dispute'. For date-based questions ('what emails today?', 'show me this week's emails'), use getRecentEmails instead. Returns email subject, sender/recipients, date, and relevant content. Always cite results as 'email from [participants] on [date]'."
+      "description": null
     },
     {
       "name": "searchTeamsMessages",
-      "description": "Search Microsoft Teams channel message threads. Use this when the user asks about Teams conversations, channel discussions, or anything communicated in Teams (e.g. 'what did the team say about the schedule in Teams?', 'find Teams messages about the subcontractor issue'). Returns channel name, participants, date, and message content. Always cite results as 'Teams message in [channel] on [date]'."
+      "description": null
     },
     {
       "name": "searchExternalDocuments",
-      "description": "Search OneDrive files and uploaded project documents (PDFs, Word docs, spreadsheets, etc.). Use this when the user asks about specific documents, reports, specs, or files (e.g. 'find the geotechnical report', 'what does the contract say about liquidated damages?', 'search the RFP document for insurance requirements'). Distinct from meeting transcripts — this searches files and documents. Always cite results as 'document: [title] ([date if available])'."
+      "description": null
     },
     {
       "name": "getOutlookOperationsStatus",
@@ -1895,15 +1975,15 @@
     },
     {
       "name": "getMeetingsByDate",
-      "description": "Get meetings for a specific date or date range. Use this for temporal queries like 'today meetings', 'yesterday', or 'meetings this week'. Returns only meeting records."
+      "description": null
     },
     {
       "name": "findProjectDocuments",
-      "description": "**USE THIS to FIND specific documents/files for a project** — permits, contracts, drawings, specs, certificates, daily reports, RFIs, submittals, change orders, financial docs. This is a STRUCTURED lookup against document_metadata by project and document category/type/title keyword. NOT a content search — use searchDocuments for content-inside-the-document queries (e.g. 'what does the spec say about fire ratings'). Returns: file_name, title, type, category, date, OneDrive link, summary, and a content preview. Examples: 'find the permit for Westfield Collective' → category='permit' or titleKeyword='permit'; 'show me drawings for Goodwill' → category='drawing' or titleKeyword='drawing'; 'pull the latest contract' → category='contract' ordered by date desc."
+      "description": null
     },
     {
       "name": "searchDocuments",
-      "description": "Vector SEARCH inside document CONTENT — meeting transcripts, email bodies, doc text — by topic or keyword. Use ONLY when you need to find the specific TEXT inside documents (e.g. 'what does the spec say about fire ratings'). For finding a specific FILE (the permit, the contract, the drawings) use findProjectDocuments instead. For project FACTS (address, phase, manager) use getProjectDetails. Works across ALL projects by default; optionally filter by projectId/Name."
+      "description": null
     },
     {
       "name": "getProjectDetails",

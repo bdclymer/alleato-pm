@@ -45,8 +45,12 @@ const MD_EXT = /\.mdx?$/;
 // docs/archive/) and docs/ops/tasks/ + docs/ops/evidence/ are process/run logs,
 // not authoritative DB-fact docs — they legitimately quote shell commands,
 // usernames, FK constraint names, and lifecycle values that trip false positives.
+// docs/patterns/ is the retrospective error-pattern archive (restored 2026-07-02
+// after the docs purge): its files quote example snippets (`.from("table")`,
+// `.from("xxx")`), trigger-word lists, and commit hashes that are never live
+// table assertions — same false-positive category as docs/archive/.
 const IGNORE_PATH_RE =
-  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
+  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/patterns\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");
@@ -80,6 +84,8 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "source_sync_health_snapshots",
   // App-DB tables referenced in docs but missing from types (may be views or AI-DB)
   "ai_insights",
+  "insights",
+  "source_documents",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
 
@@ -164,6 +170,18 @@ const NON_TABLE_WORDS = new Set([
   "experimental_telemetry",
   // Column names (JSON fields), not table names
   "risks",
+  "decisions",
+  "source",
+  "source_type",
+  "project_name",
+  "is_admin",
+  "external_key",
+  "document_type",
+  "applies_to",
+  // TanStack column-config field referenced in docs/design/table-system.md
+  "meta",
+  // event-handler variable in code snippets (`e.target.value`), never a table
+  "e",
 ]);
 
 function run(cmd) {

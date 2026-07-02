@@ -140,7 +140,7 @@ The same rule applies to phone (`tel:`), external links, and copy-to-clipboard a
 
 ## The design system docs
 
-Full reference: `frontend/src/design-system/DESIGN.md`
+Full reference: `DESIGN.md` (repo root)
 
 ### Showing an empty state?
 

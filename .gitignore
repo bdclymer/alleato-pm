@@ -78,9 +78,18 @@ frontend/tests/playwright-report/
 test-results/
 user-data/
 
-# Documentation — kept locally, not tracked in git
+# Documentation — bulk of docs/ is local-only (2026-06-23 docs purge), EXCEPT the
+# gate-mandated dirs negated below. Those are load-bearing for CLAUDE.md and the
+# pre-commit gates (RAG-DOCS-GATE, project-map freshness, noise-gate log,
+# docs/patterns references) and MUST stay committable without -f.
 openai-cs-agents-demo/
-docs/
+docs/*
+!docs/architecture/
+docs/architecture/generated/
+!docs/design/
+!docs/patterns/
+!docs/ops/
+!docs/reference/
 
 # Playwright
 /playwright-report/
