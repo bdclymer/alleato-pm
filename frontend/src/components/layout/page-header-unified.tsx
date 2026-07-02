@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionalProject } from "@/contexts/project-context";
@@ -19,16 +18,12 @@ import { Eyebrow } from "@/components/ds/eyebrow";
 import { Heading } from "@/components/ds/heading";
 import { Text } from "@/components/ds/text";
 import {
-  Breadcrumb,
-  BreadcrumbItem as UiBreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+  BreadcrumbTrail,
+  type BreadcrumbTrailItem,
+} from "@/components/ui/breadcrumb-trail";
 import { PageTabsV2 } from "@/components/layout/PageTabsV2";
 
-interface BreadcrumbItem {
+interface BreadcrumbItem extends BreadcrumbTrailItem {
   label: string;
   href?: string;
 }
@@ -174,27 +169,16 @@ export function PageHeader({
     <div className={cn(className)}>
       <div>
         {breadcrumbs && breadcrumbs.length > 0 ? (
-          <Breadcrumb className="pb-2">
-            <BreadcrumbList>
-              {breadcrumbs.map((crumb, index) => {
-                const isLast = index === breadcrumbs.length - 1;
-                return (
-                  <React.Fragment key={`${crumb.label}-${index}`}>
-                    <UiBreadcrumbItem>
-                      {isLast || !crumb.href ? (
-                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink asChild>
-                          <Link href={crumb.href}>{crumb.label}</Link>
-                        </BreadcrumbLink>
-                      )}
-                    </UiBreadcrumbItem>
-                    {!isLast ? <BreadcrumbSeparator /> : null}
-                  </React.Fragment>
-                );
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <BreadcrumbTrail
+            items={breadcrumbs}
+            className="pb-2"
+            listClassName="text-sm"
+            linkClassName="max-w-[16rem]"
+            currentClassName="max-w-[18rem]"
+            maxVisibleItems={6}
+            leadingItems={2}
+            trailingItems={2}
+          />
         ) : null}
 
         {/* Title and Actions */}

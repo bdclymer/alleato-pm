@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { BreadcrumbTrail } from "@/components/ui/breadcrumb-trail";
 import {
   headerNavGroups,
   companyWideHeaderTools,
@@ -243,28 +244,15 @@ export function SiteHeader() {
           {/* Breadcrumbs — Desktop */}
           {breadcrumbs.length > 1 && (
             <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
-              {breadcrumbs.map((crumb, index) => (
-                <span
-                  key={`${crumb.href}-${index}`}
-                  className="flex items-center gap-1"
-                >
-                  {index > 0 && (
-                    <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50" />
-                  )}
-                  {index === breadcrumbs.length - 1 ? (
-                    <span className="truncate font-medium text-foreground">
-                      {crumb.label}
-                    </span>
-                  ) : (
-                    <Link
-                      href={crumb.href}
-                      className="truncate text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {crumb.label}
-                    </Link>
-                  )}
-                </span>
-              ))}
+              <BreadcrumbTrail
+                items={breadcrumbs}
+                listClassName="text-xs"
+                linkClassName="max-w-[10rem] text-muted-foreground"
+                currentClassName="max-w-[12rem] font-medium text-foreground"
+                maxVisibleItems={5}
+                leadingItems={2}
+                trailingItems={2}
+              />
             </div>
           )}
         </div>

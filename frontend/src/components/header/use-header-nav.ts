@@ -81,7 +81,7 @@ function getCreateRouteBreadcrumbLabel(
   }
 
   if (segments[index - 1] === "prime-contract-pcos") {
-    return "New Prime Contract PCO";
+    return "New Prime Contract Potential Change Order";
   }
 
   if (
@@ -89,7 +89,7 @@ function getCreateRouteBreadcrumbLabel(
     segments[index - 2] === "change-orders" &&
     segments[index - 4] === "prime-contracts"
   ) {
-    return "New Prime Contract PCO";
+    return "New Prime Contract Potential Change Order";
   }
 
   return null;
@@ -308,6 +308,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[3] === "change-orders" &&
       segments[4] === "pcos" &&
       segments[5] !== "new";
+    const isNestedPrimePcoCreateRoute =
+      segments.length >= 6 &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "change-orders" &&
+      segments[4] === "pcos" &&
+      segments[5] === "new";
     const isPrimeCoDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -408,16 +414,16 @@ export function useHeaderNav(): UseHeaderNavReturn {
       let label: string;
 
       // Keep nested prime-contract PCO breadcrumbs on valid routes.
-      if (isNestedPrimePcoDetailRoute) {
+      if (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) {
         const nestedProjectId = segments[0];
         const nestedContractId = segments[2];
         const nestedPcoId = segments[5];
 
         if (index === 3) {
-          href = `/${nestedProjectId}/prime-contracts/change-orders`;
+          href = `/${nestedProjectId}/prime-contracts/${nestedContractId}`;
         } else if (index === 4) {
           href = `/${nestedProjectId}/prime-contracts/${nestedContractId}`;
-        } else if (index === 5) {
+        } else if (index === 5 && isNestedPrimePcoDetailRoute) {
           href = `/${nestedProjectId}/prime-contracts/${nestedContractId}/change-orders/pcos/${nestedPcoId}`;
         }
       }
@@ -471,6 +477,16 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = primePcoTitle || "Prime PCO";
       } else if (isNestedPrimePcoDetailRoute && index === 5) {
         label = primePcoTitle || "Prime PCO";
+      } else if (
+        (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) &&
+        index === 3
+      ) {
+        label = "Prime Contract";
+      } else if (
+        (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) &&
+        index === 4
+      ) {
+        label = "Potential Change Orders";
       } else if (isChangeEventDetailRoute && index === 2) {
         label = changeEventTitle || "Change Event";
       } else if (isPrimeCoDetailRoute && index === 3) {
