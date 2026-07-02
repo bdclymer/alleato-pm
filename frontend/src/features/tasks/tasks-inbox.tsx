@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
   CheckSquare2,
   ClipboardList,
@@ -15,7 +16,6 @@ import {
   Loader2,
   PanelLeft,
   Pencil,
-  Search,
   Tag,
   Table2,
   Trash2,
@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -51,12 +52,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { SplitPageFrame } from "@/components/ui/split-page";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { SplitPage, SplitPageFrame } from "@/components/ui/split-page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,6 +99,8 @@ import {
   tasksColumns,
   tasksDefaultVisibleColumns,
 } from "@/features/tasks/tasks-table-config";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { Markdown } from "@/components/misc/markdown";
 import { TasksBoardView } from "@/features/tasks/tasks-board-view";
 import {
   type EmailThreadMessage,
@@ -178,6 +194,9 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "done", label: "Done" },
 ];
 
+export const TASKS_SPLIT_WORKSPACE_CLASSNAME =
+  "relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background";
+
 const DONE_STATUSES = new Set(["complete", "closed", "done", "cancelled"]);
 const IN_PROGRESS_STATUSES = new Set(["in_progress", "started", "active"]);
 const EMPTY_FILTERS: TasksFilterState = {
@@ -233,11 +252,13 @@ const TASK_LIST_MIN_WIDTH = "69.5rem";
 const TASK_LIST_GRID_TEMPLATE =
   "44px minmax(18rem, 1.7fr) minmax(10rem, 0.9fr) minmax(8rem, 0.75fr) minmax(7rem, 0.65fr) minmax(6.5rem, 0.55fr) minmax(6.5rem, 0.55fr) minmax(7rem, 0.65fr) minmax(6.5rem, 0.5fr)";
 const TASK_LIST_PINNED_TASK_LEFT = "44px";
-// Ghost-style controls: no border, just text + chevron; bg appears on hover/open
-const GHOST_SELECT_CLASS =
-  "h-8 w-auto min-w-[5rem] gap-1 border-0 bg-transparent -ml-2 px-2 text-sm shadow-none font-normal text-foreground hover:bg-muted/50 focus:ring-0 data-[state=open]:bg-muted/50 [&>svg]:text-muted-foreground/60";
-const GHOST_DATE_CLASS =
-  "h-8 w-auto max-w-[11rem] border-0 bg-transparent -ml-2 px-2 text-sm shadow-none hover:bg-muted/50 focus:ring-0 focus-visible:ring-0 text-foreground";
+const DETAIL_META_SELECT_CLASS =
+  "h-7 w-auto min-w-0 max-w-44 gap-1 border-0 bg-transparent px-0 text-sm font-medium shadow-none hover:bg-transparent focus:ring-0 data-[state=open]:bg-transparent [&>svg]:ml-0.5 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:text-muted-foreground/60";
+const DETAIL_META_DATE_TRIGGER_CLASS =
+  "h-7 min-w-0 justify-start gap-1.5 px-0 text-sm font-medium text-foreground hover:bg-transparent";
+
+export const TASK_DETAIL_META_ROW_CLASSNAME =
+  "flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-border/40 pb-4";
 
 function TaskListHeader({
   allVisibleSelected,
@@ -299,16 +320,6 @@ function TaskListHeader({
 function formatPriorityLabel(priority: string | null): string {
   if (!priority) return "Not set";
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1).toLowerCase()}`;
-}
-
-function formatAuditLabel(value: string | null): string {
-  if (!value) return "Untracked";
-  return value
-    .replace(/[_-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
 }
 
 function projectOptionLabel(project: ProjectOption): string {
@@ -563,7 +574,10 @@ function MeetingContextSectionBlock({
             }
 
             return (
-              <p key={`${section.title}-paragraph-${index}`} className="break-words">
+              <p
+                key={`${section.title}-paragraph-${index}`}
+                className="break-words"
+              >
                 {block.text}
               </p>
             );
@@ -592,22 +606,18 @@ function ContextBody({
   collapsedChars?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const isLong = value.length > collapsedChars;
+  const normalizedValue = normalizeTaskMarkdownContext(value);
+  const isLong = normalizedValue.length > collapsedChars;
   const visibleBody =
-    !isLong || expanded ? value : `${value.slice(0, collapsedChars).trim()}...`;
+    !isLong || expanded
+      ? normalizedValue
+      : `${normalizedValue.slice(0, collapsedChars).trim()}...`;
 
   return (
     <div className="space-y-2">
-      <div className="space-y-2.5 text-xs leading-5 text-foreground">
-        {splitContextParagraphs(visibleBody).map((paragraph, index) => (
-          <p
-            key={`${paragraph.slice(0, 24)}-${index}`}
-            className="break-words whitespace-pre-line"
-          >
-            {paragraph}
-          </p>
-        ))}
-      </div>
+      <Markdown className="text-sm leading-6 text-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_em]:italic [&_h1]:mb-2 [&_h1]:mt-3 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:mb-1.5 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-medium [&_li]:mb-1 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_p]:leading-6 last:[&_p]:mb-0 [&_strong]:font-semibold [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5">
+        {visibleBody}
+      </Markdown>
       {isLong && (
         <Button
           type="button"
@@ -665,7 +675,7 @@ function MessageCard({ message }: { message: EmailThreadMessage }) {
 }
 
 function SourceContextBlock({ value }: { value: string }) {
-  const text = cleanSourceContextText(value);
+  const text = normalizeTaskMarkdownContext(value);
   const teamsConversation = parseTeamsConversation(text);
 
   if (teamsConversation && teamsConversation.messages.length > 0) {
@@ -727,7 +737,7 @@ function SourceContextBlock({ value }: { value: string }) {
   const body = (message?.body ?? text) || text;
 
   return (
-    <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+    <div className="w-full">
       <ContextBody value={body} />
     </div>
   );
@@ -1040,7 +1050,7 @@ function TaskSplitListItem({
         }
       }}
       className={cn(
-        "group flex cursor-pointer gap-3 border-b border-l-2 border-border/50 px-5 py-4 text-left transition-colors",
+        "group flex cursor-pointer gap-2.5 border-b border-l-2 border-border/50 px-4 py-2.5 text-left transition-colors",
         isSelected
           ? "border-l-primary bg-muted/70"
           : "border-l-transparent hover:bg-muted/40",
@@ -1053,11 +1063,11 @@ function TaskSplitListItem({
         aria-label={`Select ${item.description || item.title || "task"}`}
         className="mt-0.5 shrink-0"
       />
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex min-w-0 items-start justify-between gap-3">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex min-w-0 items-start justify-between gap-2">
           <p
             className={cn(
-              "line-clamp-2 text-sm font-medium leading-5 text-foreground",
+              "line-clamp-1 text-sm font-medium leading-5 text-foreground",
               ds === "done" &&
                 "text-muted-foreground line-through decoration-muted-foreground/40",
             )}
@@ -1068,7 +1078,7 @@ function TaskSplitListItem({
             {dateLabel}
           </span>
         </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-x-1.5 overflow-hidden text-xs text-muted-foreground">
           <span className="max-w-48 truncate">{projectLabel}</span>
           <span aria-hidden="true">/</span>
           <span className="max-w-32 truncate">{assignedTo}</span>
@@ -1085,56 +1095,124 @@ function TaskSplitListItem({
               </span>
             </>
           ) : null}
+          {showFeedback && item.id ? (
+            <span
+              className="ml-auto shrink-0"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <TaskFeedbackButtons
+                projectId={buildTaskFeedbackSnapshot(item).projectId}
+                taskId={item.id}
+                taskSnapshot={buildTaskFeedbackSnapshot(item)}
+                onRemove={onDelete}
+                compact
+                className="text-[11px]"
+              />
+            </span>
+          ) : null}
         </div>
-        {showFeedback && item.id ? (
-          <div
-            className="flex items-center"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <TaskFeedbackButtons
-              projectId={buildTaskFeedbackSnapshot(item).projectId}
-              taskId={item.id}
-              taskSnapshot={buildTaskFeedbackSnapshot(item)}
-              onRemove={onDelete}
-              className="text-[11px]"
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   );
 }
 
-function TaskDetailRow({
+function TaskDetailMetaItem({
   label,
   children,
-  valueClassName,
-  align = "center",
+  className,
 }: {
   label: string;
   children: ReactNode;
-  valueClassName?: string;
-  align?: "center" | "start";
+  className?: string;
 }) {
   return (
-    <div className="grid grid-cols-[120px_minmax(0,1fr)] border-b border-border/20 last:border-b-0">
-      <div
-        className={cn(
-          "flex min-h-10 pr-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70",
-          align === "center" ? "items-center py-1.5" : "items-start py-2.5",
-        )}
-      >
+    <div className={cn("flex min-w-0 items-center gap-2", className)}>
+      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
         {label}
-      </div>
-      <div
-        className={cn(
-          "flex min-h-10 min-w-0 text-sm text-foreground",
-          align === "center" ? "items-center py-1.5" : "items-start py-2.5",
-          valueClassName,
-        )}
-      >
-        {children}
-      </div>
+      </span>
+      <div className="min-w-0 text-sm text-foreground">{children}</div>
+    </div>
+  );
+}
+
+function normalizeTaskMarkdownContext(value: string): string {
+  return cleanSourceContextText(value)
+    .replace(/^\s*\{\}\s*/, "")
+    .trim();
+}
+
+function parseTaskDate(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const [year, month, day] = value.split("T")[0]?.split("-").map(Number) ?? [];
+  if (!year || !month || !day) return undefined;
+  return new Date(year, month - 1, day);
+}
+
+function TaskDueDatePicker({
+  value,
+  overdue,
+  disabled,
+  onChange,
+}: {
+  value: string | null;
+  overdue: boolean;
+  disabled: boolean;
+  onChange: (value: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedDate = parseTaskDate(value);
+  const dueLabel = selectedDate
+    ? format(selectedDate, "MMM d, yyyy")
+    : "Not set";
+
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={disabled}
+            className={cn(
+              DETAIL_META_DATE_TRIGGER_CLASS,
+              !selectedDate && "text-muted-foreground",
+            )}
+            aria-label="Task due date"
+          >
+            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span>{dueLabel}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              onChange(date ? format(date, "yyyy-MM-dd") : null);
+              setOpen(false);
+            }}
+          />
+          {selectedDate && (
+            <div className="border-t px-3 py-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full justify-start px-2 text-xs"
+                onClick={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+              >
+                Clear due date
+              </Button>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      {value && overdue && (
+        <span className="text-xs font-medium text-destructive">Overdue</span>
+      )}
     </div>
   );
 }
@@ -1226,7 +1304,6 @@ function TaskDetail({
   const overdue = isOverdue(task.due_date);
   const { confirm: confirmDelete, ConfirmDialog } = useConfirm();
   const sourceLinkLabel = sourceTitle || sourceTarget?.href || sourceLabel;
-  const extractionSourceLabel = formatAuditLabel(task.extraction_source);
   const taskProjectId = task.project_id ?? task.project_ids?.[0] ?? null;
   const selectedProjectValue = taskProjectId
     ? String(taskProjectId)
@@ -1245,14 +1322,6 @@ function TaskDetail({
         year: "numeric",
       })
     : "Not set";
-  const sourceDateLabel = task.source_date
-    ? new Date(task.source_date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Not set";
-
   const statusOptions = [
     { value: "open", label: "Open" },
     { value: "in_progress", label: "In Progress" },
@@ -1301,7 +1370,7 @@ function TaskDetail({
   return (
     <>
       {ConfirmDialog}
-      <div className="mx-auto max-w-3xl px-6 py-7">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-7 py-5">
         {onBack && (
           <Button
             type="button"
@@ -1315,7 +1384,7 @@ function TaskDetail({
           </Button>
         )}
 
-        <div className="mb-2 flex items-start gap-3">
+        <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             {isEditingText ? (
               <div className="space-y-2">
@@ -1337,7 +1406,7 @@ function TaskDetail({
                     }
                   }}
                   disabled={updatingId === task.id}
-                  className="min-h-24 resize-y text-[15px] font-medium leading-relaxed"
+                  className="min-h-24 resize-y text-xl font-semibold leading-snug"
                   aria-label="Task text"
                 />
                 <div className="flex items-center gap-2">
@@ -1377,9 +1446,9 @@ function TaskDetail({
                   disabled={updatingId === task.id}
                   aria-label="Edit task text"
                   title="Edit task text"
-                  className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-3 whitespace-normal px-2 py-1.5 text-left hover:bg-muted/50"
+                  className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-3 whitespace-normal px-2 py-1 text-left hover:bg-muted/50"
                 >
-                  <span className="min-w-0 flex-1 break-words text-[15px] font-medium leading-relaxed text-foreground">
+                  <span className="min-w-0 flex-1 break-words text-xl font-semibold leading-snug text-foreground">
                     {task.description || task.title || "Untitled task"}
                   </span>
                   <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
@@ -1409,315 +1478,278 @@ function TaskDetail({
           </Button>
         </div>
 
-        <div className="rounded-lg bg-muted/30 px-4 py-1">
-          <div>
-            <TaskDetailRow label="Status">
-              <Select
-                value={task.status ?? "open"}
-                onValueChange={(value) =>
-                  task.id && onUpdateStatus(task.id, value)
-                }
-                disabled={updatingId === task.id}
-              >
-                <SelectTrigger
-                  className={cn(GHOST_SELECT_CLASS, STATUS_SELECT_CLASSES[ds])}
-                >
-                  {updatingId === task.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <SelectValue />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem
-                      key={opt.value}
-                      value={opt.value}
-                      className="text-sm"
-                    >
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Priority">
-              <Select
-                value={selectedPriorityValue}
-                onValueChange={(value) => {
-                  if (!task.id) return;
-                  const nextPriority = value === "__none__" ? null : value;
-                  onUpdateTask(
-                    task.id,
-                    { priority: nextPriority },
-                    { priority: nextPriority },
-                  );
-                }}
-                disabled={updatingId === task.id}
-              >
-                <SelectTrigger className={GHOST_SELECT_CLASS}>
-                  {updatingId === task.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <SelectValue />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {TASK_PRIORITY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <span className="inline-flex items-center gap-2">
-                        {option.value !== "__none__" &&
-                          PRIORITY_META[option.value] && (
-                            <span
-                              className={cn(
-                                "h-1.5 w-1.5 rounded-full",
-                                PRIORITY_META[option.value].dot,
-                              )}
-                            />
-                          )}
-                        {option.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Assigned">
-              <Select
-                value={selectedAssigneeValue}
-                onValueChange={(value) => {
-                  if (!task.id) return;
-                  if (value === "__unassigned__") {
-                    onUpdateTask(
-                      task.id,
-                      { assignee_user_id: null },
-                      {
-                        assignee_person_id: null,
-                        assignee_name: null,
-                        assignee_email: null,
-                      },
-                    );
-                    return;
-                  }
-                  const nextUser = users.find(
-                    (u) => `person:${u.person_id ?? ""}` === value,
-                  );
-                  if (!nextUser) return;
-                  onUpdateTask(
-                    task.id,
-                    { assignee_user_id: nextUser.id },
-                    {
-                      assignee_person_id: nextUser.person_id ?? null,
-                      assignee_name: userOptionLabel(nextUser),
-                      assignee_email: nextUser.email ?? null,
-                    },
-                  );
-                }}
-                disabled={updatingId === task.id || usersLoading}
-              >
-                <SelectTrigger className={cn(GHOST_SELECT_CLASS, "max-w-xs")}>
-                  <SelectValue
-                    placeholder={
-                      usersLoading
-                        ? "Loading…"
-                        : (fallbackAssigneeLabel ?? "Unassigned")
-                    }
-                  >
-                    {matchedAssigneeUser
-                      ? userOptionLabel(matchedAssigneeUser)
-                      : (fallbackAssigneeLabel ?? undefined)}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                  {users
-                    .filter((u) => u.person_id)
-                    .map((user) => (
-                      <SelectItem
-                        key={user.id}
-                        value={`person:${user.person_id}`}
-                      >
-                        {userOptionLabel(user)}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Project">
-              <Select
-                value={selectedProjectValue}
-                onValueChange={(value) => {
-                  if (!task.id) return;
-                  if (value === "__none__") {
-                    onUpdateTask(
-                      task.id,
-                      { project_id: null },
-                      { project_id: null, project_ids: [], project_name: null },
-                    );
-                    return;
-                  }
-                  const pid = Number.parseInt(value, 10);
-                  const project = projects.find((item) => item.id === pid);
-                  onUpdateTask(
-                    task.id,
-                    { project_id: pid },
-                    {
-                      project_id: pid,
-                      project_ids: [pid],
-                      project_name: project
-                        ? projectOptionLabel(project)
-                        : task.project_name,
-                    },
-                  );
-                }}
-                disabled={updatingId === task.id || projectsLoading}
-              >
-                <SelectTrigger className={cn(GHOST_SELECT_CLASS, "max-w-xs")}>
-                  <SelectValue
-                    placeholder={projectsLoading ? "Loading…" : "No project"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">No project</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={String(project.id)}>
-                      {projectOptionLabel(project)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Category">
-              <Select
-                value={selectedCategoryValue}
-                onValueChange={(value) => {
-                  if (!task.id) return;
-                  const nextCategory = value === "__none__" ? null : value;
-                  onUpdateTask(
-                    task.id,
-                    { category: nextCategory },
-                    updateTaskCategoryLocally(task, nextCategory),
-                  );
-                }}
-                disabled={updatingId === task.id}
-              >
-                <SelectTrigger className={GHOST_SELECT_CLASS}>
-                  {updatingId === task.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <SelectValue />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Not set</SelectItem>
-                  {DEFAULT_TASK_CATEGORIES.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Due">
-              <div className="flex min-w-0 items-center gap-3">
-                <Input
-                  type="date"
-                  value={task.due_date ?? ""}
-                  onChange={(event) => {
-                    if (!task.id) return;
-                    const dueDate = event.target.value || null;
-                    onUpdateTask(
-                      task.id,
-                      { due_date: dueDate },
-                      { due_date: dueDate },
-                    );
-                  }}
-                  disabled={updatingId === task.id}
-                  className={GHOST_DATE_CLASS}
-                  aria-label="Task due date"
-                />
-                {task.due_date && overdue && ds !== "done" && (
-                  <span className="text-sm font-medium text-destructive">
-                    Overdue
-                  </span>
+        <div className={cn(TASK_DETAIL_META_ROW_CLASSNAME, "mt-3")}>
+          <TaskDetailMetaItem label="Status">
+            <Select
+              value={task.status ?? "open"}
+              onValueChange={(value) =>
+                task.id && onUpdateStatus(task.id, value)
+              }
+              disabled={updatingId === task.id}
+            >
+              <SelectTrigger
+                className={cn(
+                  DETAIL_META_SELECT_CLASS,
+                  STATUS_SELECT_CLASSES[ds],
                 )}
-              </div>
-            </TaskDetailRow>
-
-            <TaskDetailRow label="Created">{createdLabel}</TaskDetailRow>
-
-            <TaskDetailRow label="Source date">{sourceDateLabel}</TaskDetailRow>
-
-            {task.id && isAiGeneratedTask(task) && (
-              <TaskDetailRow label="Training">
-                <TaskFeedbackButtons
-                  projectId={taskProjectId}
-                  taskId={task.id}
-                  taskSnapshot={taskFeedbackSnapshot}
-                  onRemove={() => {
-                    if (task.id) onDelete(task.id);
-                  }}
-                />
-              </TaskDetailRow>
-            )}
-
-            <TaskDetailRow label="Source">
-              <div className="flex min-w-0 flex-col gap-1">
-                {sourceTarget ? (
-                  <a
-                    href={sourceTarget.href}
-                    target={sourceTarget.external ? "_blank" : undefined}
-                    rel={
-                      sourceTarget.external ? "noopener noreferrer" : undefined
-                    }
-                    className="inline-flex min-w-0 items-center gap-2 text-foreground underline-offset-4 hover:text-primary hover:underline"
-                  >
-                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{sourceLinkLabel}</span>
-                    {task.assigned_by && (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        via {task.assigned_by}
-                      </span>
-                    )}
-                  </a>
+              >
+                {updatingId === task.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <span className="inline-flex min-w-0 items-center gap-2 text-foreground">
-                    <span className="truncate">
-                      {sourceLinkLabel || "No source link"}
-                    </span>
-                    {task.assigned_by && (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        via {task.assigned_by}
-                      </span>
-                    )}
-                  </span>
+                  <SelectValue />
                 )}
-              </div>
-            </TaskDetailRow>
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </TaskDetailMetaItem>
 
-            <TaskDetailRow label="Generated">
-              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="shrink-0 text-foreground">
-                  {extractionSourceLabel}
-                </span>
-              </div>
-            </TaskDetailRow>
-          </div>
+          <TaskDetailMetaItem label="Priority">
+            <Select
+              value={selectedPriorityValue}
+              onValueChange={(value) => {
+                if (!task.id) return;
+                const nextPriority = value === "__none__" ? null : value;
+                onUpdateTask(
+                  task.id,
+                  { priority: nextPriority },
+                  { priority: nextPriority },
+                );
+              }}
+              disabled={updatingId === task.id}
+            >
+              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
+                {updatingId === task.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <SelectValue />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                {TASK_PRIORITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <span className="inline-flex items-center gap-2">
+                      {option.value !== "__none__" &&
+                        PRIORITY_META[option.value] && (
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full",
+                              PRIORITY_META[option.value].dot,
+                            )}
+                          />
+                        )}
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Assignee">
+            <Select
+              value={selectedAssigneeValue}
+              onValueChange={(value) => {
+                if (!task.id) return;
+                if (value === "__unassigned__") {
+                  onUpdateTask(
+                    task.id,
+                    { assignee_user_id: null },
+                    {
+                      assignee_person_id: null,
+                      assignee_name: null,
+                      assignee_email: null,
+                    },
+                  );
+                  return;
+                }
+                const nextUser = users.find(
+                  (u) => `person:${u.person_id ?? ""}` === value,
+                );
+                if (!nextUser) return;
+                onUpdateTask(
+                  task.id,
+                  { assignee_user_id: nextUser.id },
+                  {
+                    assignee_person_id: nextUser.person_id ?? null,
+                    assignee_name: userOptionLabel(nextUser),
+                    assignee_email: nextUser.email ?? null,
+                  },
+                );
+              }}
+              disabled={updatingId === task.id || usersLoading}
+            >
+              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
+                <SelectValue
+                  placeholder={
+                    usersLoading
+                      ? "Loading…"
+                      : (fallbackAssigneeLabel ?? "Unassigned")
+                  }
+                >
+                  {matchedAssigneeUser
+                    ? userOptionLabel(matchedAssigneeUser)
+                    : (fallbackAssigneeLabel ?? undefined)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                {users
+                  .filter((u) => u.person_id)
+                  .map((user) => (
+                    <SelectItem
+                      key={user.id}
+                      value={`person:${user.person_id}`}
+                    >
+                      {userOptionLabel(user)}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Project">
+            <Select
+              value={selectedProjectValue}
+              onValueChange={(value) => {
+                if (!task.id) return;
+                if (value === "__none__") {
+                  onUpdateTask(
+                    task.id,
+                    { project_id: null },
+                    { project_id: null, project_ids: [], project_name: null },
+                  );
+                  return;
+                }
+                const pid = Number.parseInt(value, 10);
+                const project = projects.find((item) => item.id === pid);
+                onUpdateTask(
+                  task.id,
+                  { project_id: pid },
+                  {
+                    project_id: pid,
+                    project_ids: [pid],
+                    project_name: project
+                      ? projectOptionLabel(project)
+                      : task.project_name,
+                  },
+                );
+              }}
+              disabled={updatingId === task.id || projectsLoading}
+            >
+              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
+                <SelectValue
+                  placeholder={projectsLoading ? "Loading…" : "No project"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {projectOptionLabel(project)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Category">
+            <Select
+              value={selectedCategoryValue}
+              onValueChange={(value) => {
+                if (!task.id) return;
+                const nextCategory = value === "__none__" ? null : value;
+                onUpdateTask(
+                  task.id,
+                  { category: nextCategory },
+                  updateTaskCategoryLocally(task, nextCategory),
+                );
+              }}
+              disabled={updatingId === task.id}
+            >
+              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
+                {updatingId === task.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <SelectValue />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Not set</SelectItem>
+                {DEFAULT_TASK_CATEGORIES.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Due Date">
+            <TaskDueDatePicker
+              value={task.due_date}
+              overdue={overdue && ds !== "done"}
+              disabled={updatingId === task.id}
+              onChange={(dueDate) => {
+                if (!task.id) return;
+                onUpdateTask(
+                  task.id,
+                  { due_date: dueDate },
+                  { due_date: dueDate },
+                );
+              }}
+            />
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Source">
+            {sourceTarget ? (
+              <a
+                href={sourceTarget.href}
+                target={sourceTarget.external ? "_blank" : undefined}
+                rel={sourceTarget.external ? "noopener noreferrer" : undefined}
+                className="inline-flex max-w-48 items-center gap-1.5 truncate font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+              >
+                <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{sourceLinkLabel}</span>
+              </a>
+            ) : (
+              <span className="font-medium text-muted-foreground">
+                {sourceLinkLabel || "No source"}
+              </span>
+            )}
+          </TaskDetailMetaItem>
+
+          <TaskDetailMetaItem label="Created">
+            <span className="font-medium">{createdLabel}</span>
+          </TaskDetailMetaItem>
+
+          {task.id && isAiGeneratedTask(task) && (
+            <TaskDetailMetaItem label="Training">
+              <TaskFeedbackButtons
+                projectId={taskProjectId}
+                taskId={task.id}
+                taskSnapshot={taskFeedbackSnapshot}
+                compact
+                onRemove={() => {
+                  if (task.id) onDelete(task.id);
+                }}
+              />
+            </TaskDetailMetaItem>
+          )}
         </div>
 
-        {/* Source context — outside the card since it can be long */}
         {task.source_context && (
-          <div className="mt-4 space-y-2">
+          <section className="mt-5 min-w-0 space-y-3">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
               Context
             </p>
             <SourceContextBlock value={task.source_context} />
-          </div>
+          </section>
         )}
       </div>
     </>
@@ -2639,6 +2671,22 @@ export function TasksInbox({
     [tableState],
   );
 
+  const handleStatusFilterChange = useCallback(
+    (value: string) => {
+      if (value !== "open" && value !== "done") return;
+
+      setFilter(value);
+      tableState.setActiveFilters((current) => ({
+        ...current,
+        status: value,
+      }));
+      tableState.setPage(1);
+      setSelectedId(null);
+      setMobileShowDetail(false);
+    },
+    [tableState],
+  );
+
   const handleOpenSource = useCallback(
     (item: TasksRow) => {
       const target = getTaskSourceTarget(item);
@@ -2702,229 +2750,209 @@ export function TasksInbox({
   if (tableState.currentView === "split") {
     return (
       <>
-        <SplitPageFrame height="viewport" className="flex-row bg-background">
-          <div
-            className={cn(
-              "flex h-full w-full min-w-0 flex-col overflow-hidden border-r border-border/70 bg-background xl:w-96 xl:shrink-0",
-              mobileShowDetail ? "hidden xl:flex" : "flex",
-            )}
+        <SplitPageFrame
+          height="fill"
+          className={TASKS_SPLIT_WORKSPACE_CLASSNAME}
+        >
+          <SplitPage
+            variant="two-column"
+            breakpoint="xl"
+            defaultIsOpen={!selectedWithContext}
+            className="min-h-0 flex-1"
           >
-            <div className="border-b border-border/70 px-5 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">
-                    Tasks
+            <div
+              className={cn(
+                "relative flex h-full w-full min-w-0 flex-col overflow-hidden border-b border-border/70 bg-background xl:w-96 xl:shrink-0 xl:border-b-0 xl:border-r",
+                mobileShowDetail ? "hidden xl:flex" : "flex",
+              )}
+            >
+              <div className="border-b border-border/70 px-5 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">
+                      Tasks
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      tableState.setCurrentView("table");
-                      tableState.setSearchParams({ view: "table" });
-                    }}
-                    aria-label="Table view"
-                    title="Table view"
-                    className="h-8 w-8 rounded-full shadow-none"
-                  >
-                    <Table2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      tableState.setCurrentView("board");
-                      tableState.setSearchParams({ view: "board" });
-                    }}
-                    aria-label="Board view"
-                    title="Board view"
-                    className="h-8 w-8 rounded-full shadow-none"
-                  >
-                    <KanbanSquare className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Split view"
-                    title="Split view"
-                    className="h-8 w-8 rounded-full bg-muted text-foreground shadow-none"
-                  >
-                    <PanelLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Search tasks"
-                    title="Search tasks"
-                    className="h-8 w-8 rounded-full shadow-none"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Filter tasks"
-                    title="Filter tasks"
-                    className="h-8 w-8 rounded-full shadow-none"
-                  >
-                    <ListFilter className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {showTabs && !profileLoading ? (
-                <nav className="mt-3 flex items-center gap-5">
-                  {scopeTabs.map((tab) => (
+                  <div className="flex items-center gap-1 text-muted-foreground">
                     <Button
-                      key={tab.label}
                       type="button"
                       variant="ghost"
-                      onClick={() => router.push(`${tab.href}&view=split`)}
-                      className={cn(
-                        "relative h-auto rounded-none px-0 py-2 text-sm font-medium shadow-none hover:bg-transparent",
-                        tab.isActive
-                          ? "text-primary"
-                          : "text-foreground/70 hover:text-foreground/90",
-                      )}
+                      size="icon"
+                      onClick={() => {
+                        tableState.setCurrentView("table");
+                        tableState.setSearchParams({ view: "table" });
+                      }}
+                      aria-label="Table view"
+                      title="Table view"
+                      className="h-8 w-8 rounded-full shadow-none"
                     >
-                      {tab.label}
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
-                          tab.isActive ? "bg-primary" : "bg-transparent",
-                        )}
-                      />
+                      <Table2 className="h-4 w-4" />
                     </Button>
-                  ))}
-                </nav>
-              ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        tableState.setCurrentView("board");
+                        tableState.setSearchParams({ view: "board" });
+                      }}
+                      aria-label="Board view"
+                      title="Board view"
+                      className="h-8 w-8 rounded-full shadow-none"
+                    >
+                      <KanbanSquare className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Split view"
+                      title="Split view"
+                      className="h-8 w-8 rounded-full bg-muted text-foreground shadow-none"
+                    >
+                      <PanelLeft className="h-4 w-4" />
+                    </Button>
+                    <ExpandableSearch
+                      value={tableState.searchInput}
+                      onChange={tableState.setSearchInput}
+                      placeholder="Search tasks"
+                      ariaLabel="Search tasks"
+                    />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Filter tasks"
+                          title={`Status: ${
+                            STATUS_FILTERS.find((item) => item.value === filter)
+                              ?.label ?? "Open"
+                          }`}
+                          className="h-8 w-8 rounded-full shadow-none"
+                        >
+                          <ListFilter className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                          value={filter}
+                          onValueChange={handleStatusFilterChange}
+                        >
+                          {STATUS_FILTERS.map((item) => (
+                            <DropdownMenuRadioItem
+                              key={item.value}
+                              value={item.value}
+                            >
+                              {item.label}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
 
-              <Tabs
-                value={filter}
-                onValueChange={(value) => {
-                  if (value === "open" || value === "done") {
-                    setFilter(value);
-                    tableState.setActiveFilters((current) => ({
-                      ...current,
-                      status: value,
-                    }));
-                    setSelectedId(null);
-                    setMobileShowDetail(false);
-                  }
-                }}
-                className="mt-4"
+                {showTabs && !profileLoading ? (
+                  <nav className="mt-3 flex items-center gap-5">
+                    {scopeTabs.map((tab) => (
+                      <Button
+                        key={tab.label}
+                        type="button"
+                        variant="ghost"
+                        onClick={() => router.push(`${tab.href}&view=split`)}
+                        className={cn(
+                          "relative h-auto rounded-none px-0 py-2 text-sm font-medium shadow-none hover:bg-transparent",
+                          tab.isActive
+                            ? "text-primary"
+                            : "text-foreground/70 hover:text-foreground/90",
+                        )}
+                      >
+                        {tab.label}
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
+                            tab.isActive ? "bg-primary" : "bg-transparent",
+                          )}
+                        />
+                      </Button>
+                    ))}
+                  </nav>
+                ) : null}
+              </div>
+
+              <div
+                data-task-list-scroll
+                className="min-h-0 flex-1 overflow-y-auto"
               >
-                <TabsList>
-                  {STATUS_FILTERS.map((tab) => (
-                    <TabsTrigger key={tab.value} value={tab.value}>
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+                {loading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                  </div>
+                ) : filteredItems.length === 0 ? (
+                  <div className="px-6 py-10 text-sm text-muted-foreground">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div className="mt-5 text-lg font-semibold tracking-[-0.02em] text-foreground">
+                      Nothing here
+                    </div>
+                    <p className="mt-2 max-w-xs leading-6">
+                      No {filter} tasks
+                      {scope === "mine" ? " assigned to you" : ""}.
+                    </p>
+                  </div>
+                ) : (
+                  filteredItems.map((item) => (
+                    <TaskSplitListItem
+                      key={item.id}
+                      item={item}
+                      projects={projects}
+                      isSelected={selectedId === item.id}
+                      isChecked={
+                        item.id ? selectedTaskIds.includes(item.id) : false
+                      }
+                      onClick={() => item.id && selectItem(item.id)}
+                      onCheckedChange={(checked) =>
+                        item.id && toggleTaskSelection(item.id, checked)
+                      }
+                      onDelete={() => item.id && deleteItem(item.id)}
+                    />
+                  ))
+                )}
+              </div>
             </div>
 
-            <div data-task-list-scroll className="min-h-0 flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="px-6 py-10 text-sm text-muted-foreground">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div className="mt-5 text-lg font-semibold tracking-[-0.02em] text-foreground">
-                    Nothing here
-                  </div>
-                  <p className="mt-2 max-w-xs leading-6">
-                    No {filter} tasks{scope === "mine" ? " assigned to you" : ""}.
-                  </p>
-                </div>
-              ) : (
-                filteredItems.map((item) => (
-                  <TaskSplitListItem
-                    key={item.id}
-                    item={item}
-                    projects={projects}
-                    isSelected={selectedId === item.id}
-                    isChecked={
-                      item.id ? selectedTaskIds.includes(item.id) : false
-                    }
-                    onClick={() => item.id && selectItem(item.id)}
-                    onCheckedChange={(checked) =>
-                      item.id && toggleTaskSelection(item.id, checked)
-                    }
-                    onDelete={() => item.id && deleteItem(item.id)}
+            <div className="hidden min-w-0 flex-1 flex-col overflow-hidden xl:flex">
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {!selectedWithContext ? (
+                  <EmptyDetail
+                    total={total}
+                    openCount={openCount}
+                    doneCount={doneCount}
+                    loading={loading}
+                    scope={scope}
+                    isProjectScoped={isProjectScoped}
                   />
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="hidden min-w-0 flex-1 flex-col overflow-hidden xl:flex">
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {!selectedWithContext ? (
-                <EmptyDetail
-                  total={total}
-                  openCount={openCount}
-                  doneCount={doneCount}
-                  loading={loading}
-                  scope={scope}
-                  isProjectScoped={isProjectScoped}
-                />
-              ) : (
-                <TaskDetail
-                  task={selectedWithContext}
-                  updatingId={updatingId}
-                  deletingId={deletingId}
-                  onUpdateStatus={updateStatus}
-                  onUpdateTask={updateTask}
-                  onDelete={deleteItem}
-                  projects={projects}
-                  projectsLoading={projectsLoading}
-                  users={users}
-                  usersLoading={usersLoading}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="hidden h-full w-80 shrink-0 overflow-y-auto border-l border-border/70 bg-background px-7 py-8 xl:block">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Task Context
-            </p>
-            <div className="mt-7 space-y-6 text-sm">
-              <div>
-                <p className="font-semibold text-foreground">Inbox</p>
-                <p className="mt-2 leading-6 text-muted-foreground">
-                  Open tasks stay in the left rail so the selected task remains
-                  focused in the center pane.
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Source</p>
-                <p className="mt-2 leading-6 text-muted-foreground">
-                  Meeting, email, and document context stays attached to the
-                  selected task.
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Training</p>
-                <p className="mt-2 leading-6 text-muted-foreground">
-                  AI-generated tasks can be marked useful or not useful from the
-                  task row or detail pane.
-                </p>
+                ) : (
+                  <TaskDetail
+                    task={selectedWithContext}
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                    onUpdateStatus={updateStatus}
+                    onUpdateTask={updateTask}
+                    onDelete={deleteItem}
+                    projects={projects}
+                    projectsLoading={projectsLoading}
+                    users={users}
+                    usersLoading={usersLoading}
+                  />
+                )}
               </div>
             </div>
-          </div>
+          </SplitPage>
         </SplitPageFrame>
       </>
     );

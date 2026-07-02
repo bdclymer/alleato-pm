@@ -3,7 +3,11 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { TaskListItem } from "../tasks-inbox";
+import {
+  TASKS_SPLIT_WORKSPACE_CLASSNAME,
+  TASK_DETAIL_META_ROW_CLASSNAME,
+  TaskListItem,
+} from "../tasks-inbox";
 import type { TasksRow } from "../task-utils";
 
 jest.mock("@/components/ai/TaskFeedbackButtons", () => ({
@@ -12,8 +16,20 @@ jest.mock("@/components/ai/TaskFeedbackButtons", () => ({
   ),
 }));
 
+jest.mock("@/components/misc/markdown", () => ({
+  Markdown: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
+}));
+
 jest.mock("@/components/ds/SwipeableListRow", () => ({
-  SwipeableListRow: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SwipeableListRow: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 function buildTask(overrides: Partial<TasksRow> = {}): TasksRow {
@@ -71,7 +87,9 @@ describe("TaskListItem feedback visibility", () => {
       />,
     );
 
-    expect(screen.getByTestId("task-feedback-buttons")).toHaveTextContent("task-1");
+    expect(screen.getByTestId("task-feedback-buttons")).toHaveTextContent(
+      "task-1",
+    );
 
     rerender(
       <TaskListItem
@@ -88,6 +106,25 @@ describe("TaskListItem feedback visibility", () => {
       />,
     );
 
-    expect(screen.queryByTestId("task-feedback-buttons")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("task-feedback-buttons"),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("Tasks split layout", () => {
+  it("keeps the split view on the same parent-fill contract as emails", () => {
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("h-full");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("min-h-0");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("flex-1");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("overflow-hidden");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("w-full");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).not.toContain("100dvh");
+  });
+
+  it("keeps task detail metadata in a compact horizontal row", () => {
+    expect(TASK_DETAIL_META_ROW_CLASSNAME).toContain("flex");
+    expect(TASK_DETAIL_META_ROW_CLASSNAME).toContain("flex-wrap");
+    expect(TASK_DETAIL_META_ROW_CLASSNAME).not.toContain("grid");
   });
 });
