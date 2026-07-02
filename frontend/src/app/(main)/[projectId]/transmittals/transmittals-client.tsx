@@ -271,7 +271,7 @@ export default function TransmittalsClient(): ReactElement {
             ),
         }}
         features={{
-          enableExport: false,
+          enableExport: true,
           enableBulkDelete: false,
           enableRowSelection: false,
         }}
