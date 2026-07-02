@@ -7,6 +7,7 @@ import {
   stampSubcontractorInvoiceStatusAuditActor,
   type SubcontractorInvoiceStatus,
 } from "@/lib/invoicing/subcontractor-invoice-audit";
+import { resolveGeneralContractorCompany } from "@/lib/invoicing/subcontractor-invoice-company";
 
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Fetch a single subcontractor invoice with line items, commitment, and billing period joins
@@ -343,6 +344,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         .maybeSingle();
       gcCompany = gc ?? null;
     }
+    const resolvedGcCompany = resolveGeneralContractorCompany(gcCompany);
 
     // Contract date from subcontract or PO
     const contractDate = sc?.contract_date ?? po?.contract_date ?? null;
@@ -407,11 +409,11 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         contract_company_zip: contractCompany?.zip_code ?? null,
         contract_retainage_percent: sc?.default_retainage_percent ?? po?.default_retainage_percent ?? null,
         contract_date: contractDate as string | null,
-        gc_company_name: gcCompany?.name ?? null,
-        gc_company_address: gcCompany?.address ?? null,
-        gc_company_city: gcCompany?.city ?? null,
-        gc_company_state: gcCompany?.state ?? null,
-        gc_company_zip: gcCompany?.zip_code ?? null,
+        gc_company_name: resolvedGcCompany.name,
+        gc_company_address: resolvedGcCompany.address,
+        gc_company_city: resolvedGcCompany.city,
+        gc_company_state: resolvedGcCompany.state,
+        gc_company_zip: resolvedGcCompany.zip_code,
         project_name: project?.name ?? null,
         project_number: project?.project_number ?? null,
         project_address: project?.address ?? null,

@@ -11,6 +11,7 @@ import {
   type SubcontractorInvoicePdfLineItem,
   type SubcontractorInvoicePdfRollup,
 } from "@/lib/subcontractor-invoice-pdf";
+import { resolveGeneralContractorCompany } from "@/lib/invoicing/subcontractor-invoice-company";
 
 // Node runtime is required for React PDF rendering.
 export const runtime = "nodejs";
@@ -293,6 +294,7 @@ export async function fetchSubcontractorInvoicePdfData(
       .maybeSingle();
     gcCompany = gc ?? null;
   }
+  const resolvedGcCompany = resolveGeneralContractorCompany(gcCompany);
 
   let subcontractorCompany: {
     name: string | null;
@@ -352,11 +354,11 @@ export async function fetchSubcontractorInvoicePdfData(
       contract_number: contractJoin?.contract_number ?? null,
       contract_title: contractJoin?.title ?? null,
       contract_date: contractJoin?.contract_date ?? null,
-      gc_company_name: gcCompany?.name ?? null,
-      gc_company_address: gcCompany?.address ?? null,
-      gc_company_city: gcCompany?.city ?? null,
-      gc_company_state: gcCompany?.state ?? null,
-      gc_company_zip: gcCompany?.zip_code ?? null,
+      gc_company_name: resolvedGcCompany.name,
+      gc_company_address: resolvedGcCompany.address,
+      gc_company_city: resolvedGcCompany.city,
+      gc_company_state: resolvedGcCompany.state,
+      gc_company_zip: resolvedGcCompany.zip_code,
       contract_company_name: subcontractorCompany?.name ?? null,
       contract_company_address: subcontractorCompany?.address ?? null,
       contract_company_city: subcontractorCompany?.city ?? null,
