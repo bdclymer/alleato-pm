@@ -12,7 +12,6 @@ import {
   ChevronDown,
   Menu,
   Sparkles,
-  X,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -112,12 +111,12 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname()!;
   const nav = useHeaderNav();
+  const { setOpenMobile } = useSidebar();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId,
   );
   const isDeveloper = userType === "developer";
   const [user, setUser] = React.useState<User | null>(null);
-  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
     React.useState<string | null>(null);
 
@@ -140,15 +139,6 @@ export function SiteHeader() {
       data.subscription.unsubscribe();
     };
   }, []);
-
-  React.useEffect(() => {
-    if (!mobileNavOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileNavOpen]);
 
   const userManagementUserId = React.useMemo(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
@@ -326,242 +316,14 @@ export function SiteHeader() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => setMobileNavOpen(true)}
+          onClick={() => setOpenMobile(true)}
           aria-label="Open menu"
           className="md:hidden h-12 w-12 shrink-0 text-foreground"
         >
           <Menu className="size-6" strokeWidth={1.8} />
         </Button>
       </div>
-
-      {/* Mobile full-screen nav overlay */}
-      <MobileNavOverlay
-        open={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-        projectId={nav.projectId}
-        currentProject={nav.currentProject}
-        projects={nav.projects}
-        loadingProjects={nav.loadingProjects}
-        onFetchProjects={nav.fetchProjects}
-        onProjectSelect={nav.handleProjectSelect}
-        activeToolName={nav.activeToolName}
-        permissions={permissions}
-        isAppAdmin={isAppAdmin}
-        userType={userType}
-        isDeveloper={isDeveloper}
-        user={user}
-      />
     </header>
-  );
-}
-
-function MobileNavOverlay({
-  open,
-  onClose,
-  projectId,
-  currentProject,
-  projects,
-  loadingProjects,
-  onFetchProjects,
-  onProjectSelect,
-  activeToolName,
-  permissions,
-  isAppAdmin,
-  userType,
-  isDeveloper,
-  user,
-}: {
-  open: boolean;
-  onClose: () => void;
-  projectId: number | null;
-  currentProject: {
-    id: number;
-    name: string | null;
-    "job number": string | null;
-  } | null;
-  projects: { id: number; name: string | null; "job number": string | null }[];
-  loadingProjects: boolean;
-  onFetchProjects: () => void;
-  onProjectSelect: (projectId: number) => void;
-  activeToolName: string;
-  permissions: Record<string, string[]>;
-  isAppAdmin: boolean;
-  userType: string | null;
-  isDeveloper: boolean;
-  user: User | null;
-}) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    if (open) {
-      setMounted(true);
-    } else {
-      const t = setTimeout(() => setMounted(false), 300);
-      return () => clearTimeout(t);
-    }
-  }, [open]);
-
-  if (!mounted && !open) return null;
-
-  const groups = headerNavGroups.map((group) => ({
-    ...group,
-    visibleTools: filterToolsByPermission(
-      group.tools,
-      projectId,
-      permissions,
-      isAppAdmin,
-      userType,
-      isDeveloper,
-      user?.email ?? null,
-    ),
-  }));
-  const companyToolList = [
-    ...companyWideHeaderTools,
-    // Only the single Admin Dashboard link; other internal admin tools are
-    // reachable from that page.
-    ...(isDeveloper
-      ? developerCompanyAdminTools.filter(
-          (tool) => tool.name === "Admin Dashboard",
-        )
-      : []),
-  ];
-  const companyTools = filterToolsByPermission(
-    companyToolList,
-    projectId,
-    permissions,
-    isAppAdmin,
-    userType,
-    isDeveloper,
-  );
-
-  return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out flex flex-col",
-        open
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-4 pointer-events-none",
-      )}
-    >
-      {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between px-4">
-        <Image
-          src="/Alleato-Group-Logo_Dark.png"
-          alt="Alleato"
-          width={96}
-          height={21}
-          className="h-auto w-24 dark:invert"
-          style={{ height: "auto" }}
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          aria-label="Close menu"
-          className="h-12 w-12 shrink-0 text-foreground"
-        >
-          <X className="size-6" strokeWidth={1.8} />
-        </Button>
-      </div>
-
-      {/* Nav — fills remaining space */}
-      <nav className="flex-1 overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="flex flex-col items-center gap-6 w-full"
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              {group.label}
-            </p>
-            <div className="flex flex-col items-center gap-5 w-full">
-              {group.visibleTools.map((tool) => {
-                const href = buildToolUrl(
-                  tool.path,
-                  projectId,
-                  tool.requiresProject,
-                );
-                const isActive = tool.name === activeToolName;
-                return (
-                  <Link
-                    key={`${tool.path}:${tool.name}`}
-                    href={href}
-                    onClick={onClose}
-                    className={cn(
-                      "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                      isActive
-                        ? "text-foreground font-semibold"
-                        : "text-foreground/85",
-                    )}
-                  >
-                    {tool.name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-        <div className="flex w-full flex-col items-center gap-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Company Tools
-          </p>
-          <div className="flex w-full flex-col items-center gap-5">
-            {companyTools.map((tool) => {
-              const href = buildToolUrl(
-                tool.path,
-                projectId,
-                tool.requiresProject,
-              );
-              const isActive = tool.name === activeToolName;
-              return (
-                <Link
-                  key={`${tool.path}:${tool.name}`}
-                  href={href}
-                  onClick={onClose}
-                  className={cn(
-                    "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                    isActive
-                      ? "font-semibold text-foreground"
-                      : "text-foreground/85",
-                  )}
-                >
-                  {tool.name}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-
-      {/* Bottom: project selector + user menu */}
-      <div className="shrink-0 border-t border-border/50 bg-background">
-        <div className="flex justify-center px-4 pt-3 pb-2 [&_.project-selector-trigger]:!border-0 [&_.project-selector-trigger]:justify-center">
-          <ProjectSelector
-            projectId={projectId}
-            currentProject={currentProject}
-            projects={projects}
-            loadingProjects={loadingProjects}
-            onFetchProjects={onFetchProjects}
-            onProjectSelect={(id) => {
-              onProjectSelect(id);
-              onClose();
-            }}
-            onViewAll={onClose}
-          />
-        </div>
-        <div className="px-4 pb-3">
-          <HeaderUserMenu
-            user={user}
-            projectId={projectId}
-            activeToolName={activeToolName}
-            permissions={permissions}
-            isAppAdmin={isAppAdmin}
-            userType={userType}
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 
