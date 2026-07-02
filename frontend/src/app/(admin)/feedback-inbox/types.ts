@@ -6,6 +6,7 @@ export type UserProfile = {
 
 export type FeedbackItem = {
   id: string;
+  category: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -29,6 +30,7 @@ export type FeedbackItem = {
   github_issue_number: number | null;
   github_issue_url: string | null;
   github_issue_state: string | null;
+  tool_id?: number | null;
   metadata: Record<string, unknown>;
   submitter: UserProfile;
 };

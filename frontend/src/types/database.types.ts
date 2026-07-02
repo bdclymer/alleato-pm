@@ -1845,6 +1845,7 @@ export type Database = {
           agent_context: Json | null
           assignee_id: string | null
           board_status: string
+          category: string | null
           comment: string
           created_at: string
           created_by: string
@@ -1878,6 +1879,7 @@ export type Database = {
           agent_context?: Json | null
           assignee_id?: string | null
           board_status?: string
+          category?: string | null
           comment: string
           created_at?: string
           created_by: string
@@ -1911,6 +1913,7 @@ export type Database = {
           agent_context?: Json | null
           assignee_id?: string | null
           board_status?: string
+          category?: string | null
           comment?: string
           created_at?: string
           created_by?: string

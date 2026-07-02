@@ -11,7 +11,13 @@ import { cn } from "@/lib/utils";
 import type { FeedbackItem, ToolContextData, ToolOption } from "../types";
 import { notifyFeedbackInboxFailure } from "../helpers";
 
-export function ToolContextSection({ item }: { item: FeedbackItem }) {
+export function ToolContextSection({
+  item,
+  showSectionChrome = true,
+}: {
+  item: FeedbackItem;
+  showSectionChrome?: boolean;
+}) {
   const [tools, setTools] = useState<ToolOption[]>([]);
   const [assignedToolId, setAssignedToolId] = useState<number | null>(null);
   const [context, setContext] = useState<ToolContextData | null>(null);
@@ -327,7 +333,7 @@ export function ToolContextSection({ item }: { item: FeedbackItem }) {
         </div>
       )}
 
-      {!context && !loading && (
+      {!context && !loading && showSectionChrome && (
         <EmptyState
           icon={<Wrench />}
           title="No tool matched"

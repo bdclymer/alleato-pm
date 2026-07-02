@@ -1,7 +1,7 @@
 "use client";
 
 import { Github } from "lucide-react";
-import { Button } from "@/components/ds";
+import { Button, Checkbox } from "@/components/ds";
 import { displayAdminFeedbackTitle, isCommentRedundantWithTitle } from "@/lib/admin-feedback/title";
 import { cn } from "@/lib/utils";
 
@@ -22,14 +22,18 @@ import { ListItemContextMenu } from "./list-item-context-menu";
 function FeedbackQueueItem({
   item,
   selectedId,
+  selectedIds,
   onSelect,
+  onToggleBulkSelected,
   onUpdateStatus,
   onSendToGitHub,
   onDelete,
 }: {
   item: FeedbackItem;
   selectedId: string | null;
+  selectedIds: string[];
   onSelect: (id: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
@@ -47,6 +51,7 @@ function FeedbackQueueItem({
   const toolLabel = toolLabelFromPath(item.page_path);
   const showCommentPreview = !isCommentRedundantWithTitle(itemDisplayTitle, item.comment);
   const sourceLabel = toolLabel ?? item.page_title ?? item.page_path;
+  const bulkSelected = selectedIds.includes(item.id);
 
   return (
     <ListItemContextMenu
@@ -68,6 +73,18 @@ function FeedbackQueueItem({
             : "hover:bg-background/60",
         )}
       >
+        <span
+          className="mt-0.5 shrink-0"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Checkbox
+            checked={bulkSelected}
+            onCheckedChange={(checked) =>
+              onToggleBulkSelected(item.id, checked === true)
+            }
+            aria-label={`Select ${itemDisplayTitle}`}
+          />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-start justify-between gap-3">
             <span className="min-w-0 space-y-0.5">
@@ -112,6 +129,14 @@ function FeedbackQueueItem({
                 <span className="truncate">{sourceLabel}</span>
               </span>
             )}
+            {item.category ? (
+              <>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="shrink-0 truncate">{item.category}</span>
+              </>
+            ) : null}
             {item.github_issue_number && item.github_issue_url && (
               <>
                 <span aria-hidden className="text-border">
@@ -139,18 +164,22 @@ function FeedbackQueueItem({
 export function FeedbackQueue({
   items,
   selectedId,
+  selectedIds,
   loading,
   currentFilterLabel,
   onSelect,
+  onToggleBulkSelected,
   onUpdateStatus,
   onSendToGitHub,
   onDelete,
 }: {
   items: FeedbackItem[];
   selectedId: string | null;
+  selectedIds: string[];
   loading: boolean;
   currentFilterLabel: string;
   onSelect: (id: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
@@ -183,7 +212,9 @@ export function FeedbackQueue({
           key={item.id}
           item={item}
           selectedId={selectedId}
+          selectedIds={selectedIds}
           onSelect={onSelect}
+          onToggleBulkSelected={onToggleBulkSelected}
           onUpdateStatus={onUpdateStatus}
           onSendToGitHub={onSendToGitHub}
           onDelete={onDelete}

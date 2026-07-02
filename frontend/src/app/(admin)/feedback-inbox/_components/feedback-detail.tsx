@@ -4,16 +4,20 @@ import { useEffect, useState, type RefObject } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowUp,
   CircleDot,
   Github,
   Link2,
+  Minus,
   Tag,
   Trash2,
   User,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Button,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -34,7 +38,6 @@ import { STATUS_OPTIONS, REQUEST_TYPE_LABELS } from "../constants";
 import {
   submitterLabel,
   toDisplayStatus,
-  toolLabelFromPath,
 } from "../helpers";
 import type { DisplayStatus, FeedbackItem } from "../types";
 
@@ -50,6 +53,8 @@ export function FeedbackDetail({
   sendingToGitHub,
   deletingId,
   onUpdateStatus,
+  onUpdateTitle,
+  onUpdateCategory,
   onSendToGitHub,
   onDelete,
   onRefresh,
@@ -61,6 +66,8 @@ export function FeedbackDetail({
   sendingToGitHub: boolean;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
   onRefresh: () => void;
@@ -69,6 +76,8 @@ export function FeedbackDetail({
 }) {
   const displayStatus = toDisplayStatus(item.status);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [titleValue, setTitleValue] = useState(item.title);
+  const [categoryValue, setCategoryValue] = useState(item.category ?? "");
   const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } =
     useConfirm();
   const displayTitle = displayAdminFeedbackTitle({
@@ -78,7 +87,34 @@ export function FeedbackDetail({
     targetText: item.target_text,
     pageTitle: item.page_title,
   });
-  const toolLabel = toolLabelFromPath(item.page_path);
+  const priorityMeta = (() => {
+    const severity = item.severity ?? "medium";
+    if (severity === "high") {
+      return {
+        icon: ArrowUp,
+        label: "High",
+        className: "text-status-error",
+      };
+    }
+    if (severity === "low") {
+      return {
+        icon: Minus,
+        label: "Low",
+        className: "text-status-success",
+      };
+    }
+    return {
+      icon: AlertCircle,
+      label: "Medium",
+      className: "text-status-warning",
+    };
+  })();
+  const PriorityIcon = priorityMeta.icon as LucideIcon;
+
+  useEffect(() => {
+    setTitleValue(item.title);
+    setCategoryValue(item.category ?? "");
+  }, [item.category, item.id, item.title]);
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -102,7 +138,7 @@ export function FeedbackDetail({
   return (
     <>
       {DetailConfirmDialog}
-      <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto w-full max-w-4xl space-y-8 px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
         {onBack && (
           <Button
             type="button"
@@ -187,10 +223,12 @@ export function FeedbackDetail({
             )}
 
             {item.severity && (
-              <DetailPropertyItem icon={AlertCircle} className="shrink-0">
-                {item.severity.charAt(0).toUpperCase() +
-                  item.severity.slice(1)}{" "}
-                priority
+              <DetailPropertyItem
+                icon={PriorityIcon}
+                className={cn("shrink-0", priorityMeta.className)}
+                title={`${priorityMeta.label} priority`}
+              >
+                {priorityMeta.label}
               </DetailPropertyItem>
             )}
 
@@ -229,6 +267,68 @@ export function FeedbackDetail({
             )}
           </DetailPropertyBar>
         </div>
+
+        <section className="space-y-4">
+          <SectionRuleHeading>Details</SectionRuleHeading>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Title</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={titleValue}
+                onChange={(event) => setTitleValue(event.target.value)}
+                placeholder="Edit title"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  titleValue.trim().length === 0 ||
+                  titleValue.trim() === item.title
+                }
+                onClick={() => onUpdateTitle(item.id, titleValue.trim())}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Category</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={categoryValue}
+                  onChange={(event) => setCategoryValue(event.target.value)}
+                  placeholder="Add category"
+                  className="h-9"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    updatingId === item.id ||
+                    (categoryValue.trim() || "") === (item.category ?? "")
+                  }
+                  onClick={() =>
+                    onUpdateCategory(item.id, categoryValue.trim() || null)
+                  }
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-muted-foreground">Tool</span>
+              <ToolContextSection item={item} showSectionChrome={false} />
+            </div>
+          </div>
+        </section>
 
         {/* Description */}
         <div className="space-y-8">
@@ -298,12 +398,6 @@ export function FeedbackDetail({
         {/* Debug — tool context, page context, metadata, dangerous actions */}
         <CollapsibleDetailSection key={`${item.id}-debug`} label="Debug">
           <div className="space-y-8">
-            {/* Tool Context */}
-            <section className="space-y-3">
-              <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
-              <ToolContextSection item={item} />
-            </section>
-
             <section className="space-y-3">
               <SectionRuleHeading label="Page Context" className="mb-0 pb-0" />
               <div className="space-y-1.5">
