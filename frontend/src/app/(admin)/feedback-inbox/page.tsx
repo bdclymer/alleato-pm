@@ -1,7 +1,24 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type RefObject,
+} from "react";
+import {
+  ArrowUpDown,
+  Check,
+  Filter,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+} from "lucide-react";
 import {
   Button,
   Select,
@@ -11,6 +28,13 @@ import {
   SelectValue,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { apiFetch } from "@/lib/api-client";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
@@ -28,9 +52,7 @@ const VeltCommentToolbar = dynamic(
 );
 import {
   FEEDBACK_INBOX_TABS,
-  LIST_SECTION_ORDER,
   STATUS_FILTERS,
-  STATUS_META,
   STATUS_OPTIONS,
 } from "./constants";
 import {
@@ -46,27 +68,119 @@ import type {
   StatusFilter,
 } from "./types";
 
+const ACTIVE_STATUS_QUERY =
+  "open,submitted,github_failed,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+const ALL_STATUS_QUERY =
+  "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed";
+const FEEDBACK_LAYOUT_STORAGE_KEY = "alleato-feedback-inbox-layout";
+const FEEDBACK_LEFT_DEFAULT = 456;
+const FEEDBACK_LEFT_MIN = 320;
+const FEEDBACK_LEFT_MAX = 640;
+
+type FeedbackSortValue =
+  | "newest"
+  | "oldest"
+  | "priority"
+  | "source"
+  | "status";
+
+const FEEDBACK_SORT_OPTIONS: {
+  value: FeedbackSortValue;
+  label: string;
+}[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "priority", label: "Priority first" },
+  { value: "source", label: "Source A-Z" },
+  { value: "status", label: "Status" },
+];
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function loadFeedbackLayout() {
+  const fallback = {
+    leftWidth: FEEDBACK_LEFT_DEFAULT,
+    leftCollapsed: false,
+  };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const stored = window.localStorage.getItem(FEEDBACK_LAYOUT_STORAGE_KEY);
+    if (!stored) return fallback;
+    const parsed = JSON.parse(stored) as Partial<typeof fallback>;
+    return {
+      leftWidth:
+        typeof parsed.leftWidth === "number"
+          ? clampNumber(parsed.leftWidth, FEEDBACK_LEFT_MIN, FEEDBACK_LEFT_MAX)
+          : fallback.leftWidth,
+      leftCollapsed:
+        typeof parsed.leftCollapsed === "boolean"
+          ? parsed.leftCollapsed
+          : fallback.leftCollapsed,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveFeedbackLayout(preference: {
+  leftWidth: number;
+  leftCollapsed: boolean;
+}) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    FEEDBACK_LAYOUT_STORAGE_KEY,
+    JSON.stringify(preference),
+  );
+}
+
+function feedbackStatusQuery(filter: StatusFilter): string | null {
+  if (filter === "all") return ALL_STATUS_QUERY;
+  if (filter === "active") return ACTIVE_STATUS_QUERY;
+  if (filter === "open") return "open,submitted,github_failed";
+  if (filter === "in_progress")
+    return "in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+  if (filter === "dispatched") return ALL_STATUS_QUERY;
+  if (filter === "deferred") return "deferred";
+  if (filter === "resolved") return "resolved,closed";
+  return filter;
+}
+
+function sortRank(item: FeedbackItem): number {
+  if (item.severity === "high") return 0;
+  if (item.severity === "medium") return 1;
+  if (item.severity === "low") return 2;
+  return 3;
+}
+
 export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("issues");
-  const [filter, setFilter] = useState<StatusFilter>("open");
+  const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("all");
+  const [filter, setFilter] = useState<StatusFilter>("active");
+  const [searchValue, setSearchValue] = useState("");
+  const [sortBy, setSortBy] = useState<FeedbackSortValue>("newest");
+  const [leftWidth, setLeftWidth] = useState(FEEDBACK_LEFT_DEFAULT);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  function showDetailOnMobileOnly() {
-    const isMobileViewport =
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 1023px)").matches;
-    setMobileShowDetail(isMobileViewport);
-  }
+  useEffect(() => {
+    const preference = loadFeedbackLayout();
+    setLeftWidth(preference.leftWidth);
+    setLeftCollapsed(preference.leftCollapsed);
+  }, []);
+
+  useEffect(() => {
+    saveFeedbackLayout({ leftWidth, leftCollapsed });
+  }, [leftWidth, leftCollapsed]);
 
   const dispatchScoped = useCallback(
     (list: FeedbackItem[]) =>
@@ -95,8 +209,56 @@ export default function FeedbackInboxPage() {
     [items, dispatchScoped],
   );
 
-  const visibleItems =
-    activeTab === "feature_requests" ? featureRequestItems : issueItems;
+  const tabScopedItems =
+    activeTab === "feature_requests"
+      ? featureRequestItems
+      : activeTab === "issues"
+        ? issueItems
+        : dispatchScoped(items);
+  const searchTerm = searchValue.trim().toLowerCase();
+  const visibleItems = useMemo(() => {
+    const filtered = searchTerm
+      ? tabScopedItems.filter((item) => {
+          const submitter =
+            item.submitter?.full_name || item.submitter?.email || item.created_by;
+          const fields = [
+            item.title,
+            item.comment,
+            item.page_title ?? "",
+            item.page_path,
+            item.page_url,
+            item.target_text ?? "",
+            submitter,
+            item.github_issue_number ? `#${item.github_issue_number}` : "",
+          ];
+          return fields.some((field) => field.toLowerCase().includes(searchTerm));
+        })
+      : tabScopedItems;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "oldest") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      if (sortBy === "priority") {
+        const priorityDiff = sortRank(a) - sortRank(b);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (sortBy === "source") {
+        const sourceA = (a.page_title || a.page_path || "").toLowerCase();
+        const sourceB = (b.page_title || b.page_path || "").toLowerCase();
+        return sourceA.localeCompare(sourceB);
+      }
+      if (sortBy === "status") {
+        const statusA = toDisplayStatus(a.status);
+        const statusB = toDisplayStatus(b.status);
+        const statusDiff = statusA.localeCompare(statusB);
+        if (statusDiff !== 0) return statusDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [searchTerm, sortBy, tabScopedItems]);
   const currentTabLabel =
     FEEDBACK_INBOX_TABS.find((tab) => tab.value === activeTab)?.label ?? "Issues";
   const selected = useMemo(
@@ -106,38 +268,17 @@ export default function FeedbackInboxPage() {
   const currentFilterLabel =
     STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
     filter.replace("_", " ");
+  const activeFilterCount =
+    (filter !== "active" ? 1 : 0) +
+    (activeTab !== "all" ? 1 : 0);
 
   // ---- Fetch ----
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter !== "all") {
-        if (filter === "open") {
-          params.set("status", "open,submitted,github_failed");
-        } else if (filter === "in_progress") {
-          params.set(
-            "status",
-            "in_progress,triaged,diagnosing,fixing,verifying,in_review",
-          );
-        } else if (filter === "dispatched") {
-          params.set(
-            "status",
-            "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed",
-          );
-        } else if (filter === "deferred") {
-          params.set("status", "deferred");
-        } else if (filter === "resolved") {
-          params.set("status", "resolved,closed");
-        } else {
-          params.set("status", filter);
-        }
-      } else {
-        params.set(
-          "status",
-          "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed",
-        );
-      }
+      const statusQuery = feedbackStatusQuery(filter);
+      if (statusQuery) params.set("status", statusQuery);
       const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(
         `/api/admin/feedback?${params.toString()}`,
       );
@@ -224,11 +365,6 @@ export default function FeedbackInboxPage() {
         case "Enter": {
           if (visibleItems.length === 0) return;
           setSelectedId(visibleItems[focusedIndex].id);
-          showDetailOnMobileOnly();
-          break;
-        }
-        case "Escape": {
-          setMobileShowDetail(false);
           break;
         }
         case "c": {
@@ -304,13 +440,11 @@ export default function FeedbackInboxPage() {
   async function deleteItem(id: string) {
     const previousItems = items;
     const previousSelectedId = selectedId;
-    const previousMobileShowDetail = mobileShowDetail;
 
     setDeletingId(id);
     setItems((currentItems) => currentItems.filter((item) => item.id !== id));
     if (selectedId === id) {
       setSelectedId(null);
-      setMobileShowDetail(false);
     }
 
     try {
@@ -323,7 +457,6 @@ export default function FeedbackInboxPage() {
     } catch (err) {
       setItems(previousItems);
       setSelectedId(previousSelectedId);
-      setMobileShowDetail(previousMobileShowDetail);
       notifyFeedbackInboxFailure({
         operation: "delete-feedback-item",
         title: "Could not delete feedback item",
@@ -338,69 +471,45 @@ export default function FeedbackInboxPage() {
 
   function selectItem(id: string) {
     setSelectedId(id);
-    showDetailOnMobileOnly();
   }
-
-  function handleMobileBack() {
-    setMobileShowDetail(false);
-  }
-
-  const listSections = useMemo(() => {
-    if (filter === "dispatched") {
-      const grouped = new Map<DisplayStatus, FeedbackItem[]>(
-        LIST_SECTION_ORDER.map((status) => [status, []]),
-      );
-      for (const item of visibleItems) {
-        const status = toDisplayStatus(item.status);
-        grouped.get(status)?.push(item);
-      }
-      return LIST_SECTION_ORDER.map((status) => ({
-        status,
-        label: STATUS_META[status].label,
-        items: grouped.get(status) ?? [],
-      })).filter((section) => section.items.length > 0);
-    }
-
-    if (filter !== "all") {
-      return visibleItems.length > 0
-        ? [
-            {
-              status: filter as DisplayStatus,
-              label: STATUS_META[filter as DisplayStatus].label,
-              items: visibleItems,
-            },
-          ]
-        : [];
-    }
-
-    const grouped = new Map<DisplayStatus, FeedbackItem[]>(
-      LIST_SECTION_ORDER.map((status) => [status, []]),
-    );
-
-    for (const item of visibleItems) {
-      const status = toDisplayStatus(item.status);
-      grouped.get(status)?.push(item);
-    }
-
-    return LIST_SECTION_ORDER.map((status) => ({
-      status,
-      label: STATUS_META[status].label,
-      items: grouped.get(status) ?? [],
-    })).filter((section) => section.items.length > 0);
-  }, [visibleItems, filter]);
 
   const handleInboxTabClick = useCallback((value: string) => {
     setActiveTab(value as FeedbackInboxTab);
     setSelectedId(null);
-    setMobileShowDetail(false);
     setFocusedIndex(0);
   }, []);
 
   const handleFilterTabClick = useCallback((value: string) => {
     setFilter(value as StatusFilter);
     setSelectedId(null);
-    setMobileShowDetail(false);
+    setFocusedIndex(0);
   }, []);
+
+  const handleResizeStart = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = leftWidth;
+
+      function handleMove(moveEvent: MouseEvent) {
+        const nextWidth = clampNumber(
+          startWidth + moveEvent.clientX - startX,
+          FEEDBACK_LEFT_MIN,
+          FEEDBACK_LEFT_MAX,
+        );
+        setLeftWidth(nextWidth);
+      }
+
+      function handleUp() {
+        document.removeEventListener("mousemove", handleMove);
+        document.removeEventListener("mouseup", handleUp);
+      }
+
+      document.addEventListener("mousemove", handleMove);
+      document.addEventListener("mouseup", handleUp);
+    },
+    [leftWidth],
+  );
 
   return (
     <PageShell
@@ -416,128 +525,468 @@ export default function FeedbackInboxPage() {
         documentId="feedback-inbox"
         documentName="Feedback Inbox"
       />
-      <div className="flex h-full min-h-0 bg-background">
-        {mobileShowDetail && selected ? (
-          <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
-            <FeedbackDetail
-              item={selected}
-              updatingId={updatingId}
-              sendingToGitHub={sendingToGitHub}
-              onUpdateStatus={updateStatus}
-              onSendToGitHub={sendToGitHub}
-              deletingId={deletingId}
-              onDelete={deleteItem}
-              onBack={handleMobileBack}
-              commentInputRef={commentInputRef}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1">
-            <div
-              ref={listPanelRef}
-              className={cn(
-                "min-w-0 overflow-hidden flex flex-col bg-muted/35",
-                mobileShowDetail ? "hidden lg:flex" : "flex",
-                "w-full lg:w-112 lg:max-w-lg lg:shrink-0",
-              )}
-            >
-              <div className="space-y-4 px-4 pb-4 pt-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div
-                    className="flex min-w-0 items-center gap-3"
-                    aria-label="Feedback type"
-                  >
-                    {FEEDBACK_INBOX_TABS.map((tab) => {
-                      const count =
-                        tab.value === "feature_requests"
-                          ? featureRequestItems.length
-                          : issueItems.length;
-                      const selected = activeTab === tab.value;
-                      return (
-                        <Button
-                          key={tab.value}
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleInboxTabClick(tab.value)}
-                          aria-pressed={selected}
-                          className={cn(
-                            "h-auto rounded-none px-0 py-0 text-sm font-medium hover:bg-transparent",
-                            selected
-                              ? "text-foreground"
-                              : "text-muted-foreground hover:text-foreground",
-                          )}
-                        >
-                          <span>{tab.label}</span>
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
-                            {count}
-                          </span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <VeltCommentToolbar />
-                </div>
-                <Select value={filter} onValueChange={handleFilterTabClick}>
-                  <SelectTrigger
-                    aria-label="Filter feedback status"
-                    size="sm"
-                    className="h-8 w-full bg-background text-sm shadow-none"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_FILTERS.map((statusFilter) => (
-                      <SelectItem
-                        key={statusFilter.value}
-                        value={statusFilter.value}
-                      >
-                        {statusFilter.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <FeedbackQueue
-                  sections={listSections}
-                  items={visibleItems}
-                  selectedId={selectedId}
-                  loading={loading}
-                  currentFilterLabel={`${currentFilterLabel} ${currentTabLabel}`}
-                  onSelect={selectItem}
-                  onUpdateStatus={updateStatus}
-                  onSendToGitHub={sendToGitHub}
-                  onDelete={deleteItem}
-                />
-              </div>
-            </div>
-
-            <div className="hidden min-w-0 flex-1 overflow-y-auto bg-background lg:block">
-              {!selected && (
-                <div className="flex h-full items-center justify-center">
-                  <p className="text-sm text-muted-foreground">
-                    Select an item to review
-                  </p>
-                </div>
-              )}
-
-              {selected && (
-                <FeedbackDetail
-                  item={selected}
-                  updatingId={updatingId}
-                  sendingToGitHub={sendingToGitHub}
-                  deletingId={deletingId}
-                  onUpdateStatus={updateStatus}
-                  onSendToGitHub={sendToGitHub}
-                  onDelete={deleteItem}
-                  commentInputRef={commentInputRef}
-                />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      <SplitPageFrame
+        height="fill"
+        className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background"
+      >
+        <SplitPage
+          variant="two-column"
+          breakpoint="lg"
+          defaultIsOpen={!selected}
+          className="min-h-0 flex-1"
+          firstPaneClassName={leftCollapsed ? "lg:w-14" : "lg:w-auto"}
+          secondPaneClassName="bg-background"
+        >
+          <FeedbackListPane
+            activeFilterCount={activeFilterCount}
+            activeTab={activeTab}
+            currentFilterLabel={currentFilterLabel}
+            currentTabLabel={currentTabLabel}
+            deletingId={deletingId}
+            featureRequestCount={featureRequestItems.length}
+            filter={filter}
+            focusedIndex={focusedIndex}
+            issueCount={issueItems.length}
+            items={visibleItems}
+            leftCollapsed={leftCollapsed}
+            leftWidth={leftWidth}
+            listPanelRef={listPanelRef}
+            loading={loading}
+            searchValue={searchValue}
+            selectedId={selectedId}
+            sortBy={sortBy}
+            totalCount={dispatchScoped(items).length}
+            onDelete={deleteItem}
+            onFilterChange={handleFilterTabClick}
+            onInboxTabChange={handleInboxTabClick}
+            onResizeStart={handleResizeStart}
+            onSearchChange={setSearchValue}
+            onSelect={selectItem}
+            onSendToGitHub={sendToGitHub}
+            onSortChange={setSortBy}
+            onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
+            onUpdateStatus={updateStatus}
+          />
+          <FeedbackDetailPane
+            commentInputRef={commentInputRef}
+            deletingId={deletingId}
+            item={selected}
+            sendingToGitHub={sendingToGitHub}
+            updatingId={updatingId}
+            onDelete={deleteItem}
+            onSendToGitHub={sendToGitHub}
+            onUpdateStatus={updateStatus}
+          />
+        </SplitPage>
+      </SplitPageFrame>
     </PageShell>
+  );
+}
+
+function FeedbackListPane({
+  activeFilterCount,
+  activeTab,
+  currentFilterLabel,
+  currentTabLabel,
+  deletingId,
+  featureRequestCount,
+  filter,
+  issueCount,
+  items,
+  leftCollapsed,
+  leftWidth,
+  listPanelRef,
+  loading,
+  searchValue,
+  selectedId,
+  sortBy,
+  totalCount,
+  onDelete,
+  onFilterChange,
+  onInboxTabChange,
+  onResizeStart,
+  onSearchChange,
+  onSelect,
+  onSendToGitHub,
+  onSortChange,
+  onToggleCollapsed,
+  onUpdateStatus,
+}: {
+  activeFilterCount: number;
+  activeTab: FeedbackInboxTab;
+  currentFilterLabel: string;
+  currentTabLabel: string;
+  deletingId: string | null;
+  featureRequestCount: number;
+  filter: StatusFilter;
+  focusedIndex: number;
+  issueCount: number;
+  items: FeedbackItem[];
+  leftCollapsed: boolean;
+  leftWidth: number;
+  listPanelRef: RefObject<HTMLDivElement | null>;
+  loading: boolean;
+  searchValue: string;
+  selectedId: string | null;
+  sortBy: FeedbackSortValue;
+  totalCount: number;
+  onDelete: (id: string) => void;
+  onFilterChange: (value: string) => void;
+  onInboxTabChange: (value: string) => void;
+  onResizeStart: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  onSearchChange: (value: string) => void;
+  onSelect: (id: string) => void;
+  onSendToGitHub: (id: string) => void;
+  onSortChange: (value: FeedbackSortValue) => void;
+  onToggleCollapsed: () => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+}) {
+  const splitPage = useSplitPage();
+
+  function handleSelect(id: string) {
+    onSelect(id);
+    if (!splitPage.isDesktop) splitPage.onClose();
+  }
+
+  if (leftCollapsed && splitPage.isDesktop) {
+    return (
+      <div className="flex h-full w-14 flex-col items-center border-r border-border/70 bg-muted/30 py-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full text-muted-foreground"
+          onClick={onToggleCollapsed}
+          aria-label="Expand feedback list"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={listPanelRef}
+      className="relative flex h-full min-h-0 w-full flex-col border-r border-border/70 bg-muted/30 lg:w-[var(--feedback-left-width)]"
+      style={{ "--feedback-left-width": `${leftWidth}px` } as CSSProperties}
+    >
+      <div className="border-b border-border/70 bg-background/90 px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
+              Feedback
+            </h1>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {items.length} shown / {totalCount} active
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="hidden h-8 w-8 rounded-full text-muted-foreground lg:inline-flex"
+              onClick={onToggleCollapsed}
+              aria-label="Collapse feedback list"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
+            <FeedbackFilterPopover
+              activeCount={activeFilterCount}
+              activeTab={activeTab}
+              featureRequestCount={featureRequestCount}
+              issueCount={issueCount}
+              status={filter}
+              totalCount={totalCount}
+              onInboxTabChange={onInboxTabChange}
+              onStatusChange={onFilterChange}
+            />
+            <ExpandableSearch
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder="Search feedback"
+              ariaLabel="Search feedback"
+            />
+            <FeedbackSortPopover
+              sortBy={sortBy}
+              onSortChange={onSortChange}
+            />
+            <VeltCommentToolbar />
+          </div>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <FeedbackQueue
+          items={items}
+          selectedId={selectedId}
+          loading={loading}
+          currentFilterLabel={`${currentFilterLabel} ${currentTabLabel}`}
+          onSelect={handleSelect}
+          onUpdateStatus={onUpdateStatus}
+          onSendToGitHub={onSendToGitHub}
+          onDelete={onDelete}
+        />
+      </div>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        aria-label="Resize feedback list"
+        className="absolute right-0 top-0 hidden h-full w-1 translate-x-1/2 cursor-col-resize rounded-none bg-transparent p-0 transition-colors hover:bg-primary/40 lg:block"
+        onMouseDown={onResizeStart}
+      />
+    </div>
+  );
+}
+
+function FeedbackFilterPopover({
+  activeCount,
+  activeTab,
+  featureRequestCount,
+  issueCount,
+  status,
+  totalCount,
+  onInboxTabChange,
+  onStatusChange,
+}: {
+  activeCount: number;
+  activeTab: FeedbackInboxTab;
+  featureRequestCount: number;
+  issueCount: number;
+  status: StatusFilter;
+  totalCount: number;
+  onInboxTabChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Filter feedback"
+          className={cn(
+            "relative h-8 w-8 rounded-full text-muted-foreground shadow-none",
+            activeCount > 0 && "text-foreground",
+          )}
+        >
+          <Filter className="h-4 w-4" />
+          {activeCount > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+              {activeCount}
+            </span>
+          ) : null}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-4">
+        <FeedbackScopePanel
+          activeCount={activeCount}
+          activeTab={activeTab}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          status={status}
+          totalCount={totalCount}
+          onClear={() => {
+            onStatusChange("active");
+            onInboxTabChange("all");
+          }}
+          onStatusChange={onStatusChange}
+          onTypeChange={onInboxTabChange}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FeedbackScopePanel({
+  activeCount,
+  activeTab,
+  featureRequestCount,
+  issueCount,
+  status,
+  totalCount,
+  onClear,
+  onStatusChange,
+  onTypeChange,
+}: {
+  activeCount: number;
+  activeTab: FeedbackInboxTab;
+  featureRequestCount: number;
+  issueCount: number;
+  status: StatusFilter;
+  totalCount: number;
+  onClear: () => void;
+  onStatusChange: (value: string) => void;
+  onTypeChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">Filters</span>
+        {activeCount > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClear}
+            className="h-6 gap-1 px-1.5 text-xs text-muted-foreground"
+          >
+            <X className="h-3 w-3" />
+            Clear
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Type</span>
+        <div className="inline-flex w-full items-center rounded-md border border-border/60 bg-muted/40 p-0.5">
+          {FEEDBACK_INBOX_TABS.map((tab) => {
+            const count =
+              tab.value === "all"
+                ? totalCount
+                : tab.value === "feature_requests"
+                  ? featureRequestCount
+                  : issueCount;
+            return (
+              <Button
+                key={tab.value}
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onTypeChange(tab.value)}
+                className={cn(
+                  "h-7 flex-1 rounded-sm px-2 text-xs shadow-none",
+                  activeTab === tab.value
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+                )}
+              >
+                <span className="truncate">{tab.label}</span>
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  {count}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Status</span>
+        <Select value={status} onValueChange={onStatusChange}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_FILTERS.map((statusFilter) => (
+              <SelectItem
+                key={statusFilter.value}
+                value={statusFilter.value}
+              >
+                {statusFilter.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackSortPopover({
+  sortBy,
+  onSortChange,
+}: {
+  sortBy: FeedbackSortValue;
+  onSortChange: (value: FeedbackSortValue) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Sort feedback"
+          className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+        >
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-44 p-1">
+        {FEEDBACK_SORT_OPTIONS.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onSortChange(option.value)}
+            className={cn(
+              "flex h-auto w-full justify-start gap-2 rounded-sm px-3 py-1.5 text-sm shadow-none transition-colors hover:bg-muted",
+              sortBy === option.value
+                ? "font-medium text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            {sortBy === option.value ? (
+              <Check className="h-3.5 w-3.5 shrink-0" />
+            ) : null}
+            <span className={cn(sortBy !== option.value && "pl-[1.375rem]")}>
+              {option.label}
+            </span>
+          </Button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FeedbackDetailPane({
+  commentInputRef,
+  deletingId,
+  item,
+  sendingToGitHub,
+  updatingId,
+  onDelete,
+  onSendToGitHub,
+  onUpdateStatus,
+}: {
+  commentInputRef: RefObject<HTMLTextAreaElement | null>;
+  deletingId: string | null;
+  item: FeedbackItem | null;
+  sendingToGitHub: boolean;
+  updatingId: string | null;
+  onDelete: (id: string) => void;
+  onSendToGitHub: (id: string) => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+}) {
+  const splitPage = useSplitPage();
+
+  if (!item) {
+    return (
+      <div className="flex h-full items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Select feedback to review</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full min-h-0 overflow-y-auto bg-background">
+      <FeedbackDetail
+        item={item}
+        updatingId={updatingId}
+        sendingToGitHub={sendingToGitHub}
+        deletingId={deletingId}
+        onUpdateStatus={onUpdateStatus}
+        onSendToGitHub={onSendToGitHub}
+        onDelete={onDelete}
+        onBack={splitPage.isDesktop ? undefined : splitPage.onOpen}
+        commentInputRef={commentInputRef}
+      />
+    </div>
   );
 }

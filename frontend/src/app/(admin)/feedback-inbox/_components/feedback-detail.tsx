@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
+import { ArrowLeft, ExternalLink, Github, Link2, Trash2, XCircle, AlertCircle, Tag, User } from "lucide-react";
 import {
   Button,
   Select,
@@ -62,6 +62,7 @@ export function FeedbackDetail({
     pageTitle: item.page_title,
   });
   const toolLabel = toolLabelFromPath(item.page_path);
+  const sourceLabel = toolLabel ?? item.page_title ?? item.page_path ?? "Submitted page";
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -194,20 +195,17 @@ export function FeedbackDetail({
               </span>
             </div>
 
-            {/* Tool — links to the page the feedback was submitted from */}
-            {toolLabel && (
-              <div className="flex items-center gap-3">
-                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                <a
-                  href={item.page_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-foreground hover:text-primary hover:underline"
-                >
-                  {toolLabel}
-                </a>
-              </div>
-            )}
+            <div className="flex min-w-0 items-center gap-3">
+              <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <a
+                href={item.page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate text-xs font-medium text-primary hover:underline"
+              >
+                Open submitted page
+              </a>
+            </div>
 
             {/* Submitter */}
             <div className="flex items-center gap-3">
@@ -233,6 +231,25 @@ export function FeedbackDetail({
 
         {/* Description */}
         <div className="space-y-8">
+          <div className="space-y-1.5 text-sm">
+            <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+              <ExternalLink className="h-4 w-4 shrink-0" />
+              <a
+                href={item.page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 truncate text-foreground hover:text-primary hover:underline"
+              >
+                {sourceLabel}
+              </a>
+            </div>
+            {item.target_text ? (
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {item.target_text}
+              </p>
+            ) : null}
+          </div>
+
           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
             {item.comment}
           </p>

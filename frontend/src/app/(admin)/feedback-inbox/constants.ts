@@ -17,6 +17,7 @@ import type {
 } from "./types";
 
 export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "active", label: "Active" },
   { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "deferred", label: "Deferred" },
@@ -35,6 +36,7 @@ export const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
 ];
 
 export const FEEDBACK_INBOX_TABS: { value: FeedbackInboxTab; label: string }[] = [
+  { value: "all", label: "All feedback" },
   { value: "issues", label: "Issues" },
   { value: "feature_requests", label: ADMIN_FEEDBACK_PRODUCT_INTAKE_LABEL },
 ];

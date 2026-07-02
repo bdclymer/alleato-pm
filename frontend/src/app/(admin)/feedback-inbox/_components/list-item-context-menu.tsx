@@ -82,6 +82,9 @@ export function ListItemContextMenu({
           window.open(item.github_issue_url, "_blank", "noopener,noreferrer");
         }
         break;
+      case "open_source":
+        window.open(item.page_url, "_blank", "noopener,noreferrer");
+        break;
       case "copy_link":
         navigator.clipboard.writeText(
           `${window.location.origin}/feedback-inbox?id=${item.id}`,
@@ -149,6 +152,17 @@ export function ListItemContextMenu({
           )}
 
           <div className="my-1 h-px bg-border" />
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="default"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+            onClick={() => handleAction("open_source")}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open submitted page
+          </Button>
 
           {!item.github_issue_number && (
             <Button

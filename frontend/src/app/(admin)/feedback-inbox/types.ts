@@ -59,6 +59,7 @@ export type GitHubComment = {
 };
 
 export type StatusFilter =
+  | "active"
   | "open"
   | "in_progress"
   | "dispatched"
@@ -86,7 +87,7 @@ export type DispatchHistoryEntry = {
   githubIssueUrl?: string | null;
 };
 
-export type FeedbackInboxTab = "issues" | "feature_requests";
+export type FeedbackInboxTab = "all" | "issues" | "feature_requests";
 
 export type ToolOption = {
   id: number;
