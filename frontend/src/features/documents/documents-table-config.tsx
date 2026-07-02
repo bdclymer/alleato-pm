@@ -81,6 +81,18 @@ const SOURCE_FILTER_OPTIONS = [
   { value: "Zapier", label: "Zapier" },
 ];
 
+const SOURCE_LABELS: Record<string, string> = Object.fromEntries(
+  SOURCE_FILTER_OPTIONS.map((option) => [option.value.toLowerCase(), option.label]),
+);
+
+/** Human-readable label for a document's `source`/`source_system` value. */
+export function documentSourceLabel(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  return SOURCE_LABELS[value.toLowerCase()] ?? value.replace(/_/g, " ");
+}
+
 const TYPE_FILTER_OPTIONS = [
   { value: "document", label: "Document" },
   { value: "email_attachment", label: "Email Attachment" },
@@ -426,7 +438,7 @@ export function buildDocumentTableColumns(opts?: {
       ...documentColumns[6],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {item.source || "-"}
+          {documentSourceLabel(item.source ?? item.source_system) || "-"}
         </span>
       ),
       sortValue: (item) => item.source,
@@ -508,7 +520,11 @@ export function renderDocumentCard(
       <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {item.type && <span className="truncate">{item.type}</span>}
         {item.category && <span className="truncate">{item.category}</span>}
-        {item.source && <span className="truncate">{item.source}</span>}
+        {documentSourceLabel(item.source ?? item.source_system) && (
+          <span className="truncate">
+            {documentSourceLabel(item.source ?? item.source_system)}
+          </span>
+        )}
         {item.created_at && <span>{formatDate(item.created_at)}</span>}
       </div>
       {item.error_message && (
@@ -536,7 +552,12 @@ export function renderDocumentList(
           {item.title || "Untitled Document"}
         </span>
         <span className="text-xs text-muted-foreground">
-          {[item.type, item.category, item.source, formatDate(item.created_at)]
+          {[
+            item.type,
+            item.category,
+            documentSourceLabel(item.source ?? item.source_system),
+            formatDate(item.created_at),
+          ]
             .filter(Boolean)
             .join(" · ")}
         </span>
