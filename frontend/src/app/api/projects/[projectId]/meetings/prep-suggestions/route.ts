@@ -639,7 +639,11 @@ function buildSegmentCarryForwardSuggestions(
             details.length > 0
               ? details.join(" ")
               : truncateText(segment.summary, 220) ?? `Review carry-forward context from ${meetingTitle}.`,
-          href: sourceDocumentHref(projectId, segment.metadata_id),
+          href: sourceDocumentHref(
+            projectId,
+            segment.metadata_id,
+            meetingSegmentAnchorId(segment.id),
+          ),
           sourceLabel: `Transcript topic ${segment.segment_index + 1}`,
           sourceContext: meetingTitle,
           priority: risks.length > 0 ? ("high" as const) : ("medium" as const),
@@ -753,8 +757,17 @@ function isNonNullable<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
-function sourceDocumentHref(projectId: number, sourceDocumentId: string) {
-  return `/${projectId}/intelligence/sources/${encodeURIComponent(sourceDocumentId)}`;
+function sourceDocumentHref(
+  projectId: number,
+  sourceDocumentId: string,
+  anchorId?: string,
+) {
+  const href = `/${projectId}/intelligence/sources/${encodeURIComponent(sourceDocumentId)}`;
+  return anchorId ? `${href}#${encodeURIComponent(anchorId)}` : href;
+}
+
+function meetingSegmentAnchorId(segmentId: string) {
+  return `meeting-segment-${segmentId}`;
 }
 
 function humanizeSourceLabel(value: string) {

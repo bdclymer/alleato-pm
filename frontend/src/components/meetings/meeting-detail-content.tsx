@@ -98,6 +98,10 @@ interface RelatedMeeting {
   duration_minutes: number | null;
 }
 
+function meetingSegmentAnchorId(segmentId: string) {
+  return `meeting-segment-${segmentId}`;
+}
+
 export interface MeetingTask {
   id: string;
   title: string | null;
@@ -730,7 +734,11 @@ export function MeetingDetailContent({
               >
                 <div className="space-y-6">
                   {segments.map((segment, index) => (
-                    <div key={segment.id} className="flex gap-2.5">
+                    <div
+                      key={segment.id}
+                      id={meetingSegmentAnchorId(segment.id)}
+                      className="flex scroll-mt-24 gap-2.5"
+                    >
                       <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium tabular-nums text-muted-foreground">
                         {segment.segment_index + 1}
                       </span>
