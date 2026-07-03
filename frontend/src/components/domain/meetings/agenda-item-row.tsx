@@ -24,10 +24,12 @@ import {
   CalendarIcon,
   ChevronDown,
   ChevronRight,
+  ExternalLink,
   GripVertical,
   MoreVertical,
   Plus,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -54,6 +56,11 @@ import {
 } from "@/components/ui/select";
 import { SortableItemHandle } from "@/components/ui/sortable";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   isPatternCEntityType,
   type PatternCEntityType,
@@ -109,6 +116,28 @@ function isMeetingItemAttachmentsEnabled(): boolean {
   return isPatternCEntityType(candidate);
 }
 
+type AgendaSourceReference = {
+  label: string;
+  href: string;
+  context: string | null;
+};
+
+function parseAgendaSourceReference(
+  description: string | null,
+): AgendaSourceReference | null {
+  if (!description) return null;
+
+  const sourceMatch = description.match(/^Source:\s*(.+?)\s*\((\/[^\s)]+)\)\s*$/m);
+  if (!sourceMatch) return null;
+
+  const label = sourceMatch[1]?.trim();
+  const href = sourceMatch[2]?.trim();
+  if (!label || !href) return null;
+
+  const context = description.match(/^Context:\s*(.+?)\s*$/m)?.[1]?.trim() ?? null;
+  return { label, href, context };
+}
+
 export interface AgendaItemRowProps {
   projectId: number;
   meetingId: string;
@@ -135,6 +164,7 @@ export function AgendaItemRow({
   const deleteItem = useDeleteItem(String(projectId), meetingId);
   const createItemTask = useCreateItemTask(String(projectId), meetingId);
   const { users } = useUsers({ personType: "all" });
+  const sourceReference = parseAgendaSourceReference(item.description);
 
   const itemHistory = useItemHistory(String(projectId), meetingId, item.id, {
     enabled: historyOpen,
@@ -251,6 +281,25 @@ export function AgendaItemRow({
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
               {item.title}
             </span>
+
+            {sourceReference ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={sourceReference.href}
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label={`Open source: ${sourceReference.label}`}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {sourceReference.context
+                    ? `${sourceReference.label} · ${sourceReference.context}`
+                    : sourceReference.label}
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
 
             <Select value={item.status} onValueChange={handleStatusChange}>
               <SelectTrigger size="sm" className="h-7 w-36 text-xs">

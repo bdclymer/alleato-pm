@@ -269,6 +269,28 @@ describe("AgendaSection", () => {
     expect(screen.getByText("2.1")).toBeInTheDocument();
   });
 
+  it("renders a compact source link when an agenda item has seeded source metadata", () => {
+    const detail = buildDetail();
+    detail.categories[0].items[0].description = [
+      "Review the permit path.",
+      "",
+      "Source: Transcript topic 1 (/760/intelligence/sources/source-1#meeting-segment-segment-1)",
+      "Context: Weekly design coordination",
+    ].join("\n");
+
+    renderWithQueryClient(
+      <AgendaSection projectId={42} meetingId="meeting-1" detail={detail} mode="agenda" />,
+    );
+
+    const link = screen.getByLabelText("Open source: Transcript topic 1");
+    expect(link).toHaveAttribute(
+      "href",
+      "/760/intelligence/sources/source-1#meeting-segment-segment-1",
+    );
+    expect(screen.getByText("Closed Item")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Open source: Closed Item")).not.toBeInTheDocument();
+  });
+
   it("hides closed items when the status filter is set to Open", async () => {
     const user = userEvent.setup();
     renderWithQueryClient(
