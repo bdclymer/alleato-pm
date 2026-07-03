@@ -138,7 +138,7 @@ export function FeedbackDetail({
   return (
     <>
       {DetailConfirmDialog}
-      <div className="mx-auto w-full max-w-4xl space-y-8 px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-5 py-8 sm:px-6 lg:px-8">
         {onBack && (
           <Button
             type="button"
@@ -296,53 +296,37 @@ export function FeedbackDetail({
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">Category</span>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={categoryValue}
-                  onChange={(event) => setCategoryValue(event.target.value)}
-                  placeholder="Add category"
-                  className="h-9"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={
-                    updatingId === item.id ||
-                    (categoryValue.trim() || "") === (item.category ?? "")
-                  }
-                  onClick={() =>
-                    onUpdateCategory(item.id, categoryValue.trim() || null)
-                  }
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">Tool</span>
-              <ToolContextSection item={item} showSectionChrome={false} />
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Category</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={categoryValue}
+                onChange={(event) => setCategoryValue(event.target.value)}
+                placeholder="Add category"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  (categoryValue.trim() || "") === (item.category ?? "")
+                }
+                onClick={() =>
+                  onUpdateCategory(item.id, categoryValue.trim() || null)
+                }
+              >
+                Save
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Description */}
-        <div className="space-y-8">
+        <section className="space-y-4">
+          <SectionRuleHeading>Feedback</SectionRuleHeading>
+
           <div className="space-y-1.5 text-sm">
-            <div className="min-w-0 text-muted-foreground">
-              <a
-                href={item.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block min-w-0 truncate text-foreground hover:text-primary hover:underline"
-              >
-                {item.page_url}
-              </a>
-            </div>
             {item.target_text ? (
               <p className="line-clamp-2 text-xs text-muted-foreground">
                 {item.target_text}
@@ -369,30 +353,33 @@ export function FeedbackDetail({
               />
             </Button>
           )}
-        </div>
+        </section>
 
-        <FeedbackResourcesSection
-          item={item}
-          onResourcesChanged={onRefresh}
-        />
-
-        {/* Comments */}
-        <div>
+        <section className="space-y-3">
           <CommentsSection
             feedbackItemId={item.id}
             commentInputRef={commentInputRef}
           />
-        </div>
+        </section>
 
-        {/* GitHub Activity — visible when there's an issue, not hidden in accordion */}
+        <CollapsibleDetailSection key={`${item.id}-routing`} label="Routing">
+          <ToolContextSection item={item} />
+        </CollapsibleDetailSection>
+
+        <CollapsibleDetailSection key={`${item.id}-resources`} label="Resources">
+          <FeedbackResourcesSection
+            item={item}
+            onResourcesChanged={onRefresh}
+          />
+        </CollapsibleDetailSection>
+
         {item.github_issue_number && (
-          <section className="space-y-3">
-            <SectionRuleHeading
-              label={`GitHub Activity #${item.github_issue_number}`}
-              className="mb-0 pb-0"
-            />
+          <CollapsibleDetailSection
+            key={`${item.id}-github`}
+            label={`GitHub Activity #${item.github_issue_number}`}
+          >
             <GitHubActivitySection issueNumber={item.github_issue_number} />
-          </section>
+          </CollapsibleDetailSection>
         )}
 
         {/* Debug — tool context, page context, metadata, dangerous actions */}

@@ -9,6 +9,7 @@ import {
   useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import {
@@ -64,10 +65,6 @@ const VeltFeedbackComments = dynamic(
   () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltFeedbackComments),
   { ssr: false },
 );
-const VeltCommentToolbar = dynamic(
-  () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltCommentToolbar),
-  { ssr: false },
-);
 import {
   FEEDBACK_STATUS_TABS,
   FEEDBACK_INBOX_TABS,
@@ -103,6 +100,7 @@ type FeedbackSortValue =
   | "newest"
   | "oldest"
   | "priority"
+  | "tool"
   | "source"
   | "status";
 type FeedbackDateFilter = "all" | "today" | "7d" | "30d" | "older";
@@ -116,6 +114,7 @@ const FEEDBACK_SORT_OPTIONS: {
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
   { value: "priority", label: "Priority first" },
+  { value: "tool", label: "Tool A-Z" },
   { value: "source", label: "Source A-Z" },
   { value: "status", label: "Status" },
 ];
@@ -147,6 +146,20 @@ const FEEDBACK_BOARD_COLUMNS: BoardColumnDefinition[] = STATUS_OPTIONS
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function formatFeedbackResultSummary({
+  visibleCount,
+  currentFilterLabel,
+  currentTabLabel,
+}: {
+  visibleCount: number;
+  currentFilterLabel: string;
+  currentTabLabel: string;
+}) {
+  const scope = `${currentFilterLabel} ${currentTabLabel}`.trim().toLowerCase();
+  const noun = visibleCount === 1 ? "item" : "items";
+  return `${visibleCount} ${noun} in ${scope}`;
 }
 
 function loadFeedbackLayout() {
@@ -226,6 +239,10 @@ function sortRank(item: FeedbackItem): number {
 
 function itemToolLabel(item: FeedbackItem): string {
   return toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
+}
+
+function itemSourceLabel(item: FeedbackItem): string {
+  return item.page_title ?? item.page_path;
 }
 
 function feedbackBoardColumnId(item: FeedbackItem): DisplayStatus {
@@ -376,6 +393,7 @@ export default function FeedbackInboxPage() {
           const fields = [
             item.title,
             item.comment,
+            itemToolLabel(item),
             item.page_title ?? "",
             item.page_path,
             item.page_url,
@@ -397,9 +415,14 @@ export default function FeedbackInboxPage() {
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
+      if (sortBy === "tool") {
+        const toolDiff = itemToolLabel(a).localeCompare(itemToolLabel(b));
+        if (toolDiff !== 0) return toolDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
       if (sortBy === "source") {
-        const sourceA = (a.page_title || a.page_path || "").toLowerCase();
-        const sourceB = (b.page_title || b.page_path || "").toLowerCase();
+        const sourceA = itemSourceLabel(a).toLowerCase();
+        const sourceB = itemSourceLabel(b).toLowerCase();
         return sourceA.localeCompare(sourceB);
       }
       if (sortBy === "status") {
@@ -1179,6 +1202,11 @@ function FeedbackListPane({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   const splitPage = useSplitPage();
+  const resultSummary = formatFeedbackResultSummary({
+    visibleCount: items.length,
+    currentFilterLabel,
+    currentTabLabel,
+  });
 
   function handleSelect(id: string) {
     onSelect(id);
@@ -1208,14 +1236,33 @@ function FeedbackListPane({
       className="relative flex h-full min-h-0 w-full flex-col border-r border-border/70 bg-muted/30 lg:w-[var(--feedback-left-width)]"
       style={{ "--feedback-left-width": `${leftWidth}px` } as CSSProperties}
     >
-      <div className="bg-background/90 px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
-              Feedback
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
+      <div className="border-b border-border/70 bg-background px-4 py-4">
+        <FeedbackWorkspaceHeader
+          resultSummary={resultSummary}
+          activeFilterCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          viewMode={viewMode}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSearchChange={onSearchChange}
+          onSortChange={onSortChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+          onViewModeChange={onViewModeChange}
+          trailingActions={
             <Button
               type="button"
               variant="ghost"
@@ -1226,65 +1273,36 @@ function FeedbackListPane({
             >
               <PanelLeftClose className="h-4 w-4" />
             </Button>
-            <FeedbackViewMenu
-              value={viewMode}
-              onValueChange={onViewModeChange}
-            />
-            <FeedbackFilterPopover
-              activeCount={activeFilterCount}
-              activeTab={activeTab}
-              categoryFilter={categoryFilter}
-              categoryOptions={categoryOptions}
-              dateFilter={dateFilter}
-              featureRequestCount={featureRequestCount}
-              issueCount={issueCount}
-              submitterFilter={submitterFilter}
-              submitterOptions={submitterOptions}
-              toolFilter={toolFilter}
-              toolOptions={toolOptions}
-              totalCount={totalCount}
-              onCategoryFilterChange={onCategoryFilterChange}
-              onDateFilterChange={onDateFilterChange}
-              onInboxTabChange={onInboxTabChange}
-              onSubmitterFilterChange={onSubmitterFilterChange}
-              onToolFilterChange={onToolFilterChange}
-            />
-            <ExpandableSearch
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder="Search feedback"
-              ariaLabel="Search feedback"
-            />
-            <FeedbackSortPopover
-              sortBy={sortBy}
-              onSortChange={onSortChange}
-            />
-            <VeltCommentToolbar />
-          </div>
+          }
+        />
+        <div className="mt-4">
+          <FeedbackStatusTabs
+            value={filter}
+            onValueChange={onFilterChange}
+            allVisibleSelected={allVisibleSelected}
+            selectedCount={selectedIds.length}
+            onToggleSelectAllVisible={onToggleSelectAllVisible}
+          />
         </div>
-        <FeedbackStatusTabs
-          value={filter}
-          onValueChange={onFilterChange}
-        />
-        <BulkEditBar
-          allTools={allTools}
-          allVisibleSelected={allVisibleSelected}
-          bulkCategory={bulkCategory}
-          bulkPriority={bulkPriority}
-          bulkStatus={bulkStatus}
-          bulkToolId={bulkToolId}
-          bulkUpdating={bulkUpdating}
-          selectedCount={selectedIds.length}
-          onApplyBulkCategory={onApplyBulkCategory}
-          onApplyBulkPriority={onApplyBulkPriority}
-          onApplyBulkStatus={onApplyBulkStatus}
-          onApplyBulkTool={onApplyBulkTool}
-          onBulkCategoryChange={onBulkCategoryChange}
-          onBulkPriorityChange={onBulkPriorityChange}
-          onBulkStatusChange={onBulkStatusChange}
-          onBulkToolChange={onBulkToolChange}
-          onToggleSelectAllVisible={onToggleSelectAllVisible}
-        />
+        {selectedIds.length > 0 && (
+          <BulkEditBar
+            allTools={allTools}
+            bulkCategory={bulkCategory}
+            bulkPriority={bulkPriority}
+            bulkStatus={bulkStatus}
+            bulkToolId={bulkToolId}
+            bulkUpdating={bulkUpdating}
+            selectedCount={selectedIds.length}
+            onApplyBulkCategory={onApplyBulkCategory}
+            onApplyBulkPriority={onApplyBulkPriority}
+            onApplyBulkStatus={onApplyBulkStatus}
+            onApplyBulkTool={onApplyBulkTool}
+            onBulkCategoryChange={onBulkCategoryChange}
+            onBulkPriorityChange={onBulkPriorityChange}
+            onBulkStatusChange={onBulkStatusChange}
+            onBulkToolChange={onBulkToolChange}
+          />
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1379,56 +1397,47 @@ function FeedbackBoardPane({
   onToolFilterChange: (value: string) => void;
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
+  const resultSummary = formatFeedbackResultSummary({
+    visibleCount: items.length,
+    currentFilterLabel,
+    currentTabLabel,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="shrink-0 bg-background/90 px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
-              Feedback
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <FeedbackViewMenu
-              value={viewMode}
-              onValueChange={onViewModeChange}
-            />
-            <FeedbackFilterPopover
-              activeCount={activeFilterCount}
-              activeTab={activeTab}
-              categoryFilter={categoryFilter}
-              categoryOptions={categoryOptions}
-              dateFilter={dateFilter}
-              featureRequestCount={featureRequestCount}
-              issueCount={issueCount}
-              submitterFilter={submitterFilter}
-              submitterOptions={submitterOptions}
-              toolFilter={toolFilter}
-              toolOptions={toolOptions}
-              totalCount={totalCount}
-              onCategoryFilterChange={onCategoryFilterChange}
-              onDateFilterChange={onDateFilterChange}
-              onInboxTabChange={onInboxTabChange}
-              onSubmitterFilterChange={onSubmitterFilterChange}
-              onToolFilterChange={onToolFilterChange}
-            />
-            <ExpandableSearch
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder="Search feedback"
-              ariaLabel="Search feedback"
-            />
-            <FeedbackSortPopover
-              sortBy={sortBy}
-              onSortChange={onSortChange}
-            />
-            <VeltCommentToolbar />
-          </div>
-        </div>
-        <FeedbackStatusTabs
-          value={filter}
-          onValueChange={onFilterChange}
+      <div className="shrink-0 border-b border-border/70 bg-background px-4 py-4">
+        <FeedbackWorkspaceHeader
+          resultSummary={resultSummary}
+          activeFilterCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          viewMode={viewMode}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSearchChange={onSearchChange}
+          onSortChange={onSortChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+          onViewModeChange={onViewModeChange}
         />
+        <div className="mt-4">
+          <FeedbackStatusTabs
+            value={filter}
+            onValueChange={onFilterChange}
+          />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -1469,7 +1478,6 @@ function FeedbackBoardPane({
 
 function BulkEditBar({
   allTools,
-  allVisibleSelected,
   bulkCategory,
   bulkPriority,
   bulkStatus,
@@ -1484,10 +1492,8 @@ function BulkEditBar({
   onBulkPriorityChange,
   onBulkStatusChange,
   onBulkToolChange,
-  onToggleSelectAllVisible,
 }: {
   allTools: ToolOption[];
-  allVisibleSelected: boolean;
   bulkCategory: string;
   bulkPriority: FeedbackSeverity | "none";
   bulkStatus: DisplayStatus | "none";
@@ -1502,139 +1508,240 @@ function BulkEditBar({
   onBulkPriorityChange: (value: FeedbackSeverity | "none") => void;
   onBulkStatusChange: (value: DisplayStatus | "none") => void;
   onBulkToolChange: (value: string) => void;
-  onToggleSelectAllVisible: (checked: boolean) => void;
 }) {
   return (
-    <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Checkbox
-          checked={allVisibleSelected}
-          onCheckedChange={(checked) => onToggleSelectAllVisible(checked === true)}
-          aria-label="Select all visible feedback rows"
-        />
-        <span>
-          {selectedCount > 0
-            ? `${selectedCount} selected`
-            : "Select rows to bulk edit"}
-        </span>
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-foreground">
+          {selectedCount} selected
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Apply one change across the current selection.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select
+            value={bulkStatus}
+            onValueChange={(value) =>
+              onBulkStatusChange(value as DisplayStatus | "none")
+            }
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk status</SelectItem>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkStatus === "none"}
+            onClick={onApplyBulkStatus}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select
+            value={bulkPriority}
+            onValueChange={(value) =>
+              onBulkPriorityChange(value as FeedbackSeverity | "none")
+            }
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk priority</SelectItem>
+              {FEEDBACK_PRIORITY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkPriority === "none"}
+            onClick={onApplyBulkPriority}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select value={bulkToolId} onValueChange={onBulkToolChange}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk tool" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk tool</SelectItem>
+              <SelectItem value="unassigned">Clear tool</SelectItem>
+              {allTools.map((tool) => (
+                <SelectItem key={tool.id} value={String(tool.id)}>
+                  {tool.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkToolId === "none"}
+            onClick={onApplyBulkTool}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-56 flex-[1.2] items-center gap-2">
+          <Input
+            value={bulkCategory}
+            onChange={(event) => onBulkCategoryChange(event.target.value)}
+            placeholder="Bulk category"
+            className="h-8 text-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkCategory.trim().length === 0}
+            onClick={() => onApplyBulkCategory(false)}
+          >
+            Apply
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={bulkUpdating}
+            onClick={() => onApplyBulkCategory(true)}
+          >
+            Clear
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackWorkspaceHeader({
+  resultSummary,
+  activeFilterCount,
+  activeTab,
+  categoryFilter,
+  categoryOptions,
+  dateFilter,
+  featureRequestCount,
+  issueCount,
+  searchValue,
+  sortBy,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
+  totalCount,
+  viewMode,
+  trailingActions,
+  onCategoryFilterChange,
+  onDateFilterChange,
+  onInboxTabChange,
+  onSearchChange,
+  onSortChange,
+  onSubmitterFilterChange,
+  onToolFilterChange,
+  onViewModeChange,
+}: {
+  resultSummary: string;
+  activeFilterCount: number;
+  activeTab: FeedbackInboxTab;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
+  dateFilter: FeedbackDateFilter;
+  featureRequestCount: number;
+  issueCount: number;
+  searchValue: string;
+  sortBy: FeedbackSortValue;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
+  totalCount: number;
+  viewMode: FeedbackViewMode;
+  trailingActions?: ReactNode;
+  onCategoryFilterChange: (value: string) => void;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onInboxTabChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  onSortChange: (value: FeedbackSortValue) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToolFilterChange: (value: string) => void;
+  onViewModeChange: (value: FeedbackViewMode) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
+            Feedback
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{resultSummary}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {trailingActions}
+          <FeedbackViewMenu
+            value={viewMode}
+            onValueChange={onViewModeChange}
+          />
+        </div>
       </div>
 
-      {selectedCount > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          <div className="flex min-w-56 flex-1 items-center gap-2">
-            <Select
-              value={bulkStatus}
-              onValueChange={(value) =>
-                onBulkStatusChange(value as DisplayStatus | "none")
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Bulk status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Bulk status</SelectItem>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={bulkUpdating || bulkStatus === "none"}
-              onClick={onApplyBulkStatus}
-            >
-              Apply
-            </Button>
-          </div>
-
-          <div className="flex min-w-56 flex-1 items-center gap-2">
-            <Select
-              value={bulkPriority}
-              onValueChange={(value) =>
-                onBulkPriorityChange(value as FeedbackSeverity | "none")
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Bulk priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Bulk priority</SelectItem>
-                {FEEDBACK_PRIORITY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={bulkUpdating || bulkPriority === "none"}
-              onClick={onApplyBulkPriority}
-            >
-              Apply
-            </Button>
-          </div>
-
-          <div className="flex min-w-56 flex-1 items-center gap-2">
-            <Select value={bulkToolId} onValueChange={onBulkToolChange}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Bulk tool" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Bulk tool</SelectItem>
-                <SelectItem value="unassigned">Clear tool</SelectItem>
-                {allTools.map((tool) => (
-                  <SelectItem key={tool.id} value={String(tool.id)}>
-                    {tool.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={bulkUpdating || bulkToolId === "none"}
-              onClick={onApplyBulkTool}
-            >
-              Apply
-            </Button>
-          </div>
-
-          <div className="flex min-w-64 flex-[1.2] items-center gap-2">
-            <Input
-              value={bulkCategory}
-              onChange={(event) => onBulkCategoryChange(event.target.value)}
-              placeholder="Bulk category"
-              className="h-8 text-xs"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={bulkUpdating || bulkCategory.trim().length === 0}
-              onClick={() => onApplyBulkCategory(false)}
-            >
-              Apply
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={bulkUpdating}
-              onClick={() => onApplyBulkCategory(true)}
-            >
-              Clear
-            </Button>
-          </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-[14rem] flex-1">
+          <ExpandableSearch
+            value={searchValue}
+            onChange={onSearchChange}
+            placeholder="Search feedback"
+            ariaLabel="Search feedback"
+            defaultExpanded
+          />
         </div>
-      ) : null}
+        <FeedbackFilterPopover
+          activeCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+        />
+        <FeedbackSortPopover
+          sortBy={sortBy}
+          onSortChange={onSortChange}
+        />
+      </div>
     </div>
   );
 }
@@ -1659,6 +1766,7 @@ function FeedbackBoardCard({
   });
   const sourceLabel = toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
   const showCommentPreview = !isCommentRedundantWithTitle(title, item.comment);
+  const secondaryLabel = item.page_title ?? item.page_path;
 
   return (
     <Button
@@ -1690,29 +1798,30 @@ function FeedbackBoardCard({
           aria-label={meta.label}
           title={meta.label}
         />
-        <span className="min-w-0 shrink truncate">{submitterLabel(item)}</span>
+        <span className="shrink-0">{meta.label}</span>
+        {item.severity === "high" ? (
+          <>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            <span className="shrink-0 font-medium text-status-error">High</span>
+          </>
+        ) : null}
         <span aria-hidden className="text-border">
           /
         </span>
-        {item.severity === "high" ? (
+        <span className="min-w-0 truncate">{secondaryLabel}</span>
+      </span>
+      <span className="mt-1 flex w-full min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+        <span className="min-w-0 truncate">{submitterLabel(item)}</span>
+        {sourceLabel && sourceLabel !== secondaryLabel ? (
           <>
-            <span className="shrink-0 font-medium text-status-error">
-              High priority
-            </span>
             <span aria-hidden className="text-border">
               /
             </span>
+            <span className="min-w-0 truncate">{sourceLabel}</span>
           </>
         ) : null}
-        {item.category ? (
-          <>
-            <span className="min-w-0 truncate">{item.category}</span>
-            <span aria-hidden className="text-border">
-              /
-            </span>
-          </>
-        ) : null}
-        <span className="min-w-0 truncate">{sourceLabel}</span>
       </span>
     </Button>
   );
@@ -2033,29 +2142,54 @@ function FeedbackScopePanel({
 function FeedbackStatusTabs({
   value,
   onValueChange,
+  allVisibleSelected,
+  selectedCount,
+  onToggleSelectAllVisible,
 }: {
   value: StatusFilter;
   onValueChange: (value: string) => void;
+  allVisibleSelected?: boolean;
+  selectedCount?: number;
+  onToggleSelectAllVisible?: (checked: boolean) => void;
 }) {
+  const showSelectionControl = typeof onToggleSelectAllVisible === "function";
+
   return (
-    <div className="mt-2 flex items-center gap-4 border-b border-border/70">
-      {FEEDBACK_STATUS_TABS.map((tab) => (
-        <Button
-          key={tab.value}
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onValueChange(tab.value)}
-          className={cn(
-            "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
-            value === tab.value
-              ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
-              : "text-muted-foreground hover:bg-transparent hover:text-foreground",
-          )}
-        >
-          <span className="truncate">{tab.label}</span>
-        </Button>
-      ))}
+    <div className="mt-2 flex items-center justify-between gap-4 border-b border-border/70">
+      <div className="flex items-center gap-4">
+        {FEEDBACK_STATUS_TABS.map((tab) => (
+          <Button
+            key={tab.value}
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onValueChange(tab.value)}
+            className={cn(
+              "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
+              value === tab.value
+                ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
+                : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+            )}
+          >
+            <span className="truncate">{tab.label}</span>
+          </Button>
+        ))}
+      </div>
+
+      {showSelectionControl ? (
+        <label className="mb-1 flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+          <Checkbox
+            checked={allVisibleSelected}
+            onCheckedChange={(checked) =>
+              onToggleSelectAllVisible(checked === true)
+            }
+            aria-label="Select all visible feedback rows"
+          />
+          {selectedCount && selectedCount > 0 ? (
+            <span className="whitespace-nowrap">{selectedCount} selected</span>
+          ) : null}
+        </label>
+      ) : null}
     </div>
   );
 }

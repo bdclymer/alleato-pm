@@ -50,8 +50,10 @@ function FeedbackQueueItem({
   });
   const toolLabel = toolLabelFromPath(item.page_path);
   const showCommentPreview = !isCommentRedundantWithTitle(itemDisplayTitle, item.comment);
-  const sourceLabel = toolLabel ?? item.page_title ?? item.page_path;
+  const sourceLabel = item.page_title ?? item.page_path;
   const bulkSelected = selectedIds.includes(item.id);
+  const primarySource = toolLabel ?? sourceLabel;
+  const secondarySource = toolLabel && sourceLabel && toolLabel !== sourceLabel ? sourceLabel : null;
 
   return (
     <ListItemContextMenu
@@ -108,33 +110,45 @@ function FeedbackQueueItem({
               aria-label={meta.label}
               title={meta.label}
             />
+            <span className="shrink-0">{meta.label}</span>
+            {item.severity === "high" && (
+              <>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="shrink-0 font-medium text-status-error">
+                  High
+                </span>
+              </>
+            )}
+            <span aria-hidden className="text-border">
+              /
+            </span>
             <span className="min-w-0 shrink truncate">
               {submitterLabel(item)}
             </span>
             <span aria-hidden className="text-border">
               /
             </span>
-            {item.severity === "high" && (
-              <>
-                <span className="shrink-0 font-medium text-status-error">
-                  High priority
-                </span>
+            {primarySource ? (
+              <span className="min-w-0 shrink truncate font-medium text-foreground">
+                {primarySource}
+              </span>
+            ) : null}
+            {secondarySource ? (
+              <span className="inline-flex min-w-0 items-center truncate">
                 <span aria-hidden className="text-border">
                   /
                 </span>
-              </>
-            )}
-            {sourceLabel && (
-              <span className="inline-flex min-w-0 items-center truncate">
-                <span className="truncate">{sourceLabel}</span>
+                <span className="truncate">{secondarySource}</span>
               </span>
-            )}
+            ) : null}
             {item.category ? (
               <>
                 <span aria-hidden className="text-border">
                   /
                 </span>
-                <span className="shrink-0 truncate">{item.category}</span>
+                <span className="min-w-0 shrink truncate">{item.category}</span>
               </>
             ) : null}
             {item.github_issue_number && item.github_issue_url && (
@@ -142,16 +156,16 @@ function FeedbackQueueItem({
                 <span aria-hidden className="text-border">
                   /
                 </span>
-              <a
-                href={item.github_issue_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 text-primary hover:underline"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <Github className="h-3 w-3" />
-                #{item.github_issue_number}
-              </a>
+                <a
+                  href={item.github_issue_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Github className="h-3 w-3" />
+                  #{item.github_issue_number}
+                </a>
               </>
             )}
           </span>
