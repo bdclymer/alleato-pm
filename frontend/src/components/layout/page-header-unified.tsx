@@ -113,6 +113,7 @@ export function PageHeader({
   const projectContext = useOptionalProject();
   const selectedProject = projectContext?.selectedProject ?? null;
   const isLoading = projectContext?.isLoading ?? false;
+  const useBudgetLayout = variant === "budget";
 
   // Only show project name when explicitly requested
   const shouldShowProjectName = showProjectName && selectedProject;
@@ -187,7 +188,9 @@ export function PageHeader({
             "min-w-0 pt-4 pb-1",
             mobileActionsInline
               ? "flex items-center justify-between gap-3"
-              : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
+              : useBudgetLayout
+                ? "flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4"
+                : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
           )}
         >
           {/* Left: title + badges (desktop only) */}
@@ -233,7 +236,12 @@ export function PageHeader({
 
             {/* Status badges — desktop: below title */}
             {statusBadge && (
-              <div className="hidden sm:flex flex-wrap items-center gap-2 mt-2">
+              <div
+                className={cn(
+                  "mt-2 flex-wrap items-center gap-2",
+                  useBudgetLayout ? "hidden lg:flex" : "hidden sm:flex",
+                )}
+              >
                 {statusBadge}
               </div>
             )}
@@ -246,14 +254,20 @@ export function PageHeader({
                 "shrink-0",
                 mobileActionsInline
                   ? "flex items-center justify-end"
-                  : "flex w-full flex-col gap-2 sm:w-auto sm:items-end",
+                  : useBudgetLayout
+                    ? "flex w-full flex-col gap-2 lg:w-auto lg:items-end"
+                    : "flex w-full flex-col gap-2 sm:w-auto sm:items-end",
               )}
             >
               {(actions || showExportButton) && (
                 <div
                   className={cn(
                     "flex items-center gap-2 max-sm:[&_button]:min-h-11",
-                    mobileActionsInline ? "justify-end" : "w-full flex-wrap sm:w-auto",
+                    mobileActionsInline
+                      ? "justify-end"
+                      : useBudgetLayout
+                        ? "w-full flex-wrap lg:w-auto"
+                        : "w-full flex-wrap sm:w-auto",
                   )}
                 >
                   {showExportButton && (onExportCSV || onExportPDF) && (
@@ -283,7 +297,12 @@ export function PageHeader({
               )}
               {/* Status badges — mobile: below actions */}
               {statusBadge && (
-                <div className="flex sm:hidden flex-wrap items-center gap-2">
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center gap-2",
+                    useBudgetLayout ? "lg:hidden" : "sm:hidden",
+                  )}
+                >
                   {statusBadge}
                 </div>
               )}

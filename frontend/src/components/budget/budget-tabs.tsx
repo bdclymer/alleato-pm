@@ -38,7 +38,7 @@ export function BudgetTabs({
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <nav
-        className="-mb-px flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-border"
+        className="-mb-px flex flex-col gap-2 border-b border-border xl:flex-row xl:items-end xl:justify-between xl:gap-4"
         aria-label="Budget Tabs"
       >
         <div className="min-w-0 max-w-full overflow-x-auto scrollbar-hide">
@@ -66,7 +66,7 @@ export function BudgetTabs({
           </div>
         </div>
         {controls ? (
-          <div className="ml-auto flex shrink-0 items-center gap-1 pb-2">
+          <div className="flex min-w-0 items-center justify-end gap-1 pb-2 xl:ml-auto xl:shrink-0">
             {controls}
           </div>
         ) : null}

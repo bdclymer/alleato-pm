@@ -459,6 +459,7 @@ export function BudgetPageHeader({
     <>
       <PageHeader
         title={title}
+        variant="budget"
         titleContent={titleContent}
         actions={actionButtons}
       />
@@ -471,30 +472,26 @@ export function BudgetPageHeader({
               <Lock className="w-5 h-5" />
               Lock Budget
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>Are you sure you want to lock the budget for this project?</p>
-              <div className="bg-muted border rounded-md p-4 mt-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium">What happens when you lock:</p>
-                    <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li>
-                        Budget line items cannot be added, edited, or deleted
-                      </li>
-                      <li>Original budget amounts become read-only</li>
-                      <li>
-                        Changes can only be made through approved change orders
-                      </li>
-                      <li>
-                        Budget changes must be made through budget modifications
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <AlertDialogDescription>
+              Are you sure you want to lock the budget for this project?
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="rounded-md border bg-muted p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-5 w-5" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground">
+                  What happens when you lock:
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                  <li>Budget line items cannot be added, edited, or deleted</li>
+                  <li>Original budget amounts become read-only</li>
+                  <li>Changes can only be made through approved change orders</li>
+                  <li>Budget changes must be made through budget modifications</li>
+                </ul>
+              </div>
+            </div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleLockConfirm}>
