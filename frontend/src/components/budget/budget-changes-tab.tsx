@@ -32,6 +32,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import {
+  type BudgetChangeStatus,
+} from "@/lib/budget/budget-change-access";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -44,7 +47,6 @@ import {
   getBulkActionSelectionCounts,
   type BudgetChangeAction,
   type BudgetChangeRecord,
-  type BudgetChangeStatus,
 } from "./budget-changes-utils";
 
 type BudgetChangesFilterState = {
@@ -137,14 +139,41 @@ function renderBudgetChangeStatusBadge(status: BudgetChangeStatus, className?: s
 function BudgetChangeDetailContent({
   change,
   actionLoading,
-  onAction,
+  onStatusChange,
 }: {
   change: BudgetChangeRecord;
   actionLoading: boolean;
-  onAction: (action: BudgetChangeAction) => void;
+  onStatusChange: (status: BudgetChangeStatus) => void;
 }): React.ReactElement {
   const { from, to } = getBudgetChangeEndpoints(change.lines);
   const transferAmount = getBudgetChangeTransferAmount(change);
+  const nextStatuses = (change.editableStatuses ?? []).filter(
+    (status) => status !== change.status,
+  );
+  const detailActions = nextStatuses.map((status) => ({
+    status,
+    variant:
+      status === "approved"
+        ? ("default" as const)
+        : status === "void"
+          ? ("destructive" as const)
+          : ("outline" as const),
+    label:
+      status === "pending"
+        ? change.status === "draft"
+          ? "Submit for approval"
+          : "Mark pending"
+        : status === "approved"
+          ? "Approve change"
+          : status === "draft"
+            ? "Return to draft"
+            : "Void change",
+    icon:
+      status === "pending" ? <Send className="h-4 w-4" />
+      : status === "approved" ? <Check className="h-4 w-4" />
+      : status === "draft" ? <X className="h-4 w-4" />
+      : <Ban className="h-4 w-4" />,
+  }));
 
   return (
     <div className="space-y-6 py-5">
@@ -248,66 +277,32 @@ function BudgetChangeDetailContent({
       </section>
 
       <div className="flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
-        {change.status === "draft" ? (
+        {detailActions.length === 0 ? (
           <Button
             type="button"
-            onClick={() => onAction("submit")}
-            disabled={actionLoading}
+            variant="outline"
+            disabled
           >
-            {actionLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            Submit for approval
+            No actions available
           </Button>
-        ) : null}
-
-        {change.status === "pending" ? (
-          <>
+        ) : (
+          detailActions.map((action) => (
             <Button
+              key={action.status}
               type="button"
-              variant="outline"
-              onClick={() => onAction("reject")}
+              variant={action.variant}
+              onClick={() => onStatusChange(action.status)}
               disabled={actionLoading}
             >
               {actionLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <X className="h-4 w-4" />
+                action.icon
               )}
-              Return to draft
+              {action.label}
             </Button>
-            <Button
-              type="button"
-              onClick={() => onAction("approve")}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              Approve change
-            </Button>
-          </>
-        ) : null}
-
-        {change.status === "approved" ? (
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => onAction("void")}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Ban className="h-4 w-4" />
-            )}
-            Void change
-          </Button>
-        ) : null}
+          ))
+        )}
       </div>
     </div>
   );
@@ -491,18 +486,52 @@ export function BudgetChangesTab({
     [projectId, refreshAfterAction],
   );
 
+  const runStatusChange = React.useCallback(
+    async (
+      modificationId: string,
+      status: BudgetChangeStatus,
+      options?: { successMessage?: string },
+    ) => {
+      setRowActionLoadingId(modificationId);
+      try {
+        const response = await apiFetch<{ message?: string; warning?: string }>(
+          `/api/projects/${projectId}/budget/modifications`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ modificationId, status }),
+          },
+        );
+
+        await fetchChanges();
+        if (status === "approved" || status === "void") {
+          onModificationChanged?.();
+        }
+
+        if (response.warning) {
+          toast.warning("Budget change updated with warning", {
+            description: response.warning,
+          });
+        } else if (options?.successMessage || response.message) {
+          toast.success(options?.successMessage ?? response.message);
+        }
+      } catch (error) {
+        toast.error("Failed to update budget change", {
+          description:
+            error instanceof Error ? error.message : "The status change did not save.",
+        });
+      } finally {
+        setRowActionLoadingId(null);
+      }
+    },
+    [fetchChanges, onModificationChanged, projectId],
+  );
+
   const runBulkAction = React.useCallback(
     async (action: BudgetChangeAction) => {
       const eligibleIds = changes
         .filter((change) => tableState.selectedIds.includes(change.id))
-        .filter((change) => {
-          if (action === "submit") return change.status === "draft";
-          if (action === "approve" || action === "reject") {
-            return change.status === "pending";
-          }
-          if (action === "void") return change.status === "approved";
-          return false;
-        })
+        .filter((change) => change.allowedActions?.includes(action))
         .map((change) => change.id);
 
       if (eligibleIds.length === 0) return;
@@ -628,17 +657,18 @@ export function BudgetChangesTab({
         showSortIcon: false,
         sortValue: (change) => change.status,
         render: (change) => {
-          const statusOptions = getBudgetChangeStatusOptions(change.status);
-          const inlineStatusDisabled =
-            change.status === "approved" || change.status === "void";
+          const statusOptions = getBudgetChangeStatusOptions(
+            change.status,
+            change.editableStatuses,
+          );
+          const inlineStatusDisabled = statusOptions.length <= 1;
 
           return (
             <Select
               value={change.status}
               onValueChange={(value) => {
-                const selected = statusOptions.find((option) => option.value === value);
-                if (!selected?.action) return;
-                void runAction(change.id, selected.action, {
+                if (value === change.status) return;
+                void runStatusChange(change.id, value as BudgetChangeStatus, {
                   successMessage: "Budget change status updated",
                 });
               }}
@@ -864,7 +894,9 @@ export function BudgetChangesTab({
                 <BudgetChangeDetailContent
                   change={selectedChange}
                   actionLoading={rowActionLoadingId === selectedChange.id}
-                  onAction={(action) => void runAction(selectedChange.id, action)}
+                  onStatusChange={(status) =>
+                    void runStatusChange(selectedChange.id, status)
+                  }
                 />
               ),
               storageKey: "budget-changes-detail",
