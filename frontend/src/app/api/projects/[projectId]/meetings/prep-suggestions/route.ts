@@ -31,6 +31,8 @@ const planningSuggestionSchema = z.object({
   title: z.string().min(1).max(160),
   description: z.string().min(1).max(320),
   href: z.string().min(1).max(240),
+  sourceLabel: z.string().min(1).max(120),
+  sourceContext: z.string().max(180).nullable().optional(),
   priority: prioritySchema.optional(),
 });
 
@@ -397,6 +399,8 @@ async function loadMeetingPrepContext(projectId: number): Promise<MeetingPrepCon
       description:
         "Use recent documents, RFIs, change events, schedule updates, and prior meeting notes to confirm what changed.",
       href: `/${projectId}/documents`,
+      sourceLabel: "Project documents",
+      sourceContext: "Recent documents, RFIs, changes, schedule updates, and prior meeting notes.",
       priority: "medium" as const,
     },
   ];
@@ -470,6 +474,8 @@ function buildTaskSuggestions(projectId: number, tasks: TaskRow[]): PlanningSugg
         .filter(Boolean)
         .join(" "),
       href: `/${projectId}/tasks`,
+      sourceLabel: "Project task",
+      sourceContext: null,
       priority: normalizePriority(task.priority),
     }));
 }
@@ -492,6 +498,8 @@ function buildRfiSuggestions(projectId: number, rfis: RfiRow[]): PlanningSuggest
         .filter(Boolean)
         .join(" "),
       href: `/${projectId}/rfis`,
+      sourceLabel: rfi.number ? `RFI ${rfi.number}` : "RFI",
+      sourceContext: null,
       priority: rfi.due_date || rfi.schedule_impact ? "high" : "medium",
     }));
 }
@@ -518,6 +526,10 @@ function buildSubmittalSuggestions(
         .filter(Boolean)
         .join(" "),
       href: `/${projectId}/submittals`,
+      sourceLabel: submittal.submittal_number
+        ? `Submittal ${submittal.submittal_number}`
+        : "Submittal",
+      sourceContext: null,
       priority: normalizePriority(submittal.priority),
     }));
 }
@@ -542,6 +554,8 @@ function buildChangeEventSuggestions(
         .filter(Boolean)
         .join(" "),
       href: `/${projectId}/change-events`,
+      sourceLabel: changeEvent.number ? `Change event ${changeEvent.number}` : "Change event",
+      sourceContext: null,
       priority: changeEvent.expecting_revenue ? "high" : "medium",
     }));
 }
@@ -566,6 +580,8 @@ function buildScheduleSuggestions(
         .filter(Boolean)
         .join(" "),
       href: `/${projectId}/schedule`,
+      sourceLabel: task.is_milestone ? "Schedule milestone" : "Schedule",
+      sourceContext: null,
       priority: task.is_milestone || task.constraint_date ? "high" : "medium",
     }));
 }
@@ -589,6 +605,8 @@ function buildPriorMeetingSuggestions(
         title: `Carry forward open items from ${meetingTitle}`,
         description,
         href: `/${projectId}/meetings`,
+        sourceLabel: "Prior meeting",
+        sourceContext: meetingTitle,
         priority: "medium" as const,
       },
     ];
@@ -622,6 +640,8 @@ function buildSegmentCarryForwardSuggestions(
               ? details.join(" ")
               : truncateText(segment.summary, 220) ?? `Review carry-forward context from ${meetingTitle}.`,
           href: sourceDocumentHref(projectId, segment.metadata_id),
+          sourceLabel: `Transcript topic ${segment.segment_index + 1}`,
+          sourceContext: meetingTitle,
           priority: risks.length > 0 ? ("high" as const) : ("medium" as const),
         },
       ];
@@ -647,6 +667,8 @@ function buildIntelligenceEventSuggestions(
       href: event.source_document_id
         ? sourceDocumentHref(projectId, event.source_document_id)
         : `/${projectId}/intelligence`,
+      sourceLabel: "Project intelligence",
+      sourceContext: `${humanizeSourceLabel(event.event_type)} · ${formatSourceDate(event.event_at)}`,
       priority: normalizePriority(event.priority),
     }));
 }
@@ -733,6 +755,24 @@ function isNonNullable<T>(value: T | null | undefined): value is T {
 
 function sourceDocumentHref(projectId: number, sourceDocumentId: string) {
   return `/${projectId}/intelligence/sources/${encodeURIComponent(sourceDocumentId)}`;
+}
+
+function humanizeSourceLabel(value: string) {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatSourceDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
 function jsonToStrings(value: unknown, maxItems: number): string[] {
@@ -840,6 +880,8 @@ function normalizeAiSuggestions(
       title: suggestion.title.trim(),
       description: suggestion.description.trim(),
       href: source.href,
+      sourceLabel: source.sourceLabel,
+      sourceContext: source.sourceContext,
       priority: suggestion.priority,
     });
   }

@@ -18,6 +18,8 @@ export interface MeetingPlanningSuggestion {
   title: string;
   description: string;
   href: string;
+  sourceLabel: string;
+  sourceContext?: string | null;
   priority?: "low" | "medium" | "high";
 }
 

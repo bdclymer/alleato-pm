@@ -514,7 +514,7 @@ async function seedAcceptedSuggestions(
         body: JSON.stringify({
           category_id: categoryId,
           title: suggestion.title,
-          description: `${suggestion.description}\n\nSource: ${suggestion.href}`,
+          description: buildSeededSuggestionDescription(suggestion),
           priority: suggestion.priority ?? "medium",
           status: "open",
         }),
@@ -547,10 +547,13 @@ function PlanningSuggestionRow({
             href={suggestion.href}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
-            Open source
+            {suggestion.sourceLabel}
             <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
+        {suggestion.sourceContext ? (
+          <p className="text-xs text-muted-foreground/80">{suggestion.sourceContext}</p>
+        ) : null}
         <p className="text-xs leading-relaxed text-muted-foreground">
           {suggestion.description}
         </p>
@@ -566,6 +569,17 @@ function PlanningSuggestionRow({
       </Button>
     </div>
   );
+}
+
+function buildSeededSuggestionDescription(suggestion: MeetingPlanningSuggestion) {
+  return [
+    suggestion.description,
+    "",
+    `Source: ${suggestion.sourceLabel} (${suggestion.href})`,
+    suggestion.sourceContext ? `Context: ${suggestion.sourceContext}` : null,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
 }
 
 function MeetingRecapRow({ recap }: { recap: MeetingPlanningRecap }) {
