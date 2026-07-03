@@ -116,7 +116,7 @@ export function SidebarStats({
 }
 
 /**
- * SidebarTabs - Tab navigation for sidebar using standard line tabs
+ * SidebarTabs - Tab navigation for sidebar using standard section tabs
  */
 export function SidebarTabs({
   tabs,
@@ -130,10 +130,7 @@ export function SidebarTabs({
   return (
     <div className="shrink-0 px-4 sm:px-8">
       <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList
-          variant="line"
-          className="w-full justify-start border-b border-border"
-        >
+        <TabsList className="w-full justify-start">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}

@@ -507,7 +507,6 @@ export {
   ProjectPageHeader,
   FormContainer,
   PageTabs,
-  PageTabsV2,
 } from "@/components/layout";
 export type { PageShellVariant } from "@/components/layout";
 

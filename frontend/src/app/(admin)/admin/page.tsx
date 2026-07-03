@@ -31,8 +31,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageShell, PageTabs } from "@/components/layout";
 
 import { AdminKanbanView } from "./admin-kanban-view";
 import { AdminDirectoryView } from "./admin-directory-view";
@@ -470,6 +469,13 @@ const sections: AdminMenuSection[] = [
             icon: LineChart,
           },
           {
+            label: "Direct Costs",
+            href: "/accounting/direct-costs",
+            route: "/accounting/direct-costs",
+            description: "Operating direct costs grouped from classified Acumatica AP bills.",
+            icon: Table2,
+          },
+          {
             label: "Invoices",
             href: "/accounting/invoices",
             route: "/accounting/invoices",
@@ -552,24 +558,40 @@ const totalPages = sections.reduce(
 );
 
 export default function AdminDashboardPage() {
+  const [activeTab, setActiveTab] = React.useState<"directory" | "kanban">(
+    "directory",
+  );
+
   return (
     <PageShell
       variant="dashboard"
       title="Admin Dashboard"
       description={`Directory of ${totalPages} internal pages across planning, AI, access, accounting, and the RAG pipeline.`}
     >
-      <Tabs defaultValue="directory" className="gap-6">
-        <TabsList variant="line">
-          <TabsTrigger value="directory">Directory</TabsTrigger>
-          <TabsTrigger value="kanban">Kanban</TabsTrigger>
-        </TabsList>
-        <TabsContent value="directory" className="m-0">
+      <div className="space-y-6">
+        <PageTabs
+          tabs={[
+            {
+              label: "Directory",
+              href: "directory",
+              isActive: activeTab === "directory",
+            },
+            {
+              label: "Kanban",
+              href: "kanban",
+              isActive: activeTab === "kanban",
+            },
+          ]}
+          variant="inline"
+          className="mb-0"
+          onTabClick={(href) => setActiveTab(href as "directory" | "kanban")}
+        />
+        {activeTab === "directory" ? (
           <AdminDirectoryView sections={sections} />
-        </TabsContent>
-        <TabsContent value="kanban" className="m-0">
+        ) : (
           <AdminKanbanView sections={sections} />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </PageShell>
   );
 }

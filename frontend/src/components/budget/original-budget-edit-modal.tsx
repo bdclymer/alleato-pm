@@ -22,8 +22,6 @@ import {
   SidebarFooter,
 } from "@/components/budget/modals/BaseSidebar";
 import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
   budgetRadioCardClass,
 } from "@/components/budget/modals/style-tokens";
 
@@ -260,17 +258,11 @@ export function OriginalBudgetEditModal({
         className="flex h-full flex-col gap-0"
       >
         <div className="px-4 sm:px-8 pt-1">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger
-              value="original"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="original">
               Original Budget
             </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+            <TabsTrigger value="history">
               History
             </TabsTrigger>
           </TabsList>

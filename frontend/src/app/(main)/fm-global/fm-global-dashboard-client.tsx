@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactElement } from "react";
+import { PageTabs } from "@/components/layout";
 import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
 import { GenericConfigUnifiedTable } from "@/components/tables/generic-config-unified-table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FmGlobalDashboardClientProps {
   tables: Record<string, unknown>[];
@@ -18,13 +19,28 @@ export function FmGlobalDashboardClient({
   tablesConfig,
   figuresConfig,
 }: FmGlobalDashboardClientProps): ReactElement {
+  const [activeTab, setActiveTab] = useState<"tables" | "figures">("tables");
+
   return (
-    <Tabs defaultValue="tables" className="w-full">
-      <TabsList variant="line">
-        <TabsTrigger value="tables">FM Global Tables</TabsTrigger>
-        <TabsTrigger value="figures">FM Global Figures</TabsTrigger>
-      </TabsList>
-      <TabsContent value="tables">
+    <div className="w-full space-y-6">
+      <PageTabs
+        tabs={[
+          {
+            label: "FM Global Tables",
+            href: "tables",
+            isActive: activeTab === "tables",
+          },
+          {
+            label: "FM Global Figures",
+            href: "figures",
+            isActive: activeTab === "figures",
+          },
+        ]}
+        variant="inline"
+        className="mb-0"
+        onTabClick={(href) => setActiveTab(href as "tables" | "figures")}
+      />
+      {activeTab === "tables" ? (
         <GenericConfigUnifiedTable
           data={tables}
           config={tablesConfig}
@@ -34,8 +50,8 @@ export function FmGlobalDashboardClient({
           emptyTitle="No FM Global tables found"
           emptyDescription="No FM Global table records have been imported yet."
         />
-      </TabsContent>
-      <TabsContent value="figures">
+      ) : null}
+      {activeTab === "figures" ? (
         <GenericConfigUnifiedTable
           data={figures}
           config={figuresConfig}
@@ -45,7 +61,7 @@ export function FmGlobalDashboardClient({
           emptyTitle="No FM Global figures found"
           emptyDescription="No FM Global figure records have been imported yet."
         />
-      </TabsContent>
-    </Tabs>
+      ) : null}
+    </div>
   );
 }

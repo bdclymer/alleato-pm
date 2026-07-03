@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
   PageContainer,
+  PageTabs,
   ProjectPageHeader,
 } from "@/components/layout";
 import {
@@ -27,7 +28,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -79,6 +79,10 @@ const KNOWLEDGE_CATEGORIES: { value: KnowledgeCategory; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 export default function CompanyKnowledgePage() {
+  const [activeTab, setActiveTab] = useState<"profile" | "articles" | "documents">(
+    "profile",
+  );
+
   return (
     <>
       <ProjectPageHeader
@@ -86,34 +90,36 @@ export default function CompanyKnowledgePage() {
         description="Manage company profile and knowledge articles for the AI assistant"
       />
       <PageContainer>
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList variant="line">
-            <TabsTrigger value="profile" className="gap-1.5">
-              <Building2 className="h-4 w-4" />
-              Company Profile
-            </TabsTrigger>
-            <TabsTrigger value="articles" className="gap-1.5">
-              <BookOpen className="h-4 w-4" />
-              Knowledge Articles
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1.5">
-              <FileText className="h-4 w-4" />
-              Documents
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <PageTabs
+            tabs={[
+              {
+                label: "Company Profile",
+                href: "profile",
+                isActive: activeTab === "profile",
+              },
+              {
+                label: "Knowledge Articles",
+                href: "articles",
+                isActive: activeTab === "articles",
+              },
+              {
+                label: "Documents",
+                href: "documents",
+                isActive: activeTab === "documents",
+              },
+            ]}
+            variant="inline"
+            className="mb-0"
+            onTabClick={(href) =>
+              setActiveTab(href as "profile" | "articles" | "documents")
+            }
+          />
 
-          <TabsContent value="profile">
-            <CompanyProfileTab />
-          </TabsContent>
-
-          <TabsContent value="articles">
-            <KnowledgeArticlesTab />
-          </TabsContent>
-
-          <TabsContent value="documents">
-            <DocumentsTab />
-          </TabsContent>
-        </Tabs>
+          {activeTab === "profile" ? <CompanyProfileTab /> : null}
+          {activeTab === "articles" ? <KnowledgeArticlesTab /> : null}
+          {activeTab === "documents" ? <DocumentsTab /> : null}
+        </div>
       </PageContainer>
     </>
   );

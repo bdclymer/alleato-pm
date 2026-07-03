@@ -21,7 +21,7 @@ import {
   BreadcrumbTrail,
   type BreadcrumbTrailItem,
 } from "@/components/ui/breadcrumb-trail";
-import { PageTabsV2 } from "@/components/layout/PageTabsV2";
+import { PageTabs } from "@/components/layout/PageTabs";
 
 interface BreadcrumbItem extends BreadcrumbTrailItem {
   label: string;
@@ -293,7 +293,7 @@ export function PageHeader({
 
         {/* Tabs — rendered below title/actions, flush with the header bottom */}
         {tabs && tabs.length > 0 && (
-          <PageTabsV2 tabs={tabs} />
+          <PageTabs tabs={tabs} variant="inline" className="mb-0" />
         )}
       </div>
     </div>

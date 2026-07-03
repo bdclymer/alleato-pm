@@ -23,8 +23,12 @@ interface PageTabsProps {
 }
 
 /**
- * PageTabs - Site-standard tab navigation with border-bottom style
- * Matches PageHeader alignment: px-4 sm:px-6 lg:px-8
+ * PageTabs owns page-level or top-of-tool navigation.
+ * Use this for the primary view switcher on a page or workspace, whether the
+ * tab changes the route or swaps top-level local state via `onTabClick`.
+ *
+ * Use `Tabs` from `@/components/ui/tabs` for section-level content tabs inside
+ * a page instead of styling section tabs into a page-navigation look.
  */
 export function PageTabs({
   tabs,
@@ -93,6 +97,18 @@ export function PageTabs({
                   aria-current={isActive ? "page" : undefined}
                 >
                   <span>{tab.label}</span>
+                  {tab.count !== undefined ? (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[11px] leading-none",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  ) : null}
                   <span
                     aria-hidden="true"
                     className={cn(

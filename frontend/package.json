@@ -30,6 +30,7 @@
     "map:components": "depcruise --output-type ddot --exclude 'node_modules|__tests__|\\.test\\.' src/components | dot -Tsvg > ../docs/archive/2026-06-22-docs-migration/codebase-map/graphs/components.svg",
     "audit:forms": "node --require tsx/cjs scripts/audit/audit-form-field-standards.ts",
     "audit:forms:components": "node scripts/audit/audit-form-components.mjs",
+    "audit:tabs": "node scripts/audit/audit-tab-primitive-usage.mjs",
     "audit:dead-code": "knip --config knip.json --no-exit-code",
     "audit:dead-code:json": "knip --config knip.json --reporter json --no-exit-code",
     "test": "playwright test --config=config/playwright/playwright.config.ts",

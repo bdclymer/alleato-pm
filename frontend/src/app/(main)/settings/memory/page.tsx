@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { EmptyState } from "@/components/ds";
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
@@ -546,18 +545,30 @@ export default function MemorySettingsPage() {
 
         <section className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value as MemoryTab)}
-            >
-              <TabsList variant="line">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="team">Team</TabsTrigger>
-                <TabsTrigger value="project">Project</TabsTrigger>
-                <TabsTrigger value="recent">Used recently</TabsTrigger>
-                <TabsTrigger value="review">Review queued</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <PageTabs
+              tabs={[
+                { label: "All", href: "all", isActive: activeTab === "all" },
+                { label: "Team", href: "team", isActive: activeTab === "team" },
+                {
+                  label: "Project",
+                  href: "project",
+                  isActive: activeTab === "project",
+                },
+                {
+                  label: "Used recently",
+                  href: "recent",
+                  isActive: activeTab === "recent",
+                },
+                {
+                  label: "Review queued",
+                  href: "review",
+                  isActive: activeTab === "review",
+                },
+              ]}
+              variant="inline"
+              className="mb-0"
+              onTabClick={(href) => setActiveTab(href as MemoryTab)}
+            />
 
             <div className="flex items-center gap-2">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
