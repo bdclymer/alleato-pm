@@ -9,10 +9,12 @@ import {
   EyeOff,
   MessageSquare,
   Plus,
+  SendHorizontal,
 } from "lucide-react";
 import {
   VeltCommentTool,
   useCommentModeState,
+  useCommentUtils,
 } from "@veltdev/react";
 import useSWR from "swr";
 
@@ -40,8 +42,13 @@ import {
   SidePanelHeader,
   SidePanelTitle,
 } from "@/components/ui/side-panel";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AllCommentItem } from "@/app/api/comments/all/route";
-import { cleanCommentPreview, sortComments } from "@/app/(main)/comments/comments-page-utils";
+import {
+  cleanCommentPreview,
+  relativeTimeLabel,
+  sortComments,
+} from "@/app/(main)/comments/comments-page-utils";
 import { apiFetch } from "@/lib/api-client";
 import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
 import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
@@ -59,6 +66,17 @@ function useCommentSummary() {
     const comments = [...(data?.comments ?? [])].sort(sortComments);
     return { comments };
   }, [data?.comments]);
+}
+
+function initials(name: string): string {
+  return (
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "C"
+  );
 }
 
 type CommentIconButtonProps = React.ComponentProps<typeof Button> & {
@@ -127,7 +145,7 @@ function SiteCommentsLink({ onNavigate }: { onNavigate?: () => void }) {
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            View all site comments
+            View all comments
           </Link>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-56">
@@ -190,6 +208,14 @@ export function CommentsSidebarButton() {
         open={pageSheetOpen}
         onOpenChange={setPageSheetOpen}
         comments={pageComments}
+        onAddComment={() => {
+          setPageSheetOpen(false);
+          if (!collaborationRuntimeActive) {
+            setCollaborationRuntimeEnabled(true);
+          }
+          setCommentsVisible(true);
+          setPendingCommentMode(true);
+        }}
       />
     </>
   );
@@ -210,11 +236,30 @@ function ActiveCommentsSidebarButton({
 }) {
   const [open, setOpen] = React.useState(false);
   const commentModeActive = useCommentModeState();
+  const commentElement = useCommentUtils();
   const commentsVisible = useCommentsVisibilityStore((state) => state.visible);
   const setCommentsVisible = useCommentsVisibilityStore(
     (state) => state.setVisible,
   );
   const addCommentTriggerRef = React.useRef<HTMLButtonElement | null>(null);
+  const setPageCommentsVisible = React.useCallback(
+    (nextVisible: boolean) => {
+      setCommentsVisible(nextVisible);
+
+      if (!commentElement) return;
+
+      if (nextVisible) {
+        commentElement.showCommentsOnDom();
+        return;
+      }
+
+      commentElement.selectCommentByAnnotationId();
+      commentElement.closeCommentSidebar();
+      commentElement.disableCommentMode();
+      commentElement.hideCommentsOnDom();
+    },
+    [commentElement, setCommentsVisible],
+  );
   const handleOpenDiscussion = React.useCallback(() => {
     setOpen(false);
     onOpenPageSheet();
@@ -273,12 +318,12 @@ function ActiveCommentsSidebarButton({
                 onRequestCommentMode();
                 return;
               }
-              setCommentsVisible(true);
+              setPageCommentsVisible(true);
               addCommentTriggerRef.current?.click();
             }}
           >
             <Plus className="h-4 w-4" />
-            Add comment
+            Add Comment
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleOpenDiscussion}
@@ -288,13 +333,13 @@ function ActiveCommentsSidebarButton({
             }}
           >
             <MessageSquare className="h-4 w-4" />
-            View discussion
+            Page Comments
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
               setOpen(false);
-              setCommentsVisible(!commentsVisible);
+              setPageCommentsVisible(!commentsVisible);
             }}
           >
             {commentsVisible ? (
@@ -302,7 +347,17 @@ function ActiveCommentsSidebarButton({
             ) : (
               <Eye className="h-4 w-4" />
             )}
-            {commentsVisible ? "Hide comments" : "View comments"}
+            {commentsVisible ? "Hide Comments" : "View Comments"}
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              href="/comments"
+              onClick={() => setOpen(false)}
+              className="cursor-pointer"
+            >
+              <ExternalLink className="h-4 w-4" />
+              All Comments
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -314,56 +369,108 @@ function PageDiscussionSheet({
   open,
   onOpenChange,
   comments,
+  onAddComment,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   comments: AllCommentItem[];
+  onAddComment: () => void;
 }) {
+  const totalMessages = React.useMemo(
+    () =>
+      comments.reduce(
+        (count, comment) => count + Math.max(comment.messages?.length ?? 0, 1),
+        0,
+      ),
+    [comments],
+  );
+  const flatMessages = React.useMemo(
+    () =>
+      comments
+        .flatMap((comment) =>
+          (comment.messages.length > 0
+            ? comment.messages
+            : [
+                {
+                  commentId: `${comment.annotationId}:preview`,
+                  authorName: comment.authorName,
+                  text: comment.preview,
+                  createdAt: comment.lastUpdated,
+                },
+              ]).map((message) => ({
+            ...message,
+            annotationId: comment.annotationId,
+          })),
+        )
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)),
+    [comments],
+  );
+
   return (
     <SidePanel open={open} onOpenChange={onOpenChange}>
-      <SidePanelContent side="right" size="md">
+      <SidePanelContent side="right" size="compact">
         <SidePanelHeader className="border-b border-border/60 text-left">
-          <SidePanelTitle>Discussion</SidePanelTitle>
+          <SidePanelTitle>Comments</SidePanelTitle>
           <SheetDescription className="text-sm text-muted-foreground">
-            {comments.length === 1 ? "1 comment" : `${comments.length} comments`}
+            {totalMessages === 1 ? "1 comment" : `${totalMessages} comments`}
           </SheetDescription>
         </SidePanelHeader>
         <div className="flex h-full flex-col">
-          <SidePanelBody className="py-4">
+          <SidePanelBody className="px-4 py-2">
             {comments.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No page discussion yet.
               </p>
             ) : (
               <div className="space-y-0">
-                {comments.map((comment, index) => (
+                {flatMessages.map((message, index) => (
                   <div
-                    key={comment.annotationId}
+                    key={message.commentId}
                     className={cn(
-                      "py-4",
+                      "py-3.5",
                       index > 0 && "border-t border-border/60",
                     )}
                   >
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium text-foreground">
-                        {comment.authorName}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {comment.replyCount > 0
-                          ? `${comment.replyCount + 1} messages`
-                          : "1 message"}
-                      </span>
+                    <div className="flex gap-3">
+                      <Avatar className="mt-0.5 h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
+                          {initials(message.authorName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-foreground">
+                            {message.authorName}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {relativeTimeLabel(message.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground">
+                          {cleanCommentPreview(message.text)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-foreground">
-                      {cleanCommentPreview(comment.preview)}
-                    </p>
                   </div>
                 ))}
               </div>
             )}
           </SidePanelBody>
-          <SidePanelFooter className="border-t border-border/60 py-3">
-            <SiteCommentsLink />
+          <SidePanelFooter className="border-t border-border/60 px-4 py-3">
+            <div className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onAddComment}
+                className="h-auto w-full justify-between rounded-full border border-border bg-background px-4 py-2.5 hover:bg-muted/40"
+              >
+                <span className="text-sm text-muted-foreground">Reply...</span>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <SendHorizontal className="h-4 w-4" />
+                </span>
+              </Button>
+              <SiteCommentsLink />
+            </div>
           </SidePanelFooter>
         </div>
       </SidePanelContent>
