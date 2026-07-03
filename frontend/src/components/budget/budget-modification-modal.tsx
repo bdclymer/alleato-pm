@@ -182,7 +182,7 @@ export function BudgetModificationModal({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       title="Add Budget Modification"
-      size="xl"
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalBody className="space-y-4">

@@ -65,8 +65,8 @@ const columnTooltips: Record<string, ColumnTooltip> = {
     formula: "Original Budget Amount entered for this line item",
   },
   budgetModifications: {
-    title: "Budget Modifications",
-    formula: "Sum of all budget transfers to/from this line item",
+    title: "Budget Changes",
+    formula: "Sum of all approved budget changes to/from this line item",
   },
   approvedCOs: {
     title: "Approved COs",
@@ -78,7 +78,7 @@ const columnTooltips: Record<string, ColumnTooltip> = {
     title: "Revised Budget",
     type: "Calculated Column",
     formula:
-      "Original Budget Amount + Budget Modifications + Approved COs = Revised Budget",
+      "Original Budget Amount + Budget Changes + Approved COs = Revised Budget",
   },
   jobToDateCostDetail: {
     title: "Job to Date Cost Detail",
@@ -171,9 +171,16 @@ type ColumnTooltipKey = keyof typeof columnTooltips;
 interface ColumnHeaderProps {
   lines: string[];
   columnKey?: ColumnTooltipKey;
+  align?: "left" | "right";
 }
 
-function TruncatedHeaderLabel({ text }: { text: string }) {
+function TruncatedHeaderLabel({
+  text,
+  align = "left",
+}: {
+  text: string;
+  align?: "left" | "right";
+}) {
   const labelRef = React.useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
 
@@ -204,7 +211,10 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   const label = (
     <div
       ref={labelRef}
-      className="truncate whitespace-nowrap text-left text-xs leading-tight"
+      className={cn(
+        "block w-full truncate whitespace-nowrap text-xs leading-tight",
+        align === "right" ? "text-right" : "text-left",
+      )}
     >
       {text}
     </div>
@@ -226,10 +236,14 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   );
 }
 
-function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
+function ColumnHeader({
+  lines,
+  columnKey,
+  align = "left",
+}: ColumnHeaderProps) {
   const labelText = lines.join(" ");
 
-  const label = <TruncatedHeaderLabel text={labelText} />;
+  const label = <TruncatedHeaderLabel text={labelText} align={align} />;
 
   if (!columnKey) {
     return label;
@@ -243,7 +257,12 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="cursor-help whitespace-nowrap text-left text-xs leading-tight text-foreground transition-colors hover:text-foreground">
+        <div
+          className={cn(
+            "block w-full cursor-help whitespace-nowrap text-xs leading-tight text-foreground transition-colors hover:text-foreground",
+            align === "right" ? "text-right" : "text-left",
+          )}
+        >
           {labelText}
         </div>
       </TooltipTrigger>
@@ -401,10 +420,14 @@ function getCalculatedColumnTooltip(
       return (
         <FormulaTooltip
           title="Revised Budget"
-          formula="Original Budget + Budget Mods + Approved COs"
+          formula="Original Budget + Budget Changes + Approved COs"
           lines={[
             { label: "Original Budget", value: lineItem.originalBudgetAmount },
-            { label: "Budget Mods", value: lineItem.budgetModifications, operator: "+" },
+            {
+              label: "Budget Changes",
+              value: lineItem.budgetModifications,
+              operator: "+",
+            },
             { label: "Approved COs", value: lineItem.approvedCOs, operator: "+" },
           ]}
           resultLabel="Revised Budget"
@@ -633,7 +656,7 @@ function getDepthPadding(depth: number) {
 const columnLabels: Record<string, string> = {
   description: "Description",
   originalBudgetAmount: "Original Budget",
-  budgetModifications: "Budget Mods",
+  budgetModifications: "Budget Changes",
   approvedCOs: "Approved COs",
   revisedBudget: "Revised Budget",
   pendingChanges: "Pending COs",
@@ -876,6 +899,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="originalBudgetAmount"
           lines={["original"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -902,7 +926,11 @@ export function BudgetTable({
     {
       accessorKey: "budgetModifications",
       header: () => (
-        <ColumnHeader columnKey="budgetModifications" lines={["Budget Mods"]} />
+        <ColumnHeader
+          columnKey="budgetModifications"
+          lines={["Budget Changes"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -928,7 +956,11 @@ export function BudgetTable({
     {
       accessorKey: "approvedCOs",
       header: () => (
-        <ColumnHeader columnKey="approvedCOs" lines={["Approved COs"]} />
+        <ColumnHeader
+          columnKey="approvedCOs"
+          lines={["Approved COs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -954,7 +986,11 @@ export function BudgetTable({
     {
       accessorKey: "revisedBudget",
       header: () => (
-        <ColumnHeader columnKey="revisedBudget" lines={["Revised Budget"]} />
+        <ColumnHeader
+          columnKey="revisedBudget"
+          lines={["Revised Budget"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -980,6 +1016,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="pendingChanges"
           lines={["Pending COs"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1009,6 +1046,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="projectedBudget"
           lines={["Projected Budget"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1032,7 +1070,11 @@ export function BudgetTable({
     {
       accessorKey: "committedCosts",
       header: () => (
-        <ColumnHeader columnKey="committedCosts" lines={["Committed Costs"]} />
+        <ColumnHeader
+          columnKey="committedCosts"
+          lines={["Committed Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -1061,6 +1103,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="jobToDateCostDetail"
           lines={["JTD Cost Detail"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1087,7 +1130,11 @@ export function BudgetTable({
     {
       accessorKey: "directCosts",
       header: () => (
-        <ColumnHeader columnKey="directCosts" lines={["Direct Costs"]} />
+        <ColumnHeader
+          columnKey="directCosts"
+          lines={["Direct Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -1116,6 +1163,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="pendingCostChanges"
           lines={["Pending Cost Changes"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1142,7 +1190,11 @@ export function BudgetTable({
     {
       accessorKey: "projectedCosts",
       header: () => (
-        <ColumnHeader columnKey="projectedCosts" lines={["Projected Costs"]} />
+        <ColumnHeader
+          columnKey="projectedCosts"
+          lines={["Projected Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -1168,6 +1220,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="forecastToComplete"
           lines={["Forecast To Complete"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1202,6 +1255,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="estimatedCostAtCompletion"
           lines={["Est. Cost at Completion"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1228,6 +1282,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="projectedOverUnder"
           lines={["Projected +/-"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {

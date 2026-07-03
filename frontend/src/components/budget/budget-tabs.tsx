@@ -17,6 +17,7 @@ interface BudgetTabsProps {
 
 const tabs: Tab[] = [
   { id: "budget", label: "Budget" },
+  { id: "budget-changes", label: "Budget Changes" },
   { id: "budget-details", label: "Budget Details" },
   { id: "cost-codes", label: "Cost Codes" },
   { id: "forecasting", label: "Forecasting" },
@@ -37,10 +38,10 @@ export function BudgetTabs({
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <nav
-        className="-mb-px flex items-end justify-between gap-4 border-b border-border"
+        className="-mb-px flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-border"
         aria-label="Budget Tabs"
       >
-        <div className="flex min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+        <div className="min-w-0 max-w-full overflow-x-auto scrollbar-hide">
           <div className="flex min-w-max space-x-4 md:space-x-6">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -53,8 +54,8 @@ export function BudgetTabs({
                   className={cn(
                     "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 rounded-none pb-4 pt-4 text-sm font-medium transition-colors h-auto px-0",
                     isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-transparent"
+                      ? "border-primary text-primary hover:bg-transparent hover:text-primary"
+                      : "border-transparent text-muted-foreground hover:border-transparent hover:text-primary hover:bg-transparent"
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
@@ -65,7 +66,9 @@ export function BudgetTabs({
           </div>
         </div>
         {controls ? (
-          <div className="flex items-center gap-1 pb-2">{controls}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-1 pb-2">
+            {controls}
+          </div>
         ) : null}
       </nav>
     </div>

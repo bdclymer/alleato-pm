@@ -1,9 +1,12 @@
 import {
+  aggregateApprovedBudgetModificationTotals,
+  buildBudgetLineRollupKey,
   EMPTY_GRAND_TOTALS,
   consumeCostAggregationOnce,
   normalizeBudgetCode,
   normalizeBudgetCodeLookupKey,
   reduceGrandTotals,
+  resolveBudgetModificationTotal,
   type BudgetLineItem,
   type GrandTotals,
 } from "./compute-grand-totals";
@@ -182,5 +185,61 @@ describe("consumeCostAggregationOnce", () => {
       approvedBudgetChanges: 0,
       pendingBudgetChanges: 0,
     });
+  });
+});
+
+describe("aggregateApprovedBudgetModificationTotals", () => {
+  it("keeps approved budget modification totals isolated by cost code, type, and sub job", () => {
+    const totals = aggregateApprovedBudgetModificationTotals([
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: null,
+        amount: -123.45,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: null,
+        amount: 23.45,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-b",
+        sub_job_id: null,
+        amount: 50,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: "sub-1",
+        amount: 75,
+      },
+    ]);
+
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-a", null)!),
+    ).toBe(-100);
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-b", null)!),
+    ).toBe(50);
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-a", "sub-1")!),
+    ).toBe(75);
+  });
+});
+
+describe("resolveBudgetModificationTotal", () => {
+  it("prefers directly aggregated approved budget modification totals over a stale view value", () => {
+    const key = buildBudgetLineRollupKey("01-3120", "type-a", null)!;
+    const totals = new Map([[key, 123.45]]);
+
+    expect(resolveBudgetModificationTotal(key, totals, 0)).toBe(123.45);
+  });
+
+  it("falls back to the view value when no direct approved budget modification total exists", () => {
+    const totals = new Map<string, number>();
+
+    expect(resolveBudgetModificationTotal("missing", totals, "45.67")).toBe(45.67);
   });
 });

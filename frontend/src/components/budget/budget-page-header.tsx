@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   Camera,
   FilePlus,
-  FileEdit,
   FileSearch,
   BarChart2,
   FileText,
@@ -184,8 +183,8 @@ export function BudgetPageHeader({
             className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
             onClick={onModificationClick}
           >
-            <FileEdit />
-            Add Budget Modification
+            <Plus />
+            Budget Change
           </Button>
         ) : (
           <DropdownMenu>
@@ -314,8 +313,8 @@ export function BudgetPageHeader({
             )}
             onClick={onModificationClick}
           >
-            <FileEdit />
-            Add Budget Modification
+            <Plus />
+            Budget Change
           </Button>
         ) : (
           <DropdownMenu>

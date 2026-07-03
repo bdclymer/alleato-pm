@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   type DragEndEvent,
@@ -252,6 +253,7 @@ export interface TableColumn<T> extends ColumnConfig {
   render: (item: T) => ReactNode;
   csvValue?: (item: T) => string;
   sortable?: boolean;
+  showSortIcon?: boolean;
   sortValue?: (item: T) => string | number | null | undefined;
   align?: "left" | "center" | "right";
   /**
@@ -353,6 +355,8 @@ export interface UnifiedTablePageProps<T> {
     actions?: ReactNode;
     variant?: "default" | "compact";
     mobileActionsInline?: boolean;
+    /** Keep title available for storage/export/reporting, but hide the visual page header. */
+    hidden?: boolean;
   };
   tabs?: TabItem[];
   toolbar: {
@@ -406,6 +410,8 @@ export interface UnifiedTablePageProps<T> {
     customActions?: ReactNode;
     /** Content rendered on the left of the toolbar row, with icons pushed to the right */
     leftContent?: ReactNode;
+    /** Render the toolbar into an external DOM node instead of the default toolbar row. */
+    portalContainerId?: string;
     /**
      * Stable identifier for this table when saving views (e.g. "meetings").
      * Set this to enable the per-user "Saved views" picker. Project-agnostic —
@@ -1965,6 +1971,8 @@ export function UnifiedTablePage<T>({
     </div>
   ) : null;
 
+  const shouldRenderHeader = Boolean(header.title) && !header.hidden;
+
   const headerContent = (
     <PageHeader
       title={header.title}
@@ -1995,11 +2003,21 @@ export function UnifiedTablePage<T>({
     />
   );
 
+  const shouldPortalToolbar = Boolean(toolbar.portalContainerId);
+  const toolbarPortalContainer =
+    shouldPortalToolbar && typeof document !== "undefined"
+      ? document.getElementById(toolbar.portalContainerId!)
+      : null;
+  const portaledToolbar =
+    shouldPortalToolbar && toolbarPortalContainer
+      ? createPortal(renderTableToolbar("w-auto py-0"), toolbarPortalContainer)
+      : null;
+
   // Split content into "above table" (header, tabs, toolbar) and "table area" so
   // the side panel grid can align its top with the table, not the page header.
   const aboveTableContent = (
     <>
-      {header.title ? headerContent : null}
+      {shouldRenderHeader ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
@@ -2019,7 +2037,7 @@ export function UnifiedTablePage<T>({
               className="-mr-1 mb-0 w-full min-w-0 sm:mr-0 md:w-auto md:flex-none"
             />
           )}
-          {!toolbarInlineWithHeader ? (
+          {!toolbarInlineWithHeader && !shouldPortalToolbar ? (
             <div
               className={cn(
                 TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
@@ -2330,6 +2348,7 @@ export function UnifiedTablePage<T>({
                                               {column.label}
                                             </span>
                                             {isSortable &&
+                                              column.showSortIcon !== false &&
                                               renderSortIcon(column.id)}
                                           </Button>
                                         </DropdownMenuTrigger>
@@ -3059,6 +3078,7 @@ export function UnifiedTablePage<T>({
 
   return (
     <>
+      {portaledToolbar}
       <PageContainer
         maxWidth={containerMaxWidth}
         padding={containerPadding}
