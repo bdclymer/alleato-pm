@@ -53,4 +53,13 @@ describe("resolvePostLoginRedirect", () => {
     expect(result).toBe("/");
     expect(fetchRedirect).toHaveBeenCalledTimes(2);
   });
+
+  it("lets callers fall back to the validated callback when the first redirect request hangs or fails", async () => {
+    const fetchRedirect = jest.fn().mockRejectedValue(new Error("Request timed out after 8s"));
+
+    await expect(resolvePostLoginRedirect(fetchRedirect, "/47/drawings/viewer/abc", noWait)).rejects.toThrow(
+      "Request timed out after 8s",
+    );
+    expect(fetchRedirect).toHaveBeenCalledTimes(1);
+  });
 });

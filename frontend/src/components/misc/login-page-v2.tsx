@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetchWithTimeout } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect-client";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
@@ -60,14 +60,23 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
           : "";
       try {
         const redirect = await resolvePostLoginRedirect(
-          () => apiFetch<{ redirect?: string }>(`/api/auth/post-login-redirect${query}`),
+          () =>
+            apiFetchWithTimeout<{ redirect?: string }>(
+              `/api/auth/post-login-redirect${query}`,
+              { cache: "no-store" },
+              8_000,
+            ),
           validatedCallback,
         );
         setTimeout(() => {
           router.push(redirect);
           router.refresh();
         }, 100);
-      } catch {
+      } catch (redirectError) {
+        console.error("Failed to resolve post-login redirect", {
+          redirectTo: validatedCallback,
+          error: redirectError instanceof Error ? redirectError.message : String(redirectError),
+        });
         setTimeout(() => {
           router.push(validatedCallback || "/");
           router.refresh();

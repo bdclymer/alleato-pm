@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { pdfjs } from "react-pdf";
 import OpenSeadragon from "openseadragon";
 import {
@@ -808,12 +809,19 @@ function OsdHtmlOverlayItem({
   imageWidth: number;
   imageHeight: number;
 }) {
-  const elRef = useRef<HTMLDivElement>(null);
+  const [container] = useState(() => {
+    const element = document.createElement("div");
+    element.style.pointerEvents = "auto";
+    return element;
+  });
+
+  useEffect(() => {
+    container.style.zIndex = String(overlay.zIndex ?? 20);
+  }, [container, overlay.zIndex]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
-    const el = elRef.current;
-    if (!viewer || !el) return;
+    if (!viewer) return;
     const placement =
       OpenSeadragon.Placement[overlay.placement ?? "BOTTOM"] ?? OpenSeadragon.Placement.BOTTOM;
     const point = new OpenSeadragon.Point(
@@ -822,7 +830,7 @@ function OsdHtmlOverlayItem({
     );
     try {
       viewer.addOverlay({
-        element: el,
+        element: container,
         location: viewer.viewport.imageToViewportCoordinates(point),
         placement,
       });
@@ -837,7 +845,7 @@ function OsdHtmlOverlayItem({
     }
     return () => {
       try {
-        viewer.removeOverlay(el);
+        viewer.removeOverlay(container);
       } catch (error) {
         reportNonCriticalFailure({
           area: "osd-drawing-viewer",
@@ -848,13 +856,9 @@ function OsdHtmlOverlayItem({
         });
       }
     };
-  }, [viewerRef, overlay.xPct, overlay.yPct, overlay.placement, imageWidth, imageHeight]);
+  }, [viewerRef, container, overlay.xPct, overlay.yPct, overlay.placement, imageWidth, imageHeight]);
 
-  return (
-    <div ref={elRef} style={{ zIndex: overlay.zIndex ?? 20, pointerEvents: "auto" }}>
-      {overlay.element}
-    </div>
-  );
+  return createPortal(overlay.element, container);
 }
 
 // ─── Annotation overlay (SVG drawing layer) ─────────────────────────────────
