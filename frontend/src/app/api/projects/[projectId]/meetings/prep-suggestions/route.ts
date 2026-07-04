@@ -64,12 +64,11 @@ const aiOutputSchema = z.object({
         sourceMeetingId: z.string().min(1).max(120),
         title: z.string().min(1).max(120),
         summary: z.string().min(1).max(280),
-        openThreads: z.array(z.string().min(1).max(140)).max(3).optional(),
-        decisions: z.array(z.string().min(1).max(140)).max(3).optional(),
+        openThreads: z.array(z.string().min(1).max(140)).max(3),
+        decisions: z.array(z.string().min(1).max(140)).max(3),
       }),
     )
-    .max(4)
-    .optional(),
+    .max(4),
 });
 
 const prepSuggestionRequestSchema = z.object({
@@ -227,6 +226,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           "Every suggestion must cite one to three sourceIds from the normalized meeting prep source packets.",
           "Prefer transcript segment and project intelligence source packets when they identify a concrete carry-forward topic.",
           "Meeting recaps are supporting evidence for the user, not agenda items. Keep recap summaries compact and preserve source meeting IDs.",
+          "Return empty arrays for meetingRecaps, openThreads, and decisions when no source-supported values apply.",
           "Merge duplicates when several source candidates point to the same discussion.",
           "Prefer agenda language that helps the meeting owner decide what must be discussed next.",
           "Return no more than six suggestions. Keep titles direct and descriptions specific.",
