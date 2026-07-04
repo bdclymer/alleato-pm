@@ -36,15 +36,20 @@ export interface MeetingPlanningRecap {
 export interface MeetingPlanningSuggestionsPayload {
   suggestions: MeetingPlanningSuggestion[];
   meetingRecaps: MeetingPlanningRecap[];
-  generatedBy: "ai" | "fallback";
+  generatedBy: "ai" | "source" | "fallback";
   model?: string | null;
   fallbackReason?: string;
 }
 
-export function useMeetingPlanningSuggestions(projectId: string) {
+export type MeetingPlanningSuggestionMode = "source" | "ai";
+
+export function useMeetingPlanningSuggestions(
+  projectId: string,
+  mode: MeetingPlanningSuggestionMode = "source",
+) {
   return useQuery({
-    queryKey: ["meeting-planning-suggestions", projectId],
-    queryFn: () => loadMeetingPlanningSuggestions(projectId),
+    queryKey: ["meeting-planning-suggestions", projectId, mode],
+    queryFn: () => loadMeetingPlanningSuggestions(projectId, mode),
     enabled: Boolean(projectId),
     staleTime: 60_000,
     retry: false,
@@ -53,11 +58,15 @@ export function useMeetingPlanningSuggestions(projectId: string) {
 
 async function loadMeetingPlanningSuggestions(
   projectId: string,
+  mode: MeetingPlanningSuggestionMode,
 ): Promise<MeetingPlanningSuggestionsPayload> {
   try {
     return await apiFetch<MeetingPlanningSuggestionsPayload>(
       `/api/projects/${projectId}/meetings/prep-suggestions`,
-      { method: "POST" },
+      {
+        method: "POST",
+        body: JSON.stringify({ mode }),
+      },
     );
   } catch {
     return {
