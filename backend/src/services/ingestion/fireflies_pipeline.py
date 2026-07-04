@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sys
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1267,6 +1268,7 @@ class FirefliesIngestionPipeline:
         text = re.sub(r"\s+", " ", text).strip()
         text = re.sub(r"[\\/:*?\"<>|]+", "", text)
         text = re.sub(r"[\x00-\x1f\x7f]+", "", text)
+        text = re.sub(r"\s+", " ", text).strip()
         return text[:180] or "Untitled Meeting"
 
     def _build_storage_path(self, title: str, captured_at: Optional[datetime]) -> str:

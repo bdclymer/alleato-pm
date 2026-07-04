@@ -834,6 +834,15 @@ def _new_pipeline() -> FirefliesIngestionPipeline:
     return FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 
 
+class TestStoragePathSanitization:
+    def test_build_storage_path_handles_unicode_titles(self):
+        pipeline = _new_pipeline()
+
+        path = pipeline._build_storage_path("Réunion / façade: süd", None)
+
+        assert path.endswith(" - Reunion facade sud.md")
+
+
 class TestUpsertStructuredMeeting:
     def test_existing_link_is_idempotent_skip(self):
         client = _FakeStructuredMeetingClient(
