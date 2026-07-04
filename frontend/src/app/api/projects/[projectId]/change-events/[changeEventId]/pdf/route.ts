@@ -9,6 +9,14 @@ import { resolveLineItemCommitmentNumbers } from "@/lib/change-events/resolve-li
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function extractProjectCity(summaryMetadata: unknown): string | null {
+  if (!summaryMetadata || typeof summaryMetadata !== "object" || Array.isArray(summaryMetadata)) {
+    return null;
+  }
+  const record = summaryMetadata as Record<string, unknown>;
+  return typeof record.city === "string" ? record.city : null;
+}
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/pdf#GET",
   async ({ params }) => {
@@ -66,7 +74,7 @@ export const GET = withApiGuardrails(
 
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, project_number, address, city, state")
+      .select("id, name, project_number, address, state, summary_metadata")
       .eq("id", projectIdNum)
       .single();
 
@@ -99,7 +107,13 @@ export const GET = withApiGuardrails(
       ...item,
       commitment: item.commitment_id ? commitmentMap.get(item.commitment_id) ?? null : null,
     }));
-    const mappedProject = project ? { ...project, number: project.project_number } : null;
+    const mappedProject = project
+      ? {
+          ...project,
+          city: extractProjectCity(project.summary_metadata),
+          number: project.project_number,
+        }
+      : null;
     const htmlContent = buildChangeEventHtml(
       { ...changeEvent, creator },
       lineItemsWithCommitment,
