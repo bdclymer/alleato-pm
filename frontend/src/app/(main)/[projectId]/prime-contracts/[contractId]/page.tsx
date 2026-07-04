@@ -1244,6 +1244,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
+            changeOrders={changeOrders}
             ownerInvoices={ownerInvoices} paymentsLoading={paymentsLoading} ownerInvoicesLoading={ownerInvoicesLoading}
             onDeleteInvoice={handleDeleteInvoice} formatCurrency={formatCurrency}
           />

@@ -2,21 +2,27 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, FileText, Plus, Trash2 } from "lucide-react";
+import { FileText, Plus, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, StatusBadge } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
-import type { OwnerInvoiceSummary, PaymentApplication, Contract } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { DataTable } from "@/components/tables/DataTable";
+import type {
+  Contract,
+  OwnerInvoiceSummary,
+  PaymentApplication,
+  PrimeContractCO,
+} from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { formatDate, formatPercent } from "@/lib/format";
 
 interface PrimeContractInvoicesTabProps {
   projectId: string;
   contractId: string;
   contract: Contract;
+  changeOrders: PrimeContractCO[];
   paymentApplications: PaymentApplication[];
   ownerInvoices: OwnerInvoiceSummary[];
   paymentsLoading: boolean;
@@ -29,11 +35,24 @@ type InvoiceRow =
   | { source: "payment_application"; paymentApplication: PaymentApplication }
   | { source: "owner_invoice"; ownerInvoice: OwnerInvoiceSummary };
 
-function buildAcumaticaInvoiceHref(docType: string | null | undefined, refNbr: string): string {
-  return `https://alleatogroup.acumatica.com/Main?ScreenId=AR301000&DocType=${encodeURIComponent(docType ?? "Invoice")}&RefNbr=${encodeURIComponent(refNbr)}`;
+interface InvoiceMetrics {
+  invoiceLabel: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  billingDate: string | null;
+  status: string;
+  originalContract: number;
+  netChangeByCOs: number;
+  revisedContract: number;
+  totalCompletedAndStoredToDate: number;
+  totalRetainage: number;
+  totalEarnedLessRetainage: number;
+  paymentDue: number;
+  balance: number;
+  percentComplete: number | null;
 }
 
-function getOwnerInvoiceAmount(invoice: OwnerInvoiceSummary): number {
+function getOwnerInvoiceCompletedToDate(invoice: OwnerInvoiceSummary): number {
   const candidates = [
     invoice.gross_amount,
     invoice.total_amount,
@@ -43,10 +62,136 @@ function getOwnerInvoiceAmount(invoice: OwnerInvoiceSummary): number {
   return candidates.find((value) => value !== null && value !== undefined && Number(value) > 0) ?? 0;
 }
 
+function getInvoiceCutoffDate(row: InvoiceRow): string | null {
+  if (row.source === "payment_application") {
+    return (
+      row.paymentApplication.period_to ??
+      row.paymentApplication.period_from ??
+      row.paymentApplication.billing_date ??
+      null
+    );
+  }
+
+  return (
+    row.ownerInvoice.period_end ??
+    row.ownerInvoice.period_start ??
+    row.ownerInvoice.billing_date ??
+    null
+  );
+}
+
+function getChangeOrderEffectiveDate(changeOrder: PrimeContractCO): string | null {
+  return changeOrder.approved_date ?? changeOrder.due_date ?? changeOrder.requested_date ?? null;
+}
+
+function getNetChangeByCOs(
+  row: InvoiceRow,
+  changeOrders: PrimeContractCO[],
+): number {
+  if (row.source === "owner_invoice") {
+    const previousChanges = row.ownerInvoice.previous_changes ?? 0;
+    const currentChanges = row.ownerInvoice.current_changes ?? 0;
+    if (previousChanges !== 0 || currentChanges !== 0) {
+      return previousChanges + currentChanges;
+    }
+  }
+
+  const cutoffDate = getInvoiceCutoffDate(row);
+  const approvedChangeOrders = changeOrders.filter((changeOrder) =>
+    changeOrder.status.toLowerCase().startsWith("approved"),
+  );
+
+  if (!cutoffDate) {
+    return approvedChangeOrders.reduce(
+      (sum, changeOrder) => sum + (changeOrder.amount || 0),
+      0,
+    );
+  }
+
+  return approvedChangeOrders.reduce((sum, changeOrder) => {
+    const effectiveDate = getChangeOrderEffectiveDate(changeOrder);
+    if (!effectiveDate || effectiveDate > cutoffDate) return sum;
+    return sum + (changeOrder.amount || 0);
+  }, 0);
+}
+
+function getInvoiceMetrics(
+  row: InvoiceRow,
+  contract: Contract,
+  changeOrders: PrimeContractCO[],
+): InvoiceMetrics {
+  const originalContract = contract.original_contract_value ?? 0;
+  const netChangeByCOs = getNetChangeByCOs(row, changeOrders);
+  const revisedContract = originalContract + netChangeByCOs;
+
+  const totalCompletedAndStoredToDate =
+    row.source === "payment_application"
+      ? row.paymentApplication.amount ?? 0
+      : getOwnerInvoiceCompletedToDate(row.ownerInvoice);
+
+  const totalRetainage =
+    row.source === "payment_application"
+      ? row.paymentApplication.retention_amount ?? 0
+      : row.ownerInvoice.retention_amount ?? 0;
+
+  const totalEarnedLessRetainage = totalCompletedAndStoredToDate - totalRetainage;
+
+  const paymentDue =
+    row.source === "payment_application"
+      ? row.paymentApplication.net_amount ??
+        totalEarnedLessRetainage
+      : row.ownerInvoice.net_amount ??
+        row.ownerInvoice.total_amount ??
+        totalEarnedLessRetainage;
+
+  const percentComplete =
+    row.source === "owner_invoice"
+      ? row.ownerInvoice.percent_complete ??
+        (revisedContract > 0
+          ? (totalCompletedAndStoredToDate / revisedContract) * 100
+          : null)
+      : revisedContract > 0
+        ? (totalCompletedAndStoredToDate / revisedContract) * 100
+        : null;
+
+  return {
+    invoiceLabel:
+      row.source === "payment_application"
+        ? row.paymentApplication.application_number
+        : row.ownerInvoice.invoice_number ?? `INV-${row.ownerInvoice.id}`,
+    periodStart:
+      row.source === "payment_application"
+        ? row.paymentApplication.period_from
+        : row.ownerInvoice.period_start,
+    periodEnd:
+      row.source === "payment_application"
+        ? row.paymentApplication.period_to
+        : row.ownerInvoice.period_end,
+    billingDate:
+      row.source === "payment_application"
+        ? row.paymentApplication.billing_date
+        : row.ownerInvoice.billing_date,
+    status:
+      row.source === "payment_application"
+        ? row.paymentApplication.status
+        : row.ownerInvoice.status,
+    originalContract,
+    netChangeByCOs,
+    revisedContract,
+    totalCompletedAndStoredToDate,
+    totalRetainage,
+    totalEarnedLessRetainage,
+    paymentDue,
+    balance: revisedContract - totalEarnedLessRetainage,
+    percentComplete,
+  };
+}
+
 export function PrimeContractInvoicesTab({
   projectId,
   contractId,
   contract,
+  changeOrders,
   paymentApplications,
   ownerInvoices,
   paymentsLoading,
@@ -70,83 +215,39 @@ export function PrimeContractInvoicesTab({
     ],
     [ownerInvoices, paymentApplications],
   );
-  const invoicedRows = useMemo(
-    () =>
-      invoiceRows.filter((row) =>
-        row.source === "payment_application"
-          ? row.paymentApplication.status === "approved"
-          : ["approved", "paid"].includes(row.ownerInvoice.status),
-      ),
-    [invoiceRows],
-  );
-  const totalAmount = useMemo(
-    () =>
-      invoicedRows.reduce(
-        (sum, row) =>
-          sum +
-          (row.source === "payment_application"
-            ? row.paymentApplication.amount
-            : getOwnerInvoiceAmount(row.ownerInvoice)),
-        0,
-      ),
-    [invoicedRows],
-  );
-  const totalRetainage = useMemo(
-    () =>
-      invoicedRows.reduce(
-        (sum, row) =>
-          sum +
-          (row.source === "payment_application"
-            ? row.paymentApplication.retention_amount
-            : (row.ownerInvoice.retention_amount ?? 0)),
-        0,
-      ),
-    [invoicedRows],
-  );
-  const totalPaymentDue = useMemo(
-    () =>
-      invoicedRows.reduce(
-        (sum, row) =>
-          sum +
-          (row.source === "payment_application"
-            ? (row.paymentApplication.net_amount ?? row.paymentApplication.amount - row.paymentApplication.retention_amount)
-            : (row.ownerInvoice.net_amount ?? row.ownerInvoice.total_amount ?? getOwnerInvoiceAmount(row.ownerInvoice))),
-        0,
-      ),
-    [invoicedRows],
-  );
-
   const columns: ColumnDef<InvoiceRow>[] = useMemo(
     () => [
       {
         header: "Invoice #",
         cell: ({ row }) => {
-          const label =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.application_number
-              : row.original.ownerInvoice.invoice_number ?? `INV-${row.original.ownerInvoice.id}`;
-          return <div className="font-medium text-primary">{label}</div>;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="font-medium text-primary">{metrics.invoiceLabel}</div>;
         },
       },
       {
-        id: "billing_period",
-        header: "Billing Period",
+        id: "invoice_dates",
+        header: "Invoice Dates",
         cell: ({ row }) => {
-          const periodFrom =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.period_from
-              : row.original.ownerInvoice.period_start;
-          const periodTo =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.period_to
-              : row.original.ownerInvoice.period_end;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
           return (
             <div className="text-sm text-muted-foreground">
-              {periodFrom && periodTo
-                ? `${formatDate(periodFrom)} - ${formatDate(periodTo)}`
-                : periodFrom
-                  ? `From ${formatDate(periodFrom)}`
+              {metrics.periodStart && metrics.periodEnd
+                ? `${formatDate(metrics.periodStart)} - ${formatDate(metrics.periodEnd)}`
+                : metrics.periodStart
+                  ? `From ${formatDate(metrics.periodStart)}`
                   : "--"}
+            </div>
+          );
+        },
+      },
+      {
+        id: "billing_date",
+        header: "Billing Date",
+        cell: ({ row }) => {
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return (
+            <div className="text-sm text-muted-foreground">
+              {metrics.billingDate ? formatDate(metrics.billingDate) : "--"}
             </div>
           );
         },
@@ -155,35 +256,65 @@ export function PrimeContractInvoicesTab({
         id: "status",
         header: "Status",
         cell: ({ row }) => {
-          const status =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.status
-              : row.original.ownerInvoice.status;
-          return <StatusBadge status={status.replace(/_/g, " ")} />;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <StatusBadge status={metrics.status.replace(/_/g, " ")} />;
         },
       },
       {
-        id: "amount",
-        header: () => <div className="text-right">Amount</div>,
+        id: "original_contract",
+        header: () => <div className="text-right">Original Contract</div>,
         cell: ({ row }) => {
-          const amount =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.amount
-              : getOwnerInvoiceAmount(row.original.ownerInvoice);
-          return <div className="text-right">{formatCurrency(amount)}</div>;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="text-right">{formatCurrency(metrics.originalContract)}</div>;
         },
       },
       {
-        id: "retention_amount",
-        header: () => <div className="text-right">Retainage</div>,
+        id: "net_change_by_cos",
+        header: () => <div className="text-right">Net Change by COs</div>,
         cell: ({ row }) => {
-          const retainage =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.retention_amount
-              : row.original.ownerInvoice.retention_amount;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="text-right">{formatCurrency(metrics.netChangeByCOs)}</div>;
+        },
+      },
+      {
+        id: "revised_contract",
+        header: () => <div className="text-right">Revised Contract</div>,
+        cell: ({ row }) => {
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="text-right">{formatCurrency(metrics.revisedContract)}</div>;
+        },
+      },
+      {
+        id: "total_completed_and_stored",
+        header: () => <div className="text-right">Total Completed and Stored to Date</div>,
+        cell: ({ row }) => {
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
           return (
-            <div className="text-right text-muted-foreground">
-              {retainage && retainage > 0 ? formatCurrency(retainage) : "--"}
+            <div className="text-right">
+              {formatCurrency(metrics.totalCompletedAndStoredToDate)}
+            </div>
+          );
+        },
+      },
+      {
+        id: "total_retainage",
+        header: () => <div className="text-right">Total Retainage</div>,
+        cell: ({ row }) => {
+          return (
+            <div className="text-right">
+              {formatCurrency(getInvoiceMetrics(row.original, contract, changeOrders).totalRetainage)}
+            </div>
+          );
+        },
+      },
+      {
+        id: "total_earned_less_retainage",
+        header: () => <div className="text-right">Total Earned Less Retainage</div>,
+        cell: ({ row }) => {
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return (
+            <div className="text-right">
+              {formatCurrency(metrics.totalEarnedLessRetainage)}
             </div>
           );
         },
@@ -192,59 +323,29 @@ export function PrimeContractInvoicesTab({
         id: "payment_due",
         header: () => <div className="text-right">Payment Due</div>,
         cell: ({ row }) => {
-          const paymentDue =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.net_amount ??
-                row.original.paymentApplication.amount - row.original.paymentApplication.retention_amount
-              : row.original.ownerInvoice.net_amount ??
-                row.original.ownerInvoice.total_amount ??
-                getOwnerInvoiceAmount(row.original.ownerInvoice);
-          return <div className="text-right">{formatCurrency(paymentDue)}</div>;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="text-right">{formatCurrency(metrics.paymentDue)}</div>;
+        },
+      },
+      {
+        id: "balance",
+        header: () => <div className="text-right">Balance</div>,
+        cell: ({ row }) => {
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
+          return <div className="text-right">{formatCurrency(metrics.balance)}</div>;
         },
       },
       {
         id: "percent_complete",
         header: () => <div className="text-right">% Complete</div>,
         cell: ({ row }) => {
-          const amount =
-            row.original.source === "payment_application"
-              ? row.original.paymentApplication.amount
-              : getOwnerInvoiceAmount(row.original.ownerInvoice);
-          const percent =
-            row.original.source === "owner_invoice"
-              ? row.original.ownerInvoice.percent_complete
-              : null;
+          const metrics = getInvoiceMetrics(row.original, contract, changeOrders);
           return (
             <div className="text-right">
-              {percent !== null && percent !== undefined
-                ? formatPercent(percent)
-                : contract.revised_contract_value > 0
-                  ? formatPercent((amount / contract.revised_contract_value) * 100)
-                  : "--"}
+              {metrics.percentComplete !== null
+                ? formatPercent(metrics.percentComplete)
+                : "--"}
             </div>
-          );
-        },
-      },
-      {
-        id: "acumatica_ref",
-        header: "Acumatica",
-        cell: ({ row }) => {
-          if (row.original.source === "payment_application") {
-            return <span className="text-sm text-muted-foreground">--</span>;
-          }
-          const refNbr = row.original.ownerInvoice.acumatica_ref_nbr;
-          if (!refNbr) return <span className="text-sm text-muted-foreground">--</span>;
-          return (
-            <a
-              href={buildAcumaticaInvoiceHref(row.original.ownerInvoice.acumatica_doc_type, refNbr)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline"
-              onClick={(event) => event.stopPropagation()}
-            >
-              {refNbr}
-              <ExternalLink className="h-3 w-3" />
-            </a>
           );
         },
       },
@@ -273,19 +374,7 @@ export function PrimeContractInvoicesTab({
         },
       },
     ],
-    [contract.revised_contract_value, formatCurrency, onDeleteInvoice],
-  );
-
-  const footerRow = useMemo<DataTableFooterCell[]>(
-    () => [
-      { value: "Approved total", colSpan: 3, align: "left" },
-      { value: formatCurrency(totalAmount) },
-      { value: formatCurrency(totalRetainage) },
-      { value: formatCurrency(totalPaymentDue) },
-      { value: "" },
-      { value: "", colSpan: 2 },
-    ],
-    [formatCurrency, totalAmount, totalPaymentDue, totalRetainage],
+    [changeOrders, contract, formatCurrency, onDeleteInvoice],
   );
 
   const createButton = (
@@ -315,12 +404,6 @@ export function PrimeContractInvoicesTab({
           />
           {invoiceRows.length > 0 && createButton}
         </div>
-        {invoiceRows.length > 0 ? (
-          <p className="text-sm text-muted-foreground -mt-3 mb-4">
-            Total invoiced:{" "}
-            {formatCurrency(totalAmount)}
-          </p>
-        ) : null}
 
         {isLoading ? (
           <div className="space-y-2">
@@ -346,7 +429,6 @@ export function PrimeContractInvoicesTab({
                 ? router.push(`/${projectId}/prime-contracts/${contractId}/invoices/${row.paymentApplication.id}`)
                 : router.push(`/${projectId}/invoicing/${row.ownerInvoice.id}`)
             }
-            footerRow={footerRow}
           />
         )}
       </div>

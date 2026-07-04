@@ -70,6 +70,9 @@ export interface OwnerInvoiceSummary {
   paid_amount: number | null;
   percent_complete: number | null;
   total_amount?: number | null;
+  previous_changes?: number | null;
+  current_changes?: number | null;
+  total_contract_amount?: number | null;
   acumatica_ref_nbr: string | null;
   acumatica_doc_type?: string | null;
   acumatica_sync_at: string | null;
