@@ -40,6 +40,7 @@ Action items should be real linked tasks, not duplicate agenda rows. Creating on
 | --- | --- | --- | --- |
 | Kickoff | Linear `AAI-928` | Pass | Issue created under Meetings project. |
 | Focused unit tests | `npm run test:unit -- --runInBand --runTestsByPath src/components/domain/meetings/__tests__/agenda-section.test.tsx 'src/app/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/tasks/__tests__/route.test.ts' src/lib/meetings/__tests__/schemas.test.ts` | Pass | 3 suites, 46 tests. |
+| Immediate section refresh regression | `npm run test:unit -- --runInBand --runTestsByPath src/hooks/__tests__/use-meetings.test.tsx src/components/domain/meetings/__tests__/agenda-section.test.tsx 'src/app/api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/tasks/__tests__/route.test.ts' src/lib/meetings/__tests__/schemas.test.ts` | Pass | 4 suites, 49 tests; covers cache `task_count` increment after linked task creation. |
 | Whitespace check | `git diff --check` | Pass | No whitespace errors. |
 | Changed-file typecheck | `npm run typecheck:changed` | Pass | Verification sub-agent: no new any type debt. |
 | Changed-file lint debt | `npm run lint:changed:debt` | Pass | Verification sub-agent: no new ESLint debt across 6 changed frontend files. |

@@ -7,6 +7,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 
 import {
   meetingKeys,
+  useCreateItemTask,
   useReorderCategories,
   useReorderItems,
   type MeetingDetail,
@@ -232,5 +233,48 @@ describe("useReorderItems", () => {
     const rolledBackCatB = rolledBack?.categories.find((c) => c.id === "cat-b");
     expect(rolledBackCatA?.items.map((i) => i.id)).toEqual(["item-1", "item-2"]);
     expect(rolledBackCatB?.items).toEqual([]);
+  });
+});
+
+describe("useCreateItemTask", () => {
+  beforeEach(() => {
+    apiFetchMock.mockReset();
+  });
+
+  it("increments the cached agenda item task count after creating a linked task", async () => {
+    const { queryClient, Wrapper } = createWrapperAndClient();
+    const detail = baseMeetingDetail();
+    queryClient.setQueryData(meetingKeys.detail(PROJECT_ID, MEETING_ID), detail);
+    apiFetchMock.mockResolvedValue({
+      id: "task-1",
+      title: "Confirm permit response",
+      meeting_item_id: "item-1",
+    });
+
+    const { result } = renderHook(() => useCreateItemTask(PROJECT_ID, MEETING_ID), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate({
+        itemId: "item-1",
+        data: {
+          title: "Confirm permit response",
+          assignee_person_id: null,
+          due_date: null,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const updated = queryClient.getQueryData<MeetingDetail>(
+        meetingKeys.detail(PROJECT_ID, MEETING_ID),
+      );
+      expect(updated?.categories[0]?.items[0]?.task_count).toBe(1);
+    });
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/api/projects/42/meetings/meeting-1/items/item-1/tasks",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

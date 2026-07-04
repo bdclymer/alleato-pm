@@ -593,6 +593,7 @@ export function useSetAttendeeAttendance(projectId: string, meetingId: string) {
 
 export function useCreateItemTask(projectId: string, meetingId: string) {
   const queryClient = useQueryClient();
+  const detailKey = meetingKeys.detail(projectId, meetingId);
 
   return useMutation({
     mutationFn: async ({ itemId, data }: { itemId: string; data: CreateItemTaskInput }) =>
@@ -600,8 +601,22 @@ export function useCreateItemTask(projectId: string, meetingId: string) {
         `/api/projects/${projectId}/meetings/${meetingId}/items/${itemId}/tasks`,
         { method: "POST", body: JSON.stringify(data) },
       ),
-    onSuccess: () => {
-      invalidateMeetingDetail(queryClient, projectId, meetingId);
+    onSuccess: (_task, variables) => {
+      queryClient.setQueryData<MeetingDetail>(detailKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          categories: current.categories.map((category) => ({
+            ...category,
+            items: category.items.map((item) =>
+              item.id === variables.itemId
+                ? { ...item, task_count: item.task_count + 1 }
+                : item,
+            ),
+          })),
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: detailKey });
       toast.success("Task created from agenda item");
     },
     onError: (error: Error) => {
