@@ -35,6 +35,7 @@ export function VendorCombobox({
   const [search, setSearch] = React.useState("");
   const vendorListId = React.useId();
   const selected = vendors.find((v) => v.id === value);
+  const showClearButton = Boolean(selected);
 
   const filtered = React.useMemo(() => {
     if (!search.trim()) return vendors;
@@ -48,46 +49,57 @@ export function VendorCombobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={vendorListId}
-          aria-label="Select vendor"
-          className={cn(
-            "flex h-9 w-full items-center justify-between px-3 py-2 text-sm font-normal",
-            !selected && "text-muted-foreground",
-          )}
-        >
-          <span className="truncate text-left">
-            {selected ? selected.vendor_name : "Select vendor..."}
-          </span>
-          <span className="ml-2 flex shrink-0 items-center gap-1">
-            {selected && (
-              <X
-                className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground"
-                aria-label="Clear vendor"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange("");
-                  setOpen(false);
-                }}
-              />
+      <div className="relative">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={vendorListId}
+            aria-label="Select vendor"
+            className={cn(
+              "flex h-9 w-full items-center justify-between px-3 py-2 pr-14 text-sm font-normal",
+              !selected && "text-muted-foreground",
             )}
+          >
+            <span className="truncate text-left">
+              {selected ? selected.vendor_name : "Select vendor..."}
+            </span>
             <ChevronsUpDown className="h-3 w-3 opacity-50" />
-          </span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start" sideOffset={0}>
+          </Button>
+        </PopoverTrigger>
+        {showClearButton ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Clear vendor"
+            className="absolute right-7 top-1/2 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onChange("");
+              setOpen(false);
+              setSearch("");
+            }}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        ) : null}
+      </div>
+      <PopoverContent className="w-80 p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search vendors..."
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList id={vendorListId} className="max-h-[200px]">
+          <CommandList id={vendorListId} className="max-h-48">
             <CommandEmpty>No vendors found.</CommandEmpty>
             <CommandGroup>
               {filtered.map((vendor) => (
