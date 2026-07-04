@@ -146,8 +146,11 @@ export const POST = withApiGuardrails<RouteParams>(
 
     const title = payload.title?.trim() || item.title;
     const description = payload.description?.trim() || item.description || title;
-    const assigneePersonId = payload.assignee_person_id ?? item.assignee_person_id ?? null;
-    const dueDate = payload.due_date ?? item.due_date ?? null;
+    const assigneePersonId =
+      payload.assignee_person_id === undefined
+        ? item.assignee_person_id ?? null
+        : payload.assignee_person_id;
+    const dueDate = payload.due_date === undefined ? item.due_date ?? null : payload.due_date;
 
     // Deterministic id: one stub per agenda item, no matter how many tasks
     // are created from it. Look up before insert (mirrors the email-tasks

@@ -220,6 +220,15 @@ describe("createItemTaskSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts null owner and due date overrides", () => {
+    const result = createItemTaskSchema.safeParse({
+      title: "Follow up with vendor",
+      assignee_person_id: null,
+      due_date: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects a non-uuid assignee_person_id", () => {
     const result = createItemTaskSchema.safeParse({ assignee_person_id: "nope" });
     expect(result.success).toBe(false);

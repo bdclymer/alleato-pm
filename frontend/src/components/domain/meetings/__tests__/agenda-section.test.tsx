@@ -340,6 +340,39 @@ describe("AgendaSection", () => {
     expect(screen.queryByTestId("meeting-action-items-section")).not.toBeInTheDocument();
   });
 
+  it("creates a linked task with title, owner, and due date from an expanded agenda item", async () => {
+    const user = userEvent.setup();
+    const detail = buildDetail();
+    detail.categories[0].items[0].assignee_person_id = "person-1";
+    detail.categories[0].items[0].due_date = "2026-07-15";
+
+    const { container } = renderWithQueryClient(
+      <AgendaSection projectId={42} meetingId="meeting-1" detail={detail} mode="agenda" />,
+    );
+
+    const agendaRow = container.querySelector('[data-item-id="item-1"]') as HTMLElement;
+    expect(agendaRow).not.toBeNull();
+
+    await user.click(within(agendaRow).getByLabelText("Expand item"));
+    await user.click(within(agendaRow).getByLabelText("Create task"));
+    await user.type(
+      within(agendaRow).getByPlaceholderText("Task: Open Item"),
+      "Confirm permit response",
+    );
+    await user.click(within(agendaRow).getByRole("button", { name: "Create" }));
+
+    await waitFor(() => {
+      expect(createItemTaskMock).toHaveBeenCalledWith({
+        itemId: "item-1",
+        data: {
+          title: "Confirm permit response",
+          assignee_person_id: "person-1",
+          due_date: "2026-07-15",
+        },
+      });
+    });
+  });
+
   it("calls useCreateItem when quick-adding an item at the bottom of a category", async () => {
     const user = userEvent.setup();
     renderWithQueryClient(

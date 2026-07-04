@@ -81,7 +81,7 @@ export type UpdateItemInput = z.infer<typeof updateItemBaseSchema>;
 export const createItemTaskSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  assignee_person_id: z.string().uuid().optional(),
-  due_date: dateString.optional(),
+  assignee_person_id: z.string().uuid().nullable().optional(),
+  due_date: dateString.nullable().optional(),
 });
 export type CreateItemTaskInput = z.infer<typeof createItemTaskSchema>;

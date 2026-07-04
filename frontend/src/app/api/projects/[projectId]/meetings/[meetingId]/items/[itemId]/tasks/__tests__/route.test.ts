@@ -262,6 +262,56 @@ describe("POST /api/projects/[projectId]/meetings/[meetingId]/items/[itemId]/tas
     );
   });
 
+  it("uses explicit null owner and due date instead of inheriting item defaults", async () => {
+    const itemChain = makeMaybeSingleChain({
+      data: {
+        id: ITEM_ID,
+        meeting_id: MEETING_ID,
+        title: "Item title",
+        description: "Item description",
+        assignee_person_id: PERSON_ID,
+        due_date: "2026-08-01",
+      },
+    });
+
+    const docLookupChain = makeMaybeSingleChain({ data: null });
+    const docInsert = jest.fn().mockResolvedValue({ error: null });
+
+    const taskInsertSingle = jest.fn(async () => ({
+      data: { id: "task-3", title: "Custom title" },
+      error: null,
+    }));
+    const taskInsertSelect = jest.fn(() => ({ single: taskInsertSingle }));
+    const taskInsert = jest.fn(() => ({ select: taskInsertSelect }));
+
+    const from = jest.fn((table: string) => {
+      if (table === "meeting_items") return itemChain;
+      if (table === "document_metadata") return { select: docLookupChain.select, insert: docInsert };
+      if (table === "tasks") return { insert: taskInsert };
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    createClientMock.mockResolvedValue({ from });
+
+    const response = await POST(
+      makePostRequest("42", MEETING_ID, ITEM_ID, {
+        title: "Custom title",
+        assignee_person_id: null,
+        due_date: null,
+      }),
+      callParams("42", MEETING_ID, ITEM_ID),
+    );
+
+    expect(response.status).toBe(201);
+    expect(taskInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Custom title",
+        assignee_person_id: null,
+        due_date: null,
+      }),
+    );
+  });
+
   it("returns 404 and performs no insert when the item doesn't belong to this meeting", async () => {
     const itemChain = makeMaybeSingleChain({ data: null });
     const docInsert = jest.fn();

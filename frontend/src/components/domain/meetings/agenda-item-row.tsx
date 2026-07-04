@@ -159,6 +159,10 @@ export function AgendaItemRow({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [taskTitleDraft, setTaskTitleDraft] = useState("");
+  const [taskAssigneeDraft, setTaskAssigneeDraft] = useState(
+    item.assignee_person_id ?? "unassigned",
+  );
+  const [taskDueDateDraft, setTaskDueDateDraft] = useState<string | null>(item.due_date);
 
   const updateItem = useUpdateItem(String(projectId), meetingId);
   const deleteItem = useDeleteItem(String(projectId), meetingId);
@@ -236,15 +240,31 @@ export function AgendaItemRow({
   function handleCreateTask() {
     const title = taskTitleDraft.trim();
     createItemTask.mutate(
-      { itemId: item.id, data: title ? { title } : {} },
+      {
+        itemId: item.id,
+        data: {
+          title: title || undefined,
+          assignee_person_id:
+            taskAssigneeDraft === "unassigned" ? null : taskAssigneeDraft,
+          due_date: taskDueDateDraft,
+        },
+      },
       {
         onSuccess: () => {
           setTaskTitleDraft("");
+          setTaskAssigneeDraft(item.assignee_person_id ?? "unassigned");
+          setTaskDueDateDraft(item.due_date);
           setTaskFormOpen(false);
           tasksQuery.refetch();
         },
       },
     );
+  }
+
+  function openTaskForm() {
+    setTaskAssigneeDraft(item.assignee_person_id ?? "unassigned");
+    setTaskDueDateDraft(item.due_date);
+    setTaskFormOpen((value) => !value);
   }
 
   return (
@@ -441,7 +461,7 @@ export function AgendaItemRow({
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => setTaskFormOpen((value) => !value)}
+                onClick={openTaskForm}
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Create task"
               >
@@ -450,11 +470,11 @@ export function AgendaItemRow({
             </div>
 
             {taskFormOpen ? (
-              <div className="flex items-center gap-2">
+              <div className="grid gap-2 sm:grid-cols-[minmax(10rem,1fr)_9rem_9rem_auto] sm:items-center">
                 <Input
                   value={taskTitleDraft}
                   onChange={(event) => setTaskTitleDraft(event.target.value)}
-                  placeholder={item.title}
+                  placeholder={`Task: ${item.title}`}
                   className="h-7 text-xs"
                   onKeyDown={(event) => {
                     if (event.key === "Enter") handleCreateTask();
@@ -462,6 +482,60 @@ export function AgendaItemRow({
                   }}
                   autoFocus
                 />
+                <Select value={taskAssigneeDraft} onValueChange={setTaskAssigneeDraft}>
+                  <SelectTrigger size="sm" className="h-7 text-xs" aria-label="Task owner">
+                    <SelectValue placeholder="Owner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {[user.first_name, user.last_name].filter(Boolean).join(" ") ||
+                          user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 justify-start text-xs font-normal"
+                      aria-label="Task due date"
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      {taskDueDateDraft
+                        ? format(parseDueDate(taskDueDateDraft)!, "PP")
+                        : "Due date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={parseDueDate(taskDueDateDraft)}
+                      onSelect={(date) =>
+                        setTaskDueDateDraft(date ? format(date, "yyyy-MM-dd") : null)
+                      }
+                      initialFocus
+                    />
+                    <div className="border-t p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setTaskDueDateDraft(null)}
+                      >
+                        Clear date
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button type="button" size="sm" className="h-7" onClick={handleCreateTask}>
+                  Create
+                </Button>
               </div>
             ) : null}
 
