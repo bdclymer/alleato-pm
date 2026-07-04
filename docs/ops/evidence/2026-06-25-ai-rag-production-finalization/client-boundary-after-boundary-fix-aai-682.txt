@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:client-boundary
+> node scripts/verify/verify_rag_client_boundary.mjs
+
+RAG client boundary check passed.

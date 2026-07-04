@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:metadata-boundary
+> node scripts/verify/verify_rag_document_metadata_boundary.mjs
+
+RAG document metadata boundary check passed.

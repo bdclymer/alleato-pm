@@ -308,7 +308,6 @@ describe("/api/admin/feedback GET", () => {
       args: ["page_path", "/product-board"],
     });
   });
-
   it("filters feedback items by category when requested", async () => {
     const calls: Record<string, QueryCall[]> = {
       admin_feedback_items: [],

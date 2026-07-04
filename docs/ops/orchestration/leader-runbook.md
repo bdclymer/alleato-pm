@@ -1,39 +1,69 @@
 # Leader Runbook
 
-Use this runbook when one Codex session is coordinating other worker sessions.
+Use this in the single leader session only.
 
-## Responsibilities
+## Goal
 
-1. Prioritize work into explicit initiatives and child tasks.
-2. Ensure every active worker has one non-overlapping ownership slice.
-3. Update `session-board.md` before or when work is assigned.
-4. Route every pending handoff into `review-queue.md`.
-5. Accept, reject, or re-scope review items with concrete notes.
-6. Keep Linear issue state and repo-side evidence aligned.
+Create order across parallel sessions by controlling ownership, evidence, and acceptance.
 
-## Review Loop
+## Start Of Day
 
-Run this loop every 30 to 60 minutes when multiple sessions are active:
+1. Open `docs/ops/memory/current-state.md`.
+2. Reset/confirm `session-board.md` statuses.
+3. Prioritize top tasks and assign one owner per task.
+4. Ensure each task has a Linear issue or sub-issue.
+5. Ensure each task has a clear definition of done.
 
-1. Check `session-board.md` for stale `Last update` timestamps.
-2. Run `npm run worker-status` to validate handoff completeness.
-3. Open any `Pending Review` items in `review-queue.md`.
-4. Accept only when the evidence is independently believable.
-5. Reject with an explicit rework note when status claims are vague, evidence is
-   missing, or scope drift occurred.
+## Assignment Rules
 
-## Acceptance Standard
+- One worker session = one active task.
+- Do not assign overlapping file ownership unless explicitly coordinated.
+- Every assignment must include:
+  - Scope
+  - Required evidence
+  - Stop condition
+  - Linear issue ID
+  - Whether subtasks are required before implementation
 
-Accept only if the review item includes:
+## Review Rules
 
-- clear owned scope
-- linked Linear issue
-- linked task doc or handoff
-- exact commands and outcome
-- evidence artifact path
-- next action or explicit closeout state
+A handoff is `Accepted` only if it includes:
 
-## Failure-Loudly Rule
+- Linear issue ID and URL
+- Latest Linear Codex update comment
+- Exact commands run
+- Pass/fail outcome summary
+- Artifact paths (logs/screenshots/reports)
+- Files changed
+- Known risks and next step
 
-If a worker does not have a board row, handoff, or review item, treat that as
-invalid progress and fix the control plane first.
+If any are missing, mark `Needs Rework` with explicit reason.
+
+Also post the same acceptance or rework reason to the Linear issue. Linear is the source of truth for issue state; `review-queue.md` is the local evidence ledger.
+
+## Fast Intake (No Manual Copy/Paste)
+
+Use filesystem-driven intake instead of chat relays:
+
+```bash
+node scripts/ops/worker-status.mjs
+# Optional date override:
+node scripts/ops/worker-status.mjs 2026-04-14
+```
+
+This reports missing handoff sections per worker session so you can disposition quickly.
+
+## Enforcement
+
+- Worker cannot start a new task while previous handoff is `Pending Review` or `Needs Rework`.
+- Unclaimed work is invalid and not merged.
+- "Fixed" without evidence is automatically rejected.
+- Codex work without a Linear issue is invalid.
+- Parent issues with multiple active slices must be decomposed into Linear sub-issues before workers start.
+
+## End Of Day
+
+1. Move unresolved items into tomorrow's priorities.
+2. Confirm `review-queue.md` statuses are current.
+3. Update `docs/ops/memory/current-state.md`.
+4. Add a weekly log entry in `docs/ops/logs/`.

@@ -23,6 +23,7 @@ import { RHFTimeField } from "@/components/forms/fields/RHFTimeField";
 import { useCreateMeeting, useMeetingSeriesList } from "@/hooks/use-meetings";
 import {
   useMeetingPlanningSuggestions,
+  type MeetingPlanningSuggestionMode,
   type MeetingPlanningRecap,
   type MeetingPlanningSuggestion,
 } from "@/hooks/use-meeting-planning-suggestions";
@@ -108,7 +109,9 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
   const createMeeting = useCreateMeeting(projectId);
   const { data: templateData } = useMeetingTemplateOptions();
   const { data: seriesData } = useMeetingSeriesList(projectId);
-  const planningSuggestions = useMeetingPlanningSuggestions(projectId);
+  const [planningMode, setPlanningMode] =
+    React.useState<MeetingPlanningSuggestionMode>("source");
+  const planningSuggestions = useMeetingPlanningSuggestions(projectId, planningMode);
   const { people, isLoading: isLoadingPeople } = usePeople({ type: "all" });
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = React.useState<Set<string>>(
     () => new Set(),
@@ -374,13 +377,17 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
                     size="xs"
                     onClick={() => {
                       setDismissedSuggestionIds(new Set());
+                      if (planningMode === "source") {
+                        setPlanningMode("ai");
+                        return;
+                      }
                       void planningSuggestions.refetch();
                     }}
                     disabled={planningSuggestions.isFetching}
                     className="w-fit"
                   >
                     <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                    Regenerate
+                    {planningMode === "ai" ? "Regenerate" : "Generate AI prep"}
                   </Button>
                 </div>
 

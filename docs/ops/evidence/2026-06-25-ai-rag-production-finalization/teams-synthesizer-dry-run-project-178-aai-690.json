@@ -1,0 +1,162 @@
+{
+  "project_id": 178,
+  "since": "2026-06-19",
+  "docs_seen": 3,
+  "emails": 3,
+  "teams": 0,
+  "skipped": 0,
+  "cards_written": 0,
+  "tasks_written": 0,
+  "extractions_attempted": 3,
+  "dry_run": true,
+  "errors": [],
+  "samples": [
+    {
+      "doc_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjmhAAA=",
+      "comm_type": "email",
+      "title": "Email: Re: Superior Beverage Exotec Install",
+      "text_chars": 4503,
+      "extraction_failed": false,
+      "extraction_error": null,
+      "what_changed": "The thread mainly advances coordination for the Superior Beverage Exotec install: Connor is trying to lock a meeting on schedule/alignment and asks about permitting, and Brandon counters that tomorrow at 10am is the preferred window if the team can make it. No substantive scope or design decision changes are stated here.",
+      "signals": 7,
+      "tasks": 3,
+      "sample_signals": [
+        {
+          "type": "decision",
+          "title": "Hold the project alignment meeting tomorrow at 10am if the team can make it.",
+          "evidence": "\"Lets do tomorrow 10am if that works for the rest of the team.\""
+        },
+        {
+          "type": "schedule_risk",
+          "title": "Permitting status is still uncertain and could affect install readiness or schedule.",
+          "evidence": "\"Also, any issues with permitting so far?\""
+        },
+        {
+          "type": "initiative_signal",
+          "title": "A prompt alignment meeting could reduce coordination friction and keep the install on track.",
+          "evidence": "\"We were looking to get a meeting set up to discuss schedule and alignment.\""
+        },
+        {
+          "type": "project_update",
+          "title": "Hy-Tek has now brought the installation lead into the email thread for the Superior project.",
+          "evidence": "\"I have on this email thread our installation lead for Superior.\""
+        },
+        {
+          "type": "project_update",
+          "title": "The current focus is coordination of schedule and alignment rather than design changes.",
+          "evidence": "\"We were looking to get a meeting set up to discuss schedule and alignment.\""
+        }
+      ],
+      "sample_tasks": [
+        {
+          "description": "Confirm whether the team can meet tomorrow at 10am for the Superior Beverage Exotec install alignment discussion.",
+          "assignee": "Brandon Clymer"
+        },
+        {
+          "description": "Respond on whether there are any permitting issues so far.",
+          "assignee": "Brandon Clymer"
+        },
+        {
+          "description": "Coordinate and attend the schedule/alignment meeting for the Superior install.",
+          "assignee": "Connor Clark"
+        }
+      ]
+    },
+    {
+      "doc_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEgSMJSAAA=",
+      "comm_type": "email",
+      "title": "Email: Fw: Superior Beverage Exotec Install and Sprinkler Touchbase",
+      "text_chars": 1724,
+      "extraction_failed": false,
+      "extraction_error": null,
+      "what_changed": "The project team has scheduled a dedicated Exotec install and sprinkler touchbase for 6/26, indicating the design/construction coordination is actively moving into an execution discussion. No substantive scope decision is stated in this email, but it confirms current attention on installation and sprinkler alignment.",
+      "signals": 3,
+      "tasks": 3,
+      "sample_signals": [
+        {
+          "type": "schedule_risk",
+          "title": "The project is at risk of schedule churn if the install and sprinkler coordination issues are not resolved in the 6/26 t",
+          "evidence": "Subject:  Superior Beverage Exotec Install and Sprinkler Touchbase When:  Fri 6/26/2026 11:00 AM - 12:00 PM"
+        },
+        {
+          "type": "project_update",
+          "title": "The team is holding a focused coordination meeting specifically around install and sprinkler topics, suggesting the proj",
+          "evidence": "Subject:  Superior Beverage Exotec Install and Sprinkler Touchbase"
+        },
+        {
+          "type": "flag",
+          "title": "The 6/26 touchbase may surface a scope or sequencing change related to install and sprinkler coordination.",
+          "evidence": "Subject:  Superior Beverage Exotec Install and Sprinkler Touchbase"
+        }
+      ],
+      "sample_tasks": [
+        {
+          "description": "Attend the scheduled Superior Beverage Exotec install and sprinkler touchbase meeting.",
+          "assignee": "Connor Clark"
+        },
+        {
+          "description": "Attend the scheduled Superior Beverage Exotec install and sprinkler touchbase meeting.",
+          "assignee": "Mike Parsons"
+        },
+        {
+          "description": "Attend the scheduled Superior Beverage Exotec install and sprinkler touchbase meeting.",
+          "assignee": "Alec Wehner"
+        }
+      ]
+    },
+    {
+      "doc_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjmgAAA=",
+      "comm_type": "email",
+      "title": "Email: Superior Beverage Exotec Install",
+      "text_chars": 1807,
+      "extraction_failed": false,
+      "extraction_error": null,
+      "what_changed": "The thread shifts from design/permit discussion into coordination for installation execution: Hy-Tek is trying to set a meeting with Superior's team and its installation lead to align schedule, and Connor is explicitly checking whether permitting has any issues so far.",
+      "signals": 7,
+      "tasks": 3,
+      "sample_signals": [
+        {
+          "type": "risk",
+          "title": "Permitting may still be an unresolved issue and could affect start readiness.",
+          "evidence": "Also, any issues with permitting so far?"
+        },
+        {
+          "type": "schedule_risk",
+          "title": "Schedule alignment is not yet set; the team may need to move the coordination meeting to next week.",
+          "evidence": "Is tomorrow a good day for you and the team or do we need to look at next week?"
+        },
+        {
+          "type": "initiative_signal",
+          "title": "Early installation coordination with the installation lead may improve schedule alignment and reduce friction before fie",
+          "evidence": "I have on this email thread our installation lead for Superior."
+        },
+        {
+          "type": "project_update",
+          "title": "The project has moved into installation planning/coordination, indicating field execution is approaching.",
+          "evidence": "I have on this email thread our installation lead for Superior."
+        },
+        {
+          "type": "open_question",
+          "title": "Permitting status is still being actively checked rather than confirmed complete.",
+          "evidence": "Also, any issues with permitting so far?"
+        }
+      ],
+      "sample_tasks": [
+        {
+          "description": "Schedule a meeting with Superior's team and the installation lead to discuss schedule and alignment.",
+          "assignee": "Connor Clark"
+        },
+        {
+          "description": "Confirm whether tomorrow works for the team or propose next week for the installation coordination meeting.",
+          "assignee": "Brandon Clymer"
+        },
+        {
+          "description": "Confirm permitting status and report whether there are any issues so far.",
+          "assignee": "Kebba Mass"
+        }
+      ]
+    }
+  ],
+  "capped_at_max_extractions": 3
+}

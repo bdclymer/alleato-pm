@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   Button,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -54,6 +55,8 @@ export function FeedbackDetail({
   sendingToGitHub,
   deletingId,
   onUpdateStatus,
+  onUpdateTitle,
+  onUpdateCategory,
   onSendToGitHub,
   onDelete,
   onRefresh,
@@ -65,6 +68,8 @@ export function FeedbackDetail({
   sendingToGitHub: boolean;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
   onRefresh: () => void;
@@ -73,6 +78,8 @@ export function FeedbackDetail({
 }) {
   const displayStatus = toDisplayStatus(item.status);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [titleValue, setTitleValue] = useState(item.title);
+  const [categoryValue, setCategoryValue] = useState(item.category ?? "");
   const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } =
     useConfirm();
   const displayTitle = displayAdminFeedbackTitle({
@@ -106,6 +113,11 @@ export function FeedbackDetail({
     };
   })();
   const PriorityIcon = priorityMeta.icon as LucideIcon;
+
+  useEffect(() => {
+    setTitleValue(item.title);
+    setCategoryValue(item.category ?? "");
+  }, [item.category, item.id, item.title]);
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -244,6 +256,16 @@ export function FeedbackDetail({
             </DetailPropertyItem>
 
             <DetailPropertyItem
+              icon={Link2}
+              href={item.page_url}
+              external
+              className="min-w-32 flex-1"
+              title={item.page_url}
+            >
+              Open submitted page
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
               icon={User}
               className="min-w-0 max-w-40 shrink"
               title={submitterLabel(item)}
@@ -266,7 +288,70 @@ export function FeedbackDetail({
         </div>
 
         <section className="space-y-4">
+          <SectionRuleHeading>Details</SectionRuleHeading>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Title</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={titleValue}
+                onChange={(event) => setTitleValue(event.target.value)}
+                placeholder="Edit title"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  titleValue.trim().length === 0 ||
+                  titleValue.trim() === item.title
+                }
+                onClick={() => onUpdateTitle(item.id, titleValue.trim())}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Category</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={categoryValue}
+                onChange={(event) => setCategoryValue(event.target.value)}
+                placeholder="Add category"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  (categoryValue.trim() || "") === (item.category ?? "")
+                }
+                onClick={() =>
+                  onUpdateCategory(item.id, categoryValue.trim() || null)
+                }
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
           <SectionRuleHeading>Feedback</SectionRuleHeading>
+
+          <div className="space-y-1.5 text-sm">
+            {item.target_text ? (
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {item.target_text}
+              </p>
+            ) : null}
+          </div>
 
           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
             {item.comment}
@@ -287,18 +372,9 @@ export function FeedbackDetail({
               />
             </Button>
           )}
-
-          <a
-            href={item.page_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 block break-all text-sm text-foreground hover:text-primary hover:underline"
-          >
-            {item.page_url}
-          </a>
         </section>
 
-        <section className="space-y-3 pt-4">
+        <section className="space-y-3">
           <CommentsSection
             feedbackItemId={item.id}
             commentInputRef={commentInputRef}

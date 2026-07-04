@@ -49,9 +49,6 @@ import {
 } from "@/lib/supabase/current-user";
 import { apiFetch } from "@/lib/api-client";
 import { headerSelectTriggerClassName } from "./header-control-styles";
-import {
-  shouldUseCompactSiteHeader,
-} from "./site-header-layout";
 
 type PermissionUserBreadcrumbRecord = {
   personId: string;
@@ -97,7 +94,7 @@ function SidebarToggleButton() {
       size="icon-sm"
       onClick={toggleSidebar}
       aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
-      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-accent hover:text-foreground"
+      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-accent hover:text-foreground hidden md:inline-flex"
     >
       {isExpanded ? (
         <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
@@ -121,36 +118,8 @@ export function SiteHeader() {
   );
   const isDeveloper = userType === "developer";
   const [user, setUser] = React.useState<User | null>(null);
-  const [useCompactHeader, setUseCompactHeader] = React.useState(false);
   const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
     React.useState<string | null>(null);
-  const headerRef = React.useRef<HTMLElement | null>(null);
-
-  React.useLayoutEffect(() => {
-    const element = headerRef.current;
-    if (!element) return;
-
-    const updateHeaderMode = () => {
-      const nextWidth = element.getBoundingClientRect().width;
-      setUseCompactHeader(shouldUseCompactSiteHeader(nextWidth));
-    };
-
-    updateHeaderMode();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateHeaderMode);
-      return () => window.removeEventListener("resize", updateHeaderMode);
-    }
-
-    const observer = new ResizeObserver(() => {
-      updateHeaderMode();
-    });
-    observer.observe(element);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   React.useEffect(() => {
     const supabase = createClient();
@@ -246,7 +215,6 @@ export function SiteHeader() {
 
   return (
     <header
-      ref={headerRef}
       className="relative z-40 flex h-12 shrink-0 items-center text-foreground shadow-sm"
       {...feedbackTargetProps("app.site-header")}
     >
@@ -254,30 +222,28 @@ export function SiteHeader() {
         {/* ── Left: Sidebar toggle + Mobile logo + Breadcrumbs (desktop) ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Sidebar toggle — desktop only, left of breadcrumbs */}
-          {!useCompactHeader && <SidebarToggleButton />}
+          <SidebarToggleButton />
 
           {/* Mobile: Logo on left */}
-          {useCompactHeader && (
-            <Link
-              href="/"
-              className="flex items-center"
-              aria-label="Home"
-            >
-              <Image
-                src="/Alleato-Group-Logo_Dark.png"
-                alt="Alleato"
-                width={96}
-                height={21}
-                priority
-                className="h-auto w-24 dark:invert"
-                style={{ height: "auto" }}
-              />
-            </Link>
-          )}
+          <Link
+            href="/"
+            className="flex items-center md:hidden"
+            aria-label="Home"
+          >
+            <Image
+              src="/Alleato-Group-Logo_Dark.png"
+              alt="Alleato"
+              width={96}
+              height={21}
+              priority
+              className="h-auto w-24 dark:invert"
+              style={{ height: "auto" }}
+            />
+          </Link>
 
           {/* Breadcrumbs — Desktop */}
-          {!useCompactHeader && breadcrumbs.length > 1 && (
-            <div className="flex items-center gap-1 text-xs min-w-0 overflow-hidden">
+          {breadcrumbs.length > 1 && (
+            <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
               <BreadcrumbTrail
                 items={breadcrumbs}
                 listClassName="text-xs"
@@ -292,62 +258,58 @@ export function SiteHeader() {
         </div>
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
-        {!useCompactHeader && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ProjectSelector
-              projectId={nav.projectId}
-              currentProject={nav.currentProject}
-              projects={nav.projects}
-              loadingProjects={nav.loadingProjects}
-              onFetchProjects={nav.fetchProjects}
-              onProjectSelect={nav.handleProjectSelect}
-              onViewAll={() => router.push("/")}
-            />
-            <ToolsDropdown
-              projectId={nav.projectId}
-              currentProject={nav.currentProject}
-              projects={nav.projects}
-              loadingProjects={nav.loadingProjects}
-              onFetchProjects={nav.fetchProjects}
-              onProjectSelect={nav.handleProjectSelect}
-              onViewAll={() => router.push("/")}
-              activeToolName={nav.activeToolName}
-              permissions={permissions}
-              isAppAdmin={isAppAdmin}
-              userType={userType}
-              isDeveloper={isDeveloper}
-              userEmail={user?.email ?? null}
-            />
-            <AiChatButton />
-            <FeedbackButton />
-            <CommentsSidebarButton />
-            <React.Suspense fallback={null}>
-              <NotificationBell />
-            </React.Suspense>
-            <HeaderUserMenu
-              user={user}
-              projectId={nav.projectId}
-              activeToolName={nav.activeToolName}
-              permissions={permissions}
-              isAppAdmin={isAppAdmin}
-              userType={userType}
-            />
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          <ProjectSelector
+            projectId={nav.projectId}
+            currentProject={nav.currentProject}
+            projects={nav.projects}
+            loadingProjects={nav.loadingProjects}
+            onFetchProjects={nav.fetchProjects}
+            onProjectSelect={nav.handleProjectSelect}
+            onViewAll={() => router.push("/")}
+          />
+          <ToolsDropdown
+            projectId={nav.projectId}
+            currentProject={nav.currentProject}
+            projects={nav.projects}
+            loadingProjects={nav.loadingProjects}
+            onFetchProjects={nav.fetchProjects}
+            onProjectSelect={nav.handleProjectSelect}
+            onViewAll={() => router.push("/")}
+            activeToolName={nav.activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+            isDeveloper={isDeveloper}
+            userEmail={user?.email ?? null}
+          />
+          <AiChatButton />
+          <FeedbackButton />
+          <CommentsSidebarButton />
+          <React.Suspense fallback={null}>
+            <NotificationBell />
+          </React.Suspense>
+          <HeaderUserMenu
+            user={user}
+            projectId={nav.projectId}
+            activeToolName={nav.activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+          />
+        </div>
 
         {/* Mobile: Menu button on right */}
-        {useCompactHeader && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpenMobile(true)}
-            aria-label="Open menu"
-            className="h-12 w-12 shrink-0 text-foreground"
-          >
-            <Menu className="size-6" strokeWidth={1.8} />
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpenMobile(true)}
+          aria-label="Open menu"
+          className="md:hidden h-12 w-12 shrink-0 text-foreground"
+        >
+          <Menu className="size-6" strokeWidth={1.8} />
+        </Button>
       </div>
     </header>
   );

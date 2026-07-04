@@ -1,0 +1,115 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 14,
+  "minConfidence": 0.85,
+  "compilerJobsConsidered": 280,
+  "documentsEligible": 0,
+  "documentsUpdated": 0,
+  "taskLinksEligible": 162,
+  "taskLinksUpdated": 0,
+  "bySource": [],
+  "samples": [],
+  "taskLinkSamples": [
+    {
+      "id": "ca7caed0-5393-4bd2-8a68-cc2789938122",
+      "title": "Schedule governance call with Jeff",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "document_title": "Brandon Clymer and Ben Golden",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "fac353d8-c461-42f0-a377-8755516ed825",
+      "title": "Update holding company loan setup",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "document_title": "Brandon Clymer and Ben Golden",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "73f3fa4d-a7d2-4429-8903-881a7e317784",
+      "title": "Define trust governance and trustee preferences",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "document_title": "Brandon Clymer and Ben Golden",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "fc50b896-1abc-4cc3-9ad2-054c6552cf66",
+      "title": "Finalize trust and holding company MSAs",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "document_title": "Brandon Clymer and Ben Golden",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "b952d6af-b5bf-4555-a25c-ce03604673a3",
+      "title": "Prepare year-end funding projections",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8CKZZZE682V1PHGV8E93QA",
+      "document_title": "Brandon Clymer and Ben Golden",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "930b70e0-c09b-4df6-97fd-53d518be0be9",
+      "title": "Add GL subcategories for QuickBooks",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "document_title": "Accounting Review meeting",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "8fcaf927-42d2-48b9-9588-fb7eea3b0352",
+      "title": "Prepare consolidated payroll journal entry",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "document_title": "Accounting Review meeting",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "8f5c7833-379e-41e5-b358-f3350fc182a3",
+      "title": "Add software and recruitment GL codes",
+      "source_system": "fireflies",
+      "metadata_id": "01KV8VH4Z228ZBQ7RA2WJA80PZ",
+      "document_title": "Accounting Review meeting",
+      "project_id": 60,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "1ba712a4-9467-4e6b-bd93-8a2911143284",
+      "title": "Align folder content and weekly submissions",
+      "source_system": "fireflies",
+      "metadata_id": "01KVB90K9WTZDM4S0KA497DZKZ",
+      "document_title": "Marketing Collaboration (weekly folder update)",
+      "project_id": 89,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    },
+    {
+      "id": "57d12e04-2a1e-409d-9333-496201b39e82",
+      "title": "Send marketing pictures to Aizen",
+      "source_system": "fireflies",
+      "metadata_id": "01KVB90K9WTZDM4S0KA497DZKZ",
+      "document_title": "Marketing Collaboration (weekly folder update)",
+      "project_id": 89,
+      "previous_project_id": null,
+      "previous_project_ids": []
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+
+> alleato-procore@0.1.0 rag:verify:meeting-pipeline
+> node scripts/verify/verify_meeting_pipeline_contract.mjs
+

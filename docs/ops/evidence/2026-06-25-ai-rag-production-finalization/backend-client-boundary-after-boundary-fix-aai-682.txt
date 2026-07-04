@@ -1,0 +1,5 @@
+
+> alleato-procore@0.1.0 rag:verify:backend-client-boundary
+> node scripts/verify/verify_backend_rag_table_boundary.mjs
+
+Backend RAG table boundary check passed.

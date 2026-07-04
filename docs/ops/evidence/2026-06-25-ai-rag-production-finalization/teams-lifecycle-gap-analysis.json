@@ -1,0 +1,174 @@
+{
+  "generated_at": "2026-06-25T20:52:44.467Z",
+  "missingDisposition": [
+    {
+      "id": "teamsdm_52a0f1bcb0e874cd_2026-06-25",
+      "title": "Teams DM Conversation: Sprinkler Division",
+      "project_id": null,
+      "created_at": "2026-06-25T18:43:33.814Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "matched_project_signal_pattern:\\bsprinkler\\b"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-25T14:48:13.733Z"
+        }
+      ]
+    },
+    {
+      "id": "teamsdm_b1b826e5a3c67c7a_2026-06-22",
+      "title": "Teams DM Conversation: Administration Communication",
+      "project_id": null,
+      "created_at": "2026-06-24T08:43:31.546Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-24T04:44:50.183Z"
+        }
+      ]
+    },
+    {
+      "id": "teamsdm_c9803ef8ea13553c_2026-06-18",
+      "title": "Teams DM Conversation: Hat Club",
+      "project_id": null,
+      "created_at": "2026-06-24T05:27:12.894Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-24T01:51:06.600Z"
+        }
+      ]
+    },
+    {
+      "id": "teamsdm_c9803ef8ea13553c_2026-06-16",
+      "title": "Teams DM Conversation: Hat Club",
+      "project_id": null,
+      "created_at": "2026-06-24T05:26:20.963Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-24T01:51:10.804Z"
+        }
+      ]
+    },
+    {
+      "id": "teamsdm_b1b826e5a3c67c7a_2026-06-18",
+      "title": "Teams DM Conversation: Administration Communication",
+      "project_id": null,
+      "created_at": "2026-06-24T05:23:18.466Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-24T01:56:17.484Z"
+        }
+      ]
+    },
+    {
+      "id": "teamsdm_f8040d175e4c02da_2026-06-23",
+      "title": "Teams DM Conversation: Accounting Team",
+      "project_id": null,
+      "created_at": "2026-06-24T05:05:26.041Z",
+      "appc": {
+        "project_applicability": "project_assignment_review",
+        "project_required": true,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern"
+      },
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "project_id": null,
+          "metadata": {
+            "type": "teams_dm_conversation",
+            "source": "microsoft_graph",
+            "category": "teams_message",
+            "embedding_path": "microsoft_graph.embed_graph_document"
+          },
+          "updated_at": "2026-06-24T01:06:03.038Z"
+        }
+      ]
+    }
+  ],
+  "unembedded": [
+    {
+      "id": "teamsdm_4ebcf74f0f650a96_2026-06-25",
+      "title": "Teams DM Conversation: 19:0b91490a2",
+      "status": "raw_ingested",
+      "created_at": "2026-06-26T00:43:15.388Z",
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "jobs": []
+    },
+    {
+      "id": "teamsdm_fa6033a35c57ae68_2026-06-25",
+      "title": "Teams DM Conversation: 19:5ccd645d-",
+      "status": "raw_ingested",
+      "created_at": "2026-06-25T16:41:33.524Z",
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "jobs": [
+        {
+          "status": "failed_permanent",
+          "updated_at": "2026-06-25T12:42:54.221Z"
+        }
+      ]
+    }
+  ]
+}

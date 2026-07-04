@@ -1,0 +1,24 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-32-44-414Z-8e428150
+
+[1/5] realworld-last-five-emails … ✓ pass (12460ms, 1 tools)
+[2/5] realworld-urgent-inbox … ✓ pass (9588ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✓ pass (10276ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✗ fail (9587ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer does separate a likely urgent construction thread from informational inbox items, but it overstates ownership, includes unsupported draft guidance, and misses a true phishing/suspicious judgment for the GitHub email. The thread summaries are reasonably concise, but the response-path logic is inconsistent and not always evidence-backed.
+[5/5] realworld-email-reply-triage … ✓ pass (8840ms, 1 tools)
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-32-44-414Z-8e428150/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-32-44-414Z-8e428150/summary.md
+Pass: 4/5

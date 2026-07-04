@@ -67,11 +67,16 @@ evidence filled in. If any item cannot be completed, change `Status` to
 ## Files Changed
 
 - `frontend/src/lib/documents/email.ts`
+- `frontend/next.config.ts`
+- `frontend/src/lib/app-surface/app-surface.generated.json`
 - `frontend/src/app/api/document-center/[recordType]/[recordId]/email/route.ts`
 - `frontend/src/components/documents/DocumentDeliveryDialog.tsx`
+- `frontend/src/lib/change-orders/commitment-change-order-pdf.ts`
 - `frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx`
+- `frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf/route.ts`
 - `frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/recipients/route.ts`
 - `frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email/route.ts`
+- `docs/architecture/PROJECT-MAP.md`
 - `docs/ops/tasks/2026-07-02-commitment-change-order-email-delivery.md`
 
 ## Evidence
@@ -84,6 +89,8 @@ evidence filled in. If any item cannot be completed, change `Status` to
 | Exact record live send | Resend id `fa04d15f-b54a-4233-a69c-87d943007b54` | Pass | Sent against commitment CCO `aa35f3c3-5ec0-4568-b126-f8671b4791cc` with attachment `CCO-001-CCO-for-1-change-event-000125.pdf`. |
 | Exact record audit read-back | `email_events.resend_id = fa04d15f-b54a-4233-a69c-87d943007b54` | Pass | Row `22fd3fec-45d2-4258-b1b3-cb3e53cc070f` recorded `status=sent`, `record_type=commitment-change-order`, and `bcc_emails=[mharison@alleatogroup.com]`. |
 | Exact record attachment failure found and fixed | `column projects.city does not exist` | Pass | Canonical commitment CCO PDF helper now reads `projects.state` plus `summary_metadata.postal_code` instead of nonexistent `projects.city` / `projects.zip_code`. |
+| Pre-commit force-trace guardrail | `ERROR: PDF-rendering route(s) not force-traced in next.config.ts` | Pass | Added the new commitment CCO email route to `outputFileTracingIncludes` so Chromium is bundled for production PDF email rendering. |
+| Project map guardrail | `npm run map:project` | Pass | Regenerated `docs/architecture/PROJECT-MAP.md` and `frontend/src/lib/app-surface/app-surface.generated.json` after the new API/email surface changed the project map. |
 
 ## Risks / Gaps
 

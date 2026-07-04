@@ -537,7 +537,6 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
   if (category) {
     query = query.eq("category", category);
   }
-
   if (excludeBoardItems) {
     query = query.neq("page_path", "/product-board");
   }

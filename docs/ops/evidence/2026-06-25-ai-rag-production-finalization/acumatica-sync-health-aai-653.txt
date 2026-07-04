@@ -1,0 +1,21 @@
+
+> alleato-procore@0.1.0 verify:acumatica-sync-health
+> node scripts/verify/verify-acumatica-sync-health.mjs
+
+Render cron: suspended 0 */2 * * * python3 scripts/run_acumatica_financial_sync.py
+Latest run: project_budgets success Wed Jun 24 2026 20:20:56 GMT-0400 (Eastern Daylight Time)
+Checked entities: 12
+Acumatica sync health verifier: FAIL
+- Render cron is suspended
+- projects last_success_at is stale (1243m)
+- vendors last_success_at is stale (1243m)
+- change_orders last_success_at is stale (1242m)
+- change_orders_projection last_success_at is stale (1242m)
+- subcontracts last_success_at is stale (1242m)
+- purchase_orders last_success_at is stale (1242m)
+- ap_bills last_success_at is stale (1242m)
+- commitments_projection last_success_at is stale (1241m)
+- ar_invoices last_success_at is stale (1241m)
+- ar_payments last_success_at is stale (1241m)
+- ap_checks last_success_at is stale (1241m)
+- project_budgets last_success_at is stale (1241m)

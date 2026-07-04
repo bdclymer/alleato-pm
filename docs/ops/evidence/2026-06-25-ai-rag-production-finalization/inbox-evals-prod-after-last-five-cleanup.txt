@@ -1,0 +1,25 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-50-12-824Z-31094afd
+
+[1/5] realworld-last-five-emails … ✗ fail (13711ms, 1 tools)
+    ! judge email_operator score 2 < 4: The answer lists five inbox items, but it does not fit the prompt cleanly and mixes in unsupported judgments. It also fails the email-operator rubric because it does not clearly separate confirmed user-owned actions from mere inbox items, and it makes a likely mistaken recommendation by labeling sign-in/security messages as Ignore without evidence-backed escalation. The threading summaries are concise, but the response path logic is weak and one item appears to be a reply thread rather than a standalone email. Overall, it is usable as an inbox excerpt, but not a high-quality operator response.
+[2/5] realworld-urgent-inbox … ✓ pass (8218ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✓ pass (12373ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✓ pass (11830ms, 1 tools)
+[5/5] realworld-email-reply-triage … ✗ fail (12053ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer identifies one likely reply-needed email and separates some watch/no-reply items, but it does not convincingly show today’s emails, overstates certainty without enough evidence, and gives only thin thread/context handling. It is usable as triage, but not strong enough for a passing Email Operator result.
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-50-12-824Z-31094afd/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-50-12-824Z-31094afd/summary.md
+Pass: 3/5

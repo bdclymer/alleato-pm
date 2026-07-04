@@ -1,0 +1,20 @@
+[
+  {
+    "name": "alleato-rfi-email-ingest",
+    "id": "crn-d8unstbsq97s73cc9q80",
+    "hasAppDbPressureGuard": true,
+    "hasDatabaseUrl": true
+  },
+  {
+    "name": "alleato-email-digest",
+    "id": "crn-d8qog8ugvqtc73e230p0",
+    "hasAppDbPressureGuard": true,
+    "hasDatabaseUrl": true
+  },
+  {
+    "name": "alleato-graph-subscription-reconcile",
+    "id": "crn-d8qo05egvqtc73e1fd30",
+    "hasAppDbPressureGuard": true,
+    "hasDatabaseUrl": true
+  }
+]

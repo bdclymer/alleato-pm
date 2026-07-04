@@ -43,7 +43,6 @@ import { StatusBadge } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
 import {
   ContentSectionStack,
-  DetailLayout,
   DetailPanel,
   LabelValueRow,
   PageShell,
@@ -534,6 +533,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
+  const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
   // <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp.
@@ -545,13 +545,14 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   return (
     <ContentSectionStack className="pb-20">
       <section className="pt-4">
-        <DetailLayout sidebar={<FinancialSummaryPanel commitment={commitment} />}>
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+          <div className="space-y-6">
             {/* General Information */}
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-8 pb-0" />
               <div className="space-y-8">
-                <div className="flex flex-col gap-8 xl:flex-row">
-                  <DetailFieldGrid columns={1} className="flex-1">
+                <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+                  <DetailFieldGrid columns={1}>
                     <DetailField label={isPO ? "PO #" : "Subcontract #"}>
                       {safeNumber(commitment.number) || "—"}
                     </DetailField>
@@ -619,9 +620,15 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         onSave={(v) => onSaveField("executed", v === "true")}
                       />
                     </DetailField>
+                    <DetailField label="Private Commitment">
+                      {commitment.private ? "Yes" : "No"}
+                    </DetailField>
+                    <DetailField label="Non-Admin SOV">
+                      {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
+                    </DetailField>
                   </DetailFieldGrid>
 
-                  <DetailFieldGrid columns={1} className="flex-1">
+                  <DetailFieldGrid columns={1}>
                     {!isPO ? (
                       <DetailField label="Start Date">
                         <InlineEditField
@@ -712,12 +719,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         />
                       </DetailField>
                     )}
-                    <DetailField label="Private Commitment">
-                      {commitment.private ? "Yes" : "No"}
-                    </DetailField>
-                    <DetailField label="Non-Admin SOV">
-                      {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
-                    </DetailField>
                   </DetailFieldGrid>
                 </div>
 
@@ -844,7 +845,12 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                 </CollapsibleContent>
               </Collapsible>
             </DetailPanel>
-        </DetailLayout>
+          </div>
+
+          <aside>
+            <FinancialSummaryPanel commitment={commitment} />
+          </aside>
+        </div>
       </section>
 
       {/* Schedule of Values */}
@@ -982,11 +988,12 @@ export default function CommitmentDetailPage() {
 
   // Persist a single field edited inline on the detail page. PUT validates
   // against the full edit schema and only writes the provided key; on success
-  // we refresh the detail (and list) so the page reflects the change. Approved
-  // commitments remain editable here — only SOV line items stay locked once
-  // approved (enforced independently in ScheduleOfValuesTab).
+  // we refresh the detail (and list) so the page reflects the change.
   const handleSaveField = useCallback(
     async (field: string, value: string | number | boolean | null) => {
+      if ((commitment?.status ?? "").trim().toLowerCase() === "approved" && field !== "status") {
+        throw new Error("Approved commitments are read-only. Change the status first to edit this record.");
+      }
       await apiFetch(`/api/commitments/${commitmentId}`, {
         method: "PUT",
         body: JSON.stringify({ [field]: value }),
@@ -1046,9 +1053,7 @@ export default function CommitmentDetailPage() {
 
   const sovLabel = isPO ? "PO SOV" : "SOV";
   const showSubcontractorSovTab = !isPO;
-  // The full edit form bundles SOV line-item editing together with general
-  // fields in one submission, so it stays gated once approved even though
-  // general fields are independently editable inline on this page.
+
   const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
 
   const headerActions = (

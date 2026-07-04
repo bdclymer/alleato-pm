@@ -76,7 +76,6 @@ import {
   getAssignedAgent,
   getDispatchStatus,
   notifyFeedbackInboxFailure,
-  relativeTime,
   toDisplayStatus,
   toolLabelFromPath,
 } from "./helpers";
@@ -147,6 +146,20 @@ const FEEDBACK_BOARD_COLUMNS: BoardColumnDefinition[] = STATUS_OPTIONS
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function formatFeedbackResultSummary({
+  visibleCount,
+  currentFilterLabel,
+  currentTabLabel,
+}: {
+  visibleCount: number;
+  currentFilterLabel: string;
+  currentTabLabel: string;
+}) {
+  const scope = `${currentFilterLabel} ${currentTabLabel}`.trim().toLowerCase();
+  const noun = visibleCount === 1 ? "item" : "items";
+  return `${visibleCount} ${noun} in ${scope}`;
 }
 
 function loadFeedbackLayout() {
@@ -625,6 +638,50 @@ export default function FeedbackInboxPage() {
     }
   }
 
+  async function updateCategory(id: string, category: string | null) {
+    setUpdatingId(id);
+    try {
+      await apiFetch("/api/admin/feedback", {
+        method: "PATCH",
+        body: JSON.stringify({ id, category }),
+      });
+      toast.success(category ? "Category updated" : "Category cleared");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "update-feedback-category",
+        title: "Could not update category",
+        fallback: "The feedback category could not be updated.",
+        error: err,
+        metadata: { feedbackId: id, category },
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function updateTitle(id: string, title: string) {
+    setUpdatingId(id);
+    try {
+      await apiFetch("/api/admin/feedback", {
+        method: "PATCH",
+        body: JSON.stringify({ id, title }),
+      });
+      toast.success("Title updated");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "update-feedback-title",
+        title: "Could not update title",
+        fallback: "The feedback title could not be updated.",
+        error: err,
+        metadata: { feedbackId: id },
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   async function applyBulkStatus() {
     if (bulkStatus === "none" || selectedIds.length === 0) return;
     setBulkUpdating(true);
@@ -1012,6 +1069,8 @@ export default function FeedbackInboxPage() {
               updatingId={updatingId}
               onDelete={deleteItem}
               onSendToGitHub={sendToGitHub}
+              onUpdateTitle={updateTitle}
+              onUpdateCategory={updateCategory}
               onUpdateStatus={updateStatus}
               onRefresh={fetchItems}
             />
@@ -1143,6 +1202,12 @@ function FeedbackListPane({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   const splitPage = useSplitPage();
+  const resultSummary = formatFeedbackResultSummary({
+    visibleCount: items.length,
+    currentFilterLabel,
+    currentTabLabel,
+  });
+
   function handleSelect(id: string) {
     onSelect(id);
     if (!splitPage.isDesktop) splitPage.onClose();
@@ -1173,6 +1238,7 @@ function FeedbackListPane({
     >
       <div className="border-b border-border/70 bg-background px-4 py-4">
         <FeedbackWorkspaceHeader
+          resultSummary={resultSummary}
           activeFilterCount={activeFilterCount}
           activeTab={activeTab}
           categoryFilter={categoryFilter}
@@ -1331,10 +1397,17 @@ function FeedbackBoardPane({
   onToolFilterChange: (value: string) => void;
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
+  const resultSummary = formatFeedbackResultSummary({
+    visibleCount: items.length,
+    currentFilterLabel,
+    currentTabLabel,
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="shrink-0 border-b border-border/70 bg-background px-4 py-4">
         <FeedbackWorkspaceHeader
+          resultSummary={resultSummary}
           activeFilterCount={activeFilterCount}
           activeTab={activeTab}
           categoryFilter={categoryFilter}
@@ -1565,6 +1638,7 @@ function BulkEditBar({
 }
 
 function FeedbackWorkspaceHeader({
+  resultSummary,
   activeFilterCount,
   activeTab,
   categoryFilter,
@@ -1590,6 +1664,7 @@ function FeedbackWorkspaceHeader({
   onToolFilterChange,
   onViewModeChange,
 }: {
+  resultSummary: string;
   activeFilterCount: number;
   activeTab: FeedbackInboxTab;
   categoryFilter: string;
@@ -1616,19 +1691,33 @@ function FeedbackWorkspaceHeader({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
-          Feedback
-        </h1>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
+            Feedback
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{resultSummary}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {trailingActions}
+          <FeedbackViewMenu
+            value={viewMode}
+            onValueChange={onViewModeChange}
+          />
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <ExpandableSearch
-          value={searchValue}
-          onChange={onSearchChange}
-          placeholder="Search feedback"
-          ariaLabel="Search feedback"
-        />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-[14rem] flex-1">
+          <ExpandableSearch
+            value={searchValue}
+            onChange={onSearchChange}
+            placeholder="Search feedback"
+            ariaLabel="Search feedback"
+            defaultExpanded
+          />
+        </div>
         <FeedbackFilterPopover
           activeCount={activeFilterCount}
           activeTab={activeTab}
@@ -1651,11 +1740,6 @@ function FeedbackWorkspaceHeader({
         <FeedbackSortPopover
           sortBy={sortBy}
           onSortChange={onSortChange}
-        />
-        {trailingActions}
-        <FeedbackViewMenu
-          value={viewMode}
-          onValueChange={onViewModeChange}
         />
       </div>
     </div>
@@ -2071,7 +2155,7 @@ function FeedbackStatusTabs({
   const showSelectionControl = typeof onToggleSelectAllVisible === "function";
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-4">
+    <div className="mt-2 flex items-center justify-between gap-4 border-b border-border/70">
       <div className="flex items-center gap-4">
         {FEEDBACK_STATUS_TABS.map((tab) => (
           <Button
@@ -2166,6 +2250,8 @@ function FeedbackDetailPane({
   updatingId,
   onDelete,
   onSendToGitHub,
+  onUpdateTitle,
+  onUpdateCategory,
   onUpdateStatus,
   onRefresh,
 }: {
@@ -2176,6 +2262,8 @@ function FeedbackDetailPane({
   updatingId: string | null;
   onDelete: (id: string) => void;
   onSendToGitHub: (id: string) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onRefresh: () => void;
 }) {
@@ -2197,6 +2285,8 @@ function FeedbackDetailPane({
         sendingToGitHub={sendingToGitHub}
         deletingId={deletingId}
         onUpdateStatus={onUpdateStatus}
+        onUpdateTitle={onUpdateTitle}
+        onUpdateCategory={onUpdateCategory}
         onSendToGitHub={onSendToGitHub}
         onDelete={onDelete}
         onRefresh={onRefresh}

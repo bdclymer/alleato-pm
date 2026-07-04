@@ -40,7 +40,6 @@ function FeedbackQueueItem({
 }) {
   const displayStatus = toDisplayStatus(item.status);
   const meta = STATUS_META[displayStatus];
-  const StatusIcon = meta.icon;
   const isSelected = selectedId === item.id;
   const itemDisplayTitle = displayAdminFeedbackTitle({
     storedTitle: item.title,
@@ -54,6 +53,7 @@ function FeedbackQueueItem({
   const sourceLabel = item.page_title ?? item.page_path;
   const bulkSelected = selectedIds.includes(item.id);
   const primarySource = toolLabel ?? sourceLabel;
+  const secondarySource = toolLabel && sourceLabel && toolLabel !== sourceLabel ? sourceLabel : null;
 
   return (
     <ListItemContextMenu
@@ -89,7 +89,7 @@ function FeedbackQueueItem({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-start justify-between gap-3">
-            <span className="min-w-0 space-y-1">
+            <span className="min-w-0 space-y-0.5">
               <span className="line-clamp-1 min-w-0 text-[13px] font-semibold leading-normal text-foreground">
                 {itemDisplayTitle}
               </span>
@@ -104,14 +104,13 @@ function FeedbackQueueItem({
             </span>
           </span>
 
-          <span className="mt-3 flex min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+          <span className="mt-2 flex min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
             <span
-              className={cn("inline-flex shrink-0 items-center", meta.className)}
+              className={cn("h-2 w-2 shrink-0 rounded-full", meta.dotClassName)}
               aria-label={meta.label}
               title={meta.label}
-            >
-              <StatusIcon className="h-3.5 w-3.5 shrink-0" />
-            </span>
+            />
+            <span className="shrink-0">{meta.label}</span>
             {item.severity === "high" && (
               <>
                 <span aria-hidden className="text-border">
@@ -134,6 +133,14 @@ function FeedbackQueueItem({
             {primarySource ? (
               <span className="min-w-0 shrink truncate font-medium text-foreground">
                 {primarySource}
+              </span>
+            ) : null}
+            {secondarySource ? (
+              <span className="inline-flex min-w-0 items-center truncate">
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="truncate">{secondarySource}</span>
               </span>
             ) : null}
             {item.category ? (

@@ -1,0 +1,952 @@
+/Users/meganharrison/Documents/alleato-pm/backend/.venv/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (6.0.0.post1)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[AcumaticaSync] Customer full select failed; probing optional fields individually: Acumatica Customer fetch failed (HTTP 500): {"message":"An error has occurred.","exceptionMessage":"The given key was not present in the dictionary.","exceptionType":"System.Collections.Generic.KeyNotFoundException","stackTrace":"   at System.ThrowHelper.ThrowKeyNotFoundException()\r\n   at System.Collections.Generic.Dictionary`2.get_Item(TKe
+[AcumaticaSync] Customer dropping optional field Phone1 after probe failure: Acumatica Customer fetch failed (HTTP 500): {"message":"An error has occurred.","exceptionMessage":"The given key was not present in the dictionary.","exceptionType":"System.Collections.Generic.KeyNotFoundException","stackTrace":"   at System.ThrowHelper.ThrowKeyNotFoundException()\r\n   at System.Collections.Generic.Dictionary`2.get_Item(TKe
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001812 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001813 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001814 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001815 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001817 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001818 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002269 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002270 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002272 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001819 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001820 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001821 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001822 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002037 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002273 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002274 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002038 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002040 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002011 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002019 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002021 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002026 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002307 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002044 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002045 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002308 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002309 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002311 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002047 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002313 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002314 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002315 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002316 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002317 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000002 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000184 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002075 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002076 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002077 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002101 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002102 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002103 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002104 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000003 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002106 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002107 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002108 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002126 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000582 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002129 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002130 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002131 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002132 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002137 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002139 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001824 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001825 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001826 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001828 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001829 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001832 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001833 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001834 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001835 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001836 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001837 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001838 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001839 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001840 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001841 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001842 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001843 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001844 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001845 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001846 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001847 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001857 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001863 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001864 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001865 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001866 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001868 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001869 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001870 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001871 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001872 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001873 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001874 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001876 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001878 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001880 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001881 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001882 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001883 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001890 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000004 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001946 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001952 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001953 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001954 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001955 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001956 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001961 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001962 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001963 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001964 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000005 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001966 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001967 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001968 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001970 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001971 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001972 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001974 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001975 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001976 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001977 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001978 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001979 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001980 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001982 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001984 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001985 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001986 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001989 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001990 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001992 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001993 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002152 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002153 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002154 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002155 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002156 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002157 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002158 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002159 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002160 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000006 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000007 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002174 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002176 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000009 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000010 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000011 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002192 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001778 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000012 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001779 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001780 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001454 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001516 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000013 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000014 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000001 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000015 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000016 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000017 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000018 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000019 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000020 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000021 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000022 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000023 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000024 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000025 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000026 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000027 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000028 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000029 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000030 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000031 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000032 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000033 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000034 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000035 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000036 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000037 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000038 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000039 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000040 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000041 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000042 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000043 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000044 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000045 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000046 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000047 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000048 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000049 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000050 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000051 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000052 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000053 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000054 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000055 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000056 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000058 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000059 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000060 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000061 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000062 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000063 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000064 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000065 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000066 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000067 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000068 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000069 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000070 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000071 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000072 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000073 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000074 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000075 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000076 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001811 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000077 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000078 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000079 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000080 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000081 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000082 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000083 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000084 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000085 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000086 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000087 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000088 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000089 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000090 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000091 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000092 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000093 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000094 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000095 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000096 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000097 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000098 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000100 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000103 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000104 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000105 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000106 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000107 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000108 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000109 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000110 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000111 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000112 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000113 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000114 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000115 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000116 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000117 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000118 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000119 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000120 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000121 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000122 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000123 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000124 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000125 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000126 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000127 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000128 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000130 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000132 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000133 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000134 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000135 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000136 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000137 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000138 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000139 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000141 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000142 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000143 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000144 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000145 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000146 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000147 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000148 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000149 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000150 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000151 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000152 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000153 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000154 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000155 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000156 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000157 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000158 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000159 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000160 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000161 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000162 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000163 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000164 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000165 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000166 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000167 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000168 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000169 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000170 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000171 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000172 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000173 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000174 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000175 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000177 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000178 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000179 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000180 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000181 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000182 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000183 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000185 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000186 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000188 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000189 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000190 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000191 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000192 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000193 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000194 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000195 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000196 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000197 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000198 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000199 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000200 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000222 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000201 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000202 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000203 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000204 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000205 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000206 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000207 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000208 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000209 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000210 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000211 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000212 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000213 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000214 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000215 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000216 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000217 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000218 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000219 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000220 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000221 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000223 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000224 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000225 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000226 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000227 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000228 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000229 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000230 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000231 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000232 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000233 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000234 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000235 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000236 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000237 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000238 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000239 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000240 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000241 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000242 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000243 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000244 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000245 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000246 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000247 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000248 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000249 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000250 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000251 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000252 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000253 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000254 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000255 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000256 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000262 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000263 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000264 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000265 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000266 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000267 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000268 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000269 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000270 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000271 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000272 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000273 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000392 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000393 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000394 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000395 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000396 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000397 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000398 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000399 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000400 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000401 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000402 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000403 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000407 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000408 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000418 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000419 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000420 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000421 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000422 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000423 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000424 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000425 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000426 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000427 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000428 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000429 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000430 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000431 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000432 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000433 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000434 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000435 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000465 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000466 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000467 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000468 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000469 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000470 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000471 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000472 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000473 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000474 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000475 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000476 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000483 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000484 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000485 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000486 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000487 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000490 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000491 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000492 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000503 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000523 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000525 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000527 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000531 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000559 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000560 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000561 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000562 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000563 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000564 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000565 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000566 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000570 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000577 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000579 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000580 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000584 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000585 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000586 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000587 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000589 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000590 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000592 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000593 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000594 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000595 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000604 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000606 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000607 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000608 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000609 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000610 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000611 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000612 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000613 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000614 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000661 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000667 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000669 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000670 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000671 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000672 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000673 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000674 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000675 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000676 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000677 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000686 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000687 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000688 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000692 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000693 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000695 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000717 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000718 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000719 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000720 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000721 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000723 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000724 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000728 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000729 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000743 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000744 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000745 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000779 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000780 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000781 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000782 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000784 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000789 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000791 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000792 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000794 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000795 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000796 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000798 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000799 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000813 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000820 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000821 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000822 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000863 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000864 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000865 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000866 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000867 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000868 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000869 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000870 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000871 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000872 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000873 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000874 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000875 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000877 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000878 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000879 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000913 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000914 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000915 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000916 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000945 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000946 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000947 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|000951 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001020 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001036 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001037 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001039 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001041 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001042 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001044 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001045 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001046 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001047 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001049 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001050 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001051 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001122 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001123 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001124 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001125 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001126 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001127 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001141 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001142 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001143 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001144 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001145 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001146 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001147 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001148 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001149 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001150 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001151 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001152 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001162 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001215 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001216 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001217 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001218 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001219 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001220 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001223 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001224 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001232 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001233 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001234 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001235 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001245 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001246 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001247 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001248 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001249 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001250 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001251 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001256 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001257 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001258 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001259 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001260 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001261 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001262 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001294 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001295 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001297 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001298 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001301 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001302 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001303 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001304 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001305 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001306 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001310 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001311 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001312 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001313 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001314 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001315 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001317 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001366 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001367 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001410 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001411 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001412 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001415 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001424 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001426 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001438 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001439 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001440 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001441 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001442 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001443 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001444 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001445 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001446 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001447 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001448 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001449 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001450 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001451 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001452 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001453 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001455 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001457 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001458 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001461 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001462 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001463 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001464 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001465 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001490 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001493 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001505 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001506 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001507 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001508 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001510 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001511 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001512 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001513 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001514 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001515 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001517 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001518 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001521 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001522 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001523 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001524 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001525 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001526 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001527 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001528 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001529 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001530 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001570 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001584 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001585 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001586 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001587 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001588 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001589 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001592 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001597 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001618 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001622 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001623 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001644 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001645 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001646 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001647 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001648 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001654 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001655 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001656 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001657 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001658 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001668 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001669 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001670 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001671 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001672 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001673 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001674 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001675 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001676 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001677 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001678 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001679 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001680 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001681 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001682 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001683 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001685 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001686 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001687 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001688 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001689 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001690 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001691 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001692 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001693 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001694 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001695 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001697 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001711 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001712 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001713 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001714 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001715 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001745 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001746 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001747 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001749 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001750 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001751 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001752 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001753 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001754 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001755 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001756 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001759 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001760 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001762 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001764 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001765 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001766 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001767 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001768 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001769 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001772 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001781 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001782 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001783 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001785 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001786 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001787 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001789 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001790 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001791 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|001810 because no active commitment mapping exists yet
+[AcumaticaSync] Skipping commitment CO projection for ChangeOrder|002138 because no active commitment mapping exists yet
+{
+  "status": "success_with_warnings",
+  "ran_at": "2026-06-25T21:24:42.819386Z",
+  "results": [
+    {
+      "entity": "projects",
+      "fetched": 2,
+      "upserted": 2,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T18:41:20.033+00:00"
+    },
+    {
+      "entity": "vendors",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T21:21:47.968484Z"
+    },
+    {
+      "entity": "accounts",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T21:21:48.532397Z"
+    },
+    {
+      "entity": "customers",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T21:21:50.406376Z",
+      "warnings": [
+        "Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email"
+      ]
+    },
+    {
+      "entity": "project_tasks",
+      "fetched": 1,
+      "upserted": 1,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T20:37:55.317+00:00"
+    },
+    {
+      "entity": "change_orders",
+      "fetched": 3,
+      "upserted": 3,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T18:41:22.813+00:00"
+    },
+    {
+      "entity": "change_orders_projection",
+      "fetched": 913,
+      "upserted": 137,
+      "projected": 0,
+      "skipped": 776,
+      "errors": 0,
+      "cursor": "2026-03-18T20:15:30.601944+00:00"
+    },
+    {
+      "entity": "subcontracts",
+      "fetched": 14,
+      "upserted": 14,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T20:46:29.877+00:00"
+    },
+    {
+      "entity": "purchase_orders",
+      "fetched": 2,
+      "upserted": 2,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T20:45:36.07+00:00"
+    },
+    {
+      "entity": "ap_bills",
+      "fetched": 87,
+      "upserted": 87,
+      "projected": 87,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T20:46:29.557+00:00"
+    },
+    {
+      "entity": "commitments_projection",
+      "fetched": 509,
+      "upserted": 509,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-03-18T20:15:56.373709+00:00"
+    },
+    {
+      "entity": "ar_invoices",
+      "fetched": 2,
+      "upserted": 2,
+      "projected": 95,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T17:31:37.197+00:00"
+    },
+    {
+      "entity": "ar_payments",
+      "fetched": 3,
+      "upserted": 3,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T17:31:37.183+00:00"
+    },
+    {
+      "entity": "ap_payment_applications",
+      "fetched": 1499,
+      "upserted": 1499,
+      "projected": 1394,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T21:23:56.348283Z"
+    },
+    {
+      "entity": "payment_applications",
+      "fetched": 0,
+      "upserted": 0,
+      "projected": 40,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T00:20:55.928596+00:00",
+      "warnings": [
+        "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+        "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+      ]
+    },
+    {
+      "entity": "ap_checks",
+      "fetched": 8,
+      "upserted": 8,
+      "projected": 1394,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T18:13:24.69+00:00"
+    },
+    {
+      "entity": "project_budgets",
+      "fetched": 17,
+      "upserted": 17,
+      "projected": 0,
+      "skipped": 0,
+      "errors": 0,
+      "cursor": "2026-06-25T20:46:29.6+00:00"
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "customers: Customer sync dropped unsupported/select-timeout fields: Phone1. Active field set: CustomerID, CustomerName, LastModifiedDateTime, Status, CurrencyID, Terms, TaxZone, Email",
+    "payment_applications: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. No AR payment application OData entity set was found. Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. Currently relevant OData entity sets: APBillsToPayments, BI-ARInvoices, CR-CampaignInvoices, DB-StorageDetailsByItemWarehouseLocation, ProcoreRetainageReleaseInvoices, ProcoreSyncedInvoices, Project Summary With Revised vs Approved CO, Z Project Summary. REST fallback error: Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, and the safe DocumentsToApply probe did not return historical application lines. Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice type/ref, amount applied, balance, project, and last modified timestamp, then wire payment_applications to that source. ApplicationHistory error: Acumatica Payment fetch failed (HTTP 500): {\"message\":\"An error has occurred.\",\"exceptionMessage\":\"Optimization cannot be performed.The following fields cause the error:\\r\\nApplicationHistory.AdjustedDocType: View ARPost has BQL delegate\\r\\nApplicationHistory.BalanceWriteOff: View ARPost has BQL delegate\\r\\nApplicationHistory.BatchNbr: View ",
+    "payment_applications: Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping because historical payment applications are not exposed."
+  ]
+}

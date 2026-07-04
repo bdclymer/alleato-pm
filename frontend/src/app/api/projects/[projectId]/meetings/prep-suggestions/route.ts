@@ -72,6 +72,10 @@ const aiOutputSchema = z.object({
     .optional(),
 });
 
+const prepSuggestionRequestSchema = z.object({
+  mode: z.enum(["source", "ai"]).optional(),
+});
+
 type PlanningSuggestion = z.infer<typeof planningSuggestionSchema>;
 type MeetingRecap = z.infer<typeof meetingRecapSchema>;
 type AiOutput = z.infer<typeof aiOutputSchema>;
@@ -175,7 +179,7 @@ const OPEN_CHANGE_EVENT_STATUSES = new Set(["open", "pending", "draft"]);
 
 export const POST = withApiGuardrails<{ projectId: string }>(
   WHERE,
-  async ({ params }) => {
+  async ({ request, params }) => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
@@ -191,15 +195,20 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
+    const mode = await readPrepSuggestionMode(request);
     const context = await loadMeetingPrepContext(numericProjectId);
     const candidates = dedupeCandidates(context.candidates);
     if (candidates.length === 0) {
       return NextResponse.json({
-        generatedBy: "fallback",
+        generatedBy: "source",
         model: null,
         suggestions: [],
         meetingRecaps: context.meetingRecaps,
       });
+    }
+
+    if (mode === "source") {
+      return NextResponse.json(buildSourceBackedResponse(candidates, context));
     }
 
     try {
@@ -262,15 +271,57 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
 
       return NextResponse.json({
-        generatedBy: "fallback",
+        ...buildSourceBackedResponse(candidates, context),
         model: MODEL_ID,
         fallbackReason: "AI prep is unavailable. Showing source-backed project suggestions.",
-        suggestions: candidates.slice(0, 8),
-        meetingRecaps: context.meetingRecaps,
       });
     }
   },
 );
+
+async function readPrepSuggestionMode(request: Request): Promise<"source" | "ai"> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return "source";
+
+  const text = await request.text();
+  if (!text.trim()) return "source";
+
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch (error) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Meeting prep suggestion request body must be valid JSON.",
+      details: error,
+    });
+  }
+
+  const parsed = prepSuggestionRequestSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: WHERE,
+      message: "Meeting prep suggestion mode must be either source or ai.",
+      details: parsed.error.flatten(),
+    });
+  }
+
+  return parsed.data.mode ?? "source";
+}
+
+function buildSourceBackedResponse(
+  candidates: PlanningSuggestion[],
+  context: MeetingPrepContext,
+) {
+  return {
+    generatedBy: "source" as const,
+    model: null,
+    suggestions: candidates.slice(0, 8),
+    meetingRecaps: context.meetingRecaps,
+  };
+}
 
 async function loadMeetingPrepContext(projectId: number): Promise<MeetingPrepContext> {
   const supabase = createServiceClient();
