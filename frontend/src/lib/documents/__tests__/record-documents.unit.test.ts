@@ -62,6 +62,10 @@ describe("commitment contract rendering", () => {
   it("renders the branded template with merged commitment fields", () => {
     const html = renderDocumentHtml(makeCommitmentBundle());
 
+    expect(html).toContain('class="contract-template"');
+    expect(html).toContain('"Times New Roman", Times, "Liberation Serif", "Nimbus Roman No9 L", serif;');
+    expect(html).toContain("font-size: 12pt;");
+    expect(html).toContain("max-width: 6.5in;");
     expect(html).toContain("R.J. Skelding Co, Inc");
     expect(html).toContain("Greenbox Systems LLC");
     expect(html).toContain("Exol Morrisville");

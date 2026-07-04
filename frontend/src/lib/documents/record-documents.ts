@@ -585,6 +585,26 @@ function replaceHtmlRangeByMarkers(
   return `${html.slice(0, startTagIndex)}${replacement}${html.slice(endTagIndex)}`;
 }
 
+function removeEmptyParagraphs(html: string): string {
+  const root = parse(`<div>${html}</div>`);
+
+  for (const paragraph of root.querySelectorAll("p")) {
+    const text = paragraph.text
+      .replace(/\u00a0/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const hasMeaningfulText = text.length > 0;
+    const hasNonBreakContent = paragraph.querySelector("table, img, svg, ul, ol") !== null;
+
+    if (!hasMeaningfulText && !hasNonBreakContent) {
+      paragraph.remove();
+    }
+  }
+
+  return root.querySelector("div")?.innerHTML ?? html;
+}
+
 function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
   const templateData = bundle.commitmentContractTemplate;
   const contractorNotice = templateData?.contractorNotice;
@@ -747,6 +767,56 @@ function buildCommitmentExhibitAHtml(bundle: DocumentBundle): string {
   `;
 }
 
+function buildCommitmentProjectFactsHtml(bundle: DocumentBundle): string {
+  const rows = [
+    {
+      label: "Project Name:",
+      value: bundle.project?.name || "Not set",
+    },
+    {
+      label: "Project Address:",
+      value: `${bundle.project?.addressLine1 || bundle.project?.address || "Not set"}${
+        bundle.project?.addressLine2 ? `<br />${renderHtmlValue(bundle.project.addressLine2)}` : ""
+      }`,
+    },
+    {
+      label: "Project Job Number:",
+      value: bundle.project?.jobNumber || "Not set",
+    },
+  ];
+
+  return `
+    <table class="contract-project-facts" cellpadding="0" cellspacing="0" role="presentation">
+      <tbody>
+        ${rows
+          .map(
+            (row) => `
+              <tr>
+                <td class="contract-project-facts__bullet">&bull;</td>
+                <td class="contract-project-facts__label"><strong>${renderHtmlValue(row.label)}</strong></td>
+                <td class="contract-project-facts__value">${row.value}</td>
+              </tr>
+            `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function buildCommitmentProjectRecitalsHtml(bundle: DocumentBundle): string {
+  const ownerName = bundle.commitmentContractTemplate?.ownerName || "Not set";
+
+  return `
+    <p align="justify">
+      A. Contractor is the General Contractor or Design-Builder engaged by
+      <u>${renderHtmlValue(ownerName)}</u> ("Owner") to furnish labor and materials and
+      perform work required by Owner for the following project ("Project"):
+    </p>
+    ${buildCommitmentProjectFactsHtml(bundle)}
+  `;
+}
+
 function renderCommitmentContractHtml(bundle: DocumentBundle): string {
   const templateData = bundle.commitmentContractTemplate;
   const templateRoot = parse(getCommitmentTemplateHtml());
@@ -802,10 +872,18 @@ function renderCommitmentContractHtml(bundle: DocumentBundle): string {
     [/ProcoreSubcontractorSignedDate/g, ""],
     [/ProcoreGeneralContractorSignHere/g, ""],
     [/ProcoreGeneralContractorSignedDate/g, ""],
+    [/RECITALS:/g, "RECITALS"],
   ]);
 
-  const noticeNormalizedBody = replaceHtmlRangeByMarkers(
+  const recitalsNormalizedBody = replaceHtmlRangeByMarkers(
     bodyHtml,
+    "A.\n\tContractor is the General Contractor or Design-Builder engaged by",
+    "B.\n\tSubcontractor has agreed",
+    buildCommitmentProjectRecitalsHtml(bundle),
+  );
+
+  const noticeNormalizedBody = replaceHtmlRangeByMarkers(
+    recitalsNormalizedBody,
     "If\nto Subcontractor:",
     "i.\n\tMerger.",
     buildCommitmentNoticeHtml(bundle),
@@ -823,11 +901,14 @@ function renderCommitmentContractHtml(bundle: DocumentBundle): string {
     .replace(/<p[^>]*>\s*,\s*<\/p>/g, contractorNoticeAddressLine1 ? `<p>${renderHtmlValue(contractorNoticeAddressLine1)}</p>` : "<p></p>")
     .replace(/<p[^>]*>\s*<\/p>\s*<p[^>]*>Cell:\s*<\/p>/g, "<p></p><p></p>");
 
+  const cleanedBody = removeEmptyParagraphs(normalizedBody);
+
   return buildBrandedDocumentHtml({
     title: bundle.title,
     renderHeading: false,
     renderFooterInBody: false,
-    bodyHtml: normalizedBody,
+    bodyHtml: `<div class="contract-template">${cleanedBody}</div>`,
+    contentWidth: "6.5in",
   });
 }
 
