@@ -282,7 +282,7 @@ export function MeetingActionItemsSection({
     () =>
       detail.categories
         .flatMap((category) => category.items)
-        .filter((item) => ACTION_ITEM_STATUSES.has(item.status)),
+        .filter((item) => item.task_count > 0 && ACTION_ITEM_STATUSES.has(item.status)),
     [detail.categories],
   );
 
@@ -293,7 +293,7 @@ export function MeetingActionItemsSection({
       <div className="space-y-1">
         <SectionRuleHeading label="Action items" className="mb-0 pb-0" />
         <p className="text-xs text-muted-foreground">
-          Open items from this meeting that need owner follow-up.
+          Linked tasks from this meeting that need owner follow-up.
         </p>
       </div>
 

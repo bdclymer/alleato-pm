@@ -310,7 +310,25 @@ describe("AgendaSection", () => {
     expect(screen.getByText("Open Item")).toBeInTheDocument();
   });
 
-  it("renders a quiet action-items section for open agenda items", () => {
+  it("renders a quiet action-items section only for agenda items with linked tasks", () => {
+    const detail = buildDetail();
+    detail.categories[1].items[0].task_count = 1;
+
+    renderWithQueryClient(
+      <MeetingActionItemsSection
+        projectId={42}
+        meetingId="meeting-1"
+        detail={detail}
+      />,
+    );
+
+    expect(screen.getByTestId("meeting-action-items-section")).toBeInTheDocument();
+    expect(screen.getByText("Second Category Item")).toBeInTheDocument();
+    expect(screen.queryByText("Open Item")).not.toBeInTheDocument();
+    expect(screen.queryByText("Closed Item")).not.toBeInTheDocument();
+  });
+
+  it("hides the action-items section when no agenda items have linked tasks", () => {
     renderWithQueryClient(
       <MeetingActionItemsSection
         projectId={42}
@@ -319,10 +337,7 @@ describe("AgendaSection", () => {
       />,
     );
 
-    expect(screen.getByTestId("meeting-action-items-section")).toBeInTheDocument();
-    expect(screen.getByText("Open Item")).toBeInTheDocument();
-    expect(screen.getByText("Second Category Item")).toBeInTheDocument();
-    expect(screen.queryByText("Closed Item")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("meeting-action-items-section")).not.toBeInTheDocument();
   });
 
   it("calls useCreateItem when quick-adding an item at the bottom of a category", async () => {
