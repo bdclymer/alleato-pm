@@ -2625,12 +2625,12 @@ function CompaniesSection({
       label: "Title",
       editable: true,
       editValue: (item) => item.contact?.job_title ?? "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.contact, "job_title", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {item.contact?.job_title ?? "—"}
+          {item.contact?.job_title ?? ""}
         </span>
       ),
       sortValue: (item) => item.contact?.job_title ?? "",
@@ -2642,7 +2642,7 @@ function CompaniesSection({
       editable: true,
       editInputType: "email",
       editValue: (item) => item.contact?.email ?? "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.contact, "email", value),
       render: (item) =>
@@ -2654,7 +2654,7 @@ function CompaniesSection({
             {item.contact.email}
           </a>
         ) : (
-          <span className="text-sm text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground" />
         ),
       sortValue: (item) => item.contact?.email ?? "",
       csvValue: (item) => item.contact?.email ?? "",
@@ -2666,14 +2666,14 @@ function CompaniesSection({
       editInputType: "tel",
       editValue: (item) =>
         item.contact?.phone_business ?? item.contact?.phone_mobile ?? "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.contact, "phone_business", value),
       render: (item) => {
         const c = item.contact;
         return (
           <span className="text-sm text-muted-foreground">
-            {c?.phone_business || c?.phone_mobile || "—"}
+            {c?.phone_business || c?.phone_mobile || ""}
           </span>
         );
       },
@@ -2872,12 +2872,12 @@ function CompaniesSection({
       label: "Title",
       editable: true,
       editValue: (item) => item.primaryContact?.job_title ?? "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.primaryContact, "job_title", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {item.primaryContact?.job_title ?? "—"}
+          {item.primaryContact?.job_title ?? ""}
         </span>
       ),
       sortValue: (item) => item.primaryContact?.job_title ?? "",
@@ -2889,7 +2889,7 @@ function CompaniesSection({
       editable: true,
       editInputType: "email",
       editValue: (item) => item.primaryContact?.email ?? "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.primaryContact, "email", value),
       render: (item) =>
@@ -2901,7 +2901,7 @@ function CompaniesSection({
             {item.primaryContact.email}
           </a>
         ) : (
-          <span className="text-sm text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground" />
         ),
       sortValue: (item) => item.primaryContact?.email ?? "",
       csvValue: (item) => item.primaryContact?.email ?? "",
@@ -2915,14 +2915,14 @@ function CompaniesSection({
         item.primaryContact?.phone_business ??
         item.primaryContact?.phone_mobile ??
         "",
-      editEmptyLabel: "—",
+      editEmptyLabel: "",
       onEdit: (item, value) =>
         handleInlineContactEdit(item.primaryContact, "phone_business", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.primaryContact?.phone_business ||
             item.primaryContact?.phone_mobile ||
-            "—"}
+            ""}
         </span>
       ),
       sortValue: (item) =>
