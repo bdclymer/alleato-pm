@@ -3,10 +3,16 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Download, FileText, Loader2, Trash2, Upload, X } from 'lucide-react';
+import { Download, File, Loader2, MoreHorizontal, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -62,6 +68,10 @@ interface DocumentTypeOption {
   display_name: string;
   category: string;
   sort_order: number;
+}
+
+function getDocumentName(doc: LinkedDoc): string {
+  return doc.title ?? doc.file_name ?? doc.document_metadata_id;
 }
 
 export interface DocumentPickerProps {
@@ -125,6 +135,7 @@ export function EntityAttachments({
 }: EntityAttachmentsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<string[]>([]);
+  const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState(
     defaultDocumentType ?? NO_DOCUMENT_TYPE
   );
@@ -261,8 +272,18 @@ export function EntityAttachments({
     return null;
   }
 
-  const renderDocumentTypeControl = (doc: LinkedDoc) => {
-    if (documentTypes.length === 0) return <span className="text-sm text-muted-foreground">Uncategorized</span>;
+  const getDocumentTypeLabel = (doc: LinkedDoc) =>
+    doc.document_type
+      ? typeLabelByKey.get(doc.document_type) ?? doc.document_type
+      : 'Uncategorized';
+
+  const renderDocumentTypeControl = (doc: LinkedDoc, className?: string) => {
+    const name = getDocumentName(doc);
+
+    if (documentTypes.length === 0) {
+      return <span className="text-sm text-muted-foreground">Uncategorized</span>;
+    }
+
     return (
       <Select
         value={doc.document_type ?? NO_DOCUMENT_TYPE}
@@ -272,14 +293,25 @@ export function EntityAttachments({
             doc.document_metadata_id
         }
         onValueChange={(value) =>
-          updateTypeMutation.mutate({
-            documentMetadataId: doc.document_metadata_id,
-            documentType:
-              value === NO_DOCUMENT_TYPE ? null : value,
-          })
+          updateTypeMutation.mutate(
+            {
+              documentMetadataId: doc.document_metadata_id,
+              documentType:
+                value === NO_DOCUMENT_TYPE ? null : value,
+            },
+            {
+              onSuccess: () => {
+                setEditingDocumentId(null);
+              },
+            }
+          )
         }
       >
-        <SelectTrigger size="sm" className="h-8 min-w-0 w-full sm:w-44">
+        <SelectTrigger
+          size="sm"
+          aria-label={`Document type for ${name}`}
+          className={cn('h-8 min-w-0 w-full sm:w-44', className)}
+        >
           <SelectValue placeholder="Type" />
         </SelectTrigger>
         <SelectContent>
@@ -298,35 +330,50 @@ export function EntityAttachments({
     const isRemoving =
       removeMutation.isPending &&
       removeMutation.variables === doc.document_metadata_id;
+    const name = getDocumentName(doc);
 
     return (
-      <div className="flex items-center justify-end gap-1">
-        {doc.download_url && (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
-            onClick={() => window.open(doc.download_url ?? '', '_blank')}
-            title="Download"
+            className="h-8 w-8 rounded-full text-muted-foreground"
+            aria-label={`Attachment actions for ${name}`}
           >
-            <Download className="h-3.5 w-3.5" />
+            {isRemoving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreHorizontal className="h-4 w-4" />
+            )}
           </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-destructive hover:text-destructive"
-          disabled={isRemoving}
-          onClick={() => removeMutation.mutate(doc.document_metadata_id)}
-          title="Remove"
-        >
-          {isRemoving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="h-3.5 w-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem
+            disabled={documentTypes.length === 0}
+            onSelect={() => setEditingDocumentId(doc.document_metadata_id)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          {doc.download_url && (
+            <DropdownMenuItem
+              onSelect={() => window.open(doc.download_url ?? '', '_blank')}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </DropdownMenuItem>
           )}
-        </Button>
-      </div>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isRemoving}
+            onSelect={() => removeMutation.mutate(doc.document_metadata_id)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
 
@@ -368,12 +415,12 @@ export function EntityAttachments({
             </TableRow>
           ) : (
             docs.map((doc) => {
-              const name = doc.title ?? doc.file_name ?? doc.document_metadata_id;
+              const name = getDocumentName(doc);
               return (
                 <TableRow key={doc.document_metadata_id}>
                   <TableCell className="max-w-none">
                     <div className="flex min-w-0 items-center gap-3">
-                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <File className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0">
                         <p className="truncate font-medium text-foreground">{name}</p>
                         <p className="truncate text-xs text-muted-foreground">
@@ -405,8 +452,8 @@ export function EntityAttachments({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          'flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-4 py-3 text-center transition-colors hover:border-primary/60 hover:bg-muted/30',
-          isDragging && 'border-primary bg-primary/5',
+          'flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-4 py-3 text-center transition-colors hover:bg-muted/30',
+          isDragging && 'bg-muted/50',
           isUploadingAny && 'pointer-events-none opacity-50',
         )}
       >
@@ -454,36 +501,43 @@ export function EntityAttachments({
       ) : (
         <ul className="divide-y divide-border/50">
           {docs.map((doc) => {
-            const name = doc.title ?? doc.file_name ?? doc.document_metadata_id;
+            const name = getDocumentName(doc);
+            const isEditing = editingDocumentId === doc.document_metadata_id;
             return (
               <li
                 key={doc.document_metadata_id}
-                className="flex flex-col gap-3 py-2.5 first:pt-0 sm:flex-row sm:items-center"
+                className="py-2.5 first:pt-0"
               >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {[
-                        doc.source_size ? formatBytes(doc.source_size) : null,
-                        doc.document_type
-                          ? typeLabelByKey.get(doc.document_type) ?? doc.document_type
-                          : null,
-                        doc.attached_at ? formatDate(doc.attached_at) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
-                  {documentTypes.length > 0 && (
-                    <div className="flex-1 sm:w-44 sm:flex-none">
-                      {renderDocumentTypeControl(doc)}
+                <div className="flex items-start gap-3">
+                  <File className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {getDocumentTypeLabel(doc)}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        {renderActions(doc)}
+                      </div>
                     </div>
-                  )}
-                  {renderActions(doc)}
+
+                    {isEditing && (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        {renderDocumentTypeControl(doc, 'sm:w-52')}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-fit px-2 text-muted-foreground"
+                          onClick={() => setEditingDocumentId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </li>
             );
@@ -532,9 +586,9 @@ export function LinkedDocumentsList({ entityType, entityId }: LinkedDocumentsLis
     <ul className="mt-2 space-y-1">
       {docs.map((doc) => (
         <li key={doc.document_metadata_id} className="flex items-center gap-2 text-sm">
-          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">
-            {doc.title ?? doc.file_name ?? doc.document_metadata_id}
+            {getDocumentName(doc)}
           </span>
           {doc.document_type && (
             <span className="shrink-0 text-xs text-muted-foreground">

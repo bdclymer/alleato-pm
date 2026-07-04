@@ -20,7 +20,7 @@ export function ContentSectionStack({
   children,
   className,
 }: ContentSectionStackProps) {
-  return <div className={cn("space-y-10", className)}>{children}</div>;
+  return <div className={cn("space-y-12", className)}>{children}</div>;
 }
 
 export interface DetailThreeColumnGridProps {
