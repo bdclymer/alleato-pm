@@ -534,7 +534,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
-  const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
   // <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp.
@@ -561,7 +560,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         label="Title"
                         value={commitment.title ?? ""}
                         display={commitment.title || undefined}
-                        disabled={isApproved}
                         onSave={(v) => onSaveField("title", v)}
                       />
                     </DetailField>
@@ -597,7 +595,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="number"
                         value={String(commitment.retention_percentage ?? 0)}
                         display={`${commitment.retention_percentage ?? 0}%`}
-                        disabled={isApproved}
                         onSave={(v) =>
                           onSaveField("default_retainage_percent", v === "" ? null : Number(v))
                         }
@@ -619,7 +616,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="boolean"
                         value={commitment.executed ? "true" : "false"}
                         display={commitment.executed ? "Yes" : "No"}
-                        disabled={isApproved}
                         onSave={(v) => onSaveField("executed", v === "true")}
                       />
                     </DetailField>
@@ -633,7 +629,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           type="date"
                           value={dateInput(commitment.start_date)}
                           display={renderDateOrDash(commitment.start_date)}
-                          disabled={isApproved}
                           onSave={(v) => onSaveField("start_date", v || null)}
                         />
                       </DetailField>
@@ -644,7 +639,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           type="date"
                           value={dateInput(commitment.substantial_completion_date)}
                           display={renderDateOrDash(commitment.substantial_completion_date)}
-                          disabled={isApproved}
                           onSave={(v) => onSaveField("delivery_date", v || null)}
                         />
                       </DetailField>
@@ -655,7 +649,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="date"
                         value={dateInput(commitment.executed_date)}
                         display={renderDateOrDash(commitment.executed_date)}
-                        disabled={isApproved}
                         onSave={(v) => onSaveField("contract_date", v || null)}
                       />
                     </DetailField>
@@ -665,7 +658,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="date"
                         value={dateInput(commitment.signed_received_date)}
                         display={renderDateOrDash(commitment.signed_received_date)}
-                        disabled={isApproved}
                         onSave={(v) =>
                           onSaveField(
                             isPO ? "signed_po_received_date" : "signed_contract_received_date",
@@ -680,7 +672,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="date"
                         value={dateInput(commitment.actual_completion_date)}
                         display={renderDateOrDash(commitment.actual_completion_date)}
-                        disabled={isApproved}
                         onSave={(v) => onSaveField("actual_completion_date", v || null)}
                       />
                     </DetailField>
@@ -690,7 +681,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         type="date"
                         value={dateInput(commitment.issued_on_date)}
                         display={renderDateOrDash(commitment.issued_on_date)}
-                        disabled={isApproved}
                         onSave={(v) => onSaveField("issued_on_date", v || null)}
                       />
                     </DetailField>
@@ -718,7 +708,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           type="date"
                           value={dateInput(commitment.substantial_completion_date)}
                           display={renderDateOrDash(commitment.substantial_completion_date)}
-                          disabled={isApproved}
                           onSave={(v) => onSaveField("estimated_completion_date", v || null)}
                         />
                       </DetailField>
@@ -993,12 +982,11 @@ export default function CommitmentDetailPage() {
 
   // Persist a single field edited inline on the detail page. PUT validates
   // against the full edit schema and only writes the provided key; on success
-  // we refresh the detail (and list) so the page reflects the change.
+  // we refresh the detail (and list) so the page reflects the change. Approved
+  // commitments remain editable here — only SOV line items stay locked once
+  // approved (enforced independently in ScheduleOfValuesTab).
   const handleSaveField = useCallback(
     async (field: string, value: string | number | boolean | null) => {
-      if ((commitment?.status ?? "").trim().toLowerCase() === "approved" && field !== "status") {
-        throw new Error("Approved commitments are read-only. Change the status first to edit this record.");
-      }
       await apiFetch(`/api/commitments/${commitmentId}`, {
         method: "PUT",
         body: JSON.stringify({ [field]: value }),
@@ -1058,7 +1046,9 @@ export default function CommitmentDetailPage() {
 
   const sovLabel = isPO ? "PO SOV" : "SOV";
   const showSubcontractorSovTab = !isPO;
-
+  // The full edit form bundles SOV line-item editing together with general
+  // fields in one submission, so it stays gated once approved even though
+  // general fields are independently editable inline on this page.
   const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
 
   const headerActions = (

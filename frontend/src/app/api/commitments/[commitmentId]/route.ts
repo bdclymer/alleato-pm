@@ -80,19 +80,6 @@ const commitmentInlinePatchSchema = z
     "At least one editable field is required",
   );
 
-function isApprovedCommitmentStatus(status: unknown): boolean {
-  return typeof status === "string" && status.trim().toLowerCase() === "approved";
-}
-
-function throwApprovedCommitmentLock(where: string, blockedFields: string[]): never {
-  throw new GuardrailError({
-    code: "PRECONDITION_FAILED",
-    where,
-    message: "Approved commitments are read-only. Change the status before editing other fields.",
-    details: { blockedFields },
-  });
-}
-
 /**
  * GET /api/commitments/[commitmentId]
  *
@@ -478,13 +465,10 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       );
     }
 
-    const attemptedFields = Object.entries(validatedData)
-      .filter(([, fieldValue]) => fieldValue !== undefined)
-      .map(([field]) => field);
-    const blockedFields = attemptedFields.filter((field) => field !== "status");
-    if (isApprovedCommitmentStatus(unifiedData.status) && blockedFields.length > 0) {
-      throwApprovedCommitmentLock("commitments/[commitmentId]#PUT", blockedFields);
-    }
+    // Approved commitments remain editable here — general fields (title, dates,
+    // retainage, private/non-admin flags, etc.) can always be updated. Only SOV
+    // line items stay locked once approved, enforced independently in
+    // ScheduleOfValuesTab / the subcontractor-sov and PCO line-item routes.
 
     // Query the appropriate table based on type
     const tableName =
@@ -615,6 +599,15 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       : null;
 
     if (sovLines && sovLines.length > 0) {
+      if ((unifiedData.status ?? "").trim().toLowerCase() === "approved") {
+        throw new GuardrailError({
+          code: "PRECONDITION_FAILED",
+          where: "commitments/[commitmentId]#PUT",
+          message:
+            "Approved commitments have a locked schedule of values. Change the status before editing SOV line items.",
+        });
+      }
+
       const sovTable =
         unifiedData.commitment_type === "subcontract"
           ? "subcontract_sov_items"
@@ -811,18 +804,12 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
       return NextResponse.json({ error: "Commitment not found" }, { status: 404 });
     }
 
-    const blockedFields = Object.entries(parsed.data)
-      .filter(([, fieldValue]) => fieldValue !== undefined)
-      .map(([field]) => field)
-      .filter((field) => field !== "status");
-    if (isApprovedCommitmentStatus(unifiedData.status) && blockedFields.length > 0) {
-      throwApprovedCommitmentLock("commitments/[commitmentId]#PATCH", blockedFields);
-    }
-
     const tableName =
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     const updatePayload: Record<string, string | boolean | null> = {
       updated_at: new Date().toISOString(),
