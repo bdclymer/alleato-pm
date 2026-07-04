@@ -1,0 +1,15 @@
+
+> alleato-procore@0.1.0 test:unit
+> jest source-specific-rag.test.ts --runInBand
+
+PASS src/lib/ai/retrieval/__tests__/source-specific-rag.test.ts
+  buildSourceSpecificRagAnswer Teams hydration
+    ✓ hydrates empty stored Teams rows from RAG metadata content (3 ms)
+    ✓ formats Teams prefetch as synthesis evidence instead of a raw audit answer (2 ms)
+    ✓ sanitizes stored Teams conversation snippets before synthesis (6 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        0.308 s, estimated 1 s
+Ran all test suites matching source-specific-rag.test.ts.

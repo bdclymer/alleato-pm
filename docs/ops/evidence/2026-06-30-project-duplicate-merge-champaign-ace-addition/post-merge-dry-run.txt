@@ -1,0 +1,82 @@
+MODE: dry-run
+{
+  "label": "source",
+  "id": 1028,
+  "name": "Champagne Ace Addition IL",
+  "archived": true,
+  "aliases": [
+    "Champaign Ace Addition"
+  ],
+  "projectNumber": "85-30",
+  "acumaticaProjectId": "8530",
+  "companyId": "b264a228-96a9-40ea-9d1f-1cf9a862b9ce",
+  "state": null,
+  "category": null,
+  "phase": null,
+  "stage": null,
+  "workScope": null,
+  "onedrive": null
+}
+{
+  "label": "target",
+  "id": 1008,
+  "name": "Champaign Ace Addition",
+  "archived": false,
+  "aliases": [
+    "Champagne Ace Addition IL"
+  ],
+  "projectNumber": "26-118",
+  "acumaticaProjectId": "26118",
+  "companyId": "11f9cb60-9531-41d2-b384-86a929dfe22a",
+  "state": "Illinois",
+  "category": "Addition",
+  "phase": "Current",
+  "stage": "Pre-Construction",
+  "workScope": "Tenant Improvement",
+  "onedrive": "https://alleato.sharepoint.com/:f:/s/AlleatoGroup/IgB34RQMJgi4SbKQFN7WNLieAftVwNH47IpakEgOSVaFBbE?e=N9HDMz"
+}
+
+Project reference counts (source=1028, target=1008)
+ai_memories.project_id	source=0	target=2087
+acumatica_project_budgets.project_id	source=0	target=200
+document_metadata.project_id	source=0	target=27
+tasks.project_id	source=0	target=27
+drawings.project_id	source=0	target=19
+budget_line_history.project_id	source=0	target=18
+acumatica_change_orders.project_id	source=0	target=17
+project_attribution_rules.project_id	source=0	target=11
+document_attribution_candidates.candidate_project_id	source=0	target=10
+project_budget_codes.project_id	source=0	target=7
+project_contact_references.project_id	source=0	target=7
+project_roles.project_id	source=0	target=7 auto-resolved
+budget_lines.project_id	source=0	target=6
+project_report_suggestions.project_id	source=0	target=6
+outlook_email_intake.project_id	source=0	target=5
+project_documents.project_id	source=0	target=5
+project_operating_snapshots.project_id	source=0	target=5
+acumatica_purchase_orders.project_id	source=0	target=4
+app_error_events.project_id	source=0	target=4
+app_error_groups.latest_project_id	source=0	target=4
+outlook_email_intake_attachments.project_id	source=0	target=4
+project_emails.project_id	source=0	target=4
+project_intelligence_timeline_events.project_id	source=0	target=4
+purchase_orders.project_id	source=0	target=4
+acumatica_ap_bills.project_id	source=0	target=2
+acumatica_ar_invoices.project_id	source=0	target=2
+estimates.project_id	source=0	target=2
+project_companies.project_id	source=0	target=2
+vertical_markup.project_id	source=0	target=2
+admin_feedback_items.project_id	source=0	target=1
+direct_costs.project_id	source=0	target=1
+drawing_sets.project_id	source=0	target=1
+intelligence_targets.project_id	source=0	target=1 auto-resolved
+project_current_state.project_id	source=0	target=1
+subcontractor_invoices.project_id	source=0	target=1
+
+Prechecks: no blocking uniqueness collisions detected.
+
+Merge operations
+{"table":"project_roles","column":"project_id","updatedRows":0,"deletedDuplicates":0,"mergedIntoTargetId":null}
+{"table":"intelligence_targets","column":"project_id","updatedRows":0,"deletedDuplicates":0,"mergedIntoTargetId":null}
+
+Dry run complete. No database rows were committed.

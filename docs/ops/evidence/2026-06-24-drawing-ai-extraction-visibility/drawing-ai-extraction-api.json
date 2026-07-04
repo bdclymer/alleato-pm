@@ -1,0 +1,109 @@
+{
+  "status": 200,
+  "body": {
+    "drawing": {
+      "id": "0e228e36-49ed-4ddf-b64b-c82f66577ef9",
+      "number": "[003] G002",
+      "title": "[003] G002"
+    },
+    "revision": {
+      "id": "1bc90e54-4ecc-482b-bfec-6b1064e514bf",
+      "revision_number": "A",
+      "status": "approved",
+      "is_current_revision": true,
+      "document_metadata_id": "7197d347-dd42-44ce-9aea-e427c7214e64",
+      "ocr_confidence_label": "unknown",
+      "ocr_confidence_score": null,
+      "ocr_confidence_source": "not_run",
+      "created_at": "2026-06-23T14:54:05.206211+00:00"
+    },
+    "documentMetadata": {
+      "id": "7197d347-dd42-44ce-9aea-e427c7214e64",
+      "title": "[003] G002",
+      "status": "complete",
+      "documentType": "drawing",
+      "sourceSystem": "drawing_upload",
+      "fileName": "[003] G002.pdf",
+      "storageBucket": "documents",
+      "sourcePath": null,
+      "url": "https://lgveqfnpkxvzbnnwuled.supabase.co/storage/v1/object/public/project-files/876/drawings/tmp/1782226443444__003__G002.pdf",
+      "createdAt": "2026-06-23T16:53:47.399837"
+    },
+    "ocr": {
+      "ready": true,
+      "textLength": 12215,
+      "textPreview": "DRAWN BY:\nChecker\nCHECKED BY:\nVERTICAL CHANGES IN LEVEL\nBEVELED CHANGES IN LEVEL\nFIG. 304.3\nSIZE OF WHEELCHAIR TURNING SPACE\nPOSITION OF CLEAR FLOOR OR GROUND SPACE\nMANEUVERING CLEARANCE IN AN ALCOVE\nFIG. 306.2\nTOE CLEARANCE\nKNEE CLEARANCE\nLIMITS OF PROTRUDING OBJECTS\nPOST-MOUNTED PROTRUDING OBJECTS\nREDUCED VERTICAL CLEARANCE\nDESIGN-QUILDER\nALLEATO GROUP\nRIJ CRAIG STREET, SUITE 150\nINDIANAPOLIS, IN 41250\nP: 317-700-0008\nSTRUCTURAL ENGINEER\nJPS CONSULTING ENGINEERS\n#1 MUNICIPAL DRIVE, SUITE 300\nFISHERS, I 40010\n:317-417-270\nW: jpaconsultingengineers.com\nMECHANICAL, PLUMBING ENGINEER\nORDCHA ENGINEERING\nCHARLOTTE, NC\nW: andicha.com\nELECTRICAL ENGINEER\nSMITH MILLER ASSOCIATES\nSI NORTH MAIN STREET\nFIG. 308.2.1\nUNOBSTRUCTED FORWARD REACH\nOBSTRUCTED HIGH FORWARD REACH\nOBSTRUCTED HIGH SIDE REACH\n404 DOORS AND DOORWAYS\n\"IF BOTH CLOSER AND LATCH ARE PROVIDED\n48\" MIN\n+\n+\n(1370)\n+\n60° MIN.\n1525]\n(445)\n305)\n1220)\n[ 36\" MIN\n(915)\n42\" MIN.\n(1065)\n(1370)\n(1220]\n24\" MIN\n(610)\n42 MIN\n(1065)\nT\n(A)\n(A) FRONT APPROACH\n(B) POCKET OR HINGE APPROACH\n(C) STOP OR LATCH APPROACH\n(A) FRONT APPROACH, PULL SIDE\n(B) FRONT APPROACH, PUSH SIDE\n(C) HINGE APPROACH, PULL SIDE\n(D) HINGE APPROACH, PULL SIDE\n(E) HINGE APPROACH, PUSH SIDE\n(F) LATCH APPROACH, PULL SIDE\n(G) LATCH APPROACH, PUSH SIDE\nFIG. 404.2.6\nTWO DOORS IN A SERIES\nMANEUVERING CLEARANCE AT SLIDING AND FOLDING DOORS\n60\" MIN\nBO\" MIN.\n1524mm\n(100mm) OF FLOOR.\nJMIN WO TH\nLANDING\nRAMP RUN\nLANDING\nRAMP RUN\nLANDING\n-AT LEAST AS WIDE AS RAMP RUN\n(A)\n(B)\nRAMP RUN\nFIG. 405.7\nRAMP LANDINGS\nRAMP EDGE PROTECTION\nCOUNTER SLOPE OF SURFACES ADJACENT TO CURB RAMPS\nDIAGONAL CURB RAMPS\n500 GENERAL SITE AND BUILDING ELEMENTS\n20-0 MIN\n1 1/2\" MAX\n38mm-\n4\"-7\nCURVED\n(A) CIRCULAR\n305mm\n12 MIN\n305mm\n12 MIN\n.305mm\n(B) NON-CIRCULAR\n3 1/16\"\n78mm\n2 1/4\" MAX.\nBEVELED\n57mm\n80° MIN\n132\" MIN .*\n96\" MIN.\"\n3350mm\n440mm\nFIG. 502 2/502.4\nFIG. 503.3\nVEHICLE PARKING SPACE / PARKING SPACE ACCESS AISLE\nPASSENGER LOADING ZONE AISLE\n175-19\"\nREF. ANSI A117.1 - FIG. 809.4.2\nFOR CHILDREN'S DIMENSIONS\nREF.ANBI A117.1 -FIG. 609.4.2\nFOR CHILDREN'S DIMENSIONS\nS\" MAX\n125mm\n380mm\n54- MN\n13/0mm\n36\" MIN.\n39-41\n915mm\n200-1040mm\"\n12\" MAX\n€\n(A) PLAN VIEW\n5\" MAX.\n15° MIN\n2380mm\n75-160mm\n,33\"-36\"\n203-2 55 mm\n75-15 0mm\nDOCUMENT TYPE\nPERMIT SET\nDATE\n4/29/2026\n< GISTERED ARCHI\nGOSH C SCHURERT\nSHEET REVISIONS\n-\n11.\n2 . 8\n.2.0\n1-6-\nFIG. 705.5\nTRUNCATED DOME SIZE\nSIDE WALL\nOF STALL\nREAR WALL\nOF STALL\nSOAP DISPENSER\nNOTE: DIMENSIONS\nSHOWN ARE TO FINISHED\nWALL\nTOILET PAPER\nDISPENSER\nTOWEL DISPENSER\nTOWEL DISPENSER !\nWASTE\nRECEPTACLE\nNAPKIN\nDISPOSAL\n1 3/8\n1'- 1\"\n2' - 5\" 1\".0\n0.00\n16-6 1mm\n18\"MIN.\nWHERE A PAIR OF DOORS IS UTILIZED, AT LEAST ONE OF THE DOORS SHALL PROVIDE A CLEAR, UNOBSTRUCTED OPENING WIDTH OF 32\" WITH THE LEAF POSITIONED AT AN ANGLE OF 90 DEGREES FROM ITS\nCLOSED POSITION.\n1\n1\n_36\" MIN.\n914mm\n(A) FORWARD\n(B) PARALLEL\n(A) FORWARD APPROACH\n(B) PARALLEL APPROACH\n17-25\n430-635mm\n25\" MAX\n835mm\n(8) PLAN\n(B) PLAN\nFIG. 306.3\nFIG. 307.2\nFIG. 307.3\nFIG. 307.4\n308 REACH RANGES\n403 WALKING SUFACES\n1 1085mm\n1005 mm\n32 MIN.\n1 815mm\n1 815mm\n(A) HINGED DOOR\n(B) SLIDING DOOR\n36\" MIN.\n815mm\nJ32 MIN.\n0\n0\n10\" MAX\n254mm E\n10\" MAX.\n254mm pak\n1=10-24\"\n255-610mm\nFIG. 308.3.2\nCLEAR WIDTH OF AN ACCESSIBLE ROUTE\n307 PROTRUDING OBJECTS\n203mm\nPREDOMINANT\n13mm\nDIRECTION OF TRAVEL\n1524mm\nLONG DIMENSION\nPERPENDICULAR\nTO DIRECTION OF\n38\" MN.\n954mm\n12 19 mm\n0 15\n229 mm\n11 MIN. DK\n279mm\n(A) ELEVATION\n(A) ELEVATION\nX2 2130mm\n_Xx 80\"\nDIORLAR.COM\n68mm+\nMF MAX\n6.4mm\nAF MAX\n2\n2\n230 MIN.\n36 MIN.\n914mm\n3T MIN\n762mm\n>27\n>27\n4\" MAX\n27 MA\nX > 12\"\nPOST\nPOSTC\nUKGr\n10 W HARKET IT\nSUITE 400\nINDIANAPOLIS, IN 46204\n4- MAX\n0\nTRAVE\nFIG. 302.3\nOPENINGS IN FLOOR OR GROUND SURFACES\n15Mmm\n_48 MIN.\n48 MIN\n1219mm\n48 MAX.\n864mm 1\nAT MAX\n37 MAX\n118 8mm\n36\"MIN\n2 MN.\n42 MIN\n48° MIN.\n1220mm\n1525mm\n(C) FOLDING DOOR\n(D) DOORWAYS WITHOUT DOORS\nFIG. 404.2.3\nCLEAR WIDTH OF DOORWAYS\n54\" MIN.\n(1220)\n24° MIN\n1\n(1220)\n(1085]\n42\" MIN.\n(1083)\n+\n.24\" MIN.\n(610)\n42\"MIN.\n48\" MIN\n1\n--\n60° MIN\n(1525)\n54\" MIN.\nL 42 MIN.\n(1065)\n48° "
+    },
+    "vision": {
+      "ready": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "sheetNumber": "G002",
+          "sheetTitle": "Accessibility",
+          "discipline": "Architectural",
+          "scale": null,
+          "detailReferences": [],
+          "impliedSubmittals": [],
+          "notesAndRequirements": [],
+          "aiSummary": "This page provides detailed architectural drawings related to accessibility features, including clear floor spaces, door approaches, and plumbing elements. It outlines the necessary dimensions and configurations to ensure compliance with accessibility standards. The sheet is essential for architects and contractors to ensure that all building elements meet accessibility requirements.",
+          "rawExtraction": {
+            "scale": null,
+            "ai_summary": "This page provides detailed architectural drawings related to accessibility features, including clear floor spaces, door approaches, and plumbing elements. It outlines the necessary dimensions and configurations to ensure compliance with accessibility standards. The sheet is essential for architects and contractors to ensure that all building elements meet accessibility requirements.",
+            "discipline": "Architectural",
+            "sheet_title": "Accessibility",
+            "sheet_number": "G002",
+            "detail_references": [],
+            "implied_submittals": [],
+            "notes_and_requirements": []
+          },
+          "visionModel": "gpt-4o",
+          "processedAt": "2026-06-24T05:23:56.336989+00:00"
+        }
+      ]
+    },
+    "retrieval": {
+      "ready": true,
+      "chunkCount": 20,
+      "chunks": [
+        {
+          "chunkIndex": 0,
+          "docType": null,
+          "textPreview": "This document appears to be a **permit set / accessibility reference sheet** rather than a narrative report or contract. It is labeled **“ACCESSIBILITY SHEET NO G002”** and includes a dense collection of **code-compliance diagrams, dimensions, and notes** for accessible design. The sheet is associated with the **EXOL Morrisville Phase 1** project at **2300 S Pennsylvania Avenue, Morrisville, PA 19067**, with a project number of **2026-019** and a date of **4/29/2026**. It also identifies the design team and consultants, including Alleato Group, JPS Consulting Engineers, and other engineering disciplines.\n\nThe main content is a visual and technical summary of **accessibility requirements** covering many building elements: **accessible routes, walking surfaces, doors and doorways, ramps, cur"
+        },
+        {
+          "chunkIndex": 0,
+          "docType": null,
+          "textPreview": "This opening block contains drafting/checking fields and consultant contact information for the project team. It lists the design-builder and engineering disciplines with addresses, phone numbers, and web references."
+        },
+        {
+          "chunkIndex": 0,
+          "docType": null,
+          "textPreview": "This short administrative section identifies the document as a permit set and provides the date. It also includes sheet revision markings and a partially legible registered architect stamp/name."
+        },
+        {
+          "chunkIndex": 0,
+          "docType": null,
+          "textPreview": "This section is a dense set of accessibility standard figure labels and related door, reach, and ramp diagrams. It includes references to maneuvering clearances, turning spaces, door approaches, sliding/folding doors, and ramp landings/edge protection."
+        },
+        {
+          "chunkIndex": 0,
+          "docType": null,
+          "textPreview": "This block shifts to general site and building element requirements, including curb ramps, parking spaces, loading zones, and related dimensional standards. It also includes plan-view dimension callouts and references to children's dimensions in ANSI A117.1."
+        }
+      ]
+    },
+    "readiness": {
+      "state": "ready",
+      "ocrTextReady": true,
+      "visionReady": true,
+      "embeddedReady": true,
+      "aiReviewReady": true,
+      "reasons": [
+        "1 page-level visual AI record(s) are available.",
+        "20 retrieval chunk(s) were found for this drawing."
+      ]
+    }
+  }
+}

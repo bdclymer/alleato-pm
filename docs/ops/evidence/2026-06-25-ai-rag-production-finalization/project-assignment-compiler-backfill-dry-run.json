@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "dryRun": true,
+  "lookbackDays": 14,
+  "minConfidence": 0.85,
+  "compilerJobsConsidered": 280,
+  "documentsEligible": 0,
+  "documentsUpdated": 0,
+  "bySource": [],
+  "samples": []
+}

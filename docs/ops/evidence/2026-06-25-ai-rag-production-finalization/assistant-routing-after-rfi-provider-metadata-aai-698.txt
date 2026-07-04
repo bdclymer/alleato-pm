@@ -1,0 +1,67 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-routing
+> pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium
+
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Already up to date
+Done in 362ms using pnpm v11.7.0
+[dotenv@17.2.3] injecting env (150) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (8) from ../.env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+Running 6 tests using 1 worker
+
+(node:89290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:89290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from ../.env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Existing auth session is still valid; verifying protected route access
+  ✓  1 [setup] › tests/auth.setup.ts:159:6 › authenticate (838ms)
+(node:89461) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:89461) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+  ✘  2 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling (3.0s)
+  -  3 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing
+  -  4 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project
+  -  5 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction
+  -  6 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+
+
+  1) [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoMatchObject[2m([22m[32mexpected[39m[2m)[22m
+
+    [32m- Expected  - 2[39m
+    [31m+ Received  + 2[39m
+
+    [2m  Object {[22m
+    [32m-   "confirmed": false,[39m
+    [32m-   "projectId": 43,[39m
+    [31m+   "message": "I need to create an RFI for Westfield about delayed electrical rough-in. What info do you need, and can you draft the action safely?",[39m
+    [31m+   "selectedProjectId": 43,[39m
+    [2m  }[22m
+
+      160 |
+      161 |     const createRfiTrace = toolTrace(report.metadata).find((trace) => trace.tool === "createRFI");
+    > 162 |     expect(createRfiTrace?.input).toMatchObject({
+          |                                   ^
+      163 |       projectId: 43,
+      164 |       confirmed: false,
+      165 |     });
+        at /Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:162:35
+
+  1 failed
+    [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling 
+  4 did not run
+  1 passed (6.0s)

@@ -1,0 +1,6 @@
+
+> alleato-procore@0.1.0 rag:verify:render-ai
+> node scripts/verify/verify_render_ai_gateway_health.mjs
+
+Render AI health check passed
+{"status":"healthy","ai_provider_path":"vercel_gateway","ai_gateway_configured":true,"ai_gateway_required":true,"openai_configured":true,"embedding_provider_configured":true,"supabase_service_configured":true,"deep_agent_storage":{"durable":false,"roots":{"llm_wiki":{"path":"/tmp/alleato-llm-wiki","durable":false},"docs_research":{"path":"/tmp/alleato-docs-research","durable":false},"content_builder":{"path":"/tmp/alleato-content-builder","durable":false}}},"timestamp":"2026-06-25T21:02:32.141833","ai_gateway_credits":{"balance":"6.54837432","total_used":"28.45162568"}}

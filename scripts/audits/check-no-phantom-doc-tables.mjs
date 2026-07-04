@@ -42,15 +42,18 @@ const MD_EXT = /\.mdx?$/;
 // look like table names but are not — and being generated, it cannot carry a
 // human-authored phantom-table claim anyway.
 // docs/migrate/ holds migrated overview/reference docs (same category as
-// docs/archive/) and docs/ops/tasks/ + docs/ops/evidence/ are process/run logs,
-// not authoritative DB-fact docs — they legitimately quote shell commands,
-// usernames, FK constraint names, and lifecycle values that trip false positives.
+// docs/archive/) and all of docs/ops/ is the engineering-memory system
+// (per docs/ops/README.md's folder map: tasks/, evidence/, handoffs/, adr/,
+// lessons/, patterns/, memory/, orchestration/, rag-pipeline-consolidation/,
+// repo-control/) — dated session narrative, not authoritative live DB-fact
+// docs. It legitimately quotes shell commands, usernames, FK constraint
+// names, config keys, and lifecycle enum values that trip false positives.
 // docs/patterns/ is the retrospective error-pattern archive (restored 2026-07-02
 // after the docs purge): its files quote example snippets (`.from("table")`,
 // `.from("xxx")`), trigger-word lists, and commit hashes that are never live
 // table assertions — same false-positive category as docs/archive/.
 const IGNORE_PATH_RE =
-  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/patterns\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
+  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/patterns\/|(^|\/)docs\/ops\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");

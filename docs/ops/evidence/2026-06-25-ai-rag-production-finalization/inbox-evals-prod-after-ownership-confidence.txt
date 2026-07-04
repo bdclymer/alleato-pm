@@ -1,0 +1,24 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-59-00-668Z-6c3dd1ea
+
+[1/5] realworld-last-five-emails … ✓ pass (15265ms, 1 tools)
+[2/5] realworld-urgent-inbox … ✓ pass (9168ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✓ pass (9811ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✗ fail (13125ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer does a decent job separating a security/watch item from a likely reply candidate and avoids claiming anything was sent. However, it overstates or blurs ownership in places, includes thread-level interpretation that is only partly supported, and does not clearly distinguish confirmed user actions from mere inbox items. It also does not fully satisfy the requirement to identify who needs a response and what happens if ignored in a crisp, decision-oriented way.
+[5/5] realworld-email-reply-triage … ✓ pass (13332ms, 1 tools)
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-59-00-668Z-6c3dd1ea/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-59-00-668Z-6c3dd1ea/summary.md
+Pass: 4/5

@@ -1,0 +1,12 @@
+Status: PASS
+
+Commands:
+
+- python3 -m py_compile backend/src/services/pipeline/document_parser.py backend/src/services/pipeline/embedder.py backend/src/services/integrations/microsoft_graph/onedrive_project_assignment_backfill.py backend/src/scripts/run_email_digest.py backend/src/services/agents/microsoft_executive_assistant/tools.py
+- cd frontend && npx eslint src/app/api/admin/ai-work-runs/route.ts src/lib/ai/tools/document-intelligence.ts --quiet
+
+Concise error lines: none.
+
+Likely owner files: none.
+
+AAI-682 relation: focused compile/lint passed on the backend and frontend files touched by the boundary cleanup.

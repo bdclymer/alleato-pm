@@ -1,0 +1,620 @@
+{
+  "generated_at": "2026-06-25T19:45:43.969Z",
+  "stage_counts": [
+    {
+      "stage": "error",
+      "count": 13227
+    },
+    {
+      "stage": "done",
+      "count": 10969
+    },
+    {
+      "stage": "embedded",
+      "count": 3053
+    },
+    {
+      "stage": "raw_ingested",
+      "count": 84
+    },
+    {
+      "stage": "chunked",
+      "count": 15
+    },
+    {
+      "stage": "segmented",
+      "count": 2
+    }
+  ],
+  "error_summary": [
+    {
+      "error_message": "manually paused to stop DB overload 2026-05-13 — reset to raw_ingested to resume",
+      "count": 12211,
+      "first_created_at": "2025-12-08T03:10:57.967Z",
+      "last_updated_at": "2026-05-13T11:54:49.351Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "Expecting value: line 1 column 1 (char 0)",
+      "count": 340,
+      "first_created_at": "2026-04-27T13:56:13.181Z",
+      "last_updated_at": "2026-05-03T19:51:39.814Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "Server disconnected",
+      "count": 234,
+      "first_created_at": "2026-03-18T19:57:07.458Z",
+      "last_updated_at": "2026-06-24T04:46:17.438Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 1
+    },
+    {
+      "error_message": "connection to server at \"db.fqcvmfqldlewvbsuxdvz.supabase.co\" (2600:1f18:16e0:2805:d014:c9ce:573a:11a4), port 5432 failed: Network is unreachable\n\tIs the server running on that host and accepting TCP/IP connections?\n",
+      "count": 61,
+      "first_created_at": "2026-06-23T01:55:19.198Z",
+      "last_updated_at": "2026-06-24T20:26:23.284Z",
+      "updated_last_24h": 2,
+      "updated_last_7d": 61
+    },
+    {
+      "error_message": "{'statusCode': 404, 'error': not_found, 'message': Object not found}",
+      "count": 31,
+      "first_created_at": "2026-05-05T18:21:03.054Z",
+      "last_updated_at": "2026-05-05T18:21:21.107Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "expected <class 'openpyxl.styles.fills.Fill'>",
+      "count": 14,
+      "first_created_at": "2026-03-11T06:48:34.481Z",
+      "last_updated_at": "2026-03-11T07:10:21.205Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "Error code: 401 - {'error': {'message': 'Authentication failed. Create an API key and set in AI_GATEWAY_API_KEY environment variable: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai-gateway%2Fapi-keys%3FshowCreateKeyModal', 'type': 'authentication_error'}}",
+      "count": 13,
+      "first_created_at": "2026-06-22T19:00:44.888Z",
+      "last_updated_at": "2026-06-23T18:59:14.509Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 13
+    },
+    {
+      "error_message": "[Errno 104] Connection reset by peer",
+      "count": 10,
+      "first_created_at": "2026-03-20T20:05:53.866Z",
+      "last_updated_at": "2026-05-11T01:29:46.330Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:315, additional_data:None>",
+      "count": 5,
+      "first_created_at": "2026-03-23T02:35:24.083Z",
+      "last_updated_at": "2026-03-23T05:25:59.603Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:23, additional_data:None>",
+      "count": 4,
+      "first_created_at": "2026-03-24T18:26:47.987Z",
+      "last_updated_at": "2026-05-01T01:51:34.917Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "Invalid input StreamInputs.SEND_HEADERS in state 5",
+      "count": 4,
+      "first_created_at": "2026-03-26T17:53:59.295Z",
+      "last_updated_at": "2026-05-13T10:38:01.494Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:61, additional_data:None>",
+      "count": 4,
+      "first_created_at": "2026-04-06T17:31:46.357Z",
+      "last_updated_at": "2026-04-09T23:18:49.206Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:53, additional_data:None>",
+      "count": 4,
+      "first_created_at": "2026-04-02T14:28:09.457Z",
+      "last_updated_at": "2026-04-07T17:13:17.374Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "No file bytes or content provided",
+      "count": 3,
+      "first_created_at": "2026-06-24T04:46:34.468Z",
+      "last_updated_at": "2026-06-24T04:46:42.396Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 3
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:95, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-21T00:14:31.412Z",
+      "last_updated_at": "2026-05-10T08:57:24.282Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "The read operation timed out",
+      "count": 3,
+      "first_created_at": "2026-03-21T00:14:41.075Z",
+      "last_updated_at": "2026-05-10T11:04:43.112Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:109, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-03T12:33:01.829Z",
+      "last_updated_at": "2026-04-03T12:33:56.770Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:259, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-07T19:15:44.421Z",
+      "last_updated_at": "2026-04-07T19:16:24.848Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:577, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-01T18:04:48.694Z",
+      "last_updated_at": "2026-04-01T18:06:07.899Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:459, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-25T00:46:15.657Z",
+      "last_updated_at": "2026-03-25T01:02:45.259Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:543, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-25T00:45:53.708Z",
+      "last_updated_at": "2026-03-25T00:53:06.243Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "Financial parser requires document_metadata.file_path",
+      "count": 3,
+      "first_created_at": "2026-03-08T01:29:30.865Z",
+      "last_updated_at": "2026-04-27T18:46:05.180Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:705, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-27T00:42:40.585Z",
+      "last_updated_at": "2026-03-27T00:46:16.880Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:337, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-08T20:40:37.470Z",
+      "last_updated_at": "2026-04-08T20:42:07.721Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:377, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-24T17:44:57.783Z",
+      "last_updated_at": "2026-03-24T18:13:30.504Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:87, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-08T20:40:36.620Z",
+      "last_updated_at": "2026-04-08T20:42:21.090Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:135, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-25T19:51:42.139Z",
+      "last_updated_at": "2026-03-25T19:53:11.798Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:355, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-24T20:17:17.098Z",
+      "last_updated_at": "2026-03-24T20:24:21.471Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:389, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-03-25T00:45:14.313Z",
+      "last_updated_at": "2026-03-25T00:46:21.075Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    },
+    {
+      "error_message": "<ConnectionTerminated error_code:1, last_stream_id:197, additional_data:None>",
+      "count": 3,
+      "first_created_at": "2026-04-08T21:39:29.103Z",
+      "last_updated_at": "2026-04-08T21:40:05.327Z",
+      "updated_last_24h": 0,
+      "updated_last_7d": 0
+    }
+  ],
+  "retryable_candidates": [
+    {
+      "total_error": 13227,
+      "rough_retryable": 5,
+      "rough_non_vectorizable": 1
+    }
+  ],
+  "recent_meeting_count": 80,
+  "recent_missing_embedded_chunks": [
+    {
+      "id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+      "fireflies_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+      "title": "Ulta Beauty Fresno Weekly Meeting",
+      "project_id": "761",
+      "status": "processed",
+      "effective_at": "2026-06-25T19:00:00.000Z",
+      "text_length": 2313,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "error",
+      "job_error": "[Errno 35] Resource temporarily unavailable",
+      "job_updated_at": "2026-06-25T19:17:26.966Z"
+    },
+    {
+      "id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "fireflies_id": "01KVTVXHPJPBX9YD4YBXW6DNCW",
+      "title": "Union Collective - DGI & DKGR",
+      "project_id": "1009",
+      "status": "processed",
+      "effective_at": "2026-06-25T18:00:00.000Z",
+      "text_length": 2106,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "error",
+      "job_error": "[Errno 35] Resource temporarily unavailable",
+      "job_updated_at": "2026-06-25T19:32:22.640Z"
+    },
+    {
+      "id": "01KVDGP7KYSBHEZCA89CJYN3RN",
+      "fireflies_id": "01KVDGP7KYSBHEZCA89CJYN3RN",
+      "title": "Vermillion design weekly call",
+      "project_id": "67",
+      "status": "processed",
+      "effective_at": "2026-06-25T17:00:00.000Z",
+      "text_length": 2760,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "error",
+      "job_error": "[Errno 35] Resource temporarily unavailable",
+      "job_updated_at": "2026-06-25T18:32:17.634Z"
+    },
+    {
+      "id": "01KVRSVPDN1K5SPGX31YXF4FAB",
+      "fireflies_id": "01KVRSVPDN1K5SPGX31YXF4FAB",
+      "title": "440 W - Alleato Group Interview",
+      "project_id": "60",
+      "status": "intentionally_excluded",
+      "effective_at": "2026-06-24T18:00:00.000Z",
+      "text_length": 2905,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "done",
+      "job_error": "INTENTIONALLY_EXCLUDED: Meeting title contains \"Interview\", so it is intentionally excluded from embedding/vectorization.",
+      "job_updated_at": "2026-06-25T02:47:40.941Z"
+    },
+    {
+      "id": "01KVDNXX51X4577FW682AJEFQY",
+      "fireflies_id": "01KVDNXX51X4577FW682AJEFQY",
+      "title": "Interview Alleato Group (Accountant-Jake)",
+      "project_id": "60",
+      "status": "intentionally_excluded",
+      "effective_at": "2026-06-24T17:00:00.000Z",
+      "text_length": 2178,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "done",
+      "job_error": "INTENTIONALLY_EXCLUDED: Meeting title contains \"Interview\", so it is intentionally excluded from embedding/vectorization.",
+      "job_updated_at": "2026-06-24T18:01:29.647Z"
+    },
+    {
+      "id": "01KVDXD1ABVQ2T66Y6JD6NK3QF",
+      "fireflies_id": "01KVDXD1ABVQ2T66Y6JD6NK3QF",
+      "title": "Interview Alleato Group (Accountant-Francis)",
+      "project_id": "60",
+      "status": "intentionally_excluded",
+      "effective_at": "2026-06-23T17:00:00.000Z",
+      "text_length": 2018,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": "done",
+      "job_error": "INTENTIONALLY_EXCLUDED: Meeting title contains \"Interview\", so it is intentionally excluded from embedding/vectorization.",
+      "job_updated_at": "2026-06-23T17:44:15.444Z"
+    },
+    {
+      "id": "01KTVRM2CVAXB7MY2R7N1DMCZ5",
+      "fireflies_id": "01KTVRM2CVAXB7MY2R7N1DMCZ5",
+      "title": "Chad Hobson - Teams interview is booked for 6/16/2026 at 4:00 PM EDT",
+      "project_id": "756",
+      "status": "intentionally_excluded",
+      "effective_at": "2026-06-16T20:00:00.000Z",
+      "text_length": 2415,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": null,
+      "job_error": null,
+      "job_updated_at": null
+    },
+    {
+      "id": "01KTSDHMWZK41424ATS0563A71",
+      "fireflies_id": "01KTSDHMWZK41424ATS0563A71",
+      "title": "Dustin Interview- VP Role",
+      "project_id": null,
+      "status": "intentionally_excluded",
+      "effective_at": "2026-06-12T13:00:00.000Z",
+      "text_length": 2231,
+      "chunks": 0,
+      "embedded_chunks": 0,
+      "job_stage": null,
+      "job_error": null,
+      "job_updated_at": null
+    }
+  ],
+  "recent_job_stage_counts": {
+    "error": 19,
+    "done": 14,
+    "no_job": 47
+  },
+  "latest_backlog_runs": [
+    {
+      "status": "failed",
+      "items_seen": 2,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 2,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "2 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T19:37:03.978Z",
+      "finished_at": "2026-06-25T19:42:15.083Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T19:27:04.015Z",
+      "finished_at": "2026-06-25T19:27:04.119Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T19:17:04.228Z",
+      "finished_at": "2026-06-25T19:17:04.323Z"
+    },
+    {
+      "status": "failed",
+      "items_seen": 3,
+      "items_synced": 1,
+      "items_skipped": 1,
+      "items_failed": 1,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "1 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T19:07:11.893Z",
+      "finished_at": "2026-06-25T19:11:15.158Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T18:47:06.076Z",
+      "finished_at": "2026-06-25T18:47:06.152Z"
+    },
+    {
+      "status": "failed",
+      "items_seen": 3,
+      "items_synced": 1,
+      "items_skipped": 0,
+      "items_failed": 2,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "2 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T18:37:02.943Z",
+      "finished_at": "2026-06-25T18:44:55.172Z"
+    },
+    {
+      "status": "failed",
+      "items_seen": 3,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 2,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "2 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T18:27:10.977Z",
+      "finished_at": "2026-06-25T18:29:40.042Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T16:17:04.459Z",
+      "finished_at": "2026-06-25T16:17:04.532Z"
+    },
+    {
+      "status": "failed",
+      "items_seen": 2,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 1,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "1 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T16:07:10.528Z",
+      "finished_at": "2026-06-25T16:08:42.104Z"
+    },
+    {
+      "status": "warning",
+      "items_seen": 1,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 0,
+      "error_code": "FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+      "error_message": "1 Fireflies backlog jobs marked non-vectorizable",
+      "started_at": "2026-06-25T15:57:10.067Z",
+      "finished_at": "2026-06-25T15:57:11.218Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T15:47:07.441Z",
+      "finished_at": "2026-06-25T15:47:07.521Z"
+    },
+    {
+      "status": "failed",
+      "items_seen": 1,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 1,
+      "error_code": "FIREFLIES_BACKLOG_FAILURE",
+      "error_message": "1 Fireflies backlog jobs failed",
+      "started_at": "2026-06-25T15:37:11.404Z",
+      "finished_at": "2026-06-25T15:40:16.923Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T15:27:12.363Z",
+      "finished_at": "2026-06-25T15:27:12.586Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T15:17:08.308Z",
+      "finished_at": "2026-06-25T15:17:08.456Z"
+    },
+    {
+      "status": "warning",
+      "items_seen": 1,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 0,
+      "error_code": "FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+      "error_message": "1 Fireflies backlog jobs marked non-vectorizable",
+      "started_at": "2026-06-25T15:07:03.976Z",
+      "finished_at": "2026-06-25T15:07:12.102Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T14:57:10.714Z",
+      "finished_at": "2026-06-25T14:57:10.857Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T14:47:06.864Z",
+      "finished_at": "2026-06-25T14:47:06.941Z"
+    },
+    {
+      "status": "succeeded",
+      "items_seen": 0,
+      "items_synced": 0,
+      "items_skipped": 0,
+      "items_failed": 0,
+      "error_code": null,
+      "error_message": "",
+      "started_at": "2026-06-25T14:37:03.396Z",
+      "finished_at": "2026-06-25T14:37:03.476Z"
+    },
+    {
+      "status": "warning",
+      "items_seen": 1,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 0,
+      "error_code": "FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+      "error_message": "1 Fireflies backlog jobs marked non-vectorizable",
+      "started_at": "2026-06-25T14:27:04.801Z",
+      "finished_at": "2026-06-25T14:27:06.009Z"
+    },
+    {
+      "status": "warning",
+      "items_seen": 1,
+      "items_synced": 0,
+      "items_skipped": 1,
+      "items_failed": 0,
+      "error_code": "FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+      "error_message": "1 Fireflies backlog jobs marked non-vectorizable",
+      "started_at": "2026-06-25T14:17:09.363Z",
+      "finished_at": "2026-06-25T14:17:11.984Z"
+    }
+  ]
+}

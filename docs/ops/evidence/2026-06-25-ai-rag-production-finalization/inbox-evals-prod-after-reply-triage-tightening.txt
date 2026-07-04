@@ -1,0 +1,27 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-28-34-058Z-f179cdab
+
+[1/5] realworld-last-five-emails … ✗ fail (11094ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer is organized and mostly distinguishes actionable mail from account/security notices, but it contains unsupported certainty, weak ownership handling, and some thread summaries are too thin or potentially hallucinated. It does not fully satisfy evidence-backed judgments or clean separation of confirmed vs inferred actions.
+[2/5] realworld-urgent-inbox … ✗ fail (9013ms, 1 tools)
+    ! judge email_operator score 3 < 4: The response does a decent job separating direct asks from noise and mostly avoids claiming anything was sent, but it misses the prompt’s core question about urgency: it never identifies a true urgent/critical item, and it labels items as Reply/Watch without strong evidence that they are urgent. It also overstates ownership with repeated "Likely Brandon should reply" language and offers generic next steps rather than a crisp urgent-vs-normal triage.
+[3/5] realworld-important-emails-this-morning … ✓ pass (9415ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✗ fail (12818ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer identifies a few inbox items and gives response-path hints, but it is not strong enough on ownership clarity, urgency triage, and evidence discipline to pass. It also includes some speculative phrasing and weakly supported recommendations instead of crisp, business-useful actions.
+[5/5] realworld-email-reply-triage … ✗ fail (12541ms, 1 tools)
+    ! judge email_operator score 2 < 4: The answer surfaces a few plausible reply candidates, but it does not cleanly answer “emails from today that need a reply.” It mixes in yesterday/UTC-timestamped items without proving they are from today, overuses vague certainty (“appears to be asking for a direct response”), and fails to separate user-owned actions from merely interesting inbox items with enough rigor. It also adds unsupported thread details in the evidence snippets and does not clearly classify suspicious or ignore judgments as evidence-based.
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-28-34-058Z-f179cdab/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-28-34-058Z-f179cdab/summary.md
+Pass: 1/5

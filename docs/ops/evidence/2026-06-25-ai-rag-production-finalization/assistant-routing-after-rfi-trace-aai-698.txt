@@ -1,0 +1,73 @@
+
+> alleato-procore@0.1.0 rag:verify:assistant-routing
+> pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium
+
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.patchedDependencies", "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Already up to date
+Done in 289ms using pnpm v11.7.0
+[dotenv@17.2.3] injecting env (150) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (8) from ../.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+Running 6 tests using 1 worker
+
+(node:90903) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:90903) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  enable debug logging with { debug: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (0) from ../.env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+Existing auth session is still valid; verifying protected route access
+  ✓  1 [setup] › tests/auth.setup.ts:159:6 › authenticate (1.1s)
+(node:91098) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:91098) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+  ✓  2 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:142:7 › AI assistant intent and tool routing › routes RFI creation requests through preview-only action tooling (3.8s)
+  ✘  3 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing (1.1m)
+  -  4 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:191:7 › AI assistant intent and tool routing › answers executive briefing metadata follow-ups without asking for a project
+  -  5 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:205:7 › AI assistant intent and tool routing › answers personal task prompts from task sources instead of inferred reconstruction
+  -  6 [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:219:7 › AI assistant intent and tool routing › returns a source-grounded Westfield briefing without streaming tool fallback
+
+
+  1) [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"I treated this as a source lookup"[39m
+    Received string:    [31m"I searched, and the only source context I have on that right now is the retrieved Teams DM evidence already in scope. The direct Brandon JobPlanner references are:·[39m
+    [31m- “Fucking job planner, did you see the new project management software Megan emailed?” — Brandon Clymer in a Teams DM on **2026-04-30 16:13:53**. Same thread also includes:[39m
+    [31m  - “I don't know how I am going to keep it together with some of these people.” — **2026-04-30 12:18:40**[39m
+    [31m  - “Looks like he did record it, here is the link to the meeting.” — **2026-04-30 14:07:20**[39m
+    [31m  - “https://app.fireflies.ai/view/Review-Allisonville-Road-Scope-of-Work::01KQF1M3PTR0945MY8F52D7YHV” — **2026-04-30 14:07:27**[39m
+    [31m  [Source: Teams DM Conversation 19:362f7b90-, 2026-04-30]·[39m
+    [31mOther JobPlanner-related Teams references tied to Brandon, but only available as summarized DM records rather than verbatim chat lines, are:·[39m
+    [31m- Brandon asked about the process of **creating a job in Job Planner**. [Source: Teams DM 19:c4beb912-, summary surfaced 2026-03-24, referring to a 2026-02-16 message][39m
+    [31m- Brandon referenced needing to **look into the job planner** to clarify an issue. [Source: Teams DM 19:2d723427-, summary surfaced 2026-03-25, referring to a 2025-10-22 message][39m
+    [31m- Brandon asked whether the **CEVA Phase 2 job** was in Job Planner. [Source: Teams DM 19:c4beb912-, summary surfaced 2026-03-24][39m
+    [31m- Brandon asked about **creating an agenda in Job Planner**. [Source: Teams DM 19:2474de6b-, 2026-04-08 summary][39m
+    [31m- Brandon discussed a problem where **costs entered into Acumatica were not appearing in Job Planner**. [Source: Teams DM 19:c4beb912-, 2026-04-30 summary of a 2025-05-07 message]·[39m
+    [31mBottom line: the only verbatim Brandon quote I can confirm from the available Teams evidence is the April 30 line about “Fucking job planner...” The rest are summary-level references, not raw quoted chat text.·[39m
+    [31mIf you want, I can do a broader pull next for **all Brandon Teams mentions of JobPlanner / job planner / planner** and return only verbatim-source snippets where available."[39m
+
+      180 |     );
+      181 |
+    > 182 |     expect(report.content).toContain("I treated this as a source lookup");
+          |                            ^
+      183 |     expect(report.content).toContain("Teams DM Conversation");
+      184 |     expect(report.content).not.toContain("**Hard Facts**");
+      185 |     expectIntentPlanner(report.metadata, ["source_lookup"]);
+        at /Users/meganharrison/Documents/alleato-pm/frontend/tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:182:28
+
+  1 failed
+    [chromium] › tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts:175:7 › AI assistant intent and tool routing › routes Teams source questions as source lookup instead of project briefing 
+  3 did not run
+  2 passed (1.2m)

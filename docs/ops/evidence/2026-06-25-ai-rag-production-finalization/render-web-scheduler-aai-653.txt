@@ -1,0 +1,27 @@
+
+> alleato-procore@0.1.0 verify:render-web-scheduler
+> node scripts/verify/verify-render-web-scheduler-disabled.mjs
+
+Render cron alleato-project-synthesis-sweep list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-fireflies-sync list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-domain-packet-compiler list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-source-rag-health list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-graph-sync list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-teams-dm-sync list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-teams-channel-sync list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render cron alleato-source-sync-health list endpoint is stale or unsafe; direct service checks remain the source of truth
+Render web scheduler guardrail failed:
+- render.yaml: alleato-backend must set GRAPH_SUBSCRIPTIONS_ENABLED=false; found auto
+- render.yaml: alleato-backend must set GRAPH_WEBHOOK_DRAIN_ENABLED=false; found auto
+- render.yaml: alleato-email-digest must define DATABASE_URL so the DB pressure guard can fail closed
+- render.yaml: alleato-graph-subscription-reconcile must define DATABASE_URL so the DB pressure guard can fail closed
+- render.yaml: alleato-rfi-email-ingest must set APP_DB_PRESSURE_GUARD_REQUIRED=true; found <missing>
+- render.yaml: alleato-rfi-email-ingest must define DATABASE_URL so the DB pressure guard can fail closed
+- Render cron alleato-domain-packet-compiler must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-fireflies-sync must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-graph-sync must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-project-synthesis-sweep must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-source-rag-health must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-source-sync-health must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-teams-channel-sync must stay suspended or structurally disabled while DB incident guard is active; found not_suspended
+- Render cron alleato-teams-dm-sync must stay suspended or structurally disabled while DB incident guard is active; found not_suspended

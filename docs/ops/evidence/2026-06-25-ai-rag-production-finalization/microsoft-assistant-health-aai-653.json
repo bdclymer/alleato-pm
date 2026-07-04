@@ -1,0 +1,57 @@
+
+> alleato-procore@0.1.0 verify:microsoft-assistant-health
+> node scripts/verify/verify_microsoft_assistant_health.mjs --json
+
+{
+  "ok": false,
+  "mailbox": "bclymer@alleatogroup.com",
+  "checkedAt": "2026-06-25T21:02:33.766Z",
+  "summary": {
+    "ok": false,
+    "failures": 1,
+    "warnings": 1
+  },
+  "checks": [
+    {
+      "stage": "render_cron",
+      "ok": true,
+      "message": "Render cron exists and config matches, but no successful run has been recorded yet.",
+      "serviceId": "crn-d8orvmmrnols73etajrg",
+      "schedule": "*/15 * * * *",
+      "rootDir": "backend",
+      "dockerCommand": "timeout 10m python3 src/scripts/run_microsoft_executive_assistant_check.py",
+      "lastSuccessfulRunAt": null,
+      "runAgeMinutes": null,
+      "warning": true
+    },
+    {
+      "stage": "graph_inbox",
+      "ok": true,
+      "message": "Live Graph inbox read succeeded for latest actionable message.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "latestMessageId": "AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARBbjnqAAA=",
+      "latestReceivedAt": "2026-06-25T20:57:51Z",
+      "latestSubject": "Re: 2025 Form 1120S S-Corp Return | Alleato LLC - Information Request",
+      "skippedNoiseCount": 0
+    },
+    {
+      "stage": "cached_intake",
+      "ok": false,
+      "message": "Cached Outlook intake is stale: 413 minutes old.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "latestReceivedAt": "2026-06-25T14:09:27+00:00",
+      "cacheAgeMinutes": 413,
+      "recentCount": 0,
+      "assignmentMethod": "unassigned"
+    },
+    {
+      "stage": "sync_ledger",
+      "ok": true,
+      "message": "Outlook sync ledger is successful.",
+      "mailbox": "bclymer@alleatogroup.com",
+      "lastSyncAt": "2026-06-25T14:18:20.675848+00:00",
+      "updatedAt": "2026-05-18T17:24:36.767+00:00",
+      "syncStatus": "success"
+    }
+  ]
+}
