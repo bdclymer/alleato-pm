@@ -7,7 +7,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
-import { AgendaSection } from "../agenda-section";
+import { AgendaSection, MeetingActionItemsSection } from "../agenda-section";
 import type { MeetingDetail } from "@/hooks/use-meetings";
 
 // Minutes-mode agenda items render an attachments picker (`meeting_item` is a
@@ -308,6 +308,21 @@ describe("AgendaSection", () => {
       expect(screen.queryByText("Closed Item")).not.toBeInTheDocument();
     });
     expect(screen.getByText("Open Item")).toBeInTheDocument();
+  });
+
+  it("renders a quiet action-items section for open agenda items", () => {
+    renderWithQueryClient(
+      <MeetingActionItemsSection
+        projectId={42}
+        meetingId="meeting-1"
+        detail={buildDetail()}
+      />,
+    );
+
+    expect(screen.getByTestId("meeting-action-items-section")).toBeInTheDocument();
+    expect(screen.getByText("Open Item")).toBeInTheDocument();
+    expect(screen.getByText("Second Category Item")).toBeInTheDocument();
+    expect(screen.queryByText("Closed Item")).not.toBeInTheDocument();
   });
 
   it("calls useCreateItem when quick-adding an item at the bottom of a category", async () => {

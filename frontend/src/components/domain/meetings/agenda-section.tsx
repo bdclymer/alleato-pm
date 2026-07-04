@@ -63,6 +63,7 @@ const STATUS_FILTER_OPTIONS = [
 ] as const;
 
 type StatusFilterValue = (typeof STATUS_FILTER_OPTIONS)[number]["value"];
+const ACTION_ITEM_STATUSES = new Set(["open", "in_progress"]);
 
 export interface AgendaSectionProps {
   projectId: number;
@@ -263,6 +264,61 @@ export function AgendaSection({ projectId, meetingId, detail, mode }: AgendaSect
         </Button>
       )}
     </div>
+  );
+}
+
+export interface MeetingActionItemsSectionProps {
+  projectId: number;
+  meetingId: string;
+  detail: MeetingDetail;
+}
+
+export function MeetingActionItemsSection({
+  projectId,
+  meetingId,
+  detail,
+}: MeetingActionItemsSectionProps) {
+  const actionItems = useMemo(
+    () =>
+      detail.categories
+        .flatMap((category) => category.items)
+        .filter((item) => ACTION_ITEM_STATUSES.has(item.status)),
+    [detail.categories],
+  );
+
+  if (actionItems.length === 0) return null;
+
+  return (
+    <section className="space-y-3" data-testid="meeting-action-items-section">
+      <div className="space-y-1">
+        <SectionRuleHeading label="Action items" className="mb-0 pb-0" />
+        <p className="text-xs text-muted-foreground">
+          Open items from this meeting that need owner follow-up.
+        </p>
+      </div>
+
+      <Sortable
+        value={actionItems}
+        getItemValue={(item) => item.id}
+        orientation="vertical"
+        onValueChange={() => undefined}
+      >
+        <SortableContent asChild>
+          <div className="flex flex-col divide-y divide-border/60">
+            {actionItems.map((item) => (
+              <SortableItem key={item.id} value={item.id} asChild>
+                <AgendaItemRow
+                  projectId={projectId}
+                  meetingId={meetingId}
+                  item={item}
+                  mode="agenda"
+                />
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContent>
+      </Sortable>
+    </section>
   );
 }
 
