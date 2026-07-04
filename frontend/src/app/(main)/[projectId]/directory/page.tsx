@@ -224,7 +224,7 @@ function DirectoryUnifiedTable<T>({
     <UnifiedTablePage<T>
       header={{
         title,
-        actions: action,
+        hidden: true,
         mobileActionsInline: false,
       }}
       toolbar={{
@@ -245,7 +245,16 @@ function DirectoryUnifiedTable<T>({
         groupByOptions,
         groupBy,
         onGroupByChange,
-        leftContent,
+        leftContent: (
+          <div className="flex min-w-0 items-center gap-3">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
+            <h2 className="shrink-0 text-lg font-semibold text-foreground">
+              {title}
+            </h2>
+            {leftContent}
+          </div>
+        ),
+        customActions: action,
       }}
       data={{
         items,
@@ -273,7 +282,7 @@ function DirectoryUnifiedTable<T>({
       layout={{
         containerPadding: false,
         containerClassName: "pb-0",
-        toolbarInlineWithHeader: true,
+        toolbarInlineWithHeader: false,
         minWidth: 880,
       }}
       emptyState={{
@@ -1968,6 +1977,8 @@ type CompanyContact = SubcontractorContact & {
   job_title: string | null;
 };
 
+type EditableContactField = "job_title" | "email" | "phone_business";
+
 type SubcontractorRow = {
   id: string;
   companyId: string;
@@ -2583,6 +2594,30 @@ function CompaniesSection({
     }
   };
 
+  const handleInlineContactEdit = React.useCallback(
+    async (
+      contact: CompanyContact | null,
+      field: EditableContactField,
+      value: string,
+    ) => {
+      if (!contact) {
+        throw new Error("Add a contact before editing contact fields.");
+      }
+
+      const result = await updateContact(contact.id, {
+        [field]: value.trim() || null,
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      onRefetch();
+      reloadContacts();
+    },
+    [onRefetch, reloadContacts],
+  );
+
   const subcontractorColumns: TableColumn<SubcontractorRow>[] = [
     {
       id: "company",
@@ -2664,6 +2699,11 @@ function CompaniesSection({
     {
       id: "title",
       label: "Title",
+      editable: true,
+      editValue: (item) => item.contact?.job_title ?? "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.contact, "job_title", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.contact?.job_title ?? "—"}
@@ -2675,6 +2715,12 @@ function CompaniesSection({
     {
       id: "email",
       label: "Email",
+      editable: true,
+      editInputType: "email",
+      editValue: (item) => item.contact?.email ?? "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.contact, "email", value),
       render: (item) =>
         item.contact?.email ? (
           <a
@@ -2692,6 +2738,13 @@ function CompaniesSection({
     {
       id: "phone",
       label: "Phone",
+      editable: true,
+      editInputType: "tel",
+      editValue: (item) =>
+        item.contact?.phone_business ?? item.contact?.phone_mobile ?? "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.contact, "phone_business", value),
       render: (item) => {
         const c = item.contact;
         return (
@@ -2893,6 +2946,11 @@ function CompaniesSection({
     {
       id: "title",
       label: "Title",
+      editable: true,
+      editValue: (item) => item.primaryContact?.job_title ?? "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.primaryContact, "job_title", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.primaryContact?.job_title ?? "—"}
@@ -2904,6 +2962,12 @@ function CompaniesSection({
     {
       id: "email",
       label: "Email",
+      editable: true,
+      editInputType: "email",
+      editValue: (item) => item.primaryContact?.email ?? "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.primaryContact, "email", value),
       render: (item) =>
         item.primaryContact?.email ? (
           <a
@@ -2921,6 +2985,15 @@ function CompaniesSection({
     {
       id: "phone",
       label: "Phone",
+      editable: true,
+      editInputType: "tel",
+      editValue: (item) =>
+        item.primaryContact?.phone_business ??
+        item.primaryContact?.phone_mobile ??
+        "",
+      editEmptyLabel: "—",
+      onEdit: (item, value) =>
+        handleInlineContactEdit(item.primaryContact, "phone_business", value),
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.primaryContact?.phone_business ||
