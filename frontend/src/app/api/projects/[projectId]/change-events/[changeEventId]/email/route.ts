@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
+import { resolveLineItemCommitmentNumbers } from "@/lib/change-events/resolve-line-item-commitment-numbers";
 import { logger } from "@/lib/logger";
 import { EMAIL_FROM } from "@/lib/email/client";
 
@@ -69,7 +70,10 @@ export const POST = withApiGuardrails(
           unit_cost,
           revenue_rom,
           cost_rom,
+          latest_price,
           non_committed_cost,
+          commitment_id,
+          commitment_type,
           budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
             id,
             description,
@@ -77,6 +81,10 @@ export const POST = withApiGuardrails(
               id,
               title,
               division_title
+            ),
+            cost_type:cost_code_types!cost_type_id(
+              code,
+              description
             )
           ),
           vendor:companies!vendor_id(id, name)
@@ -94,7 +102,7 @@ export const POST = withApiGuardrails(
 
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, project_number, address, state")
+      .select("id, name, project_number, address, city, state")
       .eq("id", projectIdNum)
       .single();
 
@@ -116,8 +124,23 @@ export const POST = withApiGuardrails(
     }
 
     const lineItems = changeEvent.change_event_line_items || [];
+    const commitmentMap = await resolveLineItemCommitmentNumbers(
+      supabase,
+      lineItems.map((item) => ({
+        commitment_id: item.commitment_id,
+        commitment_type: item.commitment_type,
+      })),
+    );
+    const lineItemsWithCommitment = lineItems.map((item) => ({
+      ...item,
+      commitment: item.commitment_id ? commitmentMap.get(item.commitment_id) ?? null : null,
+    }));
     const mappedProject = project ? { ...project, number: project.project_number } : null;
-    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
+    const htmlContent = buildChangeEventHtml(
+      { ...changeEvent, creator },
+      lineItemsWithCommitment,
+      mappedProject,
+    );
 
     const ceNumber = changeEvent.number || changeEvent.id;
     const fromAddress = EMAIL_FROM;

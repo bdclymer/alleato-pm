@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { getPublicAssetDataUri } from "@/lib/documents/branded-letterhead";
 
 /**
  * Must match the installed @sparticuz/chromium version — the guardrail test in
@@ -174,15 +175,18 @@ export function buildBrandedLogTableHtml({
 }
 
 interface LineItemForPdf {
+  description?: string | null;
   quantity?: number | null;
   unit_of_measure?: string | null;
   unit_cost?: number | null;
   revenue_rom?: number | null;
   cost_rom?: number | null;
+  latest_price?: number | null;
   non_committed_cost?: number | null;
   budget_line?: {
     description?: string | null;
-    cost_code?: { title?: string | null } | null;
+    cost_code?: { id?: string | null; title?: string | null } | null;
+    cost_type?: { code?: string | null; description?: string | null } | null;
   } | null;
   vendor?: { name?: string | null } | null;
   commitment?: { contract_number?: string | null } | null;
@@ -214,21 +218,53 @@ interface ProjectForPdf {
   state?: string | null;
 }
 
+/** Stacks a code/label pair on two lines inside a table cell (bold code, muted label below). */
+function stackedCell(top: string, sub: string | null): string {
+  return `<div class="cell-primary">${esc(top) || ""}</div>${
+    sub ? `<div class="cell-secondary">${esc(sub)}</div>` : ""
+  }`;
+}
+
+function formatBudgetCodeCell(item: LineItemForPdf): string {
+  const codeId = item.budget_line?.cost_code?.id;
+  const codeSuffix = item.budget_line?.cost_type?.code;
+  const top = codeId ? `${codeId}${codeSuffix ? `.${codeSuffix}` : ""}` : item.budget_line?.description || "";
+
+  const title = item.budget_line?.cost_code?.title;
+  const typeDescription = item.budget_line?.cost_type?.description;
+  const sub = title
+    ? `${title}${typeDescription ? `.${typeDescription}` : ""}`
+    : codeId
+      ? item.budget_line?.description || null
+      : null;
+
+  return stackedCell(top, sub);
+}
+
 export function buildChangeEventHtml(
   changeEvent: ChangeEventForPdf,
   lineItems: LineItemForPdf[],
   project: ProjectForPdf | null,
 ): string {
   const companyName = "Alleato Group";
-  const companyAddress = "2050 Meridian Blvd., Suite 300";
-  const companyCityState = "Franklin, TN 37067";
-  const companyPhone = "(615) 771-0024";
+  const companyAddressLine1 = "8383 Craig St, Suite 150";
+  const companyAddressLine2 = "Indianapolis, Indiana 46250";
+  const companyPhone = "P: +13177600088";
+  const logoSrc = getPublicAssetDataUri("Alleato-Group-Logo_Dark.png");
 
-  const printedOn = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const now = new Date();
+  const printedOn = now.toLocaleDateString("en-US");
+  const timeParts = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  }).formatToParts(now);
+  const printedAt = `${timeParts.find((p) => p.type === "hour")?.value ?? ""}:${
+    timeParts.find((p) => p.type === "minute")?.value ?? ""
+  }${timeParts.find((p) => p.type === "dayPeriod")?.value ?? ""} ${
+    timeParts.find((p) => p.type === "timeZoneName")?.value ?? ""
+  }`;
 
   const projectAddress = [project?.address, project?.city, project?.state]
     .filter(Boolean)
@@ -236,63 +272,68 @@ export function buildChangeEventHtml(
 
   const lineItemRows = lineItems
     .map((item) => {
-      const budgetCode =
-        item.budget_line?.cost_code?.title || item.budget_line?.description || "—";
-      const vendor = item.vendor?.name || "—";
-      const commitment = item.commitment?.contract_number || "—";
+      const budgetCodeCell = formatBudgetCodeCell(item);
+      const vendorCell = stackedCell(
+        item.vendor?.name || "",
+        item.commitment?.contract_number || null,
+      );
       const qty = fmtNum(item.quantity);
       const unitCost = fmt(item.unit_cost);
       const revenueRom = fmt(item.revenue_rom);
       const costRom = fmt(item.cost_rom);
       const nonCommitted = fmt(item.non_committed_cost);
-      const latestPrice = fmt(item.revenue_rom || 0);
-      const latestCost = fmt(item.cost_rom || 0);
+      const latestPrice = fmt(item.latest_price);
       const overUnder = fmt((item.revenue_rom || 0) - (item.cost_rom || 0));
+      const descriptionRow = item.description
+        ? `<tr class="description-row"><td colspan="17"><span class="description-label">Description:</span> ${esc(item.description)}</td></tr>`
+        : "";
       return `
         <tr>
-          <td>${esc(budgetCode)}</td>
-          <td>${esc(vendor)} / ${esc(commitment)}</td>
-          <td>${esc(item.unit_of_measure) || "—"}</td>
-          <td>${qty}</td>
-          <td>${unitCost}</td>
+          <td>${budgetCodeCell}</td>
+          <td>${vendorCell}</td>
+          <td>${esc(item.unit_of_measure) || ""}</td>
+          <td></td>
+          <td></td>
           <td>${revenueRom}</td>
+          <td></td>
           <td>${latestPrice}</td>
           <td>${qty}</td>
           <td>${unitCost}</td>
           <td>${costRom}</td>
+          <td></td>
+          <td></td>
           <td>${nonCommitted}</td>
-          <td>${latestCost}</td>
+          <td></td>
           <td>${overUnder}</td>
-          <td>—</td>
-        </tr>`;
+          <td></td>
+        </tr>${descriptionRow}`;
     })
     .join("");
 
   const totalRevenueRom = lineItems.reduce((s, li) => s + (li.revenue_rom || 0), 0);
   const totalCostRom = lineItems.reduce((s, li) => s + (li.cost_rom || 0), 0);
+  const totalLatestPrice = lineItems.reduce((s, li) => s + (li.latest_price || 0), 0);
   const totalNonCommitted = lineItems.reduce((s, li) => s + (li.non_committed_cost || 0), 0);
   const totalOverUnder = totalRevenueRom - totalCostRom;
 
   const ceNumber = changeEvent.number || changeEvent.id;
   const ceTitle = esc(changeEvent.title) || "Untitled";
   const ceStatus = esc(changeEvent.status) || "Open";
-  const ceType = esc(changeEvent.type) || "—";
-  const ceOrigin = esc(changeEvent.origin) || "—";
-  const ceScope = esc(changeEvent.scope) || "—";
-  const ceReason = esc(changeEvent.reason) || "—";
-  const ceDescription = esc(changeEvent.description) || "—";
+  const ceType = esc(changeEvent.type) || "";
+  const ceOrigin = esc(changeEvent.origin) || "";
+  const ceScope = esc(changeEvent.scope) || "";
+  const ceReason = esc(changeEvent.reason) || "";
+  const ceDescription = esc(changeEvent.description) || "";
   const createdAt = changeEvent.created_at
     ? new Date(changeEvent.created_at).toLocaleDateString("en-US")
-    : "—";
+    : "";
   const createdBy = changeEvent.creator
     ? esc(
         [changeEvent.creator.first_name, changeEvent.creator.last_name]
           .filter(Boolean)
-          .join(" ") ||
-          changeEvent.creator.email ||
-          "—",
+          .join(" ") || changeEvent.creator.email || "",
       )
-    : "—";
+    : "";
   const projectNumber = project?.number ? `${esc(String(project.number))} - ` : "";
   const projectName = esc(project?.name) || "Unknown Project";
 
@@ -307,29 +348,35 @@ export function buildChangeEventHtml(
     body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; }
     .page { padding: 20mm 15mm; min-height: 100vh; position: relative; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .header-left { font-size: 10px; line-height: 1.5; }
-    .header-left .company-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .header-left { display: flex; align-items: flex-start; gap: 12px; }
+    .header-logo { height: 36px; width: auto; object-fit: contain; margin-top: 1px; }
+    .header-logo-mark { font-size: 13px; font-weight: 700; line-height: 1.1; color: #1a1a1a; }
+    .header-logo-mark span { display: block; font-size: 8px; letter-spacing: 0.2em; }
+    .header-company { font-size: 10px; line-height: 1.5; }
+    .header-company .company-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
     .header-right { text-align: right; font-size: 10px; line-height: 1.5; }
     .header-right .project-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
     hr.divider { border: none; border-top: 2px solid #1a1a1a; margin-bottom: 16px; }
     .ce-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-bottom: 20px; }
-    .meta-row { display: flex; gap: 6px; }
-    .meta-label { font-weight: 600; white-space: nowrap; min-width: 100px; }
+    .meta-table { border-top: 1px solid #ccc; margin-bottom: 20px; }
+    .meta-row { display: flex; gap: 24px; border-bottom: 1px solid #e2ddd7; padding: 5px 4px; }
+    .meta-field { flex: 1; display: flex; gap: 6px; min-width: 0; }
+    .meta-label { font-weight: 700; white-space: nowrap; min-width: 100px; }
     .meta-value { color: #333; }
     .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 8px; }
     th { background: #2d2d2d; color: #fff; padding: 4px 3px; text-align: center; font-weight: 600; border: 1px solid #444; white-space: nowrap; }
     th.group-revenue { background: #1a4d7a; }
     th.group-cost { background: #2d6b3d; }
-    th.group-overunder { background: #6b3a2d; }
-    th.group-budgetmod { background: #4a3d6b; }
     td { padding: 3px; border: 1px solid #ddd; text-align: center; vertical-align: top; }
     td:first-child { text-align: left; }
     td:nth-child(2) { text-align: left; }
+    .cell-primary { font-weight: 700; }
+    .cell-secondary { color: #666; }
     tr:nth-child(even) { background: #f8f8f8; }
-    .totals-row { font-weight: 700; background: #f0f0f0 !important; }
-    .totals-row td { border-top: 2px solid #333; }
+    .description-row td { text-align: left; font-style: italic; color: #444; background: #fff; border-top: none; }
+    .description-label { font-style: normal; font-weight: 600; color: #1a1a1a; }
+    .totals-row td { font-weight: 700; background: #f0f0f0 !important; border-top: 2px solid #333; }
     .footer { display: flex; justify-content: space-between; font-size: 8px; color: #666; border-top: 1px solid #ccc; padding-top: 4px; margin-top: 16px; }
   </style>
 </head>
@@ -337,10 +384,17 @@ export function buildChangeEventHtml(
 <div class="page">
   <div class="header">
     <div class="header-left">
-      <div class="company-name">${companyName}</div>
-      <div>${companyAddress}</div>
-      <div>${companyCityState}</div>
-      <div>${companyPhone}</div>
+      ${
+        logoSrc
+          ? `<img class="header-logo" src="${logoSrc}" alt="${esc(companyName)}" />`
+          : `<div class="header-logo-mark">ALLEATO<span>GROUP</span></div>`
+      }
+      <div class="header-company">
+        <div class="company-name">${esc(companyName)}</div>
+        <div>${esc(companyAddressLine1)}</div>
+        <div>${esc(companyAddressLine2)}</div>
+        <div>${esc(companyPhone)}</div>
+      </div>
     </div>
     <div class="header-right">
       <div class="project-name">Project: ${projectNumber}${projectName}</div>
@@ -349,19 +403,27 @@ export function buildChangeEventHtml(
   </div>
   <hr class="divider" />
   <div class="ce-title">CHANGE EVENT #${esc(String(ceNumber))} &mdash; ${ceTitle}</div>
-  <div class="meta-grid">
-    <div>
-      <div class="meta-row"><span class="meta-label">Origin:</span><span class="meta-value">${ceOrigin}</span></div>
-      <div class="meta-row"><span class="meta-label">Date Created:</span><span class="meta-value">${createdAt}</span></div>
-      <div class="meta-row"><span class="meta-label">Status:</span><span class="meta-value">${ceStatus}</span></div>
-      <div class="meta-row"><span class="meta-label">Type:</span><span class="meta-value">${ceType}</span></div>
-      <div class="meta-row"><span class="meta-label">Description:</span><span class="meta-value">${ceDescription}</span></div>
-      <div class="meta-row"><span class="meta-label">Attachments:</span><span class="meta-value">—</span></div>
+  <div class="meta-table">
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Origin:</span><span class="meta-value">${ceOrigin}</span></div>
     </div>
-    <div>
-      <div class="meta-row"><span class="meta-label">Created By:</span><span class="meta-value">${createdBy}</span></div>
-      <div class="meta-row"><span class="meta-label">Scope:</span><span class="meta-value">${ceScope}</span></div>
-      <div class="meta-row"><span class="meta-label">Change Reason:</span><span class="meta-value">${ceReason}</span></div>
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Date Created:</span><span class="meta-value">${createdAt}</span></div>
+      <div class="meta-field"><span class="meta-label">Created By:</span><span class="meta-value">${createdBy}</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Status:</span><span class="meta-value">${ceStatus}</span></div>
+      <div class="meta-field"><span class="meta-label">Scope:</span><span class="meta-value">${ceScope}</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Type:</span><span class="meta-value">${ceType}</span></div>
+      <div class="meta-field"><span class="meta-label">Change Reason:</span><span class="meta-value">${ceReason}</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Description:</span><span class="meta-value">${ceDescription}</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-field"><span class="meta-label">Attachments:</span><span class="meta-value"></span></div>
     </div>
   </div>
   <div class="section-heading">Change Event Line Items</div>
@@ -371,44 +433,51 @@ export function buildChangeEventHtml(
         <th rowspan="2">Budget Code</th>
         <th rowspan="2">Vendor / Contract</th>
         <th rowspan="2">UOM</th>
-        <th colspan="3" class="group-revenue">Revenue</th>
-        <th colspan="1" class="group-revenue">Prime PCO</th>
-        <th colspan="4" class="group-cost">Cost</th>
-        <th colspan="1" class="group-overunder">Over/Under</th>
-        <th colspan="1" class="group-budgetmod">Budget Mod.</th>
+        <th colspan="5" class="group-revenue">Revenue</th>
+        <th colspan="7" class="group-cost">Cost</th>
+        <th rowspan="2">Over/<br/>Under</th>
+        <th rowspan="2">Budget<br/>Mod.</th>
       </tr>
       <tr>
         <th class="group-revenue">QTY</th>
         <th class="group-revenue">Unit Cost</th>
         <th class="group-revenue">ROM</th>
+        <th class="group-revenue">Prime PCO</th>
         <th class="group-revenue">Latest Price</th>
         <th class="group-cost">QTY</th>
         <th class="group-cost">Unit Cost</th>
+        <th class="group-cost">ROM</th>
+        <th class="group-cost">RFQ</th>
+        <th class="group-cost">Commit.</th>
         <th class="group-cost">Non-Commit.</th>
         <th class="group-cost">Latest Cost</th>
-        <th class="group-overunder">Over/Under</th>
-        <th class="group-budgetmod">Budget Mod.</th>
       </tr>
     </thead>
     <tbody>
-      ${lineItemRows || `<tr><td colspan="14" style="text-align:center;padding:8px;color:#666;">No line items</td></tr>`}
+      ${lineItemRows || `<tr><td colspan="17" style="text-align:center;padding:8px;color:#666;">No line items</td></tr>`}
       <tr class="totals-row">
-        <td colspan="5"><strong>Grand Totals</strong></td>
+        <td colspan="3"><strong>Grand Totals</strong></td>
+        <td></td>
+        <td></td>
         <td>${fmt(totalRevenueRom)}</td>
-        <td>${fmt(totalRevenueRom)}</td>
+        <td></td>
+        <td>${fmt(totalLatestPrice)}</td>
+        <td></td>
+        <td></td>
+        <td>${fmt(totalCostRom)}</td>
         <td></td>
         <td></td>
         <td>${fmt(totalNonCommitted)}</td>
-        <td>${fmt(totalCostRom)}</td>
+        <td></td>
         <td>${fmt(totalOverUnder)}</td>
-        <td>—</td>
+        <td></td>
       </tr>
     </tbody>
   </table>
   <div class="footer">
-    <span>${companyName}</span>
+    <span>${esc(companyName)}</span>
     <span>Page 1 of 1</span>
-    <span>Printed on: ${printedOn}</span>
+    <span>Printed on: ${printedOn} at ${printedAt}</span>
   </div>
 </div>
 </body>
