@@ -110,7 +110,7 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
   const { data: templateData } = useMeetingTemplateOptions();
   const { data: seriesData } = useMeetingSeriesList(projectId);
   const [planningMode, setPlanningMode] =
-    React.useState<MeetingPlanningSuggestionMode>("source");
+    React.useState<MeetingPlanningSuggestionMode>("ai");
   const planningSuggestions = useMeetingPlanningSuggestions(projectId, planningMode);
   const { people, isLoading: isLoadingPeople } = usePeople({ type: "all" });
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = React.useState<Set<string>>(

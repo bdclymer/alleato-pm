@@ -224,6 +224,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           "You generate meeting prep suggestions for construction project meetings.",
           "Use only the provided source candidates. Do not invent links, records, people, dates, or facts.",
           "Use prior meeting context only to prioritize and phrase suggestions; do not cite a prior meeting unless it is represented as a source candidate.",
+          "Every suggestion must cite one to three sourceIds from the normalized meeting prep source packets.",
+          "Prefer transcript segment and project intelligence source packets when they identify a concrete carry-forward topic.",
           "Meeting recaps are supporting evidence for the user, not agenda items. Keep recap summaries compact and preserve source meeting IDs.",
           "Merge duplicates when several source candidates point to the same discussion.",
           "Prefer agenda language that helps the meeting owner decide what must be discussed next.",
@@ -241,11 +243,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           JSON.stringify(context.intelligenceEvents.map(summarizeTimelineEvent), null, 2),
           "Previous meeting prep excerpt:",
           context.previousPrep ?? "None",
-          "Source candidates:",
-          JSON.stringify(candidates, null, 2),
+          "Normalized meeting prep source packets:",
+          JSON.stringify(buildMeetingPrepSourcePackets(context, candidates), null, 2),
           "Existing compact meeting recaps:",
           JSON.stringify(context.meetingRecaps, null, 2),
-          "Create the most useful meeting prep list from these candidates, and rewrite the compact recaps only when the source meeting IDs match the provided recaps.",
+          "Create the most useful meeting prep list from these source packets, and rewrite the compact recaps only when the source meeting IDs match the provided recaps.",
         ].join("\n\n"),
       });
 
@@ -321,6 +323,56 @@ function buildSourceBackedResponse(
     suggestions: candidates.slice(0, 8),
     meetingRecaps: context.meetingRecaps,
   };
+}
+
+function buildMeetingPrepSourcePackets(
+  context: MeetingPrepContext,
+  candidates: PlanningSuggestion[],
+) {
+  const segmentByCandidateId = new Map(
+    context.meetingSegments.map((segment) => [`meeting-segment-${segment.id}`, segment]),
+  );
+  const intelligenceByCandidateId = new Map(
+    context.intelligenceEvents.map((event) => [`intelligence-event-${event.id}`, event]),
+  );
+  const meetingByCandidateId = new Map(
+    context.recentMeetings.map((meeting) => [`prior-meeting-${meeting.id}`, meeting]),
+  );
+
+  return candidates.map((candidate) => {
+    const segment = segmentByCandidateId.get(candidate.id);
+    const intelligenceEvent = intelligenceByCandidateId.get(candidate.id);
+    const meeting = meetingByCandidateId.get(candidate.id);
+
+    return {
+      id: candidate.id,
+      kind: candidate.kind,
+      sourceType: classifySourcePacket(candidate.id),
+      title: candidate.title,
+      description: candidate.description,
+      href: candidate.href,
+      sourceLabel: candidate.sourceLabel,
+      sourceContext: candidate.sourceContext,
+      priority: candidate.priority ?? "medium",
+      evidence:
+        segment ? summarizeMeetingSegment(segment)
+        : intelligenceEvent ? summarizeTimelineEvent(intelligenceEvent)
+        : meeting ? summarizeRecentMeeting(meeting)
+        : null,
+    };
+  });
+}
+
+function classifySourcePacket(candidateId: string) {
+  if (candidateId.startsWith("meeting-segment-")) return "transcript_segment";
+  if (candidateId.startsWith("prior-meeting-")) return "prior_meeting";
+  if (candidateId.startsWith("intelligence-event-")) return "project_intelligence";
+  if (candidateId.startsWith("task-")) return "task";
+  if (candidateId.startsWith("rfi-")) return "rfi";
+  if (candidateId.startsWith("submittal-")) return "submittal";
+  if (candidateId.startsWith("change-event-")) return "change_event";
+  if (candidateId.startsWith("schedule-")) return "schedule";
+  return "project_context";
 }
 
 async function loadMeetingPrepContext(projectId: number): Promise<MeetingPrepContext> {
