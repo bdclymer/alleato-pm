@@ -2589,25 +2589,30 @@ function CompaniesSection({
       label: "Company",
       width: 240,
       render: (item) => (
-        <div className="flex min-w-0 items-baseline gap-2">
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => onCompanyClick(item.companyId)}
-            className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium"
-          >
-            {item.companyName}
-          </Button>
-          {item.typeLabel && (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {item.typeLabel}
-            </span>
-          )}
-        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onCompanyClick(item.companyId)}
+          className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium text-foreground hover:bg-transparent hover:text-foreground hover:underline"
+        >
+          {item.companyName}
+        </Button>
       ),
       sortValue: (item) => item.companyName,
       csvValue: (item) => item.companyName,
+    },
+    {
+      id: "type",
+      label: "Type",
+      width: 120,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.typeLabel || "—"}
+        </span>
+      ),
+      sortValue: (item) => item.typeLabel,
+      csvValue: (item) => item.typeLabel,
     },
     {
       id: "name",
@@ -2811,23 +2816,30 @@ function CompaniesSection({
             </Button>
             <Button
               type="button"
-              variant="link"
+              variant="ghost"
               size="sm"
               onClick={() => onCompanyClick(item.companyId)}
-              className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium"
+              className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium text-foreground hover:bg-transparent hover:text-foreground hover:underline"
             >
               {item.companyName}
             </Button>
-            {item.typeLabel && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {item.typeLabel}
-              </span>
-            )}
           </div>
         );
       },
       sortValue: (item) => item.companyName,
       csvValue: (item) => item.companyName,
+    },
+    {
+      id: "type",
+      label: "Type",
+      width: 120,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.typeLabel || "—"}
+        </span>
+      ),
+      sortValue: (item) => item.typeLabel,
+      csvValue: (item) => item.typeLabel,
     },
     {
       id: "name",
