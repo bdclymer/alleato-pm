@@ -2574,20 +2574,25 @@ function CompaniesSection({
       render: (item) => {
         if (!item.contact) {
           return (
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-sm text-primary"
-              onClick={() =>
-                setAddContact({
-                  open: true,
-                  companyId: item.companyId,
-                  companyName: item.companyName,
-                })
-              }
-            >
-              Add person
-            </Button>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-muted-foreground">—</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                aria-label={`Add contact to ${item.companyName}`}
+                onClick={() =>
+                  setAddContact({
+                    open: true,
+                    companyId: item.companyId,
+                    companyName: item.companyName,
+                  })
+                }
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           );
         }
         const c = item.contact;
