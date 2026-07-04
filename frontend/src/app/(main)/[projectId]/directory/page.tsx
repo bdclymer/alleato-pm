@@ -50,7 +50,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import {
   UnifiedTablePage,
   TableExpandedRow,
@@ -245,15 +245,7 @@ function DirectoryUnifiedTable<T>({
         groupByOptions,
         groupBy,
         onGroupByChange,
-        leftContent: (
-          <div className="flex min-w-0 items-center gap-3">
-            {/* eslint-disable-next-line design-system/no-raw-heading */}
-            <h2 className="shrink-0 text-lg font-semibold text-foreground">
-              {title}
-            </h2>
-            {leftContent}
-          </div>
-        ),
+        leftContent,
         customActions: action,
       }}
       data={{
@@ -366,84 +358,12 @@ function ExpandableSearch({
   );
 }
 
-// ─── Local: Section heading row ───────────────────────────────────
-
-function SectionRow({
-  title,
+function SectionActionsOnly({
   action,
-  count,
-  search,
-  onSearch,
-  searchPlaceholder,
-  filterContent,
 }: {
-  title: string;
   action: React.ReactNode;
-  count?: number;
-  search?: string;
-  onSearch?: (v: string) => void;
-  searchPlaceholder?: string;
-  filterContent?: React.ReactNode;
 }) {
-  const [filterOpen, setFilterOpen] = React.useState(false);
-
-  return (
-    <div className="flex items-center justify-between gap-4">
-      {/* Left: title */}
-      <div className="flex items-center gap-3 min-w-0">
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-lg font-semibold text-foreground shrink-0">
-          {title}
-        </h2>
-      </div>
-
-      {/* Right: search + filter + count + action */}
-      <div className="flex items-center gap-2 shrink-0">
-        {onSearch !== undefined && (
-          <ExpandableSearch
-            value={search ?? ""}
-            onChange={onSearch}
-            placeholder={
-              searchPlaceholder ?? `Search ${title.toLowerCase()}...`
-            }
-          />
-        )}
-
-        {filterContent && (
-          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Filters"
-                className="h-8 w-8 text-muted-foreground"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-0">
-              <div className="border-b px-3 py-2.5">
-                <p className="text-sm font-medium text-foreground">Filters</p>
-              </div>
-              <div className="p-3">{filterContent}</div>
-            </PopoverContent>
-          </Popover>
-        )}
-
-        {count !== undefined && (
-          <>
-            <div className="mx-1 h-4 w-px bg-border/60" />
-            <span className="inline-flex h-6 items-center rounded-md bg-muted/60 px-2 text-[11px] font-medium text-muted-foreground">
-              {count} {count === 1 ? "item" : "items"}
-            </span>
-          </>
-        )}
-
-        {action && <div className="ml-2">{action}</div>}
-      </div>
-    </div>
-  );
+  return <div className="mb-4 flex justify-end">{action}</div>;
 }
 
 // ─── Dialogs ─────────────────────────────────────────────────────
@@ -1128,8 +1048,7 @@ function ProjectTeamSection({
     <>
       {isLoading ? (
         <>
-          <SectionRow
-            title="Project Team"
+          <SectionActionsOnly
             action={
               <Button
                 size="xs"
@@ -1146,8 +1065,7 @@ function ProjectTeamSection({
         </>
       ) : roles.length === 0 ? (
         <>
-          <SectionRow
-            title="Project Team"
+          <SectionActionsOnly
             action={
               <Button
                 size="xs"
@@ -2003,6 +1921,7 @@ type CompanyGroupRow = {
 };
 
 type DirectorySubcontractorView = "contacts" | "companies";
+type DirectoryPageTab = "subcontractors" | "project-team";
 
 function SubcontractorViewSwitch({
   value,
@@ -3114,14 +3033,14 @@ function CompaniesSection({
     <>
       {isLoading ? (
         <>
-          <SectionRow title="Subcontractors" action={addCompanyAction} />
+          <SectionActionsOnly action={addCompanyAction} />
           <div className="mt-4">
             <SectionSkeleton rows={3} />
           </div>
         </>
       ) : error ? (
         <>
-          <SectionRow title="Subcontractors" action={addCompanyAction} />
+          <SectionActionsOnly action={addCompanyAction} />
           <p className="py-4 text-sm text-destructive">
             Failed to load companies.
           </p>
@@ -3186,6 +3105,8 @@ function CompaniesSection({
 export default function ProjectDirectoryPage() {
   const params = useParams()! ?? {};
   const projectId = params.projectId as string;
+  const [activeTab, setActiveTab] =
+    React.useState<DirectoryPageTab>("subcontractors");
 
   const [clientName, setClientName] = React.useState<string | null>(null);
   const [ownerCompanyId, setOwnerCompanyId] = React.useState<string | null>(
@@ -3276,6 +3197,22 @@ export default function ProjectDirectoryPage() {
       });
   }, [projectId]);
 
+  const directoryTabs = React.useMemo(
+    () => [
+      {
+        label: "Subcontractors",
+        href: "#subcontractors",
+        isActive: activeTab === "subcontractors",
+      },
+      {
+        label: "Project Team",
+        href: "#project-team",
+        isActive: activeTab === "project-team",
+      },
+    ],
+    [activeTab],
+  );
+
   return (
     <PageShell
       variant="dashboard"
@@ -3285,34 +3222,47 @@ export default function ProjectDirectoryPage() {
           <span className="text-sm text-muted-foreground">{clientName}</span>
         ) : undefined
       }
-      contentClassName="space-y-12"
+      contentClassName="space-y-6"
     >
-      {/* Section 1: Companies */}
-      <section>
-        <CompaniesSection
-          projectId={projectId}
-          companies={projectCompanies}
-          isLoading={companiesLoading}
-          error={companiesError}
-          ownerCompanyId={ownerCompanyId}
-          onAssignClick={() => setAddCompanyOpen(true)}
-          onRefetch={() => {
-            void refetchCompanies();
-          }}
-          onCompanyClick={(companyId) =>
-            setCompanySheet({ open: true, companyId })
+      <PageTabs
+        tabs={directoryTabs}
+        variant="inline"
+        className="mb-0"
+        onTabClick={(href) => {
+          if (href === "#project-team") {
+            setActiveTab("project-team");
+            return;
           }
-        />
-      </section>
+          setActiveTab("subcontractors");
+        }}
+      />
 
-      {/* Section 2: Project Team */}
-      <section id="project-team" className="scroll-mt-24">
-        <ProjectTeamSection
-          projectId={projectId}
-          manageRolesOpen={manageRolesOpen}
-          onManageRolesOpenChange={setManageRolesOpen}
-        />
-      </section>
+      {activeTab === "subcontractors" ? (
+        <section>
+          <CompaniesSection
+            projectId={projectId}
+            companies={projectCompanies}
+            isLoading={companiesLoading}
+            error={companiesError}
+            ownerCompanyId={ownerCompanyId}
+            onAssignClick={() => setAddCompanyOpen(true)}
+            onRefetch={() => {
+              void refetchCompanies();
+            }}
+            onCompanyClick={(companyId) =>
+              setCompanySheet({ open: true, companyId })
+            }
+          />
+        </section>
+      ) : (
+        <section>
+          <ProjectTeamSection
+            projectId={projectId}
+            manageRolesOpen={manageRolesOpen}
+            onManageRolesOpenChange={setManageRolesOpen}
+          />
+        </section>
+      )}
 
       <AssignExistingCompanyDialog
         open={addCompanyOpen}
