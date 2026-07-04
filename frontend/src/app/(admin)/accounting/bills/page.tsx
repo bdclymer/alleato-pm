@@ -10,6 +10,7 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
@@ -82,7 +83,10 @@ const COLUMNS: TableColumn<ApBill>[] = [
     render: (item) =>
       item.reference_nbr ? (
         <a
-          href={`https://alleatogroup.acumatica.com/Main?ScreenId=AP301000&DocType=${encodeURIComponent(item.document_type ?? "Bill")}&RefNbr=${encodeURIComponent(item.reference_nbr)}`}
+          href={buildAcumaticaApBillHref(
+            item.document_type,
+            item.reference_nbr,
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 font-mono text-xs font-medium text-primary hover:underline"

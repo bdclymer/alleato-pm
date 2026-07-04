@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 import { buildFinanceSpendRollup } from "@/lib/accounting/finance-spend";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const WHERE = "/api/accounting/direct-costs";
-
-function buildAcumaticaHref(documentType: string | null, referenceNbr: string): string {
-  return `https://alleatogroup.acumatica.com/Main?ScreenId=AP301000&DocType=${encodeURIComponent(documentType ?? "Bill")}&RefNbr=${encodeURIComponent(referenceNbr)}`;
-}
 
 export const GET = withApiGuardrails(`${WHERE}#GET`, async ({ request }) => {
   await requireCurrentUserAppCapability(
@@ -52,7 +49,7 @@ export const GET = withApiGuardrails(`${WHERE}#GET`, async ({ request }) => {
   const rows = rollup.includedBills.map((row) => ({
     ...row,
     sourceHref: row.referenceNbr
-      ? buildAcumaticaHref(row.documentType, row.referenceNbr)
+      ? buildAcumaticaApBillHref(row.documentType, row.referenceNbr)
       : null,
     needsReview: row.confidence < 0.85 || row.flags.length > 0,
   }));

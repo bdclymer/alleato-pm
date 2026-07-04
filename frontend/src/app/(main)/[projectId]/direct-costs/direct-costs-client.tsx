@@ -29,6 +29,7 @@ import { DirectCostPreviewPane } from "./direct-cost-preview-pane";
 
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
 import { apiFetch } from "@/lib/api-client";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 
 export type DirectCostRow = {
   id: string;
@@ -414,7 +415,7 @@ export function DirectCostsClient({
             ? `${item.acumatica_doc_type ? `${item.acumatica_doc_type} ` : ""}${item.acumatica_ref_nbr}`
             : "Synced";
           const acumaticaUrl = item.acumatica_ref_nbr
-            ? `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(item.acumatica_ref_nbr)}`
+            ? buildAcumaticaApBillHref(item.acumatica_doc_type, item.acumatica_ref_nbr)
             : null;
           return acumaticaUrl ? (
             <a

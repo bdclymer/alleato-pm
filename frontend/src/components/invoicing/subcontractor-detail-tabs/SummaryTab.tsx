@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 import { DetailField, DetailFieldGrid } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
@@ -168,13 +169,6 @@ function formatCompanyAddress(
     lines.push([cityStateZip, zip].filter(Boolean).join(" "));
   }
   return lines;
-}
-
-function buildAcumaticaApBillHref(
-  docType: string | null | undefined,
-  refNbr: string,
-): string {
-  return `https://alleatogroup.acumatica.com/Main?ScreenId=AP301000&DocType=${encodeURIComponent(docType ?? "Bill")}&RefNbr=${encodeURIComponent(refNbr)}`;
 }
 
 interface SummaryTabProps {

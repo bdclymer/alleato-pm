@@ -40,6 +40,7 @@ import {
   ReceiptText,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 
 interface DirectCostDetailPageProps {
   params: Promise<{
@@ -202,9 +203,10 @@ export default function DirectCostDetailPage({
     (a, b) => a.line_order - b.line_order,
   );
   const acumaticaHref = directCost.acumatica_ref_nbr
-    ? `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(
+    ? buildAcumaticaApBillHref(
+        directCost.acumatica_doc_type,
         directCost.acumatica_ref_nbr,
-      )}`
+      )
     : null;
 
   return (
