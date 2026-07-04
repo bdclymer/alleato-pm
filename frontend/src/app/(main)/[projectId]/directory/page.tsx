@@ -47,6 +47,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import {
@@ -188,6 +190,7 @@ function DirectoryUnifiedTable<T>({
   groupByOptions,
   groupBy,
   onGroupByChange,
+  leftContent,
 }: {
   title: string;
   action?: React.ReactNode;
@@ -213,6 +216,7 @@ function DirectoryUnifiedTable<T>({
   groupByOptions?: { value: string; label: string }[];
   groupBy?: string | null;
   onGroupByChange?: (value: string) => void;
+  leftContent?: React.ReactNode;
 }) {
   const [currentView, setCurrentView] = React.useState<ViewMode>("table");
 
@@ -241,6 +245,7 @@ function DirectoryUnifiedTable<T>({
         groupByOptions,
         groupBy,
         onGroupByChange,
+        leftContent,
       }}
       data={{
         items,
@@ -1986,6 +1991,48 @@ type CompanyGroupRow = {
   primaryContact: CompanyContact | null;
 };
 
+type DirectorySubcontractorView = "contacts" | "companies";
+
+function SubcontractorViewSwitch({
+  value,
+  onChange,
+  className,
+}: {
+  value: DirectorySubcontractorView;
+  onChange: (value: DirectorySubcontractorView) => void;
+  className?: string;
+}) {
+  return (
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={(nextValue) => {
+        if (nextValue === "contacts" || nextValue === "companies") {
+          onChange(nextValue);
+        }
+      }}
+      aria-label="Subcontractors view"
+      className={cn("rounded-md border border-border/60", className)}
+      size="sm"
+    >
+      <ToggleGroupItem
+        value="contacts"
+        aria-label="View by contact"
+        className="h-8 px-3 text-xs"
+      >
+        By contact
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="companies"
+        aria-label="View by company"
+        className="h-8 px-3 text-xs"
+      >
+        By company
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
+
 // Add-contact flow lifted out of the old per-company card. Lets the user attach
 // an existing directory contact to a company, or jump to creating a new one —
 // reused for every company from the flat Subcontractors table.
@@ -2287,8 +2334,9 @@ function CompaniesSection({
     companyId: string | null;
     companyName: string;
   }>({ open: false, companyId: null, companyName: "" });
-  const [groupBy, setGroupBy] = React.useState("none");
-  const isGrouped = groupBy === "company";
+  const [subcontractorView, setSubcontractorView] =
+    React.useState<DirectorySubcontractorView>("contacts");
+  const isGrouped = subcontractorView === "companies";
   const [expandedCompanyIds, setExpandedCompanyIds] = React.useState<
     Set<string>
   >(new Set());
@@ -2303,12 +2351,11 @@ function CompaniesSection({
       return next;
     });
   }, []);
-  const companyGroupByOptions = React.useMemo(
-    () => [
-      { value: "none", label: "All contacts" },
-      { value: "company", label: "By company" },
-    ],
-    [],
+  const subcontractorViewSwitch = (
+    <SubcontractorViewSwitch
+      value={subcontractorView}
+      onChange={setSubcontractorView}
+    />
   );
 
   const handleRemoveCompany = async (
@@ -2543,13 +2590,15 @@ function CompaniesSection({
       width: 240,
       render: (item) => (
         <div className="flex min-w-0 items-baseline gap-2">
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="sm"
             onClick={() => onCompanyClick(item.companyId)}
-            className="truncate text-sm font-medium text-primary hover:underline"
+            className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium"
           >
             {item.companyName}
-          </button>
+          </Button>
           {item.typeLabel && (
             <span className="shrink-0 text-xs text-muted-foreground">
               {item.typeLabel}
@@ -2726,46 +2775,57 @@ function CompaniesSection({
       id: "company",
       label: "Company",
       width: 240,
-      render: (item) => (
-        <div className="flex min-w-0 items-center gap-1.5">
-          {item.contacts.length > 1 && (
+      render: (item) => {
+        const canExpand = item.contacts.length > 1;
+        const isExpanded = expandedCompanyIds.has(item.id);
+        return (
+          <div className="flex min-w-0 items-center gap-1.5">
             <Button
               type="button"
               variant="ghost"
               size="icon"
+              disabled={!canExpand}
               onClick={(e) => {
                 e.stopPropagation();
-                toggleExpandedCompany(item.id);
+                if (canExpand) toggleExpandedCompany(item.id);
               }}
-              className="h-5 w-5 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className={cn(
+                "h-5 w-5 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-30",
+                !canExpand && "text-muted-foreground/60",
+              )}
+              aria-expanded={canExpand ? isExpanded : undefined}
               aria-label={
-                expandedCompanyIds.has(item.id)
-                  ? `Collapse contacts for ${item.companyName}`
-                  : `Expand contacts for ${item.companyName}`
+                canExpand
+                  ? isExpanded
+                    ? `Collapse contacts for ${item.companyName}`
+                    : `Expand contacts for ${item.companyName}`
+                  : `${item.companyName} has ${item.contacts.length} contact${item.contacts.length === 1 ? "" : "s"}`
               }
             >
               <ChevronRight
                 className={cn(
                   "h-3.5 w-3.5 transition-transform",
-                  expandedCompanyIds.has(item.id) && "rotate-90",
+                  canExpand && isExpanded && "rotate-90",
                 )}
               />
             </Button>
-          )}
-          <button
-            type="button"
-            onClick={() => onCompanyClick(item.companyId)}
-            className="truncate text-sm font-medium text-primary hover:underline"
-          >
-            {item.companyName}
-          </button>
-          {item.typeLabel && (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {item.typeLabel}
-            </span>
-          )}
-        </div>
-      ),
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => onCompanyClick(item.companyId)}
+              className="h-auto min-w-0 max-w-full justify-start truncate p-0 text-sm font-medium"
+            >
+              {item.companyName}
+            </Button>
+            {item.typeLabel && (
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {item.typeLabel}
+              </span>
+            )}
+          </div>
+        );
+      },
       sortValue: (item) => item.companyName,
       csvValue: (item) => item.companyName,
     },
@@ -2994,9 +3054,7 @@ function CompaniesSection({
           totalItems={companyCards.length}
           rowActions={renderGroupedRowActions}
           renderExpandedRow={renderGroupedExpandedRow}
-          groupByOptions={companyGroupByOptions}
-          groupBy={groupBy}
-          onGroupByChange={setGroupBy}
+          leftContent={subcontractorViewSwitch}
           emptyTitle="No subcontractors yet"
           emptyDescription="Add a company to start building the project directory."
           filteredDescription="No companies or contacts match the current search."
@@ -3014,9 +3072,7 @@ function CompaniesSection({
           searchPlaceholder="Search companies or contacts..."
           totalItems={allRows.length}
           rowActions={renderRowActions}
-          groupByOptions={companyGroupByOptions}
-          groupBy={groupBy}
-          onGroupByChange={setGroupBy}
+          leftContent={subcontractorViewSwitch}
           emptyTitle="No subcontractors yet"
           emptyDescription="Add a company to start building the project directory."
           filteredDescription="No companies or contacts match the current search."
