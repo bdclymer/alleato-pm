@@ -47,6 +47,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ds";
@@ -2597,15 +2600,10 @@ function CompaniesSection({
         }
         const c = item.contact;
         return (
-          <div className="flex items-center gap-2.5">
-            <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                {initials(c.first_name, c.last_name)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex items-center gap-2">
             <Link
               href={`/directory/contacts/${c.id}`}
-              className="text-sm font-medium text-foreground hover:underline"
+              className="text-sm text-muted-foreground hover:text-foreground hover:underline"
             >
               {contactDisplayName(c) || "Unnamed"}
             </Link>
@@ -2843,15 +2841,10 @@ function CompaniesSection({
         if (item.contacts.length === 1) {
           const c = item.contacts[0];
           return (
-            <div className="flex items-center gap-2.5">
-              <Avatar className="h-7 w-7 shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                  {initials(c.first_name, c.last_name)}
-                </AvatarFallback>
-              </Avatar>
+            <div className="flex items-center gap-2">
               <Link
                 href={`/directory/contacts/${c.id}`}
-                className="text-sm font-medium text-foreground hover:underline"
+                className="text-sm text-muted-foreground hover:text-foreground hover:underline"
               >
                 {contactDisplayName(c) || "Unnamed"}
               </Link>
@@ -2859,9 +2852,22 @@ function CompaniesSection({
           );
         }
         return (
-          <span className="text-sm text-muted-foreground">
-            {item.contacts.length} contacts
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-sm text-muted-foreground">
+                {item.contacts.length} contacts
+              </span>
+            </TooltipTrigger>
+            <TooltipContent align="start" className="max-w-64">
+              <div className="space-y-1">
+                {item.contacts.map((contact) => (
+                  <p key={contact.id} className="text-xs text-foreground">
+                    {contactDisplayName(contact) || "Unnamed"}
+                  </p>
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
         );
       },
       sortValue: (item) => item.contacts.length,
