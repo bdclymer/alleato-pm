@@ -916,12 +916,8 @@ export default function NewPrimeContractPcoPage() {
 
   return (
     <PageShell
-      variant="dashboard"
-      title={
-        hasChangeEvents
-          ? "New Prime Contract PCO"
-          : "New Prime Contract Change Order"
-      }
+      variant="form"
+      title="New Prime Contract Potential Change Order"
       description={
         hasChangeEvents
           ? "Create a potential change order from linked change events."

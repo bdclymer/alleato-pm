@@ -1,6 +1,7 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger, Badge } from "@/components/ds";
+import { useState } from "react";
+import { PageTabs, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from "@/components/ds";
 import {
   BarChart3,
   Clock,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 
 export function TabsSection() {
+  const [activePageTab, setActivePageTab] = useState("inbox");
+
   return (
     <section id="tabs" className="scroll-mt-8">
       {/* Section Header */}
@@ -144,44 +147,23 @@ export function TabsSection() {
         {/* Line / Underline Tabs */}
         <div className="space-y-3">
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
-            Underline Tabs — Line Variant
+            Page Tabs
           </h3>
           <div className="rounded-xl bg-card shadow-sm overflow-hidden">
-            <Tabs defaultValue="inbox" className="p-6">
-              <div className="border-b border-border -mx-6 px-6 pb-0 mb-6">
-                <TabsList variant="line" className="gap-0">
-                  <TabsTrigger value="inbox" className="px-4 pb-3 rounded-none">
-                    <Inbox className="h-3.5 w-3.5" />
-                    Inbox
-                    <Badge
-                      variant="default"
-                      className="h-4 min-w-4 px-1 text-[10px]"
-                    >
-                      4
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="team" className="px-4 pb-3 rounded-none">
-                    <Users className="h-3.5 w-3.5" />
-                    Team
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="recent"
-                    className="px-4 pb-3 rounded-none"
-                  >
-                    <Clock className="h-3.5 w-3.5" />
-                    Recent
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="settings"
-                    className="px-4 pb-3 rounded-none"
-                  >
-                    <Settings className="h-3.5 w-3.5" />
-                    Settings
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+            <div className="p-6">
+              <PageTabs
+                tabs={[
+                  { label: "Inbox", href: "inbox", count: 4, isActive: activePageTab === "inbox" },
+                  { label: "Team", href: "team", isActive: activePageTab === "team" },
+                  { label: "Recent", href: "recent", isActive: activePageTab === "recent" },
+                  { label: "Settings", href: "settings", isActive: activePageTab === "settings" },
+                ]}
+                variant="inline"
+                className="mb-6"
+                onTabClick={setActivePageTab}
+              />
 
-              <TabsContent value="inbox">
+              {activePageTab === "inbox" ? (
                 <div className="space-y-2">
                   {[
                     {
@@ -224,24 +206,23 @@ export function TabsSection() {
                     </div>
                   ))}
                 </div>
-              </TabsContent>
-
-              <TabsContent value="team">
+              ) : null}
+              {activePageTab === "team" ? (
                 <p className="text-[13px] text-muted-foreground">
                   Team notifications and mentions.
                 </p>
-              </TabsContent>
-              <TabsContent value="recent">
+              ) : null}
+              {activePageTab === "recent" ? (
                 <p className="text-[13px] text-muted-foreground">
                   Recently viewed items.
                 </p>
-              </TabsContent>
-              <TabsContent value="settings">
+              ) : null}
+              {activePageTab === "settings" ? (
                 <p className="text-[13px] text-muted-foreground">
                   Notification preferences and settings.
                 </p>
-              </TabsContent>
-            </Tabs>
+              ) : null}
+            </div>
           </div>
         </div>
 

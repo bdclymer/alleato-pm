@@ -119,7 +119,7 @@
 
     /* Structural */
     --border: var(--neutral-300);
-    --input: var(--neutral-300);
+    --input: var(--neutral-400);
     --ring: var(--neutral-400);
     --schedule-view-active: var(--brand-orange-500);
 
@@ -291,7 +291,7 @@
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5% 19%;
-    --input: 240 5% 19%;
+    --input: 240 4% 28%;
     --ring: 240 5% 35%;
     --schedule-view-active: 29 90% 61%;
 
@@ -1856,28 +1856,83 @@ velt-comment-dialog-internal .velt-comment-dialog {
   border-color: transparent !important;
 }
 
+/* Keep the in-canvas thread card clean: no extra rule between header actions
+   and message content, and no card-like border chrome on internal containers. */
+velt-comment-dialog-internal .velt-comment-dialog--line-div,
+velt-comment-dialog-internal .velt-thread-card--container,
+velt-comment-dialog-internal .velt-thread-card,
+velt-comment-dialog-internal .velt-comment-dialog-composer {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Keep on-page annotations quiet. The marker should read as a lightweight
    anchor, not a colored badge that competes with the document. */
 velt-comment-annotation-pin,
 velt-comment-pin,
+[data-velt-comment-pin-host],
+[data-testid="velt-comment-pin"],
+.velt-comment-pin,
 [data-velt-annotation],
 [data-annotation-id] {
+  position: relative !important;
+  z-index: 90 !important;
   box-shadow: none !important;
+  pointer-events: auto !important;
 }
 
+[data-velt-comment-pin-host] .velt-comment-pin--marker,
+[data-velt-comment-pin-host] .velt-comment-pin--marker-default,
+[data-velt-comment-pin-host] .velt-comment-pin--status-default,
 [data-testid="velt-comment-pin"] .velt-comment-pin--marker,
 [data-testid="velt-comment-pin"] .velt-comment-pin--marker-default,
-[data-testid="velt-comment-pin"] .velt-comment-pin--status-default {
+[data-testid="velt-comment-pin"] .velt-comment-pin--status-default,
+.velt-comment-pin .velt-comment-pin--marker,
+.velt-comment-pin .velt-comment-pin--marker-default,
+.velt-comment-pin .velt-comment-pin--status-default {
   background: hsl(var(--background)) !important;
   border: 1px solid hsl(var(--border)) !important;
   color: hsl(var(--foreground)) !important;
   box-shadow: none !important;
+  position: relative !important;
+  z-index: 91 !important;
+}
+
+/* When a thread card is open, the SDK leaves the pin in an "open" state above
+   the dialog. That extra badge reads like a stray notification instead of
+   useful context, so hide the open-state pin entirely. */
+velt-comment-pin.velt-comment-pin-open,
+[data-testid="velt-comment-pin"].velt-comment-pin-open,
+velt-comment-annotation-pin.velt-comment-pin-open {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.cdk-overlay-pane.snippyly-overlay-panel,
+.velt-comment-dialog-overlay-panel,
+velt-comment-dialog-internal {
+  z-index: 120 !important;
+}
+
+/* The standalone copy-link control is redundant next to the overflow menu and
+   reads as visual noise at this size. Hide only the explicit copy-link trigger;
+   keep the overflow menu available for secondary actions. */
+velt-comment-dialog-internal [aria-label="Copy link"],
+velt-comment-dialog-internal [aria-label="Copy Link"],
+velt-comment-dialog-internal [title="Copy link"],
+velt-comment-dialog-internal [title="Copy Link"] {
+  display: none !important;
 }
 
 .snippyly-highlight,
 [snippyly-highlight="true"] {
-  outline: 1px solid hsl(var(--border)) !important;
+  outline: 1px solid hsl(var(--border) / 0.35) !important;
   outline-offset: 0 !important;
+}
+
+#app-main-content.snippyly-highlight,
+#app-main-content[snippyly-highlight="true"] {
+  outline-color: transparent !important;
 }
 
 .velt-persistent-comment-mode-frame,

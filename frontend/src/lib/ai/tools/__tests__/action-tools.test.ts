@@ -42,7 +42,6 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
 }));
 
 jest.mock("@/services/notificationService", () => ({
-  notifyChangeRequestReviewNeeded: jest.fn(),
   notifyRfiReviewNeeded: jest.fn(),
 }));
 
@@ -52,10 +51,7 @@ jest.mock("@/lib/ai/notification-decision-ledger", () => ({
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { recordAiNotificationDecision } from "@/lib/ai/notification-decision-ledger";
-import {
-  notifyChangeRequestReviewNeeded,
-  notifyRfiReviewNeeded,
-} from "@/services/notificationService";
+import { notifyRfiReviewNeeded } from "@/services/notificationService";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
@@ -69,9 +65,6 @@ import {
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
 const mockedCreateServiceClient = jest.mocked(createServiceClient);
-const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
-  notifyChangeRequestReviewNeeded,
-);
 const mockedNotifyRfiReviewNeeded = jest.mocked(notifyRfiReviewNeeded);
 const mockedRecordAiNotificationDecision = jest.mocked(
   recordAiNotificationDecision,
@@ -80,10 +73,6 @@ const mockedRecordAiNotificationDecision = jest.mocked(
 describe("previewCreateRFI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedNotifyChangeRequestReviewNeeded.mockResolvedValue({
-      created: 1,
-      skipped: 0,
-    });
     mockedNotifyRfiReviewNeeded.mockResolvedValue({
       created: 1,
       skipped: 0,
@@ -313,18 +302,6 @@ describe("createChangeEvent", () => {
         }),
       ]),
     );
-    expect(mockedNotifyChangeRequestReviewNeeded).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      expect.objectContaining({
-        projectId: 43,
-        title: "Owner-requested lobby finish change",
-        description: "Owner asked to upgrade the lobby finish package.",
-        scope: "TBD",
-        type: "Owner Change",
-        status: "Open",
-        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
-      }),
-    );
     expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
       expect.objectContaining({
         recipientUserId: "00000000-0000-0000-0000-000000000001",
@@ -462,7 +439,6 @@ describe("createChangeEvent", () => {
       success: false,
       error: expect.stringContaining('Invalid change request status "void"'),
     });
-    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
     expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
   });
 
@@ -576,7 +552,6 @@ describe("createChangeEvent", () => {
     expect(auditInsert).toHaveBeenCalledWith(
       expect.objectContaining({ status: "success" }),
     );
-    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
     expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
     expect(output).toMatchObject({
       success: true,

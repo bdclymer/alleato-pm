@@ -6,6 +6,8 @@ node_modules/
 out/
 dist/
 build/
+!frontend/scripts/build/
+!frontend/scripts/build/*.mjs
 
 # Environment files
 .env
@@ -129,6 +131,12 @@ YokeFlow/
 
 # Test artifacts
 frontend/tests/test-results-*
+.codex-artifacts/
+feature-audit-output/
+frontend/tests/artifacts/
+/tmp-*.png
+/*.png
+skills/visual-documentation/
 
 # Temp files
 tmp/

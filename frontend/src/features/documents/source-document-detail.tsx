@@ -30,12 +30,17 @@ import type { ReactNode } from "react";
 
 export type SourceDocument = Database["public"]["Tables"]["document_metadata"]["Row"];
 type RagSourceDocument = RagDatabase["public"]["Tables"]["rag_document_metadata"]["Row"];
+type MeetingSourceSegment = Pick<
+  Database["public"]["Tables"]["meeting_segments"]["Row"],
+  "id" | "segment_index" | "summary" | "title"
+>;
 
 export type SourceDocumentDetailRecord = {
   source: SourceDocument;
   attachmentUrl: string | null;
   attachmentContentType: string | null;
   relatedTaskCount: number;
+  meetingSegments: MeetingSourceSegment[];
 };
 
 type LoadSourceDocumentDetailOptions = {
@@ -168,6 +173,10 @@ function getParticipants(source: SourceDocument): string[] {
     .filter(Boolean);
 }
 
+function meetingSegmentAnchorId(segmentId: string) {
+  return `meeting-segment-${segmentId}`;
+}
+
 export async function loadSourceDocumentDetail(
   options: LoadSourceDocumentDetailOptions,
 ): Promise<SourceDocumentDetailRecord | null> {
@@ -222,9 +231,18 @@ export async function loadSourceDocumentDetail(
     .from("tasks")
     .select("id", { count: "exact", head: true })
     .eq("metadata_id", options.sourceDocumentId);
+  const { data: meetingSegments, error: meetingSegmentsError } = await supabase
+    .from("meeting_segments")
+    .select("id, segment_index, summary, title")
+    .eq("metadata_id", options.sourceDocumentId)
+    .order("segment_index", { ascending: true });
 
   if (relatedTaskError) {
     throw relatedTaskError;
+  }
+
+  if (meetingSegmentsError) {
+    throw meetingSegmentsError;
   }
 
   return {
@@ -232,6 +250,7 @@ export async function loadSourceDocumentDetail(
     attachmentUrl,
     attachmentContentType: attachmentLinkResult.data?.content_type ?? null,
     relatedTaskCount: relatedTaskCount ?? 0,
+    meetingSegments: meetingSegments ?? [],
   };
 }
 
@@ -243,7 +262,7 @@ export function SourceDocumentDetailPage({
   projectSourceHref,
   reviewActions,
 }: SourceDocumentDetailPageProps) {
-  const { source, attachmentUrl, attachmentContentType } = record;
+  const { source, attachmentUrl, attachmentContentType, meetingSegments } = record;
   const readableContent = getReadableContent(source);
   const emailMessages =
     source.type === "email" || source.category === "email"
@@ -340,6 +359,37 @@ export function SourceDocumentDetailPage({
         <section className="space-y-3">
           <SectionRuleHeading label="Review Actions" />
           {reviewActions}
+        </section>
+      ) : null}
+
+      {meetingSegments.length > 0 ? (
+        <section className="space-y-3">
+          <SectionRuleHeading label={`Discussion Topics (${meetingSegments.length})`} />
+          <ol className="divide-y divide-border">
+            {meetingSegments.map((segment, index) => (
+              <li
+                key={segment.id}
+                id={meetingSegmentAnchorId(segment.id)}
+                className="scroll-mt-24 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="flex gap-2.5">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium tabular-nums text-muted-foreground">
+                    {segment.segment_index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <p className="text-sm font-medium text-foreground">
+                      {segment.title || `Topic ${index + 1}`}
+                    </p>
+                    {segment.summary ? (
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {cleanSourceText(segment.summary)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
         </section>
       ) : null}
 

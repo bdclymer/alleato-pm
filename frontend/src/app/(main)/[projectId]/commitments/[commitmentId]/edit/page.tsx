@@ -12,6 +12,7 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { PageShell } from "@/components/layout";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { ErrorState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
@@ -386,6 +387,7 @@ export default function EditCommitmentPage() {
         title={title}
         onBack={handleCancel}
         backLabel="Cancel"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
       >
         <div className="space-y-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -406,6 +408,7 @@ export default function EditCommitmentPage() {
         title={title}
         onBack={handleCancel}
         backLabel="Back"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
       >
         <ErrorState
           title="Approved commitments cannot be edited"
@@ -421,6 +424,7 @@ export default function EditCommitmentPage() {
       title={title}
       onBack={handleCancel}
       backLabel="Cancel"
+      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
     >
       {isSubcontract ? (
         <CreateSubcontractForm

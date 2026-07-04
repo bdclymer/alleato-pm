@@ -22,8 +22,6 @@ import {
   SidebarFooter,
 } from "@/components/budget/modals/BaseSidebar";
 import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
   budgetRadioCardClass,
 } from "@/components/budget/modals/style-tokens";
 
@@ -78,6 +76,18 @@ const UOM_OPTIONS = [
 
 type CalculationMethod = "manual" | "calculated";
 
+function getInitialCalculationMethod(lineItem: {
+  unitQty?: number;
+  uom?: string;
+  unitCost?: number;
+}): CalculationMethod {
+  return lineItem.unitQty != null ||
+    lineItem.unitCost != null ||
+    Boolean(lineItem.uom?.trim())
+    ? "calculated"
+    : "manual";
+}
+
 function toEditableNumberString(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "";
   return value === 0 ? "" : String(value);
@@ -109,7 +119,7 @@ export function OriginalBudgetEditModal({
 
   // Form state
   const [calculationMethod, setCalculationMethod] =
-    useState<CalculationMethod>("manual");
+    useState<CalculationMethod>(getInitialCalculationMethod(lineItem));
   const [unitQty, setUnitQty] = useState(toEditableNumberString(lineItem.unitQty));
   const [uom, setUom] = useState(lineItem.uom || "");
   const [unitCost, setUnitCost] = useState(toEditableNumberString(lineItem.unitCost));
@@ -146,7 +156,7 @@ export function OriginalBudgetEditModal({
   // we need.
   useEffect(() => {
     if (open) {
-      setCalculationMethod("manual");
+      setCalculationMethod(getInitialCalculationMethod(lineItem));
       setUnitQty(toEditableNumberString(lineItem.unitQty));
       setUom(lineItem.uom || "");
       setUnitCost(toEditableNumberString(lineItem.unitCost));
@@ -260,17 +270,11 @@ export function OriginalBudgetEditModal({
         className="flex h-full flex-col gap-0"
       >
         <div className="px-4 sm:px-8 pt-1">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger
-              value="original"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="original">
               Original Budget
             </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+            <TabsTrigger value="history">
               History
             </TabsTrigger>
           </TabsList>

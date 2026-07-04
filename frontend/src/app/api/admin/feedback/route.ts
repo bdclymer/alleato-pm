@@ -25,6 +25,7 @@ import type { Database } from "@/types/database.types";
 import { logger } from "@/lib/logger";
 
 const feedbackPayloadSchema = z.object({
+  category: z.string().trim().min(1).max(100).nullable().optional(),
   title: z.string().trim().min(1).max(200).optional(),
   comment: z.string().trim().min(1).max(5000),
   pageUrl: z.string().url(),
@@ -299,6 +300,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
   const agentContext = toolContext ? toJsonValue(contextToAgentPayload(toolContext)) : null;
 
   const insertPayload: FeedbackInsert = {
+    category: payload.category ?? null,
     created_by: requestUser.id,
     project_id: payload.projectId ?? null,
     page_url: payload.pageUrl,
@@ -468,9 +470,11 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
 // ---------------------------------------------------------------------------
 
 const listQuerySchema = z.object({
+  category: z.string().optional(),
   status: z.string().optional(),
   excludeStatus: z.string().optional(),
   requestType: z.string().optional(),
+  excludeBoardItems: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -487,13 +491,21 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     );
   }
 
-  const { status, excludeStatus, requestType, limit = 100, offset = 0 } = parsed.data;
+  const {
+    category,
+    status,
+    excludeStatus,
+    requestType,
+    excludeBoardItems,
+    limit = 100,
+    offset = 0,
+  } = parsed.data;
   const serviceSupabase = createServiceClient();
 
   let query = serviceSupabase
     .from("admin_feedback_items")
     .select(
-      "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
+      "id, category, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -520,6 +532,14 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
   if (requestType) {
     query = query.eq("request_type", requestType);
+  }
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  if (excludeBoardItems) {
+    query = query.neq("page_path", "/product-board");
   }
 
   const { data, error, count } = await query;
@@ -568,14 +588,14 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
 const patchSchema = z.object({
   id: z.string().uuid(),
+  category: z.string().trim().min(1).max(100).nullable().optional(),
+  severity: z.enum(ADMIN_FEEDBACK_SEVERITIES).optional(),
   status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "pr_created", "deferred", "resolved", "closed", "archived"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
-  resolved: "closed",
-};
+const LEGACY_STATUS_FALLBACKS: Record<string, string> = {};
 
 export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
   await requireAdminUser("/api/admin/feedback#PATCH");
@@ -625,7 +645,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
     .from("admin_feedback_items")
     .update(mergedUpdates)
     .eq("id", id)
-    .select("id, status, title")
+    .select("id, category, severity, status, title")
     .single();
 
   if (
@@ -640,7 +660,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
       .from("admin_feedback_items")
       .update(fallbackUpdates)
       .eq("id", id)
-      .select("id, status, title")
+      .select("id, category, severity, status, title")
       .single();
     data = fallbackResult.data;
     error = fallbackResult.error;
@@ -654,7 +674,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
     throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PATCH", message: details.message });
   }
 
-  if (data?.status === "resolved") {
+  if (data?.status === "closed") {
     try {
       const { data: fullItem } = await serviceSupabase
         .from("admin_feedback_items")
@@ -686,7 +706,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
         });
       }
     } catch (learningError) {
-      logger.error({ msg: "[AdminFeedback] Resolved learning ingestion failed", data: learningError });
+      logger.error({ msg: "[AdminFeedback] Verified learning ingestion failed", data: learningError });
     }
   }
 

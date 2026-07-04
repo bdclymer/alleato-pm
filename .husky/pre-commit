@@ -143,10 +143,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# ── RAG architecture docs freshness gate ─────────────────────────
-# If staged changes touch RAG code or RAG-table migrations, the two
-# architecture docs (AI-RAG-ARCHITECTURE.md + TABLE-INVENTORY.md) must
-# be updated in the same commit. See .claude/rules/RAG-DOCS-GATE.md.
+# ── RAG architecture docs freshness gate (structural half only) ──
+# Checks tables.yaml/TABLE-LIST.md consistency, which doesn't depend on the
+# commit message. The RAG-path + [skip-rag-docs] check lives in
+# .husky/commit-msg, since that's the only hook stage with the final
+# message on disk. See .claude/rules/RAG-DOCS-GATE.md.
 sh .husky/pre-commit-rag-docs
 if [ $? -ne 0 ]; then
   exit 1

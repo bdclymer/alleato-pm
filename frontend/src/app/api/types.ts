@@ -115,6 +115,7 @@ export interface Commitment {
   erp_status: string | null;
   ssov_status: string | null;
   // Phase 5 enhancements - Change order aggregations
+  change_order_count?: number;
   pending_change_orders: number;
   draft_change_orders: number;
   // Phase 5 enhancements - Invoice/payment aggregations

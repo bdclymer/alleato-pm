@@ -116,14 +116,12 @@ export function KanbanEmptyAction({ children, onClick }: KanbanEmptyActionProps)
   );
 }
 
-interface KanbanCardShellProps {
+interface KanbanCardShellProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   density: keyof typeof kanbanDensityStyles | { cardPadding: string };
   interactive?: boolean;
   className?: string;
   sortStyle?: React.CSSProperties;
-  onClick?: () => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   ariaLabel?: string;
 }
 
@@ -135,9 +133,8 @@ function KanbanCardShell(
     interactive = false,
     className,
     sortStyle,
-    onClick,
-    onKeyDown,
     ariaLabel,
+    ...props
   },
   ref,
 ) {
@@ -154,11 +151,10 @@ function KanbanCardShell(
         interactive && "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-label={ariaLabel}
+      {...props}
     >
       {children}
     </div>

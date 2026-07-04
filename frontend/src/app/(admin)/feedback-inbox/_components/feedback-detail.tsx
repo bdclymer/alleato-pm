@@ -4,13 +4,17 @@ import { useEffect, useState, type RefObject } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowUp,
   CircleDot,
   Github,
   Link2,
+  Minus,
+  Shapes,
   Tag,
   Trash2,
   User,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Button,
@@ -79,6 +83,29 @@ export function FeedbackDetail({
     pageTitle: item.page_title,
   });
   const toolLabel = toolLabelFromPath(item.page_path);
+  const priorityMeta = (() => {
+    const severity = item.severity ?? "medium";
+    if (severity === "high") {
+      return {
+        icon: ArrowUp,
+        label: "High",
+        className: "text-status-error",
+      };
+    }
+    if (severity === "low") {
+      return {
+        icon: Minus,
+        label: "Low",
+        className: "text-status-success",
+      };
+    }
+    return {
+      icon: AlertCircle,
+      label: "Medium",
+      className: "text-status-warning",
+    };
+  })();
+  const PriorityIcon = priorityMeta.icon as LucideIcon;
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -102,7 +129,7 @@ export function FeedbackDetail({
   return (
     <>
       {DetailConfirmDialog}
-      <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-5 py-8 sm:px-6 lg:px-8">
         {onBack && (
           <Button
             type="button"
@@ -123,6 +150,11 @@ export function FeedbackDetail({
               <h2 className="text-lg font-semibold leading-snug text-foreground">
                 {displayTitle}
               </h2>
+              {toolLabel ? (
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {toolLabel}
+                </p>
+              ) : null}
             </div>
             <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-muted-foreground">
               {new Date(item.created_at).toLocaleDateString("en-US", {
@@ -153,7 +185,9 @@ export function FeedbackDetail({
                   size="sm"
                   className={cn(
                     "h-auto w-auto min-w-0 gap-1 border-0 bg-transparent p-0 text-xs font-medium text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-1",
-                    displayStatus === "resolved" &&
+                    displayStatus === "verified" &&
+                      "text-muted-foreground hover:text-foreground",
+                    displayStatus === "in_review" &&
                       "text-muted-foreground hover:text-foreground",
                     (displayStatus === "in_progress" || displayStatus === "pr_created") &&
                       "text-muted-foreground hover:text-foreground",
@@ -185,25 +219,28 @@ export function FeedbackDetail({
             )}
 
             {item.severity && (
-              <DetailPropertyItem icon={AlertCircle} className="shrink-0">
-                {item.severity.charAt(0).toUpperCase() +
-                  item.severity.slice(1)}{" "}
-                priority
+              <DetailPropertyItem
+                icon={PriorityIcon}
+                className={cn("shrink-0", priorityMeta.className)}
+                title={`${priorityMeta.label} priority`}
+              >
+                {priorityMeta.label}
               </DetailPropertyItem>
             )}
 
-            <DetailPropertyItem icon={Tag} className="shrink-0">
-              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+            <DetailPropertyItem
+              icon={Tag}
+              className="shrink-0"
+              muted={!item.category}
+            >
+              {item.category ?? "No category"}
             </DetailPropertyItem>
 
             <DetailPropertyItem
-              icon={Link2}
-              href={item.page_url}
-              external
-              className="min-w-32 flex-1"
-              title={item.page_url}
+              icon={Shapes}
+              className="shrink-0"
             >
-              Open submitted page
+              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
             </DetailPropertyItem>
 
             <DetailPropertyItem
@@ -228,25 +265,8 @@ export function FeedbackDetail({
           </DetailPropertyBar>
         </div>
 
-        {/* Description */}
-        <div className="space-y-8">
-          <div className="space-y-1.5 text-sm">
-            <div className="min-w-0 text-muted-foreground">
-              <a
-                href={item.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block min-w-0 truncate text-foreground hover:text-primary hover:underline"
-              >
-                {item.page_url}
-              </a>
-            </div>
-            {item.target_text ? (
-              <p className="line-clamp-2 text-xs text-muted-foreground">
-                {item.target_text}
-              </p>
-            ) : null}
-          </div>
+        <section className="space-y-4">
+          <SectionRuleHeading>Feedback</SectionRuleHeading>
 
           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
             {item.comment}
@@ -267,41 +287,47 @@ export function FeedbackDetail({
               />
             </Button>
           )}
-        </div>
 
-        <FeedbackResourcesSection
-          item={item}
-          onResourcesChanged={onRefresh}
-        />
+          <a
+            href={item.page_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 block break-all text-sm text-foreground hover:text-primary hover:underline"
+          >
+            {item.page_url}
+          </a>
+        </section>
 
-        {/* Comments */}
-        <div>
+        <section className="space-y-3 pt-4">
           <CommentsSection
             feedbackItemId={item.id}
             commentInputRef={commentInputRef}
           />
-        </div>
+        </section>
 
-        {/* GitHub Activity — visible when there's an issue, not hidden in accordion */}
+        <CollapsibleDetailSection key={`${item.id}-routing`} label="Routing">
+          <ToolContextSection item={item} />
+        </CollapsibleDetailSection>
+
+        <CollapsibleDetailSection key={`${item.id}-resources`} label="Resources">
+          <FeedbackResourcesSection
+            item={item}
+            onResourcesChanged={onRefresh}
+          />
+        </CollapsibleDetailSection>
+
         {item.github_issue_number && (
-          <section className="space-y-3">
-            <SectionRuleHeading
-              label={`GitHub Activity #${item.github_issue_number}`}
-              className="mb-0 pb-0"
-            />
+          <CollapsibleDetailSection
+            key={`${item.id}-github`}
+            label={`GitHub Activity #${item.github_issue_number}`}
+          >
             <GitHubActivitySection issueNumber={item.github_issue_number} />
-          </section>
+          </CollapsibleDetailSection>
         )}
 
         {/* Debug — tool context, page context, metadata, dangerous actions */}
         <CollapsibleDetailSection key={`${item.id}-debug`} label="Debug">
           <div className="space-y-8">
-            {/* Tool Context */}
-            <section className="space-y-3">
-              <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
-              <ToolContextSection item={item} />
-            </section>
-
             <section className="space-y-3">
               <SectionRuleHeading label="Page Context" className="mb-0 pb-0" />
               <div className="space-y-1.5">

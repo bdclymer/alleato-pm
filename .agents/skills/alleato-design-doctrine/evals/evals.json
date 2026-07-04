@@ -36,6 +36,18 @@
       "prompt": "Design an agenda-item creation flow where users add many agenda items quickly. The current design requires clicking an Add button after each item and focus disappears after save.",
       "expected_output": "The skill should require keyboard-first momentum: Enter adds the next item and focuses the next empty row, Shift+Enter makes a newline when multiline is supported, Tab and Shift+Tab move between logical inputs, arrows move between sibling rows/cells when applicable, Escape exits edit state, and empty trailing rows do not create junk records.",
       "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Audit emails, project emails, tasks, project tasks, comments, and feedback inbox for layout consistency. Some use custom two-pane flex layouts, some use cards, and some have different toolbar and empty-state structures.",
+      "expected_output": "The skill should require the shared SplitPageFrame + SplitPage shell for list/detail workflows, identify these pages as the same layout family, allow content-specific differences only inside the list/detail panes, require the same mobile list/detail behavior through useSplitPage, and flag feedback inbox if it is a bespoke dashboard rather than a split review queue.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Audit a task detail pane that was asked to match the meetings detail header property row. Meetings uses compact icon plus value items for date, project, category, and source link. Tasks instead uses a local TaskDetailMetaItem component with uppercase text labels such as STATUS, PRIORITY, ASSIGNEE, PROJECT, CATEGORY, DUE DATE, SOURCE, CREATED, and TRAINING.",
+      "expected_output": "The skill should reject the task detail metadata row as a pattern-fidelity failure. It should require extracting or using a shared DetailPropertyBar and DetailPropertyItem, preserving the meetings icon-plus-value treatment, replacing uppercase label grids with icon-anchored compact items, and reusing the same component across meetings, tasks, emails, project emails, and feedback detail panes where applicable.",
+      "files": []
     }
   ]
 }

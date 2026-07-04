@@ -100,8 +100,17 @@ export const BudgetModificationPayloadSchema = z
 // Schema for modification status actions (submit, approve, reject, void)
 export const BudgetModificationActionSchema = z.object({
   modificationId: z.string().uuid("modificationId must be a valid UUID"),
-  action: z.enum(["submit", "approve", "reject", "void"]),
+  action: z.enum(["submit", "approve", "reject", "void"]).optional(),
+  status: z.enum(["draft", "pending", "approved", "void"]).optional(),
   voidedReason: z.string().min(1).max(1000).optional(),
+}).superRefine((value, ctx) => {
+  if (!value.action && !value.status) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Either action or status is required",
+      path: ["action"],
+    });
+  }
 });
 
 export type BudgetLineItemPayload = z.infer<

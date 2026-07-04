@@ -1,5 +1,6 @@
 "use client";
 import { PageShell } from "@/components/layout";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -238,15 +239,18 @@ export default function CommitmentConfigurePage() {
       description="Configure commitment defaults, workflows, billing, and permissions."
       onBack={() => router.push(`/${projectId}/commitments`)}
       actions={
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="gap-2"
-        >
-          <Save />
-          Update
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <CommitmentsHelpSheet buttonVariant="ghost" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            <Save />
+            Update
+          </Button>
+        </div>
       }
     >
       <div className="space-y-8">

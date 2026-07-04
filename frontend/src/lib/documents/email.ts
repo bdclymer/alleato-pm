@@ -16,6 +16,8 @@ interface EmailAuditOptions {
 
 interface SendEmailOptions {
   to: string[];
+  cc?: string[];
+  bcc?: string[];
   subject: string;
   html: string;
   text: string;
@@ -94,6 +96,8 @@ export async function sendDocumentEmail(
     body: JSON.stringify({
       from,
       to: options.to,
+      cc: options.cc ?? [],
+      bcc: options.bcc ?? [],
       subject: options.subject,
       html: options.html,
       text: options.text,

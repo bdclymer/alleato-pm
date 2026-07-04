@@ -79,6 +79,7 @@ export const staticRoutes: SitemapRoute[] = [
   { url: "/[projectId]/photos", title: "Photos", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/daily-log", title: "Daily Log", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/daily-log/new", title: "New Daily Log", category: "Project — Field", type: "form", dynamic: true },
+  { url: "/[projectId]/daily-log/site-lead-checklist", title: "Site Lead Checklist", category: "Project — Field", type: "form", dynamic: true },
   { url: "/[projectId]/specifications", title: "Specifications", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/transmittals", title: "Transmittals", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/emails", title: "Emails", category: "Project — Field", type: "list", dynamic: true },

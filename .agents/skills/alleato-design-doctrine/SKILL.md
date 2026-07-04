@@ -1,6 +1,6 @@
 ---
 name: alleato-design-doctrine
-description: Mandatory AI Creative Director and design governance auditor for Alleato interfaces. Use before creating, editing, approving, or reviewing any product UI, especially dropdowns, popovers, sidebars, tables, forms, dashboards, headers, comment tools, filters, action menus, feedback/training pages, creation flows, review queues, or page layouts. Triggers whenever the user mentions design doctrine, creative direction, visual hierarchy, cognitive load, design system consistency, keyboard usability, next action, feedback collection, AI training/review, card-within-card clutter, one-off components, progressive disclosure, information density, workflow alignment, clutter, visual noise, bad UI, inconsistent dropdowns, or asks whether an interface feels clear, inevitable, Apple-like, Linear-like, Notion-like, easy, intuitive, or too decorative.
+description: Mandatory AI Creative Director and design governance auditor for Alleato UI. Use before creating, editing, approving, or reviewing product interfaces including dropdowns, popovers, sidebars, tables, forms, dashboards, headers, action menus, split-page workspaces, detail metadata/property rows, feedback inboxes, AI training/review pages, creation flows, review queues, and page layouts. Triggers on design doctrine, visual hierarchy, cognitive load, design system consistency, split view, inbox layout, emails, tasks, feedback inbox, detail properties, metadata row, property bar, keyboard usability, next action, clutter, visual noise, bad UI, inconsistent components, or questions about whether an interface feels clear, intuitive, consistent, Linear-like, Notion-like, or too decorative.
 ---
 
 # Alleato Design Doctrine
@@ -20,6 +20,8 @@ Load the relevant reference before making design or code decisions:
 - For any UI work: read `references/product-design-constitution.md`.
 - For any workflow, form, review queue, feedback/training surface, creation flow, or editable page: read `references/workflow-usability-gate.md`.
 - For dropdowns, popovers, sheets, dialogs, sidebars, tables, forms, dashboards, or headers: read `references/surface-complexity-budgets.md` and `references/blessed-patterns.md`.
+- For emails, tasks, comments, project task lists, project email lists, feedback inboxes, review queues, or any list/detail workspace: read `references/split-page-workspace.md`.
+- For detail pages, selected-item detail panes, metadata rows, or object property summaries: read `references/detail-property-bar.md`.
 - Before inventing any layout: read `references/pattern-library-operating-model.md`. The default task is pattern reproduction, not original design.
 - For critiques, screenshots, or visual QA: read `references/bad-vs-good-examples.md` and `references/review-checklists.md`.
 - When source files are available, run `node scripts/audit-surface-complexity.mjs <files...>` before approving the change. Treat failures as blockers unless the user explicitly accepts an exception.
@@ -79,6 +81,9 @@ If the user cannot complete the actual job from the surface, the design fails ev
 - Every review or training page must allow correction, feedback, or response.
 - Repetitive creation flows must support keyboard-first entry.
 - A read-only page for a correction workflow is a product failure.
+- List/detail review workspaces use the shared `SplitPageFrame` + `SplitPage` shell. Different content does not justify a different layout.
+- Detail metadata uses the shared property bar and property item primitive. Different entities do not justify different property-row layouts.
+- Property rows use icon plus value/action. Do not replace an icon property row with uppercase text labels unless the blessed pattern explicitly calls for labels.
 
 ## Audit Workflow
 
@@ -110,6 +115,12 @@ Before claiming a UI fix is complete:
 
    ```bash
    node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs <changed-ui-file...>
+   ```
+
+   For list/detail workspaces such as emails, tasks, comments, project emails, project tasks, and feedback inbox, also run:
+
+   ```bash
+   node .agents/skills/alleato-design-doctrine/scripts/audit-split-page-consistency.mjs <changed-ui-file...>
    ```
 
 2. Browser-test the actual surface the user will interact with. Do not rely on code inspection for visual or interaction fixes.
@@ -165,6 +176,11 @@ Flag these directly and explain why they hurt the user:
 - Pages that present diagnosis without a way to act
 - Empty states with no recovery or creation path
 - Success states that strand the user instead of moving them to the next item
+- Bespoke two-pane layouts for pages that should use the shared split-page primitive
+- Split-page workspaces where list, detail, toolbar, empty state, mobile back behavior, or pane sizing diverges without a documented reason
+- Bespoke detail metadata/property rows when a shared property-row primitive is warranted
+- Uppercase label grids for properties when the established detail pattern is icon plus value
+- Missing icons in a copied property-row pattern where icons are the visual anchors
 
 ## Scoring Rubric
 

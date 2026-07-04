@@ -8,6 +8,7 @@ import {
 } from "@/components/domain/contracts";
 import { apiFetchRaw } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { PageShell } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
@@ -291,6 +292,7 @@ export default function NewCommitmentPage() {
           : "Create a new purchase order commitment"
       }
       onBack={() => router.back()}
+      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
     >
       {type === "purchase_order" ? (
         <CreatePurchaseOrderForm

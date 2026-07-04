@@ -32,6 +32,7 @@ export {
   CellStatus,
   CellBadge,
   CellLink,
+  TABLE_LINK_CLASSNAME,
   CellEmail,
   TruncatedCell,
   formatParticipantDisplayName,
@@ -46,6 +47,10 @@ export {
   type TableColumn,
   type UnifiedTableFeatures,
 } from "./unified-table-page";
+export {
+  EmbeddedUnifiedTablePage,
+  type EmbeddedUnifiedTablePageProps,
+} from "./embedded-unified-table-page";
 export {
   useUnifiedTableState,
   type UnifiedTableState,

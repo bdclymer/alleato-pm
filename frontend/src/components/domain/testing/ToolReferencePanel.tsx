@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 
@@ -102,9 +103,11 @@ export function ToolReferencePanel({ toolName }: { toolName: string }) {
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       {/* Toggle header */}
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted transition-colors text-left"
+        className="h-auto w-full justify-start gap-2 rounded-none px-4 py-3 text-left hover:bg-muted"
       >
         <BookOpen className="size-4 text-muted-foreground shrink-0" />
         <span className="text-sm font-medium text-foreground flex-1">Tool Reference</span>
@@ -113,7 +116,7 @@ export function ToolReferencePanel({ toolName }: { toolName: string }) {
         ) : (
           <ChevronDown className="size-4 text-muted-foreground" />
         )}
-      </button>
+      </Button>
 
       {/* Panel body */}
       {open && (
@@ -130,14 +133,16 @@ export function ToolReferencePanel({ toolName }: { toolName: string }) {
 
           {!loading && hasData && (
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent h-9 px-4 gap-1">
-                <TabsTrigger value="overview"   className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Overview</TabsTrigger>
-                <TabsTrigger value="screenshots" className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Screenshots</TabsTrigger>
-                <TabsTrigger value="features"   className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+              <div className="px-4 pt-4">
+                <TabsList className="w-full justify-start">
+                  <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+                  <TabsTrigger value="screenshots" className="text-xs">Screenshots</TabsTrigger>
+                  <TabsTrigger value="features" className="text-xs">
                   Features {data.features.length > 0 && <span className="ml-1 text-muted-foreground">({data.features.length})</span>}
-                </TabsTrigger>
-                <TabsTrigger value="forms"      className="text-xs h-7 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Forms</TabsTrigger>
-              </TabsList>
+                  </TabsTrigger>
+                  <TabsTrigger value="forms" className="text-xs">Forms</TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* ── Overview ── */}
               <TabsContent value="overview" className="p-4 space-y-3 mt-0">

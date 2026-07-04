@@ -1,5 +1,6 @@
 "use client";
 import { PageShell } from "@/components/layout";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -120,28 +121,31 @@ export default function CommitmentSettingsPage() {
       title="Commitment Settings"
       onBack={() => router.back()}
       actions={
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="gap-2"
-        >
-          <Save />
-          Save Settings
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <CommitmentsHelpSheet buttonVariant="ghost" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            <Save />
+            Save Settings
+          </Button>
+        </div>
       }
     >
 
       <div className="max-w-3xl space-y-6">
-        <Tabs defaultValue="general">
-          <TabsList variant="line">
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="distribution">Distribution</TabsTrigger>
             <TabsTrigger value="defaults">Defaults</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="mt-6">
+          <TabsContent value="general" className="m-0">
             <Card>
               <CardHeader>
                 <CardTitle>General Settings</CardTitle>
@@ -228,7 +232,7 @@ export default function CommitmentSettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="distribution" className="mt-6">
+          <TabsContent value="distribution" className="m-0">
             <Card>
               <CardHeader>
                 <CardTitle>Distribution Settings</CardTitle>
@@ -285,7 +289,7 @@ export default function CommitmentSettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="defaults" className="mt-6">
+          <TabsContent value="defaults" className="m-0">
             <Card>
               <CardHeader>
                 <CardTitle>Default Values</CardTitle>
@@ -340,7 +344,7 @@ export default function CommitmentSettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="billing" className="mt-6">
+          <TabsContent value="billing" className="m-0">
             <Card>
               <CardHeader>
                 <CardTitle>Billing Settings</CardTitle>

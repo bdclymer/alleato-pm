@@ -20,6 +20,7 @@ function comment(overrides: Partial<AllCommentItem>): AllCommentItem {
     statusName: null,
     replyCount: 0,
     lastUpdated: Date.UTC(2026, 5, 25, 12, 0, 0),
+    messages: [],
     ...overrides,
   };
 }

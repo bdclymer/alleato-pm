@@ -33,6 +33,8 @@ export interface BudgetLineItem {
   projectedOverUnder: number;
   forecastMethod?: ForecastMethod;
   forecastNotes?: string | null;
+  forecastStartDate?: string | null;
+  forecastEndDate?: string | null;
   children?: BudgetLineItem[];
   expanded?: boolean;
 }

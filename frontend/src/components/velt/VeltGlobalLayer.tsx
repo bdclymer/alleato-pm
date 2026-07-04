@@ -12,6 +12,8 @@ import {
   VeltRecorderNotes,
   VeltRecorderPlayer,
   useCommentEventCallback,
+  useCommentModeState,
+  useCommentUtils,
   useRecorderAddHandler,
   useSetDocument,
   useVeltClient,
@@ -189,6 +191,51 @@ function VeltFeedbackInboxBridge() {
   return null;
 }
 
+function VeltCommentRestingStateController() {
+  const commentElement = useCommentUtils();
+  const commentModeActive = useCommentModeState();
+  const addCommentEvent = useCommentEventCallback("addComment");
+  const addCommentAnnotationEvent = useCommentEventCallback("addCommentAnnotation");
+  const shouldCollapseAfterSubmitRef = useRef(false);
+  const collapseVersionRef = useRef(0);
+
+  useEffect(() => {
+    if (addCommentEvent || addCommentAnnotationEvent) {
+      shouldCollapseAfterSubmitRef.current = true;
+    }
+  }, [addCommentAnnotationEvent, addCommentEvent]);
+
+  useEffect(() => {
+    if (!commentElement || commentModeActive !== false) return;
+    if (!shouldCollapseAfterSubmitRef.current) return;
+
+    shouldCollapseAfterSubmitRef.current = false;
+    collapseVersionRef.current += 1;
+    const collapseVersion = collapseVersionRef.current;
+
+    commentElement.disableDialogOnHover?.();
+
+    const collapseTimer = window.setTimeout(() => {
+      if (collapseVersionRef.current !== collapseVersion) return;
+      commentElement.selectCommentByAnnotationId?.();
+      commentElement.clearPageModeComposerContext?.();
+      commentElement.disableCommentMode?.();
+    }, 80);
+
+    const restoreHoverTimer = window.setTimeout(() => {
+      if (collapseVersionRef.current !== collapseVersion) return;
+      commentElement.enableDialogOnHover?.();
+    }, 900);
+
+    return () => {
+      window.clearTimeout(collapseTimer);
+      window.clearTimeout(restoreHoverTimer);
+    };
+  }, [commentElement, commentModeActive]);
+
+  return null;
+}
+
 export function VeltGlobalLayer() {
   const rawPathname = usePathname();
   const pathname = rawPathname ?? "/";
@@ -219,6 +266,7 @@ export function VeltGlobalLayer() {
   return (
     <>
       <VeltCommentConfiguration />
+      <VeltCommentRestingStateController />
       <VeltFeedbackInboxBridge />
       <VeltComments
         shadowDom={false}

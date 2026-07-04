@@ -9,6 +9,7 @@ export const CONTENT_TYPE_META: Record<
   email: { label: "Email", plural: "Emails" },
   teams: { label: "Teams", plural: "Teams messages" },
   document: { label: "Document", plural: "Documents" },
+  task: { label: "Task", plural: "Tasks" },
 };
 
 export const CONTENT_TYPE_ORDER: InboxContentType[] = [
@@ -16,6 +17,7 @@ export const CONTENT_TYPE_ORDER: InboxContentType[] = [
   "email",
   "teams",
   "document",
+  "task",
 ];
 
 export const INBOX_COLUMNS: ColumnConfig[] = [

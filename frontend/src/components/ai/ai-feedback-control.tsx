@@ -5,11 +5,20 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
+  PopoverAnchor,
   Popover,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 
 /** A reason chip the user can pick when marking AI output as unhelpful. */
@@ -28,6 +37,7 @@ export const DEFAULT_AI_FEEDBACK_REASONS: AiFeedbackReason[] = [
 ];
 
 type Submitted = "up" | "down" | null;
+type PendingFeedback = "up" | "down" | null;
 
 /**
  * Thumbs up / down control for any AI-generated surface. Posts to the shared
@@ -44,7 +54,15 @@ export function AiFeedbackControl({
   subjectId = null,
   projectId = null,
   contentText,
+  contentSnapshot,
   reasons = DEFAULT_AI_FEEDBACK_REASONS,
+  positiveReasons,
+  collectReasonFor = "down",
+  reasonInputMode = "quick-pick",
+  reasonPrompt = "What was off?",
+  freeTextLabel = "Additional context",
+  freeTextPlaceholder = "Optional note",
+  submitLabel = "Submit feedback",
   className,
 }: {
   surface: string;
@@ -53,12 +71,34 @@ export function AiFeedbackControl({
   projectId?: number | null;
   /** The AI text being rated — used to extract keywords for the learning. */
   contentText?: string;
+  contentSnapshot?: Record<string, unknown>;
   reasons?: AiFeedbackReason[];
+  positiveReasons?: AiFeedbackReason[];
+  collectReasonFor?: "down" | "both";
+  reasonInputMode?: "quick-pick" | "form";
+  reasonPrompt?: string;
+  freeTextLabel?: string;
+  freeTextPlaceholder?: string;
+  submitLabel?: string;
   className?: string;
 }) {
   const [submitted, setSubmitted] = React.useState<Submitted>(null);
   const [reasonOpen, setReasonOpen] = React.useState(false);
+  const [pendingFeedback, setPendingFeedback] =
+    React.useState<PendingFeedback>(null);
+  const [selectedReasonId, setSelectedReasonId] = React.useState<string>("");
+  const [freeText, setFreeText] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+
+  const activeReasons = React.useMemo(
+    () => (pendingFeedback === "up" ? positiveReasons ?? [] : reasons),
+    [pendingFeedback, positiveReasons, reasons],
+  );
+  const selectedReason =
+    activeReasons.find((reason) => reason.id === selectedReasonId) ?? null;
+  const shouldOpenFormForUp =
+    collectReasonFor === "both" && (positiveReasons?.length ?? 0) > 0;
+  const usesFormMode = reasonInputMode === "form";
 
   async function send(
     feedback: "up" | "down",
@@ -79,10 +119,14 @@ export function AiFeedbackControl({
           reasonCategory: reasonCategory ?? null,
           reason: reason ?? null,
           messageContent: contentText?.slice(0, 2000) ?? null,
+          contentSnapshot: contentSnapshot ?? null,
         }),
       });
       setSubmitted(feedback);
       setReasonOpen(false);
+      setPendingFeedback(null);
+      setSelectedReasonId("");
+      setFreeText("");
       toast.success(
         feedback === "up"
           ? "Thanks — logged as helpful."
@@ -98,26 +142,59 @@ export function AiFeedbackControl({
     }
   }
 
-  return (
-    <div className={cn("flex items-center gap-0.5", className)}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={saving}
-        aria-label="Helpful"
-        title="Helpful"
-        className={cn(
-          "size-5 text-muted-foreground hover:bg-transparent hover:text-foreground",
-          submitted === "up" && "text-primary",
-        )}
-        onClick={() => void send("up")}
-      >
-        <ThumbsUp className="h-3.5 w-3.5" />
-      </Button>
+  function openReasonForm(feedback: "up" | "down") {
+    setPendingFeedback(feedback);
+    setSelectedReasonId("");
+    setFreeText("");
+    setReasonOpen(true);
+  }
 
-      <Popover open={reasonOpen} onOpenChange={setReasonOpen}>
-        <PopoverTrigger asChild>
+  function handlePositiveClick() {
+    if (shouldOpenFormForUp) {
+      openReasonForm("up");
+      return;
+    }
+    void send("up");
+  }
+
+  function handleNegativeClick() {
+    if (!usesFormMode) {
+      setPendingFeedback("down");
+      setReasonOpen(true);
+      return;
+    }
+    openReasonForm("down");
+  }
+
+  function handleSubmit() {
+    if (!pendingFeedback || saving) return;
+    void send(
+      pendingFeedback,
+      selectedReason?.id ?? undefined,
+      freeText.trim() || selectedReason?.label || undefined,
+    );
+  }
+
+  return (
+    <Popover open={reasonOpen} onOpenChange={setReasonOpen}>
+      <PopoverAnchor asChild>
+        <div className={cn("flex items-center gap-0.5", className)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={saving}
+            aria-label="Helpful"
+            title="Helpful"
+            className={cn(
+              "size-5 text-muted-foreground hover:bg-transparent hover:text-foreground",
+              submitted === "up" && "text-primary",
+            )}
+            onClick={handlePositiveClick}
+          >
+            <ThumbsUp className="h-3.5 w-3.5" />
+          </Button>
+
           <Button
             type="button"
             variant="ghost"
@@ -129,31 +206,110 @@ export function AiFeedbackControl({
               "size-5 text-muted-foreground hover:bg-transparent hover:text-foreground",
               submitted === "down" && "text-destructive",
             )}
+            onClick={handleNegativeClick}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
           </Button>
-        </PopoverTrigger>
+        </div>
+      </PopoverAnchor>
+
+      {usesFormMode ? (
+        <PopoverContent className="w-72 space-y-3 p-3" align="end">
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {pendingFeedback === "up" ? "Helpful feedback" : "Not helpful"}
+            </p>
+            <p className="text-xs text-muted-foreground">{reasonPrompt}</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor={`${surface}-${subjectType}-${subjectId ?? "feedback"}-reason`}
+              className="text-[11px] font-medium text-muted-foreground"
+            >
+              Reason
+            </Label>
+            <Select
+              value={selectedReasonId}
+              onValueChange={setSelectedReasonId}
+              disabled={saving}
+            >
+              <SelectTrigger
+                id={`${surface}-${subjectType}-${subjectId ?? "feedback"}-reason`}
+                className="h-8 text-xs"
+              >
+                <SelectValue placeholder="Select a reason" />
+              </SelectTrigger>
+              <SelectContent>
+                {activeReasons.map((reason) => (
+                  <SelectItem key={reason.id} value={reason.id}>
+                    {reason.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground">
+              {freeTextLabel}
+            </Label>
+            <Textarea
+              value={freeText}
+              onChange={(event) => setFreeText(event.target.value)}
+              placeholder={freeTextPlaceholder}
+              className="min-h-24 resize-none text-xs"
+              disabled={saving}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={saving}
+              onClick={() => {
+                setReasonOpen(false);
+                setPendingFeedback(null);
+                setSelectedReasonId("");
+                setFreeText("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={saving || !selectedReasonId}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </Button>
+          </div>
+        </PopoverContent>
+      ) : (
         <PopoverContent className="w-52 p-2" align="end">
           <p className="px-1 pb-1.5 text-[11px] font-medium text-muted-foreground">
-            What was off?
+            {reasonPrompt}
           </p>
           <div className="flex flex-col gap-0.5">
-            {reasons.map((r) => (
+            {reasons.map((reason) => (
               <Button
-                key={r.id}
+                key={reason.id}
                 type="button"
                 variant="ghost"
                 size="sm"
                 disabled={saving}
-                onClick={() => void send("down", r.id, r.label)}
+                onClick={() => void send("down", reason.id, reason.label)}
                 className="h-auto w-full justify-start px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
-                {r.label}
+                {reason.label}
               </Button>
             ))}
           </div>
         </PopoverContent>
-      </Popover>
-    </div>
+      )}
+    </Popover>
   );
 }

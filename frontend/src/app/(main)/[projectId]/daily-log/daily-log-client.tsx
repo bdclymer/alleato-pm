@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Mic, Plus } from "lucide-react";
+import { ClipboardList, Mic, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -168,6 +168,14 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         description: "Daily construction logs and site reports",
         actions: (
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push(`/${projectId}/daily-log/site-lead-checklist`)}
+            >
+              <ClipboardList />
+              Site Lead Checklist
+            </Button>
             <Button
               size="sm"
               variant="outline"

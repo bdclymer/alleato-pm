@@ -24,6 +24,8 @@ type CostCodeRef = {
 
 const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
 const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+const PENDING_SUBCONTRACT_STATUSES = ["out for signature", "pending"];
+const PENDING_PO_STATUSES = ["draft", "sent", "acknowledged"];
 
 interface RuntimePendingChangeOrderLinesClient {
   from: (tableName: string) => {
@@ -157,8 +159,10 @@ export const GET = withApiGuardrails(
           id: `budget-${line.id}`,
           budgetCode: line.cost_code_id || costCode?.id || "",
           budgetCodeDescription: costCode?.title || "",
+          item: "Original Budget",
           detailType: "original_budget" as DetailType,
           description: line.description || "",
+          status: "Current",
           originalBudgetAmount: Number(line.original_amount) || 0,
         });
       });
@@ -174,6 +178,7 @@ export const GET = withApiGuardrails(
         description,
         cost_code_id,
         budget_modifications!inner (
+          id,
           status,
           number,
           title
@@ -204,6 +209,7 @@ export const GET = withApiGuardrails(
             : "",
           detailType: "budget_changes" as DetailType,
           description: mod.description || "",
+          status: "Approved",
           budgetChanges: Number(mod.amount) || 0,
         });
       });
@@ -219,6 +225,7 @@ export const GET = withApiGuardrails(
         description,
         cost_code_id,
         budget_modifications!inner (
+          id,
           status,
           number,
           title
@@ -236,6 +243,7 @@ export const GET = withApiGuardrails(
       pendingMods.forEach((mod) => {
         const costCode = mod.cost_codes as unknown as CostCodeRef | null;
         const modification = mod.budget_modifications as unknown as {
+          status: string;
           number: string;
           title: string;
         };
@@ -249,6 +257,7 @@ export const GET = withApiGuardrails(
             : "",
           detailType: "budget_changes" as DetailType,
           description: mod.description || "",
+          status: modification?.status || "Pending",
           pendingBudgetChanges: Number(mod.amount) || 0,
         });
       });
@@ -263,6 +272,7 @@ export const GET = withApiGuardrails(
         amount,
         description,
         change_order_number,
+        status,
         prime_contracts!inner (
           contract_number
         )
@@ -284,6 +294,8 @@ export const GET = withApiGuardrails(
           item: `CO ${co.change_order_number}`,
           detailType: "prime_contract_change_orders" as DetailType,
           description: co.description || "",
+          status: co.status || "Approved",
+          detailHref: co.id ? `/${projectIdNum}/change-orders/prime/${co.id}` : null,
           approvedCOs: Number(co.amount) || 0,
         });
       });
@@ -304,6 +316,7 @@ export const GET = withApiGuardrails(
           description,
           cost_code_id,
           change_orders!inner (
+            id,
             status,
             change_order_number,
             project_id
@@ -332,7 +345,7 @@ export const GET = withApiGuardrails(
           amount: number | null;
           description: string | null;
           cost_code_id: string | null;
-          change_orders: { status: string; change_order_number: string; project_id: number };
+          change_orders: { id: string; status: string; change_order_number: string; project_id: number };
         }> | null;
         error: unknown;
       };
@@ -340,6 +353,8 @@ export const GET = withApiGuardrails(
     if (!pendingContractCOsError && pendingContractCOs) {
       pendingContractCOs.forEach((co) => {
         const changeOrder = co.change_orders as unknown as {
+          id: string;
+          status: string;
           change_order_number: string;
         };
 
@@ -352,6 +367,10 @@ export const GET = withApiGuardrails(
             : "",
           detailType: "budget_changes" as DetailType,
           description: co.description || "",
+          status: changeOrder?.status || "Pending",
+          detailHref: changeOrder?.id
+            ? `/${projectIdNum}/change-orders/prime/${changeOrder.id}`
+            : null,
           pendingBudgetChanges: Number(co.amount) || 0,
         });
       });
@@ -368,6 +387,7 @@ export const GET = withApiGuardrails(
         description,
         budget_code,
         subcontracts!inner (
+          id,
           status,
           contract_number,
           project_id,
@@ -416,6 +436,10 @@ export const GET = withApiGuardrails(
           item: subcontract ? subcontract.contract_number : "",
           detailType: "commitments" as DetailType,
           description: line.description || "",
+          status: subcontract?.status || "",
+          detailHref: subcontract?.id
+            ? `/${projectIdNum}/commitments/${subcontract.id}`
+            : null,
           committedCosts: Number(line.amount) || 0,
         });
       });
@@ -431,6 +455,7 @@ export const GET = withApiGuardrails(
         description,
         budget_code,
         purchase_orders!inner (
+          id,
           status,
           contract_number,
           project_id,
@@ -479,8 +504,133 @@ export const GET = withApiGuardrails(
           item: purchaseOrder ? purchaseOrder.contract_number : "",
           detailType: "commitments" as DetailType,
           description: line.description || "",
+          status: purchaseOrder?.status || "",
+          detailHref: purchaseOrder?.id
+            ? `/${projectIdNum}/commitments/${purchaseOrder.id}`
+            : null,
           committedCosts: Number(line.amount) || 0,
         });
+      });
+    }
+
+    // 5c. Fetch Pending Subcontract / Purchase Order SOV Items
+    const { data: pendingSubcontractSovItems, error: pendingSubcontractsError } =
+      await supabase
+        .from("subcontract_sov_items")
+        .select(
+          `
+        id,
+        amount,
+        description,
+        budget_code,
+        subcontracts!inner (
+          id,
+          status,
+          contract_number,
+          project_id,
+          contract_company_id
+        )
+      `,
+        )
+        .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES)
+        .eq("subcontracts.project_id", projectIdNum);
+
+    if (pendingSubcontractsError) {
+      return apiErrorResponse(pendingSubcontractsError);
+    }
+
+    const { data: pendingPoSovItems, error: pendingPoError } = await supabase
+      .from("purchase_order_sov_items")
+      .select(
+        `
+        id,
+        amount,
+        description,
+        budget_code,
+        purchase_orders!inner (
+          id,
+          status,
+          contract_number,
+          project_id,
+          contract_company_id
+        )
+      `,
+      )
+      .in("purchase_orders.status", PENDING_PO_STATUSES)
+      .eq("purchase_orders.project_id", projectIdNum);
+
+    if (pendingPoError) {
+      return apiErrorResponse(pendingPoError);
+    }
+
+    const pendingCompanyIds = [
+      ...(pendingSubcontractSovItems ?? []).map((line) => {
+        const subcontract = Array.isArray(line.subcontracts)
+          ? line.subcontracts[0]
+          : line.subcontracts;
+        return subcontract?.contract_company_id ?? "";
+      }),
+      ...(pendingPoSovItems ?? []).map((line) => {
+        const purchaseOrder = Array.isArray(line.purchase_orders)
+          ? line.purchase_orders[0]
+          : line.purchase_orders;
+        return purchaseOrder?.contract_company_id ?? "";
+      }),
+    ].filter(Boolean);
+
+    let pendingCompanyNames: Map<string, string>;
+    try {
+      pendingCompanyNames = await loadCompanyNameMap(
+        supabase as CompanyLookupClient,
+        pendingCompanyIds,
+      );
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
+
+    for (const line of pendingSubcontractSovItems ?? []) {
+      const subcontract = Array.isArray(line.subcontracts)
+        ? line.subcontracts[0]
+        : line.subcontracts;
+
+      details.push({
+        id: `pending-subcontract-${line.id}`,
+        budgetCode: canonicalBudgetCode(line.budget_code),
+        budgetCodeDescription: "",
+        vendor: subcontract?.contract_company_id
+          ? (pendingCompanyNames.get(subcontract.contract_company_id) ?? "")
+          : "",
+        item: subcontract ? subcontract.contract_number : "",
+        detailType: "commitments" as DetailType,
+        description: line.description || "",
+        status: subcontract?.status || "Pending",
+        detailHref: subcontract?.id
+          ? `/${projectIdNum}/commitments/${subcontract.id}`
+          : null,
+        pendingCostChanges: Number(line.amount) || 0,
+      });
+    }
+
+    for (const line of pendingPoSovItems ?? []) {
+      const purchaseOrder = Array.isArray(line.purchase_orders)
+        ? line.purchase_orders[0]
+        : line.purchase_orders;
+
+      details.push({
+        id: `pending-po-${line.id}`,
+        budgetCode: canonicalBudgetCode(line.budget_code),
+        budgetCodeDescription: "",
+        vendor: purchaseOrder?.contract_company_id
+          ? (pendingCompanyNames.get(purchaseOrder.contract_company_id) ?? "")
+          : "",
+        item: purchaseOrder ? purchaseOrder.contract_number : "",
+        detailType: "commitments" as DetailType,
+        description: line.description || "",
+        status: purchaseOrder?.status || "Pending",
+        detailHref: purchaseOrder?.id
+          ? `/${projectIdNum}/commitments/${purchaseOrder.id}`
+          : null,
+        pendingCostChanges: Number(line.amount) || 0,
       });
     }
 
@@ -494,6 +644,7 @@ export const GET = withApiGuardrails(
         description,
         cost_code_id,
         commitment_change_orders!inner (
+          id,
           status,
           change_order_number,
           commitments!inner (
@@ -517,6 +668,8 @@ export const GET = withApiGuardrails(
       commitmentCOs.forEach((co) => {
         const costCode = co.cost_codes as unknown as CostCodeRef | null;
         const changeOrder = co.commitment_change_orders as unknown as {
+          id: string;
+          status: string;
           change_order_number: string;
           commitments: {
             commitment_number: string;
@@ -532,6 +685,10 @@ export const GET = withApiGuardrails(
           item: `CO ${changeOrder?.change_order_number || ""}`,
           detailType: "commitment_change_orders" as DetailType,
           description: co.description || "",
+          status: changeOrder?.status || "Approved",
+          detailHref: changeOrder?.id
+            ? `/${projectIdNum}/change-orders/commitment/${changeOrder.id}`
+            : null,
           approvedCOs: Number(co.amount) || 0,
         });
       });
@@ -546,6 +703,7 @@ export const GET = withApiGuardrails(
         description,
         budget_code_id,
         change_events!inner (
+          id,
           number,
           title,
           project_id
@@ -558,6 +716,7 @@ export const GET = withApiGuardrails(
       changeEventLines.forEach((line) => {
         const event = line.change_events as
           | {
+              id: string;
               number: string;
               title: string;
             }
@@ -570,6 +729,10 @@ export const GET = withApiGuardrails(
           item: event ? `${event.number} - ${event.title}` : "",
           detailType: "change_events" as DetailType,
           description: line.description || "",
+          status: "Open",
+          detailHref: event?.id
+            ? `/${projectIdNum}/change-events/${event.id}`
+            : null,
         });
       });
     }
@@ -587,6 +750,7 @@ export const GET = withApiGuardrails(
         unit_cost,
         description,
         direct_costs!inner (
+          id,
           cost_type,
           status,
           project_id,
@@ -610,6 +774,8 @@ export const GET = withApiGuardrails(
               vendors: { name: string } | null;
               invoice_number: string | null;
               date: string | null;
+              id: string;
+              status: string | null;
             }
           | null;
 
@@ -626,6 +792,10 @@ export const GET = withApiGuardrails(
           item: directCost?.invoice_number || "",
           detailType: "direct_costs" as DetailType,
           description: line.description || "",
+          status: directCost?.status || "",
+          detailHref: directCost?.id
+            ? `/${projectIdNum}/direct-costs/${directCost.id}`
+            : null,
           directCosts: Number(amount) || 0,
         });
       });
@@ -687,7 +857,9 @@ export const GET = withApiGuardrails(
         id: `forecast-${budgetCode}`,
         budgetCode,
         budgetCodeDescription: "Forecast",
+        item: "Calculated forecast",
         detailType: "forecast_to_complete" as DetailType,
+        status: "Calculated",
         forecastToComplete,
       });
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Archive,
   Circle,
@@ -12,7 +12,12 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ds";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { useConfirm } from "@/hooks/use-confirm";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
@@ -33,7 +38,7 @@ export function ListItemContextMenu({
   onDelete: (id: string) => void;
 }) {
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const { confirm: confirmDelete, ConfirmDialog: ListItemConfirmDialog } = useConfirm();
 
   function handleContextMenu(e: React.MouseEvent) {
@@ -42,34 +47,21 @@ export function ListItemContextMenu({
   }
 
   useEffect(() => {
-    if (!contextPos) return;
-
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setContextPos(null);
-      }
-    }
-
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setContextPos(null);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
+    setIsOpen(Boolean(contextPos));
   }, [contextPos]);
 
   const displayStatus = toDisplayStatus(item.status);
-  const isResolved = displayStatus === "resolved";
+  const isInReview = displayStatus === "in_review";
+  const isVerified = displayStatus === "verified";
 
   async function handleAction(action: string) {
     setContextPos(null);
     switch (action) {
-      case "resolve":
-        onUpdateStatus(item.id, "resolved");
+      case "mark_in_review":
+        onUpdateStatus(item.id, "in_review");
+        break;
+      case "mark_verified":
+        onUpdateStatus(item.id, "verified");
         break;
       case "reopen":
         onUpdateStatus(item.id, "open");
@@ -120,133 +112,105 @@ export function ListItemContextMenu({
       </div>
 
       {contextPos && (
-        <div
-          ref={menuRef}
-          className="fixed z-50 min-w-40 rounded-md border border-border bg-popover p-1 shadow-sm animate-in fade-in-0 zoom-in-95"
-          style={{ top: contextPos.y, left: contextPos.x }}
+        <DropdownMenu
+          open={isOpen}
+          onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) {
+              setContextPos(null);
+            }
+          }}
         >
-          {!isResolved && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="default"
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-              onClick={() => handleAction("resolve")}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Resolve
-            </Button>
-          )}
-
-          {isResolved && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="default"
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-              onClick={() => handleAction("reopen")}
-            >
-              <Circle className="h-3.5 w-3.5" />
-              Move to Submitted
-            </Button>
-          )}
-
-          <div className="my-1 h-px bg-border" />
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-            onClick={() => handleAction("open_source")}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              left: contextPos.x,
+              top: contextPos.y,
+              width: 1,
+              height: 1,
+              pointerEvents: "none",
+            }}
+          />
+          <DropdownMenuContent
+            className="w-56"
+            style={{
+              position: "fixed",
+              left: contextPos.x,
+              top: contextPos.y,
+            }}
+            onCloseAutoFocus={(event) => event.preventDefault()}
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Open submitted page
-          </Button>
+            {!isInReview && !isVerified && (
+              <DropdownMenuItem onClick={() => handleAction("mark_in_review")}>
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Mark In Review
+              </DropdownMenuItem>
+            )}
 
-          {!item.github_issue_number && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="default"
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-              onClick={() => handleAction("send_to_github")}
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              Create Issue
-            </Button>
-          )}
+            {isInReview && (
+              <DropdownMenuItem onClick={() => handleAction("mark_verified")}>
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Mark Verified
+              </DropdownMenuItem>
+            )}
 
-          {item.github_issue_url && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="default"
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-              onClick={() => handleAction("view_github")}
-            >
+            {isVerified && (
+              <DropdownMenuItem onClick={() => handleAction("reopen")}>
+                <Circle className="h-3.5 w-3.5" />
+                Move to Submitted
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={() => handleAction("open_source")}>
               <ExternalLink className="h-3.5 w-3.5" />
-              View in GitHub
-            </Button>
-          )}
+              Open submitted page
+            </DropdownMenuItem>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-            onClick={() => handleAction("copy_link")}
-          >
-            <Copy className="h-3.5 w-3.5" />
-            Copy link
-          </Button>
+            {!item.github_issue_number && (
+              <DropdownMenuItem onClick={() => handleAction("send_to_github")}>
+                <GitBranch className="h-3.5 w-3.5" />
+                Create Issue
+              </DropdownMenuItem>
+            )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-            onClick={() => handleAction("copy_id")}
-          >
-            <Hash className="h-3.5 w-3.5" />
-            Copy ID
-          </Button>
+            {item.github_issue_url && (
+              <DropdownMenuItem onClick={() => handleAction("view_github")}>
+                <ExternalLink className="h-3.5 w-3.5" />
+                View in GitHub
+              </DropdownMenuItem>
+            )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-            onClick={() => handleAction("defer")}
-          >
-            <PauseCircle className="h-3.5 w-3.5" />
-            Defer
-          </Button>
+            <DropdownMenuItem onClick={() => handleAction("copy_link")}>
+              <Copy className="h-3.5 w-3.5" />
+              Copy link
+            </DropdownMenuItem>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
-            onClick={() => handleAction("archive")}
-          >
-            <Archive className="h-3.5 w-3.5" />
-            Archive
-          </Button>
+            <DropdownMenuItem onClick={() => handleAction("copy_id")}>
+              <Hash className="h-3.5 w-3.5" />
+              Copy ID
+            </DropdownMenuItem>
 
-          <div className="my-1 h-px bg-border" />
+            <DropdownMenuItem onClick={() => handleAction("defer")}>
+              <PauseCircle className="h-3.5 w-3.5" />
+              Defer
+            </DropdownMenuItem>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-status-error hover:bg-status-error/10 transition-colors"
-            onClick={() => handleAction("delete")}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
-          </Button>
-        </div>
+            <DropdownMenuItem onClick={() => handleAction("archive")}>
+              <Archive className="h-3.5 w-3.5" />
+              Archive
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem variant="destructive" onClick={() => handleAction("delete")}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
       {ListItemConfirmDialog}
     </>

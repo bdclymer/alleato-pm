@@ -73,6 +73,9 @@ module.exports = {
       '[projectId]/meetings/page.tsx',
       '(admin)/meeting-templates/page.tsx',
       '(admin)/meeting-templates/[templateId]/page.tsx',
+      // Thin delegation page: extracts templateId and passes it to
+      // PermissionTemplateDetailPageClient, which owns its own PageShell.
+      '(admin)/user-management/templates/[templateId]/page.tsx',
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',

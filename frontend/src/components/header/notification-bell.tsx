@@ -1,96 +1,33 @@
 "use client";
 
-import { Bell, Trash2 } from "lucide-react";
+import { Bell } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  VeltCommentNotifications,
-} from "@/components/notifications/velt-comment-notifications";
+  ActivityFeedList,
+  initials,
+  type ActivityFeedItem,
+} from "@/components/notifications/activity-feed";
+import { useVeltCommentUnreadCount } from "@/components/notifications/velt-comment-notifications";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import {
   useCollaborationNotifications,
-  type CollaborationNotification,
 } from "@/hooks/use-collaboration-notifications";
+import { useCommentActivity } from "@/hooks/use-comment-activity";
+import { getCollaborationNotificationHref } from "@/lib/collaboration/notification-links";
 import { sortNotificationsByPriority } from "@/lib/collaboration/notification-priority";
 import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
 import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 import { cn } from "@/lib/utils";
-
-function formatTime(ts: string) {
-  const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return "";
-  const diff = Date.now() - d.getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "Just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return days < 7 ? `${days}d ago` : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function initials(title?: string | null) {
-  if (!title) return "?";
-  return title.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function NotificationItem({
-  notification,
-  onMarkRead,
-  onDelete,
-}: {
-  notification: CollaborationNotification;
-  onMarkRead: (id: string) => void;
-  onDelete: (id: string) => void;
-}) {
-  const isUnread = !notification.readAt;
-  const href =
-    notification.projectId && notification.entityType
-      ? `/${notification.projectId}/${notification.entityType}/${notification.entityId ?? ""}`
-      : "/team-chat";
-
-  return (
-    <div className="group/item relative">
-      {isUnread && (
-        <span className="absolute inset-y-2 left-0 w-0.5 rounded-r-full bg-primary" />
-      )}
-      <Link
-        href={href}
-        onClick={() => isUnread && onMarkRead(notification.id)}
-        className="flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-      >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-          {initials(notification.title)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className={cn("text-xs leading-snug", isUnread ? "font-medium text-foreground" : "text-muted-foreground")}>
-            {notification.title}
-          </p>
-          {notification.body && (
-            <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
-              {notification.body}
-            </p>
-          )}
-          <p className="mt-1 text-[11px] text-muted-foreground/50">
-            {formatTime(notification.createdAt)}
-          </p>
-        </div>
-      </Link>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onDelete(notification.id)}
-        aria-label="Delete"
-        className="absolute right-2 top-2.5 h-6 w-6 opacity-0 transition-opacity group-hover/item:opacity-100"
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
-    </div>
-  );
-}
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
@@ -102,102 +39,116 @@ export function NotificationBell() {
     collaborationRuntimeEnabled || shouldForceCollaborationRuntime(pathname);
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
     useCollaborationNotifications({ enabled: open });
-  const totalUnreadCount = unreadCount;
+  const { items: commentActivity, isLoading: isCommentLoading } =
+    useCommentActivity({ enabled: open && collaborationRuntimeActive });
+  const commentUnreadCount = useVeltCommentUnreadCount();
+  const totalUnreadCount = unreadCount + commentUnreadCount;
   const prioritizedNotifications = sortNotificationsByPriority(notifications);
+  const feedItems = useMemo<ActivityFeedItem[]>(() => {
+    const projectItems = prioritizedNotifications.map((notification) => ({
+      id: notification.id,
+      title: notification.title,
+      body: notification.body,
+      href: getCollaborationNotificationHref(notification),
+      createdAt: notification.createdAt,
+      avatarLabel: initials(notification.title),
+      isUnread: !notification.readAt,
+      kind: "project" as const,
+      onClick: () => {
+        setOpen(false);
+        if (!notification.readAt) {
+          void markAsRead(notification.id);
+        }
+      },
+      onDelete: () => void deleteNotification(notification.id),
+    }));
+
+    const commentItems = commentActivity.map((item) => ({
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      href: item.href,
+      createdAt: item.createdAt,
+      avatarLabel: initials(item.authorName),
+      sourceLabel: item.documentLabel,
+      kind: "comment" as const,
+      onClick: () => setOpen(false),
+    }));
+
+    return [...commentItems, ...projectItems]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      )
+      .slice(0, 8);
+  }, [
+    commentActivity,
+    deleteNotification,
+    markAsRead,
+    prioritizedNotifications,
+  ]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "relative h-8 w-8 p-0 transition-colors",
-            open
-              ? "bg-primary/10 text-primary hover:bg-primary/20"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {totalUnreadCount > 0 && (
-            <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-              {totalUnreadCount > 9 ? "9+" : totalUnreadCount}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="w-80 p-0 shadow-sm"
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "relative h-8 w-8 p-0 transition-colors",
+          open
+            ? "bg-primary/10 text-primary hover:bg-primary/20"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+        aria-label="Notifications"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-medium text-foreground">Notifications</span>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto px-0 py-0 text-[11px] text-muted-foreground hover:text-foreground"
-              onClick={() => void markAllAsRead()}
+        <Bell className="h-4 w-4" />
+        {totalUnreadCount > 0 ? (
+          <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+            {totalUnreadCount > 9 ? "9+" : totalUnreadCount}
+          </span>
+        ) : null}
+      </Button>
+
+      <SidePanel open={open} onOpenChange={setOpen}>
+        <SidePanelContent side="right" size="compact">
+          <SidePanelHeader className="border-b border-border/60">
+            <div className="flex items-center justify-between gap-3">
+              <SidePanelTitle>Notifications</SidePanelTitle>
+              {unreadCount > 0 ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-0 py-0 text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => void markAllAsRead()}
+                >
+                  Mark all read
+                </Button>
+              ) : null}
+            </div>
+          </SidePanelHeader>
+
+          <SidePanelBody className="px-0 py-0">
+            <ActivityFeedList
+              items={feedItems}
+              isLoading={isLoading || isCommentLoading}
+              emptyTitle="No activity yet"
+              emptyDescription="You'll be notified about comments, mentions, and project activity."
+            />
+          </SidePanelBody>
+
+          <SidePanelFooter className="border-t border-border/60">
+            <Link
+              href="/notifications"
+              onClick={() => setOpen(false)}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Mark all read
-            </Button>
-          )}
-        </div>
-
-        {/* List */}
-        <div className="max-h-96 overflow-y-auto border-t border-border/50">
-          {isLoading ? (
-            <div className="space-y-0.5 py-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-3 px-4 py-3">
-                  <Skeleton className="h-7 w-7 rounded-full" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-3 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <Bell className="h-5 w-5 text-muted-foreground/40" />
-              <p className="text-xs text-muted-foreground">No project activity notifications yet</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {prioritizedNotifications.slice(0, 8).map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onMarkRead={(id) => void markAsRead(id)}
-                  onDelete={(id) => void deleteNotification(id)}
-                />
-              ))}
-            </div>
-          )}
-
-          {collaborationRuntimeActive &&
-          process.env.NEXT_PUBLIC_VELT_API_KEY ? (
-            <div className="border-t border-border/50 py-3">
-              <VeltCommentNotifications compact />
-            </div>
-          ) : null}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-border/50 px-4 py-2.5">
-          <Link
-            href="/notifications"
-            onClick={() => setOpen(false)}
-            className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            See all notifications
-          </Link>
-        </div>
-      </PopoverContent>
-    </Popover>
+              See all notifications
+            </Link>
+          </SidePanelFooter>
+        </SidePanelContent>
+      </SidePanel>
+    </>
   );
 }

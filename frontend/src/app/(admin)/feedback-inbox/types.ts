@@ -6,6 +6,7 @@ export type UserProfile = {
 
 export type FeedbackItem = {
   id: string;
+  category: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -29,6 +30,7 @@ export type FeedbackItem = {
   github_issue_number: number | null;
   github_issue_url: string | null;
   github_issue_state: string | null;
+  tool_id?: number | null;
   metadata: Record<string, unknown>;
   submitter: UserProfile;
 };
@@ -77,17 +79,19 @@ export type StatusFilter =
   | "active"
   | "open"
   | "in_progress"
+  | "in_review"
+  | "verified"
   | "dispatched"
   | "deferred"
-  | "resolved"
   | "all";
 
 export type DisplayStatus =
   | "open"
   | "in_progress"
   | "pr_created"
+  | "in_review"
+  | "verified"
   | "deferred"
-  | "resolved"
   | "archived";
 
 export type AgentTarget = "codex" | "claude_code";

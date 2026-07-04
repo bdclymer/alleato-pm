@@ -575,6 +575,18 @@ const REASON_PREVENTION_HINTS: Record<string, string> = {
     "Pick the tool that matches the user's intent (emails vs meetings vs tasks vs budget). When unsure, prefer the more specific tool over a generic search.",
   unhelpful:
     "Give the actual answer, not a meta-description of what you could do. If you don't have enough context, ask one specific clarifying question.",
+  duplicate_risk:
+    "Do not list overlapping risks as separate items. Merge duplicates and keep the clearest wording once.",
+  not_a_risk:
+    "Only label something as a risk when it describes a plausible project exposure, blocker, delay, cost issue, or coordination failure. Do not turn neutral discussion points into risks.",
+  wrong_priority:
+    "Prioritize risks by actual project impact and immediacy. Avoid inflating minor notes into top-line risks.",
+  well_scoped:
+    "Keep each risk specific, concrete, and bounded to one real project issue.",
+  actionable:
+    "Phrase risks so a PM can immediately understand what could go wrong and what needs follow-up.",
+  real_risk:
+    "Prefer risks grounded in explicit evidence from the meeting, not speculative or generic concerns.",
   other: "Re-read the user feedback note and avoid this failure pattern.",
 };
 

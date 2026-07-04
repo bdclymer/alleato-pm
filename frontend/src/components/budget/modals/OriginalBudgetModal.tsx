@@ -27,8 +27,6 @@ import { Grid, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
   budgetRadioCardClass,
 } from "./style-tokens";
 
@@ -140,17 +138,11 @@ export function OriginalBudgetModal({
         className="flex flex-col flex-1 min-h-0"
       >
         <div className="px-4 sm:px-8 flex-shrink-0">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger
-              value="budget"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="budget">
               Original Budget
             </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+            <TabsTrigger value="history">
               History
             </TabsTrigger>
           </TabsList>

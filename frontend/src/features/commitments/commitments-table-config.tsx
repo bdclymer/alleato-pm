@@ -1,6 +1,5 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import Link from "next/link";
 import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
@@ -20,6 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  CellLink,
+} from "@/components/tables/unified";
 import type {
   ColumnConfig,
   DetailFieldConfig,
@@ -258,6 +260,18 @@ function acumaticaCommitmentUrl(
 
 export type CommitmentInlineField = "title" | "description" | "executed";
 
+function hasCommitmentChangeOrders(item: CommitmentListItem): boolean {
+  if (typeof item.change_order_count === "number") {
+    return item.change_order_count > 0;
+  }
+
+  return (
+    item.approved_change_orders !== 0 ||
+    item.pending_change_orders !== 0 ||
+    item.draft_change_orders !== 0
+  );
+}
+
 export function buildCommitmentTableColumns(
   projectId: string,
   expandedIds?: Set<string>,
@@ -282,15 +296,10 @@ export function buildCommitmentTableColumns(
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
-          <Link
-            href={`/${projectId}/commitments/${item.id}`}
-            className="font-medium max-w-32 truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            title={item.number}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <span className="block max-w-32 truncate font-medium" title={item.number}>
             {item.number}
-          </Link>
-          {onToggleExpand && (
+          </span>
+          {onToggleExpand && hasCommitmentChangeOrders(item) && (
             <Button
               type="button"
               onClick={(e) => {
@@ -321,13 +330,10 @@ export function buildCommitmentTableColumns(
     contract_company: {
       render: (item) =>
         item.contract_company?.id && item.contract_company?.name ? (
-          <Link
+          <CellLink
+            value={item.contract_company.name}
             href={`/directory/companies/${item.contract_company.id}`}
-            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {item.contract_company.name}
-          </Link>
+          />
         ) : (
           <span>{item.contract_company?.name ?? "-"}</span>
         ),
@@ -390,7 +396,11 @@ export function buildCommitmentTableColumns(
     },
     title: {
       render: (item) => (
-        <span className="font-medium">{item.title ?? "-"}</span>
+        <CellLink
+          value={item.title ?? "-"}
+          href={`/${projectId}/commitments/${item.id}`}
+          className="block max-w-72 truncate font-medium"
+        />
       ),
       csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
@@ -476,16 +486,12 @@ export function buildCommitmentTableColumns(
       render: (item) => {
         const url = acumaticaCommitmentUrl(item.number, item.type);
         return url ? (
-          <a
+          <CellLink
+            value="View"
             href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            title={`Open ${item.number} in Acumatica`}
-          >
-            View
-          </a>
+            external
+            className="font-medium"
+          />
         ) : (
           <span className="text-muted-foreground">-</span>
         );

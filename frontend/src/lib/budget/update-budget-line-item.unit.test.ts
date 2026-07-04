@@ -1,8 +1,19 @@
-import { ApiError } from "@/lib/api-client";
+import { ApiError, apiFetch } from "@/lib/api-client";
 import {
   formatBudgetCreateError,
   formatBudgetUpdateError,
+  updateBudgetLineItem,
 } from "./update-budget-line-item";
+
+jest.mock("@/lib/api-client", () => {
+  const actual = jest.requireActual("@/lib/api-client");
+  return {
+    ...actual,
+    apiFetch: jest.fn(),
+  };
+});
+
+const apiFetchMock = apiFetch as jest.MockedFunction<typeof apiFetch>;
 
 describe("formatBudgetCreateError", () => {
   it("preserves the server error message for budget creation failures", () => {
@@ -40,6 +51,35 @@ describe("formatBudgetUpdateError", () => {
   it("falls back to a stable message when the thrown value is opaque", () => {
     expect(formatBudgetUpdateError(null)).toBe(
       "An unexpected error occurred while saving the budget line.",
+    );
+  });
+});
+
+describe("updateBudgetLineItem", () => {
+  beforeEach(() => {
+    apiFetchMock.mockReset();
+    apiFetchMock.mockResolvedValue(undefined as never);
+  });
+
+  it("sends unit_of_measure through the shared budget update payload", async () => {
+    await updateBudgetLineItem("760", "line-1", {
+      quantity: 3,
+      uom: "ea",
+      unitCost: 3921,
+      originalAmount: 11763,
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/api/projects/760/budget/lines/line-1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          quantity: 3,
+          unit_of_measure: "ea",
+          unit_cost: 3921,
+          original_amount: 11763,
+        }),
+      }),
     );
   });
 });

@@ -9,6 +9,7 @@ import {
   Download,
   FileText,
   GitBranch,
+  Loader2,
   Mail,
   MoreVertical,
   Plus,
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { triggerBrowserDownload } from "@/lib/browser-download";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
@@ -29,6 +29,7 @@ import {
 import { COMMITMENT_STATUS_OPTIONS } from "@/features/commitments/commitments-table-config";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { PaymentsIssuedTab } from "@/components/commitments/tabs/PaymentsIssuedTab";
@@ -42,6 +43,7 @@ import { StatusBadge } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
 import {
   ContentSectionStack,
+  DetailLayout,
   DetailPanel,
   LabelValueRow,
   PageShell,
@@ -68,8 +70,10 @@ import {
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { apiFetch } from "@/lib/api-client";
+import type { CommitmentSovLockState } from "@/lib/commitments/commitment-sov-lock";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import { useConfirm } from "@/hooks/use-confirm";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import type { Commitment } from "@/types/financial";
 
 // ---------------------------------------------------------------------------
@@ -131,6 +135,7 @@ type CommitmentDetail = Commitment & {
     unit_cost?: number | null;
     billed_to_date?: number | null;
   }>;
+  sov_lock?: CommitmentSovLockState | null;
 };
 
 type CommitmentSovSummary = {
@@ -142,6 +147,15 @@ type CommitmentSovSummary = {
   amountRemaining: number;
   currentRetainage: number;
 };
+
+function getCurrentRetainageWithheld(commitment: Pick<CommitmentDetail, "billed_to_date" | "retention_percentage">) {
+  const billedToDate = commitment.billed_to_date ?? 0;
+  const retainagePercent = Number(commitment.retention_percentage ?? 0);
+
+  return retainagePercent > 0 && retainagePercent < 100
+    ? (billedToDate * retainagePercent) / (100 - retainagePercent)
+    : 0;
+}
 
 // ---------------------------------------------------------------------------
 // Data normalizer
@@ -352,6 +366,10 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     ship_via: typeof record.ship_via === "string" ? record.ship_via : null,
     payment_terms: typeof record.payment_terms === "string" ? record.payment_terms : null,
     line_items,
+    sov_lock:
+      record.sov_lock && typeof record.sov_lock === "object"
+        ? (record.sov_lock as CommitmentSovLockState)
+        : null,
   };
 };
 
@@ -423,11 +441,7 @@ function getCommitmentSovSummary(commitment: CommitmentDetail): CommitmentSovSum
   const contractTotal = originalContract + approvedChanges;
   const billedToDate = commitment.billed_to_date ?? 0;
   const amountRemaining = Math.max(contractTotal - billedToDate, 0);
-  const retainagePercent = Number(commitment.retention_percentage ?? 0);
-  const currentRetainage =
-    retainagePercent > 0 && retainagePercent < 100
-      ? (billedToDate * retainagePercent) / (100 - retainagePercent)
-      : 0;
+  const currentRetainage = getCurrentRetainageWithheld(commitment);
 
   return {
     subtotal,
@@ -452,7 +466,7 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
   const pendingRevised = revisedContract + pendingCOs;
   const invoiced = commitment.billed_to_date ?? 0;
   const paymentsIssued = commitment.payments_issued ?? 0;
-  const retainageReleased = commitment.retainage_released_amount ?? 0;
+  const retainageWithheld = getCurrentRetainageWithheld(commitment);
   const remainingBalance = commitment.remaining_balance !== undefined
     ? commitment.remaining_balance
     : revisedContract - paymentsIssued;
@@ -470,7 +484,7 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
         <SummaryValueRow label="Draft COs" value={formatCurrency(draftCOs)} />
         <SummaryValueRow label="Invoiced" value={formatCurrency(invoiced)} />
         <SummaryValueRow label="Payments Issued" value={formatCurrency(paymentsIssued)} />
-        <SummaryValueRow label="Retainage Released" value={formatCurrency(retainageReleased)} />
+        <SummaryValueRow label="Retainage Withheld" value={formatCurrency(retainageWithheld)} />
         <SummaryValueRow label="Balance" value={formatCurrency(remainingBalance)} />
         <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
       </dl>
@@ -530,201 +544,219 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   const exclusionLines = parseTextLines(commitment.exclusions);
 
   return (
-    <ContentSectionStack className="space-y-8 pb-20">
-      <section>
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-          <div className="space-y-6">
+    <ContentSectionStack className="pb-20">
+      <section className="pt-4">
+        <DetailLayout sidebar={<FinancialSummaryPanel commitment={commitment} />}>
             {/* General Information */}
             <DetailPanel>
-              <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-              <DetailFieldGrid columns={2}>
-                <DetailField label={isPO ? "PO #" : "Subcontract #"}>
-                  {safeNumber(commitment.number) || "—"}
-                </DetailField>
-                {!isPO ? (
-                  <DetailField label="Start Date">
-                    <InlineEditField
-                      label="Start Date"
-                      type="date"
-                      value={dateInput(commitment.start_date)}
-                      display={renderDateOrDash(commitment.start_date)}
-                      disabled={isApproved}
-                      onSave={(v) => onSaveField("start_date", v || null)}
-                    />
-                  </DetailField>
-                ) : (
-                  <DetailField label={isPO ? "Delivery Date" : "Est. Completion"}>
-                    <InlineEditField
-                      label={isPO ? "Delivery Date" : "Est. Completion"}
-                      type="date"
-                      value={dateInput(commitment.substantial_completion_date)}
-                      display={renderDateOrDash(commitment.substantial_completion_date)}
-                      disabled={isApproved}
-                      onSave={(v) =>
-                        onSaveField(isPO ? "delivery_date" : "estimated_completion_date", v || null)
-                      }
-                    />
-                  </DetailField>
-                )}
-                <DetailField label="Title">
-                  <InlineEditField
-                    label="Title"
-                    value={commitment.title ?? ""}
-                    display={commitment.title || undefined}
-                    disabled={isApproved}
-                    onSave={(v) => onSaveField("title", v)}
-                  />
-                </DetailField>
-                <DetailField label="Contract Date">
-                  <InlineEditField
-                    label="Contract Date"
-                    type="date"
-                    value={dateInput(commitment.executed_date)}
-                    display={renderDateOrDash(commitment.executed_date)}
-                    disabled={isApproved}
-                    onSave={(v) => onSaveField("contract_date", v || null)}
-                  />
-                </DetailField>
-                <DetailField label="Status">
-                  <InlineEditField
-                    label="Status"
-                    type="select"
-                    options={COMMITMENT_STATUS_OPTIONS}
-                    value={displayStatus}
-                    display={<StatusBadge status={displayStatus} />}
-                    onSave={(v) => onSaveField("status", v)}
-                  />
-                </DetailField>
-                <DetailField label="Signed Date">
-                    <InlineEditField
-                      label="Signed Date"
-                      type="date"
-                      value={dateInput(commitment.signed_received_date)}
-                      display={renderDateOrDash(commitment.signed_received_date)}
-                      disabled={isApproved}
-                      onSave={(v) =>
-                        onSaveField(
-                          isPO ? "signed_po_received_date" : "signed_contract_received_date",
-                        v || null,
-                      )
-                    }
-                  />
-                </DetailField>
-                <DetailField label="Contract Company">
-                  {commitment.contract_company?.name ? (
-                    commitment.contract_company_id ? (
-                      <Link
-                        href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
-                        className="text-primary hover:underline"
-                      >
-                        {commitment.contract_company.name}
-                      </Link>
+              <SectionRuleHeading label="General Information" className="mb-8 pb-0" />
+              <div className="space-y-8">
+                <div className="flex flex-col gap-8 xl:flex-row">
+                  <DetailFieldGrid columns={1} className="flex-1">
+                    <DetailField label={isPO ? "PO #" : "Subcontract #"}>
+                      {safeNumber(commitment.number) || "—"}
+                    </DetailField>
+                    <DetailField label="Title">
+                      <InlineEditField
+                        label="Title"
+                        value={commitment.title ?? ""}
+                        display={commitment.title || undefined}
+                        disabled={isApproved}
+                        onSave={(v) => onSaveField("title", v)}
+                      />
+                    </DetailField>
+                    <DetailField label="Status">
+                      <InlineEditField
+                        label="Status"
+                        type="select"
+                        options={COMMITMENT_STATUS_OPTIONS}
+                        value={displayStatus}
+                        display={<StatusBadge status={displayStatus} />}
+                        onSave={(v) => onSaveField("status", v)}
+                      />
+                    </DetailField>
+                    <DetailField label="Contract Company">
+                      {commitment.contract_company?.name ? (
+                        commitment.contract_company_id ? (
+                          <Link
+                            href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
+                            className="text-primary hover:underline"
+                          >
+                            {commitment.contract_company.name}
+                          </Link>
+                        ) : (
+                          commitment.contract_company.name
+                        )
+                      ) : (
+                        "—"
+                      )}
+                    </DetailField>
+                    <DetailField label="Default Retainage">
+                      <InlineEditField
+                        label="Default Retainage"
+                        type="number"
+                        value={String(commitment.retention_percentage ?? 0)}
+                        display={`${commitment.retention_percentage ?? 0}%`}
+                        disabled={isApproved}
+                        onSave={(v) =>
+                          onSaveField("default_retainage_percent", v === "" ? null : Number(v))
+                        }
+                      />
+                    </DetailField>
+                    <DetailField label="Accounting Method">
+                      {commitment.accounting_method === "unit"
+                        ? "Unit/Quantity"
+                        : commitment.accounting_method === "percent"
+                          ? "Percent"
+                          : "Amount Based"}
+                    </DetailField>
+                    <DetailField label="Created By">
+                      {commitment.created_by_name || "—"}
+                    </DetailField>
+                    <DetailField label="Executed">
+                      <InlineEditField
+                        label="Executed"
+                        type="boolean"
+                        value={commitment.executed ? "true" : "false"}
+                        display={commitment.executed ? "Yes" : "No"}
+                        disabled={isApproved}
+                        onSave={(v) => onSaveField("executed", v === "true")}
+                      />
+                    </DetailField>
+                  </DetailFieldGrid>
+
+                  <DetailFieldGrid columns={1} className="flex-1">
+                    {!isPO ? (
+                      <DetailField label="Start Date">
+                        <InlineEditField
+                          label="Start Date"
+                          type="date"
+                          value={dateInput(commitment.start_date)}
+                          display={renderDateOrDash(commitment.start_date)}
+                          disabled={isApproved}
+                          onSave={(v) => onSaveField("start_date", v || null)}
+                        />
+                      </DetailField>
                     ) : (
-                      commitment.contract_company.name
-                    )
-                  ) : (
-                    "—"
-                  )}
-                </DetailField>
-                <DetailField label="License Number">
-                  {commitment.contract_company?.license_number || "—"}
-                </DetailField>
-                <DetailField label="Actual Completion">
-                  <InlineEditField
-                    label="Actual Completion"
-                    type="date"
-                    value={dateInput(commitment.actual_completion_date)}
-                    display={renderDateOrDash(commitment.actual_completion_date)}
-                    disabled={isApproved}
-                    onSave={(v) => onSaveField("actual_completion_date", v || null)}
-                  />
-                </DetailField>
-                {commitment.invoice_contacts !== undefined && (
-                  <DetailField label="Invoice Contact">
-                    {commitment.invoice_contacts.length > 0
-                      ? commitment.invoice_contacts.map((contact, index) => (
-                          <span key={contact.id}>
-                            {index > 0 ? ", " : null}
-                            <Link
-                              href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
-                              className="text-primary hover:underline"
-                            >
-                              {contact.name}
-                            </Link>
-                          </span>
-                        ))
-                      : "—"}
-                  </DetailField>
-                )}
-                <DetailField label="Issued On">
-                  <InlineEditField
-                    label="Issued On"
-                    type="date"
-                    value={dateInput(commitment.issued_on_date)}
-                    display={renderDateOrDash(commitment.issued_on_date)}
-                    disabled={isApproved}
-                    onSave={(v) => onSaveField("issued_on_date", v || null)}
-                  />
-                </DetailField>
-                <DetailField label="Default Retainage">
-                  <InlineEditField
-                    label="Default Retainage"
-                    type="number"
-                    value={String(commitment.retention_percentage ?? 0)}
-                    display={`${commitment.retention_percentage ?? 0}%`}
-                    disabled={isApproved}
-                    onSave={(v) =>
-                      onSaveField("default_retainage_percent", v === "" ? null : Number(v))
-                    }
-                  />
-                </DetailField>
-                <DetailField label="Accounting Method">
-                  {commitment.accounting_method === "unit"
-                    ? "Unit/Quantity"
-                    : commitment.accounting_method === "percent"
-                      ? "Percent"
-                      : "Amount Based"}
-                </DetailField>
-                {!isPO && (
-                  <DetailField label="Est. Completion">
-                    <InlineEditField
-                      label="Est. Completion"
-                      type="date"
-                      value={dateInput(commitment.substantial_completion_date)}
-                      display={renderDateOrDash(commitment.substantial_completion_date)}
-                      disabled={isApproved}
-                      onSave={(v) => onSaveField("estimated_completion_date", v || null)}
+                      <DetailField label="Delivery Date">
+                        <InlineEditField
+                          label="Delivery Date"
+                          type="date"
+                          value={dateInput(commitment.substantial_completion_date)}
+                          display={renderDateOrDash(commitment.substantial_completion_date)}
+                          disabled={isApproved}
+                          onSave={(v) => onSaveField("delivery_date", v || null)}
+                        />
+                      </DetailField>
+                    )}
+                    <DetailField label="Contract Date">
+                      <InlineEditField
+                        label="Contract Date"
+                        type="date"
+                        value={dateInput(commitment.executed_date)}
+                        display={renderDateOrDash(commitment.executed_date)}
+                        disabled={isApproved}
+                        onSave={(v) => onSaveField("contract_date", v || null)}
+                      />
+                    </DetailField>
+                    <DetailField label="Signed Date">
+                      <InlineEditField
+                        label="Signed Date"
+                        type="date"
+                        value={dateInput(commitment.signed_received_date)}
+                        display={renderDateOrDash(commitment.signed_received_date)}
+                        disabled={isApproved}
+                        onSave={(v) =>
+                          onSaveField(
+                            isPO ? "signed_po_received_date" : "signed_contract_received_date",
+                            v || null,
+                          )
+                        }
+                      />
+                    </DetailField>
+                    <DetailField label="Actual Completion">
+                      <InlineEditField
+                        label="Actual Completion"
+                        type="date"
+                        value={dateInput(commitment.actual_completion_date)}
+                        display={renderDateOrDash(commitment.actual_completion_date)}
+                        disabled={isApproved}
+                        onSave={(v) => onSaveField("actual_completion_date", v || null)}
+                      />
+                    </DetailField>
+                    <DetailField label="Issued On">
+                      <InlineEditField
+                        label="Issued On"
+                        type="date"
+                        value={dateInput(commitment.issued_on_date)}
+                        display={renderDateOrDash(commitment.issued_on_date)}
+                        disabled={isApproved}
+                        onSave={(v) => onSaveField("issued_on_date", v || null)}
+                      />
+                    </DetailField>
+                    {commitment.invoice_contacts !== undefined && (
+                      <DetailField label="Invoice Contact">
+                        {commitment.invoice_contacts.length > 0
+                          ? commitment.invoice_contacts.map((contact, index) => (
+                              <span key={contact.id}>
+                                {index > 0 ? ", " : null}
+                                <Link
+                                  href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
+                                  className="text-primary hover:underline"
+                                >
+                                  {contact.name}
+                                </Link>
+                              </span>
+                            ))
+                          : "—"}
+                      </DetailField>
+                    )}
+                    {!isPO && (
+                      <DetailField label="Est. Completion">
+                        <InlineEditField
+                          label="Est. Completion"
+                          type="date"
+                          value={dateInput(commitment.substantial_completion_date)}
+                          display={renderDateOrDash(commitment.substantial_completion_date)}
+                          disabled={isApproved}
+                          onSave={(v) => onSaveField("estimated_completion_date", v || null)}
+                        />
+                      </DetailField>
+                    )}
+                    <DetailField label="Private Commitment">
+                      {commitment.private ? "Yes" : "No"}
+                    </DetailField>
+                    <DetailField label="Non-Admin SOV">
+                      {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
+                    </DetailField>
+                  </DetailFieldGrid>
+                </div>
+
+                <div className="space-y-3 border-t border-border/50 pt-6">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Description</p>
+                    <div
+                      className={`max-w-3xl whitespace-pre-wrap text-sm leading-7 ${
+                        commitment.description
+                          ? "text-foreground"
+                          : "text-muted-foreground/50"
+                      }`}
+                    >
+                      {commitment.description || "—"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <p className="text-xs text-muted-foreground">Attachments</p>
+                    <EntityAttachments
+                      entityType="commitment"
+                      entityId={commitmentId}
+                      projectId={projectId}
+                      showLabel={false}
                     />
-                  </DetailField>
-                )}
-                <DetailField label="Created By">
-                  {commitment.created_by_name || "—"}
-                </DetailField>
-                <DetailField label="Private Commitment">
-                  {commitment.private ? "Yes" : "No"}
-                </DetailField>
-                <DetailField label="Executed">
-                  <InlineEditField
-                    label="Executed"
-                    type="boolean"
-                    value={commitment.executed ? "true" : "false"}
-                    display={commitment.executed ? "Yes" : "No"}
-                    disabled={isApproved}
-                    onSave={(v) => onSaveField("executed", v === "true")}
-                  />
-                </DetailField>
-                <DetailField label="Non-Admin SOV">
-                  {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
-                </DetailField>
-                <DetailField label="Attachments" span={2}>
-                  <EntityAttachments
-                    entityType="commitment"
-                    entityId={commitmentId}
-                    projectId={projectId}
-                    showLabel={false}
-                  />
-                </DetailField>
-              </DetailFieldGrid>
+                  </div>
+                </div>
+              </div>
             </DetailPanel>
 
             {/* Shipping & Billing (PO only) */}
@@ -785,18 +817,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
               </DetailPanel>
             )}
 
-            {/* Description (collapsible, closed by default) */}
-            <DetailPanel>
-              <Collapsible>
-                <CollapsibleSectionHeading label="Description" />
-                <CollapsibleContent className="mt-4">
-                  <p className={`text-sm leading-relaxed ${!commitment.description ? "text-muted-foreground/50" : "text-foreground"}`}>
-                    {commitment.description || "—"}
-                  </p>
-                </CollapsibleContent>
-              </Collapsible>
-            </DetailPanel>
-
             {/* Inclusions + Exclusions (collapsible, closed by default) */}
             <DetailPanel>
               <Collapsible>
@@ -835,12 +855,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                 </CollapsibleContent>
               </Collapsible>
             </DetailPanel>
-          </div>
-
-          <aside>
-            <FinancialSummaryPanel commitment={commitment} />
-          </aside>
-        </div>
+        </DetailLayout>
       </section>
 
       {/* Schedule of Values */}
@@ -855,6 +870,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
           summary={getCommitmentSovSummary(commitment)}
           showHeader={false}
           status={commitment.status}
+          lockState={commitment.sov_lock}
           onImportComplete={onImportComplete}
         />
       </section>
@@ -996,16 +1012,13 @@ export default function CommitmentDetailPage() {
     [commitmentId, queryClient, fetchCommitment],
   );
 
-  const handleExport = useCallback(() => {
-    void triggerBrowserDownload(
-      `/api/document-center/commitment/${commitmentId}/pdf`,
-      `${commitment?.number || "commitment"}-${commitment?.title || "commitment"}.pdf`,
-      "application/pdf",
-    ).catch((error) => {
-      console.error("Commitment PDF download failed", error);
-      toast.error("Commitment PDF download failed. Try again.");
-    });
-  }, [commitment?.number, commitment?.title, commitmentId]);
+  const { exportPdf: handleExport, isExporting } = usePdfExport({
+    endpoint: `/api/document-center/commitment/${commitmentId}/pdf`,
+    filename: `${commitment?.number || "commitment"}-${commitment?.title || "commitment"}.pdf`,
+    loadingMessage: "Preparing commitment PDF...",
+    successMessage: "Commitment PDF download started",
+    errorMessage: "Commitment PDF download failed. Try again.",
+  });
 
   const handleEmail = useCallback(() => {
     setIsEmailDialogOpen(true);
@@ -1081,10 +1094,6 @@ export default function CommitmentDetailPage() {
             <DollarSign className="mr-2 h-4 w-4" />
             Create Invoice
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleEmail}>
-            <Mail className="mr-2 h-4 w-4" />
-            Email Commitment
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -1099,9 +1108,17 @@ export default function CommitmentDetailPage() {
             <Upload className="mr-2 h-4 w-4" />
             Import
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
+          <DropdownMenuItem disabled={isExporting} onSelect={() => void handleExport()}>
+            {isExporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {isExporting ? "Preparing PDF..." : "Download PDF"}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            Email Commitment
           </DropdownMenuItem>
           {!isApproved && (
             <DropdownMenuItem asChild>
@@ -1120,6 +1137,8 @@ export default function CommitmentDetailPage() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CommitmentsHelpSheet buttonVariant="ghost" />
     </>
   );
 
@@ -1127,6 +1146,7 @@ export default function CommitmentDetailPage() {
     <PageShell
       variant="detailWide"
       title={commitment.title || (displayNumber ? `#${displayNumber}` : "Commitment")}
+      description={isPO ? "Purchase Order" : "Subcontract"}
       actions={headerActions}
       onBack={() => router.back()}
       contentClassName="space-y-0"
@@ -1178,6 +1198,7 @@ export default function CommitmentDetailPage() {
             summary={getCommitmentSovSummary(commitment)}
             showHeader={false}
             status={commitment.status}
+            lockState={commitment.sov_lock}
             onImportComplete={() => void fetchCommitment()}
           />
         )}

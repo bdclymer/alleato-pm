@@ -149,3 +149,64 @@ Rules:
 - Muted metadata.
 - No metric cards.
 - No duplicate header dropdown actions except the link to full comments page.
+
+## Pattern F: Split-Page Work Queue
+
+Use for emails, tasks, project tasks, project emails, comments, feedback inbox, AI training queues, and any list/detail review workflow.
+
+Shape:
+
+```text
+SplitPageFrame
+  SplitPage
+    Left pane: title + toolbar/tabs + scrollable list
+    Detail pane: selected item detail or empty state
+    Optional auxiliary pane: source context or feedback/training panel
+```
+
+Rules:
+
+- Use `SplitPageFrame` and `SplitPage` from `@/components/ui/split-page`.
+- Keep list on the left and detail on the right for desktop.
+- Use the same mobile list/detail behavior through `useSplitPage`.
+- Use `variant="three-column"` for a true auxiliary rail.
+- Keep only content-specific differences across emails, tasks, comments, and feedback inbox.
+- Do not invent a new two-pane shell for each feature.
+
+Hard failures:
+
+- Custom flex two-pane layouts where `SplitPage` should be used.
+- A review queue without a selected-item detail pane.
+- A feedback inbox that behaves like a unique dashboard instead of a split review queue.
+- Different toolbar/list/detail/empty-state structure across pages without documented reason.
+
+## Pattern G: Detail Property Bar
+
+Use for metadata/property rows on detail pages and selected-item detail panes.
+
+Shape:
+
+```text
+Icon + property value/action
+Icon + property value/action
+Icon + muted empty action
+Icon + source link
+```
+
+Rules:
+
+- Use a shared property bar component and a shared property item component.
+- Start from the meetings detail property row pattern when a compact detail header needs metadata.
+- Use icon plus value/action, not uppercase field labels as the primary visual structure.
+- Use compact inline controls for editable values such as status, priority, assignee, project, category, and due date.
+- Use muted action text for empty values such as `Add category`, `Assign project`, `Set due date`, or `Unassigned`.
+- Preserve truncation and accessible labels for long values.
+- Keep the row visually subordinate to the title and primary content.
+
+Hard failures:
+
+- Feature-local property row components when two or more pages need the same pattern.
+- A task, email, feedback, or document detail pane that visually diverges from the meetings property row without a documented reason.
+- Uppercase metadata grids such as `STATUS`, `PRIORITY`, `ASSIGNEE`, `PROJECT`, `CATEGORY` when the expected pattern is icon plus value.
+- Missing icons where the reference pattern uses icons as anchors.
+- Bulky form-like property sections in a detail header.

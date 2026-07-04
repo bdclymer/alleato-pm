@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (325)
+## UI Routes (329)
 
-_298/325 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_298/329 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -48,9 +48,10 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/commitments/new` | Create new subcontract or purchase order with details and schedule of values | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
 | `/[projectId]/commitments/recycle-bin` | Redirect to commitments list filtered to recycle bin with soft-deleted records | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
 | `/[projectId]/commitments/settings` | Configure commitment settings for auto-numbering, defaults, and approval thresholds | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
-| `/[projectId]/daily-log` | List daily logs with weather, manpower, equipment, and site management notes | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
+| `/[projectId]/daily-log` | List daily logs with weather, manpower, equipment, and general field activity details | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
 | `/[projectId]/daily-log/[dailyLogId]/edit` | Edit daily log entry with weather conditions, manpower, equipment, and general notes | frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx |
 | `/[projectId]/daily-log/new` | Create new daily log entry with site observations and project activities | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
+| `/[projectId]/daily-log/site-lead-checklist` | Complete the separate site lead checklist for a project date without opening the daily log form | frontend/src/app/(main)/[projectId]/daily-log/site-lead-checklist/page.tsx |
 | `/[projectId]/daily-log/site-scribe` | Realtime AI daily-log capture for field crews. | frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx |
 | `/[projectId]/direct-costs` | List direct costs with vendor, amounts, and status tracked separately from commitments | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
 | `/[projectId]/direct-costs/[costId]` | Direct cost not found | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
@@ -88,9 +89,9 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/invoicing/subcontractor/new` | Create new subcontractor invoice with SOV and approved change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
 | `/[projectId]/meetings` | List project meetings with transcripts and extracted key information | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
 | `/[projectId]/meetings/[meetingId]` | View meeting transcript with segments, tasks, risks, decisions, and opportunities | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
-| `/[projectId]/meetings/[meetingId]/agenda` | Add attendees to this meeting. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/agenda/page.tsx |
+| `/[projectId]/meetings/[meetingId]/agenda` | Link a transcript from Sources when one is available. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/agenda/page.tsx |
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
-| `/[projectId]/meetings/new` | Start a structured project meeting. Each new meeting begins with an Uncategorized Items agenda section. | frontend/src/app/(main)/[projectId]/meetings/new/page.tsx |
+| `/[projectId]/meetings/new` | Create meeting | frontend/src/app/(main)/[projectId]/meetings/new/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
@@ -144,6 +145,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/accounting/ap-payments` | Table of AP checks and payments issued with status and amount | frontend/src/app/(admin)/accounting/ap-payments/page.tsx |
 | `/accounting/bills` | Accounts payable bills synced from Acumatica with balance and hold status | frontend/src/app/(admin)/accounting/bills/page.tsx |
 | `/accounting/checks` | AP check register with payment method, vendor, and project allocation | frontend/src/app/(admin)/accounting/checks/page.tsx |
+| `/accounting/direct-costs` | Direct Costs | frontend/src/app/(admin)/accounting/direct-costs/page.tsx |
 | `/accounting/finance-spend` | Trailing 12-month accounting and finance overhead from classified Acumatica AP bills. | frontend/src/app/(admin)/accounting/finance-spend/page.tsx |
 | `/accounting/invoices` | Accounts receivable invoices with customer, due date, balance, and payments | frontend/src/app/(admin)/accounting/invoices/page.tsx |
 | `/accounting/payments` | AR payment receipts with status, customer, linked invoices, and balance | frontend/src/app/(admin)/accounting/payments/page.tsx |
@@ -198,6 +200,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/calendar` | Project calendar view for scheduling and tracking events | frontend/src/app/(main)/calendar/page.tsx |
 | `/change-events` | Global table of change events and modifications across all projects | frontend/src/app/(tables)/change-events/page.tsx |
 | `/command-center` | Kanban-style task board for tracking initiatives across idea, planned, in progress, and done statuses | frontend/src/app/(admin)/command-center/page.tsx |
+| `/command-center/file` | — | frontend/src/app/(admin)/command-center/file/page.tsx |
 | `/comments` | — | frontend/src/app/(main)/comments/page.tsx |
 | `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
 | `/daily-briefs` | Historical record of executive Daily Brief packets and delivery status | frontend/src/app/(tables)/daily-briefs/page.tsx |
@@ -341,9 +344,10 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/ui-library` | Disclosure primitive for secondary detail. Keep primary labels and status visible outside the collapsed body. | frontend/src/app/(admin)/ui-library/page.tsx |
 | `/updates` | A running log of features added, improved, and fixed across all areas of the platform. | frontend/src/app/(admin)/updates/page.tsx |
 | `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
+| `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (735)
+## API Endpoints (741)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -352,6 +356,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/accounting/bills` | GET | frontend/src/app/api/accounting/bills/route.ts |
 | `/api/accounting/checks` | GET | frontend/src/app/api/accounting/checks/route.ts |
 | `/api/accounting/dashboard` | GET | frontend/src/app/api/accounting/dashboard/route.ts |
+| `/api/accounting/direct-costs` | GET | frontend/src/app/api/accounting/direct-costs/route.ts |
 | `/api/accounting/finance-spend` | GET | frontend/src/app/api/accounting/finance-spend/route.ts |
 | `/api/accounting/finance-spend/rules` | GET | frontend/src/app/api/accounting/finance-spend/rules/route.ts |
 | `/api/accounting/finance-spend/rules/[ruleId]` | PATCH | frontend/src/app/api/accounting/finance-spend/rules/[ruleId]/route.ts |
@@ -468,6 +473,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/app-error-events` | POST | frontend/src/app/api/app-error-events/route.ts |
 | `/api/assignment-inbox` | GET | frontend/src/app/api/assignment-inbox/route.ts |
 | `/api/assignment-inbox/assign` | POST | frontend/src/app/api/assignment-inbox/assign/route.ts |
+| `/api/assignment-inbox/rules` | GET | frontend/src/app/api/assignment-inbox/rules/route.ts |
 | `/api/auth/admin-check` | GET | frontend/src/app/api/auth/admin-check/route.ts |
 | `/api/auth/change-password` | POST | frontend/src/app/api/auth/change-password/route.ts |
 | `/api/auth/forgot-password` | POST | frontend/src/app/api/auth/forgot-password/route.ts |
@@ -481,6 +487,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/clients` | GET, POST | frontend/src/app/api/clients/route.ts |
 | `/api/collaboration/comments` | GET, POST | frontend/src/app/api/collaboration/comments/route.ts |
 | `/api/collaboration/notifications` | GET, PATCH | frontend/src/app/api/collaboration/notifications/route.ts |
+| `/api/command-center/ops` | GET | frontend/src/app/api/command-center/ops/route.ts |
 | `/api/comments/all` | GET | frontend/src/app/api/comments/all/route.ts |
 | `/api/commitments` | GET, POST | frontend/src/app/api/commitments/route.ts |
 | `/api/commitments/[commitmentId]` | GET, PUT, PATCH, DELETE | frontend/src/app/api/commitments/[commitmentId]/route.ts |
@@ -636,7 +643,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/permissions/page-access` | GET, PUT | frontend/src/app/api/permissions/page-access/route.ts |
 | `/api/permissions/page-role-access` | GET, PUT | frontend/src/app/api/permissions/page-role-access/route.ts |
 | `/api/permissions/templates` | GET, POST | frontend/src/app/api/permissions/templates/route.ts |
-| `/api/permissions/templates/[templateId]` | PUT, DELETE | frontend/src/app/api/permissions/templates/[templateId]/route.ts |
+| `/api/permissions/templates/[templateId]` | GET, PUT, DELETE | frontend/src/app/api/permissions/templates/[templateId]/route.ts |
 | `/api/permissions/users` | GET, POST | frontend/src/app/api/permissions/users/route.ts |
 | `/api/permissions/users/[personId]` | PATCH, DELETE | frontend/src/app/api/permissions/users/[personId]/route.ts |
 | `/api/permissions/users/[personId]/company-template` | PUT, DELETE | frontend/src/app/api/permissions/users/[personId]/company-template/route.ts |
@@ -713,9 +720,11 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments` | GET, POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]` | DELETE | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/attachments/[attachmentId]/route.ts |
+| `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items` | GET, POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]` | PUT, DELETE | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf/route.ts |
+| `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/recipients` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/recipients/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject` | POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/export` | GET | frontend/src/app/api/projects/[projectId]/commitment-change-orders/export/route.ts |
 | `/api/projects/[projectId]/commitment-options` | GET | frontend/src/app/api/projects/[projectId]/commitment-options/route.ts |
@@ -915,6 +924,7 @@ _298/325 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/meetings/[meetingId]/prep` | GET, PUT | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/route.ts |
 | `/api/projects/[projectId]/meetings/[meetingId]/prep/generate` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/generate/route.ts |
 | `/api/projects/[projectId]/meetings/[meetingId]/restore` | POST | frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/restore/route.ts |
+| `/api/projects/[projectId]/meetings/prep-suggestions` | POST | frontend/src/app/api/projects/[projectId]/meetings/prep-suggestions/route.ts |
 | `/api/projects/[projectId]/pcos` | GET, POST | frontend/src/app/api/projects/[projectId]/pcos/route.ts |
 | `/api/projects/[projectId]/pcos/[pcoId]` | GET, PATCH | frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/route.ts |
 | `/api/projects/[projectId]/pcos/[pcoId]/atomic` | PUT | frontend/src/app/api/projects/[projectId]/pcos/[pcoId]/atomic/route.ts |

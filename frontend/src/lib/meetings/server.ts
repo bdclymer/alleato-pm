@@ -53,6 +53,33 @@ export type PreviousMinutesEntry = {
   status: string;
 };
 
+export type CuratedMeetingRisk = {
+  id: string;
+  text: string;
+  whyItMatters: string | null;
+  confidence: string | null;
+  source: "curated";
+};
+
+const MEETING_RISK_CARD_TYPES = [
+  "risk",
+  "blocker",
+  "financial_exposure",
+  "schedule_risk",
+] as const;
+
+const ACTIVE_CARD_STATUS_VALUES = [
+  "open",
+  "blocked",
+  "needs_review",
+  "stale",
+] as const;
+
+const VALID_ATTRIBUTION_STATUS_VALUES = [
+  "auto_assigned",
+  "approved",
+] as const;
+
 /**
  * loadMeetingDetail
  * Loads a single meeting (scoped to a project, excluding soft-deleted rows)
@@ -206,6 +233,64 @@ export async function loadMeetingDetail(
     attendees,
     categories,
   };
+}
+
+export async function loadCuratedMeetingRisks(
+  supabase: ServiceClient,
+  documentMetadataId: string,
+): Promise<CuratedMeetingRisk[]> {
+  const { data: evidenceRows, error: evidenceError } = await supabase
+    .from("insight_card_evidence")
+    .select("insight_card_id")
+    .eq("source_document_id", documentMetadataId);
+
+  if (evidenceError) {
+    throw new Error(
+      `Failed to load meeting risk evidence: ${evidenceError.message}`,
+    );
+  }
+
+  const insightCardIds = [...new Set(
+    (evidenceRows ?? [])
+      .map((row) => row.insight_card_id)
+      .filter((id): id is string => Boolean(id)),
+  )];
+
+  if (insightCardIds.length === 0) {
+    return [];
+  }
+
+  const { data: cardRows, error: cardError } = await supabase
+    .from("insight_cards")
+    .select(
+      "id,title,summary,why_it_matters,confidence,card_type,current_status,attribution_status,severity,last_seen_at,updated_at",
+    )
+    .in("id", insightCardIds)
+    .in("card_type", [...MEETING_RISK_CARD_TYPES])
+    .in("current_status", [...ACTIVE_CARD_STATUS_VALUES])
+    .in("attribution_status", [...VALID_ATTRIBUTION_STATUS_VALUES]);
+
+  if (cardError) {
+    throw new Error(`Failed to load meeting risk cards: ${cardError.message}`);
+  }
+
+  return (cardRows ?? [])
+    .slice()
+    .sort((a, b) => {
+      const severityDelta = (b.severity ?? -1) - (a.severity ?? -1);
+      if (severityDelta !== 0) return severityDelta;
+      const aTime = Date.parse(a.last_seen_at ?? a.updated_at ?? "") || 0;
+      const bTime = Date.parse(b.last_seen_at ?? b.updated_at ?? "") || 0;
+      return bTime - aTime;
+    })
+    .map((card) => ({
+      id: card.id,
+      text: card.title || card.summary,
+      whyItMatters: card.why_it_matters ?? null,
+      confidence: card.confidence ?? null,
+      source: "curated" as const,
+    }))
+    .filter((card) => card.text.trim().length > 0);
 }
 
 export type ResolvedMeetingDocumentId =

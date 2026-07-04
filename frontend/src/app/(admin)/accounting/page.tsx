@@ -168,6 +168,12 @@ const REPORT_LINKS: Array<{
     detail: (data) =>
       `${formatCurrency(data.leadership.trailingFinanceSpend)} trailing spend, ${data.leadership.financeSpendExceptionCount} exceptions`,
   },
+  {
+    title: "Direct Costs",
+    href: "/accounting/direct-costs",
+    detail: (data) =>
+      `${formatCurrency(data.leadership.trailingFinanceSpend)} grouped operating spend`,
+  },
 ];
 
 function formatCurrency(amount: number): string {

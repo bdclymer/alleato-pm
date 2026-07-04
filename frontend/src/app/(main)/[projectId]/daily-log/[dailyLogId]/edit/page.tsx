@@ -4,7 +4,6 @@ import {
   type DailyLogStatus,
 } from "@/app/(main)/actions/daily-log-actions";
 import { DailyLogFormClient, type DailyLogInitialData } from "@/components/daily-log/DailyLogFormClient";
-import { normalizeSiteManagementChecklist } from "@/lib/daily-log/site-management-checklist";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +35,6 @@ export default async function EditDailyLogPage({
     logDate: log.log_date,
     status: (log.status as DailyLogStatus) ?? "draft",
     generalNotes: log.general_notes ?? "",
-    siteManagementChecklist: normalizeSiteManagementChecklist(
-      log.site_management_checklist,
-    ),
     weather: weather.map((row) => ({
       id: row.id,
       area: row.area ?? "All Areas",

@@ -13,8 +13,8 @@ export default function NewMeetingPage() {
   return (
     <PageShell
       variant="form"
-      title="Create Meeting"
-      description="Start a structured project meeting. Each new meeting begins with an Uncategorized Items agenda section."
+      title="Create meeting"
+      eyebrow="New meeting"
       onBack={() => router.push(`/${projectId}/meetings`)}
     >
       <CreateMeetingForm projectId={projectId} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -17,6 +18,7 @@ import { ErrorState } from "@/components/ds/error-state";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, LayoutGrid, Table2 } from "lucide-react";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { useUnifiedTableState } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import { useProductBoard, type BoardItem } from "./use-product-board";
@@ -49,10 +51,30 @@ function filterItems(items: BoardItem[], filters: BoardFilters): BoardItem[] {
 type ViewMode = "board" | "table";
 
 export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { items, isLoading, error, activeId, setActiveId, updateStatus, reorder } = useProductBoard();
   const [filters, setFilters] = useState<BoardFilters>({});
   const [cardSettings, setCardSettings] = useState<CardViewSettings>(loadCardViewSettings);
-  const [viewMode, setViewMode] = useState<ViewMode>("board");
+  const viewState = useUnifiedTableState({
+    entityKey: "product-board",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "board",
+      allowedViews: ["board", "table"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: null,
+      sortDirection: "asc",
+      visibleColumns: [],
+      filters: {},
+    },
+  });
+  const viewMode = viewState.currentView as ViewMode;
 
   function updateCardSettings(patch: Partial<CardViewSettings>) {
     setCardSettings((prev) => {
@@ -137,7 +159,10 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setViewMode("board")}
+        onClick={() => {
+          viewState.setCurrentView("board");
+          viewState.setSearchParams({ view: "board" });
+        }}
         className={cn(
           "h-6 gap-1.5 px-2 text-[11px] font-medium",
           viewMode === "board"
@@ -151,7 +176,10 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setViewMode("table")}
+        onClick={() => {
+          viewState.setCurrentView("table");
+          viewState.setSearchParams({ view: "table" });
+        }}
         className={cn(
           "h-6 gap-1.5 px-2 text-[11px] font-medium",
           viewMode === "table"
@@ -208,10 +236,12 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
-        <div className="grid w-max min-w-full grid-flow-col auto-cols-[minmax(18rem,20rem)] gap-3 overflow-x-auto pb-6">
-          {BOARD_STATUSES.map((status) => (
-            <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
-          ))}
+        <div className="min-w-0 overflow-x-auto pb-6">
+          <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
+            {BOARD_STATUSES.map((status) => (
+              <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -242,22 +272,24 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid w-max min-w-full grid-flow-col auto-cols-[minmax(18rem,20rem)] gap-3 overflow-x-auto pb-6">
-          {BOARD_STATUSES.map((status) => (
-            <BoardColumn
-              key={status}
-              status={status}
-              label={BOARD_STATUS_LABELS[status]}
-              items={filteredItems
-                .filter((i) => i.board_status === status)
-                .sort((a, b) => a.position - b.position)}
-              allItems={items
-                .filter((i) => i.board_status === status)
-                .sort((a, b) => a.position - b.position)}
-              readonly={readonly}
-              cardSettings={cardSettings}
-            />
-          ))}
+        <div className="min-w-0 overflow-x-auto pb-6">
+          <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
+            {BOARD_STATUSES.map((status) => (
+              <BoardColumn
+                key={status}
+                status={status}
+                label={BOARD_STATUS_LABELS[status]}
+                items={filteredItems
+                  .filter((i) => i.board_status === status)
+                  .sort((a, b) => a.position - b.position)}
+                allItems={items
+                  .filter((i) => i.board_status === status)
+                  .sort((a, b) => a.position - b.position)}
+                readonly={readonly}
+                cardSettings={cardSettings}
+              />
+            ))}
+          </div>
         </div>
 
         <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.18,0.67,0.6,1.22)" }}>

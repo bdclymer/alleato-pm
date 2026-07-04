@@ -380,6 +380,77 @@ export function buildBrandedDocumentHtml({
     .document-content p[align="justify"] {
       text-align: left;
     }
+    /*
+     * The commitment contract is sourced from a Word/LibreOffice document with
+     * explicit Times New Roman typography. Preserve that legal-document text
+     * system here instead of flattening it into the default sans-serif branded
+     * wrapper, otherwise font substitution and paragraph rhythm drift from the
+     * source template the user is approving against.
+     */
+    .document-content .contract-template {
+      color: #222222;
+      font-family: "Times New Roman", Times, "Liberation Serif", "Nimbus Roman No9 L", serif;
+      font-size: 12pt;
+      line-height: 1.15;
+    }
+    .document-content .contract-template p,
+    .document-content .contract-template td,
+    .document-content .contract-template span,
+    .document-content .contract-template div,
+    .document-content .contract-template li,
+    .document-content .contract-template font {
+      color: inherit !important;
+      font-family: inherit !important;
+      line-height: 1.15 !important;
+    }
+    .document-content .contract-template p {
+      margin-bottom: 0.083in !important;
+    }
+    .document-content .contract-template p + table.contract-project-facts {
+      margin-top: 0;
+    }
+    .document-content .contract-template table.contract-project-facts + p {
+      margin-top: 0 !important;
+    }
+    .document-content .contract-template p[align="justify"] {
+      text-align: left !important;
+    }
+    .document-content .contract-template p[align="center"] {
+      text-align: center !important;
+    }
+    .document-content .contract-template > p[align="center"]:first-of-type {
+      font-size: 18pt !important;
+      font-weight: 700;
+      margin-bottom: 0.083in !important;
+    }
+    .document-content .contract-template p[align="center"] b,
+    .document-content .contract-template p[align="center"] strong {
+      letter-spacing: 0;
+    }
+    .document-content .contract-template u {
+      text-underline-offset: 0.08em;
+    }
+    .document-content .contract-template .contract-project-facts {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 0.03in 0;
+    }
+    .document-content .contract-template .contract-project-facts td {
+      vertical-align: top;
+      padding: 0 0 0.03in 0;
+    }
+    .document-content .contract-template .contract-project-facts__bullet {
+      width: 18px;
+      padding-right: 6px;
+    }
+    .document-content .contract-template .contract-project-facts__label {
+      width: 170px;
+      padding-right: 8px;
+      white-space: nowrap;
+    }
+    .document-content .contract-template .contract-project-facts__value {
+      width: auto;
+    }
   </style>
 </head>
 <body>

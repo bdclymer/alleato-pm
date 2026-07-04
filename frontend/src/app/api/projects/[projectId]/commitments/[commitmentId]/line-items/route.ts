@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -85,40 +86,29 @@ async function fetchCommitmentType(
 }
 
 /**
- * Procore rule: a commitment's Schedule of Values is editable at any time
- * UNLESS the commitment is Approved. Enforced server-side so the lock cannot be
- * bypassed by calling the API directly.
+ * Commitment SOV edits are blocked once invoice workflow has started. Enforced
+ * server-side so the lock cannot be bypassed by calling the API directly.
  */
 async function assertCommitmentEditable(
   supabase: DbClient,
   commitmentId: string,
+  commitmentType: CommitmentType,
 ): Promise<void> {
-  const { data, error } = await supabase
-    .from("commitments_unified")
-    .select("status")
-    .eq("id", commitmentId)
-    .single();
+  const lock = await getCommitmentSovLockStateForCommitment(supabase, {
+    commitmentId,
+    commitmentType,
+  });
 
-  if (error || !data) {
+  if (lock.locked) {
     throw new GuardrailError({
-      code: "INVALID_PAYLOAD",
-      where: `${ROUTE_WHERE}#commitment-status`,
-      message: "Commitment not found.",
-      cause: error,
-      status: 404,
-    });
-  }
-
-  if ((data.status ?? "").trim().toLowerCase() === "approved") {
-    throw new GuardrailError({
-      code: "INVALID_PAYLOAD",
-      where: `${ROUTE_WHERE}#approved-locked`,
-      message: "This commitment is Approved — its schedule of values is locked.",
+      code: "PRECONDITION_FAILED",
+      where: `${ROUTE_WHERE}#invoice-locked`,
+      message: lock.message ?? "This commitment schedule of values is locked.",
       details: {
-        reason:
-          "Procore allows SOV edits only while a commitment is not Approved. Change the status first.",
+        errorCode: "COMMITMENT_SOV_LOCKED_AFTER_INVOICE_SUBMISSION",
+        reason: lock.reason,
       },
-      status: 409,
+      status: 412,
     });
   }
 }
@@ -440,8 +430,7 @@ export const PUT = withApiGuardrails(
       ? normalizeCommitmentType(bodyCommitmentType, "subcontract")
       : await fetchCommitmentType(supabase, commitmentId);
 
-    // Procore: block all SOV writes when the commitment is Approved.
-    await assertCommitmentEditable(supabase, commitmentId);
+    await assertCommitmentEditable(supabase, commitmentId, commitmentType);
 
     // Fetch existing line items (with billed_to_date + amount so we can lock invoiced lines)
     const existingItems = await fetchExistingSovItems(

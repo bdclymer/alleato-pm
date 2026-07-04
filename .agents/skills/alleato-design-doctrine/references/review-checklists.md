@@ -87,6 +87,33 @@ Fail if any answer is yes:
 - Global filters that belong on a full page?
 - No link to the canonical full page when one exists?
 
+## Split-Page Gate
+
+Fail if any answer is no for list/detail workflows:
+
+- Does the page use `SplitPageFrame` and `SplitPage`?
+- Does the list pane own title, toolbar/tabs, filters/search, and scrollable rows?
+- Does the detail pane own selected-item content and actions?
+- Is mobile list/detail behavior handled through `useSplitPage`?
+- Are pane sizes, scroll ownership, selected-row treatment, and empty states consistent with sibling split pages?
+- If a third pane exists, is it `variant="three-column"` rather than a custom local rail?
+- For feedback/review pages, can the user act on the selected item from the detail pane?
+
+## Detail Property Bar Gate
+
+Fail if any answer is no for detail pages or selected-item detail panes:
+
+- Does the page use a shared property bar component when metadata appears in a detail header?
+- Does each property use a shared property item component?
+- Does the visual treatment use icon plus value/action rather than uppercase label plus value?
+- Are empty values shown as muted actions, such as `Add category` or `Set due date`?
+- Are editable properties handled as compact inline controls inside the property item?
+- Are icons present when the reference surface uses icons?
+- Does the row match the established meeting detail property row density, spacing, and hierarchy?
+- Is the row subordinate to the title and main content?
+- Are long values truncated with recovery through title, tooltip, or accessible label?
+- If this page differs from sibling pages, is the reason documented and necessary?
+
 ## Implementation Gate
 
 Before final response:
@@ -95,6 +122,8 @@ Before final response:
 - Name the existing reference surface copied.
 - Name the user's next action and correction path.
 - Name the keyboard behavior for repetitive workflows.
+- For list/detail pages, name whether `SplitPageFrame` + `SplitPage` was used and how it matches sibling pages.
+- For detail pages or selected-item panes, name whether the shared detail property bar/item pattern was used and which reference surface it matches.
 - Name anything removed or moved to another surface.
 - Name any budget that still fails.
 - Run `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs <changed-ui-file...>` for changed UI files.

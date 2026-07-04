@@ -18,6 +18,20 @@ interface RouteParams {
 // to prerender this route handler path and throwing PageNotFoundError.
 export const dynamic = "force-dynamic";
 
+type PersonRecord = {
+  id: string;
+  auth_user_id: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
+function buildPersonName(person: PersonRecord | null | undefined): string | null {
+  if (!person) return null;
+  const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+  return fullName || person.email || null;
+}
+
 /**
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  * Returns the PCCO with related contract info and line items.
@@ -77,8 +91,40 @@ export const GET = withApiGuardrails(
       contractInfo = contract;
     }
 
+    const creatorIdentifier =
+      typeof data.created_by === "string" && data.created_by.trim().length > 0
+        ? data.created_by
+        : null;
+
+    let createdByName: string | null = null;
+    if (creatorIdentifier) {
+      const [{ data: personById, error: personByIdError }, { data: personByAuth, error: personByAuthError }] =
+        await Promise.all([
+          supabase
+            .from("people")
+            .select("id, auth_user_id, first_name, last_name, email")
+            .eq("id", creatorIdentifier)
+            .maybeSingle<PersonRecord>(),
+          supabase
+            .from("people")
+            .select("id, auth_user_id, first_name, last_name, email")
+            .eq("auth_user_id", creatorIdentifier)
+            .maybeSingle<PersonRecord>(),
+        ]);
+
+      if (personByIdError) {
+        return apiErrorResponse(personByIdError);
+      }
+      if (personByAuthError) {
+        return apiErrorResponse(personByAuthError);
+      }
+
+      createdByName = buildPersonName(personById ?? personByAuth);
+    }
+
     return NextResponse.json({
       ...data,
+      created_by_name: createdByName,
       line_items: lineItems ?? [],
       contract: contractInfo,
     });

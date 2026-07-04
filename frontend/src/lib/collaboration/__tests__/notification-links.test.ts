@@ -1,4 +1,7 @@
-import { getCollaborationNotificationHref } from "../notification-links";
+import {
+  getCollaborationNotificationHref,
+  getCommentDiscussionHref,
+} from "../notification-links";
 
 describe("collaboration notification links", () => {
   it("routes submittal notifications to the submittals detail page", () => {
@@ -39,5 +42,17 @@ describe("collaboration notification links", () => {
         entityId: "sub-1",
       }),
     ).toBe("/team-chat");
+  });
+
+  it("routes comment activity into the source page discussion sheet", () => {
+    expect(getCommentDiscussionHref("/team-chat", "annotation-1")).toBe(
+      "/team-chat?discussion=annotation-1",
+    );
+  });
+
+  it("falls back to the comments workspace when no source route exists", () => {
+    expect(getCommentDiscussionHref("", "annotation-1")).toBe(
+      "/comments?thread=annotation-1",
+    );
   });
 });

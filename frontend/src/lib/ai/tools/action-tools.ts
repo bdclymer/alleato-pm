@@ -91,10 +91,7 @@ import {
   buildChangeRequestPreviewFields,
   normalizeChangeRequestDraft,
 } from "@/lib/ai/workflow-registry";
-import {
-  notifyChangeRequestReviewNeeded,
-  notifyRfiReviewNeeded,
-} from "@/services/notificationService";
+import { notifyRfiReviewNeeded } from "@/services/notificationService";
 import {
   recordAiNotificationDecision,
   type AiNotificationDecisionLedgerResult,
@@ -940,16 +937,6 @@ export function createActionTools(
             fields,
             reviewCard: buildChangeRequestReviewCard(fields),
           };
-          await notifyChangeRequestReviewNeeded(userId, {
-            projectId: draft.projectId,
-            title: draft.title,
-            description: draft.description ?? undefined,
-            scope: draft.scope,
-            type: draft.type,
-            status: draft.status,
-            eventKey,
-          });
-
           const notificationDecision =
             await recordChangeEventPreviewNotificationDecision({
               userId,

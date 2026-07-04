@@ -17,10 +17,12 @@ interface VeltUser {
 }
 
 interface VeltComment {
+  commentId?: string;
   commentText?: string;
   commentHtml?: string;
   from?: VeltUser;
   createdAt?: number;
+  lastUpdated?: number | string;
 }
 
 interface VeltAnnotation {
@@ -34,6 +36,13 @@ interface VeltAnnotation {
 }
 
 /** Normalized shape the /comments page renders. */
+export interface AllCommentMessage {
+  commentId: string;
+  authorName: string;
+  text: string;
+  createdAt: number | null;
+}
+
 export interface AllCommentItem {
   documentId: string;
   annotationId: string;
@@ -43,6 +52,7 @@ export interface AllCommentItem {
   statusName: string | null;
   replyCount: number;
   lastUpdated: number | null;
+  messages: AllCommentMessage[];
 }
 
 function toMillis(value: number | string | undefined): number | null {
@@ -51,20 +61,42 @@ function toMillis(value: number | string | undefined): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-function normalize(documentId: string, annotation: VeltAnnotation): AllCommentItem {
-  const first = annotation.comments?.[0];
-  const preview = (first?.commentText ?? first?.commentHtml ?? "")
+function normalizeCommentMessage(
+  comment: VeltComment,
+  fallbackAuthorName: string,
+  fallbackId: string,
+): AllCommentMessage {
+  const text = (comment.commentText ?? comment.commentHtml ?? "")
     .replace(/<[^>]*>/g, "")
     .trim();
+
+  return {
+    commentId: comment.commentId ?? fallbackId,
+    authorName: comment.from?.name ?? fallbackAuthorName,
+    text: text || "(no text)",
+    createdAt: toMillis(comment.lastUpdated ?? comment.createdAt),
+  };
+}
+
+function normalize(documentId: string, annotation: VeltAnnotation): AllCommentItem {
+  const first = annotation.comments?.[0];
+  const fallbackAuthorName = annotation.from?.name ?? first?.from?.name ?? "Unknown";
+  const messages = (annotation.comments ?? []).map((comment, index) =>
+    normalizeCommentMessage(comment, fallbackAuthorName, `${annotation.annotationId}:${index}`),
+  );
+  const preview = messages[0]?.text
+    ?? (first?.commentText ?? first?.commentHtml ?? "").replace(/<[^>]*>/g, "").trim();
+
   return {
     documentId,
     annotationId: annotation.annotationId,
     annotationNumber: annotation.annotationNumber ?? null,
-    authorName: annotation.from?.name ?? first?.from?.name ?? "Unknown",
+    authorName: fallbackAuthorName,
     preview: preview || "(no text)",
     statusName: annotation.status?.name ?? null,
     replyCount: Math.max((annotation.comments?.length ?? 1) - 1, 0),
     lastUpdated: toMillis(annotation.lastUpdated ?? annotation.createdAt),
+    messages,
   };
 }
 

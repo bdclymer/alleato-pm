@@ -62,7 +62,7 @@ const DIALOG_SIZE_CLASSES: Record<BudgetOverlaySize, string> = {
   md: "sm:max-w-2xl",
   lg: "sm:max-w-4xl",
   xl: "sm:max-w-6xl",
-  full: "sm:max-w-[98vw]",
+  full: "sm:max-w-none",
 };
 
 const SHEET_SIZE_CLASSES: Record<BudgetOverlaySize, string> = {
@@ -101,7 +101,10 @@ export function BudgetOverlay({
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
           className={cn(
-            "flex max-h-[92dvh] min-h-[72dvh] flex-col rounded-t-2xl border-t bg-background p-0",
+            "flex min-h-0 flex-col bg-background p-0",
+            "data-[vaul-drawer-direction=bottom]:inset-x-4 data-[vaul-drawer-direction=bottom]:bottom-4 data-[vaul-drawer-direction=bottom]:top-auto",
+            "data-[vaul-drawer-direction=bottom]:mt-0 data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-2rem)]",
+            "data-[vaul-drawer-direction=bottom]:rounded-2xl data-[vaul-drawer-direction=bottom]:border",
             className,
           )}
         >
@@ -134,9 +137,10 @@ export function BudgetOverlay({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "grid w-full max-w-[calc(100%-2rem)] gap-0 overflow-hidden border border-border/80 bg-background p-0 shadow-sm",
-          "max-h-[92dvh] rounded-t-2xl rounded-b-none sm:max-h-[90vh] sm:rounded-2xl",
           DIALOG_SIZE_CLASSES[size],
+          "grid w-[calc(100vw-2rem)] gap-0 overflow-hidden border border-border/80 bg-background p-0 shadow-sm",
+          "max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] rounded-t-2xl rounded-b-none",
+          "sm:w-auto sm:max-w-[calc(100vw-4rem)] sm:max-h-[calc(100dvh-4rem)] sm:rounded-2xl",
           className,
         )}
       >

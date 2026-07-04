@@ -24,6 +24,7 @@ import { formatCurrency } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { BudgetCodeCreateDialog } from "@/components/budget/budget-code-create-dialog";
@@ -33,6 +34,7 @@ import {
   normalizeBudgetCodesForSelector,
   resolvePrimeCoBudgetCode,
 } from "@/lib/budget/budget-code-selection";
+import type { CommitmentSovLockState } from "@/lib/commitments/commitment-sov-lock";
 
 interface LineItem {
   id: string;
@@ -67,10 +69,11 @@ interface ScheduleOfValuesTabProps {
   summary?: CommitmentSovSummary;
   showHeader?: boolean;
   /**
-   * Commitment status. Procore rule: SOV line items are editable at any time
-   * UNLESS the commitment is Approved. When Approved the SOV is read-only.
+   * Commitment status. Preserved for compatibility with older callers, but
+   * `lockState` is the source of truth for editability.
    */
   status?: string | null;
+  lockState?: CommitmentSovLockState | null;
   onImportComplete?: () => void | Promise<void>;
   onLineItemsChange?: (items: LineItem[]) => void;
   isLoading?: boolean;
@@ -94,6 +97,7 @@ export function ScheduleOfValuesTab({
   summary,
   showHeader = true,
   status,
+  lockState,
   onImportComplete,
   onLineItemsChange,
   isLoading = false,
@@ -108,9 +112,25 @@ export function ScheduleOfValuesTab({
   const [showCreateBudgetCode, setShowCreateBudgetCode] = useState(false);
   const [activeBudgetCodeRowId, setActiveBudgetCodeRowId] = useState<string | null>(null);
 
-  // Procore: SOV is editable unless the commitment is Approved.
-  const isApproved = (status ?? "").trim().toLowerCase() === "approved";
-  const canEdit = !isApproved;
+  const isApprovedStatus = (status ?? "").trim().toLowerCase() === "approved";
+  const baseLockState = lockState ?? {
+    locked: false,
+    reason: null,
+    message: null,
+  };
+  const approvedStatusMessage =
+    "This commitment is approved. Move it back to Draft before editing schedule-of-values line items.";
+  const resolvedLockState = isApprovedStatus
+    ? {
+        locked: true,
+        reason: baseLockState.reason ?? "approved_commitment",
+        message: approvedStatusMessage,
+      }
+    : baseLockState;
+  const canEdit = !resolvedLockState.locked;
+  const lockMessage =
+    resolvedLockState.message ??
+    "This schedule of values is locked.";
 
   const fetchBudgetCodes = useCallback(async () => {
     setBudgetCodesLoading(true);
@@ -164,6 +184,7 @@ export function ScheduleOfValuesTab({
   const amountRemaining = Math.max(totals.amount - totals.billed, 0);
   const summaryRows = useMemo(
     () => [
+      { label: "Line Items Total", value: totals.amount },
       { label: "Subtotal", value: summary?.subtotal ?? totals.amount },
       {
         label: "Original Contract",
@@ -179,8 +200,13 @@ export function ScheduleOfValuesTab({
       {
         label: "Amount Remaining",
         value: summary?.amountRemaining ?? amountRemaining,
+        strong: true,
       },
-      { label: "Current Retainage", value: summary?.currentRetainage ?? 0 },
+      {
+        label: "Current Retainage",
+        value: summary?.currentRetainage ?? 0,
+        muted: true,
+      },
     ],
     [amountRemaining, summary, totals.amount, totals.billed],
   );
@@ -411,7 +437,7 @@ export function ScheduleOfValuesTab({
           description={
             canEdit
               ? "Add line items manually or import them from the budget."
-              : "This commitment is Approved — its schedule of values is locked."
+              : resolvedLockState.message ?? "This schedule of values is locked."
           }
           action={
             canEdit ? (
@@ -438,11 +464,18 @@ export function ScheduleOfValuesTab({
     );
   }
 
-  return (
-    <div>
-      {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
+  const totalColumns = accountingMethod === "unit" ? (canEdit ? 10 : 9) : (canEdit ? 7 : 6);
 
-      <InlineTable variant="edit">
+  return (
+    <div className="space-y-6">
+      {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
+      {!canEdit ? (
+        <p className="text-sm text-muted-foreground">
+          {lockMessage}
+        </p>
+      ) : null}
+
+      <InlineTable variant={canEdit ? "edit" : "read"}>
         <InlineTableHeader>
           <InlineTableHeaderRow>
             <InlineTableHeaderCell className="w-10">#</InlineTableHeaderCell>
@@ -458,7 +491,7 @@ export function ScheduleOfValuesTab({
             <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Billed to Date</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Remaining</InlineTableHeaderCell>
-            <InlineTableHeaderCell className="w-px" />
+            {canEdit ? <InlineTableHeaderCell className="w-px" /> : null}
           </InlineTableHeaderRow>
         </InlineTableHeader>
         <InlineTableBody>
@@ -486,75 +519,104 @@ export function ScheduleOfValuesTab({
                   </div>
                 </InlineTableCell>
                 <InlineTableCell className="whitespace-nowrap min-w-50">
-                  <BudgetCodeSelector
-                    value={budgetCodeResolution.selectorValue}
-                    onValueChange={(_value, code) =>
-                      updateItem(item.id, "budget_code", budgetCodeTextValue(code))
-                    }
-                    onCreateNew={
-                      canEdit && !locked
-                        ? () => {
-                            setActiveBudgetCodeRowId(item.id);
-                            setShowCreateBudgetCode(true);
-                          }
-                        : undefined
-                    }
-                    budgetCodes={budgetCodes}
-                    loading={budgetCodesLoading}
-                    disabled={budgetCodesLoading || !canEdit || locked}
-                    placeholder={
-                      budgetCodeResolution.isMapped
-                        ? "Select budget code..."
-                        : budgetCodeResolution.displayCode
-                    }
-                    error={!budgetCodeResolution.isMapped}
-                    className="min-w-56"
-                  />
+                  {canEdit ? (
+                    <BudgetCodeSelector
+                      value={budgetCodeResolution.selectorValue}
+                      onValueChange={(_value, code) =>
+                        updateItem(item.id, "budget_code", budgetCodeTextValue(code))
+                      }
+                      onCreateNew={
+                        !locked
+                          ? () => {
+                              setActiveBudgetCodeRowId(item.id);
+                              setShowCreateBudgetCode(true);
+                            }
+                          : undefined
+                      }
+                      budgetCodes={budgetCodes}
+                      loading={budgetCodesLoading}
+                      disabled={budgetCodesLoading || locked}
+                      placeholder={
+                        budgetCodeResolution.isMapped
+                          ? "Select budget code..."
+                          : budgetCodeResolution.displayCode
+                      }
+                      error={!budgetCodeResolution.isMapped}
+                      className="min-w-56"
+                    />
+                  ) : (
+                    <div className="text-sm text-foreground">
+                      {budgetCodeResolution.displayCode || "—"}
+                    </div>
+                  )}
                 </InlineTableCell>
                 <InlineTableCell className="min-w-50">
-                  <Input
-                    aria-label={`Description ${index + 1}`}
-                    value={item.description ?? ""}
-                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                    disabled={!canEdit || locked}
-                  />
+                  {canEdit ? (
+                    <Input
+                      aria-label={`Description ${index + 1}`}
+                      value={item.description ?? ""}
+                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                      disabled={locked}
+                    />
+                  ) : (
+                    <div className="text-sm leading-6 text-foreground">
+                      {item.description || "—"}
+                    </div>
+                  )}
                 </InlineTableCell>
                 {accountingMethod === "unit" ? (
                   <>
                     <InlineTableCell align="right">
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        className="text-right w-24 ml-auto"
-                        aria-label={`Quantity ${index + 1}`}
-                        value={item.quantity ?? ""}
-                        onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                        disabled={!canEdit || locked}
-                      />
+                      {canEdit ? (
+                        <NumberInput
+                          min={0}
+                          step="0.01"
+                          className="text-right w-24 ml-auto"
+                          aria-label={`Quantity ${index + 1}`}
+                          value={item.quantity ?? ""}
+                          onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                          disabled={locked}
+                        />
+                      ) : (
+                        <span className="text-sm tabular-nums text-foreground">
+                          {item.quantity ?? "—"}
+                        </span>
+                      )}
                     </InlineTableCell>
                     <InlineTableCell>
-                      <Input
-                        aria-label={`UOM ${index + 1}`}
-                        value={item.uom ?? ""}
-                        onChange={(e) => updateItem(item.id, "uom", e.target.value)}
-                        disabled={!canEdit || locked}
-                      />
+                      {canEdit ? (
+                        <Input
+                          aria-label={`UOM ${index + 1}`}
+                          value={item.uom ?? ""}
+                          onChange={(e) => updateItem(item.id, "uom", e.target.value)}
+                          disabled={locked}
+                        />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          {item.uom || "—"}
+                        </span>
+                      )}
                     </InlineTableCell>
                     <InlineTableCell align="right">
-                      <MoneyField
-                        label={`Unit cost ${index + 1}`}
-                        inline
-                        showCurrency={false}
-                        value={item.unit_cost ?? undefined}
-                        onChange={(value) => updateItem(item.id, "unit_cost", value)}
-                        disabled={!canEdit || locked}
-                      />
+                      {canEdit ? (
+                        <MoneyField
+                          label={`Unit cost ${index + 1}`}
+                          inline
+                          showCurrency={false}
+                          value={item.unit_cost ?? undefined}
+                          onChange={(value) => updateItem(item.id, "unit_cost", value)}
+                          disabled={locked}
+                        />
+                      ) : (
+                        <span className="text-sm tabular-nums text-foreground">
+                          {formatCurrency(item.unit_cost ?? 0)}
+                        </span>
+                      )}
                     </InlineTableCell>
                   </>
                 ) : null}
                 <InlineTableCell align="right" numeric>
-                  {accountingMethod === "unit" ? (
+                  {!canEdit || accountingMethod === "unit" ? (
                     <span className="text-sm tabular-nums text-muted-foreground">
                       {formatCurrency(Number(item.amount ?? 0))}
                     </span>
@@ -565,7 +627,7 @@ export function ScheduleOfValuesTab({
                       showCurrency={false}
                       value={item.amount ?? undefined}
                       onChange={(value) => updateItem(item.id, "amount", value)}
-                      disabled={!canEdit || locked}
+                      disabled={locked}
                     />
                   )}
                 </InlineTableCell>
@@ -575,71 +637,91 @@ export function ScheduleOfValuesTab({
                 <InlineTableCell align="right" numeric>
                   {formatCurrency(remaining)}
                 </InlineTableCell>
-                <InlineTableCell>
-                  <div className="flex items-center justify-end gap-0.5">
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={`Move line ${index + 1} up`}
-                      disabled={index === 0 || !canEdit}
-                      onClick={() => moveItem(item.id, "up")}
-                    >
-                      <ArrowUp />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={`Move line ${index + 1} down`}
-                      disabled={index === items.length - 1 || !canEdit}
-                      onClick={() => moveItem(item.id, "down")}
-                    >
-                      <ArrowDown />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label={`Delete line ${index + 1}`}
-                      onClick={() => handleDelete(item.id)}
-                      disabled={!canEdit || locked}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </InlineTableCell>
+                {canEdit ? (
+                  <InlineTableCell>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Move line ${index + 1} up`}
+                        disabled={index === 0}
+                        onClick={() => moveItem(item.id, "up")}
+                      >
+                        <ArrowUp />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Move line ${index + 1} down`}
+                        disabled={index === items.length - 1}
+                        onClick={() => moveItem(item.id, "down")}
+                      >
+                        <ArrowDown />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Delete line ${index + 1}`}
+                        onClick={() => handleDelete(item.id)}
+                        disabled={locked}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  </InlineTableCell>
+                ) : null}
               </InlineTableRow>
             );
           })}
         </InlineTableBody>
         <InlineTableFooter>
-          <InlineTableFooterRow type="totals">
-            <InlineTableFooterCell align="right" colSpan={accountingMethod === "unit" ? 6 : 3}>Totals</InlineTableFooterCell>
+            <InlineTableFooterRow type="totals">
+              <InlineTableFooterCell
+                align="right"
+                colSpan={totalColumns - 3}
+                className="text-muted-foreground"
+              >
+                Total
+              </InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
-            <InlineTableFooterCell />
           </InlineTableFooterRow>
-          {summaryRows.map((row) => (
-            <InlineTableFooterRow key={row.label}>
-              <InlineTableFooterCell
-                align="right"
-                colSpan={accountingMethod === "unit" ? 8 : 5}
-                className={row.strong ? "font-semibold" : undefined}
-              >
-                {row.label}
-              </InlineTableFooterCell>
-              <InlineTableFooterCell
-                align="right"
-                numeric
-                className={row.strong ? "font-semibold" : undefined}
-              >
-                {formatCurrency(row.value)}
-              </InlineTableFooterCell>
-              <InlineTableFooterCell />
-            </InlineTableFooterRow>
-          ))}
         </InlineTableFooter>
       </InlineTable>
+
+      <div className="flex justify-end">
+        <div className="w-full max-w-xl divide-y divide-border/60 border-t border-border/70">
+          {summaryRows.map((row) => (
+            <div
+              key={row.label}
+              className="flex items-center justify-between gap-6 py-3 text-sm"
+            >
+              <div
+                className={
+                  row.strong
+                    ? "font-semibold text-foreground"
+                    : row.muted
+                      ? "text-muted-foreground"
+                      : "font-medium text-foreground"
+                }
+              >
+                {row.label}
+              </div>
+              <div
+                className={
+                  row.strong
+                    ? "text-base font-semibold tabular-nums text-foreground"
+                    : "font-medium tabular-nums text-foreground"
+                }
+              >
+                {formatCurrency(row.value)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Actions below table, left-aligned */}
       {canEdit ? (

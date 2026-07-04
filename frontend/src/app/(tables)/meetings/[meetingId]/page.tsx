@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormattedTranscript } from "@/app/(main)/[projectId]/meetings/formatted-transcript";
 import { parseTranscriptSections } from "@/app/(main)/[projectId]/meetings/[meetingId]/parse-transcript-sections";
-import { MarkdownSummary } from "@/app/(main)/[projectId]/meetings/[meetingId]/markdown-summary";
 import { MeetingDetailContent } from "@/components/meetings/meeting-detail-content";
 import { collectSegmentItems } from "@/lib/meetings/collect-segment-items";
+import { loadCuratedMeetingRisks } from "@/lib/meetings/server";
 import type { Database } from "@/types/database.types";
 
 type MeetingSegment =
@@ -71,6 +71,25 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     decisions: allDecisions,
     opportunities: allOpportunities,
   } = collectSegmentItems(segments);
+  const curatedRisks = await loadCuratedMeetingRisks(supabase, meetingId).catch(
+    (error) => {
+      console.warn(JSON.stringify({
+        event: "meeting_curated_risks_load_failed",
+        meetingId,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return [];
+    },
+  );
+  const riskItems = curatedRisks.length
+    ? curatedRisks
+    : allRisks.map((risk, index) => ({
+        id: `${meetingId}:segment-risk:${index}`,
+        text: risk,
+        whyItMatters: null,
+        confidence: null,
+        source: "segment_fallback" as const,
+      }));
 
   const { data: meetingTasksData } = await supabase
     .from("tasks")
@@ -129,21 +148,14 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       parsedSections={parsedSections}
       participantsList={participantsList}
       allTasks={allTasks}
-      allRisks={allRisks}
+      riskItems={riskItems}
       allDecisions={allDecisions}
       allOpportunities={allOpportunities}
       meetingTasks={meetingTasks}
       transcriptContent={transcriptContent}
       transcriptLoadFailed={transcriptLoadFailed && !transcriptContent}
-      backHref="/meetings"
-      backLabel="Meetings"
       relatedMeetings={relatedMeetings}
       relatedMeetingsBaseHref="/meetings"
-      summarySlot={
-        parsedSections?.summary ? (
-          <MarkdownSummary content={parsedSections.summary} />
-        ) : undefined
-      }
       transcriptSlot={
         parsedSections?.transcript ? (
           <FormattedTranscript
@@ -152,6 +164,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             meetingId={meeting.id}
             meetingTitle={meeting.title}
             projectId={meeting.project_id ?? null}
+            showHeading={false}
           />
         ) : undefined
       }

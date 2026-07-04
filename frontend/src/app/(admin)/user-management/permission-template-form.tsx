@@ -18,41 +18,38 @@ import {
   GRANULAR_FLAG_LABELS,
 } from "@/lib/permissions-shared";
 import type {
-  PermissionModule,
   PermissionLevel,
   PermissionTemplate,
   GranularFlag,
 } from "@/lib/permissions-shared";
-
-const MODULES: { key: PermissionModule; label: string }[] = [
-  { key: "directory",     label: "Directory" },
-  { key: "budget",        label: "Budget" },
-  { key: "contracts",     label: "Contracts" },
-  { key: "documents",     label: "Documents" },
-  { key: "schedule",      label: "Schedule" },
-  { key: "submittals",    label: "Submittals" },
-  { key: "rfis",          label: "RFIs" },
-  { key: "change_orders", label: "Change Orders" },
-];
+import {
+  PERMISSION_TEMPLATE_GROUPS,
+  PERMISSION_TEMPLATE_MODULES,
+  getPermissionTemplateToolsByGroup,
+} from "./permission-template-config";
 
 const LEVELS: PermissionLevel[] = ["none", "read", "write", "admin"];
 
-type RulesState = Record<PermissionModule, PermissionLevel[]>;
+type RulesState = PermissionTemplate["rules_json"];
 
 function defaultRules(): RulesState {
   return Object.fromEntries(
-    MODULES.map(({ key }) => [key, ["read"]])
+    PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [moduleKey, ["read"]])
   ) as RulesState;
 }
 
-function templateToRulesState(rules_json: Record<PermissionModule, PermissionLevel[]>): RulesState {
+function templateToRulesState(rules_json: PermissionTemplate["rules_json"]): RulesState {
   return Object.fromEntries(
-    MODULES.map(({ key }) => [key, rules_json[key] ?? ["read"]])
+    PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [
+      moduleKey,
+      rules_json[moduleKey] ?? ["read"],
+    ])
   ) as RulesState;
 }
 
 interface Props {
   template?: PermissionTemplate;
+  includeAccessControls?: boolean;
   onSave: (data: {
     name: string;
     description: string;
@@ -62,7 +59,12 @@ interface Props {
   onCancel: () => void;
 }
 
-export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
+export function PermissionTemplateForm({
+  template,
+  includeAccessControls = true,
+  onSave,
+  onCancel,
+}: Props) {
   const [name, setName] = useState(template?.name ?? "");
   const [description, setDescription] = useState(template?.description ?? "");
   const [rules, setRules] = useState<RulesState>(
@@ -74,7 +76,7 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function getHighestLevel(module: PermissionModule): PermissionLevel {
+  function getHighestLevel(module: keyof RulesState): PermissionLevel {
     const levels = rules[module];
     if (levels.includes("admin")) return "admin";
     if (levels.includes("write")) return "write";
@@ -82,7 +84,7 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
     return "none";
   }
 
-  function setHighestLevel(module: PermissionModule, level: PermissionLevel) {
+  function setHighestLevel(module: keyof RulesState, level: PermissionLevel) {
     const expansion: Record<PermissionLevel, PermissionLevel[]> = {
       none:  ["none"],
       read:  ["read"],
@@ -147,59 +149,76 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
         </div>
       </div>
 
-      {/* Module access */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Module Access</p>
-        <div className="rounded-md border border-border divide-y divide-border">
-          {MODULES.map(({ key, label }) => (
-            <div
-              key={key}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="text-sm text-foreground">{label}</span>
-              <Select
-                value={getHighestLevel(key)}
-                onValueChange={(v) => setHighestLevel(key, v as PermissionLevel)}
-              >
-                <SelectTrigger className="w-32 h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level.charAt(0).toUpperCase() + level.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-      </div>
+      {includeAccessControls ? (
+        <>
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-foreground">Tool Access</p>
+            {PERMISSION_TEMPLATE_GROUPS.map((group) => {
+              const groupModules = getPermissionTemplateToolsByGroup(group.key).filter(
+                (tool) => tool.kind === "module",
+              );
 
-      {/* Granular flags */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Granular Access</p>
-        <p className="text-xs text-muted-foreground">
-          Fine-grained capabilities layered on top of module access levels.
-        </p>
-        <div className="rounded-md border border-border divide-y divide-border">
-          {ALL_GRANULAR_FLAGS.map((flag) => (
-            <label
-              key={flag}
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-            >
-              <Checkbox
-                checked={granularFlags.has(flag)}
-                onCheckedChange={() => toggleFlag(flag)}
-              />
-              <span className="text-sm text-foreground">
-                {GRANULAR_FLAG_LABELS[flag]}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
+              return (
+                <div key={group.key} className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}
+                  </p>
+                  <div className="rounded-md border border-border divide-y divide-border">
+                    {groupModules.map((tool) => (
+                      <div
+                        key={tool.id}
+                        className="flex items-center justify-between gap-4 px-4 py-3"
+                      >
+                        <span className="text-sm text-foreground">{tool.label}</span>
+                        <Select
+                          value={getHighestLevel(tool.moduleKey)}
+                          onValueChange={(value) =>
+                            setHighestLevel(
+                              tool.moduleKey,
+                              value as PermissionLevel,
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-32 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {LEVELS.map((level) => (
+                              <SelectItem key={level} value={level}>
+                                {level.charAt(0).toUpperCase() + level.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Granular Access</p>
+            <div className="rounded-md border border-border divide-y divide-border">
+              {ALL_GRANULAR_FLAGS.map((flag) => (
+                <label
+                  key={flag}
+                  className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={granularFlags.has(flag)}
+                    onCheckedChange={() => toggleFlag(flag)}
+                  />
+                  <span className="text-sm text-foreground">
+                    {GRANULAR_FLAG_LABELS[flag]}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {error && (
         <p className="text-sm text-destructive">{error}</p>

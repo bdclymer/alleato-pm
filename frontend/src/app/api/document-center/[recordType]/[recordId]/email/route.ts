@@ -32,6 +32,10 @@ interface DocumentProjectContext {
   relatedTool: string;
 }
 
+function isValidEmail(value: string | null | undefined): value is string {
+  return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+}
+
 function isDocumentRecordType(value: string): value is DocumentRecordType {
   return (
     value === "prime-contract" ||
@@ -154,6 +158,11 @@ export const POST = withApiGuardrails(
 
     const emailHtml = renderDocumentEmailHtml(bundle, message, senderName || "Alleato User");
     const emailText = renderDocumentEmailText(bundle, message, senderName || "Alleato User");
+    const normalizedRecipientEmails = recipients.map((recipient) => recipient.email.trim().toLowerCase());
+    const senderCopyEmail = [senderProfile?.email, user.email]
+      .map((email) => email?.trim().toLowerCase() ?? null)
+      .find((email): email is string => isValidEmail(email) && !normalizedRecipientEmails.includes(email));
+    const bccRecipients = senderCopyEmail ? [senderCopyEmail] : [];
 
     let attachments: Array<{ filename: string; content: string }> = [];
     try {
@@ -166,6 +175,7 @@ export const POST = withApiGuardrails(
 
     const result = await sendDocumentEmail({
       to: recipients.map((recipient) => recipient.email.trim()),
+      bcc: bccRecipients,
       subject,
       html: emailHtml,
       text: emailText,
@@ -181,6 +191,7 @@ export const POST = withApiGuardrails(
           record_id: recordId,
           related_tool: projectContext.relatedTool,
           recipient_emails: recipients.map((recipient) => recipient.email.trim()),
+          bcc_emails: bccRecipients,
           has_attachments: attachments.length > 0,
           filename: bundle.filename,
         },
@@ -196,6 +207,7 @@ export const POST = withApiGuardrails(
       from_email: user.email ?? null,
       from_name: senderName || null,
       to_list: recipients.map((recipient) => recipient.email.trim()),
+      bcc_list: bccRecipients,
       status: "Sent",
       sent_at: sentAt,
       created_by: user.id,

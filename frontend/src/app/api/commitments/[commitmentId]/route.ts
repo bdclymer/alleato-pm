@@ -7,6 +7,7 @@ import type { ZodError } from "@/app/api/types";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
 import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
 import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
@@ -359,6 +360,11 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const revisedAmount = originalAmount + changeOrderTotals.approved;
     const balanceToFinish = revisedAmount - billedToDate;
 
+    const sovLock = await getCommitmentSovLockStateForCommitment(supabase, {
+      commitmentId,
+      commitmentType: isSubcontract ? "subcontract" : "purchase_order",
+    });
+
     const responseData = {
       ...data,
       contract_company: contractCompany,
@@ -381,6 +387,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       invoice_contacts: invoiceContacts,
       created_by_name: createdByName,
       assigned_to_name: assignedToName,
+      sov_lock: sovLock,
     };
 
     // Add cache headers for detail data (5 seconds, revalidate in background)

@@ -19,8 +19,11 @@ interface PageTabsV2Props {
 }
 
 /**
- * PageTabsV2 - Alternative pill-style tabs (shadcn/ui pattern)
- * Use PageTabs (v1) as the site standard
+ * @deprecated Use `PageTabs` for page-level navigation and `Tabs` from
+ * `@/components/ui/tabs` for section-level content tabs.
+ *
+ * This component remains only for controlled migration of older call sites and
+ * should not be imported into new production surfaces.
  */
 export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
   const pathname = usePathname()! ?? "";

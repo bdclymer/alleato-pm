@@ -246,6 +246,64 @@ describe("assignment-inbox assign POST route", () => {
     );
   });
 
+  it("assigns a task without sending attribution-learning feedback", async () => {
+    const taskUpdateEq = jest.fn().mockResolvedValue({ error: null });
+    const taskUpdate = jest.fn().mockReturnValue({ eq: taskUpdateEq });
+
+    const from = jest.fn((table: string) => {
+      if (table === "projects") {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest
+                .fn()
+                .mockResolvedValue({ data: { id: 88, name: "Morrisville Yard" }, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === "tasks") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: {
+                  id: "task-1",
+                  title: "Follow up with owner",
+                  description: "Clarify closeout requirement.",
+                },
+                error: null,
+              }),
+            }),
+          }),
+          update: taskUpdate,
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    createServiceClientMock.mockReturnValue({ from });
+    createOutlookIntakeServiceClientMock.mockReturnValue({ from });
+
+    const response = await POST(
+      makeRequest({
+        sourceTable: "tasks",
+        itemId: "task-1",
+        projectId: 88,
+        suggestedProjectId: null,
+      }),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(taskUpdate).toHaveBeenCalledWith({
+      project_id: 88,
+      project_ids: [88],
+    });
+    expect(taskUpdateEq).toHaveBeenCalledWith("id", "task-1");
+    expect(recordFeedbackMock).not.toHaveBeenCalled();
+  });
+
   it("rejects assignment to a non-existent project", async () => {
     const from = jest.fn((table: string) => {
       if (table === "projects") {

@@ -33,6 +33,7 @@ export type GranularFlag =
   | "edit_own_ssov"
   | "bulk_edit_subcontractor_invoice_status"
   | "approve_change_orders"
+  | "approve_budget_changes"
   | "approve_invoices"
   | "create_change_events"
   | "create_budget_modifications"
@@ -64,6 +65,7 @@ export const ALL_GRANULAR_FLAGS: GranularFlag[] = [
   "edit_own_ssov",
   "bulk_edit_subcontractor_invoice_status",
   "approve_change_orders",
+  "approve_budget_changes",
   "approve_invoices",
   "create_change_events",
   "create_budget_modifications",
@@ -82,6 +84,7 @@ export const GRANULAR_FLAG_LABELS: Record<GranularFlag, string> = {
   edit_own_ssov:                          "Edit own schedule of values (invoice contact)",
   bulk_edit_subcontractor_invoice_status: "Bulk edit subcontractor invoice status",
   approve_change_orders:                  "Approve change orders",
+  approve_budget_changes:                 "Approve budget changes",
   approve_invoices:                       "Approve invoices",
   create_change_events:                   "Create change events",
   create_budget_modifications:            "Create budget modifications",

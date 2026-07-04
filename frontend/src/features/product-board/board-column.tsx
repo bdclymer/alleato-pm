@@ -132,7 +132,7 @@ export function BoardColumn({ status, label, items, allItems, readonly, cardSett
       <div className="flex items-center justify-between px-1 pb-2">
         <div className="flex items-center gap-2">
           <span className={cn("h-1.5 w-1.5 rounded-full", STAGE_DOT[status])} aria-hidden />
-          <span className="text-[13px] font-semibold uppercase tracking-wide text-foreground/80">{label}</span>
+          <span className="text-[12px] font-semibold uppercase tracking-wide text-foreground/80">{label}</span>
         </div>
         <span className={cn("rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums leading-none min-w-[1.25rem] text-center", COUNT_PILL[status])}>
           {items.length}

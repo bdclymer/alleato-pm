@@ -51,6 +51,7 @@ async function ensureSeniorProjectManagerRole() {
       "view_private_commitments",
       "bulk_edit_subcontractor_invoice_status",
       "approve_change_orders",
+      "approve_budget_changes",
       "approve_invoices",
       "create_change_events",
       "create_budget_modifications",

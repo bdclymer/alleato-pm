@@ -52,6 +52,7 @@ import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { useConfirm } from "@/hooks/use-confirm";
 import {
   ContentSectionStack,
+  DetailLayout,
   DetailPanel,
   LabelValueRow,
   PageTabs,
@@ -172,6 +173,7 @@ interface PrimeCO {
   due_date: string | null;
   invoiced_date: string | null;
   created_by: string | null;
+  created_by_name?: string | null;
   contract_company: string | null;
   submitted_at: string | null;
   approved_at: string | null;
@@ -289,12 +291,13 @@ interface HistoryEntry {
 
 function ChangeHistoryTimeline({ co }: { co: PrimeCO }) {
   const entries: HistoryEntry[] = [];
+  const createdByLabel = co.created_by_name || co.created_by;
 
   if (co.created_at) {
     entries.push({
       label: "Created",
       date: co.created_at,
-      note: co.created_by ? `by ${co.created_by}` : undefined,
+      note: createdByLabel ? `by ${createdByLabel}` : undefined,
       variant: "default",
     });
   }
@@ -362,6 +365,13 @@ function ChangeHistoryTimeline({ co }: { co: PrimeCO }) {
       ))}
     </div>
   );
+}
+
+function resolveLineItemBudgetCodeDisplay(
+  item: Pick<LineItem, "cost_code">,
+  budgetCodes: BudgetCodeOption[],
+) {
+  return resolvePrimeCoBudgetCode(item.cost_code, budgetCodes);
 }
 
 // ---------------------------------------------------------------------------
@@ -1575,13 +1585,16 @@ export default function PrimeContractCODetailPage() {
     ? changeOrderAmount
     : 0;
   const varianceAmount = changeOrderAmount - lineItemsTotal;
+  const hasInlineLineItemTable = lineItems.length > 0 || addingLineItem;
+  const shouldUseMobileLineItemList =
+    lineItems.length > 0 && !addingLineItem && editingLineItemId == null;
   const renderDateOrDash = (value: string | null | undefined) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
 
   return (
     <>
       <PageShell
-        variant="detailWide"
+        variant="detail"
         title={pageTitle}
         onBack={handleBack}
         actions={
@@ -1640,9 +1653,9 @@ export default function PrimeContractCODetailPage() {
           variant="inline"
           tabs={[
             { label: "General", href: "general", isActive: activeTab === "general" },
-            { label: `Related Items (${relatedItems.length})`, href: "related", isActive: activeTab === "related" },
+            { label: `Related (${relatedItems.length})`, href: "related", isActive: activeTab === "related" },
             { label: `Emails (${emails.length})`, href: "emails", isActive: activeTab === "emails" },
-            { label: "Change History", href: "history", isActive: activeTab === "history" },
+            { label: "History", href: "history", isActive: activeTab === "history" },
           ]}
           onTabClick={(href) => setActiveTab(href)}
         />
@@ -1650,15 +1663,593 @@ export default function PrimeContractCODetailPage() {
         <div>
           {activeTab === "general" && (
             <ContentSectionStack>
-              {/* ── General Section: Three-column layout parity with prime contract detail ── */}
-              <section>
-                <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+              <DetailLayout
+                sidebar={
+                  <div className="space-y-8">
+                    <DetailPanel>
+                      <SectionRuleHeading
+                        label="Financial Summary"
+                        className="mb-6 pb-0"
+                      />
+                      <dl className="space-y-3 text-sm">
+                        <SummaryValueRow
+                          label="Change Order Amount"
+                          value={formatCurrency(changeOrderAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Line Items Total"
+                          value={formatCurrency(lineItemsTotal)}
+                        />
+                        <SummaryValueRow
+                          label="Variance"
+                          value={formatCurrency(varianceAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Approved Amount"
+                          value={formatCurrency(approvedAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Pending Amount"
+                          value={formatCurrency(pendingAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Schedule Impact"
+                          value={
+                            co.schedule_impact != null
+                              ? `${co.schedule_impact} days`
+                              : "—"
+                          }
+                          bold
+                          border
+                        />
+                      </dl>
+                    </DetailPanel>
+
+                    <DetailPanel>
+                      <SectionRuleHeading
+                        label="Key Dates"
+                        className="mb-6 pb-0"
+                      />
+                      <dl className="space-y-3 text-sm">
+                        <LabelValueRow label="Date Created">
+                          {renderDateOrDash(co.created_at)}
+                        </LabelValueRow>
+                        <LabelValueRow
+                          label="Created By"
+                          valueClassName="break-all sm:break-words"
+                        >
+                          {co.created_by_name || co.created_by || "—"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Submitted">
+                          {renderDateOrDash(co.submitted_at)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Approved">
+                          {renderDateOrDash(co.approved_at)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Due Date">
+                          {renderDateOrDash(co.due_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Invoiced Date">
+                          {renderDateOrDash(co.invoiced_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Signed CO Received Date">
+                          {renderDateOrDash(co.signed_co_received_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Review Date">
+                          {renderDateOrDash(co.review_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Revised Substantial Completion">
+                          {renderDateOrDash(co.revised_substantial_completion_date)}
+                        </LabelValueRow>
+                      </dl>
+                    </DetailPanel>
+                  </div>
+                }
+                footer={
+                  <>
+                    <section className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <SectionRuleHeading
+                          label="Line Items"
+                          className="flex-1 [&_span]:text-primary"
+                        />
+                      </div>
+
+                      {lineItemsLoading ? (
+                        <div className="space-y-2">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4">
+                              <Skeleton className="h-4 w-6" />
+                              <Skeleton className="h-4 flex-1" />
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-4 w-12" />
+                              <Skeleton className="h-4 w-16" />
+                              <Skeleton className="h-4 w-24" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : hasInlineLineItemTable ? (
+                        <div className="space-y-4">
+                          {shouldUseMobileLineItemList ? (
+                            <div className="divide-y divide-border/60 border-y border-border/60 md:hidden">
+                              {lineItems.map((item, idx) => {
+                                const budgetCodeResolution =
+                                  resolveLineItemBudgetCodeDisplay(item, budgetCodes);
+                                return (
+                                  <div key={item.id} className="space-y-3 py-4">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="min-w-0 space-y-1">
+                                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                                          Line {idx + 1}
+                                        </p>
+                                        <p className="text-sm font-medium text-foreground">
+                                          {item.description || "—"}
+                                        </p>
+                                      </div>
+                                      <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                                        {formatCurrency(item.line_amount)}
+                                      </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <LabelValueRow label="Budget Code">
+                                        <span
+                                          className={
+                                            budgetCodeResolution.isMapped
+                                              ? undefined
+                                              : "text-muted-foreground"
+                                          }
+                                        >
+                                          {budgetCodeResolution.displayCode}
+                                        </span>
+                                      </LabelValueRow>
+                                      <LabelValueRow label="Quantity">
+                                        {item.quantity ?? "—"}
+                                      </LabelValueRow>
+                                      <LabelValueRow label="UOM">
+                                        {item.uom || "—"}
+                                      </LabelValueRow>
+                                      <LabelValueRow label="Unit Cost">
+                                        {item.unit_cost != null
+                                          ? formatCurrency(item.unit_cost)
+                                          : "—"}
+                                      </LabelValueRow>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-1 pt-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9"
+                                        onClick={() => startEditLineItem(item)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteLineItem(item.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {computedMarkups.length > 0 ? (
+                                <div className="space-y-2 py-4">
+                                  <LabelValueRow label="Subtotal">
+                                    {formatCurrency(lineItemsTotal)}
+                                  </LabelValueRow>
+                                  {computedMarkups.map((markup) => (
+                                    <LabelValueRow
+                                      key={markup.id}
+                                      label={
+                                        MARKUP_LABELS[markup.markup_type] ??
+                                        markup.markup_type
+                                      }
+                                    >
+                                      {markup.percentage}% · {formatCurrency(markup.amount)}
+                                    </LabelValueRow>
+                                  ))}
+                                </div>
+                              ) : null}
+                              <div className="py-4">
+                                <LabelValueRow
+                                  label="Total"
+                                  valueClassName="text-base font-semibold"
+                                >
+                                  {formatCurrency(grandTotal)}
+                                </LabelValueRow>
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <div
+                            className={cn(
+                              "overflow-x-auto",
+                              shouldUseMobileLineItemList ? "hidden md:block" : "block",
+                            )}
+                          >
+                            <InlineTable variant="read">
+                              <InlineTableHeader>
+                                <InlineTableHeaderRow>
+                                  <InlineTableHeaderCell>#</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                                  <InlineTableHeaderCell className="w-20" />
+                                </InlineTableHeaderRow>
+                              </InlineTableHeader>
+                              <InlineTableBody>
+                                {lineItems.map((item, idx) =>
+                                  editingLineItemId === item.id ? (
+                                    <InlineTableRow key={item.id} className="bg-muted/50">
+                                      <InlineTableCell className="text-muted-foreground">
+                                        {idx + 1}
+                                      </InlineTableCell>
+                                      <InlineTableCell className="pr-2">
+                                        <Input
+                                          value={lineItemForm.description}
+                                          onChange={(e) =>
+                                            setLineItemForm((f) => ({
+                                              ...f,
+                                              description: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                          placeholder="Description"
+                                          className="h-8"
+                                        />
+                                      </InlineTableCell>
+                                      <InlineTableCell className="pr-2">
+                                        <BudgetCodeSelector
+                                          value={selectedLineItemBudgetCode.selectorValue}
+                                          onValueChange={handleLineItemBudgetCodeChange}
+                                          budgetCodes={budgetCodes}
+                                          loading={budgetCodesLoading}
+                                          placeholder={
+                                            selectedLineItemBudgetCode.isMapped
+                                              ? "Select budget code..."
+                                              : selectedLineItemBudgetCode.displayCode
+                                          }
+                                          error={!selectedLineItemBudgetCode.isMapped}
+                                          className="h-8 min-w-48 px-3"
+                                        />
+                                      </InlineTableCell>
+                                      <InlineTableCell className="pr-2">
+                                        <Input
+                                          type="number"
+                                          value={lineItemForm.quantity}
+                                          onChange={(e) =>
+                                            setLineItemForm((f) => ({
+                                              ...f,
+                                              quantity: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                          placeholder=""
+                                          className="h-8 w-20 text-right"
+                                        />
+                                      </InlineTableCell>
+                                      <InlineTableCell className="pr-2">
+                                        <Input
+                                          value={lineItemForm.uom}
+                                          onChange={(e) =>
+                                            setLineItemForm((f) => ({
+                                              ...f,
+                                              uom: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                          placeholder="UOM"
+                                          className="h-8 w-20"
+                                        />
+                                      </InlineTableCell>
+                                      <InlineTableCell className="pr-2">
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          value={lineItemForm.unit_cost}
+                                          onChange={(e) =>
+                                            setLineItemForm((f) => ({
+                                              ...f,
+                                              unit_cost: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                          placeholder=""
+                                          className="h-8 w-28 text-right"
+                                        />
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right" className="text-muted-foreground">
+                                        {formatCurrency(computedLineItemAmount)}
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right">
+                                        <div className="flex items-center justify-end gap-1">
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => void handleSaveLineItem()}
+                                            disabled={lineItemSaving}
+                                          >
+                                            <Check className="h-4 w-4 text-primary" />
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={cancelLineItemEdit}
+                                            disabled={lineItemSaving}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </InlineTableCell>
+                                    </InlineTableRow>
+                                  ) : (
+                                    <InlineTableRow key={item.id}>
+                                      <InlineTableCell className="text-muted-foreground">
+                                        {idx + 1}
+                                      </InlineTableCell>
+                                      <InlineTableCell>
+                                        {item.description || "—"}
+                                      </InlineTableCell>
+                                      <InlineTableCell>
+                                        {(() => {
+                                          const resolution = resolveLineItemBudgetCodeDisplay(
+                                            item,
+                                            budgetCodes,
+                                          );
+                                          return (
+                                            <span
+                                              title={resolution.displayLabel}
+                                              className={
+                                                resolution.isMapped
+                                                  ? undefined
+                                                  : "text-muted-foreground"
+                                              }
+                                            >
+                                              {resolution.displayCode}
+                                            </span>
+                                          );
+                                        })()}
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right">
+                                        {item.quantity ?? "—"}
+                                      </InlineTableCell>
+                                      <InlineTableCell>{item.uom || "—"}</InlineTableCell>
+                                      <InlineTableCell align="right">
+                                        {item.unit_cost != null
+                                          ? formatCurrency(item.unit_cost)
+                                          : "—"}
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right">
+                                        {formatCurrency(item.line_amount)}
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right">
+                                        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => startEditLineItem(item)}
+                                          >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive hover:text-destructive"
+                                            onClick={() =>
+                                              handleDeleteLineItem(item.id)
+                                            }
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </div>
+                                      </InlineTableCell>
+                                    </InlineTableRow>
+                                  ),
+                                )}
+                                {addingLineItem && (
+                                  <InlineTableRow className="bg-muted/50">
+                                    <InlineTableCell className="text-muted-foreground">
+                                      {lineItems.length + 1}
+                                    </InlineTableCell>
+                                    <InlineTableCell className="pr-2">
+                                      <Input
+                                        value={lineItemForm.description}
+                                        onChange={(e) =>
+                                          setLineItemForm((f) => ({
+                                            ...f,
+                                            description: e.target.value,
+                                          }))
+                                        }
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                        placeholder="Description"
+                                        className="h-8"
+                                        autoFocus
+                                      />
+                                    </InlineTableCell>
+                                    <InlineTableCell className="pr-2">
+                                      <BudgetCodeSelector
+                                        value={selectedLineItemBudgetCode.selectorValue}
+                                        onValueChange={handleLineItemBudgetCodeChange}
+                                        budgetCodes={budgetCodes}
+                                        loading={budgetCodesLoading}
+                                        placeholder="Select budget code..."
+                                        error={
+                                          Boolean(lineItemForm.cost_code) &&
+                                          !selectedLineItemBudgetCode.isMapped
+                                        }
+                                        className="h-8 min-w-48 px-3"
+                                      />
+                                    </InlineTableCell>
+                                    <InlineTableCell className="pr-2">
+                                      <Input
+                                        type="number"
+                                        value={lineItemForm.quantity}
+                                        onChange={(e) =>
+                                          setLineItemForm((f) => ({
+                                            ...f,
+                                            quantity: e.target.value,
+                                          }))
+                                        }
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                        placeholder=""
+                                        className="h-8 w-20 text-right"
+                                      />
+                                    </InlineTableCell>
+                                    <InlineTableCell className="pr-2">
+                                      <Input
+                                        value={lineItemForm.uom}
+                                        onChange={(e) =>
+                                          setLineItemForm((f) => ({
+                                            ...f,
+                                            uom: e.target.value,
+                                          }))
+                                        }
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                        placeholder="UOM"
+                                        className="h-8 w-20"
+                                      />
+                                    </InlineTableCell>
+                                    <InlineTableCell className="pr-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={lineItemForm.unit_cost}
+                                        onChange={(e) =>
+                                          setLineItemForm((f) => ({
+                                            ...f,
+                                            unit_cost: e.target.value,
+                                          }))
+                                        }
+                                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
+                                        placeholder=""
+                                        className="h-8 w-28 text-right"
+                                      />
+                                    </InlineTableCell>
+                                    <InlineTableCell align="right" className="text-muted-foreground">
+                                      {formatCurrency(computedLineItemAmount)}
+                                    </InlineTableCell>
+                                    <InlineTableCell align="right">
+                                      <div className="flex items-center justify-end gap-1">
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => void handleSaveLineItem()}
+                                          disabled={lineItemSaving}
+                                        >
+                                          <Check className="h-4 w-4 text-primary" />
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={cancelLineItemEdit}
+                                          disabled={lineItemSaving}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </InlineTableCell>
+                                  </InlineTableRow>
+                                )}
+                                {computedMarkups.length > 0 && (
+                                  <>
+                                    <InlineTableRow>
+                                      <InlineTableCell
+                                        colSpan={6}
+                                        align="right"
+                                        className="text-xs font-medium text-muted-foreground"
+                                      >
+                                        Subtotal
+                                      </InlineTableCell>
+                                      <InlineTableCell align="right" className="text-xs font-medium">
+                                        {formatCurrency(lineItemsTotal)}
+                                      </InlineTableCell>
+                                      <InlineTableCell />
+                                    </InlineTableRow>
+                                    {computedMarkups.map((markup) => (
+                                      <InlineTableRow key={markup.id} type="markup">
+                                        <InlineTableCell />
+                                        <InlineTableCell
+                                          colSpan={4}
+                                          className="text-sm text-muted-foreground"
+                                        >
+                                          {MARKUP_LABELS[markup.markup_type] ??
+                                            markup.markup_type}
+                                        </InlineTableCell>
+                                        <InlineTableCell align="right" className="text-sm text-muted-foreground">
+                                          {markup.percentage}%
+                                        </InlineTableCell>
+                                        <InlineTableCell align="right" className="text-sm">
+                                          {formatCurrency(markup.amount)}
+                                        </InlineTableCell>
+                                        <InlineTableCell />
+                                      </InlineTableRow>
+                                    ))}
+                                  </>
+                                )}
+                              </InlineTableBody>
+                              <InlineTableFooter>
+                                <InlineTableFooterRow type="totals">
+                                  <InlineTableFooterCell colSpan={7}>
+                                    <div className="flex justify-between">
+                                      <span>Total</span>
+                                      <span>{formatCurrency(grandTotal)}</span>
+                                    </div>
+                                  </InlineTableFooterCell>
+                                  <InlineTableFooterCell />
+                                </InlineTableFooterRow>
+                              </InlineTableFooter>
+                            </InlineTable>
+                          </div>
+                        </div>
+                      ) : (
+                        <EmptyState
+                          icon={<List />}
+                          title="No line items"
+                          description="Add cost line items to this change order"
+                          action={
+                            <Button size="sm" variant="outline" onClick={startAddLineItem}>
+                              <Plus />
+                              Add Line Item
+                            </Button>
+                          }
+                        />
+                      )}
+                    </section>
+
+                    <section className="space-y-4">
+                      <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
+                      <EntityAttachments
+                        entityType="change_order"
+                        entityId={primeCoId}
+                        projectId={projectId}
+                        showLabel={false}
+                      />
+                    </section>
+                  </>
+                }
+              >
+                <section>
                   <DetailPanel className="space-y-8">
                     <SectionRuleHeading
                       label="General Information"
                       className="[&_span]:text-primary"
                     />
-                    <DetailFieldGrid columns={2}>
+                    <DetailFieldGrid columns={2} className="gap-x-10 gap-y-5">
                       <DetailField label="#">
                         {co.pcco_number || "—"}
                       </DetailField>
@@ -1688,7 +2279,7 @@ export default function PrimeContractCODetailPage() {
                           <Button
                             type="button"
                             variant="link"
-                            className="inline-flex h-auto min-w-0 flex-wrap items-start justify-start gap-1 whitespace-normal p-0 text-left text-primary"
+                            className="inline-flex h-auto min-w-0 max-w-full flex-wrap items-start justify-start gap-1 whitespace-normal p-0 text-left text-primary"
                             onClick={() =>
                               router.push(
                                 `/${projectId}/prime-contracts/${co.contract!.id}`,
@@ -1748,482 +2339,8 @@ export default function PrimeContractCODetailPage() {
                       </div>
                     )}
                   </DetailPanel>
-
-                  <div className="space-y-8">
-                    <DetailPanel>
-                      <SectionRuleHeading
-                        label="Financial Summary"
-                        className="mb-6 pb-0"
-                      />
-                      <dl className="space-y-3 text-sm">
-                        <SummaryValueRow
-                          label="Change Order Amount"
-                          value={formatCurrency(changeOrderAmount)}
-                        />
-                        <SummaryValueRow
-                          label="Line Items Total"
-                          value={formatCurrency(lineItemsTotal)}
-                        />
-                        <SummaryValueRow
-                          label="Variance"
-                          value={formatCurrency(varianceAmount)}
-                        />
-                        <SummaryValueRow
-                          label="Approved Amount"
-                          value={formatCurrency(approvedAmount)}
-                        />
-                        <SummaryValueRow
-                          label="Pending Amount"
-                          value={formatCurrency(pendingAmount)}
-                        />
-                        <SummaryValueRow
-                          label="Schedule Impact"
-                          value={
-                            co.schedule_impact != null
-                              ? `${co.schedule_impact} days`
-                              : "—"
-                          }
-                          bold
-                          border
-                        />
-                      </dl>
-                    </DetailPanel>
-
-                    <DetailPanel>
-                      <SectionRuleHeading
-                        label="Key Dates"
-                        className="mb-6 pb-0"
-                      />
-                      <dl className="space-y-3 text-sm">
-                        <LabelValueRow label="Date Created">
-                          {renderDateOrDash(co.created_at)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Created By">
-                          {co.created_by || "—"}
-                        </LabelValueRow>
-                        <LabelValueRow label="Submitted">
-                          {renderDateOrDash(co.submitted_at)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Approved">
-                          {renderDateOrDash(co.approved_at)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Due Date">
-                          {renderDateOrDash(co.due_date)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Invoiced Date">
-                          {renderDateOrDash(co.invoiced_date)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Signed CO Received Date">
-                          {renderDateOrDash(co.signed_co_received_date)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Review Date">
-                          {renderDateOrDash(co.review_date)}
-                        </LabelValueRow>
-                        <LabelValueRow label="Revised Substantial Completion">
-                          {renderDateOrDash(co.revised_substantial_completion_date)}
-                        </LabelValueRow>
-                      </dl>
-                    </DetailPanel>
-                  </div>
-                </div>
-              </section>
-
-              {/* ── Line Items (inline CRUD) ────────────────────── */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <SectionRuleHeading
-                    label="Line Items"
-                    className="flex-1 [&_span]:text-primary"
-                  />
-                  {/* Add button only shown in empty state below */}
-                </div>
-
-                {lineItemsLoading ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <Skeleton className="h-4 w-6" />
-                        <Skeleton className="h-4 flex-1" />
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-12" />
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    ))}
-                  </div>
-                ) : lineItems.length > 0 || addingLineItem ? (
-                  <InlineTable variant="read">
-                    <InlineTableHeader>
-                      <InlineTableHeaderRow>
-                        <InlineTableHeaderCell>#</InlineTableHeaderCell>
-                        <InlineTableHeaderCell>Description</InlineTableHeaderCell>
-                        <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
-                        <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
-                        <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
-                        <InlineTableHeaderCell className="w-20" />
-                      </InlineTableHeaderRow>
-                    </InlineTableHeader>
-                    <InlineTableBody>
-                      {lineItems.map((item, idx) =>
-                        editingLineItemId === item.id ? (
-                          <InlineTableRow key={item.id} className="bg-muted/50">
-                            <InlineTableCell className="text-muted-foreground">
-                              {idx + 1}
-                            </InlineTableCell>
-                            <InlineTableCell className="pr-2">
-                              <Input
-                                value={lineItemForm.description}
-                                onChange={(e) =>
-                                  setLineItemForm((f) => ({
-                                    ...f,
-                                    description: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                                placeholder="Description"
-                                className="h-8"
-                              />
-                            </InlineTableCell>
-                            <InlineTableCell className="pr-2">
-                              <BudgetCodeSelector
-                                value={selectedLineItemBudgetCode.selectorValue}
-                                onValueChange={handleLineItemBudgetCodeChange}
-                                budgetCodes={budgetCodes}
-                                loading={budgetCodesLoading}
-                                placeholder={
-                                  selectedLineItemBudgetCode.isMapped
-                                    ? "Select budget code..."
-                                    : selectedLineItemBudgetCode.displayCode
-                                }
-                                error={!selectedLineItemBudgetCode.isMapped}
-                                className="h-8 min-w-48 px-3"
-                              />
-                            </InlineTableCell>
-                            <InlineTableCell className="pr-2">
-                              <Input
-                                type="number"
-                                value={lineItemForm.quantity}
-                                onChange={(e) =>
-                                  setLineItemForm((f) => ({
-                                    ...f,
-                                    quantity: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                                placeholder=""
-                                className="h-8 w-20 text-right"
-                              />
-                            </InlineTableCell>
-                            <InlineTableCell className="pr-2">
-                              <Input
-                                value={lineItemForm.uom}
-                                onChange={(e) =>
-                                  setLineItemForm((f) => ({
-                                    ...f,
-                                    uom: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                                placeholder="UOM"
-                                className="h-8 w-20"
-                              />
-                            </InlineTableCell>
-                            <InlineTableCell className="pr-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={lineItemForm.unit_cost}
-                                onChange={(e) =>
-                                  setLineItemForm((f) => ({
-                                    ...f,
-                                    unit_cost: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                                placeholder=""
-                                className="h-8 w-28 text-right"
-                              />
-                            </InlineTableCell>
-                            <InlineTableCell align="right" className="text-muted-foreground">
-                              {formatCurrency(computedLineItemAmount)}
-                            </InlineTableCell>
-                            <InlineTableCell align="right">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => void handleSaveLineItem()}
-                                  disabled={lineItemSaving}
-                                >
-                                  <Check className="h-4 w-4 text-primary" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={cancelLineItemEdit}
-                                  disabled={lineItemSaving}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </InlineTableCell>
-                          </InlineTableRow>
-                        ) : (
-                          <InlineTableRow key={item.id}>
-                            <InlineTableCell className="text-muted-foreground">
-                              {idx + 1}
-                            </InlineTableCell>
-                            <InlineTableCell>
-                              {item.description || "—"}
-                            </InlineTableCell>
-                            <InlineTableCell>
-                              {(() => {
-                                const resolution = resolvePrimeCoBudgetCode(
-                                  item.cost_code,
-                                  budgetCodes,
-                                );
-                                return (
-                                  <span
-                                    title={resolution.displayLabel}
-                                    className={
-                                      resolution.isMapped
-                                        ? undefined
-                                        : "text-muted-foreground"
-                                    }
-                                  >
-                                    {resolution.displayCode}
-                                  </span>
-                                );
-                              })()}
-                            </InlineTableCell>
-                            <InlineTableCell align="right">
-                              {item.quantity ?? "—"}
-                            </InlineTableCell>
-                            <InlineTableCell>{item.uom || "—"}</InlineTableCell>
-                            <InlineTableCell align="right">
-                              {item.unit_cost != null
-                                ? formatCurrency(item.unit_cost)
-                                : "—"}
-                            </InlineTableCell>
-                            <InlineTableCell align="right">
-                              {formatCurrency(item.line_amount)}
-                            </InlineTableCell>
-                            <InlineTableCell align="right">
-                              <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => startEditLineItem(item)}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() =>
-                                    handleDeleteLineItem(item.id)
-                                  }
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </InlineTableCell>
-                          </InlineTableRow>
-                        ),
-                      )}
-                      {/* Inline add row */}
-                      {addingLineItem && (
-                        <InlineTableRow className="bg-muted/50">
-                          <InlineTableCell className="text-muted-foreground">
-                            {lineItems.length + 1}
-                          </InlineTableCell>
-                          <InlineTableCell className="pr-2">
-                            <Input
-                              value={lineItemForm.description}
-                              onChange={(e) =>
-                                setLineItemForm((f) => ({
-                                  ...f,
-                                  description: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                              placeholder="Description"
-                              className="h-8"
-                              autoFocus
-                            />
-                          </InlineTableCell>
-                          <InlineTableCell className="pr-2">
-                            <BudgetCodeSelector
-                              value={selectedLineItemBudgetCode.selectorValue}
-                              onValueChange={handleLineItemBudgetCodeChange}
-                              budgetCodes={budgetCodes}
-                              loading={budgetCodesLoading}
-                              placeholder="Select budget code..."
-                              error={
-                                Boolean(lineItemForm.cost_code) &&
-                                !selectedLineItemBudgetCode.isMapped
-                              }
-                              className="h-8 min-w-48 px-3"
-                            />
-                          </InlineTableCell>
-                          <InlineTableCell className="pr-2">
-                            <Input
-                              type="number"
-                              value={lineItemForm.quantity}
-                              onChange={(e) =>
-                                setLineItemForm((f) => ({
-                                  ...f,
-                                  quantity: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                              placeholder=""
-                              className="h-8 w-20 text-right"
-                            />
-                          </InlineTableCell>
-                          <InlineTableCell className="pr-2">
-                            <Input
-                              value={lineItemForm.uom}
-                              onChange={(e) =>
-                                setLineItemForm((f) => ({
-                                  ...f,
-                                  uom: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                              placeholder="UOM"
-                              className="h-8 w-20"
-                            />
-                          </InlineTableCell>
-                          <InlineTableCell className="pr-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={lineItemForm.unit_cost}
-                              onChange={(e) =>
-                                setLineItemForm((f) => ({
-                                  ...f,
-                                  unit_cost: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                              placeholder=""
-                              className="h-8 w-28 text-right"
-                            />
-                          </InlineTableCell>
-                          <InlineTableCell align="right" className="text-muted-foreground">
-                            {formatCurrency(computedLineItemAmount)}
-                          </InlineTableCell>
-                          <InlineTableCell align="right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => void handleSaveLineItem()}
-                                disabled={lineItemSaving}
-                              >
-                                <Check className="h-4 w-4 text-primary" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={cancelLineItemEdit}
-                                disabled={lineItemSaving}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </InlineTableCell>
-                        </InlineTableRow>
-                      )}
-                      {/* Vertical Markup rows (read-only) */}
-                      {computedMarkups.length > 0 && (
-                        <>
-                          {/* Subtotal separator */}
-                          <InlineTableRow>
-                            <InlineTableCell
-                              colSpan={6}
-                              align="right"
-                              className="text-xs font-medium text-muted-foreground"
-                            >
-                              Subtotal
-                            </InlineTableCell>
-                            <InlineTableCell align="right" className="text-xs font-medium">
-                              {formatCurrency(lineItemsTotal)}
-                            </InlineTableCell>
-                            <InlineTableCell />
-                          </InlineTableRow>
-                          {computedMarkups.map((markup) => (
-                            <InlineTableRow key={markup.id} type="markup">
-                              <InlineTableCell />
-                              <InlineTableCell
-                                colSpan={4}
-                                className="text-sm text-muted-foreground"
-                              >
-                                {MARKUP_LABELS[markup.markup_type] ??
-                                  markup.markup_type}
-                              </InlineTableCell>
-                              <InlineTableCell align="right" className="text-sm text-muted-foreground">
-                                {markup.percentage}%
-                              </InlineTableCell>
-                              <InlineTableCell align="right" className="text-sm">
-                                {formatCurrency(markup.amount)}
-                              </InlineTableCell>
-                              <InlineTableCell />
-                            </InlineTableRow>
-                          ))}
-                        </>
-                      )}
-                    </InlineTableBody>
-                    <InlineTableFooter>
-                      <InlineTableFooterRow type="totals">
-                        <InlineTableFooterCell colSpan={7}>
-                          <div className="flex justify-between">
-                            <span>Total</span>
-                            <span>{formatCurrency(grandTotal)}</span>
-                          </div>
-                        </InlineTableFooterCell>
-                        <InlineTableFooterCell />
-                      </InlineTableFooterRow>
-                    </InlineTableFooter>
-                  </InlineTable>
-                ) : (
-                  <EmptyState
-                    icon={<List />}
-                    title="No line items"
-                    description="Add cost line items to this change order"
-                    action={
-                      <Button size="sm" variant="outline" onClick={startAddLineItem}>
-                        <Plus />
-                        Add Line Item
-                      </Button>
-                    }
-                  />
-                )}
-              </section>
-
-              {/* ── Attachments ───────────────────────────────────── */}
-              <section className="space-y-4">
-                <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
-                <EntityAttachments
-                  entityType="change_order"
-                  entityId={primeCoId}
-                  projectId={projectId}
-                  showLabel={false}
-                />
-              </section>
+                </section>
+              </DetailLayout>
             </ContentSectionStack>
           )}
 
@@ -2269,52 +2386,91 @@ export default function PrimeContractCODetailPage() {
                     Email change order
                   </Button>
                 </div>
-                <InlineTable variant="read">
-                  <InlineTableHeader>
-                    <InlineTableHeaderRow>
-                      <InlineTableHeaderCell>Subject</InlineTableHeaderCell>
-                      <InlineTableHeaderCell>Recipients</InlineTableHeaderCell>
-                      <InlineTableHeaderCell>Status</InlineTableHeaderCell>
-                      <InlineTableHeaderCell>Preview</InlineTableHeaderCell>
-                      <InlineTableHeaderCell>Date</InlineTableHeaderCell>
-                      <InlineTableHeaderCell className="w-10" />
-                    </InlineTableHeaderRow>
-                  </InlineTableHeader>
-                  <InlineTableBody>
-                    {emails.map((email) => {
-                      const sentDate =
-                        email.sent_at ?? email.received_at ?? email.created_at;
-                      const preview = stripHtml(email.body).slice(0, 120);
+                <div className="divide-y divide-border/60 border-y border-border/60 md:hidden">
+                  {emails.map((email) => {
+                    const sentDate =
+                      email.sent_at ?? email.received_at ?? email.created_at;
+                    const preview = stripHtml(email.body).slice(0, 120);
 
-                      return (
-                        <InlineTableRow key={email.id}>
-                          <InlineTableCell className="max-w-sm truncate font-medium">
-                            {email.subject || "—"}
-                          </InlineTableCell>
-                          <InlineTableCell className="max-w-xs truncate">
-                            {email.to_list?.length
-                              ? email.to_list.join(", ")
-                              : "—"}
-                          </InlineTableCell>
-                          <InlineTableCell>
-                            <StatusBadge status={email.status || "Unknown"} />
-                          </InlineTableCell>
-                          <InlineTableCell className="max-w-md truncate text-muted-foreground">
+                    return (
+                      <div key={email.id} className="space-y-3 py-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-sm font-medium text-foreground">
+                              {email.subject || "—"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {sentDate ? formatDate(sentDate) : "—"}
+                            </p>
+                          </div>
+                          <StatusBadge status={email.status || "Unknown"} />
+                        </div>
+                        <LabelValueRow label="Recipients">
+                          {email.to_list?.length ? email.to_list.join(", ") : "—"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Preview">
+                          <span className="text-muted-foreground">
                             {preview || "—"}
-                          </InlineTableCell>
-                          <InlineTableCell className="whitespace-nowrap text-muted-foreground">
-                            {sentDate ? formatDate(sentDate) : "—"}
-                          </InlineTableCell>
-                          <InlineTableCell>
-                            {email.has_attachments ? (
-                              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                            ) : null}
-                          </InlineTableCell>
-                        </InlineTableRow>
-                      );
-                    })}
-                  </InlineTableBody>
-                </InlineTable>
+                          </span>
+                        </LabelValueRow>
+                        {email.has_attachments ? (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Paperclip className="h-3.5 w-3.5" />
+                            Attachments included
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
+                  <InlineTable variant="read">
+                    <InlineTableHeader>
+                      <InlineTableHeaderRow>
+                        <InlineTableHeaderCell>Subject</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Recipients</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Preview</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Date</InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-10" />
+                      </InlineTableHeaderRow>
+                    </InlineTableHeader>
+                    <InlineTableBody>
+                      {emails.map((email) => {
+                        const sentDate =
+                          email.sent_at ?? email.received_at ?? email.created_at;
+                        const preview = stripHtml(email.body).slice(0, 120);
+
+                        return (
+                          <InlineTableRow key={email.id}>
+                            <InlineTableCell className="max-w-sm truncate font-medium">
+                              {email.subject || "—"}
+                            </InlineTableCell>
+                            <InlineTableCell className="max-w-xs truncate">
+                              {email.to_list?.length
+                                ? email.to_list.join(", ")
+                                : "—"}
+                            </InlineTableCell>
+                            <InlineTableCell>
+                              <StatusBadge status={email.status || "Unknown"} />
+                            </InlineTableCell>
+                            <InlineTableCell className="max-w-md truncate text-muted-foreground">
+                              {preview || "—"}
+                            </InlineTableCell>
+                            <InlineTableCell className="whitespace-nowrap text-muted-foreground">
+                              {sentDate ? formatDate(sentDate) : "—"}
+                            </InlineTableCell>
+                            <InlineTableCell>
+                              {email.has_attachments ? (
+                                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                              ) : null}
+                            </InlineTableCell>
+                          </InlineTableRow>
+                        );
+                      })}
+                    </InlineTableBody>
+                  </InlineTable>
+                </div>
               </section>
             )
           )}

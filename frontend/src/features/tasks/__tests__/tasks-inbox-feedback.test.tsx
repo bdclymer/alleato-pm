@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react";
 
 import {
   TASKS_SPLIT_WORKSPACE_CLASSNAME,
-  TASK_DETAIL_META_ROW_CLASSNAME,
+  TASK_DETAIL_PROPERTY_BAR_CLASSNAME,
   TaskListItem,
 } from "../tasks-inbox";
 import type { TasksRow } from "../task-utils";
@@ -122,9 +122,9 @@ describe("Tasks split layout", () => {
     expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).not.toContain("100dvh");
   });
 
-  it("keeps task detail metadata in a compact horizontal row", () => {
-    expect(TASK_DETAIL_META_ROW_CLASSNAME).toContain("flex");
-    expect(TASK_DETAIL_META_ROW_CLASSNAME).toContain("flex-wrap");
-    expect(TASK_DETAIL_META_ROW_CLASSNAME).not.toContain("grid");
+  it("keeps task detail metadata on the shared property-bar spacing contract", () => {
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mt-3");
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mb-0");
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).not.toContain("grid");
   });
 });

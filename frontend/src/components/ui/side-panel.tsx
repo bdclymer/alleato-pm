@@ -17,6 +17,7 @@ const SIDE_PANEL_WIDTHS = {
   sm: "min(100vw, 28rem)",
   md: "min(100vw, 34rem)",
   lg: "min(100vw, 42rem)",
+  xl: "min(100vw, 54rem)",
 } as const;
 
 type SidePanelSize = keyof typeof SIDE_PANEL_WIDTHS;

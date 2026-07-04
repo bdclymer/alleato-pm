@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   CheckSquare2,
   ClipboardList,
+  Clock,
+  Flag,
+  FolderOpen,
   KanbanSquare,
   ListFilter,
   Loader2,
@@ -19,6 +22,7 @@ import {
   Tag,
   Table2,
   Trash2,
+  ThumbsUp,
   UserRound,
   X,
 } from "lucide-react";
@@ -52,14 +56,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -70,6 +66,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
 import { SplitPage, SplitPageFrame } from "@/components/ui/split-page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -257,8 +257,7 @@ const DETAIL_META_SELECT_CLASS =
 const DETAIL_META_DATE_TRIGGER_CLASS =
   "h-7 min-w-0 justify-start gap-1.5 px-0 text-sm font-medium text-foreground hover:bg-transparent";
 
-export const TASK_DETAIL_META_ROW_CLASSNAME =
-  "flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-border/40 pb-4";
+export const TASK_DETAIL_PROPERTY_BAR_CLASSNAME = "mt-3 mb-0";
 
 function TaskListHeader({
   allVisibleSelected,
@@ -1116,28 +1115,9 @@ function TaskSplitListItem({
   );
 }
 
-function TaskDetailMetaItem({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex min-w-0 items-center gap-2", className)}>
-      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
-        {label}
-      </span>
-      <div className="min-w-0 text-sm text-foreground">{children}</div>
-    </div>
-  );
-}
-
 function normalizeTaskMarkdownContext(value: string): string {
   return cleanSourceContextText(value)
-    .replace(/^\s*\{\}\s*/, "")
+    .replace(/^\s*\{\}\s*$/gm, "")
     .trim();
 }
 
@@ -1179,7 +1159,6 @@ function TaskDueDatePicker({
             )}
             aria-label="Task due date"
           >
-            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span>{dueLabel}</span>
           </Button>
         </PopoverTrigger>
@@ -1308,6 +1287,7 @@ function TaskDetail({
   const selectedProjectValue = taskProjectId
     ? String(taskProjectId)
     : "__none__";
+  const projectPropertyLabel = taskProjectLabel(task, projects);
   const selectedCategoryValue = category || "__none__";
   const selectedPriorityValue =
     task.priority?.trim().toLowerCase() || "__none__";
@@ -1478,8 +1458,12 @@ function TaskDetail({
           </Button>
         </div>
 
-        <div className={cn(TASK_DETAIL_META_ROW_CLASSNAME, "mt-3")}>
-          <TaskDetailMetaItem label="Status">
+        <DetailPropertyBar className={TASK_DETAIL_PROPERTY_BAR_CLASSNAME}>
+          <DetailPropertyItem
+            icon={CheckCircle2}
+            contentClassName="overflow-visible"
+            aria-label="Task status"
+          >
             <Select
               value={task.status ?? "open"}
               onValueChange={(value) =>
@@ -1507,9 +1491,14 @@ function TaskDetail({
                 ))}
               </SelectContent>
             </Select>
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Priority">
+          <DetailPropertyItem
+            icon={Flag}
+            contentClassName="overflow-visible"
+            muted={selectedPriorityValue === "__none__"}
+            aria-label="Task priority"
+          >
             <Select
               value={selectedPriorityValue}
               onValueChange={(value) => {
@@ -1549,9 +1538,14 @@ function TaskDetail({
                 ))}
               </SelectContent>
             </Select>
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Assignee">
+          <DetailPropertyItem
+            icon={UserRound}
+            contentClassName="overflow-visible"
+            muted={!fallbackAssigneeLabel && !matchedAssigneeUser}
+            aria-label="Task assignee"
+          >
             <Select
               value={selectedAssigneeValue}
               onValueChange={(value) => {
@@ -1611,9 +1605,14 @@ function TaskDetail({
                   ))}
               </SelectContent>
             </Select>
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Project">
+          <DetailPropertyItem
+            icon={FolderOpen}
+            contentClassName="overflow-visible"
+            muted={selectedProjectValue === "__none__"}
+            aria-label="Task project"
+          >
             <Select
               value={selectedProjectValue}
               onValueChange={(value) => {
@@ -1644,8 +1643,14 @@ function TaskDetail({
             >
               <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
                 <SelectValue
-                  placeholder={projectsLoading ? "Loading…" : "No project"}
-                />
+                  placeholder={
+                    projectsLoading ? "Loading…" : projectPropertyLabel
+                  }
+                >
+                  {selectedProjectValue !== "__none__"
+                    ? projectPropertyLabel
+                    : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">No project</SelectItem>
@@ -1656,9 +1661,14 @@ function TaskDetail({
                 ))}
               </SelectContent>
             </Select>
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Category">
+          <DetailPropertyItem
+            icon={Tag}
+            contentClassName="overflow-visible"
+            muted={selectedCategoryValue === "__none__"}
+            aria-label="Task category"
+          >
             <Select
               value={selectedCategoryValue}
               onValueChange={(value) => {
@@ -1688,9 +1698,14 @@ function TaskDetail({
                 ))}
               </SelectContent>
             </Select>
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Due Date">
+          <DetailPropertyItem
+            icon={CalendarDays}
+            contentClassName="overflow-visible"
+            muted={!task.due_date}
+            aria-label="Task due date"
+          >
             <TaskDueDatePicker
               value={task.due_date}
               overdue={overdue && ds !== "done"}
@@ -1704,32 +1719,30 @@ function TaskDetail({
                 );
               }}
             />
-          </TaskDetailMetaItem>
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Source">
-            {sourceTarget ? (
-              <a
-                href={sourceTarget.href}
-                target={sourceTarget.external ? "_blank" : undefined}
-                rel={sourceTarget.external ? "noopener noreferrer" : undefined}
-                className="inline-flex max-w-48 items-center gap-1.5 truncate font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
-              >
-                <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{sourceLinkLabel}</span>
-              </a>
-            ) : (
-              <span className="font-medium text-muted-foreground">
-                {sourceLinkLabel || "No source"}
-              </span>
-            )}
-          </TaskDetailMetaItem>
+          <DetailPropertyItem
+            icon={ArrowUpRight}
+            href={sourceTarget?.href}
+            external={sourceTarget?.external}
+            muted={!sourceTarget}
+            title={sourceLinkLabel || "No source"}
+            aria-label="Task source"
+            contentClassName="max-w-48"
+          >
+            {sourceTarget ? sourceLinkLabel : sourceLinkLabel || "No source"}
+          </DetailPropertyItem>
 
-          <TaskDetailMetaItem label="Created">
-            <span className="font-medium">{createdLabel}</span>
-          </TaskDetailMetaItem>
+          <DetailPropertyItem icon={Clock} aria-label="Task created date">
+            {createdLabel}
+          </DetailPropertyItem>
 
           {task.id && isAiGeneratedTask(task) && (
-            <TaskDetailMetaItem label="Training">
+            <DetailPropertyItem
+              icon={ThumbsUp}
+              contentClassName="overflow-visible"
+              aria-label="Task training feedback"
+            >
               <TaskFeedbackButtons
                 projectId={taskProjectId}
                 taskId={task.id}
@@ -1739,9 +1752,9 @@ function TaskDetail({
                   if (task.id) onDelete(task.id);
                 }}
               />
-            </TaskDetailMetaItem>
+            </DetailPropertyItem>
           )}
-        </div>
+        </DetailPropertyBar>
 
         {task.source_context && (
           <section className="mt-5 min-w-0 space-y-3">
@@ -2818,39 +2831,32 @@ export function TasksInbox({
                       placeholder="Search tasks"
                       ariaLabel="Search tasks"
                     />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Filter tasks"
-                          title={`Status: ${
-                            STATUS_FILTERS.find((item) => item.value === filter)
-                              ?.label ?? "Open"
-                          }`}
-                          className="h-8 w-8 rounded-full shadow-none"
-                        >
-                          <ListFilter className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuLabel>Status</DropdownMenuLabel>
-                        <DropdownMenuRadioGroup
-                          value={filter}
-                          onValueChange={handleStatusFilterChange}
-                        >
-                          {STATUS_FILTERS.map((item) => (
-                            <DropdownMenuRadioItem
-                              key={item.value}
-                              value={item.value}
-                            >
-                              {item.label}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Showing ${
+                        STATUS_FILTERS.find((item) => item.value === filter)
+                          ?.label ?? "Open"
+                      } tasks. Switch to ${
+                        filter === "open" ? "Done" : "Open"
+                      } tasks.`}
+                      title={`Showing ${
+                        STATUS_FILTERS.find((item) => item.value === filter)
+                          ?.label ?? "Open"
+                      } tasks`}
+                      className={cn(
+                        "h-8 w-8 rounded-full shadow-none",
+                        filter === "done" && "bg-muted text-foreground",
+                      )}
+                      onClick={() =>
+                        handleStatusFilterChange(
+                          filter === "open" ? "done" : "open",
+                        )
+                      }
+                    >
+                      <ListFilter className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 

@@ -4,6 +4,7 @@ import {
   TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME,
   TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME,
   TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
+  shouldRenderRowSelection,
   shouldUseIconOnlyInlineEdit,
 } from "../unified-table-page";
 
@@ -42,5 +43,13 @@ describe("UnifiedTablePage header labels", () => {
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("overflow-hidden");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("pb-0");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).not.toContain("100dvh");
+  });
+
+  it("defaults row selection on unless a page explicitly opts out", () => {
+    expect(shouldRenderRowSelection()).toBe(true);
+    expect(shouldRenderRowSelection({ enableRowSelection: true })).toBe(true);
+    expect(shouldRenderRowSelection({ enableRowSelection: false })).toBe(
+      false,
+    );
   });
 });

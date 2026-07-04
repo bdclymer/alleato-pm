@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { FormattedTranscript } from "../formatted-transcript";
 import { parseTranscriptSections } from "./parse-transcript-sections";
-import { MarkdownSummary } from "./markdown-summary";
-import { DigestSection } from "./digest-section";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { MeetingDetailContent } from "@/components/meetings/meeting-detail-content";
 import { collectSegmentItems } from "@/lib/meetings/collect-segment-items";
+import { loadCuratedMeetingRisks } from "@/lib/meetings/server";
 import type { Database } from "@/types/database.types";
 
 type MeetingSegment =
@@ -26,7 +25,7 @@ export default async function ProjectMeetingDetailPage({
   params,
 }: PageProps) {
   const { projectId, meetingId } = await params;
-  const { project, numericProjectId, supabase } =
+  const { numericProjectId, supabase } =
     await getProjectInfo(projectId);
 
   // Transcript-first detail. The Meetings tool's structured rows use UUID
@@ -93,6 +92,27 @@ export default async function ProjectMeetingDetailPage({
     decisions: allDecisions,
     opportunities: allOpportunities,
   } = collectSegmentItems(segments);
+  const curatedRisks = await loadCuratedMeetingRisks(supabase, documentId).catch(
+    (error) => {
+      console.warn(JSON.stringify({
+        event: "meeting_curated_risks_load_failed",
+        projectId,
+        meetingId,
+        documentId,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return [];
+    },
+  );
+  const riskItems = curatedRisks.length
+    ? curatedRisks
+    : allRisks.map((risk, index) => ({
+        id: `${documentId}:segment-risk:${index}`,
+        text: risk,
+        whyItMatters: null,
+        confidence: null,
+        source: "segment_fallback" as const,
+      }));
 
   let transcriptContent = null;
   let transcriptLoadFailed = false;
@@ -144,25 +164,13 @@ export default async function ProjectMeetingDetailPage({
       parsedSections={parsedSections}
       participantsList={participantsList}
       allTasks={allTasks}
-      allRisks={allRisks}
+      riskItems={riskItems}
       allDecisions={allDecisions}
       allOpportunities={allOpportunities}
       transcriptContent={transcriptContent}
       transcriptLoadFailed={transcriptLoadFailed && !transcriptContent}
-      backHref={`/${projectId}/meetings`}
-      backLabel={
-        project?.name ? `${project.name} · Meetings` : "Meetings"
-      }
       relatedMeetings={relatedMeetings}
       relatedMeetingsBaseHref={`/${projectId}/meetings`}
-      digestSlot={
-        <DigestSection projectId={projectId} meetingId={documentId} />
-      }
-      summarySlot={
-        parsedSections?.summary ? (
-          <MarkdownSummary content={parsedSections.summary} />
-        ) : undefined
-      }
       transcriptSlot={
         parsedSections?.transcript ? (
           <FormattedTranscript
@@ -171,6 +179,7 @@ export default async function ProjectMeetingDetailPage({
             meetingId={meeting.id}
             meetingTitle={meeting.title}
             projectId={meeting.project_id ?? numericProjectId ?? null}
+            showHeading={false}
           />
         ) : undefined
       }

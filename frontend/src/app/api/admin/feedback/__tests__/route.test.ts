@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { DELETE } from "../route";
+import { DELETE, GET } from "../route";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -63,6 +63,26 @@ function createQuery(result: QueryResult, calls: QueryCall[]) {
     }),
     eq: jest.fn((...args: unknown[]) => {
       calls.push({ op: "eq", args });
+      return query;
+    }),
+    neq: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "neq", args });
+      return query;
+    }),
+    in: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "in", args });
+      return query;
+    }),
+    not: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "not", args });
+      return query;
+    }),
+    order: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "order", args });
+      return query;
+    }),
+    range: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "range", args });
       return query;
     }),
     delete: jest.fn((...args: unknown[]) => {
@@ -141,6 +161,13 @@ function makeDeleteRequest(id = "11111111-1111-4111-8111-111111111111") {
   });
 }
 
+function makeGetRequest(query = "") {
+  const suffix = query ? `?${query}` : "";
+  return new NextRequest(`http://localhost/api/admin/feedback${suffix}`, {
+    method: "GET",
+  });
+}
+
 describe("/api/admin/feedback DELETE", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -192,5 +219,171 @@ describe("/api/admin/feedback DELETE", () => {
     expect(
       calls.admin_feedback_items.filter((call) => call.op === "delete"),
     ).toHaveLength(0);
+  });
+});
+
+describe("/api/admin/feedback GET", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getApiRouteUserMock.mockResolvedValue({
+      id: "admin-user-id",
+      email: "admin@example.com",
+    } as never);
+  });
+
+  it("excludes board-authored product items when requested by the inbox", async () => {
+    const calls: Record<string, QueryCall[]> = {
+      admin_feedback_items: [],
+      user_profiles: [],
+    };
+    const feedbackItems = [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        category: "Navigation",
+        created_at: "2026-07-02T12:00:00.000Z",
+        updated_at: "2026-07-02T12:00:00.000Z",
+        created_by: "user-1",
+        project_id: null,
+        page_url: "/feedback-inbox",
+        page_path: "/feedback-inbox",
+        page_title: "Feedback Inbox",
+        target_id: null,
+        target_selector: "feedback-item",
+        target_text: null,
+        target_tag: null,
+        dom_path: null,
+        target_rect: null,
+        title: "Broken filter",
+        comment: "The filter chips are wrong",
+        request_type: "bug",
+        severity: "medium",
+        status: "open",
+        screenshot_url: null,
+        screenshot_path: null,
+        github_issue_number: null,
+        github_issue_url: null,
+        github_issue_state: null,
+        metadata: {},
+        tool_id: null,
+        agent_context: null,
+      },
+    ];
+
+    const client = {
+      from: jest.fn((table: string) => {
+        if (table === "user_profiles") {
+          const userProfilesCallCount = calls.user_profiles.filter(
+            (call) => call.op === "select",
+          ).length;
+          const result =
+            userProfilesCallCount === 0
+              ? { data: { is_admin: true }, error: null }
+              : {
+                  data: [{ id: "user-1", email: "submitter@example.com", full_name: "Submitter" }],
+                  error: null,
+                };
+          return createQuery(result, calls.user_profiles);
+        }
+
+        if (table === "admin_feedback_items") {
+          return createQuery(
+            { data: feedbackItems, error: null, count: 1 } as QueryResult & {
+              count: number;
+            },
+            calls.admin_feedback_items,
+          );
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    };
+
+    createServiceClientMock.mockReturnValue(client as never);
+
+    const response = await GET(makeGetRequest("excludeBoardItems=true&limit=25"));
+    expect(response.status).toBe(200);
+
+    expect(calls.admin_feedback_items).toContainEqual({
+      op: "neq",
+      args: ["page_path", "/product-board"],
+    });
+  });
+
+  it("filters feedback items by category when requested", async () => {
+    const calls: Record<string, QueryCall[]> = {
+      admin_feedback_items: [],
+      user_profiles: [],
+    };
+    const feedbackItems = [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        category: "Navigation",
+        created_at: "2026-07-02T12:00:00.000Z",
+        updated_at: "2026-07-02T12:00:00.000Z",
+        created_by: "user-1",
+        project_id: null,
+        page_url: "/feedback-inbox",
+        page_path: "/feedback-inbox",
+        page_title: "Feedback Inbox",
+        target_id: null,
+        target_selector: "feedback-item",
+        target_text: null,
+        target_tag: null,
+        dom_path: null,
+        target_rect: null,
+        title: "Broken filter",
+        comment: "The filter chips are wrong",
+        request_type: "bug",
+        severity: "medium",
+        status: "open",
+        screenshot_url: null,
+        screenshot_path: null,
+        github_issue_number: null,
+        github_issue_url: null,
+        github_issue_state: null,
+        metadata: {},
+        tool_id: null,
+        agent_context: null,
+      },
+    ];
+
+    const client = {
+      from: jest.fn((table: string) => {
+        if (table === "user_profiles") {
+          const userProfilesCallCount = calls.user_profiles.filter(
+            (call) => call.op === "select",
+          ).length;
+          const result =
+            userProfilesCallCount === 0
+              ? { data: { is_admin: true }, error: null }
+              : {
+                  data: [{ id: "user-1", email: "submitter@example.com", full_name: "Submitter" }],
+                  error: null,
+                };
+          return createQuery(result, calls.user_profiles);
+        }
+
+        if (table === "admin_feedback_items") {
+          return createQuery(
+            { data: feedbackItems, error: null, count: 1 } as QueryResult & {
+              count: number;
+            },
+            calls.admin_feedback_items,
+          );
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      }),
+    };
+
+    createServiceClientMock.mockReturnValue(client as never);
+
+    const response = await GET(makeGetRequest("category=Navigation"));
+    expect(response.status).toBe(200);
+
+    expect(calls.admin_feedback_items).toContainEqual({
+      op: "eq",
+      args: ["category", "Navigation"],
+    });
   });
 });

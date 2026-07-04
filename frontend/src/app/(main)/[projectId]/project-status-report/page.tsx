@@ -186,13 +186,22 @@ async function fetchPsrServerSide(
   const sumRevised = (lines: BudgetLineItem[]) =>
     lines.reduce((sum, l) => sum + l.revisedBudget, 0);
 
-  const feeLines = lineItems.filter((l) => l.costCode?.startsWith("550500"));
-  const insuranceLines = lineItems.filter((l) => l.costCode?.startsWith("550050"));
-  const unallocatedLines = lineItems.filter((l) => l.costCode?.startsWith("550099"));
-  const contingencyLines = lineItems.filter((l) => l.costCode?.startsWith("550100"));
+  const hasBudgetPrefix = (line: BudgetLineItem, prefix: string) =>
+    (line.costCode ?? "").replace(/\D/g, "").startsWith(prefix);
 
-  const contractBudget = primeContract?.original_contract_value ?? 0;
-  const currentBudget = primeContract?.revised_contract_value ?? 0;
+  const feeLines = lineItems.filter((l) => hasBudgetPrefix(l, "550500"));
+  const insuranceLines = lineItems.filter((l) => hasBudgetPrefix(l, "550050"));
+  const unallocatedLines = lineItems.filter((l) => hasBudgetPrefix(l, "550099"));
+  const contingencyLines = lineItems.filter((l) => hasBudgetPrefix(l, "550100"));
+
+  const contractBudget =
+    grandTotals.originalBudgetAmount ||
+    primeContract?.original_contract_value ||
+    0;
+  const currentBudget =
+    grandTotals.revisedBudget ||
+    primeContract?.revised_contract_value ||
+    0;
   const eca = grandTotals.estimatedCostAtCompletion;
 
   // Monthly billing

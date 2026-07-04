@@ -134,7 +134,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
                 <LabelStrips labels={labels} />
               )}
 
-              <p className="text-sm font-medium leading-snug text-foreground line-clamp-3">
+              <p className="text-[13px] font-medium leading-snug text-foreground line-clamp-3">
                 {item.title}
               </p>
 
@@ -214,7 +214,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
 export function BoardCardOverlay({ item }: { item: BoardItem }) {
   return (
     <div className="rounded-xl bg-background p-3 shadow-sm ring-1 ring-primary/30 rotate-1 scale-[1.02] opacity-95">
-      <p className="text-sm font-medium leading-snug text-foreground line-clamp-2">{item.title}</p>
+      <p className="text-[13px] font-medium leading-snug text-foreground line-clamp-2">{item.title}</p>
     </div>
   );
 }

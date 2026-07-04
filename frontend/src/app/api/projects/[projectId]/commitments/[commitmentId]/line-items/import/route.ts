@@ -4,6 +4,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
 
 type BudgetLine = {
   id: string;
@@ -91,12 +92,21 @@ export const POST = withApiGuardrails<
       });
     }
 
-    if (typeof commitment.status === "string" && commitment.status.trim().toLowerCase() === "approved") {
+    const lock = await getCommitmentSovLockStateForCommitment(supabase, {
+      commitmentId,
+      commitmentType: commitment.commitment_type === "subcontract" ? "subcontract" : "purchase_order",
+    });
+
+    if (lock.locked) {
       throw new GuardrailError({
         code: "PRECONDITION_FAILED",
         where: "/api/projects/[projectId]/commitments/[commitmentId]/line-items/import#POST",
-        message: "Approved commitments are read-only. Change the status before importing line items.",
-        details: { commitmentId },
+        message: lock.message ?? "This commitment schedule of values is locked.",
+        details: {
+          commitmentId,
+          errorCode: "COMMITMENT_SOV_LOCKED_AFTER_INVOICE_SUBMISSION",
+          reason: lock.reason,
+        },
       });
     }
 

@@ -17,6 +17,7 @@ import {
   ScrollText,
   BookOpen,
   BarChart3,
+  Wallet,
 } from "lucide-react";
 
 type NavItem = {
@@ -76,6 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "SOP Backlog", href: "/accounting/sop-backlog", icon: BookOpen },
       { label: "Finance Spend", href: "/accounting/finance-spend", icon: BarChart3 },
+      { label: "Direct Costs", href: "/accounting/direct-costs", icon: Wallet },
       { label: "WIP Report", href: "/accounting/wip", icon: ClipboardList },
       {
         label: "PSR",

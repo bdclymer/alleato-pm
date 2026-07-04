@@ -64,6 +64,41 @@ function renderTab(accountingMethod: "amount" | "unit") {
   );
 }
 
+function renderLockedTab(accountingMethod: "amount" | "unit") {
+  return render(
+    <ScheduleOfValuesTab
+      lineItems={lineItems}
+      projectId={25125}
+      commitmentId="test-commitment"
+      commitmentType="subcontract"
+      accountingMethod={accountingMethod}
+      lockState={{
+        locked: true,
+        reason: "submitted_invoice",
+        message: "This schedule of values is locked.",
+      }}
+    />,
+  );
+}
+
+function renderApprovedStatusTab() {
+  return render(
+    <ScheduleOfValuesTab
+      lineItems={lineItems}
+      projectId={25125}
+      commitmentId="test-commitment"
+      commitmentType="subcontract"
+      accountingMethod="amount"
+      status="approved"
+      lockState={{
+        locked: false,
+        reason: null,
+        message: null,
+      }}
+    />,
+  );
+}
+
 function renderTabWithSummary() {
   return render(
     <ScheduleOfValuesTab
@@ -110,10 +145,27 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(assertTableColumnIntegrity(table as HTMLTableElement)).toBe(10);
   });
 
+  it("keeps header, body, and footer aligned in locked amount mode (6 columns)", async () => {
+    const { container } = renderLockedTab("amount");
+    await waitForBudgetCodes();
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
+    expect(assertTableColumnIntegrity(table as HTMLTableElement)).toBe(6);
+  });
+
+  it("keeps header, body, and footer aligned in locked unit mode (9 columns)", async () => {
+    const { container } = renderLockedTab("unit");
+    await waitForBudgetCodes();
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
+    expect(assertTableColumnIntegrity(table as HTMLTableElement)).toBe(9);
+  });
+
   it("renders the commitment SOV financial summary rows", async () => {
     renderTabWithSummary();
     await waitForBudgetCodes();
 
+    expect(screen.getByText("Line Items Total")).toBeInTheDocument();
     expect(screen.getByText("Subtotal")).toBeInTheDocument();
     expect(screen.getByText("Original Contract")).toBeInTheDocument();
     expect(screen.getByText("Approved Changes")).toBeInTheDocument();
@@ -123,5 +175,31 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(screen.getByText("Current Retainage")).toBeInTheDocument();
     expect(screen.getByText("$44,370.00")).toBeInTheDocument();
     expect(screen.getByText("$555.56")).toBeInTheDocument();
+  });
+
+  it("renders locked rows as read-only content instead of edit controls", async () => {
+    renderLockedTab("amount");
+    await waitForBudgetCodes();
+
+    expect(screen.queryByRole("textbox", { name: /Description 1/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Move line 1 up/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Demolition")).toBeInTheDocument();
+    expect(screen.getByText("024113")).toBeInTheDocument();
+  });
+
+  it("forces approved commitments into read-only mode even if lockState says unlocked", async () => {
+    renderApprovedStatusTab();
+    await waitForBudgetCodes();
+
+    expect(
+      screen.getByText(
+        "This commitment is approved. Move it back to Draft before editing schedule-of-values line items.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Add Line Item")).not.toBeInTheDocument();
+    expect(screen.queryByText("Import from Budget")).not.toBeInTheDocument();
+    expect(screen.queryByText("Save Changes")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /Description 1/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Move line 1 up/i })).not.toBeInTheDocument();
   });
 });

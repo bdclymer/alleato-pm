@@ -376,23 +376,31 @@ function buildProjectInfo(
     jobToDateCostDetail: number;
   },
 ): PsrProjectInfo {
-  // Extract special budget lines by cost code prefix
-  const feeLines = lineItems.filter((l) => l.costCode?.startsWith("550500"));
-  const insuranceLines = lineItems.filter((l) => l.costCode?.startsWith("550050"));
-  const unallocatedLines = lineItems.filter((l) => l.costCode?.startsWith("550099"));
-  const contingencyLines = lineItems.filter((l) => l.costCode?.startsWith("550100"));
+  const hasBudgetPrefix = (line: BudgetLineItem, prefix: string) =>
+    (line.costCode ?? "").replace(/\D/g, "").startsWith(prefix);
+
+  // Extract special budget lines by canonical numeric prefix so formatted codes
+  // like `55-0500` and `55-0050` still map into the PSR summary buckets.
+  const feeLines = lineItems.filter((l) => hasBudgetPrefix(l, "550500"));
+  const insuranceLines = lineItems.filter((l) => hasBudgetPrefix(l, "550050"));
+  const unallocatedLines = lineItems.filter((l) => hasBudgetPrefix(l, "550099"));
+  const contingencyLines = lineItems.filter((l) => hasBudgetPrefix(l, "550100"));
 
   const sumOriginal = (lines: BudgetLineItem[]) =>
     lines.reduce((sum, l) => sum + l.originalBudgetAmount, 0);
   const sumRevised = (lines: BudgetLineItem[]) =>
     lines.reduce((sum, l) => sum + l.revisedBudget, 0);
 
-  // Use prime contract values when available; fall back to budget tool totals so
-  // the PSR always shows meaningful numbers even when no prime contract is set up.
+  // Budget detail rows in the PSR already use budget-tool totals, so the summary
+  // must use the same source of truth to avoid conflicting numbers on one page.
   const contractBudget =
-    (primeContract?.original_contract_value || 0) || grandTotals.originalBudgetAmount;
+    grandTotals.originalBudgetAmount ||
+    primeContract?.original_contract_value ||
+    0;
   const currentBudget =
-    (primeContract?.revised_contract_value || 0) || grandTotals.revisedBudget;
+    grandTotals.revisedBudget ||
+    primeContract?.revised_contract_value ||
+    0;
   const eca = grandTotals.estimatedCostAtCompletion;
   const currentProjectedProfit = currentBudget - eca;
   const remainingBuyout =

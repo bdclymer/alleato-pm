@@ -18,19 +18,20 @@ import type {
 
 export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "active", label: "Active" },
-  { value: "open", label: "Submitted" },
+  { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
+  { value: "in_review", label: "In Review" },
+  { value: "verified", label: "Verified" },
   { value: "deferred", label: "Deferred" },
-  { value: "resolved", label: "Resolved" },
   { value: "dispatched", label: "Dispatched" },
   { value: "all", label: "All" },
 ];
 
 export const FEEDBACK_STATUS_TABS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "open", label: "Submitted" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved", label: "Resolved" },
+  { value: "open", label: "Open" },
+  { value: "in_review", label: "In Review" },
+  { value: "verified", label: "Verified" },
   { value: "deferred", label: "Deferred" },
 ];
 
@@ -38,8 +39,9 @@ export const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
   { value: "open", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "pr_created", label: "PR Created" },
+  { value: "in_review", label: "In Review" },
+  { value: "verified", label: "Verified" },
   { value: "deferred", label: "Deferred" },
-  { value: "resolved", label: "Resolved" },
   { value: "archived", label: "Archived" },
 ];
 
@@ -86,11 +88,18 @@ export const STATUS_META: Record<
     label: "Deferred",
     showInList: true,
   },
-  resolved: {
+  in_review: {
+    icon: ShieldCheck,
+    className: "text-status-info",
+    dotClassName: "bg-status-info",
+    label: "In Review",
+    showInList: true,
+  },
+  verified: {
     icon: ShieldCheck,
     className: "text-status-success",
     dotClassName: "bg-status-success",
-    label: "Resolved",
+    label: "Verified",
     showInList: true,
   },
   archived: {
@@ -115,13 +124,15 @@ export const IN_PROGRESS_STATUSES = new Set([
   "in_review",
 ]);
 export const PR_CREATED_STATUSES = new Set(["pr_created"]);
-export const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+export const IN_REVIEW_STATUSES = new Set(["resolved", "in_review"]);
+export const VERIFIED_STATUSES = new Set(["closed"]);
 export const DEFERRED_STATUSES = new Set(["deferred"]);
 export const ARCHIVED_STATUSES = new Set(["archived"]);
 export const LIST_SECTION_ORDER: DisplayStatus[] = [
   "in_progress",
   "pr_created",
+  "in_review",
   "open",
   "deferred",
-  "resolved",
+  "verified",
 ];

@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  ArrowLeft,
   Calendar,
   ChevronDown,
   Clock,
   ExternalLink,
   FileText,
   FolderOpen,
+  Plus,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -17,6 +17,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import {
+  AiFeedbackControl,
+  type AiFeedbackReason,
+} from "@/components/ai/ai-feedback-control";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -39,7 +43,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateAvatar, EmptyState } from "@/components/ds";
+import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
 import { PageShell } from "@/components/layout";
+import type { CuratedMeetingRisk } from "@/lib/meetings/server";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
 import { MeetingCategoryControl } from "@/components/meetings/meeting-category-control";
 import { MeetingTasksManager } from "@/components/meetings/meeting-tasks-manager";
@@ -50,9 +59,10 @@ import { toast } from "sonner";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type MeetingSegment = Database["public"]["Tables"]["meeting_segments"]["Row"] & {
-  opportunities?: unknown[];
-};
+type MeetingSegment =
+  Database["public"]["Tables"]["meeting_segments"]["Row"] & {
+    opportunities?: unknown[];
+  };
 
 type DocumentMetadata =
   Database["public"]["Tables"]["document_metadata"]["Row"] & {
@@ -98,6 +108,10 @@ interface RelatedMeeting {
   duration_minutes: number | null;
 }
 
+function meetingSegmentAnchorId(segmentId: string) {
+  return `meeting-segment-${segmentId}`;
+}
+
 export interface MeetingTask {
   id: string;
   title: string | null;
@@ -117,23 +131,26 @@ export interface MeetingDetailContentProps {
   parsedSections: ParsedSections | null;
   participantsList: string[];
   allTasks: string[];
-  allRisks: string[];
+  riskItems: Array<
+    | CuratedMeetingRisk
+    | {
+        id: string;
+        text: string;
+        whyItMatters: string | null;
+        confidence: string | null;
+        source: "segment_fallback";
+      }
+  >;
   allDecisions: string[];
   allOpportunities: string[];
   meetingTasks?: MeetingTask[];
   transcriptContent: string | null;
   /** True when a stored transcript existed but the fetch failed (vs. never processed) */
   transcriptLoadFailed?: boolean;
-  backHref: string;
-  backLabel: string;
   relatedMeetings?: RelatedMeeting[];
   relatedMeetingsBaseHref?: string;
-  /** Render slot for DigestSection or other project-specific content */
-  digestSlot?: React.ReactNode;
   /** Render slot for the FormattedTranscript */
   transcriptSlot?: React.ReactNode;
-  /** Render slot for the MarkdownSummary */
-  summarySlot?: React.ReactNode;
 }
 
 // ─── Collapsible Section ────────────────────────────────────────────────────
@@ -163,25 +180,74 @@ function AccordionSection({
   );
 }
 
-// ─── Sidebar List ───────────────────────────────────────────────────────────
-
-function SidebarList({
+function SummarySubsection({
   label,
-  items,
+  children,
 }: {
   label: string;
-  items: string[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+// ─── Sidebar List ───────────────────────────────────────────────────────────
+
+const MEETING_RISK_POSITIVE_REASONS: AiFeedbackReason[] = [
+  { id: "real_risk", label: "This is a real risk" },
+  { id: "well_scoped", label: "Well scoped" },
+  { id: "actionable", label: "Actionable wording" },
+  { id: "right_priority", label: "Right priority" },
+];
+
+const MEETING_RISK_NEGATIVE_REASONS: AiFeedbackReason[] = [
+  { id: "duplicate_risk", label: "Duplicate of another risk" },
+  { id: "not_a_risk", label: "Not actually a risk" },
+  { id: "too_vague", label: "Too vague" },
+  { id: "wrong_priority", label: "Wrong priority" },
+  { id: "missing_context", label: "Missing context" },
+];
+
+function SidebarList<T>({
+  label,
+  items,
+  getItemKey,
+  renderItem,
+  renderItemActions,
+}: {
+  label: string;
+  items: T[];
+  getItemKey?: (item: T, index: number) => React.Key;
+  renderItem?: (item: T, index: number) => React.ReactNode;
+  renderItemActions?: (item: T, index: number) => React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold text-foreground">
-        {label}
-      </div>
+      <div className="text-sm font-semibold text-foreground">{label}</div>
       <ul className="space-y-1.5">
         {items.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
-            <span aria-hidden className="mt-0.5 text-muted-foreground">-</span>
-            <span>{item}</span>
+          <li
+            key={getItemKey ? getItemKey(item, idx) : idx}
+            className="group flex items-start gap-2 text-sm leading-relaxed text-muted-foreground"
+          >
+            <span aria-hidden className="mt-0.5 text-muted-foreground">
+              -
+            </span>
+            <div className="min-w-0 flex-1">
+              {renderItem ? renderItem(item, idx) : String(item)}
+            </div>
+            {renderItemActions ? (
+              <div className="mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                {renderItemActions(item, idx)}
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -277,9 +343,9 @@ function preprocessMarkdown(text: string): string {
     // Detect lines starting with emoji (Unicode emoji ranges)
     const cp = line.codePointAt(0) ?? 0;
     const startsWithEmoji =
-      (cp >= 0x1F300 && cp <= 0x1FAD6) ||
-      (cp >= 0x2600 && cp <= 0x27BF) ||
-      (cp >= 0x2700 && cp <= 0x27BF);
+      (cp >= 0x1f300 && cp <= 0x1fad6) ||
+      (cp >= 0x2600 && cp <= 0x27bf) ||
+      (cp >= 0x2700 && cp <= 0x27bf);
 
     if (startsWithEmoji && i > 0) {
       result.push("");
@@ -311,7 +377,8 @@ function FirefliesSectionContent({ value }: { value: string }) {
         area: "meeting-detail",
         operation: "parse-json-content",
         error,
-        userVisibleFallback: "Meeting content was rendered as markdown instead of JSON.",
+        userVisibleFallback:
+          "Meeting content was rendered as markdown instead of JSON.",
       });
     }
   }
@@ -325,22 +392,30 @@ function FirefliesSectionContent({ value }: { value: string }) {
         components={{
           h1: ({ children }) => (
             // eslint-disable-next-line design-system/no-raw-heading
-            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">{children}</h3>
+            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">
+              {children}
+            </h3>
           ),
           h2: ({ children }) => (
             // eslint-disable-next-line design-system/no-raw-heading
-            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">{children}</h3>
+            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">
+              {children}
+            </h3>
           ),
           h3: ({ children }) => (
             // eslint-disable-next-line design-system/no-raw-heading
-            <h4 className="text-xs font-semibold text-foreground pt-3 first:pt-0">{children}</h4>
+            <h4 className="text-xs font-semibold text-foreground pt-3 first:pt-0">
+              {children}
+            </h4>
           ),
           p: ({ children }) => (
             <p className="text-sm text-muted-foreground leading-relaxed pb-1">
               {children}
             </p>
           ),
-          ul: ({ children }) => <ul className="space-y-1 pl-4 list-disc">{children}</ul>,
+          ul: ({ children }) => (
+            <ul className="space-y-1 pl-4 list-disc">{children}</ul>
+          ),
           ol: ({ children }) => (
             <ol className="list-decimal pl-4 space-y-1">{children}</ol>
           ),
@@ -350,7 +425,9 @@ function FirefliesSectionContent({ value }: { value: string }) {
             </li>
           ),
           strong: ({ children }) => (
-            <strong className="font-semibold text-foreground">{children}</strong>
+            <strong className="font-semibold text-foreground">
+              {children}
+            </strong>
           ),
         }}
       >
@@ -401,7 +478,9 @@ function ProjectAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{hasProject ? "Change project" : "Assign to project"}</DialogTitle>
+          <DialogTitle>
+            {hasProject ? "Change project" : "Assign to project"}
+          </DialogTitle>
           <DialogDescription>{meetingTitle}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2 py-2">
@@ -413,7 +492,11 @@ function ProjectAssignmentDialog({
             disabled={isLoadingProjects || isSaving}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
+              <SelectValue
+                placeholder={
+                  isLoadingProjects ? "Loading projects..." : "Select a project"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">No project</SelectItem>
@@ -441,7 +524,11 @@ function ProjectAssignmentDialog({
           >
             Cancel
           </Button>
-          <Button type="button" onClick={onSave} disabled={isLoadingProjects || isSaving}>
+          <Button
+            type="button"
+            onClick={onSave}
+            disabled={isLoadingProjects || isSaving}
+          >
             {isSaving ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
@@ -458,33 +545,33 @@ export function MeetingDetailContent({
   parsedSections,
   participantsList,
   allTasks: _allTasks,
-  allRisks,
+  riskItems,
   allDecisions: _allDecisions,
   allOpportunities,
   meetingTasks = [],
   transcriptContent,
   transcriptLoadFailed = false,
-  backHref,
-  backLabel,
   relatedMeetings = [],
   relatedMeetingsBaseHref,
-  digestSlot,
   transcriptSlot,
-  summarySlot,
 }: MeetingDetailContentProps) {
-  const { projects, isLoading: isLoadingProjects, error: projectLoadError } = useProjects({
+  const {
+    projects,
+    isLoading: isLoadingProjects,
+    error: projectLoadError,
+  } = useProjects({
     limit: 500,
   });
   const [assignmentDialogOpen, setAssignmentDialogOpen] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState(
     meeting.project_id ? String(meeting.project_id) : "",
   );
-  const [assignedProjectId, setAssignedProjectId] = React.useState<number | null>(
-    meeting.project_id,
-  );
-  const [assignedProjectName, setAssignedProjectName] = React.useState<string | null>(
-    meeting.project,
-  );
+  const [assignedProjectId, setAssignedProjectId] = React.useState<
+    number | null
+  >(meeting.project_id);
+  const [assignedProjectName, setAssignedProjectName] = React.useState<
+    string | null
+  >(meeting.project);
   const [isSavingProject, setIsSavingProject] = React.useState(false);
 
   React.useEffect(() => {
@@ -494,7 +581,9 @@ export function MeetingDetailContent({
   }, [meeting.id, meeting.project, meeting.project_id]);
 
   const selectedProject = React.useMemo(
-    () => projects.find((project) => String(project.id) === selectedProjectId) ?? null,
+    () =>
+      projects.find((project) => String(project.id) === selectedProjectId) ??
+      null,
     [projects, selectedProjectId],
   );
 
@@ -507,6 +596,9 @@ export function MeetingDetailContent({
     assignedProject?.name ||
     assignedProjectName ||
     (assignedProjectId ? `Project #${assignedProjectId}` : null);
+  const createMeetingHref = assignedProjectId
+    ? `/${assignedProjectId}/meetings/new`
+    : null;
 
   const handleSaveProjectAssignment = async () => {
     const nextProjectId = selectedProjectId ? Number(selectedProjectId) : null;
@@ -522,9 +614,15 @@ export function MeetingDetailContent({
         body: JSON.stringify({ project_id: nextProjectId }),
       });
       setAssignedProjectId(nextProjectId);
-      setAssignedProjectName(nextProjectId ? selectedProject?.name ?? null : null);
+      setAssignedProjectName(
+        nextProjectId ? (selectedProject?.name ?? null) : null,
+      );
       setAssignmentDialogOpen(false);
-      toast.success(nextProjectId ? "Meeting assigned to project" : "Project assignment removed");
+      toast.success(
+        nextProjectId
+          ? "Meeting assigned to project"
+          : "Project assignment removed",
+      );
     } catch (error) {
       toast.error("Failed to assign meeting to project");
     } finally {
@@ -541,17 +639,26 @@ export function MeetingDetailContent({
     meaningfulText(meeting.summary) ||
     undefined;
   const notesContent =
-    meaningfulText(parsedSections?.notes) ||
-    meaningfulText(meeting.notes);
+    meaningfulText(parsedSections?.notes) || meaningfulText(meeting.notes);
   const actionItemsContent =
     meaningfulText(parsedSections?.actionItems) ||
     meaningfulText(meeting.action_items);
+  const summaryOverviewContent =
+    meaningfulText(parsedSections?.shortOverview) ||
+    meaningfulText(parsedSections?.shortSummary) ||
+    meaningfulText(parsedSections?.gist) ||
+    meaningfulText(parsedSections?.summary) ||
+    meaningfulText(meeting.overview) ||
+    meaningfulText(meeting.summary);
   const shorthandBullet =
     meaningfulText(parsedSections?.shorthandBullet) ||
     meaningfulText(meeting.bullet_points);
   const hasActionSnapshot =
-    allRisks.length > 0 ||
-    allOpportunities.length > 0;
+    riskItems.length > 0 || allOpportunities.length > 0;
+  const hasSummarySection =
+    Boolean(summaryOverviewContent) ||
+    Boolean(notesContent) ||
+    Boolean(actionItemsContent);
 
   const keywordList = React.useMemo(
     () =>
@@ -573,79 +680,67 @@ export function MeetingDetailContent({
       variant="detailWide"
       title={meeting.title || "Untitled Meeting"}
       actions={
-        backHref ? (
-          <Button asChild size="sm" variant="ghost">
+        createMeetingHref ? (
+          <Button asChild size="sm">
             <Link
-              href={backHref}
-              aria-label={backLabel ? `Back to ${backLabel}` : "Back"}
+              href={createMeetingHref}
+              aria-label={
+                projectLabel
+                  ? `Create meeting for ${projectLabel}`
+                  : "Create meeting"
+              }
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {backLabel || "Meetings"}
+              <Plus className="mr-2 h-4 w-4" />
+              Create meeting
             </Link>
           </Button>
         ) : undefined
       }
       contentClassName="pb-12"
     >
-
-      {/* Meta bar */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-4 mb-8">
+      <DetailPropertyBar>
         {meeting.date ? (
-          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
+          <DetailPropertyItem icon={Calendar}>
             {format(new Date(meeting.date), "EEEE, MMMM d, yyyy · h:mm a")}
-          </span>
+          </DetailPropertyItem>
         ) : null}
         {meeting.duration_minutes ? (
-          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
+          <DetailPropertyItem icon={Clock}>
             {meeting.duration_minutes} min
-          </span>
+          </DetailPropertyItem>
         ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={`inline-flex items-center gap-2 text-xs font-medium h-auto px-0 transition-colors ${
-            projectLabel
-              ? "text-muted-foreground hover:text-foreground"
-              : "text-muted-foreground/60 hover:text-muted-foreground"
-          }`}
+        <DetailPropertyItem
+          icon={FolderOpen}
           onClick={() => setAssignmentDialogOpen(true)}
+          muted={!projectLabel}
         >
-          <FolderOpen className="h-3.5 w-3.5" />
           {projectLabel ?? "Assign to project"}
-        </Button>
+        </DetailPropertyItem>
         <MeetingCategoryControl
           meetingId={meeting.id}
           meetingTitle={meeting.title || "Untitled Meeting"}
           initialCategory={meeting.category}
         />
         {meeting.fireflies_link ? (
-          <a
+          <DetailPropertyItem
+            icon={ExternalLink}
             href={meeting.fireflies_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            external
           >
-            <ExternalLink className="h-3.5 w-3.5" />
             View in Fireflies
-          </a>
+          </DetailPropertyItem>
         ) : null}
-      </div>
+      </DetailPropertyBar>
 
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Main content */}
         <div className="space-y-8">
-          {/* Meeting Overview — leads with the prose summary; the bulleted
-              key points move to their own section below. */}
-          {(overviewContent || shorthandBullet) ? (
+          {/* Meeting Overview — leads with the prose read of the meeting. */}
+          {overviewContent || shorthandBullet ? (
             <section className="space-y-4">
               <AccordionSection label="Meeting Overview">
                 {overviewContent ? (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {overviewContent}
-                  </p>
+                  <FirefliesSectionContent value={overviewContent} />
                 ) : (
                   <FirefliesSectionContent value={shorthandBullet!} />
                 )}
@@ -658,8 +753,8 @@ export function MeetingDetailContent({
           <section className="border-t border-border pt-6">
             <AccordionSection label={`Tasks (${meetingTasks.length})`}>
               <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                Tasks are tracked follow-ups you can edit, assign, prioritize, and
-                close across Alleato.
+                Tasks are tracked follow-ups you can edit, assign, prioritize,
+                and close across Alleato.
               </p>
               <MeetingTasksManager
                 meetingId={meeting.id}
@@ -677,46 +772,27 @@ export function MeetingDetailContent({
             </AccordionSection>
           </section>
 
-          {/* Action Items — grouped by the person Fireflies assigned them to */}
-          {actionItemsContent ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label="Action Items">
-                <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                  Action items are the source transcript notes from Fireflies,
-                  grouped by the assignee named in the meeting.
-                </p>
-                <ActionItemsByAssignee content={actionItemsContent} />
-              </AccordionSection>
-            </section>
-          ) : null}
-
-          {/* Summary — collapsed by default */}
-          {parsedSections?.summary && summarySlot ? (
+          {/* Summary — Fireflies overview, notes, and action items grouped into one section */}
+          {hasSummarySection ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Summary" defaultOpen={false}>
-                {summarySlot}
-              </AccordionSection>
-            </section>
-          ) : null}
-
-          {/* AI Digest — owns its own border/spacing so it leaves no empty
-              bordered section when the meeting has no digest yet. */}
-          {digestSlot}
-
-          {/* Notes — collapsed by default */}
-          {notesContent ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label="Notes" defaultOpen={false}>
-                <FirefliesSectionContent value={notesContent} />
-              </AccordionSection>
-            </section>
-          ) : null}
-
-          {/* Key Points (bulleted form — shown below the prose overview when both exist) */}
-          {overviewContent && shorthandBullet ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label="Key Points" defaultOpen={false}>
-                <FirefliesSectionContent value={shorthandBullet} />
+                <div className="space-y-6">
+                  {summaryOverviewContent ? (
+                    <SummarySubsection label="Overview">
+                      <FirefliesSectionContent value={summaryOverviewContent} />
+                    </SummarySubsection>
+                  ) : null}
+                  {notesContent ? (
+                    <SummarySubsection label="Notes">
+                      <FirefliesSectionContent value={notesContent} />
+                    </SummarySubsection>
+                  ) : null}
+                  {actionItemsContent ? (
+                    <SummarySubsection label="Action Items">
+                      <ActionItemsByAssignee content={actionItemsContent} />
+                    </SummarySubsection>
+                  ) : null}
+                </div>
               </AccordionSection>
             </section>
           ) : null}
@@ -730,7 +806,11 @@ export function MeetingDetailContent({
               >
                 <div className="space-y-6">
                   {segments.map((segment, index) => (
-                    <div key={segment.id} className="flex gap-2.5">
+                    <div
+                      key={segment.id}
+                      id={meetingSegmentAnchorId(segment.id)}
+                      className="flex scroll-mt-24 gap-2.5"
+                    >
                       <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium tabular-nums text-muted-foreground">
                         {segment.segment_index + 1}
                       </span>
@@ -753,7 +833,9 @@ export function MeetingDetailContent({
           {/* Full Transcript */}
           {transcriptSlot ? (
             <section className="border-t border-border pt-6">
-              {transcriptSlot}
+              <AccordionSection label="Full Transcript">
+                {transcriptSlot}
+              </AccordionSection>
             </section>
           ) : null}
 
@@ -795,20 +877,68 @@ export function MeetingDetailContent({
                 Action Snapshot
               </div>
 
-              {allRisks.length > 0 && (
+              {riskItems.length > 0 && (
                 <div className="border-b border-border pb-4">
                   <SidebarList
                     label="Risks"
-                    items={allRisks}
+                    items={riskItems}
+                    getItemKey={(risk) => risk.id}
+                    renderItem={(risk) => (
+                      <div className="space-y-1">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {risk.text}
+                        </p>
+                        {risk.whyItMatters ? (
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            {risk.whyItMatters}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                    renderItemActions={(risk, index) => (
+                      <AiFeedbackControl
+                        surface={
+                          risk.source === "curated"
+                            ? "meeting_detail_risk_card"
+                            : "meeting_detail_risk"
+                        }
+                        subjectType={
+                          risk.source === "curated"
+                            ? "insight_card"
+                            : "meeting_risk"
+                        }
+                        subjectId={risk.id}
+                        projectId={assignedProjectId}
+                        contentText={[risk.text, risk.whyItMatters]
+                          .filter(Boolean)
+                          .join("\n")}
+                        contentSnapshot={{
+                          meetingId: meeting.id,
+                          projectId: assignedProjectId,
+                          section: "action_snapshot_risks",
+                          riskText: risk.text,
+                          riskIndex: index,
+                          meetingTitle: meeting.title,
+                          riskSource: risk.source,
+                          confidence: risk.confidence,
+                        }}
+                        reasons={MEETING_RISK_NEGATIVE_REASONS}
+                        positiveReasons={MEETING_RISK_POSITIVE_REASONS}
+                        collectReasonFor="both"
+                        reasonInputMode="form"
+                        reasonPrompt="Why is this risk useful or not useful?"
+                        freeTextLabel="What should the AI know?"
+                        freeTextPlaceholder="Optional example, correction, or dedupe note"
+                        submitLabel="Save"
+                        className="rounded-full bg-background/80"
+                      />
+                    )}
                   />
                 </div>
               )}
 
               {allOpportunities.length > 0 && (
-                <SidebarList
-                  label="Opportunities"
-                  items={allOpportunities}
-                />
+                <SidebarList label="Opportunities" items={allOpportunities} />
               )}
             </div>
           )}
@@ -821,7 +951,8 @@ export function MeetingDetailContent({
                   Related Meetings
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {relatedMeetings.length} recent meeting{relatedMeetings.length === 1 ? "" : "s"}
+                  {relatedMeetings.length} recent meeting
+                  {relatedMeetings.length === 1 ? "" : "s"}
                 </p>
               </div>
               <div className="space-y-2">
@@ -832,7 +963,10 @@ export function MeetingDetailContent({
                     className="group flex items-center gap-3 py-1.5 transition-colors"
                   >
                     {(rm.date ?? rm.created_at) ? (
-                      <DateAvatar date={(rm.date ?? rm.created_at)!} size="sm" />
+                      <DateAvatar
+                        date={(rm.date ?? rm.created_at)!}
+                        size="sm"
+                      />
                     ) : (
                       <div className="w-7 h-7 shrink-0 rounded-full bg-muted flex items-center justify-center">
                         <Calendar className="h-3 w-3 text-muted-foreground" />
@@ -843,7 +977,9 @@ export function MeetingDetailContent({
                         {rm.title || "Untitled Meeting"}
                       </p>
                       {rm.duration_minutes ? (
-                        <p className="text-xs text-muted-foreground">{rm.duration_minutes} min</p>
+                        <p className="text-xs text-muted-foreground">
+                          {rm.duration_minutes} min
+                        </p>
                       ) : null}
                     </div>
                   </Link>

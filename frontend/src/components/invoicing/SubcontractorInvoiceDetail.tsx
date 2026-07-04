@@ -53,6 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import {
   SummaryTab,
@@ -425,6 +426,7 @@ export function SubcontractorInvoiceDetail({
       contentClassName="space-y-4"
       actions={
         <div className="flex items-center gap-2">
+          <CommitmentsHelpSheet buttonVariant="ghost" />
           {canInviteSubcontractor && (
             <Button
               size="sm"

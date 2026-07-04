@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -254,6 +255,7 @@ export default function NewCommitmentPcoPage() {
       onBack={() => router.back()}
       actions={
         <div className="flex items-center gap-1.5">
+          <CommitmentsHelpSheet buttonVariant="ghost" />
           <Button
             variant="outline"
             size="sm"

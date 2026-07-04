@@ -7,3 +7,4 @@
 export { ExportDialog } from "./ExportDialog";
 export { ExportCommitmentDialog } from "./ExportCommitmentDialog";
 export { EmailCommitmentDialog } from "./EmailCommitmentDialog";
+export { CommitmentsHelpSheet } from "./CommitmentsHelpSheet";

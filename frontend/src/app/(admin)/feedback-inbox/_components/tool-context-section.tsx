@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Link2, Loader2, Play, Wrench } from "lucide-react";
-import { Button, EmptyState } from "@/components/ds";
+import {
+  Button,
+  EmptyState,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -11,14 +19,19 @@ import { cn } from "@/lib/utils";
 import type { FeedbackItem, ToolContextData, ToolOption } from "../types";
 import { notifyFeedbackInboxFailure } from "../helpers";
 
-export function ToolContextSection({ item }: { item: FeedbackItem }) {
+export function ToolContextSection({
+  item,
+  showSectionChrome = true,
+}: {
+  item: FeedbackItem;
+  showSectionChrome?: boolean;
+}) {
   const [tools, setTools] = useState<ToolOption[]>([]);
   const [assignedToolId, setAssignedToolId] = useState<number | null>(null);
   const [context, setContext] = useState<ToolContextData | null>(null);
   const [loading, setLoading] = useState(false);
   const [crawling, setCrawling] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,19 +97,7 @@ export function ToolContextSection({ item }: { item: FeedbackItem }) {
     };
   }, [item.id]);
 
-  useEffect(() => {
-    if (!showDropdown) return;
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showDropdown]);
-
   async function handleAssign(toolId: number) {
-    setShowDropdown(false);
     setLoading(true);
     try {
       await apiFetch("/api/admin/feedback/tools", {
@@ -211,123 +212,139 @@ export function ToolContextSection({ item }: { item: FeedbackItem }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="relative" ref={dropdownRef}>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-56 flex-1">
+            <Select
+              value={assignedToolId ? String(assignedToolId) : "none"}
+              onValueChange={(value) => {
+                if (value === "none") return;
+                void handleAssign(Number(value));
+              }}
+              disabled={loading}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                  <SelectValue placeholder="Assign tool" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                {tools.map((tool) => (
+                  <SelectItem key={tool.id} value={String(tool.id)}>
+                    {tool.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <Button
             type="button"
             variant="outline"
             size="xs"
-            onClick={() => setShowDropdown(!showDropdown)}
+            onClick={handleAutoMatch}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Auto-detect tool from feedback content"
           >
-            <Wrench className="h-3 w-3 text-muted-foreground" />
-            {assignedTool ? assignedTool.name : "Assign tool"}
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Play className="h-3 w-3" />
+            )}
+            Auto-match
           </Button>
+        </div>
 
-          {showDropdown && (
-            <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-sm">
-              {tools.map((tool) => (
+        {assignedTool ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{assignedTool.name}</span>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            <span>{assignedTool.category}</span>
+            {context ? (
+              <>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
                 <Button
-                  key={tool.id}
                   type="button"
                   variant="ghost"
-                  size="default"
-                  onClick={() => handleAssign(tool.id)}
-                  className={cn(
-                    "h-auto w-full justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-xs font-normal transition-colors hover:bg-muted",
-                    tool.id === assignedToolId && "bg-primary/10 text-primary",
-                  )}
+                  size="xs"
+                  className="h-auto px-0 py-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  onClick={() => setShowDetails((value) => !value)}
                 >
-                  <span className="truncate">{tool.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {tool.category}
-                  </span>
+                  {showDetails ? "Hide tool details" : "Show tool details"}
+                  <ChevronDown
+                    className={cn(
+                      "ml-1 h-3 w-3 transition-transform",
+                      showDetails && "rotate-180",
+                    )}
+                  />
                 </Button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="xs"
-          onClick={handleAutoMatch}
-          disabled={loading}
-          className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-          title="Auto-detect tool from feedback content"
-        >
-          {loading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-          Auto-match
-        </Button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {context && (
-        <div className="space-y-1.5 rounded-md bg-muted/40 p-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground w-20 shrink-0">Tool</span>
-            <span className="font-medium text-foreground">{context.tool_name}</span>
-          </div>
-          {context.procore_url && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground w-20 shrink-0">Procore</span>
-              <a
-                href={context.procore_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="truncate font-mono text-xs text-primary hover:underline flex items-center gap-1"
-              >
-                <Link2 className="h-3 w-3 shrink-0" />
-                {context.procore_url.replace(/https?:\/\/[^/]+/, "")}
-              </a>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground w-20 shrink-0">PRP</span>
-            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-              {context.prp_path}
-            </code>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground w-20 shrink-0">Research</span>
-            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-              {context.research_folder}
-            </code>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground w-20 shrink-0">Manifest</span>
-            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-              {context.manifest_path}
-            </code>
-          </div>
-
-          <div className="pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="xs"
-              onClick={handleCrawl}
-              disabled={crawling}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+      {context && showDetails ? (
+        <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+          {context.procore_url ? (
+            <a
+              href={context.procore_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-w-0 items-center gap-1.5 text-xs text-primary hover:underline"
             >
-              {crawling ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Play className="h-3 w-3" />
-              )}
-              {crawling ? "Crawling Procore..." : "Crawl Procore"}
-            </Button>
+              <Link2 className="h-3 w-3 shrink-0" />
+              <span className="truncate">
+                {context.procore_url.replace(/https?:\/\/[^/]+/, "")}
+              </span>
+            </a>
+          ) : null}
+          <div className="space-y-1 text-xs text-muted-foreground">
+            {context.prp_path ? (
+              <p className="truncate">
+                <span className="font-medium text-foreground">PRP:</span>{" "}
+                <code>{context.prp_path}</code>
+              </p>
+            ) : null}
+            <p className="truncate">
+              <span className="font-medium text-foreground">Research:</span>{" "}
+              <code>{context.research_folder}</code>
+            </p>
+            <p className="truncate">
+              <span className="font-medium text-foreground">Manifest:</span>{" "}
+              <code>{context.manifest_path}</code>
+            </p>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {!context && !loading && (
+      {context ? (
+        <div className="mt-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={handleCrawl}
+            disabled={crawling}
+            className="h-auto px-0 py-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
+          >
+            {crawling ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : (
+              <Play className="mr-1 h-3 w-3" />
+            )}
+            {crawling ? "Crawling Procore..." : "Refresh tool context"}
+          </Button>
+        </div>
+      ) : null}
+
+      {!context && !loading && showSectionChrome && (
         <EmptyState
           icon={<Wrench />}
           title="No tool matched"

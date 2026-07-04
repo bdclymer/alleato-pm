@@ -9,6 +9,7 @@ import {
   useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import {
@@ -23,6 +24,8 @@ import {
 } from "lucide-react";
 import {
   Button,
+  Checkbox,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -62,10 +65,6 @@ const VeltFeedbackComments = dynamic(
   () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltFeedbackComments),
   { ssr: false },
 );
-const VeltCommentToolbar = dynamic(
-  () => import("@/components/velt/VeltFeedbackComments").then((m) => m.VeltCommentToolbar),
-  { ssr: false },
-);
 import {
   FEEDBACK_STATUS_TABS,
   FEEDBACK_INBOX_TABS,
@@ -77,6 +76,7 @@ import {
   getAssignedAgent,
   getDispatchStatus,
   notifyFeedbackInboxFailure,
+  relativeTime,
   toDisplayStatus,
   toolLabelFromPath,
 } from "./helpers";
@@ -85,9 +85,10 @@ import type {
   FeedbackInboxTab,
   FeedbackItem,
   StatusFilter,
+  ToolOption,
 } from "./types";
 
-const ACTIVE_EXCLUDED_STATUS_QUERY = "resolved,closed,deferred,archived";
+const ACTIVE_EXCLUDED_STATUS_QUERY = "in_review,resolved,closed,deferred,archived";
 const ALL_STATUS_QUERY =
   "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created,deferred,resolved,closed";
 const FEEDBACK_LAYOUT_STORAGE_KEY = "alleato-feedback-inbox-layout";
@@ -100,10 +101,12 @@ type FeedbackSortValue =
   | "newest"
   | "oldest"
   | "priority"
+  | "tool"
   | "source"
   | "status";
 type FeedbackDateFilter = "all" | "today" | "7d" | "30d" | "older";
 type FeedbackViewMode = "split" | "board";
+type FeedbackSeverity = "low" | "medium" | "high";
 
 const FEEDBACK_SORT_OPTIONS: {
   value: FeedbackSortValue;
@@ -112,6 +115,7 @@ const FEEDBACK_SORT_OPTIONS: {
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
   { value: "priority", label: "Priority first" },
+  { value: "tool", label: "Tool A-Z" },
   { value: "source", label: "Source A-Z" },
   { value: "status", label: "Status" },
 ];
@@ -124,6 +128,14 @@ const FEEDBACK_DATE_FILTERS: {
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "older", label: "Older than 30 days" },
+];
+const FEEDBACK_PRIORITY_OPTIONS: {
+  value: FeedbackSeverity;
+  label: string;
+}[] = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
 ];
 const FEEDBACK_BOARD_COLUMNS: BoardColumnDefinition[] = STATUS_OPTIONS
   .filter((option) => option.value !== "archived")
@@ -189,13 +201,14 @@ function feedbackStatusQuery(filter: StatusFilter): string | null {
   if (filter === "all") return ALL_STATUS_QUERY;
   if (filter === "active") return null;
   if (filter === "open") {
-    return "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+    return "open,github_failed,submitted,in_progress,triaged,diagnosing,fixing,verifying,pr_created";
   }
   if (filter === "in_progress")
-    return "in_progress,triaged,diagnosing,fixing,verifying,in_review,pr_created";
+    return "in_progress,triaged,diagnosing,fixing,verifying,pr_created";
+  if (filter === "in_review") return "resolved,in_review";
+  if (filter === "verified") return "closed";
   if (filter === "dispatched") return ALL_STATUS_QUERY;
   if (filter === "deferred") return "deferred";
-  if (filter === "resolved") return "resolved,closed";
   return filter;
 }
 
@@ -213,6 +226,10 @@ function sortRank(item: FeedbackItem): number {
 
 function itemToolLabel(item: FeedbackItem): string {
   return toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
+}
+
+function itemSourceLabel(item: FeedbackItem): string {
+  return item.page_title ?? item.page_path;
 }
 
 function feedbackBoardColumnId(item: FeedbackItem): DisplayStatus {
@@ -237,10 +254,12 @@ function matchesDateFilter(item: FeedbackItem, filter: FeedbackDateFilter): bool
 
 export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
+  const [allTools, setAllTools] = useState<ToolOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FeedbackInboxTab>("all");
   const [filter, setFilter] = useState<StatusFilter>("open");
   const [dateFilter, setDateFilter] = useState<FeedbackDateFilter>("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [toolFilter, setToolFilter] = useState("all");
   const [submitterFilter, setSubmitterFilter] = useState("all");
   const [searchValue, setSearchValue] = useState("");
@@ -253,6 +272,12 @@ export default function FeedbackInboxPage() {
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<DisplayStatus | "none">("none");
+  const [bulkPriority, setBulkPriority] = useState<FeedbackSeverity | "none">("none");
+  const [bulkToolId, setBulkToolId] = useState("none");
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
@@ -315,6 +340,15 @@ export default function FeedbackInboxPage() {
       .map(([value, label]) => ({ value, label }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [tabScopedItems]);
+  const categoryOptions = useMemo(() => {
+    const options = new Set<string>();
+    for (const item of tabScopedItems) {
+      if (item.category) options.add(item.category);
+    }
+    return [...options]
+      .map((value) => ({ value, label: value }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [tabScopedItems]);
   const submitterOptions = useMemo(() => {
     const options = new Map<string, string>();
     for (const item of tabScopedItems) {
@@ -330,11 +364,12 @@ export default function FeedbackInboxPage() {
     () =>
       tabScopedItems.filter((item) => {
         if (!matchesDateFilter(item, dateFilter)) return false;
+        if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
         if (toolFilter !== "all" && itemToolLabel(item) !== toolFilter) return false;
         if (submitterFilter !== "all" && item.created_by !== submitterFilter) return false;
         return true;
       }),
-    [dateFilter, submitterFilter, tabScopedItems, toolFilter],
+    [categoryFilter, dateFilter, submitterFilter, tabScopedItems, toolFilter],
   );
   const searchTerm = searchValue.trim().toLowerCase();
   const visibleItems = useMemo(() => {
@@ -345,9 +380,11 @@ export default function FeedbackInboxPage() {
           const fields = [
             item.title,
             item.comment,
+            itemToolLabel(item),
             item.page_title ?? "",
             item.page_path,
             item.page_url,
+            item.category ?? "",
             item.target_text ?? "",
             submitter,
             item.github_issue_number ? `#${item.github_issue_number}` : "",
@@ -365,9 +402,14 @@ export default function FeedbackInboxPage() {
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
+      if (sortBy === "tool") {
+        const toolDiff = itemToolLabel(a).localeCompare(itemToolLabel(b));
+        if (toolDiff !== 0) return toolDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
       if (sortBy === "source") {
-        const sourceA = (a.page_title || a.page_path || "").toLowerCase();
-        const sourceB = (b.page_title || b.page_path || "").toLowerCase();
+        const sourceA = itemSourceLabel(a).toLowerCase();
+        const sourceB = itemSourceLabel(b).toLowerCase();
         return sourceA.localeCompare(sourceB);
       }
       if (sortBy === "status") {
@@ -386,12 +428,20 @@ export default function FeedbackInboxPage() {
     () => visibleItems.find((i) => i.id === selectedId) ?? null,
     [visibleItems, selectedId],
   );
+  const visibleItemIds = useMemo(
+    () => visibleItems.map((item) => item.id),
+    [visibleItems],
+  );
+  const allVisibleSelected =
+    visibleItemIds.length > 0 &&
+    visibleItemIds.every((id) => selectedIds.includes(id));
   const currentFilterLabel =
     STATUS_FILTERS.find((statusFilter) => statusFilter.value === filter)?.label ??
     filter.replace("_", " ");
   const activeFilterCount =
     (activeTab !== "all" ? 1 : 0) +
     (dateFilter !== "all" ? 1 : 0) +
+    (categoryFilter !== "all" ? 1 : 0) +
     (toolFilter !== "all" ? 1 : 0) +
     (submitterFilter !== "all" ? 1 : 0);
 
@@ -425,6 +475,39 @@ export default function FeedbackInboxPage() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTools() {
+      try {
+        const data = await apiFetch<{ tools?: ToolOption[] }>(
+          "/api/admin/feedback/tools?action=list",
+        );
+        if (!cancelled) {
+          setAllTools(data.tools ?? []);
+        }
+      } catch (err) {
+        notifyFeedbackInboxFailure({
+          operation: "load-feedback-tools",
+          title: "Could not load tools",
+          fallback: "Tool options could not be loaded for bulk editing.",
+          error: err,
+        });
+      }
+    }
+
+    loadTools();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setSelectedIds((current) =>
+      current.filter((id) => visibleItemIds.includes(id)),
+    );
+  }, [visibleItemIds]);
 
   // Auto-select the most recent item when items load or current selection is invalid
   useEffect(() => {
@@ -515,9 +598,15 @@ export default function FeedbackInboxPage() {
   async function updateStatus(id: string, status: DisplayStatus) {
     setUpdatingId(id);
     try {
+      const persistedStatus =
+        status === "in_review"
+          ? "resolved"
+          : status === "verified"
+            ? "closed"
+            : status;
       await apiFetch("/api/admin/feedback", {
         method: "PATCH",
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, status: persistedStatus }),
       });
       const statusLabel =
         STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
@@ -529,10 +618,144 @@ export default function FeedbackInboxPage() {
         title: "Could not update status",
         fallback: "The feedback item status could not be updated.",
         error: err,
-        metadata: { feedbackId: id, status },
+        metadata: { feedbackId: id, status: persistedStatus },
       });
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function applyBulkStatus() {
+    if (bulkStatus === "none" || selectedIds.length === 0) return;
+    setBulkUpdating(true);
+    try {
+      const persistedStatus =
+        bulkStatus === "in_review"
+          ? "resolved"
+          : bulkStatus === "verified"
+            ? "closed"
+            : bulkStatus;
+      await Promise.all(
+        selectedIds.map((id) =>
+          apiFetch("/api/admin/feedback", {
+            method: "PATCH",
+            body: JSON.stringify({ id, status: persistedStatus }),
+          }),
+        ),
+      );
+      toast.success(`Updated status for ${selectedIds.length} items`);
+      setSelectedIds([]);
+      setBulkStatus("none");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "bulk-update-feedback-status",
+        title: "Could not bulk update status",
+        fallback: "The selected feedback statuses could not be updated.",
+        error: err,
+        metadata: { count: selectedIds.length },
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  }
+
+  async function applyBulkPriority() {
+    if (bulkPriority === "none" || selectedIds.length === 0) return;
+    setBulkUpdating(true);
+    try {
+      await Promise.all(
+        selectedIds.map((id) =>
+          apiFetch("/api/admin/feedback", {
+            method: "PATCH",
+            body: JSON.stringify({ id, severity: bulkPriority }),
+          }),
+        ),
+      );
+      toast.success(`Updated priority for ${selectedIds.length} items`);
+      setSelectedIds([]);
+      setBulkPriority("none");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "bulk-update-feedback-priority",
+        title: "Could not bulk update priority",
+        fallback: "The selected feedback priorities could not be updated.",
+        error: err,
+        metadata: { count: selectedIds.length },
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  }
+
+  async function applyBulkTool() {
+    if (bulkToolId === "none" || selectedIds.length === 0) return;
+    setBulkUpdating(true);
+    try {
+      const toolId = bulkToolId === "unassigned" ? null : Number(bulkToolId);
+      await Promise.all(
+        selectedIds.map((feedbackId) =>
+          apiFetch("/api/admin/feedback/tools", {
+            method: "POST",
+            body: JSON.stringify({ feedbackId, toolId }),
+          }),
+        ),
+      );
+      toast.success(`Updated tool for ${selectedIds.length} items`);
+      setSelectedIds([]);
+      setBulkToolId("none");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: "bulk-update-feedback-tool",
+        title: "Could not bulk update tool",
+        fallback: "The selected feedback tools could not be updated.",
+        error: err,
+        metadata: { count: selectedIds.length },
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  }
+
+  async function applyBulkCategory(clear = false) {
+    if ((!clear && bulkCategory.trim().length === 0) || selectedIds.length === 0) {
+      return;
+    }
+    setBulkUpdating(true);
+    try {
+      const category = clear ? null : bulkCategory.trim();
+      await Promise.all(
+        selectedIds.map((id) =>
+          apiFetch("/api/admin/feedback", {
+            method: "PATCH",
+            body: JSON.stringify({ id, category }),
+          }),
+        ),
+      );
+      toast.success(
+        clear
+          ? `Cleared category for ${selectedIds.length} items`
+          : `Updated category for ${selectedIds.length} items`,
+      );
+      setSelectedIds([]);
+      setBulkCategory("");
+      fetchItems();
+    } catch (err) {
+      notifyFeedbackInboxFailure({
+        operation: clear
+          ? "bulk-clear-feedback-category"
+          : "bulk-update-feedback-category",
+        title: clear ? "Could not clear categories" : "Could not bulk update category",
+        fallback: clear
+          ? "The selected feedback categories could not be cleared."
+          : "The selected feedback categories could not be updated.",
+        error: err,
+        metadata: { count: selectedIds.length },
+      });
+    } finally {
+      setBulkUpdating(false);
     }
   }
 
@@ -597,6 +820,23 @@ export default function FeedbackInboxPage() {
 
   function selectItem(id: string) {
     setSelectedId(id);
+  }
+
+  function toggleBulkSelected(id: string, checked: boolean) {
+    setSelectedIds((current) =>
+      checked
+        ? [...new Set([...current, id])]
+        : current.filter((value) => value !== id),
+    );
+  }
+
+  function toggleSelectAllVisible(checked: boolean) {
+    setSelectedIds((current) => {
+      if (checked) {
+        return [...new Set([...current, ...visibleItemIds])];
+      }
+      return current.filter((id) => !visibleItemIds.includes(id));
+    });
   }
 
   function selectItemFromBoard(id: string) {
@@ -666,6 +906,8 @@ export default function FeedbackInboxPage() {
             activeTab={activeTab}
             currentFilterLabel={currentFilterLabel}
             currentTabLabel={currentTabLabel}
+            categoryFilter={categoryFilter}
+            categoryOptions={categoryOptions}
             dateFilter={dateFilter}
             featureRequestCount={featureRequestItems.length}
             filter={filter}
@@ -681,6 +923,7 @@ export default function FeedbackInboxPage() {
             toolOptions={toolOptions}
             totalCount={dispatchScoped(items).length}
             onDateFilterChange={setDateFilter}
+            onCategoryFilterChange={setCategoryFilter}
             onFilterChange={handleFilterTabClick}
             onInboxTabChange={handleInboxTabClick}
             onSearchChange={setSearchValue}
@@ -705,6 +948,8 @@ export default function FeedbackInboxPage() {
               activeTab={activeTab}
               currentFilterLabel={currentFilterLabel}
               currentTabLabel={currentTabLabel}
+              categoryFilter={categoryFilter}
+              categoryOptions={categoryOptions}
               dateFilter={dateFilter}
               deletingId={deletingId}
               featureRequestCount={featureRequestItems.length}
@@ -717,6 +962,7 @@ export default function FeedbackInboxPage() {
               listPanelRef={listPanelRef}
               loading={loading}
               searchValue={searchValue}
+              selectedIds={selectedIds}
               selectedId={selectedId}
               sortBy={sortBy}
               submitterFilter={submitterFilter}
@@ -727,18 +973,36 @@ export default function FeedbackInboxPage() {
               viewMode={viewMode}
               onDelete={deleteItem}
               onDateFilterChange={setDateFilter}
+              onCategoryFilterChange={setCategoryFilter}
               onFilterChange={handleFilterTabClick}
               onInboxTabChange={handleInboxTabClick}
               onResizeStart={handleResizeStart}
               onSearchChange={setSearchValue}
               onSelect={selectItem}
+              onToggleBulkSelected={toggleBulkSelected}
+              onToggleSelectAllVisible={toggleSelectAllVisible}
               onSendToGitHub={sendToGitHub}
+              onBulkCategoryChange={setBulkCategory}
+              onBulkPriorityChange={setBulkPriority}
+              onBulkStatusChange={setBulkStatus}
+              onBulkToolChange={setBulkToolId}
+              onApplyBulkCategory={applyBulkCategory}
+              onApplyBulkPriority={applyBulkPriority}
+              onApplyBulkStatus={applyBulkStatus}
+              onApplyBulkTool={applyBulkTool}
               onSortChange={setSortBy}
               onSubmitterFilterChange={setSubmitterFilter}
               onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
               onToolFilterChange={setToolFilter}
               onUpdateStatus={updateStatus}
               onViewModeChange={setViewMode}
+              allTools={allTools}
+              allVisibleSelected={allVisibleSelected}
+              bulkCategory={bulkCategory}
+              bulkPriority={bulkPriority}
+              bulkStatus={bulkStatus}
+              bulkToolId={bulkToolId}
+              bulkUpdating={bulkUpdating}
             />
             <FeedbackDetailPane
               commentInputRef={commentInputRef}
@@ -763,6 +1027,8 @@ function FeedbackListPane({
   activeTab,
   currentFilterLabel,
   currentTabLabel,
+  categoryFilter,
+  categoryOptions,
   dateFilter,
   deletingId,
   featureRequestCount,
@@ -774,6 +1040,7 @@ function FeedbackListPane({
   listPanelRef,
   loading,
   searchValue,
+  selectedIds,
   selectedId,
   sortBy,
   submitterFilter,
@@ -782,13 +1049,31 @@ function FeedbackListPane({
   toolOptions,
   totalCount,
   viewMode,
+  allTools,
+  allVisibleSelected,
+  bulkCategory,
+  bulkPriority,
+  bulkStatus,
+  bulkToolId,
+  bulkUpdating,
   onDelete,
+  onApplyBulkCategory,
+  onApplyBulkPriority,
+  onApplyBulkStatus,
+  onApplyBulkTool,
+  onBulkCategoryChange,
+  onBulkPriorityChange,
+  onBulkStatusChange,
+  onBulkToolChange,
+  onCategoryFilterChange,
   onDateFilterChange,
   onFilterChange,
   onInboxTabChange,
   onResizeStart,
   onSearchChange,
   onSelect,
+  onToggleBulkSelected,
+  onToggleSelectAllVisible,
   onSendToGitHub,
   onSortChange,
   onSubmitterFilterChange,
@@ -801,6 +1086,8 @@ function FeedbackListPane({
   activeTab: FeedbackInboxTab;
   currentFilterLabel: string;
   currentTabLabel: string;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
   dateFilter: FeedbackDateFilter;
   deletingId: string | null;
   featureRequestCount: number;
@@ -813,6 +1100,7 @@ function FeedbackListPane({
   listPanelRef: RefObject<HTMLDivElement | null>;
   loading: boolean;
   searchValue: string;
+  selectedIds: string[];
   selectedId: string | null;
   sortBy: FeedbackSortValue;
   submitterFilter: string;
@@ -821,13 +1109,31 @@ function FeedbackListPane({
   toolOptions: { value: string; label: string }[];
   totalCount: number;
   viewMode: FeedbackViewMode;
+  allTools: ToolOption[];
+  allVisibleSelected: boolean;
+  bulkCategory: string;
+  bulkPriority: FeedbackSeverity | "none";
+  bulkStatus: DisplayStatus | "none";
+  bulkToolId: string;
+  bulkUpdating: boolean;
   onDelete: (id: string) => void;
+  onApplyBulkCategory: (clear?: boolean) => void;
+  onApplyBulkPriority: () => void;
+  onApplyBulkStatus: () => void;
+  onApplyBulkTool: () => void;
+  onBulkCategoryChange: (value: string) => void;
+  onBulkPriorityChange: (value: FeedbackSeverity | "none") => void;
+  onBulkStatusChange: (value: DisplayStatus | "none") => void;
+  onBulkToolChange: (value: string) => void;
+  onCategoryFilterChange: (value: string) => void;
   onDateFilterChange: (value: FeedbackDateFilter) => void;
   onFilterChange: (value: string) => void;
   onInboxTabChange: (value: string) => void;
   onResizeStart: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   onSearchChange: (value: string) => void;
   onSelect: (id: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
+  onToggleSelectAllVisible: (checked: boolean) => void;
   onSendToGitHub: (id: string) => void;
   onSortChange: (value: FeedbackSortValue) => void;
   onSubmitterFilterChange: (value: string) => void;
@@ -837,7 +1143,6 @@ function FeedbackListPane({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   const splitPage = useSplitPage();
-
   function handleSelect(id: string) {
     onSelect(id);
     if (!splitPage.isDesktop) splitPage.onClose();
@@ -866,14 +1171,32 @@ function FeedbackListPane({
       className="relative flex h-full min-h-0 w-full flex-col border-r border-border/70 bg-muted/30 lg:w-[var(--feedback-left-width)]"
       style={{ "--feedback-left-width": `${leftWidth}px` } as CSSProperties}
     >
-      <div className="bg-background/90 px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
-              Feedback
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
+      <div className="border-b border-border/70 bg-background px-4 py-4">
+        <FeedbackWorkspaceHeader
+          activeFilterCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          viewMode={viewMode}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSearchChange={onSearchChange}
+          onSortChange={onSortChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+          onViewModeChange={onViewModeChange}
+          trailingActions={
             <Button
               type="button"
               variant="ghost"
@@ -884,52 +1207,47 @@ function FeedbackListPane({
             >
               <PanelLeftClose className="h-4 w-4" />
             </Button>
-            <FeedbackViewMenu
-              value={viewMode}
-              onValueChange={onViewModeChange}
-            />
-            <FeedbackFilterPopover
-              activeCount={activeFilterCount}
-              activeTab={activeTab}
-              dateFilter={dateFilter}
-              featureRequestCount={featureRequestCount}
-              issueCount={issueCount}
-              submitterFilter={submitterFilter}
-              submitterOptions={submitterOptions}
-              toolFilter={toolFilter}
-              toolOptions={toolOptions}
-              totalCount={totalCount}
-              onDateFilterChange={onDateFilterChange}
-              onInboxTabChange={onInboxTabChange}
-              onSubmitterFilterChange={onSubmitterFilterChange}
-              onToolFilterChange={onToolFilterChange}
-            />
-            <ExpandableSearch
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder="Search feedback"
-              ariaLabel="Search feedback"
-            />
-            <FeedbackSortPopover
-              sortBy={sortBy}
-              onSortChange={onSortChange}
-            />
-            <VeltCommentToolbar />
-          </div>
-        </div>
-        <FeedbackStatusTabs
-          value={filter}
-          onValueChange={onFilterChange}
+          }
         />
+        <div className="mt-4">
+          <FeedbackStatusTabs
+            value={filter}
+            onValueChange={onFilterChange}
+            allVisibleSelected={allVisibleSelected}
+            selectedCount={selectedIds.length}
+            onToggleSelectAllVisible={onToggleSelectAllVisible}
+          />
+        </div>
+        {selectedIds.length > 0 && (
+          <BulkEditBar
+            allTools={allTools}
+            bulkCategory={bulkCategory}
+            bulkPriority={bulkPriority}
+            bulkStatus={bulkStatus}
+            bulkToolId={bulkToolId}
+            bulkUpdating={bulkUpdating}
+            selectedCount={selectedIds.length}
+            onApplyBulkCategory={onApplyBulkCategory}
+            onApplyBulkPriority={onApplyBulkPriority}
+            onApplyBulkStatus={onApplyBulkStatus}
+            onApplyBulkTool={onApplyBulkTool}
+            onBulkCategoryChange={onBulkCategoryChange}
+            onBulkPriorityChange={onBulkPriorityChange}
+            onBulkStatusChange={onBulkStatusChange}
+            onBulkToolChange={onBulkToolChange}
+          />
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <FeedbackQueue
           items={items}
           selectedId={selectedId}
+          selectedIds={selectedIds}
           loading={loading}
           currentFilterLabel={`${currentFilterLabel} ${currentTabLabel}`}
           onSelect={handleSelect}
+          onToggleBulkSelected={onToggleBulkSelected}
           onUpdateStatus={onUpdateStatus}
           onSendToGitHub={onSendToGitHub}
           onDelete={onDelete}
@@ -953,6 +1271,8 @@ function FeedbackBoardPane({
   activeTab,
   currentFilterLabel,
   currentTabLabel,
+  categoryFilter,
+  categoryOptions,
   dateFilter,
   featureRequestCount,
   filter,
@@ -969,6 +1289,7 @@ function FeedbackBoardPane({
   totalCount,
   viewMode,
   onDateFilterChange,
+  onCategoryFilterChange,
   onFilterChange,
   onInboxTabChange,
   onSearchChange,
@@ -982,6 +1303,8 @@ function FeedbackBoardPane({
   activeTab: FeedbackInboxTab;
   currentFilterLabel: string;
   currentTabLabel: string;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
   dateFilter: FeedbackDateFilter;
   featureRequestCount: number;
   filter: StatusFilter;
@@ -998,6 +1321,7 @@ function FeedbackBoardPane({
   totalCount: number;
   viewMode: FeedbackViewMode;
   onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onCategoryFilterChange: (value: string) => void;
   onFilterChange: (value: string) => void;
   onInboxTabChange: (value: string) => void;
   onSearchChange: (value: string) => void;
@@ -1009,51 +1333,38 @@ function FeedbackBoardPane({
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="shrink-0 bg-background/90 px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
-              Feedback
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <FeedbackViewMenu
-              value={viewMode}
-              onValueChange={onViewModeChange}
-            />
-            <FeedbackFilterPopover
-              activeCount={activeFilterCount}
-              activeTab={activeTab}
-              dateFilter={dateFilter}
-              featureRequestCount={featureRequestCount}
-              issueCount={issueCount}
-              submitterFilter={submitterFilter}
-              submitterOptions={submitterOptions}
-              toolFilter={toolFilter}
-              toolOptions={toolOptions}
-              totalCount={totalCount}
-              onDateFilterChange={onDateFilterChange}
-              onInboxTabChange={onInboxTabChange}
-              onSubmitterFilterChange={onSubmitterFilterChange}
-              onToolFilterChange={onToolFilterChange}
-            />
-            <ExpandableSearch
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder="Search feedback"
-              ariaLabel="Search feedback"
-            />
-            <FeedbackSortPopover
-              sortBy={sortBy}
-              onSortChange={onSortChange}
-            />
-            <VeltCommentToolbar />
-          </div>
-        </div>
-        <FeedbackStatusTabs
-          value={filter}
-          onValueChange={onFilterChange}
+      <div className="shrink-0 border-b border-border/70 bg-background px-4 py-4">
+        <FeedbackWorkspaceHeader
+          activeFilterCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          viewMode={viewMode}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSearchChange={onSearchChange}
+          onSortChange={onSortChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+          onViewModeChange={onViewModeChange}
         />
+        <div className="mt-4">
+          <FeedbackStatusTabs
+            value={filter}
+            onValueChange={onFilterChange}
+          />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -1092,6 +1403,265 @@ function FeedbackBoardPane({
   );
 }
 
+function BulkEditBar({
+  allTools,
+  bulkCategory,
+  bulkPriority,
+  bulkStatus,
+  bulkToolId,
+  bulkUpdating,
+  selectedCount,
+  onApplyBulkCategory,
+  onApplyBulkPriority,
+  onApplyBulkStatus,
+  onApplyBulkTool,
+  onBulkCategoryChange,
+  onBulkPriorityChange,
+  onBulkStatusChange,
+  onBulkToolChange,
+}: {
+  allTools: ToolOption[];
+  bulkCategory: string;
+  bulkPriority: FeedbackSeverity | "none";
+  bulkStatus: DisplayStatus | "none";
+  bulkToolId: string;
+  bulkUpdating: boolean;
+  selectedCount: number;
+  onApplyBulkCategory: (clear?: boolean) => void;
+  onApplyBulkPriority: () => void;
+  onApplyBulkStatus: () => void;
+  onApplyBulkTool: () => void;
+  onBulkCategoryChange: (value: string) => void;
+  onBulkPriorityChange: (value: FeedbackSeverity | "none") => void;
+  onBulkStatusChange: (value: DisplayStatus | "none") => void;
+  onBulkToolChange: (value: string) => void;
+}) {
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-foreground">
+          {selectedCount} selected
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Apply one change across the current selection.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select
+            value={bulkStatus}
+            onValueChange={(value) =>
+              onBulkStatusChange(value as DisplayStatus | "none")
+            }
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk status</SelectItem>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkStatus === "none"}
+            onClick={onApplyBulkStatus}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select
+            value={bulkPriority}
+            onValueChange={(value) =>
+              onBulkPriorityChange(value as FeedbackSeverity | "none")
+            }
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk priority</SelectItem>
+              {FEEDBACK_PRIORITY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkPriority === "none"}
+            onClick={onApplyBulkPriority}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-44 flex-1 items-center gap-2">
+          <Select value={bulkToolId} onValueChange={onBulkToolChange}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Bulk tool" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Bulk tool</SelectItem>
+              <SelectItem value="unassigned">Clear tool</SelectItem>
+              {allTools.map((tool) => (
+                <SelectItem key={tool.id} value={String(tool.id)}>
+                  {tool.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkToolId === "none"}
+            onClick={onApplyBulkTool}
+          >
+            Apply
+          </Button>
+        </div>
+
+        <div className="flex min-w-56 flex-[1.2] items-center gap-2">
+          <Input
+            value={bulkCategory}
+            onChange={(event) => onBulkCategoryChange(event.target.value)}
+            placeholder="Bulk category"
+            className="h-8 text-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={bulkUpdating || bulkCategory.trim().length === 0}
+            onClick={() => onApplyBulkCategory(false)}
+          >
+            Apply
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={bulkUpdating}
+            onClick={() => onApplyBulkCategory(true)}
+          >
+            Clear
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackWorkspaceHeader({
+  activeFilterCount,
+  activeTab,
+  categoryFilter,
+  categoryOptions,
+  dateFilter,
+  featureRequestCount,
+  issueCount,
+  searchValue,
+  sortBy,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
+  totalCount,
+  viewMode,
+  trailingActions,
+  onCategoryFilterChange,
+  onDateFilterChange,
+  onInboxTabChange,
+  onSearchChange,
+  onSortChange,
+  onSubmitterFilterChange,
+  onToolFilterChange,
+  onViewModeChange,
+}: {
+  activeFilterCount: number;
+  activeTab: FeedbackInboxTab;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
+  dateFilter: FeedbackDateFilter;
+  featureRequestCount: number;
+  issueCount: number;
+  searchValue: string;
+  sortBy: FeedbackSortValue;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
+  totalCount: number;
+  viewMode: FeedbackViewMode;
+  trailingActions?: ReactNode;
+  onCategoryFilterChange: (value: string) => void;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onInboxTabChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  onSortChange: (value: FeedbackSortValue) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToolFilterChange: (value: string) => void;
+  onViewModeChange: (value: FeedbackViewMode) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
+          Feedback
+        </h1>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <ExpandableSearch
+          value={searchValue}
+          onChange={onSearchChange}
+          placeholder="Search feedback"
+          ariaLabel="Search feedback"
+        />
+        <FeedbackFilterPopover
+          activeCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+        />
+        <FeedbackSortPopover
+          sortBy={sortBy}
+          onSortChange={onSortChange}
+        />
+        {trailingActions}
+        <FeedbackViewMenu
+          value={viewMode}
+          onValueChange={onViewModeChange}
+        />
+      </div>
+    </div>
+  );
+}
+
 function FeedbackBoardCard({
   item,
   selectedId,
@@ -1112,6 +1682,7 @@ function FeedbackBoardCard({
   });
   const sourceLabel = toolLabelFromPath(item.page_path) ?? item.page_title ?? item.page_path;
   const showCommentPreview = !isCommentRedundantWithTitle(title, item.comment);
+  const secondaryLabel = item.page_title ?? item.page_path;
 
   return (
     <Button
@@ -1143,21 +1714,30 @@ function FeedbackBoardCard({
           aria-label={meta.label}
           title={meta.label}
         />
-        <span className="min-w-0 shrink truncate">{submitterLabel(item)}</span>
-        <span aria-hidden className="text-border">
-          /
-        </span>
+        <span className="shrink-0">{meta.label}</span>
         {item.severity === "high" ? (
           <>
-            <span className="shrink-0 font-medium text-status-error">
-              High priority
-            </span>
             <span aria-hidden className="text-border">
               /
             </span>
+            <span className="shrink-0 font-medium text-status-error">High</span>
           </>
         ) : null}
-        <span className="min-w-0 truncate">{sourceLabel}</span>
+        <span aria-hidden className="text-border">
+          /
+        </span>
+        <span className="min-w-0 truncate">{secondaryLabel}</span>
+      </span>
+      <span className="mt-1 flex w-full min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+        <span className="min-w-0 truncate">{submitterLabel(item)}</span>
+        {sourceLabel && sourceLabel !== secondaryLabel ? (
+          <>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            <span className="min-w-0 truncate">{sourceLabel}</span>
+          </>
+        ) : null}
       </span>
     </Button>
   );
@@ -1223,6 +1803,8 @@ function FeedbackViewMenu({
 function FeedbackFilterPopover({
   activeCount,
   activeTab,
+  categoryFilter,
+  categoryOptions,
   dateFilter,
   featureRequestCount,
   issueCount,
@@ -1231,6 +1813,7 @@ function FeedbackFilterPopover({
   toolFilter,
   toolOptions,
   totalCount,
+  onCategoryFilterChange,
   onDateFilterChange,
   onInboxTabChange,
   onSubmitterFilterChange,
@@ -1238,6 +1821,8 @@ function FeedbackFilterPopover({
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
   dateFilter: FeedbackDateFilter;
   featureRequestCount: number;
   issueCount: number;
@@ -1246,6 +1831,7 @@ function FeedbackFilterPopover({
   toolFilter: string;
   toolOptions: { value: string; label: string }[];
   totalCount: number;
+  onCategoryFilterChange: (value: string) => void;
   onDateFilterChange: (value: FeedbackDateFilter) => void;
   onInboxTabChange: (value: string) => void;
   onSubmitterFilterChange: (value: string) => void;
@@ -1276,6 +1862,8 @@ function FeedbackFilterPopover({
         <FeedbackScopePanel
           activeCount={activeCount}
           activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
           dateFilter={dateFilter}
           featureRequestCount={featureRequestCount}
           issueCount={issueCount}
@@ -1287,9 +1875,11 @@ function FeedbackFilterPopover({
           onClear={() => {
             onInboxTabChange("all");
             onDateFilterChange("all");
+            onCategoryFilterChange("all");
             onToolFilterChange("all");
             onSubmitterFilterChange("all");
           }}
+          onCategoryFilterChange={onCategoryFilterChange}
           onDateFilterChange={onDateFilterChange}
           onSubmitterFilterChange={onSubmitterFilterChange}
           onToolFilterChange={onToolFilterChange}
@@ -1303,6 +1893,8 @@ function FeedbackFilterPopover({
 function FeedbackScopePanel({
   activeCount,
   activeTab,
+  categoryFilter,
+  categoryOptions,
   dateFilter,
   featureRequestCount,
   issueCount,
@@ -1312,6 +1904,7 @@ function FeedbackScopePanel({
   toolOptions,
   totalCount,
   onClear,
+  onCategoryFilterChange,
   onDateFilterChange,
   onSubmitterFilterChange,
   onToolFilterChange,
@@ -1319,6 +1912,8 @@ function FeedbackScopePanel({
 }: {
   activeCount: number;
   activeTab: FeedbackInboxTab;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
   dateFilter: FeedbackDateFilter;
   featureRequestCount: number;
   issueCount: number;
@@ -1328,6 +1923,7 @@ function FeedbackScopePanel({
   toolOptions: { value: string; label: string }[];
   totalCount: number;
   onClear: () => void;
+  onCategoryFilterChange: (value: string) => void;
   onDateFilterChange: (value: FeedbackDateFilter) => void;
   onSubmitterFilterChange: (value: string) => void;
   onToolFilterChange: (value: string) => void;
@@ -1405,6 +2001,23 @@ function FeedbackScopePanel({
       </div>
 
       <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Category</span>
+        <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Any category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any category</SelectItem>
+            {categoryOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Tool</span>
         <Select value={toolFilter} onValueChange={onToolFilterChange}>
           <SelectTrigger className="h-8 text-xs">
@@ -1445,29 +2058,54 @@ function FeedbackScopePanel({
 function FeedbackStatusTabs({
   value,
   onValueChange,
+  allVisibleSelected,
+  selectedCount,
+  onToggleSelectAllVisible,
 }: {
   value: StatusFilter;
   onValueChange: (value: string) => void;
+  allVisibleSelected?: boolean;
+  selectedCount?: number;
+  onToggleSelectAllVisible?: (checked: boolean) => void;
 }) {
+  const showSelectionControl = typeof onToggleSelectAllVisible === "function";
+
   return (
-    <div className="mt-2 flex items-center gap-4 border-b border-border/70">
-      {FEEDBACK_STATUS_TABS.map((tab) => (
-        <Button
-          key={tab.value}
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onValueChange(tab.value)}
-          className={cn(
-            "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
-            value === tab.value
-              ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
-              : "text-muted-foreground hover:bg-transparent hover:text-foreground",
-          )}
-        >
-          <span className="truncate">{tab.label}</span>
-        </Button>
-      ))}
+    <div className="mt-2 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
+        {FEEDBACK_STATUS_TABS.map((tab) => (
+          <Button
+            key={tab.value}
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onValueChange(tab.value)}
+            className={cn(
+              "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
+              value === tab.value
+                ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
+                : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+            )}
+          >
+            <span className="truncate">{tab.label}</span>
+          </Button>
+        ))}
+      </div>
+
+      {showSelectionControl ? (
+        <label className="mb-1 flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+          <Checkbox
+            checked={allVisibleSelected}
+            onCheckedChange={(checked) =>
+              onToggleSelectAllVisible(checked === true)
+            }
+            aria-label="Select all visible feedback rows"
+          />
+          {selectedCount && selectedCount > 0 ? (
+            <span className="whitespace-nowrap">{selectedCount} selected</span>
+          ) : null}
+        </label>
+      ) : null}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/ds";
+import { PageTabs } from "@/components/layout";
 import {
   Card,
   CardContent,
@@ -24,7 +25,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -227,19 +227,33 @@ export default function ClientDashboard({
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <TabsList variant="line">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <PageTabs
+            tabs={[
+              {
+                label: "Overview",
+                href: "overview",
+                isActive: activeTab === "overview",
+              },
+              {
+                label: "Schedule",
+                href: "schedule",
+                isActive: activeTab === "schedule",
+              },
+              {
+                label: "Documents",
+                href: "documents",
+                isActive: activeTab === "documents",
+              },
+            ]}
+            variant="inline"
+            className="mb-0"
+            onTabClick={(href) => setActiveTab(href as typeof activeTab)}
+          />
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          {activeTab === "overview" ? (
+            <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Contract Details */}
               {primeContract && (
@@ -411,10 +425,12 @@ export default function ClientDashboard({
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+            </div>
+          ) : null}
 
           {/* Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-6">
+          {activeTab === "schedule" ? (
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Schedule</CardTitle>
@@ -477,10 +493,12 @@ export default function ClientDashboard({
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+            </div>
+          ) : null}
 
           {/* Documents Tab */}
-          <TabsContent value="documents" className="space-y-6">
+          {activeTab === "documents" ? (
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Documents</CardTitle>
@@ -552,8 +570,9 @@ export default function ClientDashboard({
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

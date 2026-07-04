@@ -75,10 +75,6 @@ import {
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import {
-  ALL_GRANULAR_FLAGS,
-  GRANULAR_FLAG_LABELS,
-} from "@/lib/permissions-shared";
 import type {
   GranularFlag,
   PermissionLevel,
@@ -118,24 +114,6 @@ type EmployeeOption = {
   email: string | null;
   jobTitle: string | null;
 };
-
-const TEMPLATE_MODULES: Array<{ key: PermissionModule; label: string }> = [
-  { key: "directory", label: "Directory" },
-  { key: "budget", label: "Budget" },
-  { key: "contracts", label: "Contracts" },
-  { key: "documents", label: "Documents" },
-  { key: "schedule", label: "Schedule" },
-  { key: "submittals", label: "Submittals" },
-  { key: "rfis", label: "RFIs" },
-  { key: "change_orders", label: "Change Orders" },
-];
-
-const TEMPLATE_LEVELS: Array<{ key: PermissionLevel; label: string }> = [
-  { key: "none", label: "None" },
-  { key: "read", label: "Read" },
-  { key: "write", label: "Write" },
-  { key: "admin", label: "Admin" },
-];
 
 const USER_TYPE_OPTIONS = [
   { value: "employee", label: "Employee" },
@@ -543,11 +521,10 @@ export default function PermissionsAdminPage() {
   const [deleteTarget, setDeleteTarget] = useState<PermissionTemplate | null>(
     null,
   );
+  const [showBulkDeleteTemplates, setShowBulkDeleteTemplates] = useState(false);
+  const [showBulkDeleteUsers, setShowBulkDeleteUsers] = useState(false);
   const [userDeleteTarget, setUserDeleteTarget] =
     useState<UserAccessSummary | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
-    null,
-  );
 
   useEffect(() => {
     if (tabParam === "project-access") {
@@ -1171,32 +1148,6 @@ export default function PermissionsAdminPage() {
     },
   });
 
-  const templateMatrixMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: {
-      id: string;
-      scope: TemplateScope;
-      name: string;
-      description: string;
-      rules_json: Record<PermissionModule, PermissionLevel[]>;
-      granular_flags?: GranularFlag[];
-    }) => {
-      await apiFetch(`/api/permissions/templates/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["permission-templates"] });
-      toast.success("Permission saved");
-    },
-    onError: (err) => {
-      toast.error("Failed to update permission");
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async ({ id }: { id: string; scope: TemplateScope }) => {
       await apiFetch(`/api/permissions/templates/${id}`, { method: "DELETE" });
@@ -1208,6 +1159,36 @@ export default function PermissionsAdminPage() {
     },
     onError: (err) => {
       toast.error("Failed to delete template");
+    },
+  });
+
+  const bulkDeleteTemplatesMutation = useMutation({
+    mutationFn: async (templateIds: string[]) => {
+      await Promise.all(
+        templateIds.map((id) =>
+          apiFetch(`/api/permissions/templates/${id}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    },
+    onSuccess: (_data, templateIds) => {
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
+      tableState.setSelectedIds([]);
+      setShowBulkDeleteTemplates(false);
+      const templateScopeLabel =
+        activeTab === "company-templates" ? "company" : "project";
+      toast.success(
+        `Deleted ${templateIds.length} ${templateScopeLabel} template${templateIds.length === 1 ? "" : "s"}`,
+      );
+    },
+    onError: (error) => {
+      const templateScopeLabel =
+        activeTab === "company-templates" ? "company" : "project";
+      toast.error(`Failed to delete ${templateScopeLabel} templates`, {
+        description:
+          error instanceof Error ? error.message : "The selected templates could not be deleted.",
+      });
     },
   });
 
@@ -1249,6 +1230,29 @@ export default function PermissionsAdminPage() {
     },
     onError: (err) => {
       toast.error("Failed to delete user");
+    },
+  });
+
+  const bulkDeleteUsersMutation = useMutation({
+    mutationFn: async (personIds: string[]) => {
+      await Promise.all(
+        personIds.map((personId) =>
+          apiFetch(`/api/permissions/users/${personId}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    },
+    onSuccess: (_data, personIds) => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+      tableState.setSelectedIds([]);
+      setShowBulkDeleteUsers(false);
+      toast.success(
+        `Removed ${personIds.length} app user${personIds.length === 1 ? "" : "s"}`,
+      );
+    },
+    onError: (err) => {
+      toast.error("Failed to delete app users");
     },
   });
 
@@ -1306,6 +1310,11 @@ export default function PermissionsAdminPage() {
     setShowCreate(true);
   };
 
+  const templateDetailHref = useCallback(
+    (template: PermissionTemplate) => `/user-management/templates/${template.id}`,
+    [],
+  );
+
   const activeTemplates =
     activeTab === "company-templates" ? companyTemplates : projectTemplates;
 
@@ -1335,8 +1344,21 @@ export default function PermissionsAdminPage() {
     1,
     Math.ceil(sortedRoles.length / tableState.perPage),
   );
-  const selectedTemplate =
-    sortedRoles.find((template) => template.id === selectedTemplateId) ?? null;
+  const selectedTemplateIds = useMemo(
+    () =>
+      tableState.selectedIds.filter((id) =>
+        activeTemplates.some(
+          (template) => template.id === id && template.is_system !== true,
+        ),
+      ),
+    [activeTemplates, tableState.selectedIds],
+  );
+
+  useEffect(() => {
+    if (tableState.selectedIds.length > 0) {
+      tableState.setSelectedIds([]);
+    }
+  }, [activeTab, tableState.setSelectedIds, tableState.selectedIds.length]);
 
   const tabs = [
     {
@@ -1346,16 +1368,16 @@ export default function PermissionsAdminPage() {
       isActive: activeTab === "app-users",
     },
     {
-      label: "Project Permission Templates",
-      href: "/user-management?tab=project-templates",
-      count: projectTemplates.length,
-      isActive: activeTab === "project-templates",
-    },
-    {
       label: "Company Permission Templates",
       href: "/user-management?tab=company-templates",
       count: companyTemplates.length,
       isActive: activeTab === "company-templates",
+    },
+    {
+      label: "Project Permission Templates",
+      href: "/user-management?tab=project-templates",
+      count: projectTemplates.length,
+      isActive: activeTab === "project-templates",
     },
   ];
 
@@ -1441,18 +1463,6 @@ export default function PermissionsAdminPage() {
         ),
       },
       {
-        id: "templateType",
-        label: "Type",
-        defaultVisible: true,
-        sortable: true,
-        sortValue: (role) => (role.is_system ? "system" : "custom"),
-        render: (role) => (
-          <span className="text-sm text-muted-foreground">
-            {role.is_system ? "System" : "Custom"}
-          </span>
-        ),
-      },
-      {
         id: "granular",
         label: "Granular",
         defaultVisible: true,
@@ -1485,7 +1495,7 @@ export default function PermissionsAdminPage() {
           toolbar={{
             totalItems: usersTotalCount,
             filteredItems: sortedUsers.length,
-            selectedCount: tableState.selectedIds.length,
+            selectedCount: canManageUserRows ? tableState.selectedIds.length : 0,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
             searchPlaceholder: usersSearchPlaceholder,
@@ -1499,6 +1509,10 @@ export default function PermissionsAdminPage() {
             visibleColumns: tableState.visibleColumns,
             onColumnVisibilityChange: tableState.setVisibleColumns,
             onExport: sortedUsers.length > 0 ? handleExportUsers : undefined,
+            onBulkDelete:
+              canManageUserRows && tableState.selectedIds.length > 0
+                ? () => setShowBulkDeleteUsers(true)
+                : undefined,
           }}
           data={{
             items: pagedUsers,
@@ -1611,8 +1625,8 @@ export default function PermissionsAdminPage() {
             enableColumnToggle: true,
             enableFilters: false,
             enableExport: true,
-            enableBulkDelete: false,
-            enableRowSelection: false,
+            enableBulkDelete: canManageUserRows,
+            enableRowSelection: canManageUserRows,
             enableRowActions: canManageUserRows,
             enableInlineEditing: true,
           }}
@@ -1645,7 +1659,7 @@ export default function PermissionsAdminPage() {
           toolbar={{
             totalItems: activeTemplates.length,
             filteredItems: sortedRoles.length,
-            selectedCount: 0,
+            selectedCount: selectedTemplateIds.length,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
             searchPlaceholder:
@@ -1659,10 +1673,13 @@ export default function PermissionsAdminPage() {
               "name",
               "description",
               "scope",
-              "templateType",
               "granular",
             ],
             onColumnVisibilityChange: () => undefined,
+            onBulkDelete:
+              selectedTemplateIds.length > 0
+                ? () => setShowBulkDeleteTemplates(true)
+                : undefined,
           }}
           data={{
             items: sortedRoles,
@@ -1676,8 +1693,7 @@ export default function PermissionsAdminPage() {
           table={{
             columns: roleColumns,
             getRowId: (role) => role.id,
-            activeRowId: selectedTemplate?.id ?? null,
-            onRowClick: (template) => setSelectedTemplateId(template.id),
+            onRowClick: (template) => router.push(templateDetailHref(template)),
             rowActions: (template) =>
               template.is_system ? null : (
                 <DropdownMenu>
@@ -1705,6 +1721,32 @@ export default function PermissionsAdminPage() {
             stickyHeader: true,
             density: "compact",
           }}
+          selection={
+            {
+              selectedIds: selectedTemplateIds,
+              onSelectAll: (checked) => {
+                tableState.setSelectedIds(
+                  checked
+                    ? sortedRoles
+                        .filter((template) => !template.is_system)
+                        .map((template) => template.id)
+                    : [],
+                );
+              },
+              onSelectRow: (id, checked) => {
+                const template = activeTemplates.find((item) => item.id === id);
+                if (!template || template.is_system) return;
+
+                tableState.setSelectedIds((current) =>
+                  checked
+                    ? current.includes(id)
+                      ? current
+                      : [...current, id]
+                    : current.filter((selectedId) => selectedId !== id),
+                );
+              },
+            }
+          }
           sorting={{
             sortBy: tableState.sortBy,
             sortDirection: tableState.sortDirection,
@@ -1757,8 +1799,8 @@ export default function PermissionsAdminPage() {
             enableColumnToggle: false,
             enableFilters: false,
             enableExport: false,
-            enableBulkDelete: false,
-            enableRowSelection: false,
+            enableBulkDelete: true,
+            enableRowSelection: true,
             enableRowActions: true,
             enableInlineEditing: true,
           }}
@@ -1842,46 +1884,6 @@ export default function PermissionsAdminPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!selectedTemplate}
-        onOpenChange={(open) => !open && setSelectedTemplateId(null)}
-      >
-        <DialogContent
-          size="form"
-          className="max-h-[calc(100svh-2rem)] overflow-y-auto"
-        >
-          <DialogHeader>
-            <DialogTitle>Manage permission template access</DialogTitle>
-            <DialogDescription>
-              Adjust the module access and granular capabilities included in
-              this permission template.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedTemplate && (
-            <TemplatePermissionMatrix
-              template={selectedTemplate}
-              isSaving={templateMatrixMutation.isPending}
-              onEdit={() => {
-                setEditTarget(selectedTemplate);
-                setSelectedTemplateId(null);
-              }}
-              onChange={(nextTemplate) =>
-                templateMatrixMutation.mutate({
-                  id: nextTemplate.id,
-                  scope: (nextTemplate.scope === "company"
-                    ? "company"
-                    : "project") as TemplateScope,
-                  name: nextTemplate.name,
-                  description: nextTemplate.description ?? "",
-                  rules_json: nextTemplate.rules_json,
-                  granular_flags: nextTemplate.granular_flags ?? [],
-                })
-              }
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
@@ -1914,6 +1916,42 @@ export default function PermissionsAdminPage() {
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog
+        open={showBulkDeleteTemplates}
+        onOpenChange={setShowBulkDeleteTemplates}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {selectedTemplateIds.length}{" "}
+              {activeTab === "company-templates" ? "company" : "project"}{" "}
+              template{selectedTemplateIds.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the selected{" "}
+              {activeTab === "company-templates" ? "company" : "project"}{" "}
+              templates. Members using them must be reassigned.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() =>
+                bulkDeleteTemplatesMutation.mutate(selectedTemplateIds)
+              }
+              disabled={
+                selectedTemplateIds.length === 0 ||
+                bulkDeleteTemplatesMutation.isPending
+              }
+            >
+              {bulkDeleteTemplatesMutation.isPending
+                ? "Deleting..."
+                : `Delete ${selectedTemplateIds.length} template${selectedTemplateIds.length === 1 ? "" : "s"}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
         open={!!userDeleteTarget}
         onOpenChange={() => setUserDeleteTarget(null)}
       >
@@ -1938,6 +1976,44 @@ export default function PermissionsAdminPage() {
               disabled={deleteUserMutation.isPending}
             >
               Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={showBulkDeleteUsers}
+        onOpenChange={setShowBulkDeleteUsers}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {tableState.selectedIds.length} app user
+              {tableState.selectedIds.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the selected users from App Users. This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() =>
+                bulkDeleteUsersMutation.mutate(
+                  sortedUsers
+                    .filter((user) => tableState.selectedIds.includes(user.id))
+                    .map((user) => user.personId),
+                )
+              }
+              disabled={
+                tableState.selectedIds.length === 0 ||
+                bulkDeleteUsersMutation.isPending
+              }
+            >
+              {bulkDeleteUsersMutation.isPending
+                ? "Deleting..."
+                : `Delete ${tableState.selectedIds.length} user${tableState.selectedIds.length === 1 ? "" : "s"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2383,7 +2459,7 @@ function EmployeeCombobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-auto min-h-10 w-full justify-between px-3 py-2 text-left font-normal",
+            "h-11 w-full justify-between px-4 py-1 text-left text-base font-normal sm:h-9 md:text-sm",
             !selectedEmployee && "text-muted-foreground",
           )}
         >
@@ -2458,162 +2534,6 @@ function findTemplateId(templates: PermissionTemplate[], name: string) {
     templates.find(
       (template) => template.name.toLowerCase() === name.toLowerCase(),
     )?.id ?? ""
-  );
-}
-
-function getHighestTemplateLevel(
-  levels: PermissionLevel[] | undefined,
-): PermissionLevel {
-  if (levels?.includes("admin")) return "admin";
-  if (levels?.includes("write")) return "write";
-  if (levels?.includes("read")) return "read";
-  return "none";
-}
-
-function expandTemplateLevel(level: PermissionLevel): PermissionLevel[] {
-  if (level === "admin") return ["read", "write", "admin"];
-  if (level === "write") return ["read", "write"];
-  if (level === "read") return ["read"];
-  return ["none"];
-}
-
-function TemplatePermissionMatrix({
-  template,
-  isSaving,
-  onEdit,
-  onChange,
-}: {
-  template: PermissionTemplate;
-  isSaving: boolean;
-  onEdit: () => void;
-  onChange: (template: PermissionTemplate) => void;
-}) {
-  const updateModuleLevel = (
-    module: PermissionModule,
-    level: PermissionLevel,
-  ) => {
-    onChange({
-      ...template,
-      rules_json: {
-        ...template.rules_json,
-        [module]: expandTemplateLevel(level),
-      },
-    });
-  };
-
-  const updateGranularFlag = (flag: GranularFlag, checked: boolean) => {
-    const currentFlags = new Set(template.granular_flags ?? []);
-    if (checked) {
-      currentFlags.add(flag);
-    } else {
-      currentFlags.delete(flag);
-    }
-    onChange({
-      ...template,
-      granular_flags: Array.from(currentFlags),
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-lg font-semibold text-foreground">
-              {template.name}
-            </h2>
-            {template.is_system && <Badge variant="outline">System</Badge>}
-            <Badge variant="outline">
-              {template.scope === "company"
-                ? "Company template"
-                : "Project template"}
-            </Badge>
-          </div>
-          {template.description && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              {template.description}
-            </p>
-          )}
-        </div>
-        <Button type="button" size="sm" variant="outline" onClick={onEdit}>
-          Edit Details
-        </Button>
-      </div>
-
-      <div className="overflow-hidden border-y border-border">
-        <div className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] border-b border-border bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <div className="px-4 py-2">Module</div>
-          {TEMPLATE_LEVELS.map((level) => (
-            <div
-              key={level.key}
-              className="border-l border-border px-3 py-2 text-center"
-            >
-              {level.label}
-            </div>
-          ))}
-        </div>
-        <div className="divide-y divide-border">
-          {TEMPLATE_MODULES.map((module) => {
-            const selectedLevel = getHighestTemplateLevel(
-              template.rules_json[module.key],
-            );
-
-            return (
-              <div
-                key={module.key}
-                className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] items-center"
-              >
-                <div className="px-4 py-3 text-sm font-medium text-foreground">
-                  {module.label}
-                </div>
-                {TEMPLATE_LEVELS.map((level) => (
-                  <label
-                    key={`${module.key}-${level.key}`}
-                    className="flex h-full items-center justify-center border-l border-border px-3 py-3"
-                    aria-label={`${module.label} ${level.label}`}
-                  >
-                    <Checkbox
-                      checked={selectedLevel === level.key}
-                      disabled={isSaving}
-                      onCheckedChange={(checked) => {
-                        if (checked) updateModuleLevel(module.key, level.key);
-                      }}
-                    />
-                  </label>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <SectionRuleHeading label="Granular Access" />
-        <div className="overflow-hidden border-y border-border">
-          <div className="divide-y divide-border">
-            {ALL_GRANULAR_FLAGS.map((flag) => (
-              <label
-                key={flag}
-                className="grid cursor-pointer grid-cols-[minmax(0,1fr)_96px] items-center px-4 py-3 hover:bg-muted/40"
-              >
-                <span className="text-sm text-foreground">
-                  {GRANULAR_FLAG_LABELS[flag]}
-                </span>
-                <span className="flex justify-center">
-                  <Checkbox
-                    checked={(template.granular_flags ?? []).includes(flag)}
-                    disabled={isSaving}
-                    onCheckedChange={(checked) =>
-                      updateGranularFlag(flag, checked === true)
-                    }
-                  />
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 

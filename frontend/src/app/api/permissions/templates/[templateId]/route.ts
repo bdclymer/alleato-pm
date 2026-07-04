@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import {
+  getPermissionTemplateById,
   updatePermissionTemplate,
   deletePermissionTemplate,
 } from "@/lib/permissions";
@@ -22,6 +23,32 @@ async function requireAdmin(): Promise<{ ok: true } | { error: string; status: n
     return { error: status === 401 ? "Unauthorized" : "Forbidden", status };
   }
 }
+
+/**
+ * GET /api/permissions/templates/[templateId]
+ * Load one permission template (admin only)
+ */
+export const GET = withApiGuardrails(
+  "permissions/templates/[templateId]#GET",
+  async ({ params }) => {
+    const auth = await requireAdmin();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    const { templateId } = await params;
+    const template = await getPermissionTemplateById(templateId);
+
+    if (!template) {
+      return NextResponse.json(
+        { error: "Permission template not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ data: template });
+  },
+);
 
 /**
  * PUT /api/permissions/templates/[templateId]
@@ -48,10 +75,13 @@ export const PUT = withApiGuardrails(
     });
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return NextResponse.json(
+        { error: result.error ?? "Template update failed." },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ data: result.data });
     },
 );
 

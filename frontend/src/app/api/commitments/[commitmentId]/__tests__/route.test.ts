@@ -105,6 +105,8 @@ describe("/api/commitments/[commitmentId]", () => {
           return sovChain;
         case "contract_change_orders":
           return changeOrdersChain;
+        case "subcontractor_invoices":
+          return createQueryChain([]);
         default:
           throw new Error(`Unexpected table: ${table}`);
       }

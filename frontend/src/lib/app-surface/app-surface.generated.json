@@ -159,7 +159,7 @@
     {
       "url": "/[projectId]/daily-log",
       "title": "Daily Log",
-      "description": "List daily logs with weather, manpower, equipment, and site management notes"
+      "description": "List daily logs with weather, manpower, equipment, and general field activity details"
     },
     {
       "url": "/[projectId]/daily-log/[dailyLogId]/edit",
@@ -170,6 +170,11 @@
       "url": "/[projectId]/daily-log/new",
       "title": null,
       "description": "Create new daily log entry with site observations and project activities"
+    },
+    {
+      "url": "/[projectId]/daily-log/site-lead-checklist",
+      "title": "Site Lead Checklist",
+      "description": "Complete the separate site lead checklist for a project date without opening the daily log form"
     },
     {
       "url": "/[projectId]/daily-log/site-scribe",
@@ -358,8 +363,8 @@
     },
     {
       "url": "/[projectId]/meetings/[meetingId]/agenda",
-      "title": "Loading meeting…",
-      "description": "Add attendees to this meeting."
+      "title": "Loading meeting...",
+      "description": "Link a transcript from Sources when one is available."
     },
     {
       "url": "/[projectId]/meetings/[meetingId]/prep",
@@ -368,8 +373,8 @@
     },
     {
       "url": "/[projectId]/meetings/new",
-      "title": "Create Meeting",
-      "description": "Start a structured project meeting. Each new meeting begins with an Uncategorized Items agenda section."
+      "title": "Create meeting",
+      "description": null
     },
     {
       "url": "/[projectId]/my-work",
@@ -423,7 +428,7 @@
     },
     {
       "url": "/[projectId]/prime-contract-pcos/new",
-      "title": null,
+      "title": "New Prime Contract Potential Change Order",
       "description": "Create prime contract PCO from change events or standalone for conversion to CO"
     },
     {
@@ -635,6 +640,11 @@
       "url": "/accounting/checks",
       "title": null,
       "description": "AP check register with payment method, vendor, and project allocation"
+    },
+    {
+      "url": "/accounting/direct-costs",
+      "title": "Direct Costs",
+      "description": null
     },
     {
       "url": "/accounting/finance-spend",
@@ -905,6 +915,11 @@
       "url": "/command-center",
       "title": "Command Center",
       "description": "Kanban-style task board for tracking initiatives across idea, planned, in progress, and done statuses"
+    },
+    {
+      "url": "/command-center/file",
+      "title": null,
+      "description": null
     },
     {
       "url": "/comments",
@@ -1308,7 +1323,7 @@
     },
     {
       "url": "/notifications",
-      "title": "No notifications",
+      "title": "Notifications",
       "description": "You'll be notified about comments, mentions, and project activity."
     },
     {
@@ -1620,6 +1635,11 @@
       "url": "/user-management",
       "title": "Invite blocked",
       "description": "Manage app users, project access, and permission templates with granular capability controls"
+    },
+    {
+      "url": "/user-management/templates/[templateId]",
+      "title": null,
+      "description": null
     },
     {
       "url": "/user-management/users/[userSlug]",

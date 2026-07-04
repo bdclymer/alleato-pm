@@ -134,39 +134,8 @@ export const GET = withApiGuardrails(
       return getForecastLineDetail(projectIdNum, budgetLineIdParam);
     }
 
-    const origin = request.nextUrl.origin;
-    const budgetResponse = await fetch(`${origin}/api/projects/${projectId}/budget`, {
-      headers: {
-        cookie: request.headers.get("cookie") ?? "",
-      },
-      cache: "no-store",
-    });
-
-    if (!budgetResponse.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch budget data" },
-        { status: budgetResponse.status },
-      );
-    }
-
-    const budgetData = (await budgetResponse.json()) as {
-      lineItems?: Array<{
-        id?: string;
-        originalBudgetAmount?: number;
-        revisedBudget?: number;
-        projectedBudget?: number;
-        projectedCosts?: number;
-        projectedOverUnder?: number;
-        forecastToComplete?: number;
-        estimatedCostAtCompletion?: number;
-        forecastStartDate?: string | null;
-        forecastEndDate?: string | null;
-        forecastMethod?: ForecastMethod;
-        forecastNotes?: string | null;
-        costCode?: string;
-        costCodeDescription?: string;
-      }>;
-    };
+    const supabase = await createClient();
+    const { lineItems } = await computeBudgetGrandTotals(supabase, projectIdNum);
 
     // Calculate forecasts
     let totalProjectedBudget = 0;
@@ -191,7 +160,7 @@ export const GET = withApiGuardrails(
       forecastEndDate: string | null;
     }> = [];
 
-    (budgetData.lineItems ?? []).forEach((line) => {
+    lineItems.forEach((line) => {
       const original = Number(line.originalBudgetAmount) || 0;
       const revised = Number(line.revisedBudget) || original;
       const projectedBudget = Number(line.projectedBudget) || revised;

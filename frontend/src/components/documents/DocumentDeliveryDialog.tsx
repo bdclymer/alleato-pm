@@ -47,6 +47,9 @@ interface DocumentDeliveryDialogProps {
   number: string;
   initialTab?: DialogTab;
   allowedTabs?: DialogTab[];
+  recipientsEndpoint?: string;
+  emailEndpoint?: string;
+  downloadEndpoint?: string;
 }
 
 function validateEmail(email: string): boolean {
@@ -63,6 +66,9 @@ export function DocumentDeliveryDialog({
   number,
   initialTab = "download",
   allowedTabs = ["download", "email"],
+  recipientsEndpoint,
+  emailEndpoint,
+  downloadEndpoint,
 }: DocumentDeliveryDialogProps) {
   const sanitizedAllowedTabs = React.useMemo(
     () => (allowedTabs.length > 0 ? allowedTabs : ["download", "email"]),
@@ -82,6 +88,13 @@ export function DocumentDeliveryDialog({
   const [isLoadingRecipients, setIsLoadingRecipients] = React.useState(false);
   const [metadataError, setMetadataError] = React.useState<string | null>(null);
 
+  const resolvedRecipientsEndpoint =
+    recipientsEndpoint ?? `/api/document-center/${recordType}/${recordId}/recipients`;
+  const resolvedEmailEndpoint =
+    emailEndpoint ?? `/api/document-center/${recordType}/${recordId}/email`;
+  const resolvedDownloadEndpoint =
+    downloadEndpoint ?? `/api/document-center/${recordType}/${recordId}/pdf`;
+
   React.useEffect(() => {
     if (!open) return;
 
@@ -100,9 +113,7 @@ export function DocumentDeliveryDialog({
         const data = await apiFetch<{
           defaultSubject: string;
           recipients: RecipientOption[];
-        }>(
-          `/api/document-center/${recordType}/${recordId}/recipients`,
-        );
+        }>(resolvedRecipientsEndpoint);
 
         if (!isMounted) return;
 
@@ -134,7 +145,7 @@ export function DocumentDeliveryDialog({
     return () => {
       isMounted = false;
     };
-  }, [defaultTab, number, open, recordId, recordType, title]);
+  }, [defaultTab, number, open, recordId, recordType, resolvedRecipientsEndpoint, title]);
 
   const availableRecipients = React.useMemo(
     () =>
@@ -185,7 +196,7 @@ export function DocumentDeliveryDialog({
     setIsDownloading(true);
     try {
       await triggerBrowserDownload(
-        `/api/document-center/${recordType}/${recordId}/pdf`,
+        resolvedDownloadEndpoint,
         `${number}-${title}.pdf`,
         "application/pdf",
       );
@@ -196,7 +207,7 @@ export function DocumentDeliveryDialog({
     } finally {
       setIsDownloading(false);
     }
-  }, [number, recordId, recordType, title]);
+  }, [number, resolvedDownloadEndpoint, title]);
 
   const handleSend = React.useCallback(async () => {
     if (recipients.length === 0) {
@@ -211,17 +222,14 @@ export function DocumentDeliveryDialog({
 
     setIsSending(true);
     try {
-      await apiFetch(
-        `/api/document-center/${recordType}/${recordId}/email`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            recipients,
-            subject: subject.trim(),
-            message: message.trim(),
-          }),
-        },
-      );
+      await apiFetch(resolvedEmailEndpoint, {
+        method: "POST",
+        body: JSON.stringify({
+          recipients,
+          subject: subject.trim(),
+          message: message.trim(),
+        }),
+      });
 
       toast.success(
         `Email sent to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`,
@@ -233,7 +241,7 @@ export function DocumentDeliveryDialog({
     } finally {
       setIsSending(false);
     }
-  }, [message, onEmailSent, onOpenChange, recipients, recordId, recordType, subject]);
+  }, [message, onEmailSent, onOpenChange, recipients, resolvedEmailEndpoint, subject]);
 
   const showTabbedLayout = sanitizedAllowedTabs.length > 1;
   const modalTitle =

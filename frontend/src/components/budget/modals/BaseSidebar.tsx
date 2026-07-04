@@ -3,11 +3,13 @@
 import { ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import { cn } from "@/lib/utils";
 
 interface BaseSidebarProps {
@@ -36,22 +38,24 @@ export function BaseSidebar({
   size = "lg",
 }: BaseSidebarProps) {
   return (
-    <BudgetOverlay
+    <SidePanel
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      variant="sheet"
-      size={size}
-      className="flex h-full flex-col bg-background"
     >
-      <BudgetOverlayHeader
-        title={title}
-        subtitle={subtitle}
-        className="px-4 py-4 sm:px-8 sm:py-6"
-      />
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-    </BudgetOverlay>
+      <SidePanelContent size={size} side="right" className="flex h-full flex-col bg-background">
+        <SidePanelHeader className="border-b border-border/60 px-4 py-4 sm:px-6">
+          {subtitle ? (
+            <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {subtitle}
+            </div>
+          ) : null}
+          <SidePanelTitle className="tracking-tight">{title}</SidePanelTitle>
+        </SidePanelHeader>
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 
@@ -65,9 +69,7 @@ export function SidebarBody({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <BudgetOverlayBody className={className}>{children}</BudgetOverlayBody>
-  );
+  return <SidePanelBody className={className}>{children}</SidePanelBody>;
 }
 
 /**
@@ -81,11 +83,11 @@ export function SidebarFooter({
   className?: string;
 }) {
   return (
-    <BudgetOverlayFooter
-      className={cn("bg-muted px-4 py-4 sm:px-8 sm:py-6", className)}
+    <SidePanelFooter
+      className={cn("border-t border-border/60 bg-background px-4 py-4 sm:px-6", className)}
     >
       {children}
-    </BudgetOverlayFooter>
+    </SidePanelFooter>
   );
 }
 
@@ -116,7 +118,7 @@ export function SidebarStats({
 }
 
 /**
- * SidebarTabs - Tab navigation for sidebar using standard line tabs
+ * SidebarTabs - Tab navigation for sidebar using standard section tabs
  */
 export function SidebarTabs({
   tabs,
@@ -130,10 +132,7 @@ export function SidebarTabs({
   return (
     <div className="shrink-0 px-4 sm:px-8">
       <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList
-          variant="line"
-          className="w-full justify-start border-b border-border"
-        >
+        <TabsList className="w-full justify-start">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}

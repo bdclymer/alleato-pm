@@ -9,10 +9,8 @@ jest.mock("@/lib/bot/teams-proactive", () => ({
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   buildAiWidgetNotificationMetadata,
-  buildChangeRequestReviewPrompt,
   buildRfiReviewPrompt,
   notifyAiWidgetNotification,
-  notifyChangeRequestReviewNeeded,
   notifyRfiReviewNeeded,
 } from "../notificationService";
 
@@ -186,41 +184,6 @@ describe("AI widget notification producer", () => {
     expect(client.select).not.toHaveBeenCalled();
   });
 
-  it("builds change request review notifications for the widget composer", async () => {
-    const client = createNotificationClientMock();
-
-    await expect(
-      notifyChangeRequestReviewNeeded("user-1", {
-        projectId: 25125,
-        title: "Owner-requested lobby finish change",
-        description: "Upgrade lobby finish package.",
-        scope: "owner_change",
-        type: "potential_change",
-        status: "open",
-        eventKey: "change-preview-1",
-      }),
-    ).resolves.toEqual({ created: 1, skipped: 0 });
-
-    expect(client.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: "user-1",
-        project_id: 25125,
-        entity_type: "change_events",
-        kind: "change_request_review_needed",
-        title: "Change request ready for review",
-        body: "Owner-requested lobby finish change",
-        metadata: expect.objectContaining({
-          actionLabel: "Review change request",
-          source: "createChangeEvent.preview",
-          eventKey: "change-preview-1",
-          prompt: expect.stringContaining(
-            "Owner-requested lobby finish change",
-          ),
-        }),
-      }),
-    );
-  });
-
   it("builds RFI review notifications for the widget composer", async () => {
     const client = createNotificationClientMock();
 
@@ -253,16 +216,6 @@ describe("AI widget notification producer", () => {
         }),
       }),
     );
-  });
-
-  it("renders change request review prompts with required draft fields", () => {
-    expect(
-      buildChangeRequestReviewPrompt({
-        projectId: 25125,
-        title: "Owner-requested lobby finish change",
-        description: null,
-      }),
-    ).toContain("Project ID: 25125");
   });
 
   it("renders RFI review prompts with required draft fields", () => {

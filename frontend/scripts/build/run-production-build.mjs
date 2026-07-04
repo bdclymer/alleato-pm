@@ -28,6 +28,7 @@ const buildEngine = (process.env.NEXT_PRODUCTION_BUILD_ENGINE ?? "turbopack")
   .toLowerCase();
 const nextBuildNodeOptions =
   process.env.NEXT_PRODUCTION_BUILD_NODE_OPTIONS?.trim() || "--max-old-space-size=7168";
+const buildContractsScript = path.join(frontendRoot, "scripts/build/check-critical-build-contracts.mjs");
 
 let activeChild = null;
 let cleanedUp = false;
@@ -173,6 +174,8 @@ async function main() {
       `[build] Unsupported NEXT_PRODUCTION_BUILD_ENGINE="${buildEngine}". Expected "turbopack" or "webpack".`,
     );
   }
+
+  await timedStep("Verify critical build contracts", () => runNodeScript(buildContractsScript));
 
   await timedStep("Disable non-production routes", () => runNodeScript(disableScript));
 

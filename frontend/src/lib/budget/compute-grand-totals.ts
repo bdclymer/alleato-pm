@@ -117,6 +117,43 @@ interface CostForecastEntry {
   created_at: string | null;
 }
 
+interface ApprovedBudgetModificationLineItem {
+  cost_code_id: string | null;
+  cost_type_id: string | null;
+  sub_job_id: string | null;
+  amount: number | null;
+}
+
+interface EditableBudgetFieldsRow {
+  id: string;
+  quantity: number | null;
+  unit_cost: number | null;
+  unit_of_measure: string | null;
+}
+
+export function mergeBudgetRowsWithEditableFields(
+  rows: Record<string, unknown>[],
+  editableRows: EditableBudgetFieldsRow[],
+) {
+  const editableById = new Map(
+    editableRows.map((row) => [row.id, row]),
+  );
+
+  return rows.map((row) => {
+    const editable = editableById.get(String(row.id));
+    if (!editable) {
+      return row;
+    }
+
+    return {
+      ...row,
+      quantity: editable.quantity,
+      unit_cost: editable.unit_cost,
+      unit_of_measure: editable.unit_of_measure,
+    };
+  });
+}
+
 interface ForecastDetailRow {
   budget_line_id: string;
   method: "manual" | "monitored_resources";
@@ -234,8 +271,24 @@ async function fetchBudgetRows(
     .order("cost_code_id", { ascending: true });
 
   if (!viewResult.error) {
+    const editableFieldsResult = await supabase
+      .from("budget_lines")
+      .select("id, quantity, unit_cost, unit_of_measure")
+      .eq("project_id", projectIdNum);
+
+    if (editableFieldsResult.error) {
+      return {
+        data: null,
+        error: editableFieldsResult.error,
+        source: "view",
+      };
+    }
+
     return {
-      data: (viewResult.data as Record<string, unknown>[] | null) ?? [],
+      data: mergeBudgetRowsWithEditableFields(
+        (viewResult.data as Record<string, unknown>[] | null) ?? [],
+        (editableFieldsResult.data as EditableBudgetFieldsRow[] | null) ?? [],
+      ),
       error: null,
       source: "view",
     };
@@ -453,6 +506,46 @@ export function normalizeBudgetCodeLookupKey(budgetCode: string): string {
     .toUpperCase();
 }
 
+export function buildBudgetLineRollupKey(
+  costCodeId: string | null | undefined,
+  costTypeId: string | null | undefined,
+  subJobId: string | null | undefined,
+): string | null {
+  if (!costCodeId) return null;
+  return [costCodeId, costTypeId ?? "", subJobId ?? ""].join("::");
+}
+
+export function aggregateApprovedBudgetModificationTotals(
+  lines: ApprovedBudgetModificationLineItem[],
+): Map<string, number> {
+  const totals = new Map<string, number>();
+
+  for (const line of lines) {
+    const key = buildBudgetLineRollupKey(
+      line.cost_code_id,
+      line.cost_type_id,
+      line.sub_job_id,
+    );
+    if (!key) continue;
+
+    totals.set(key, (totals.get(key) ?? 0) + (Number(line.amount) || 0));
+  }
+
+  return totals;
+}
+
+export function resolveBudgetModificationTotal(
+  lineKey: string | null,
+  approvedBudgetModificationTotalsByLineKey: Map<string, number>,
+  fallbackViewValue: unknown,
+): number {
+  if (lineKey && approvedBudgetModificationTotalsByLineKey.has(lineKey)) {
+    return approvedBudgetModificationTotalsByLineKey.get(lineKey) ?? 0;
+  }
+
+  return parseFloat(String(fallbackViewValue ?? 0)) || 0;
+}
+
 // ---------------------------------------------------------------------------
 // Pure reducers — tested directly, no DB dependency
 // ---------------------------------------------------------------------------
@@ -488,6 +581,9 @@ export interface BudgetLineItem {
   divisionTitle: string;
   subJob: string;
   originalBudgetAmount: number;
+  unitQty?: number;
+  uom?: string;
+  unitCost?: number;
   budgetModifications: number;
   approvedCOs: number;
   revisedBudget: number;
@@ -551,6 +647,23 @@ export function reduceGrandTotals(lineItems: BudgetLineItem[]): GrandTotals {
   );
 }
 
+export function extractBudgetLineEditFields(item: Record<string, unknown>) {
+  const quantity =
+    item.quantity == null ? undefined : Number(item.quantity);
+  const unitCost =
+    item.unit_cost == null ? undefined : Number(item.unit_cost);
+  const unitOfMeasure =
+    typeof item.unit_of_measure === "string" && item.unit_of_measure.trim()
+      ? item.unit_of_measure
+      : undefined;
+
+  return {
+    unitQty: Number.isFinite(quantity) ? quantity : undefined,
+    uom: unitOfMeasure,
+    unitCost: Number.isFinite(unitCost) ? unitCost : undefined,
+  };
+}
+
 export function consumeCostAggregationOnce(
   costCodeId: string,
   costsByCode: Record<string, CostAggregation>,
@@ -593,6 +706,7 @@ export async function computeBudgetGrandTotals(
     budgetRowsResult,
     directCostsRes,
     projectCostCodesRes,
+    approvedBudgetModificationsRes,
     subcontractSovRes,
     poSovRes,
     pendingPrimeChangeOrdersRes,
@@ -626,6 +740,20 @@ export async function computeBudgetGrandTotals(
       .from("project_budget_codes")
       .select("id, cost_code_id")
       .eq("project_id", projectIdNum),
+
+    supabase
+      .from("budget_mod_lines")
+      .select(
+        `
+        cost_code_id,
+        cost_type_id,
+        sub_job_id,
+        amount,
+        budget_modifications!inner(status, project_id)
+      `,
+      )
+      .eq("project_id", projectIdNum)
+      .eq("budget_modifications.status", "approved"),
 
     supabase
       .from("subcontract_sov_items")
@@ -892,7 +1020,11 @@ export async function computeBudgetGrandTotals(
   }
 
   // ---- Map budget rows to full line items ----
-  const usingBudgetTableFallback = budgetRowsResult.source === "table";
+  const approvedBudgetModificationTotalsByLineKey =
+    aggregateApprovedBudgetModificationTotals(
+      (approvedBudgetModificationsRes.data ||
+        []) as ApprovedBudgetModificationLineItem[],
+    );
 
   const consumedCostCodes = new Set<string>();
   const lineItems: BudgetLineItem[] = (budgetRowsResult.data || []).map(
@@ -917,6 +1049,11 @@ export async function computeBudgetGrandTotals(
         | { code?: string; name?: string }
         | undefined;
       const costCodeId = item.cost_code_id as string;
+      const lineKey = buildBudgetLineRollupKey(
+        costCodeId,
+        item.cost_type_id as string | null | undefined,
+        item.sub_job_id as string | null | undefined,
+      );
 
       const costData = consumeCostAggregationOnce(
         costCodeId,
@@ -926,16 +1063,17 @@ export async function computeBudgetGrandTotals(
 
       const originalBudgetAmount =
         parseFloat(item.original_amount as string) || 0;
-      const budgetModifications = usingBudgetTableFallback
-        ? 0
-        : parseFloat(item.budget_mod_total as string) || 0;
-      const approvedCOs = usingBudgetTableFallback
+      const budgetModifications = resolveBudgetModificationTotal(
+        lineKey,
+        approvedBudgetModificationTotalsByLineKey,
+        item.budget_mod_total,
+      );
+      const approvedCOs = budgetRowsResult.source === "table"
         ? costData.approvedBudgetChanges
         : (parseFloat(item.approved_co_total as string) || 0) +
           costData.approvedBudgetChanges;
-      const revisedBudget = usingBudgetTableFallback
-        ? originalBudgetAmount + budgetModifications + approvedCOs
-        : parseFloat(item.revised_budget as string) || 0;
+      const revisedBudget =
+        originalBudgetAmount + budgetModifications + approvedCOs;
 
       const projectedBudget = revisedBudget + costData.pendingBudgetChanges;
       const projectedCosts =
@@ -953,6 +1091,15 @@ export async function computeBudgetGrandTotals(
         forecastMethod,
         detailRows,
       );
+      const forecastStartDate =
+        detailRows
+          .map((row) => row.start_date ?? null)
+          .find((value): value is string => Boolean(value)) ?? null;
+      const forecastEndDate =
+        [...detailRows]
+          .reverse()
+          .map((row) => row.end_date ?? null)
+          .find((value): value is string => Boolean(value)) ?? null;
       const savedForecast = Number(forecastEntry?.forecast_to_complete ?? NaN);
       const hasSavedForecast = Number.isFinite(savedForecast);
       const forecastToComplete =
@@ -979,6 +1126,7 @@ export async function computeBudgetGrandTotals(
         subJob: subJob?.name || "",
 
         originalBudgetAmount,
+        ...extractBudgetLineEditFields(item),
         budgetModifications,
         approvedCOs,
         revisedBudget,
@@ -995,6 +1143,8 @@ export async function computeBudgetGrandTotals(
         projectedOverUnder,
         forecastMethod,
         forecastNotes: forecastEntry?.notes ?? null,
+        forecastStartDate,
+        forecastEndDate,
       };
     },
   );

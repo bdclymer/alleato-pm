@@ -56,11 +56,20 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   kanbanDensityStyles,
   kanbanPriorityDotClasses,
   type KanbanTone,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import {
+  ActiveWorkWorkspace,
+  OpsPanel,
+  ReviewWorkspace,
+} from "@/components/admin/command-center/ops-views";
 import {
   Calendar,
   ChevronDown,
@@ -68,7 +77,6 @@ import {
   ExternalLink,
   Filter,
   Github,
-  GripVertical,
   Lightbulb,
   MoreHorizontal,
   Pencil,
@@ -93,6 +101,7 @@ import {
   type InitiativeCard,
   type Employee,
 } from "@/hooks/use-initiative-cards";
+import { useCommandCenterOps } from "@/hooks/use-command-center-ops";
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -101,6 +110,7 @@ import {
 type CardStatus = InitiativeCard["status"];
 type CardPriority = InitiativeCard["priority"];
 type Density = "compact" | "default" | "spacious";
+type CommandCenterView = "active" | "review" | "initiatives";
 
 interface ColumnDef {
   id: CardStatus;
@@ -244,6 +254,11 @@ function ExpandableSearch({
 
 export default function CommandCenterPage() {
   const { data: cards = [], isLoading } = useInitiativeCards();
+  const {
+    data: opsData,
+    isLoading: opsLoading,
+    error: opsError,
+  } = useCommandCenterOps();
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
@@ -257,6 +272,7 @@ export default function CommandCenterPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createInColumn, setCreateInColumn] = useState<CardStatus>("idea");
   const [editingCard, setEditingCard] = useState<InitiativeCard | null>(null);
+  const [activeView, setActiveView] = useState<CommandCenterView>("active");
 
   // Toolbar state
   const [searchQuery, setSearchQuery] = useState("");
@@ -353,8 +369,8 @@ export default function CommandCenterPage() {
 
   // Sensors
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor),
   );
 
@@ -515,191 +531,230 @@ export default function CommandCenterPage() {
   const totalCards = localCards.length;
   const filteredTotal = filteredCards.length;
   const densityConfig = DENSITY_CONFIG[density];
+  const opsSummary =
+    activeView === "active"
+      ? `${opsData?.resumePacks.length ?? 0} active workstream${opsData?.resumePacks.length === 1 ? "" : "s"}`
+      : activeView === "review"
+        ? `${opsData?.reviewQueue.length ?? 0} review item${opsData?.reviewQueue.length === 1 ? "" : "s"}`
+        : hasActiveFilters
+            ? `${filteredTotal} of ${totalCards} initiatives`
+            : `${totalCards} initiative${totalCards !== 1 ? "s" : ""} across ${COLUMNS.length} stages`;
+  const opsUpdatedAt = opsData?.generatedAt
+    ? new Date(opsData.generatedAt).toLocaleString()
+    : null;
 
   return (
     <PageShell variant="dashboard" title="Command Center" showHeader={false} className="h-full" contentClassName="space-y-0">
-      <div className="flex flex-col h-full">
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as CommandCenterView)} className="flex h-full flex-col">
       {/* Header — Notion-style: title left, icon toolbar + primary action right */}
       <div className="bg-background px-6 py-3 mx-auto w-full max-w-screen-2xl">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-foreground">Command Center</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {hasActiveFilters
-                ? `${filteredTotal} of ${totalCards} initiatives`
-                : `${totalCards} initiative${totalCards !== 1 ? "s" : ""} across ${COLUMNS.length} stages`}
-            </p>
           </div>
 
-          {/* Right side: icon toolbar + New button */}
           <div className="flex items-center gap-1">
-            <TooltipProvider delayDuration={300}>
-              {/* Filter icon — unified popover with all filter categories */}
-              <FilterMenu
-                title="Filters"
-                hasActiveFilters={hasActiveFilters}
-                onClear={clearFilters}
-                trigger={
-                  <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Filter">
-                    <Filter />
-                    {hasActiveFilters && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                        {ALL_PRIORITIES.length - priorityFilter.size + ALL_SOURCES.length - sourceFilter.size + (allLabels.length > 0 ? allLabels.length - labelFilter.size : 0)}
-                      </span>
-                    )}
-                  </Button>
-                }
-              >
-                <FilterMenuGroup label="Priority">
-                  {ALL_PRIORITIES.map((p) => (
-                    <FilterCheckboxRow
-                      key={p}
-                      checked={priorityFilter.has(p)}
-                      onCheckedChange={() => togglePriority(p)}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <span className={`h-2 w-2 rounded-full ${PRIORITY_CONFIG[p].dot}`} />
-                        {PRIORITY_CONFIG[p].label}
-                      </span>
-                    </FilterCheckboxRow>
-                  ))}
-                </FilterMenuGroup>
-                <FilterMenuGroup label="Source">
-                  {ALL_SOURCES.map((s) => (
-                    <FilterCheckboxRow
-                      key={s}
-                      checked={sourceFilter.has(s)}
-                      onCheckedChange={() => toggleSource(s)}
-                      className="capitalize"
-                    >
-                      {s.replace("_", " ")}
-                    </FilterCheckboxRow>
-                  ))}
-                </FilterMenuGroup>
-                {allLabels.length > 0 && (
-                  <FilterMenuGroup label="Labels">
-                    {allLabels.map((l) => (
-                      <FilterCheckboxRow
-                        key={l}
-                        checked={labelFilter.has(l)}
-                        onCheckedChange={() => toggleLabel(l)}
-                      >
-                        {l}
-                      </FilterCheckboxRow>
-                    ))}
-                  </FilterMenuGroup>
-                )}
-              </FilterMenu>
-
-              {/* Search icon — expandable */}
-              <ExpandableSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search cards..." />
-
-              {/* Settings icon — field visibility + density */}
-              <Popover>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Rows3 className="h-4 w-4" />
+            {activeView === "initiatives" ? (
+              <>
+                <TooltipProvider delayDuration={300}>
+                  {/* Filter icon — unified popover with all filter categories */}
+                  <FilterMenu
+                    title="Filters"
+                    hasActiveFilters={hasActiveFilters}
+                    onClear={clearFilters}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Filter">
+                        <Filter />
+                        {hasActiveFilters && (
+                          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                            {ALL_PRIORITIES.length - priorityFilter.size + ALL_SOURCES.length - sourceFilter.size + (allLabels.length > 0 ? allLabels.length - labelFilter.size : 0)}
+                          </span>
+                        )}
                       </Button>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>View settings</TooltipContent>
-                </Tooltip>
-                <PopoverContent align="end" className="w-56 p-0">
-                  <div className="px-3 py-2.5 border-b border-border">
-                    <span className="text-sm font-medium">View settings</span>
-                  </div>
-                  <div className="p-3 space-y-4">
-                    {/* Density */}
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Density</p>
-                      <DensityControl
-                        value={density}
-                        options={[
-                          { value: "compact", label: "Compact" },
-                          { value: "default", label: "Default" },
-                          { value: "spacious", label: "Spacious" },
-                        ]}
-                        onChange={setDensity}
-                      />
-                    </div>
-                    {/* Property visibility */}
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Property visibility</p>
-                      {CARD_FIELDS.map((f) => (
+                    }
+                  >
+                    <FilterMenuGroup label="Priority">
+                      {ALL_PRIORITIES.map((p) => (
                         <FilterCheckboxRow
-                          key={f.key}
-                          checked={visibleFields.has(f.key)}
-                          onCheckedChange={() => toggleField(f.key)}
+                          key={p}
+                          checked={priorityFilter.has(p)}
+                          onCheckedChange={() => togglePriority(p)}
                         >
-                          {f.label}
+                          <span className="flex items-center gap-1.5">
+                            <span className={`h-2 w-2 rounded-full ${PRIORITY_CONFIG[p].dot}`} />
+                            {PRIORITY_CONFIG[p].label}
+                          </span>
                         </FilterCheckboxRow>
                       ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </TooltipProvider>
+                    </FilterMenuGroup>
+                    <FilterMenuGroup label="Source">
+                      {ALL_SOURCES.map((s) => (
+                        <FilterCheckboxRow
+                          key={s}
+                          checked={sourceFilter.has(s)}
+                          onCheckedChange={() => toggleSource(s)}
+                          className="capitalize"
+                        >
+                          {s.replace("_", " ")}
+                        </FilterCheckboxRow>
+                      ))}
+                    </FilterMenuGroup>
+                    {allLabels.length > 0 && (
+                      <FilterMenuGroup label="Labels">
+                        {allLabels.map((l) => (
+                          <FilterCheckboxRow
+                            key={l}
+                            checked={labelFilter.has(l)}
+                            onCheckedChange={() => toggleLabel(l)}
+                          >
+                            {l}
+                          </FilterCheckboxRow>
+                        ))}
+                      </FilterMenuGroup>
+                    )}
+                  </FilterMenu>
 
-            {/* Primary action — always rightmost */}
-            <Button
-              size="sm"
-              onClick={() => {
-                setCreateInColumn("idea");
-                setShowCreateDialog(true);
-              }}
-            >
-              New
-              <ChevronDown />
-            </Button>
-          </div>
-        </div>
-      </div>
+                  <ExpandableSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search cards..." />
 
-      {/* Board */}
-      <div className="flex-1 w-full overflow-hidden flex">
-        {isLoading ? (
-          <div className="flex items-center justify-center flex-1 text-muted-foreground">
-            Loading command center...
-          </div>
-        ) : (
-          <DndContext
-            collisionDetection={closestCenter}
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex h-full flex-1">
-              {COLUMNS.map((col) => (
-                <KanbanColumn
-                  key={col.id}
-                  column={col}
-                  cards={columnCards[col.id]}
-                  density={densityConfig}
-                  visibleFields={visibleFields}
-                  employees={employees}
-                  copiedDispatch={copiedDispatch}
-                  onAddCard={() => {
-                    setCreateInColumn(col.id);
+                  <Popover>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Rows3 className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>View settings</TooltipContent>
+                    </Tooltip>
+                    <PopoverContent align="end" className="w-56 p-0">
+                      <div className="px-3 py-2.5 border-b border-border">
+                        <span className="text-sm font-medium">View settings</span>
+                      </div>
+                      <div className="p-3 space-y-4">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5">Density</p>
+                          <DensityControl
+                            value={density}
+                            options={[
+                              { value: "compact", label: "Compact" },
+                              { value: "default", label: "Default" },
+                              { value: "spacious", label: "Spacious" },
+                            ]}
+                            onChange={setDensity}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5">Property visibility</p>
+                          {CARD_FIELDS.map((f) => (
+                            <FilterCheckboxRow
+                              key={f.key}
+                              checked={visibleFields.has(f.key)}
+                              onCheckedChange={() => toggleField(f.key)}
+                            >
+                              {f.label}
+                            </FilterCheckboxRow>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TooltipProvider>
+
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setCreateInColumn("idea");
                     setShowCreateDialog(true);
                   }}
-                  onEditCard={setEditingCard}
-                  onDeleteCard={handleDeleteCard}
-                  onDispatchCard={handleDispatchCard}
-                />
-              ))}
-            </div>
-            <DragOverlay>
-              {activeCard ? (
-                <div className="w-72 rotate-2">
-                  <CardContent card={activeCard} density={densityConfig} visibleFields={visibleFields} />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+                >
+                  New
+                  <ChevronDown />
+                </Button>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                {opsUpdatedAt ? `Updated ${opsUpdatedAt}` : "Waiting for control-plane data"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <TabsList className="mt-4 flex w-full max-w-2xl">
+          <TabsTrigger value="active" className="flex-1">Active Work</TabsTrigger>
+          <TabsTrigger value="review" className="flex-1">Needs Review</TabsTrigger>
+          <TabsTrigger value="initiatives" className="flex-1">Initiatives</TabsTrigger>
+        </TabsList>
       </div>
+
+      <TabsContent value="active" className="mt-0 flex-1 overflow-auto px-6 pb-6 data-[state=inactive]:hidden">
+        <OpsPanel
+          isLoading={opsLoading}
+          error={opsError}
+          data={opsData}
+        >
+          <ActiveWorkWorkspace
+            sessions={opsData?.sessions ?? []}
+            resumePacks={opsData?.resumePacks ?? []}
+            reviewQueue={opsData?.reviewQueue ?? []}
+          />
+        </OpsPanel>
+      </TabsContent>
+
+      <TabsContent value="review" className="mt-0 flex-1 overflow-auto px-6 pb-6 data-[state=inactive]:hidden">
+        <OpsPanel
+          isLoading={opsLoading}
+          error={opsError}
+          data={opsData}
+        >
+          <ReviewWorkspace reviewQueue={opsData?.reviewQueue ?? []} />
+        </OpsPanel>
+      </TabsContent>
+
+      <TabsContent value="initiatives" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <div className="flex-1 w-full overflow-hidden flex">
+          {isLoading ? (
+            <div className="flex items-center justify-center flex-1 text-muted-foreground">
+              Loading command center...
+            </div>
+          ) : (
+            <DndContext
+              collisionDetection={closestCenter}
+              sensors={sensors}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex h-full flex-1">
+                {COLUMNS.map((col) => (
+                  <KanbanColumn
+                    key={col.id}
+                    column={col}
+                    cards={columnCards[col.id]}
+                    density={densityConfig}
+                    visibleFields={visibleFields}
+                    employees={employees}
+                    copiedDispatch={copiedDispatch}
+                    onAddCard={() => {
+                      setCreateInColumn(col.id);
+                      setShowCreateDialog(true);
+                    }}
+                    onEditCard={setEditingCard}
+                    onDeleteCard={handleDeleteCard}
+                    onDispatchCard={handleDispatchCard}
+                  />
+                ))}
+              </div>
+              <DragOverlay>
+                {activeCard ? (
+                  <div className="w-72 rotate-2">
+                    <CardContent card={activeCard} density={densityConfig} visibleFields={visibleFields} />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </div>
+      </TabsContent>
 
       {showCreateDialog && (
         <CardFormDialog
@@ -721,7 +776,7 @@ export default function CommandCenterPage() {
           onClose={() => setEditingCard(null)}
         />
       )}
-      </div>
+      </Tabs>
     </PageShell>
   );
 }
@@ -902,30 +957,35 @@ const CardContent = React.forwardRef<HTMLDivElement, {
     [onEdit],
   );
 
+  const dragKeyDown = dragProps?.onKeyDown as
+    | ((event: React.KeyboardEvent<HTMLDivElement>) => void)
+    | undefined;
+  const { onKeyDown: _dragOnKeyDown, ...dragInteractionProps } = dragProps ?? {};
+  const mergedKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      dragKeyDown?.(event);
+      if (event.defaultPrevented) return;
+      handleCardKeyDown(event);
+    },
+    [dragKeyDown, handleCardKeyDown],
+  );
+
   return (
     <KanbanCardShell
       ref={ref}
       density={density}
       interactive={isEditable}
       sortStyle={sortStyle}
-      className={isDragging ? "opacity-30" : "opacity-100"}
+      className={cn(
+        isDragging ? "opacity-30 shadow-sm" : "opacity-100",
+        "cursor-grab active:cursor-grabbing touch-manipulation",
+      )}
       onClick={isEditable ? handleCardClick : undefined}
-      onKeyDown={isEditable ? handleCardKeyDown : undefined}
+      onKeyDown={isEditable ? mergedKeyDown : dragKeyDown}
       ariaLabel={isEditable ? `Edit ${card.title}` : undefined}
+      {...dragInteractionProps}
     >
       <div className="flex items-start gap-1.5">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon-xs"
-          {...dragProps}
-          className="mt-1 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
-        >
-          <span aria-label="Drag card" onClick={(event) => event.stopPropagation()}>
-            <GripVertical className={isCompact ? "h-3 w-3" : "h-4 w-4"} />
-          </span>
-        </Button>
-
         <div className="flex-1 min-w-0">
           {/* Source badge — priority is shown as dot on the title line */}
           {visibleFields.has("source") && sourceBadge && (

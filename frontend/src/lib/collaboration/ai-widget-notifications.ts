@@ -10,7 +10,6 @@ export const AI_WIDGET_NOTIFICATION_KINDS = [
   "ai_action_ready",
   "ai_notification_decision",
   "rfi_attention",
-  "change_request_review_needed",
 ] as const;
 
 export type AiWidgetNotificationKind =

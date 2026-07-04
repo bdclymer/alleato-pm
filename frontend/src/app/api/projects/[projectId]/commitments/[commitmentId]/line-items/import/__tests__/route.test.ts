@@ -57,7 +57,7 @@ describe("commitment line item budget import", () => {
     } as Awaited<ReturnType<typeof requirePermission>>);
   });
 
-  it("rejects imports for approved commitments", async () => {
+  it("rejects imports after invoice submission has started", async () => {
     const supabase = {
       from: jest.fn((table: string) => {
         if (table === "commitments_unified") {
@@ -68,6 +68,18 @@ describe("commitment line item budget import", () => {
               commitment_type: "subcontract",
               status: "Approved",
             },
+            error: null,
+          });
+        }
+        if (table === "subcontractor_invoices") {
+          return createBuilder({
+            data: [
+              {
+                status: "under_review",
+                submitted_at: "2026-07-02T18:00:00.000Z",
+                approved_at: null,
+              },
+            ],
             error: null,
           });
         }
@@ -103,7 +115,8 @@ describe("commitment line item budget import", () => {
     expect(response.status).toBe(412);
     await expect(response.json()).resolves.toMatchObject({
       error_code: "PRECONDITION_FAILED",
-      error_message: "Approved commitments are read-only. Change the status before importing line items.",
+      error_message:
+        "A commitment invoice has already been submitted, so the schedule of values stays locked to protect invoice history.",
     });
   });
 });

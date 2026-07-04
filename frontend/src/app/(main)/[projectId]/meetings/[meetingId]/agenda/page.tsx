@@ -1,15 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowRightLeft,
+  Calendar,
   Copy,
   Download,
+  ExternalLink,
+  FileText,
+  LinkIcon,
+  MapPin,
   MoreVertical,
+  Paperclip,
   Trash2,
   UserPlus,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,18 +24,14 @@ import {
   DetailPanel,
   PageShell,
   PageTabs,
-  SectionAction,
   SectionRuleHeading,
 } from "@/components/layout";
 import {
   ConfirmDeleteDialog,
-  DetailField,
-  DetailFieldGrid,
-  EditableDetailField,
   EmptyState,
   EntityAttachments,
-  StatusBadge,
 } from "@/components/ds";
+import { DetailPropertyBar, DetailPropertyItem } from "@/components/ui/detail-property-bar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -52,39 +53,40 @@ import { ErrorState } from "@/components/ds/error-state";
 import { formatDate } from "@/lib/format";
 import { usePeople } from "@/hooks/use-people";
 import {
-  useConvertMeeting,
   useCreateFollowUpMeeting,
   useDeleteMeeting,
   useMeetingDetail,
   useSetAttendeeAttendance,
-  useUpdateMeeting,
+  type MeetingDetail,
 } from "@/hooks/use-meetings";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
-import { AgendaSection } from "@/components/domain/meetings/agenda-section";
+import {
+  AgendaSection,
+  MeetingActionItemsSection,
+} from "@/components/domain/meetings/agenda-section";
 import { MeetingSummaryPane } from "@/components/domain/meetings/meeting-summary-pane";
 import { MeetingTranscriptPane } from "@/components/domain/meetings/meeting-transcript-pane";
-import {
-  meetingStatusLabel,
-  meetingStatusVariant,
-} from "@/features/meetings/meeting-series-table-config";
+import { meetingStatusLabel } from "@/features/meetings/meeting-series-table-config";
 
-type DetailTab = "details" | "transcript";
+type DetailTab = "agenda" | "transcript" | "sources" | "minutes";
 
-const TIMEZONE_OPTIONS = [
-  { value: "America/Indiana/Indianapolis", label: "Eastern (Indianapolis)" },
-  { value: "America/New_York", label: "Eastern (New York)" },
-  { value: "America/Chicago", label: "Central" },
-  { value: "America/Denver", label: "Mountain" },
-  { value: "America/Los_Angeles", label: "Pacific" },
-];
+const QUICK_LINKS = [
+  { label: "Submittals", href: "submittals" },
+  { label: "RFIs", href: "rfis" },
+  { label: "Change events", href: "change-events" },
+  { label: "Change orders", href: "change-orders" },
+  { label: "Schedule", href: "schedule" },
+  { label: "Drawings", href: "drawings" },
+  { label: "Commitments", href: "commitments" },
+] as const;
 
-export default function MeetingDetailPage() {
+export default function MeetingAgendaPage() {
   const params = useParams()! ?? {};
   const router = useRouter();
   const projectId = params.projectId as string;
   const meetingId = params.meetingId as string;
 
-  const [activeTab, setActiveTab] = useState<DetailTab>("details");
+  const [activeTab, setActiveTab] = useState<DetailTab>("agenda");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [addAttendeeId, setAddAttendeeId] = useState<string>("");
 
@@ -92,41 +94,26 @@ export default function MeetingDetailPage() {
     projectId,
     meetingId,
   );
-  const updateMeeting = useUpdateMeeting(projectId);
-  const convertMeeting = useConvertMeeting(projectId);
   const deleteMeeting = useDeleteMeeting(projectId);
   const createFollowUp = useCreateFollowUpMeeting(projectId);
   const setAttendeeAttendance = useSetAttendeeAttendance(projectId, meetingId);
   const { people } = usePeople();
 
   const attendeePersonIds = useMemo(
-    () => new Set((detail?.attendees ?? []).map((a) => a.person_id)),
+    () => new Set((detail?.attendees ?? []).map((attendee) => attendee.person_id)),
     [detail?.attendees],
   );
   const addableAttendees = useMemo(
-    () => people.filter((p) => !attendeePersonIds.has(p.id)),
-    [people, attendeePersonIds],
+    () => people.filter((person) => !attendeePersonIds.has(person.id)),
+    [attendeePersonIds, people],
   );
-
-  const handleSaveField = async (
-    field: string,
-    value: string | number | boolean | null,
-  ) => {
-    await updateMeeting.mutateAsync({ meetingId, data: { [field]: value } as never });
-  };
-
-  const handleConvert = () => {
-    if (!detail) return;
-    const nextMode = detail.meeting.mode === "minutes" ? "agenda" : "minutes";
-    convertMeeting.mutate({ meetingId, mode: nextMode });
-  };
 
   const handleCreateFollowUp = () => {
     createFollowUp.mutate(
       { meetingId, carry_open_items: true },
       {
         onSuccess: (created) => {
-          router.push(`/${projectId}/meetings/${created.meeting.id}`);
+          router.push(`/${projectId}/meetings/${created.meeting.id}/agenda`);
         },
       },
     );
@@ -178,7 +165,11 @@ export default function MeetingDetailPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="detail" title="Loading meeting…" onBack={() => router.push(`/${projectId}/meetings`)}>
+      <PageShell
+        variant="detail"
+        title="Loading meeting..."
+        onBack={() => router.push(`/${projectId}/meetings`)}
+      >
         <Skeleton className="h-96" />
       </PageShell>
     );
@@ -186,39 +177,35 @@ export default function MeetingDetailPage() {
 
   if (isError || !detail) {
     return (
-      <PageShell variant="detail" title="Meeting" onBack={() => router.push(`/${projectId}/meetings`)}>
+      <PageShell
+        variant="detail"
+        title="Meeting"
+        onBack={() => router.push(`/${projectId}/meetings`)}
+      >
         <ErrorState title="Couldn't load meeting" error={error} onRetry={() => refetch()} />
       </PageShell>
     );
   }
 
-  const { meeting, attendees, categories } = detail;
-  const isMinutesMode = meeting.mode === "minutes";
+  const { meeting } = detail;
   const hasTranscript = Boolean(meeting.transcript_document_id);
-  const totalItemCount = categories.reduce((sum, c) => sum + c.items.length, 0);
+  const hasMinutes = meeting.mode === "minutes" || meeting.status === "minutes";
+  const statusLabel = meetingStatusLabel[meeting.status];
+  const seriesLabel = meeting.series_name
+    ? `${meeting.series_name} #${meeting.number}`
+    : `Meeting #${meeting.number}`;
 
   return (
     <PageShell
       variant="detail"
-      eyebrow={meeting.series_name ? `${meeting.series_name} #${meeting.number}` : `#${meeting.number}`}
+      eyebrow={`${statusLabel} · ${seriesLabel}`}
       title={meeting.name}
-      statusBadge={
-        <StatusBadge
-          status={meetingStatusLabel[meeting.status]}
-          variant={meetingStatusVariant[meeting.status]}
-        />
-      }
       onBack={() => router.push(`/${projectId}/meetings`)}
       actions={
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExportPdf}>
             <Download className="h-4 w-4" />
             Export
-          </Button>
-
-          <Button variant={isMinutesMode ? "outline" : "default"} size="sm" onClick={handleConvert}>
-            <ArrowRightLeft className="h-4 w-4" />
-            {isMinutesMode ? "Revert to Agenda" : "Convert to Minutes"}
           </Button>
 
           <DropdownMenu>
@@ -230,7 +217,7 @@ export default function MeetingDetailPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleCreateFollowUp} disabled={createFollowUp.isPending}>
                 <Copy className="h-4 w-4" />
-                Create Follow-Up Meeting
+                Create follow-up
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -248,219 +235,138 @@ export default function MeetingDetailPage() {
       <PageTabs
         variant="inline"
         tabs={[
-          { label: "Meeting Details", href: "details", isActive: activeTab === "details" },
-          ...(hasTranscript
-            ? [{ label: "Transcript", href: "transcript", isActive: activeTab === "transcript" }]
-            : []),
+          { label: "Agenda", href: "agenda", isActive: activeTab === "agenda" },
+          { label: "Transcript", href: "transcript", isActive: activeTab === "transcript" },
+          { label: "Sources", href: "sources", isActive: activeTab === "sources" },
+          { label: "Minutes", href: "minutes", isActive: activeTab === "minutes" },
         ]}
         onTabClick={(href) => setActiveTab(href as DetailTab)}
       />
 
-      <ContentSectionStack className="pt-3">
-        {activeTab === "details" ? (
+      <DetailPropertyBar className="mb-6 pb-0">
+        {meeting.meeting_date ? (
+          <DetailPropertyItem icon={Calendar}>
+            {formatDate(meeting.meeting_date)}
+            {meeting.start_time ? ` · ${meeting.start_time}` : ""}
+          </DetailPropertyItem>
+        ) : (
+          <DetailPropertyItem icon={Calendar} muted>
+            Set date
+          </DetailPropertyItem>
+        )}
+        {meeting.location ? (
+          <DetailPropertyItem icon={MapPin}>{meeting.location}</DetailPropertyItem>
+        ) : null}
+        {meeting.meeting_link ? (
+          <DetailPropertyItem icon={LinkIcon} href={meeting.meeting_link} external>
+            Meeting link
+          </DetailPropertyItem>
+        ) : null}
+        {hasTranscript ? (
+          <DetailPropertyItem icon={FileText}>Transcript linked</DetailPropertyItem>
+        ) : (
+          <DetailPropertyItem icon={FileText} muted>
+            No transcript
+          </DetailPropertyItem>
+        )}
+      </DetailPropertyBar>
+
+      <ContentSectionStack className="pt-1">
+        {activeTab === "agenda" ? (
           <DetailLayout
             sidebar={
-              <>
-                <section>
-                  <SectionRuleHeading
-                    label="Attendees"
-                    actions={
-                      addableAttendees.length > 0 ? (
-                        <Select value={addAttendeeId} onValueChange={setAddAttendeeId}>
-                          <SelectTrigger className="h-7 w-auto border-none px-1 text-xs shadow-none">
-                            <SelectValue placeholder={<UserPlus className="h-3.5 w-3.5" />} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {addableAttendees.map((person) => (
-                              <SelectItem key={person.id} value={person.id}>
-                                {person.first_name} {person.last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : undefined
-                    }
-                  />
-                  {addAttendeeId ? (
-                    <div className="mb-3 flex items-center gap-2">
-                      <Button size="sm" onClick={handleAddAttendee}>
-                        Add
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setAddAttendeeId("")}>
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : null}
-                  {attendees.length === 0 ? (
-                    <EmptyState
-                      icon={<Users />}
-                      title="No attendees"
-                      description="Add attendees to this meeting."
-                    />
-                  ) : (
-                    <ul className="space-y-2">
-                      {attendees.map((attendee) => (
-                        <li
-                          key={attendee.id}
-                          className="flex items-center justify-between gap-2 text-sm"
-                        >
-                          <div className="flex min-w-0 items-center gap-2">
-                            {meeting.mode === "minutes" ? (
-                              <Checkbox
-                                checked={attendee.attended === true}
-                                aria-label={`Mark ${attendee.person.first_name} ${attendee.person.last_name} attended`}
-                                onCheckedChange={(checked) =>
-                                  setAttendeeAttendance.mutate({
-                                    personId: attendee.person_id,
-                                    attended: checked === true,
-                                  })
-                                }
-                              />
-                            ) : null}
-                            <div className="min-w-0">
-                              <p className="truncate font-medium text-foreground">
-                                {attendee.person.first_name} {attendee.person.last_name}
-                              </p>
-                              {attendee.person.company_name ? (
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {attendee.person.company_name}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label="Attendee actions">
-                                <MoreVertical className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => handleRemoveAttendee(attendee.person_id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <section>
-                  <SectionRuleHeading label="Attachments" />
-                  <EntityAttachments
-                    entityType="meeting"
-                    entityId={meeting.id}
-                    projectId={projectId}
-                    showLabel={false}
-                  />
-                </section>
-
-                <MeetingSummaryPane
-                  projectId={projectId}
-                  meetingId={meetingId}
-                  hasTranscript={hasTranscript}
-                />
-              </>
+              <MeetingCommandRail
+                projectId={projectId}
+                detail={detail}
+                addableAttendees={addableAttendees}
+                addAttendeeId={addAttendeeId}
+                onAddAttendeeIdChange={setAddAttendeeId}
+                onAddAttendee={handleAddAttendee}
+                onRemoveAttendee={handleRemoveAttendee}
+                onSetAttendance={(personId, attended) =>
+                  setAttendeeAttendance.mutate({ personId, attended })
+                }
+                onShowSources={() => setActiveTab("sources")}
+              />
             }
           >
-            <DetailPanel>
-              <SectionRuleHeading label="General Information" />
-              <DetailFieldGrid columns={2}>
-                <EditableDetailField
-                  label="Meeting Name"
-                  type="text"
-                  value={meeting.name ?? ""}
-                  onSave={(v) => handleSaveField("name", v)}
-                  span={2}
-                />
-                <EditableDetailField
-                  label="Date"
-                  type="date"
-                  value={meeting.meeting_date ?? ""}
-                  display={meeting.meeting_date ? formatDate(meeting.meeting_date) : undefined}
-                  emptyPlaceholder="Set date"
-                  onSave={(v) => handleSaveField("meeting_date", v || null)}
-                />
-                <EditableDetailField
-                  label="Timezone"
-                  type="select"
-                  value={meeting.timezone}
-                  options={TIMEZONE_OPTIONS}
-                  onSave={(v) => handleSaveField("timezone", v)}
-                />
-                <EditableDetailField
-                  label="Start Time"
-                  type="text"
-                  value={meeting.start_time ?? ""}
-                  emptyPlaceholder="Set start time"
-                  onSave={(v) => handleSaveField("start_time", v || null)}
-                />
-                <EditableDetailField
-                  label="End Time"
-                  type="text"
-                  value={meeting.end_time ?? ""}
-                  emptyPlaceholder="Set end time"
-                  onSave={(v) => handleSaveField("end_time", v || null)}
-                />
-                <EditableDetailField
-                  label="Location"
-                  type="text"
-                  value={meeting.location ?? ""}
-                  emptyPlaceholder="Add location"
-                  onSave={(v) => handleSaveField("location", v || null)}
-                />
-                <EditableDetailField
-                  label="Meeting Link"
-                  type="text"
-                  value={meeting.meeting_link ?? ""}
-                  emptyPlaceholder="Add meeting link"
-                  onSave={(v) => handleSaveField("meeting_link", v || null)}
-                />
-                <EditableDetailField
-                  label="Private"
-                  type="boolean"
-                  value={String(meeting.is_private)}
-                  onSave={(v) => handleSaveField("is_private", v === "true")}
-                />
-                <EditableDetailField
-                  label="Draft"
-                  type="boolean"
-                  value={String(meeting.is_draft)}
-                  onSave={(v) => handleSaveField("is_draft", v === "true")}
-                />
-                <EditableDetailField
-                  label="Overview"
-                  type="textarea"
-                  value={meeting.overview ?? ""}
-                  emptyPlaceholder="Add an overview"
-                  onSave={(v) => handleSaveField("overview", v || null)}
-                  span={2}
-                />
-                <DetailField label="Agenda Items">{String(totalItemCount)}</DetailField>
-                <DetailField label="Created">{formatDate(meeting.created_at)}</DetailField>
-              </DetailFieldGrid>
-            </DetailPanel>
+            <section className="space-y-4">
+              <div className="space-y-1">
+                <SectionRuleHeading label="Agenda" className="mb-0 pb-0" />
+                <p className="text-xs text-muted-foreground">
+                  Inline rows are the primary surface. Prior history stays quiet until opened.
+                </p>
+              </div>
 
+              <AgendaSection
+                projectId={Number(projectId)}
+                meetingId={meetingId}
+                detail={detail}
+                mode="agenda"
+              />
+            </section>
+
+            <MeetingActionItemsSection
+              projectId={Number(projectId)}
+              meetingId={meetingId}
+              detail={detail}
+            />
+          </DetailLayout>
+        ) : null}
+
+        {activeTab === "transcript" ? (
+          hasTranscript ? (
+            <MeetingTranscriptPane
+              transcriptDocumentId={meeting.transcript_document_id}
+              meetingId={meetingId}
+              meetingTitle={meeting.name}
+              projectId={Number(projectId)}
+            />
+          ) : (
+            <EmptyState
+              icon={<FileText />}
+              title="No transcript linked"
+              description="Link a transcript from Sources when one is available."
+            />
+          )
+        ) : null}
+
+        {activeTab === "sources" ? (
+          <DetailPanel className="space-y-8">
+            <section>
+              <SectionRuleHeading label="Attachments" />
+              <EntityAttachments
+                entityType="meeting"
+                entityId={meeting.id}
+                projectId={projectId}
+                showLabel={false}
+              />
+            </section>
+
+            <MeetingSummaryPane
+              projectId={projectId}
+              meetingId={meetingId}
+              hasTranscript={hasTranscript}
+            />
+          </DetailPanel>
+        ) : null}
+
+        {activeTab === "minutes" ? (
+          hasMinutes ? (
             <AgendaSection
               projectId={Number(projectId)}
               meetingId={meetingId}
               detail={detail}
-              mode={meeting.mode as "agenda" | "minutes"}
+              mode="minutes"
             />
-          </DetailLayout>
-        ) : (
-          <MeetingTranscriptPane
-            transcriptDocumentId={meeting.transcript_document_id}
-            meetingId={meetingId}
-            meetingTitle={meeting.name}
-            projectId={Number(projectId)}
-          />
-        )}
+          ) : (
+            <EmptyState
+              icon={<FileText />}
+              title="Minutes not available yet"
+              description="Meeting minutes will populate after the meeting has been completed."
+            />
+          )
+        ) : null}
       </ContentSectionStack>
 
       <ConfirmDeleteDialog
@@ -471,5 +377,178 @@ export default function MeetingDetailPage() {
         isDeleting={deleteMeeting.isPending}
       />
     </PageShell>
+  );
+}
+
+function MeetingCommandRail({
+  projectId,
+  detail,
+  addableAttendees,
+  addAttendeeId,
+  onAddAttendeeIdChange,
+  onAddAttendee,
+  onRemoveAttendee,
+  onSetAttendance,
+  onShowSources,
+}: {
+  projectId: string;
+  detail: MeetingDetail;
+  addableAttendees: Array<{ id: string; first_name: string | null; last_name: string | null; email: string | null }>;
+  addAttendeeId: string;
+  onAddAttendeeIdChange: (value: string) => void;
+  onAddAttendee: () => void;
+  onRemoveAttendee: (personId: string) => void;
+  onSetAttendance: (personId: string, attended: boolean | null) => void;
+  onShowSources: () => void;
+}) {
+  const decisions = detail.categories
+    .flatMap((category) => category.items)
+    .filter((item) => item.status === "closed" || Boolean(item.official_minutes))
+    .slice(0, 3);
+
+  return (
+    <>
+      <section>
+        <SectionRuleHeading
+          label="Attendees"
+          actions={
+            addableAttendees.length > 0 ? (
+              <Select value={addAttendeeId} onValueChange={onAddAttendeeIdChange}>
+                <SelectTrigger className="h-7 w-auto border-none px-1 text-xs shadow-none">
+                  <SelectValue placeholder={<UserPlus className="h-3.5 w-3.5" />} />
+                </SelectTrigger>
+                <SelectContent>
+                  {addableAttendees.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {[person.first_name, person.last_name].filter(Boolean).join(" ") || person.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : undefined
+          }
+        />
+        {addAttendeeId ? (
+          <div className="mb-3 flex items-center gap-2">
+            <Button size="xs" onClick={onAddAttendee}>
+              Add
+            </Button>
+            <Button size="xs" variant="ghost" onClick={() => onAddAttendeeIdChange("")}>
+              Cancel
+            </Button>
+          </div>
+        ) : null}
+        {detail.attendees.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No attendees.</p>
+        ) : (
+          <ul className="space-y-2">
+            {detail.attendees.map((attendee) => (
+              <li
+                key={attendee.id}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <Checkbox
+                    checked={attendee.attended === true}
+                    aria-label={`Mark ${attendee.person.first_name} ${attendee.person.last_name} attended`}
+                    onCheckedChange={(checked) =>
+                      onSetAttendance(attendee.person_id, checked === true)
+                    }
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">
+                      {attendee.person.first_name} {attendee.person.last_name}
+                    </p>
+                    {attendee.person.company_name ? (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {attendee.person.company_name}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon-xs" aria-label="Attendee actions">
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onRemoveAttendee(attendee.person_id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <SectionRuleHeading label="Decisions today" />
+        {decisions.length > 0 ? (
+          <ul className="space-y-2">
+            {decisions.map((item) => (
+              <li key={item.id} className="flex gap-2 text-sm">
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {item.agenda_number}
+                </span>
+                <span className="min-w-0 text-muted-foreground">{item.title}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">No decisions captured yet.</p>
+        )}
+      </section>
+
+      <section>
+        <SectionRuleHeading label="Parking lot" />
+        <p className="text-sm text-muted-foreground">No parking lot items.</p>
+      </section>
+
+      <section>
+        <SectionRuleHeading label="Sources" />
+        <div className="space-y-2 text-sm">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onShowSources}
+            className="h-7 w-full justify-between px-1 text-left text-muted-foreground hover:text-foreground"
+          >
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <Paperclip className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Attachments</span>
+            </span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+          </Button>
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <FileText className="h-3.5 w-3.5" />
+            {detail.meeting.transcript_document_id ? "Transcript linked" : "No transcript"}
+          </span>
+        </div>
+      </section>
+
+      <section>
+        <SectionRuleHeading label="Quick links" />
+        <nav className="grid grid-cols-1 gap-1 text-sm" aria-label="Meeting quick links">
+          {QUICK_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={`/${projectId}/${link.href}`}
+              className="flex items-center justify-between rounded-md px-1 py-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            >
+              {link.label}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          ))}
+        </nav>
+      </section>
+    </>
   );
 }

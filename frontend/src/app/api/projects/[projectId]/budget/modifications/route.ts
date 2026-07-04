@@ -7,17 +7,38 @@ import {
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
 import type { Database } from "@/types/database.types";
+import {
+  hasGranular,
+  hasPermission,
+  loadUserPermissions,
+} from "@/lib/permissions";
+import {
+  canDeleteBudgetChange,
+  getBudgetChangeAllowedActions,
+  getBudgetChangeSelectableStatuses,
+  mapBudgetChangeActionToStatus,
+  type BudgetChangeStatus,
+} from "@/lib/budget/budget-change-access";
 
-// Valid status transitions for the modification workflow
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ["pending"], // Submit for approval
-  pending: ["approved", "draft"], // Approve or reject (back to draft)
-  approved: ["void"], // Can only void approved modifications
-  void: [], // Final state - no transitions allowed
-};
+function getBudgetChangePermissions(
+  permissions: Awaited<ReturnType<typeof loadUserPermissions>>,
+) {
+  if (!permissions) return null;
+
+  return {
+    isAdmin: permissions.isAdmin,
+    canManageBudgetChanges:
+      permissions.isAdmin ||
+      (hasPermission(permissions, "budget", "read") &&
+        hasGranular(permissions, "create_budget_modifications")),
+    canApproveBudgetChanges:
+      permissions.isAdmin ||
+      (hasPermission(permissions, "budget", "read") &&
+        hasGranular(permissions, "approve_budget_changes")),
+  };
+}
 
 // GET /api/projects/[id]/budget/modifications - Fetch budget modifications
 export const GET = withApiGuardrails<{ projectId: string }>(
@@ -34,9 +55,24 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Permission check: reading budget modifications requires "read" on budget
-    const guard = await requirePermission(projectIdNum, "budget", "read");
-    if (guard.denied) return guard.response;
+    const permissions = await loadUserPermissions(projectIdNum);
+    if (!permissions || !hasPermission(permissions, "budget", "read")) {
+      return NextResponse.json(
+        {
+          error: "Insufficient permissions: requires read access to budget",
+          required: { module: "budget", level: "read" },
+        },
+        { status: 403 },
+      );
+    }
+
+    const budgetChangePermissions = getBudgetChangePermissions(permissions);
+    if (!budgetChangePermissions) {
+      return NextResponse.json(
+        { error: "No project membership found" },
+        { status: 403 },
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const budgetLineId = searchParams.get("budgetLineId");
@@ -172,12 +208,24 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         number: mod.number,
         title: mod.title,
         reason: mod.reason,
-        status: mod.status,
+        status: mod.status as BudgetChangeStatus,
         effectiveDate: mod.effective_date,
         createdAt: mod.created_at,
         updatedAt: mod.updated_at,
         createdBy: mod.created_by,
         amount: totalAmount,
+        editableStatuses: getBudgetChangeSelectableStatuses(
+          mod.status as BudgetChangeStatus,
+          budgetChangePermissions,
+        ),
+        allowedActions: getBudgetChangeAllowedActions(
+          mod.status as BudgetChangeStatus,
+          budgetChangePermissions,
+        ),
+        canDelete: canDeleteBudgetChange(
+          mod.status as BudgetChangeStatus,
+          budgetChangePermissions,
+        ),
         lines: lines.map((line) => {
           const costCodes = line.cost_codes as
             | { id?: string; title?: string }
@@ -210,6 +258,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     return NextResponse.json({
       modifications,
+      permissions: {
+        canManageBudgetChanges: budgetChangePermissions.canManageBudgetChanges,
+        canApproveBudgetChanges: budgetChangePermissions.canApproveBudgetChanges,
+        isAdmin: budgetChangePermissions.isAdmin,
+      },
     });
     },
 );
@@ -229,9 +282,29 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Permission check: creating budget modifications requires "write" on budget
-    const guard = await requirePermission(projectIdNum, "budget", "write");
-    if (guard.denied) return guard.response;
+    const permissions = await loadUserPermissions(projectIdNum);
+    const budgetChangePermissions = getBudgetChangePermissions(permissions);
+
+    if (!permissions || !hasPermission(permissions, "budget", "read")) {
+      return NextResponse.json(
+        {
+          error: "Insufficient permissions: requires read access to budget",
+          required: { module: "budget", level: "read" },
+        },
+        { status: 403 },
+      );
+    }
+
+    if (!budgetChangePermissions?.canManageBudgetChanges) {
+      return NextResponse.json(
+        {
+          error:
+            'Insufficient permissions: requires the "Create budget modifications" permission',
+          required: { granularFlag: "create_budget_modifications" },
+        },
+        { status: 403 },
+      );
+    }
 
     const body = await request.json();
 
@@ -482,10 +555,6 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Permission check: updating budget modification status requires "write" on budget
-    const guard = await requirePermission(projectIdNum, "budget", "write");
-    if (guard.denied) return guard.response;
-
     const body = await request.json();
 
     // Normalize field names for backwards compatibility, then validate with Zod
@@ -494,6 +563,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       modificationId:
         body.modificationId ?? body.modification_id ?? body.modId,
       action: body.action,
+      status: body.status,
       voidedReason: body.voidedReason ?? body.voided_reason,
     };
 
@@ -509,7 +579,32 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const { modificationId: modId, action, voidedReason } = validation.data;
+    const {
+      modificationId: modId,
+      action,
+      status,
+      voidedReason,
+    } = validation.data;
+
+    const permissions = await loadUserPermissions(projectIdNum);
+    const budgetChangePermissions = getBudgetChangePermissions(permissions);
+
+    if (!permissions || !hasPermission(permissions, "budget", "read")) {
+      return NextResponse.json(
+        {
+          error: "Insufficient permissions: requires read access to budget",
+          required: { module: "budget", level: "read" },
+        },
+        { status: 403 },
+      );
+    }
+
+    if (!budgetChangePermissions) {
+      return NextResponse.json(
+        { error: "No project membership found" },
+        { status: 403 },
+      );
+    }
 
     const supabase = await createClient();
 
@@ -535,35 +630,38 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Map action to target status
-    const actionToStatus: Record<string, string> = {
-      submit: "pending",
-      approve: "approved",
-      reject: "draft",
-      void: "void",
-    };
-    const targetStatus = actionToStatus[action];
+    const currentStatus = currentMod.status as BudgetChangeStatus;
+    const targetStatus = (
+      status ?? (action ? mapBudgetChangeActionToStatus(action) : null)
+    ) as BudgetChangeStatus | null;
 
-    // Validate state transition
-    const validNextStatuses = VALID_TRANSITIONS[currentMod.status] || [];
-    if (!validNextStatuses.includes(targetStatus)) {
+    if (!targetStatus) {
       return NextResponse.json(
         {
-          error: `Invalid status transition: cannot ${action} a ${currentMod.status} modification`,
-          currentStatus: currentMod.status,
-          validActions: validNextStatuses
-            .map((s: string) => {
-              const reverseMap: Record<string, string> = {
-                pending: "submit",
-                approved: "approve",
-                draft: "reject",
-                void: "void",
-              };
-              return reverseMap[s];
-            })
-            .filter(Boolean),
+          error: "A target budget change status is required",
         },
-        { status: 400 },
+        { status: 422 },
+      );
+    }
+
+    const allowedStatuses = getBudgetChangeSelectableStatuses(
+      currentStatus,
+      budgetChangePermissions,
+    );
+
+    if (!allowedStatuses.includes(targetStatus) || targetStatus === currentStatus) {
+      return NextResponse.json(
+        {
+          error: `You cannot change a ${currentStatus} budget change to ${targetStatus}`,
+          currentStatus,
+          targetStatus,
+          allowedStatuses,
+          required:
+            targetStatus === "approved" || targetStatus === "void"
+              ? { granularFlag: "approve_budget_changes" }
+              : { granularFlag: "create_budget_modifications" },
+        },
+        { status: 403 },
       );
     }
 
@@ -636,6 +734,12 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       reject: "Modification rejected - returned to draft",
       void: "Modification voided - budget totals updated",
     };
+    const statusMessages: Record<BudgetChangeStatus, string> = {
+      draft: "Modification returned to draft",
+      pending: "Modification marked pending",
+      approved: "Modification approved - budget totals updated",
+      void: "Modification voided - budget totals updated",
+    };
 
     return NextResponse.json({
       success: true,
@@ -645,7 +749,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
         status: updatedMod.status,
         effectiveDate: updatedMod.effective_date,
       },
-      message: actionMessages[action],
+      message: action ? actionMessages[action] : statusMessages[targetStatus],
       warning: refreshWarning,
     });
     },
@@ -666,9 +770,29 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Permission check: deleting budget modifications requires "admin" on budget
-    const guard = await requirePermission(projectIdNum, "budget", "admin");
-    if (guard.denied) return guard.response;
+    const permissions = await loadUserPermissions(projectIdNum);
+    const budgetChangePermissions = getBudgetChangePermissions(permissions);
+
+    if (!permissions || !hasPermission(permissions, "budget", "read")) {
+      return NextResponse.json(
+        {
+          error: "Insufficient permissions: requires read access to budget",
+          required: { module: "budget", level: "read" },
+        },
+        { status: 403 },
+      );
+    }
+
+    if (!budgetChangePermissions?.canManageBudgetChanges) {
+      return NextResponse.json(
+        {
+          error:
+            'Insufficient permissions: requires the "Create budget modifications" permission',
+          required: { granularFlag: "create_budget_modifications" },
+        },
+        { status: 403 },
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const modificationId = searchParams.get("modificationId");
@@ -704,14 +828,20 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Only allow deletion of draft modifications
-    if (modification.status !== "draft") {
+    // App admins can delete any budget change. Other users can delete drafts only.
+    if (
+      !canDeleteBudgetChange(
+        modification.status as BudgetChangeStatus,
+        budgetChangePermissions,
+      )
+    ) {
       return NextResponse.json(
         {
-          error:
-            "Only draft modifications can be deleted. Use void action for approved modifications.",
+          error: permissions.isAdmin
+            ? "This budget change cannot be deleted."
+            : "Only draft budget changes can be deleted. Use a status change for approved items.",
         },
-        { status: 400 },
+        { status: 403 },
       );
     }
 

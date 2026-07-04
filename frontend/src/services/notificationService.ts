@@ -62,15 +62,6 @@ export type AiWidgetNotificationData = BasePayload & {
   eventKey?: string | null;
 };
 
-export type ChangeRequestReviewNeededData = BasePayload & {
-  title: string;
-  description?: string | null;
-  scope?: string | null;
-  type?: string | null;
-  status?: string | null;
-  eventKey?: string | null;
-};
-
 export type RfiReviewNeededData = BasePayload & {
   subject: string;
   question: string;
@@ -157,25 +148,6 @@ export function buildAiWidgetNotificationMetadata(
   };
 }
 
-export function buildChangeRequestReviewPrompt(
-  data: ChangeRequestReviewNeededData,
-): string {
-  const lines = [
-    "Review this change request draft and help me revise it or confirm it before creating it.",
-    "",
-    `Project ID: ${data.projectId ?? "not selected"}`,
-    `Title: ${data.title}`,
-    `Description: ${data.description?.trim() || "Not provided"}`,
-    `Scope: ${data.scope?.trim() || "other"}`,
-    `Type: ${data.type?.trim() || "potential_change"}`,
-    `Status: ${data.status?.trim() || "open"}`,
-    "",
-    "If anything is missing, ask for it. If it is ready, show the preview and wait for my explicit confirmation before creating it.",
-  ];
-
-  return lines.join("\n");
-}
-
 export function buildRfiReviewPrompt(data: RfiReviewNeededData): string {
   const lines = [
     "Review this RFI draft and help me revise it or confirm it before creating it.",
@@ -258,23 +230,6 @@ export async function notifyAiWidgetNotification(
   }
 
   return { created, skipped };
-}
-
-export async function notifyChangeRequestReviewNeeded(
-  userId: UserTarget,
-  data: ChangeRequestReviewNeededData,
-): Promise<{ created: number; skipped: number }> {
-  return notifyAiWidgetNotification(userId, {
-    kind: "change_request_review_needed",
-    title: "Change request ready for review",
-    body: data.title,
-    projectId: data.projectId,
-    entityType: "change_events",
-    prompt: buildChangeRequestReviewPrompt(data),
-    actionLabel: "Review change request",
-    source: "createChangeEvent.preview",
-    eventKey: data.eventKey,
-  });
 }
 
 export async function notifyRfiReviewNeeded(
