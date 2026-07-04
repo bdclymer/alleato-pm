@@ -61,7 +61,7 @@ function esc(value: string | number | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-function getPublicAssetDataUri(publicPath: string): string | null {
+export function getPublicAssetDataUri(publicPath: string): string | null {
   const assetPath = path.join(process.cwd(), "public", publicPath);
   if (!existsSync(assetPath)) return null;
 
