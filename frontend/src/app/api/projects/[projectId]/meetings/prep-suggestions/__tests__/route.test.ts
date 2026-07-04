@@ -184,7 +184,7 @@ describe("/api/projects/[projectId]/meetings/prep-suggestions", () => {
 
     expect(response.status).toBe(200);
     expect(body.generatedBy).toBe("ai");
-    expect(body.model).toBe("gpt-5.5");
+    expect(body.model).toBe("openai/gpt-5.4-mini");
     expect(body.suggestions).toEqual([
       expect.objectContaining({
         id: "ai-task-task-1",
@@ -327,7 +327,7 @@ describe("/api/projects/[projectId]/meetings/prep-suggestions", () => {
 
     expect(response.status).toBe(200);
     expect(body.generatedBy).toBe("source");
-    expect(body.model).toBe("gpt-5.5");
+    expect(body.model).toBe("openai/gpt-5.4-mini");
     expect(body.fallbackReason).toBe(
       "AI prep is unavailable. Showing source-backed project suggestions.",
     );

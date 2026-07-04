@@ -10,7 +10,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
-const MODEL_ID = "gpt-5.5";
+const MODEL_ID = "openai/gpt-5.4-mini";
 const WHERE = "projects/[projectId]/meetings/prep-suggestions#POST";
 const AI_GENERATION_TIMEOUT_MS = 12_000;
 
