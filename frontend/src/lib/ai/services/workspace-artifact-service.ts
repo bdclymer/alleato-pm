@@ -18,6 +18,7 @@
 import { embed } from "@/lib/ai/services/ai-memory-service";
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
+import type { ChangeEventWorkflowMetadata } from "@/lib/ai/change-event-workflow";
 
 // Write artifact embedding to AI Database document_chunks.
 // PM APP holds the record; AI DB holds the searchable vector.
@@ -59,7 +60,8 @@ export type ArtifactType =
   | "meeting_prep"
   | "analysis"
   | "briefing"
-  | "note";
+  | "note"
+  | "change_event_draft";
 
 export type ArtifactStatus = "draft" | "final" | "archived" | "promoted";
 
@@ -186,6 +188,7 @@ export interface UpdateArtifactParams {
   content?: Record<string, unknown>;
   status?: ArtifactStatus;
   contextSnapshot?: Record<string, unknown>;
+  projectId?: number | null;
   sessionId?: string | null;
   tags?: string[];
 }
@@ -200,7 +203,7 @@ export async function updateArtifact(
   // Fetch current record to get current version and type for re-embedding
   const { data: current, error: fetchError } = await supabase
     .from("workspace_artifacts")
-    .select("version, artifact_type, title, content")
+    .select("version, artifact_type, title, content, project_id")
     .eq("id", id)
     .eq("user_id", userId)
     .single();
@@ -220,6 +223,7 @@ export async function updateArtifact(
   if (params.content !== undefined) updates.content = params.content;
   if (params.status !== undefined) updates.status = params.status;
   if (params.contextSnapshot !== undefined) updates.context_snapshot = params.contextSnapshot;
+  if (params.projectId !== undefined) updates.project_id = params.projectId;
   if (params.sessionId !== undefined) updates.session_id = params.sessionId;
   if (params.tags !== undefined) updates.tags = params.tags;
 
@@ -239,6 +243,7 @@ export async function updateArtifact(
     void _syncArtifactChunkToAiDb(id, embedText, {
       user_id: userId,
       artifact_type: current.artifact_type,
+      project_id: params.projectId !== undefined ? params.projectId : current.project_id,
       status: params.status ?? null,
     });
   }
@@ -280,6 +285,7 @@ export interface ListArtifactsParams {
   projectId?: number | null;
   artifactType?: ArtifactType;
   status?: ArtifactStatus;
+  sessionId?: string | null;
   limit?: number;
 }
 
@@ -302,6 +308,9 @@ export async function listArtifacts(params: ListArtifactsParams): Promise<Worksp
     if (params.status !== undefined) {
       query = query.eq("status", params.status);
     }
+    if (params.sessionId !== undefined && params.sessionId !== null) {
+      query = query.eq("session_id", params.sessionId);
+    }
     if (params.limit !== undefined) {
       query = query.limit(params.limit);
     }
@@ -320,6 +329,100 @@ export async function listArtifacts(params: ListArtifactsParams): Promise<Worksp
     );
     return [];
   }
+}
+
+export interface UpsertChangeEventDraftArtifactParams {
+  userId: string;
+  sessionId: string;
+  workflow: ChangeEventWorkflowMetadata;
+}
+
+export async function upsertChangeEventDraftArtifact(
+  params: UpsertChangeEventDraftArtifactParams,
+): Promise<{ id: string; version: number; action: "created" | "updated" } | { error: string }> {
+  const supabase = createServiceClient();
+  const draft = params.workflow.draft;
+  const title = draft.title ?? "Change Event Draft";
+  const content = {
+    workflow: params.workflow,
+    draft,
+    readiness: params.workflow.readiness,
+    expectedNativeTool: params.workflow.expectedNativeTool,
+    writeOwner: params.workflow.writeOwner,
+    updatedAt: params.workflow.updatedAt,
+  };
+  const contextSnapshot = {
+    workflowKey: params.workflow.workflowKey,
+    source: params.workflow.source,
+    projectId: draft.projectId,
+    projectName: draft.projectName,
+    readyForPreview: draft.readyForPreview,
+  };
+
+  const { data: existing, error: existingError } = await supabase
+    .from("workspace_artifacts")
+    .select("id")
+    .eq("user_id", params.userId)
+    .eq("artifact_type", "change_event_draft")
+    .eq("session_id", params.sessionId)
+    .eq("status", "draft")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) {
+    return { error: `Change event draft artifact lookup failed: ${existingError.message}` };
+  }
+
+  if (existing?.id) {
+    const updateResult = await updateArtifact(existing.id, params.userId, {
+      title,
+      content,
+      contextSnapshot,
+      projectId: draft.projectId,
+      sessionId: params.sessionId,
+      tags: ["change-event", "ai-workflow"],
+    });
+
+    if ("error" in updateResult) return updateResult;
+
+    return {
+      id: updateResult.id,
+      version: updateResult.version,
+      action: "updated",
+    };
+  }
+
+  const createResult = await createArtifact({
+    userId: params.userId,
+    artifactType: "change_event_draft",
+    title,
+    content,
+    projectId: draft.projectId,
+    contextSnapshot,
+    sessionId: params.sessionId,
+    tags: ["change-event", "ai-workflow"],
+    status: "draft",
+  });
+
+  if ("error" in createResult) return createResult;
+
+  return { id: createResult.id, version: 1, action: "created" };
+}
+
+export async function loadLatestChangeEventDraftArtifact(params: {
+  userId: string;
+  sessionId: string;
+}): Promise<WorkspaceArtifact | null> {
+  const artifacts = await listArtifacts({
+    userId: params.userId,
+    artifactType: "change_event_draft",
+    status: "draft",
+    sessionId: params.sessionId,
+    limit: 1,
+  });
+
+  return artifacts[0] ?? null;
 }
 
 // ---------------------------------------------------------------------------

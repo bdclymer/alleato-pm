@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { apiFetchBlob } from "@/lib/api-client";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   AI_ASSISTANT_MODELS,
@@ -417,6 +417,30 @@ function getLatestChangeEventWorkflowDraft(
     }
   }
   return null;
+}
+
+type WorkspaceArtifactListResponse = {
+  artifacts?: Array<{
+    content?: unknown;
+  }>;
+};
+
+function changeEventDraftFromArtifactContent(
+  content: unknown,
+): ChangeEventWorkflowDraft | null {
+  if (!content || typeof content !== "object" || Array.isArray(content)) {
+    return null;
+  }
+  const record = content as Record<string, unknown>;
+  const workflow = record.workflow;
+  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) {
+    return null;
+  }
+  const draft = (workflow as Record<string, unknown>).draft;
+  if (!draft || typeof draft !== "object" || Array.isArray(draft)) {
+    return null;
+  }
+  return draft as ChangeEventWorkflowDraft;
 }
 
 function isOutlookInboxSummaryWidget(widget: AssistantWidgetPayload): boolean {
@@ -1266,10 +1290,51 @@ export function ChatArea({
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
     AI_ASSISTANT_MODELS[0];
   const councilMode = councilModeProp ?? councilModeInternal;
-  const activeChangeEventDraft = useMemo(
+  const latestMessageChangeEventDraft = useMemo(
     () => getLatestChangeEventWorkflowDraft(messages),
     [messages],
   );
+  const [persistedChangeEventDraft, setPersistedChangeEventDraft] =
+    useState<ChangeEventWorkflowDraft | null>(null);
+  const activeChangeEventDraft =
+    latestMessageChangeEventDraft ?? persistedChangeEventDraft;
+
+  useEffect(() => {
+    if (!sessionId) {
+      setPersistedChangeEventDraft(null);
+      return;
+    }
+
+    let cancelled = false;
+    const params = new URLSearchParams({
+      type: "change_event_draft",
+      status: "draft",
+      sessionId,
+      limit: "1",
+    });
+
+    apiFetch<WorkspaceArtifactListResponse>(
+      `/api/ai-assistant/workspace?${params.toString()}`,
+    )
+      .then((data) => {
+        if (cancelled) return;
+        const draft = changeEventDraftFromArtifactContent(
+          data.artifacts?.[0]?.content,
+        );
+        setPersistedChangeEventDraft(draft);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        console.warn(
+          "[ai-assistant] Failed to hydrate change-event draft artifact for session.",
+        );
+        setPersistedChangeEventDraft(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

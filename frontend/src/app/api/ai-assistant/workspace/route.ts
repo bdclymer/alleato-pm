@@ -28,6 +28,7 @@ export const GET = withApiGuardrails(
     const projectId = projectIdParam ? parseInt(projectIdParam, 10) : undefined;
     const artifactType = searchParams.get("type") as ArtifactType | null;
     const status = searchParams.get("status") as ArtifactStatus | null;
+    const sessionId = searchParams.get("sessionId");
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 20;
 
@@ -36,6 +37,7 @@ export const GET = withApiGuardrails(
       projectId: projectId ?? undefined,
       artifactType: artifactType ?? undefined,
       status: status ?? undefined,
+      sessionId: sessionId ?? undefined,
       limit,
     });
 

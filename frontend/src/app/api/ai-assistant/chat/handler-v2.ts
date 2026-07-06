@@ -64,6 +64,9 @@ import {
   buildChangeEventWorkflowMetadata,
   isChangeEventFinalPreviewRequest,
 } from "@/lib/ai/change-event-workflow";
+import {
+  upsertChangeEventDraftArtifact,
+} from "@/lib/ai/services/workspace-artifact-service";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
   CHARS_PER_TOKEN,
@@ -309,6 +312,24 @@ async function loadLatestChangeEventWorkflowDraft(params: {
     if (draft) return draft;
   }
   return null;
+}
+
+async function persistChangeEventWorkflowArtifact(params: {
+  userId: string;
+  sessionId: string;
+  workflow: ReturnType<typeof buildChangeEventWorkflowMetadata>;
+}): Promise<void> {
+  const result = await upsertChangeEventDraftArtifact({
+    userId: params.userId,
+    sessionId: params.sessionId,
+    workflow: params.workflow,
+  });
+
+  if ("error" in result) {
+    throw new Error(
+      `Persisting change-event workflow artifact failed: ${result.error}`,
+    );
+  }
 }
 
 function isLikelyChangeEventWorkflowFollowup(message: string): boolean {
@@ -2776,6 +2797,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           selectedProjectId: args.selectedProjectId ?? null,
           previousDraft: previousChangeEventWorkflowDraft,
         });
+        await persistChangeEventWorkflowArtifact({
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          workflow: initialWorkflow,
+        });
 
         if (!initialWorkflow.draft.projectId) {
           const projectOptions = await loadProjectPickerOptions({
@@ -3046,6 +3072,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           selectedProjectId: args.selectedProjectId ?? null,
           previousDraft: previousChangeEventWorkflowDraft,
           relatedEvidence,
+        });
+        await persistChangeEventWorkflowArtifact({
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          workflow,
         });
         const dataPart = {
           type: "data-assistant-widget",

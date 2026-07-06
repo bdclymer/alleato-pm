@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageResponse } from "@/components/ai-elements/message";
+import { DetailField, DetailFieldGrid } from "@/components/ds";
 import { cn } from "@/lib/utils";
 import type { ArtifactType } from "@/lib/ai/services/workspace-artifact-service";
 
@@ -28,6 +29,8 @@ export function ArtifactBody({
       return <BriefingBody content={content} variant={variant} />;
     case "note":
       return <NoteBody content={content} variant={variant} />;
+    case "change_event_draft":
+      return <ChangeEventDraftBody content={content} variant={variant} />;
     default:
       return <UnknownBody content={content} variant={variant} />;
   }
@@ -286,6 +289,55 @@ function BriefingBody({
   return (
     <PreviewWrap variant={variant}>
       <MessageResponse className="text-sm leading-6">{body}</MessageResponse>
+    </PreviewWrap>
+  );
+}
+
+function ChangeEventDraftBody({
+  content,
+  variant,
+}: {
+  content: Record<string, unknown>;
+  variant: "preview" | "full";
+}) {
+  const draft = content.draft && typeof content.draft === "object"
+    ? (content.draft as Record<string, unknown>)
+    : {};
+  const title = strField(draft, "title") || "Change Event Draft";
+  const narrative = strField(draft, "narrative");
+  const cause = strField(draft, "cause");
+  const scope = strField(draft, "scope");
+  const costImpact = strField(draft, "costImpact");
+  const scheduleImpact = strField(draft, "scheduleImpact");
+  const recommendations = arrField<string>(draft, "recommendedImpacts");
+
+  return (
+    <PreviewWrap variant={variant}>
+      <SectionHeading>Draft</SectionHeading>
+      <div className="space-y-2 text-sm">
+        <div className="font-medium text-foreground">{title}</div>
+        {narrative ? (
+          <MessageResponse className="text-sm leading-6">
+            {narrative}
+          </MessageResponse>
+        ) : null}
+        <DetailFieldGrid columns={2} className="gap-x-6 gap-y-2">
+          <DetailField label="Type">{cause || "TBD"}</DetailField>
+          <DetailField label="Scope">{scope || "TBD"}</DetailField>
+          <DetailField label="Cost">{costImpact || "TBD"}</DetailField>
+          <DetailField label="Schedule">{scheduleImpact || "TBD"}</DetailField>
+        </DetailFieldGrid>
+      </div>
+      {recommendations.length > 0 ? (
+        <>
+          <SectionHeading>Recommendations</SectionHeading>
+          <ul className="ml-4 list-disc space-y-1">
+            {recommendations.slice(0, variant === "preview" ? 3 : undefined).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </PreviewWrap>
   );
 }

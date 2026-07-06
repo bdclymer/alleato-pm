@@ -49,6 +49,7 @@ const ARTIFACT_TYPE_LABELS: Record<ArtifactType, string> = {
   analysis: "Analysis",
   briefing: "Briefing",
   note: "Note",
+  change_event_draft: "Change Event Draft",
 };
 
 function isSaveArtifactInput(value: unknown): value is SaveArtifactInput {
