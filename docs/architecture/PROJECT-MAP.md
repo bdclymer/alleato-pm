@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (330)
+## UI Routes (331)
 
-_299/330 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_300/331 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -90,6 +90,7 @@ _299/330 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/meetings` | List project meetings with transcripts and extracted key information | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
 | `/[projectId]/meetings/[meetingId]` | View meeting transcript with segments, tasks, risks, decisions, and opportunities | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
 | `/[projectId]/meetings/[meetingId]/agenda` | Link a transcript from Sources when one is available. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/agenda/page.tsx |
+| `/[projectId]/meetings/[meetingId]/lineage` | This shows how the route parameter resolved into the meeting’s actual stored ids. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/lineage/page.tsx |
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
 | `/[projectId]/meetings/new` | Create meeting | frontend/src/app/(main)/[projectId]/meetings/new/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |

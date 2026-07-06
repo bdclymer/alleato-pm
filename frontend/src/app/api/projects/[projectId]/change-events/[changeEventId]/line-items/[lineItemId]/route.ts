@@ -7,6 +7,7 @@ import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
 import { resolveChangeEventBudgetLineId } from "@/lib/change-events/budget-line-resolver";
 import { requirePermission } from "@/lib/permissions-guard";
+import type { Database } from "@/types/database.types";
 
 interface RouteParams {
   params: Promise<{
@@ -15,6 +16,9 @@ interface RouteParams {
     lineItemId: string;
   }>;
 }
+
+type ChangeEventLineItemUpdate =
+  Database["public"]["Tables"]["change_event_line_items"]["Update"];
 
 /**
  * GET /api/projects/[id]/change-events/[changeEventId]/line-items/[lineItemId]
@@ -191,7 +195,7 @@ export const PATCH = withApiGuardrails(
     const resolvedVendorId = validatedData.vendorId;
 
     // Build update object
-    const updates: any = {
+    const updates: ChangeEventLineItemUpdate = {
       updated_at: new Date().toISOString(),
     };
 
@@ -286,7 +290,7 @@ export const DELETE = withApiGuardrails(
   
     const { projectId, changeEventId, lineItemId } = await params;
     const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
