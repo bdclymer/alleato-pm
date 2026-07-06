@@ -166,6 +166,16 @@ describe("change event workflow draft", () => {
         "Prepare the final createChangeEvent preview from this live intake draft.",
       ),
     ).toBe(true);
+    expect(
+      isChangeEventFinalPreviewRequest(
+        "Prepare the final Change Event create preview from this draft.",
+      ),
+    ).toBe(true);
+    expect(
+      isChangeEventFinalPreviewRequest(
+        "Run createChangeEvent now with confirmed=true using exactly these preview values.",
+      ),
+    ).toBe(true);
     expect(isChangeEventFinalPreviewRequest("Create a change event for owner work")).toBe(
       false,
     );

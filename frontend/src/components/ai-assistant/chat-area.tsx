@@ -1678,9 +1678,16 @@ export function ChatArea({
 
   const handleToolApprove = useCallback(
     (part: ToolPart) => {
-      const toolName = formatToolName(getToolNameFromType(part.type));
+      const toolName = getToolNameFromType(part.type);
+      const preview = getToolPreview(part);
+      const fields = asObject(preview?.fields);
       onSubmit(
-        `I approve this ${toolName} preview. Run it now exactly as shown.`,
+        [
+          `Run ${toolName} now with confirmed=true using exactly these preview values.`,
+          "Do not rebuild the intake draft. Do not ask another preview question.",
+          "",
+          JSON.stringify(fields, null, 2),
+        ].join("\n"),
       );
     },
     [onSubmit],

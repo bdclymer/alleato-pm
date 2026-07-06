@@ -191,8 +191,8 @@ export function ChangeEventDraftArtifact({
   const handleReviewCreate = () => {
     onSubmit(
       [
-        "Prepare the final Change Event create preview from this draft.",
-        "Do not create the record until I approve the preview.",
+        "Prepare the final createChangeEvent preview from this live intake draft.",
+        "Do not create the record yet. Call createChangeEvent with confirmed=false, then wait for my confirmation.",
         "",
         JSON.stringify(payload, null, 2),
       ].join("\n"),

@@ -785,7 +785,10 @@ export function isChangeEventFinalPreviewRequest(prompt: string): boolean {
   const normalized = normalizePrompt(prompt).toLowerCase();
   return (
     normalized.includes("prepare the final createchangeevent preview") ||
+    normalized.includes("prepare the final change event create preview") ||
     normalized.includes("call createchangeevent with confirmed=false") ||
+    normalized.includes("run createchangeevent now with confirmed=true") ||
+    normalized.includes("confirmed=true") ||
     normalized.includes("confirmed=false")
   );
 }

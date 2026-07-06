@@ -188,6 +188,76 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join(" ");
 }
 
+function parseConfirmedChangeEventApprovalInput(
+  message: string,
+): Record<string, unknown> | null {
+  const normalized = message.trim().toLowerCase();
+  if (
+    !normalized.includes("run createchangeevent now") ||
+    !normalized.includes("confirmed=true")
+  ) {
+    return null;
+  }
+
+  const jsonStart = message.indexOf("{");
+  if (jsonStart === -1) return null;
+
+  try {
+    const fields = JSON.parse(message.slice(jsonStart)) as Record<string, unknown>;
+    const projectId =
+      typeof fields.project_id === "number"
+        ? fields.project_id
+        : typeof fields.projectId === "number"
+          ? fields.projectId
+          : null;
+    const title = typeof fields.title === "string" ? fields.title.trim() : "";
+    if (!projectId || !title) return null;
+
+    return {
+      projectId,
+      title,
+      description:
+        typeof fields.description === "string" ? fields.description : undefined,
+      scope: typeof fields.scope === "string" ? fields.scope : undefined,
+      type: typeof fields.type === "string" ? fields.type : undefined,
+      status: typeof fields.status === "string" ? fields.status : undefined,
+      reason: typeof fields.reason === "string" ? fields.reason : undefined,
+      origin: typeof fields.origin === "string" ? fields.origin : undefined,
+      originId:
+        typeof fields.origin_id === "string"
+          ? fields.origin_id
+          : typeof fields.originId === "string"
+            ? fields.originId
+            : undefined,
+      expectingRevenue:
+        typeof fields.expecting_revenue === "boolean"
+          ? fields.expecting_revenue
+          : typeof fields.expectingRevenue === "boolean"
+            ? fields.expectingRevenue
+            : undefined,
+      lineItemRevenueSource:
+        typeof fields.line_item_revenue_source === "string"
+          ? fields.line_item_revenue_source
+          : typeof fields.lineItemRevenueSource === "string"
+            ? fields.lineItemRevenueSource
+            : undefined,
+      primeContractId:
+        typeof fields.prime_contract_id === "string"
+          ? fields.prime_contract_id
+          : typeof fields.primeContractId === "string"
+            ? fields.primeContractId
+            : undefined,
+      confirmed: true,
+      idempotencyKey:
+        typeof fields.idempotencyKey === "string"
+          ? fields.idempotencyKey
+          : `change-event-confirmed-${projectId}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80)}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Detect attachments on a user message. Text-readable files (csv/txt/json) are
  * inlined into the message TEXT by the chat UI (so they reach the model); any
@@ -2439,6 +2509,163 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           timestamp: new Date().toISOString(),
         },
       } as never);
+
+      const confirmedChangeEventInput =
+        parseConfirmedChangeEventApprovalInput(lastUserContent);
+      if (confirmedChangeEventInput) {
+        responseAlreadyPersisted = true;
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-confirmed-write",
+            message: "Creating confirmed change event",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the confirmed change-event user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const directTrace: Array<Record<string, unknown>> = [];
+        const tools = createStrategistTools(args.user.id, {
+          pinnedProjectId:
+            typeof confirmedChangeEventInput.projectId === "number"
+              ? confirmedChangeEventInput.projectId
+              : args.selectedProjectId,
+          sessionId: args.sessionId,
+          includeActionTools: true,
+          onTrace: (trace) => {
+            const normalizedTrace = buildLiveToolTrace(trace, lastUserContent);
+            if (normalizedTrace) directTrace.push(normalizedTrace);
+          },
+        });
+        const executeCreateChangeEvent = tools.createChangeEvent?.execute;
+        if (!executeCreateChangeEvent) {
+          throw new Error("createChangeEvent execute handler was not registered.");
+        }
+
+        const output = await executeCreateChangeEvent(confirmedChangeEventInput as never);
+        const outputRecord =
+          output && typeof output === "object" && "record" in output
+            ? (output as { record?: unknown }).record
+            : null;
+        const outputError =
+          output && typeof output === "object" && "error" in output
+            ? (output as { error?: unknown }).error
+            : null;
+        const record =
+          outputRecord && typeof outputRecord === "object"
+            ? (outputRecord as Record<string, unknown>)
+            : null;
+        const title =
+          typeof record?.title === "string"
+            ? record.title
+            : typeof confirmedChangeEventInput.title === "string"
+              ? confirmedChangeEventInput.title
+              : "change event";
+        const content = outputError
+          ? `I could not create the change event: ${String(outputError)}`
+          : `Change event created: ${title}.`;
+        const toolTrace = [
+          ...directTrace,
+          {
+            tool: "createChangeEvent",
+            toolName: "createChangeEvent",
+            status: outputError ? "failed" : "success",
+            input: confirmedChangeEventInput,
+            output,
+            timestamp: new Date().toISOString(),
+          },
+        ];
+
+        writeTextResponse(
+          writer,
+          "strategist-change-event-confirmed-write",
+          content,
+        );
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: outputError
+              ? "Change event create failed"
+              : "Change event created",
+            status: outputError ? "error" : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        const { error: assistantPersistError } = await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: toJsonValue({
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-change-event-confirmed-write",
+              model: null,
+            },
+            provider_path: "deterministic-change-event-confirmed-write",
+            model: null,
+            retrieval_plan: {
+              intent: "change_event_write",
+              reason: "confirmed_change_event_write",
+              responseFormat: "write_result",
+              sources: ["chat_history.createChangeEvent.preview"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: {
+              orchestrator: "change-event-confirmed-write",
+              evidenceCount: 1,
+              sourceCoverage: [
+                {
+                  sourceType: "chat_history.createChangeEvent.preview",
+                  status: "checked",
+                  notes: "Confirmed preview fields were sent directly to createChangeEvent with confirmed=true.",
+                },
+              ],
+            },
+          }) as Json,
+        });
+        if (assistantPersistError) {
+          throw new Error(
+            `Persisting the confirmed change-event assistant response failed: ${assistantPersistError.message}`,
+          );
+        }
+
+        const { error: conversationUpdateError } = await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        if (conversationUpdateError) {
+          throw new Error(
+            `Updating the confirmed change-event conversation timestamp failed: ${conversationUpdateError.message}`,
+          );
+        }
+
+        responseAlreadyPersisted = true;
+        return;
+      }
 
       if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
         writer.write({
