@@ -1854,7 +1854,7 @@ function SubmittalSettingsTab({
         }}
         className="mb-6"
       >
-        <TabsList className="max-w-full justify-start">
+        <TabsList spacing="comfortable" className="max-w-full justify-start">
           {SUBMITTAL_SETTINGS_TABS.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}

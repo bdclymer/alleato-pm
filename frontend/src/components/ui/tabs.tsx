@@ -36,9 +36,15 @@ const tabsListVariants = cva(
         // content tabs.
         line: "gap-4 md:gap-6 bg-transparent border-b border-border p-0 h-auto",
       },
+      spacing: {
+        default: "",
+        comfortable:
+          "gap-1.5 [&>[data-slot=tabs-trigger]]:flex-none [&>[data-slot=tabs-trigger]]:px-3.5",
+      },
     },
     defaultVariants: {
       variant: "default",
+      spacing: "default",
     },
   }
 )
@@ -46,6 +52,7 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = "default",
+  spacing = "default",
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
@@ -53,7 +60,8 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      data-spacing={spacing}
+      className={cn(tabsListVariants({ variant, spacing }), className)}
       {...props}
     />
   )
