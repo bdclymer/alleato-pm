@@ -20,7 +20,7 @@ If a generic user-global skill conflicts with an Alleato-specific skill, the All
 
 | Work type | Start with | Then use when needed |
 | --- | --- | --- |
-| Frontend page or component design | `.agents/skills/impeccable` | `.agents/skills/alleato-design-doctrine`, `.codex/skills/frontend-responsive-design-standards`, `.claude/skills/building-components` |
+| Frontend page or component design | `.agents/skills/impeccable` | `.codex/skills/frontend-responsive-design-standards`, `.claude/skills/building-components`, `.agents/skills/alleato-design-doctrine` only as a legacy alias or reference-pack loader |
 | Table/list page work | `.claude/skills/alleato-table-page` | `.codex/skills/verify-feature`, `.claude/skills/testing/agent-browser` |
 | User-visible feature verification | `.claude/skills/verify-feature` | `.claude/skills/testing/agent-browser`, `.codex/skills/e2e-test`, `.codex/skills/smoke-test` |
 | Procore behavior or parity | `.claude/skills/procore-verify` | `.claude/skills/procore-test-matrix`, `.codex/skills/procore-docs-rag`, `.codex/skills/parity-audit` |
@@ -35,7 +35,7 @@ If a generic user-global skill conflicts with an Alleato-specific skill, the All
 
 ## Design Rule
 
-For Alleato UI work, `impeccable` is the canonical design/noise-control skill. Generic design skills are implementation references only. Do not create a parallel design-governance skill unless the work is intentionally cross-repo and the reason is documented.
+For Alleato UI work, `impeccable` is the single primary design/noise-control entrypoint. It must load the Alleato doctrine overlay and product noise gate for Alleato product-register work. `alleato-design-doctrine` is no longer a competing front door; it is a compatibility alias plus reference-pack loader. Generic design skills are implementation references only.
 
 ## Testing Rule
 

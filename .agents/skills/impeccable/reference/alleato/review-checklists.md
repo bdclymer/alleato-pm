@@ -126,7 +126,7 @@ Before final response:
 - For detail pages or selected-item panes, name whether the shared detail property bar/item pattern was used and which reference surface it matches.
 - Name anything removed or moved to another surface.
 - Name any budget that still fails.
-- Run `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs <changed-ui-file...>` for changed UI files.
+- Run `node .agents/skills/impeccable/scripts/alleato/audit-surface-complexity.mjs <changed-ui-file...>` for changed UI files.
 - Browser-test the actual interacted surface.
 - Capture a screenshot or browser artifact for visual changes.
 - Report the exact audit command and result.
