@@ -2,7 +2,6 @@
 import "dotenv/config";
 
 import fs from "node:fs";
-import { spawnSync } from "node:child_process";
 import yaml from "js-yaml";
 
 const ACTIVE_BACKEND_HOST = "alleato-backend-rbnj.onrender.com";
@@ -15,7 +14,6 @@ const backendUrl = (
 ).replace(/\/$/, "");
 
 const expectEnabled = process.env.DEEP_AGENTS_EXPECT_ENABLED === "true";
-const expectFrontendBridge = process.env.DEEP_AGENTS_EXPECT_FRONTEND_BRIDGE === "true";
 const adminApiKey = process.env.ADMIN_API_KEY;
 const DEFAULT_FETCH_TIMEOUT_MS = Number(process.env.DEEP_AGENTS_VERIFY_FETCH_TIMEOUT_MS || 120000);
 const SHORT_FETCH_TIMEOUT_MS = Number(process.env.DEEP_AGENTS_VERIFY_SHORT_FETCH_TIMEOUT_MS || 30000);
@@ -112,33 +110,6 @@ async function verifyRenderApiServiceMapping() {
   if (!activeService) {
     fail(
       `Render API key does not expose the active ${ACTIVE_BACKEND_HOST} service. Refusing to use any other Render backend service.`,
-    );
-  }
-}
-
-function verifyVercelProductionBridgeEnv() {
-  if (!expectFrontendBridge) return;
-
-  const result = spawnSync(
-    "npx",
-    ["vercel", "env", "ls", "production", "--scope", "meganharrisons-projects"],
-    {
-      encoding: "utf8",
-      maxBuffer: 1024 * 1024,
-      timeout: SHORT_FETCH_TIMEOUT_MS,
-    },
-  );
-  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
-  if (result.status !== 0) {
-    fail(
-      `Unable to inspect Vercel production env for Deep Agents bridge flag. Exit ${result.status}.`,
-    );
-    return;
-  }
-
-  if (!output.includes("AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED")) {
-    fail(
-      "Vercel production is missing AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED; frontend chat will not call the backend Deep Agents bridge.",
     );
   }
 }
@@ -297,7 +268,6 @@ async function main() {
     researchSourceCount,
     toolInventory,
     expectEnabled,
-    expectFrontendBridge,
     warnings,
   };
 

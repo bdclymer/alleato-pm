@@ -281,6 +281,7 @@ function createBackendBridgeTrace(params: {
   selectedProjectId?: number | null;
   durationMs?: number;
   detail?: string | null;
+  diagnostic?: Record<string, unknown> | null;
 }) {
   return {
     tool: params.tool,
@@ -289,11 +290,37 @@ function createBackendBridgeTrace(params: {
     status: params.status,
     durationMs: params.durationMs ?? 0,
     detail: params.detail ?? null,
+    diagnostic: params.diagnostic ?? null,
     input: {
       message: params.message.slice(0, 240),
       selectedProjectId: params.selectedProjectId ?? null,
     },
     timestamp: new Date().toISOString(),
+  };
+}
+
+function bridgeFailureDiagnostic(error: unknown): Record<string, unknown> {
+  if (error instanceof GuardrailError) {
+    return {
+      name: error.name,
+      code: error.code,
+      where: error.where,
+      status: error.status,
+      safeToRetry: error.safeToRetry,
+      message: error.message,
+      details: error.details ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return {
+    message: String(error),
   };
 }
 
@@ -678,11 +705,27 @@ function namedProjectFromSnapshot(snapshot: Record<string, unknown>): string {
 function shouldUseDirectProjectBriefing(params: {
   plan: ReturnType<typeof planRetrieval>;
   retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  message: string;
+  selectedProjectId?: number | null;
 }): boolean {
+  if (
+    typeof params.selectedProjectId !== "number" &&
+    isBroadPortfolioProjectHealthRequest(params.message)
+  ) {
+    return false;
+  }
+
   return (
     params.plan.responseFormat === "briefing_template" &&
     params.plan.intent !== "source_health" &&
     Boolean(params.retrievalCtx.projectSnapshot)
+  );
+}
+
+function isBroadPortfolioProjectHealthRequest(message: string): boolean {
+  return (
+    /\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b.{0,80}\b(health|status|overview|risk|risks|read|briefing)\b/i.test(message) ||
+    /\b(health|status|overview|risk|risks|read|briefing)\b.{0,80}\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b/i.test(message)
   );
 }
 
@@ -3267,8 +3310,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
         } as never);
 
+        const executiveBridgeStarted = Date.now();
         try {
-          const executiveBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
             {
@@ -3419,18 +3462,22 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
+          const diagnostic = bridgeFailureDiagnostic(error);
           bridgeToolTrace.push(
             createBackendBridgeTrace({
               tool: "backendDeepAgentExecutiveBriefing",
               status: "failed",
               message: lastUserContent,
               selectedProjectId: args.selectedProjectId ?? null,
+              durationMs: Date.now() - executiveBridgeStarted,
               detail,
+              diagnostic,
             }),
           );
           console.error("[handler-v2] Deep Agents executive bridge failed", {
             message: detail,
             intent: plan.intent,
+            diagnostic,
           });
           writer.write({
             type: "data-status",
@@ -3874,7 +3921,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
-      if (shouldUseDirectProjectBriefing({ plan, retrievalCtx })) {
+      if (
+        shouldUseDirectProjectBriefing({
+          plan,
+          retrievalCtx,
+          message: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        })
+      ) {
         const content = buildDirectProjectBriefingContent({
           ctx: retrievalCtx,
           message: lastUserContent,

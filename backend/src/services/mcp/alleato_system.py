@@ -4,10 +4,17 @@ import hmac
 import os
 from typing import Any, Dict, Iterable, List, Optional
 
-from mcp.server.fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
 from src.services.supabase_helpers import SupabaseRagStore, get_supabase_client
+
+try:
+    from mcp.server.fastmcp import FastMCP
+except ModuleNotFoundError as exc:  # pragma: no cover - depends on deploy image
+    FastMCP = None  # type: ignore[assignment]
+    _MCP_IMPORT_ERROR: Optional[str] = str(exc)
+else:
+    _MCP_IMPORT_ERROR = None
 
 DEFAULT_LIMIT = 10
 MAX_LIMIT = 50
@@ -23,7 +30,7 @@ def _env_flag_enabled(name: str, default: bool = False) -> bool:
 
 
 def alleato_system_mcp_enabled() -> bool:
-    return _env_flag_enabled("ALLEATO_SYSTEM_MCP_ENABLED", default=True)
+    return _env_flag_enabled("ALLEATO_SYSTEM_MCP_ENABLED", default=True) and FastMCP is not None
 
 
 def get_alleato_system_mcp_bearer_token() -> Optional[str]:
@@ -42,6 +49,8 @@ def alleato_system_mcp_status() -> Dict[str, Any]:
         "endpoint_path": "/mcp/",
         "transport": "streamable-http",
         "tool_count": len(ALLEATO_SYSTEM_TOOL_NAMES),
+        "available": FastMCP is not None,
+        "unavailable_reason": _MCP_IMPORT_ERROR,
     }
 
 
@@ -703,7 +712,12 @@ def _search_project_context(project_ref: str, query: str, limit: int = 8) -> Dic
     }
 
 
-def build_alleato_system_mcp() -> FastMCP:
+def build_alleato_system_mcp():
+    if FastMCP is None:
+        raise RuntimeError(
+            f"Alleato system MCP is unavailable because the MCP dependency failed to import: {_MCP_IMPORT_ERROR}"
+        )
+
     mcp = FastMCP(
         name="alleato-system",
         instructions=(
@@ -792,13 +806,22 @@ ALLEATO_SYSTEM_TOOL_NAMES = [
 ]
 
 
-_ALLEATO_SYSTEM_MCP = build_alleato_system_mcp()
-_ALLEATO_SYSTEM_MCP_STARLETTE_APP = _ALLEATO_SYSTEM_MCP.streamable_http_app()
+_ALLEATO_SYSTEM_MCP = None
+_ALLEATO_SYSTEM_MCP_STARLETTE_APP = None
+
+
+def _get_alleato_system_mcp():
+    global _ALLEATO_SYSTEM_MCP, _ALLEATO_SYSTEM_MCP_STARLETTE_APP
+    if _ALLEATO_SYSTEM_MCP is None:
+        _ALLEATO_SYSTEM_MCP = build_alleato_system_mcp()
+        _ALLEATO_SYSTEM_MCP_STARLETTE_APP = _ALLEATO_SYSTEM_MCP.streamable_http_app()
+    return _ALLEATO_SYSTEM_MCP
 
 
 def create_alleato_system_mcp_app():
+    _get_alleato_system_mcp()
     return MCPBearerTokenMiddleware(_ALLEATO_SYSTEM_MCP_STARLETTE_APP)
 
 
 def create_alleato_system_mcp_lifespan():
-    return _ALLEATO_SYSTEM_MCP.session_manager.run()
+    return _get_alleato_system_mcp().session_manager.run()

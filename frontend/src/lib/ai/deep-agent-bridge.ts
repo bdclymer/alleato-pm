@@ -102,14 +102,7 @@ export type DeepAgentAppExpertRequest = {
 };
 
 export function isDeepAgentBridgeEnabled(): boolean {
-  if (process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "false") {
-    return false;
-  }
-  return Boolean(
-    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "true" ||
-      process.env.BACKEND_URL ||
-      process.env.PYTHON_BACKEND_URL,
-  );
+  return Boolean(process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL);
 }
 
 function getDeepAgentBridgeTimeoutMs(): number {

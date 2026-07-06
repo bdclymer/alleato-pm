@@ -187,6 +187,8 @@ describe("planRetrieval", () => {
     "What is the highest priority Brandon should focus on right now across the business?",
     "What are Brandon's must-do items today?",
     "How does the pipeline look right now?",
+    "Give me an overview of the active projects health",
+    "Give me a portfolio health overview across all projects",
     "Find important insights from today's meetings.",
     "Are any clients upset or showing relationship risk? Use recent meetings, email, and Teams evidence.",
   ])(

@@ -14,7 +14,8 @@ const originalEnv = process.env;
 beforeEach(() => {
   process.env = {
     ...originalEnv,
-    AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED: "true",
+    BACKEND_URL: "https://backend.example.test",
+    PYTHON_BACKEND_URL: "",
   };
 });
 
@@ -71,6 +72,17 @@ const appExpertPacket: DeepAppExpertResponse = {
 };
 
 describe("Deep Agents live bridge", () => {
+  it("derives bridge availability from backend URL, not a separate frontend flag", () => {
+    process.env = {
+      ...originalEnv,
+      BACKEND_URL: "",
+      PYTHON_BACKEND_URL: "",
+    };
+
+    expect(shouldUseDeepAgentResearchBridge({ intent: "external_research" })).toBe(false);
+    expect(shouldUseDeepAgentAppExpertBridge({ intent: "app_help" })).toBe(false);
+  });
+
   it("routes only live research and app-help bridge intents", () => {
     expect(shouldUseDeepAgentResearchBridge({ intent: "external_research" })).toBe(true);
     expect(shouldUseDeepAgentResearchBridge({ intent: "latest_status" })).toBe(false);

@@ -154,7 +154,7 @@
 ### `deep-agent-project-status.ts`
 - **Lines:** ~400+
 - **Role:** data-fetcher
-- **Purpose:** Bridge to Python FastAPI backend's deep-agent endpoints. Defines Zod schemas for 3 response types. Exports `shouldUseDeepAgentProjectStatusBridge` / `shouldUseDeepAgentExecutiveBridge` / `shouldUseDeepAgentResearchBridge` (gated on `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED`). `fetchDeepAgentProjectStatus` POSTs to `/api/intelligence/deep-agent/project-status` etc. via `fetchWithGuardrails` with `ADMIN_API_KEY`.
+- **Purpose:** Bridge to Python FastAPI backend's deep-agent endpoints. Defines Zod schemas for response types. Exports `shouldUseDeepAgentExecutiveBridge`, `shouldUseDeepAgentResearchBridge`, and related fetch helpers. Frontend availability is derived from the configured backend URL; backend endpoint flags remain the service source of truth. Fetch helpers POST to backend intelligence endpoints via `fetchWithGuardrails` with `ADMIN_API_KEY`.
 - **Data sources touched:** `external_api:python_backend`
 - **Used by:** `handler-v2.ts`
 

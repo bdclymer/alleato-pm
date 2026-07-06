@@ -54,6 +54,16 @@ const EXECUTIVE_DEEP_AGENT_PATTERNS: Array<{
 }> = [
   {
     pattern:
+      /\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b.{0,80}\b(health|status|overview|risk|risks|read|briefing)\b/i,
+    intent: "latest_status",
+  },
+  {
+    pattern:
+      /\b(health|status|overview|risk|risks|read|briefing)\b.{0,80}\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b/i,
+    intent: "latest_status",
+  },
+  {
+    pattern:
       /\b(highest priority|top priority|what should brandon focus|what should i focus|most important thing|state of the business)\b/i,
     intent: "risk_review",
   },
