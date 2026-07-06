@@ -2385,14 +2385,6 @@ const DEFAULT_FIELD_FEEDBACK: Record<AssistantFieldKey, AssistantFieldVerdict> =
   score: "unreviewed",
 };
 
-const QUICK_CATEGORY_OPTIONS = [
-  "Accounting",
-  "Client Follow-up",
-  "Sales Lead",
-  "Vendor / Subcontractor",
-  "No Action",
-] as const;
-
 const BUSINESS_CATEGORY_OPTIONS = [
   "Accounting",
   "Client Follow-up",
@@ -2408,6 +2400,29 @@ function isBusinessCategory(value: string | null | undefined): boolean {
   return BUSINESS_CATEGORY_OPTIONS.includes(
     (value ?? "") as (typeof BUSINESS_CATEGORY_OPTIONS)[number],
   );
+}
+
+function parseBusinessCategories(value: string | null | undefined): string[] {
+  if (!value?.trim()) return [];
+
+  const parsed = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set(parsed));
+}
+
+function serializeBusinessCategories(values: string[]): string | null {
+  const normalized = Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+
+  return normalized.length > 0 ? normalized.join(", ") : null;
 }
 
 function defaultAssistantCategory(email: ProjectEmail): string {
@@ -2618,7 +2633,9 @@ export function EmailTrainingFeedbackPanel({
   const [assistantPriority, setAssistantPriority] =
     React.useState<AssistantReviewPriority>("normal");
   const [assistantCategory, setAssistantCategory] = React.useState("FYI");
-  const [quickCategory, setQuickCategory] = React.useState("");
+  const [quickCategories, setQuickCategories] = React.useState<string[]>([]);
+  const [quickCategoryOpen, setQuickCategoryOpen] = React.useState(false);
+  const [quickCategorySearch, setQuickCategorySearch] = React.useState("");
   const [reviewOutcome, setReviewOutcome] =
     React.useState<BrandonReviewOutcome>("skipped");
   const [draftBody, setDraftBody] = React.useState("");
@@ -2648,11 +2665,9 @@ export function EmailTrainingFeedbackPanel({
     setAssistantAction(selectedEmail.assistant_action ?? "watch");
     setAssistantPriority(selectedEmail.assistant_priority ?? "normal");
     setAssistantCategory(defaultAssistantCategory(selectedEmail));
-    setQuickCategory(
-      isBusinessCategory(selectedEmail.assistant_category)
-        ? selectedEmail.assistant_category ?? ""
-        : "",
-    );
+    setQuickCategories(parseBusinessCategories(selectedEmail.assistant_category));
+    setQuickCategoryOpen(false);
+    setQuickCategorySearch("");
     setReviewOutcome(defaultReviewOutcome(selectedEmail));
     setDraftBody(selectedEmail.assistant_review?.draftBody ?? "");
     setReviewerNote(selectedEmail.assistant_review?.reviewerNote ?? "");
@@ -2686,10 +2701,11 @@ export function EmailTrainingFeedbackPanel({
   );
   const categoryOptions = React.useMemo(() => {
     const options = new Set<string>(BUSINESS_CATEGORY_OPTIONS);
-    const current = quickCategory.trim();
-    if (current) options.add(current);
+    for (const category of quickCategories) {
+      if (category.trim()) options.add(category.trim());
+    }
     return Array.from(options);
-  }, [quickCategory]);
+  }, [quickCategories]);
 
   async function handleSave() {
     if (!selectedEmail) return;
@@ -2719,11 +2735,13 @@ export function EmailTrainingFeedbackPanel({
         reasonNote:
           projectStatus === "unreviewed" ? null : projectReasonNote.trim() || null,
       };
+      const serializedQuickCategories =
+        serializeBusinessCategories(quickCategories);
       const commonPayload = {
         assistantAction,
         assistantPriority,
         assistantCategory:
-          quickCategory.trim() || assistantCategory.trim() || null,
+          serializedQuickCategories || assistantCategory.trim() || null,
         reviewOutcome,
         reviewerNote: reviewerNote.trim() || null,
         draftBody: draftBody.trim() || null,
@@ -2774,22 +2792,49 @@ export function EmailTrainingFeedbackPanel({
 
   const quickCategoryDirty = React.useMemo(() => {
     if (!selectedEmail) return false;
-    const baseline = isBusinessCategory(selectedEmail.assistant_category)
-      ? selectedEmail.assistant_category ?? ""
-      : "";
-    return quickCategory.trim() !== baseline;
-  }, [quickCategory, selectedEmail]);
+    const baseline = parseBusinessCategories(selectedEmail.assistant_category);
+    return serializeBusinessCategories(quickCategories) !== serializeBusinessCategories(baseline);
+  }, [quickCategories, selectedEmail]);
 
-  const updateQuickCategory = React.useCallback(
-    (nextCategory: string) => {
-      setQuickCategory(nextCategory);
+  const updateQuickCategories = React.useCallback(
+    (nextCategories: string[]) => {
+      setQuickCategories(
+        Array.from(
+          new Set(
+            nextCategories
+              .map((value) => value.trim())
+              .filter(Boolean),
+          ),
+        ),
+      );
       setFieldFeedback((current) => ({
         ...current,
-        category: nextCategory.trim() ? "incorrect" : "unreviewed",
+        category:
+          nextCategories.some((value) => value.trim()) ? "incorrect" : "unreviewed",
       }));
     },
     [],
   );
+
+  const toggleQuickCategory = React.useCallback(
+    (category: string) => {
+      updateQuickCategories(
+        quickCategories.includes(category)
+          ? quickCategories.filter((value) => value !== category)
+          : [...quickCategories, category],
+      );
+    },
+    [quickCategories, updateQuickCategories],
+  );
+
+  const createQuickCategory = React.useCallback(() => {
+    const trimmed = quickCategorySearch.trim();
+    if (!trimmed) return;
+    if (!quickCategories.includes(trimmed)) {
+      updateQuickCategories([...quickCategories, trimmed]);
+    }
+    setQuickCategorySearch("");
+  }, [quickCategories, quickCategorySearch, updateQuickCategories]);
 
   async function handleGenerateDraft() {
     if (!selectedEmail) return;
@@ -3119,65 +3164,106 @@ export function EmailTrainingFeedbackPanel({
 
               <ReviewSection
                 title="Quick Category"
-                headerAction={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void handleSave()}
-                    disabled={isSaving || !quickCategoryDirty}
-                    className="h-7 text-[12px]"
-                  >
-                    {isSaving ? "Saving..." : "Save category"}
-                  </Button>
-                }
               >
                 <div className="space-y-3">
-                  <p className="text-[12px] leading-5 text-muted-foreground">
-                    Use this for the business label on the email. The AI
-                    workflow bucket above can still stay as delegate, reply, or
-                    watch.
-                  </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {QUICK_CATEGORY_OPTIONS.map((category) => {
-                      const selected = quickCategory === category;
-                      return (
+                    {quickCategories.length > 0 ? (
+                      quickCategories.map((category) => (
                         <Button
                           key={category}
                           type="button"
+                          onClick={() => toggleQuickCategory(category)}
                           variant="ghost"
                           size="sm"
-                          onClick={() => updateQuickCategory(category)}
-                          className={cn(
-                            "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
-                            selected
-                              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
-                              : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
-                          )}
+                          className="h-7 rounded-full border border-primary/40 bg-primary/10 px-2.5 text-[11px] font-medium text-primary shadow-none hover:bg-primary/15 hover:text-primary"
+                          aria-label={`Remove ${category}`}
                         >
-                          {category}
+                          <span>{category}</span>
+                          <X className="h-3 w-3" />
                         </Button>
-                      );
-                    })}
+                      ))
+                    ) : (
+                      <span className="text-[12px] text-muted-foreground">
+                        No business categories selected.
+                      </span>
+                    )}
                   </div>
-                  <Select
-                    value={quickCategory || "__none__"}
-                    onValueChange={(value) =>
-                      updateQuickCategory(value === "__none__" ? "" : value)
-                    }
+                  <Popover
+                    open={quickCategoryOpen}
+                    onOpenChange={(open) => {
+                      setQuickCategoryOpen(open);
+                      if (!open) setQuickCategorySearch("");
+                    }}
                   >
-                    <SelectTrigger className="h-8 text-[13px]">
-                      <SelectValue placeholder="Choose business category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">No business category</SelectItem>
-                      {categoryOptions.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 justify-between text-[13px] shadow-none"
+                      >
+                        <span>Add or edit categories</span>
+                        <ChevronDownIcon className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      className="w-72 p-0"
+                    >
+                      <Command>
+                        <CommandInput
+                          value={quickCategorySearch}
+                          onValueChange={setQuickCategorySearch}
+                          placeholder="Search or create category"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No categories found.</CommandEmpty>
+                          <CommandGroup>
+                            {categoryOptions.map((category) => {
+                              const selected =
+                                quickCategories.includes(category);
+                              return (
+                                <CommandItem
+                                  key={category}
+                                  value={category}
+                                  onSelect={() => toggleQuickCategory(category)}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selected
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  {category}
+                                </CommandItem>
+                              );
+                            })}
+                            {quickCategorySearch.trim() &&
+                            !categoryOptions.some(
+                              (category) =>
+                                category.toLowerCase() ===
+                                quickCategorySearch.trim().toLowerCase(),
+                            ) ? (
+                              <CommandItem
+                                value={`create ${quickCategorySearch}`}
+                                onSelect={createQuickCategory}
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create "{quickCategorySearch.trim()}"
+                              </CommandItem>
+                            ) : null}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {quickCategoryDirty ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Save feedback below to persist category changes.
+                    </p>
+                  ) : null}
                 </div>
               </ReviewSection>
 
