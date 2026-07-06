@@ -49,6 +49,13 @@
 - Targeted verification:
   - `cd /tmp/alleato-publish-all/frontend && ./node_modules/.bin/jest --runInBand --runTestsByPath ...` -> 12 suites passed, 99 tests passed
   - `cd /tmp/alleato-publish-all && node scripts/verify/__tests__/source-control-plane-health-lib.test.mjs` -> passed
-- Migration verification:
-  - `cd /tmp/alleato-publish-all && npm run db:migrations:verify-applied -- supabase/migrations/20260704103000_create_change_event_project_settings.sql supabase/migrations/20260704113000_sync_task_project_assignment_from_document_metadata.sql` -> passed
-  - `cd /tmp/alleato-publish-all && npm run db:types:check` -> passed
+- Migration blocker:
+  - `cd /tmp/alleato-publish-all && npx supabase db push --dry-run` -> failed with `unexpected login role status 401: {"message":"Unauthorized"}` and `Connect to your database by setting the env var correctly: SUPABASE_DB_PASSWORD`
+
+## Blocker
+
+- Status: Blocked
+- Cause: Supabase remote schema publish is not possible from the current local environment because `SUPABASE_DB_PASSWORD` is unavailable and no repo-local env file, Supabase CLI cache, process environment, or keychain entry provided a usable credential.
+- Detection gap: The preserved lanes included two new migrations, but the local environment was not carrying the database credential needed to apply them remotely.
+- Prevention step: Keep the Supabase project credential in one standard secure source available to local automation, such as the expected CLI login/cache path or a managed local env source that Codex can read.
+- Exact failing command: `cd /tmp/alleato-publish-all && npx supabase db push --dry-run`
