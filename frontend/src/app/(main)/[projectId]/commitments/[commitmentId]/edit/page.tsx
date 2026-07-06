@@ -16,6 +16,7 @@ import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSh
 import { ErrorState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import type { CreatePurchaseOrderInput, PurchaseOrderSovLineItem } from "@/lib/schemas/create-purchase-order-schema";
 
@@ -47,6 +48,8 @@ export default function EditCommitmentPage() {
   const commitmentId = params.commitmentId as string;
 
   const { data: rawData, isLoading } = useCommitmentDetail(commitmentId);
+  const { profile } = useCurrentUserProfile();
+  const isAdmin = profile?.isAdmin ?? false;
   const [attachments, setAttachments] = useState<CommitmentAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
 
@@ -253,7 +256,9 @@ export default function EditCommitmentPage() {
     rawData && typeof rawData === "object" && typeof (rawData as { status?: unknown }).status === "string"
       ? String((rawData as { status: string }).status).trim().toLowerCase()
       : "draft";
-  const isApproved = normalizedStatus === "approved";
+  // Approved commitments are locked to editors — except admins, who can always
+  // edit (matches the detail-page inline-edit and Edit-menu admin bypass).
+  const isApproved = normalizedStatus === "approved" && !isAdmin;
 
   const uploadCommitmentAttachments = async (
     targetCommitmentId: string,

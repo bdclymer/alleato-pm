@@ -68,6 +68,7 @@ import {
   useCommitmentDetail,
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { apiFetch } from "@/lib/api-client";
 import type { CommitmentSovLockState } from "@/lib/commitments/commitment-sov-lock";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
@@ -886,6 +887,8 @@ export default function CommitmentDetailPage() {
   const queryClient = useQueryClient();
 
   const { confirm, ConfirmDialog } = useConfirm();
+  const { profile } = useCurrentUserProfile();
+  const isAdmin = profile?.isAdmin ?? false;
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [subcontractorSovCount, setSubcontractorSovCount] = useState<number>(0);
@@ -991,7 +994,11 @@ export default function CommitmentDetailPage() {
   // we refresh the detail (and list) so the page reflects the change.
   const handleSaveField = useCallback(
     async (field: string, value: string | number | boolean | null) => {
-      if ((commitment?.status ?? "").trim().toLowerCase() === "approved" && field !== "status") {
+      if (
+        !isAdmin &&
+        (commitment?.status ?? "").trim().toLowerCase() === "approved" &&
+        field !== "status"
+      ) {
         throw new Error("Approved commitments are read-only. Change the status first to edit this record.");
       }
       await apiFetch(`/api/commitments/${commitmentId}`, {
@@ -1004,7 +1011,7 @@ export default function CommitmentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
       await fetchCommitment();
     },
-    [commitmentId, queryClient, fetchCommitment],
+    [commitmentId, queryClient, fetchCommitment, isAdmin, commitment?.status],
   );
 
   const { exportPdf: handleExport, isExporting } = usePdfExport({
@@ -1115,7 +1122,7 @@ export default function CommitmentDetailPage() {
             <Mail className="mr-2 h-4 w-4" />
             Email Commitment
           </DropdownMenuItem>
-          {!isApproved && (
+          {(!isApproved || isAdmin) && (
             <DropdownMenuItem asChild>
               <Link href={`/${projectId}/commitments/${commitmentId}/edit`}>
                 <FileText className="mr-2 h-4 w-4" />

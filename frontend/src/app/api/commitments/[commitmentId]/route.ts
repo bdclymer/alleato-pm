@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { getIsAdmin } from "@/lib/auth/current-user";
 import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
 import { logger } from "@/lib/logger";
@@ -599,7 +600,13 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       : null;
 
     if (sovLines && sovLines.length > 0) {
-      if ((unifiedData.status ?? "").trim().toLowerCase() === "approved") {
+      // Admins bypass the approved-status SOV lock — they can edit the schedule
+      // of values even on an approved commitment (matches the client-side admin
+      // bypass on the detail page and edit form). Non-admins stay locked.
+      const isApprovedSovLocked =
+        (unifiedData.status ?? "").trim().toLowerCase() === "approved" &&
+        !(await getIsAdmin());
+      if (isApprovedSovLocked) {
         throw new GuardrailError({
           code: "PRECONDITION_FAILED",
           where: "commitments/[commitmentId]#PUT",
