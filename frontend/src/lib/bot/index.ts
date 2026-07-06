@@ -82,6 +82,15 @@ async function resolveUserId(platformUserId: string): Promise<string> {
   return mapping?.supabase_user_id ?? "system";
 }
 
+function buildUnlinkedAccountMessage(platform: string, platformUserId: string): string {
+  const label = platform === "slack" ? "Slack" : platform === "teams" ? "Teams" : platform;
+  return [
+    `I can see this ${label} message, but I cannot answer with Alleato project context yet.`,
+    "",
+    `No Alleato user is linked for \`${platformUserId}\`. Link this chat account from Alleato Settings > Integrations, or ask an admin to add a \`bot_user_mappings\` row for that platform user ID.`,
+  ].join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Telegram account linking helpers
 // ---------------------------------------------------------------------------
@@ -158,6 +167,10 @@ bot.onNewMention(async (thread, message) => {
 
   const platformUserId = `${thread.adapter.name}:${message.author?.userId ?? "unknown"}`;
   const userId = await resolveUserId(platformUserId);
+  if (userId === "system") {
+    await thread.post(buildUnlinkedAccountMessage(thread.adapter.name, platformUserId));
+    return;
+  }
   const sessionId = `bot-${nanoid(12)}`;
 
   // Persist the user message for memory continuity
@@ -349,6 +362,10 @@ bot.onSubscribedMessage(async (thread, message) => {
   } | null;
   const platformUserId = `${thread.adapter.name}:${message.author?.userId ?? "unknown"}`;
   const userId = state?.userId ?? (await resolveUserId(platformUserId));
+  if (userId === "system") {
+    await thread.post(buildUnlinkedAccountMessage(thread.adapter.name, platformUserId));
+    return;
+  }
   const sessionId = state?.sessionId ?? `bot-${nanoid(12)}`;
 
   // Persist user message
