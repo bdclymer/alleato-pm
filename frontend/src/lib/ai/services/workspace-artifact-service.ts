@@ -18,7 +18,11 @@
 import { embed } from "@/lib/ai/services/ai-memory-service";
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
-import type { ChangeEventWorkflowMetadata } from "@/lib/ai/change-event-workflow";
+import {
+  applyChangeEventWorkflowDraftEdits,
+  type ChangeEventWorkflowDraftEdits,
+  type ChangeEventWorkflowMetadata,
+} from "@/lib/ai/change-event-workflow";
 
 // Write artifact embedding to AI Database document_chunks.
 // PM APP holds the record; AI DB holds the searchable vector.
@@ -337,27 +341,45 @@ export interface UpsertChangeEventDraftArtifactParams {
   workflow: ChangeEventWorkflowMetadata;
 }
 
+function buildChangeEventDraftArtifactPayload(workflow: ChangeEventWorkflowMetadata) {
+  const draft = workflow.draft;
+  const title = draft.title ?? "Change Event Draft";
+  const content = {
+    workflow,
+    draft,
+    readiness: workflow.readiness,
+    expectedNativeTool: workflow.expectedNativeTool,
+    writeOwner: workflow.writeOwner,
+    updatedAt: workflow.updatedAt,
+  };
+  const contextSnapshot = {
+    workflowKey: workflow.workflowKey,
+    source: workflow.source,
+    projectId: draft.projectId,
+    projectName: draft.projectName,
+    readyForPreview: draft.readyForPreview,
+  };
+
+  return { title, content, contextSnapshot };
+}
+
+function readChangeEventWorkflowContent(
+  content: Record<string, unknown>,
+): ChangeEventWorkflowMetadata | null {
+  const workflow = content.workflow;
+  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) {
+    return null;
+  }
+  return workflow as ChangeEventWorkflowMetadata;
+}
+
 export async function upsertChangeEventDraftArtifact(
   params: UpsertChangeEventDraftArtifactParams,
 ): Promise<{ id: string; version: number; action: "created" | "updated" } | { error: string }> {
   const supabase = createServiceClient();
   const draft = params.workflow.draft;
-  const title = draft.title ?? "Change Event Draft";
-  const content = {
-    workflow: params.workflow,
-    draft,
-    readiness: params.workflow.readiness,
-    expectedNativeTool: params.workflow.expectedNativeTool,
-    writeOwner: params.workflow.writeOwner,
-    updatedAt: params.workflow.updatedAt,
-  };
-  const contextSnapshot = {
-    workflowKey: params.workflow.workflowKey,
-    source: params.workflow.source,
-    projectId: draft.projectId,
-    projectName: draft.projectName,
-    readyForPreview: draft.readyForPreview,
-  };
+  const { title, content, contextSnapshot } =
+    buildChangeEventDraftArtifactPayload(params.workflow);
 
   const { data: existing, error: existingError } = await supabase
     .from("workspace_artifacts")
@@ -423,6 +445,61 @@ export async function loadLatestChangeEventDraftArtifact(params: {
   });
 
   return artifacts[0] ?? null;
+}
+
+export async function updateChangeEventDraftArtifactEdits(params: {
+  userId: string;
+  sessionId: string;
+  edits: ChangeEventWorkflowDraftEdits;
+}): Promise<
+  | {
+      id: string;
+      version: number;
+      workflow: ChangeEventWorkflowMetadata;
+    }
+  | { error: string }
+> {
+  const artifact = await loadLatestChangeEventDraftArtifact({
+    userId: params.userId,
+    sessionId: params.sessionId,
+  });
+
+  if (!artifact) {
+    return {
+      error: "No active Change Event draft artifact exists for this session.",
+    };
+  }
+
+  const workflow = readChangeEventWorkflowContent(artifact.content);
+  if (!workflow) {
+    return {
+      error:
+        "Change Event draft artifact is missing workflow metadata and cannot be edited safely.",
+    };
+  }
+
+  const updatedWorkflow = applyChangeEventWorkflowDraftEdits({
+    workflow,
+    edits: params.edits,
+  });
+  const { title, content, contextSnapshot } =
+    buildChangeEventDraftArtifactPayload(updatedWorkflow);
+  const result = await updateArtifact(artifact.id, params.userId, {
+    title,
+    content,
+    contextSnapshot,
+    projectId: updatedWorkflow.draft.projectId,
+    sessionId: params.sessionId,
+    tags: ["change-event", "ai-workflow"],
+  });
+
+  if ("error" in result) return result;
+
+  return {
+    id: result.id,
+    version: result.version,
+    workflow: updatedWorkflow,
+  };
 }
 
 // ---------------------------------------------------------------------------

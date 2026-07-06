@@ -13,7 +13,10 @@ jest.mock("@/lib/ai/services/ai-memory-service", () => ({
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { buildChangeEventWorkflowMetadata } from "@/lib/ai/change-event-workflow";
-import { upsertChangeEventDraftArtifact } from "@/lib/ai/services/workspace-artifact-service";
+import {
+  updateChangeEventDraftArtifactEdits,
+  upsertChangeEventDraftArtifact,
+} from "@/lib/ai/services/workspace-artifact-service";
 
 const createServiceClientMock =
   createServiceClient as jest.MockedFunction<typeof createServiceClient>;
@@ -52,6 +55,17 @@ function createUpdateFetchChain(result: unknown) {
     select: jest.fn(() => chain),
     eq: jest.fn(() => chain),
     single: jest.fn().mockResolvedValue(result),
+  };
+  return chain;
+}
+
+function createListChain(result: unknown) {
+  const chain = {
+    select: jest.fn(() => chain),
+    eq: jest.fn(() => chain),
+    order: jest.fn(() => chain),
+    limit: jest.fn(() => chain),
+    then: jest.fn((resolve, reject) => Promise.resolve(result).then(resolve, reject)),
   };
   return chain;
 }
@@ -157,6 +171,93 @@ describe("workspace artifact change-event drafts", () => {
         project_id: 760,
         session_id: "session-1",
         tags: ["change-event", "ai-workflow"],
+      }),
+    );
+  });
+
+  it("persists user edits to the latest session draft artifact", async () => {
+    const workflow = buildChangeEventWorkflowMetadata({
+      updatedAt: "2026-07-06T05:00:00.000Z",
+      prompt: "Help me create a change event",
+      selectedProjectId: 760,
+      selectedProjectName: "Exol Wilmer",
+    });
+    const listChain = createListChain({
+      data: [
+        {
+          id: "artifact-1",
+          user_id: "user-1",
+          project_id: 760,
+          artifact_type: "change_event_draft",
+          title: "Change Event Draft",
+          status: "draft",
+          version: 1,
+          content: { workflow },
+          context_snapshot: {},
+          session_id: "session-1",
+          promoted_to: null,
+          promoted_at: null,
+          tags: ["change-event", "ai-workflow"],
+          created_at: "2026-07-06T05:00:00.000Z",
+          updated_at: "2026-07-06T05:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    const fetchChain = createUpdateFetchChain({
+      data: {
+        version: 1,
+        artifact_type: "change_event_draft",
+        title: "Change Event Draft",
+        content: { workflow },
+        project_id: 760,
+      },
+      error: null,
+    });
+    const updateChain = createUpdateChain({ error: null });
+
+    createServiceClientMock
+      .mockReturnValueOnce({ from: jest.fn(() => listChain) } as never)
+      .mockReturnValueOnce({
+        from: jest
+          .fn()
+          .mockReturnValueOnce(fetchChain)
+          .mockReturnValueOnce(updateChain),
+      } as never);
+
+    const result = await updateChangeEventDraftArtifactEdits({
+      userId: "user-1",
+      sessionId: "session-1",
+      edits: {
+        title: "Owner requested restroom relocation",
+        narrative: "Owner requested relocating restroom plumbing after framing.",
+        cause: "Owner Requested",
+        scope: "Out of Scope",
+        costImpact: "$18,000",
+        scheduleImpact: "No schedule impact expected",
+      },
+    });
+
+    expect(result).toMatchObject({
+      id: "artifact-1",
+      version: 2,
+      workflow: {
+        draft: {
+          title: "Owner requested restroom relocation",
+          cause: "Owner Requested",
+          readyForPreview: true,
+        },
+        readiness: {
+          readyForPreview: true,
+        },
+      },
+    });
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 2,
+        project_id: 760,
+        title: "Owner requested restroom relocation",
+        session_id: "session-1",
       }),
     );
   });

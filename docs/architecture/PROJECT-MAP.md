@@ -469,7 +469,7 @@ _299/330 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/ai-assistant/teach` | POST | frontend/src/app/api/ai-assistant/teach/route.ts |
 | `/api/ai-assistant/timeline` | GET | frontend/src/app/api/ai-assistant/timeline/route.ts |
 | `/api/ai-assistant/usage-stats` | GET | frontend/src/app/api/ai-assistant/usage-stats/route.ts |
-| `/api/ai-assistant/workspace` | GET, POST | frontend/src/app/api/ai-assistant/workspace/route.ts |
+| `/api/ai-assistant/workspace` | GET, POST, PATCH | frontend/src/app/api/ai-assistant/workspace/route.ts |
 | `/api/ai-assistant/workspace/[artifactId]` | GET, PATCH, DELETE | frontend/src/app/api/ai-assistant/workspace/[artifactId]/route.ts |
 | `/api/ai-operator/presentation-preview` | POST | frontend/src/app/api/ai-operator/presentation-preview/route.ts |
 | `/api/app-error-events` | POST | frontend/src/app/api/app-error-events/route.ts |

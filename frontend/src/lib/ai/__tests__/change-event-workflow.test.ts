@@ -1,4 +1,5 @@
 import {
+  applyChangeEventWorkflowDraftEdits,
   buildChangeEventRelatedEvidence,
   buildChangeEventWorkflowDraft,
   buildChangeEventWorkflowMetadata,
@@ -168,5 +169,35 @@ describe("change event workflow draft", () => {
     expect(isChangeEventFinalPreviewRequest("Create a change event for owner work")).toBe(
       false,
     );
+  });
+
+  it("applies artifact field edits and recomputes readiness", () => {
+    const metadata = buildChangeEventWorkflowMetadata({
+      updatedAt: "2026-07-06T05:00:00.000Z",
+      selectedProjectId: 25125,
+      prompt: "Help me create a change event",
+    });
+
+    const updated = applyChangeEventWorkflowDraftEdits({
+      workflow: metadata,
+      updatedAt: "2026-07-06T06:00:00.000Z",
+      edits: {
+        title: "Owner requested restroom relocation",
+        narrative: "Owner requested relocating the restroom plumbing after framing.",
+        cause: "Owner Requested",
+        scope: "Out of Scope",
+        costImpact: "$18,000",
+        scheduleImpact: "No schedule impact expected",
+      },
+    });
+
+    expect(updated.updatedAt).toBe("2026-07-06T06:00:00.000Z");
+    expect(updated.draft.title).toBe("Owner requested restroom relocation");
+    expect(updated.draft.cause).toBe("Owner Requested");
+    expect(updated.draft.readyForPreview).toBe(true);
+    expect(updated.readiness.readyForPreview).toBe(true);
+    expect(updated.readiness.missingChecklistKeys).not.toContain("review_create");
+    expect(updated.draft.confirmPrompt).toContain("Project ID: 25125");
+    expect(updated.draft.confirmPrompt).toContain("confirmed=false");
   });
 });

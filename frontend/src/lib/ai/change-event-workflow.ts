@@ -84,6 +84,18 @@ export type ChangeEventWorkflowMetadata = {
   };
 };
 
+export type ChangeEventWorkflowDraftEdits = {
+  title?: string | null;
+  narrative?: string | null;
+  cause?: ChangeEventWorkflowDraft["cause"];
+  scope?: ChangeEventWorkflowDraft["scope"];
+  costImpact?: string | null;
+  scheduleImpact?: string | null;
+  ownerNotified?: ChangeEventWorkflowDraft["ownerNotified"];
+  supportingDocs?: string[];
+  relatedRecordHints?: string[];
+};
+
 function normalizePrompt(prompt: string): string {
   return prompt.trim().replace(/\s+/g, " ");
 }
@@ -513,6 +525,67 @@ function finalizeDraft(
   draft.confirmPrompt = buildConfirmPrompt(draft);
   draft.checklist = buildChecklist(draft);
   return draft;
+}
+
+function optionalEditedString(
+  edits: ChangeEventWorkflowDraftEdits,
+  key: "title" | "narrative" | "costImpact" | "scheduleImpact",
+  fallback: string | null,
+): string | null {
+  if (!Object.prototype.hasOwnProperty.call(edits, key)) return fallback;
+  const value = edits[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function applyChangeEventWorkflowDraftEdits({
+  workflow,
+  edits,
+  updatedAt,
+}: {
+  workflow: ChangeEventWorkflowMetadata;
+  edits: ChangeEventWorkflowDraftEdits;
+  updatedAt?: string;
+}): ChangeEventWorkflowMetadata {
+  const current = workflow.draft;
+  const draft = finalizeDraft({
+    projectId: current.projectId,
+    projectName: current.projectName,
+    title: optionalEditedString(edits, "title", current.title),
+    narrative: optionalEditedString(edits, "narrative", current.narrative),
+    cause: Object.prototype.hasOwnProperty.call(edits, "cause")
+      ? edits.cause ?? null
+      : current.cause,
+    scope: edits.scope ?? current.scope,
+    costImpact: optionalEditedString(edits, "costImpact", current.costImpact),
+    scheduleImpact: optionalEditedString(
+      edits,
+      "scheduleImpact",
+      current.scheduleImpact,
+    ),
+    ownerNotified: edits.ownerNotified ?? current.ownerNotified,
+    supportingDocs: edits.supportingDocs ?? current.supportingDocs,
+    relatedRecordHints: edits.relatedRecordHints ?? current.relatedRecordHints,
+    relatedEvidence: current.relatedEvidence,
+  });
+  const missingChecklistKeys = draft.checklist
+    .filter((item) => item.status !== "complete")
+    .map((item) => item.key);
+  const activeChecklistKey =
+    draft.checklist.find((item) => item.status === "active")?.key ?? null;
+
+  return {
+    ...workflow,
+    updatedAt: updatedAt ?? new Date().toISOString(),
+    draft,
+    readiness: {
+      readyForPreview: draft.readyForPreview,
+      missingChecklistKeys,
+      activeChecklistKey,
+      evidenceCount: draft.relatedEvidence.length,
+      evidenceSourcePath:
+        draft.relatedEvidence.length > 0 ? "semantic_vector_search" : "none",
+    },
+  };
 }
 
 export function buildChangeEventWorkflowDraft({

@@ -3,8 +3,22 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { ChangeEventWorkflowDraft } from "@/lib/ai/change-event-workflow";
+import {
+  CHANGE_REQUEST_SCOPE_OPTIONS,
+  CHANGE_REQUEST_TYPE_OPTIONS,
+} from "@/lib/ai/workflow-registry";
+import type {
+  ChangeEventWorkflowDraft,
+  ChangeEventWorkflowDraftEdits,
+} from "@/lib/ai/change-event-workflow";
 
 type EditableDraft = {
   title: string;
@@ -18,6 +32,7 @@ type EditableDraft = {
 type ChangeEventDraftArtifactProps = {
   draft: ChangeEventWorkflowDraft;
   onSubmit: (message: string) => void;
+  onSaveDraft: (edits: ChangeEventWorkflowDraftEdits) => Promise<void>;
 };
 
 function toEditableDraft(draft: ChangeEventWorkflowDraft): EditableDraft {
@@ -60,8 +75,11 @@ function fieldsChanged(a: EditableDraft, b: EditableDraft): boolean {
 export function ChangeEventDraftArtifact({
   draft,
   onSubmit,
+  onSaveDraft,
 }: ChangeEventDraftArtifactProps) {
   const [editable, setEditable] = useState(() => toEditableDraft(draft));
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const baseline = useMemo(() => toEditableDraft(draft), [draft]);
   const hasChanges = fieldsChanged(editable, baseline);
@@ -74,6 +92,7 @@ export function ChangeEventDraftArtifact({
 
   useEffect(() => {
     setEditable(toEditableDraft(draft));
+    setSaveError(null);
   }, [draft]);
 
   const updateField =
@@ -82,15 +101,37 @@ export function ChangeEventDraftArtifact({
       setEditable((current) => ({ ...current, [field]: event.target.value }));
     };
 
-  const handleSyncDraft = () => {
-    onSubmit(
-      [
-        "Update the Change Event draft with these edited fields.",
-        "Keep asking only the next highest-value follow-up.",
-        "",
-        JSON.stringify(payload, null, 2),
-      ].join("\n"),
-    );
+  const updateSelectField =
+    (field: "cause" | "scope") =>
+    (value: string) => {
+      setEditable((current) => ({ ...current, [field]: value }));
+    };
+
+  const handleSyncDraft = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSaveDraft({
+        title: editable.title,
+        narrative: editable.narrative,
+        cause: editable.cause
+          ? (editable.cause as ChangeEventWorkflowDraft["cause"])
+          : null,
+        scope: editable.scope
+          ? (editable.scope as ChangeEventWorkflowDraft["scope"])
+          : "TBD",
+        costImpact: editable.costImpact,
+        scheduleImpact: editable.scheduleImpact,
+      });
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "The draft could not be saved. Try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReviewCreate = () => {
@@ -159,23 +200,44 @@ export function ChangeEventDraftArtifact({
               <label className="text-xs font-medium text-muted-foreground">
                 Type
               </label>
-              <Input
-                value={editable.cause}
-                onChange={updateField("cause")}
-                placeholder="Owner Requested"
-                className="mt-1"
-              />
+              <Select
+                value={editable.cause || "__unset__"}
+                onValueChange={(value) => {
+                  updateSelectField("cause")(value === "__unset__" ? "" : value);
+                }}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unset__">Not selected</SelectItem>
+                  {CHANGE_REQUEST_TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">
                 Scope
               </label>
-              <Input
-                value={editable.scope}
-                onChange={updateField("scope")}
-                placeholder="TBD"
-                className="mt-1"
-              />
+              <Select
+                value={editable.scope || "TBD"}
+                onValueChange={updateSelectField("scope")}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select scope" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHANGE_REQUEST_SCOPE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">
@@ -280,10 +342,10 @@ export function ChangeEventDraftArtifact({
             <Button
               size="sm"
               variant="outline"
-              disabled={!hasChanges}
+              disabled={!hasChanges || isSaving}
               onClick={handleSyncDraft}
             >
-              Update draft
+              {isSaving ? "Saving" : "Update draft"}
             </Button>
             <Button
               size="sm"
@@ -293,6 +355,9 @@ export function ChangeEventDraftArtifact({
               Review create
             </Button>
           </div>
+          {saveError ? (
+            <p className="text-xs leading-5 text-destructive">{saveError}</p>
+          ) : null}
         </div>
       </div>
     </aside>

@@ -141,7 +141,10 @@ import {
   isAssistantWidgetPayload,
   type AssistantWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
-import type { ChangeEventWorkflowDraft } from "@/lib/ai/change-event-workflow";
+import type {
+  ChangeEventWorkflowDraft,
+  ChangeEventWorkflowDraftEdits,
+} from "@/lib/ai/change-event-workflow";
 import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
@@ -423,6 +426,10 @@ type WorkspaceArtifactListResponse = {
   artifacts?: Array<{
     content?: unknown;
   }>;
+};
+
+type ChangeEventDraftSaveResponse = {
+  draft: ChangeEventWorkflowDraft;
 };
 
 function changeEventDraftFromArtifactContent(
@@ -1297,15 +1304,19 @@ export function ChatArea({
   const [persistedChangeEventDraft, setPersistedChangeEventDraft] =
     useState<ChangeEventWorkflowDraft | null>(null);
   const activeChangeEventDraft =
-    latestMessageChangeEventDraft ?? persistedChangeEventDraft;
+    persistedChangeEventDraft ?? latestMessageChangeEventDraft;
 
   useEffect(() => {
+    if (latestMessageChangeEventDraft) {
+      setPersistedChangeEventDraft(latestMessageChangeEventDraft);
+    }
+  }, [latestMessageChangeEventDraft]);
+
+  const loadChangeEventDraftArtifact = useCallback(async () => {
     if (!sessionId) {
-      setPersistedChangeEventDraft(null);
-      return;
+      return null;
     }
 
-    let cancelled = false;
     const params = new URLSearchParams({
       type: "change_event_draft",
       status: "draft",
@@ -1313,14 +1324,18 @@ export function ChatArea({
       limit: "1",
     });
 
-    apiFetch<WorkspaceArtifactListResponse>(
+    const data = await apiFetch<WorkspaceArtifactListResponse>(
       `/api/ai-assistant/workspace?${params.toString()}`,
-    )
-      .then((data) => {
+    );
+    return changeEventDraftFromArtifactContent(data.artifacts?.[0]?.content);
+  }, [sessionId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadChangeEventDraftArtifact()
+      .then((draft) => {
         if (cancelled) return;
-        const draft = changeEventDraftFromArtifactContent(
-          data.artifacts?.[0]?.content,
-        );
         setPersistedChangeEventDraft(draft);
       })
       .catch(() => {
@@ -1334,7 +1349,30 @@ export function ChatArea({
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [loadChangeEventDraftArtifact]);
+
+  const saveChangeEventDraftArtifact = useCallback(
+    async (edits: ChangeEventWorkflowDraftEdits) => {
+      if (!sessionId) {
+        throw new Error("No active AI session is available for this draft.");
+      }
+
+      const data = await apiFetch<ChangeEventDraftSaveResponse>(
+        "/api/ai-assistant/workspace",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_change_event_draft",
+            sessionId,
+            edits,
+          }),
+        },
+      );
+      setPersistedChangeEventDraft(data.draft);
+    },
+    [sessionId],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1682,7 +1720,8 @@ export function ChatArea({
   );
 
   const hasMessages = messages.length > 0;
-  const showWelcome = !hasMessages && !isLoadingMessages;
+  const showWelcome =
+    !hasMessages && !isLoadingMessages && !activeChangeEventDraft;
 
   // Determine streaming indicator visibility
   const lastMessage = messages[messages.length - 1];
@@ -2572,6 +2611,7 @@ export function ChatArea({
                 <ChangeEventDraftArtifact
                   draft={activeChangeEventDraft}
                   onSubmit={onSubmit}
+                  onSaveDraft={saveChangeEventDraftArtifact}
                 />
               </div>
             ) : null}
@@ -2584,6 +2624,7 @@ export function ChatArea({
           <ChangeEventDraftArtifact
             draft={activeChangeEventDraft}
             onSubmit={onSubmit}
+            onSaveDraft={saveChangeEventDraftArtifact}
           />
         </div>
       ) : null}
