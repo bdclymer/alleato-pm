@@ -362,70 +362,113 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderColor: "#111111",
     marginTop: 4,
+    width: "100%",
   },
   detailHeaderRow: {
     flexDirection: "row",
     backgroundColor: "#F3F3F3",
   },
+  detailLetterRow: {
+    flexDirection: "row",
+  },
   detailRow: {
     flexDirection: "row",
   },
   detailItem: {
-    width: "6%",
+    width: "5.5%",
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
     textAlign: "center",
-    fontSize: 7,
+    fontSize: 5.8,
   },
   detailBudget: {
-    width: "14%",
+    width: "12.5%",
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
-    fontSize: 7,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
+    fontSize: 5.8,
   },
   detailDescription: {
-    width: "22%",
+    width: "20.5%",
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 3,
-    fontSize: 7,
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+    fontSize: 5.8,
   },
   detailNumber: {
-    width: "10%",
+    width: "8.5%",
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
     textAlign: "right",
-    fontSize: 7,
+    fontSize: 5.8,
+  },
+  detailNarrowNumber: {
+    width: "8%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 2,
+    paddingHorizontal: 1,
+    textAlign: "right",
+    fontSize: 5.8,
+  },
+  detailTotal: {
+    width: "9%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 2,
+    paddingHorizontal: 1,
+    textAlign: "right",
+    fontSize: 5.8,
   },
   detailPercent: {
-    width: "8%",
+    width: "5.5%",
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
     textAlign: "right",
-    fontSize: 7,
+    fontSize: 5.8,
   },
-  detailLast: {
-    width: "8%",
+  detailBalance: {
+    width: "7.5%",
+    borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#111111",
-    paddingVertical: 3,
-    paddingHorizontal: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
     textAlign: "right",
-    fontSize: 7,
+    fontSize: 5.8,
+  },
+  detailRetainage: {
+    width: "6.5%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 2,
+    paddingHorizontal: 1,
+    textAlign: "right",
+    fontSize: 5.8,
+  },
+  detailHeaderText: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 5.4,
+  },
+  detailLetterText: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 5.2,
+    textAlign: "center",
   },
   tableSectionTitle: {
     marginTop: 8,
@@ -467,9 +510,11 @@ function SummaryRuleRow({
 function DetailTable({
   rows,
   totalsLabel,
+  includeTotals = true,
 }: {
   rows: ContinuationRow[];
   totalsLabel: string;
+  includeTotals?: boolean;
 }) {
   const totals = rows.reduce<ContinuationRow>(
     (acc, row) => ({
@@ -524,40 +569,81 @@ function DetailTable({
       <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
         {formatMoney(row.previousWork)}
       </Text>
-      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+      <Text
+        style={[styles.detailNarrowNumber, emphasize ? styles.emphasized : null]}
+      >
         {formatMoney(row.thisPeriodWork)}
       </Text>
-      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+      <Text
+        style={[styles.detailNarrowNumber, emphasize ? styles.emphasized : null]}
+      >
         {formatMoney(row.materialsStored)}
       </Text>
-      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailTotal, emphasize ? styles.emphasized : null]}>
         {formatMoney(row.totalCompletedStored)}
       </Text>
       <Text style={[styles.detailPercent, emphasize ? styles.emphasized : null]}>
         {formatPercent(row.percentComplete)}
       </Text>
-      <Text style={[styles.detailLast, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailBalance, emphasize ? styles.emphasized : null]}>
         {formatMoney(row.balanceToFinish)}
+      </Text>
+      <Text style={[styles.detailRetainage, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.retainage)}
       </Text>
     </View>
   );
 
   return (
     <View style={styles.detailTable}>
+      <View style={styles.detailLetterRow} wrap={false}>
+        <Text style={[styles.detailItem, styles.detailLetterText]}>A</Text>
+        <Text style={[styles.detailBudget, styles.detailLetterText]}>B</Text>
+        <Text style={[styles.detailDescription, styles.detailLetterText]} />
+        <Text style={[styles.detailNumber, styles.detailLetterText]}>C</Text>
+        <Text style={[styles.detailNumber, styles.detailLetterText]}>D</Text>
+        <Text style={[styles.detailNarrowNumber, styles.detailLetterText]}>E</Text>
+        <Text style={[styles.detailNarrowNumber, styles.detailLetterText]}>F</Text>
+        <Text style={[styles.detailTotal, styles.detailLetterText]}>G</Text>
+        <Text style={[styles.detailPercent, styles.detailLetterText]} />
+        <Text style={[styles.detailBalance, styles.detailLetterText]}>H</Text>
+        <Text style={[styles.detailRetainage, styles.detailLetterText]}>I</Text>
+      </View>
       <View style={styles.detailHeaderRow} wrap={false}>
-        <Text style={styles.detailItem}>ITEM NO.</Text>
-        <Text style={styles.detailBudget}>BUDGET CODE</Text>
-        <Text style={styles.detailDescription}>DESCRIPTION OF WORK</Text>
-        <Text style={styles.detailNumber}>SCHEDULED VALUE</Text>
-        <Text style={styles.detailNumber}>FROM PREVIOUS APPLICATION</Text>
-        <Text style={styles.detailNumber}>THIS PERIOD</Text>
-        <Text style={styles.detailNumber}>MATERIALS STORED</Text>
-        <Text style={styles.detailNumber}>TOTAL COMPLETED AND STORED</Text>
-        <Text style={styles.detailPercent}>%</Text>
-        <Text style={styles.detailLast}>BALANCE TO FINISH</Text>
+        <Text style={[styles.detailItem, styles.detailHeaderText]}>ITEM NO.</Text>
+        <Text style={[styles.detailBudget, styles.detailHeaderText]}>
+          BUDGET CODE
+        </Text>
+        <Text style={[styles.detailDescription, styles.detailHeaderText]}>
+          DESCRIPTION OF WORK
+        </Text>
+        <Text style={[styles.detailNumber, styles.detailHeaderText]}>
+          {"SCHEDULED\nVALUE"}
+        </Text>
+        <Text style={[styles.detailNumber, styles.detailHeaderText]}>
+          {"FROM PREVIOUS\nAPPLICATION\n(D + E)"}
+        </Text>
+        <Text style={[styles.detailNarrowNumber, styles.detailHeaderText]}>
+          {"THIS\nPERIOD"}
+        </Text>
+        <Text style={[styles.detailNarrowNumber, styles.detailHeaderText]}>
+          {"MATERIALS\nPRESENTLY STORED\n(NOT IN D OR E)"}
+        </Text>
+        <Text style={[styles.detailTotal, styles.detailHeaderText]}>
+          {"TOTAL COMPLETED\nAND STORED TO DATE\n(D + E + F)"}
+        </Text>
+        <Text style={[styles.detailPercent, styles.detailHeaderText]}>
+          {"%\n(G / C)"}
+        </Text>
+        <Text style={[styles.detailBalance, styles.detailHeaderText]}>
+          {"BALANCE TO\nFINISH\n(C - G)"}
+        </Text>
+        <Text style={[styles.detailRetainage, styles.detailHeaderText]}>
+          RETAINAGE
+        </Text>
       </View>
       {rows.map((row, index) => renderRow(row, `${row.itemNo}-${index}`))}
-      {renderRow(totals, `${totalsLabel}-totals`, true)}
+      {includeTotals ? renderRow(totals, `${totalsLabel}-totals`, true) : null}
     </View>
   );
 }
@@ -833,6 +919,9 @@ export function SubcontractorInvoicePdfDocument({
           Document SUMMARY SHEET, APPLICATION AND CERTIFICATE FOR PAYMENT,
           containing Contractor&apos;s signed Certification is attached.
         </Text>
+        <Text style={styles.bodyText}>
+          Use Column I on Contracts where variable retainage for line items apply.
+        </Text>
 
         <View style={styles.continuationMeta}>
           <View style={styles.continuationMetaBlock}>
@@ -856,48 +945,11 @@ export function SubcontractorInvoicePdfDocument({
         <DetailTable rows={changeOrderRows} totalsLabel="TOTALS:" />
 
         <Text style={styles.tableSectionTitle}>Grand Totals</Text>
-        <View style={styles.detailTable}>
-          <View style={styles.detailHeaderRow} wrap={false}>
-            <Text style={styles.detailItem}>ITEM NO.</Text>
-            <Text style={styles.detailBudget}>BUDGET CODE</Text>
-            <Text style={styles.detailDescription}>DESCRIPTION OF WORK</Text>
-            <Text style={styles.detailNumber}>SCHEDULED VALUE</Text>
-            <Text style={styles.detailNumber}>FROM PREVIOUS APPLICATION</Text>
-            <Text style={styles.detailNumber}>THIS PERIOD</Text>
-            <Text style={styles.detailNumber}>MATERIALS STORED</Text>
-            <Text style={styles.detailNumber}>TOTAL COMPLETED AND STORED</Text>
-            <Text style={styles.detailPercent}>%</Text>
-            <Text style={styles.detailLast}>BALANCE TO FINISH</Text>
-          </View>
-          <View style={styles.detailRow} wrap={false}>
-            <Text style={styles.detailItem} />
-            <Text style={styles.detailBudget} />
-            <Text style={[styles.detailDescription, styles.emphasized]}>
-              {grandTotals.description}
-            </Text>
-            <Text style={[styles.detailNumber, styles.emphasized]}>
-              {formatMoney(grandTotals.scheduledValue)}
-            </Text>
-            <Text style={[styles.detailNumber, styles.emphasized]}>
-              {formatMoney(grandTotals.previousWork)}
-            </Text>
-            <Text style={[styles.detailNumber, styles.emphasized]}>
-              {formatMoney(grandTotals.thisPeriodWork)}
-            </Text>
-            <Text style={[styles.detailNumber, styles.emphasized]}>
-              {formatMoney(grandTotals.materialsStored)}
-            </Text>
-            <Text style={[styles.detailNumber, styles.emphasized]}>
-              {formatMoney(grandTotals.totalCompletedStored)}
-            </Text>
-            <Text style={[styles.detailPercent, styles.emphasized]}>
-              {formatPercent(grandTotals.percentComplete)}
-            </Text>
-            <Text style={[styles.detailLast, styles.emphasized]}>
-              {formatMoney(grandTotals.balanceToFinish)}
-            </Text>
-          </View>
-        </View>
+        <DetailTable
+          rows={[grandTotals]}
+          totalsLabel="GRAND TOTALS:"
+          includeTotals={false}
+        />
 
         {data.notes ? (
           <Text style={styles.footerNote}>Notes: {data.notes}</Text>

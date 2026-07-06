@@ -106,6 +106,23 @@ function makeBaseData() {
   };
 }
 
+function collectRenderedText(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(collectRenderedText).join(" ");
+  if (!React.isValidElement(node)) return "";
+
+  if (typeof node.type === "function") {
+    return collectRenderedText(
+      node.type(node.props as Record<string, unknown>) as React.ReactNode,
+    );
+  }
+
+  return collectRenderedText(
+    (node.props as { children?: React.ReactNode }).children,
+  );
+}
+
 describe("subcontractor invoice pdf helpers", () => {
   it("builds a Procore-style filename from project metadata", () => {
     const filename = buildSubcontractorInvoicePdfFilename(
@@ -173,6 +190,36 @@ describe("subcontractor invoice pdf helpers", () => {
     for (const page of pages) {
       const pageText = JSON.stringify(page.props.children);
       expect(pageText).toContain("Alleato group subcontractor invoice");
+    }
+  });
+
+  it("renders the Procore-style continuation sheet columns", () => {
+    const document = SubcontractorInvoicePdfDocument({ data: makeBaseData() });
+    const pages = React.Children.toArray(document.props.children).filter(
+      (child): child is React.ReactElement<{ children?: React.ReactNode }> =>
+        React.isValidElement(child) && child.type === Page,
+    );
+    const continuationText = collectRenderedText(pages[1]);
+
+    for (const label of [
+      "Use Column I on Contracts where variable retainage for line items apply.",
+      "ITEM NO.",
+      "BUDGET CODE",
+      "DESCRIPTION OF WORK",
+      "SCHEDULED\nVALUE",
+      "FROM PREVIOUS\nAPPLICATION\n(D + E)",
+      "THIS\nPERIOD",
+      "MATERIALS\nPRESENTLY STORED\n(NOT IN D OR E)",
+      "TOTAL COMPLETED\nAND STORED TO DATE\n(D + E + F)",
+      "%\n(G / C)",
+      "BALANCE TO\nFINISH\n(C - G)",
+      "RETAINAGE",
+    ]) {
+      expect(continuationText).toContain(label);
+    }
+
+    for (const column of ["A", "B", "C", "D", "E", "F", "G", "H", "I"]) {
+      expect(continuationText).toContain(column);
     }
   });
 });
