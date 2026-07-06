@@ -19,6 +19,8 @@ behind progressive disclosure.
   compact disclosure controls.
 - Keep existing workflow metadata, retrieval evidence, and `createChangeEvent`
   ownership unchanged.
+- Rank reusable project-context picker options by recent activity when activity
+  data is available.
 
 ## Out Of Scope
 
@@ -51,9 +53,17 @@ behind progressive disclosure.
 - Replaced the `project_picker` searchable popover with a short direct project
   list, so the picker passes the surface-complexity budget and does not behave
   like a mini page.
+- Updated the reusable `project_picker` to show the most active projects first
+  and keep the remaining project options behind a compact dropdown.
+- Ranked default project picker results from `project_activity_view` using open
+  tasks, meeting count, and recent activity, with a fallback to active projects
+  when activity data is unavailable.
 - Added project-context parsing in `buildChangeEventWorkflowDraft` so a picker
   follow-up containing `Project ID` and `Project Name` continues the same
   workflow.
+- Rendered `project_picker` as a trailing assistant widget so the assistant
+  sentence appears before the card, and disabled the streaming caret for that
+  completed guided-selection response.
 - Added `change_event_workflow` to chat text suppression so the workflow card
   owns its response without duplicate text.
 - Simplified `ChangeEventWorkflowWidget` default hierarchy to one status line,
@@ -63,15 +73,26 @@ behind progressive disclosure.
   passed with 14 tests.
 - `cd frontend && npx eslint src/components/ai-assistant/assistant-widget-renderer.tsx src/components/ai-assistant/chat-area.tsx src/app/api/ai-assistant/chat/handler-v2.ts src/lib/ai/change-event-workflow.ts src/lib/ai/assistant-widgets.ts src/lib/ai/__tests__/assistant-widgets.test.ts src/lib/ai/__tests__/change-event-workflow.test.ts`
   passed with one pre-existing warning at
-  `frontend/src/components/ai-assistant/assistant-widget-renderer.tsx:884`.
+  `frontend/src/components/ai-assistant/assistant-widget-renderer.tsx:1088`.
 - `cd frontend && npm run typecheck:changed` passed.
 - `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs frontend/src/components/ai-assistant/assistant-widget-renderer.tsx`
   passed.
+- `node .agents/skills/alleato-design-doctrine/scripts/audit-surface-complexity.mjs frontend/src/components/ai-assistant/assistant-widget-renderer.tsx frontend/src/components/ai-assistant/chat-area.tsx`
+  passed for `assistant-widget-renderer.tsx` and failed for an existing composer
+  project-context popover search in `chat-area.tsx:1739`.
 - `npx markdownlint-cli2 --no-globs docs/ops/tasks/2026-07-06-change-event-workflow-card-simplification.md`
   passed.
-- Browser automation attempted `http://localhost:3001/ai`, but the automation
-  session redirected to `/auth/login?callbackUrl=%2Fai`; authenticated visual
-  proof is blocked in that browser session.
+- Authenticated browser proof captured at
+  `tmp/ai-card-proof/change-event-project-picker-most-active-dropdown.png`.
+  The live `/ai` route shows the assistant sentence first, then a compact
+  `project_picker` card with `Most active projects` and a `Choose another
+  project` dropdown.
+- Final authenticated browser proof captured at
+  `tmp/ai-card-proof/change-event-project-picker-plain-header.png`. The picker
+  header now uses only `Select Project` with no icon or eyebrow, and the
+  description says which project is needed before creating the change event.
+- Dropdown interaction proof captured at
+  `tmp/ai-card-proof/change-event-project-picker-dropdown-open.png`.
 
 ## Failure Contract
 

@@ -249,6 +249,7 @@ export type ProjectPickerWidgetPayload = {
     state?: string | null;
     summary?: string | null;
     contractValue?: string | null;
+    activityLabel?: string | null;
     meetingCount?: number | null;
     openCriticalItems?: number | null;
     healthStatus?: string | null;

@@ -1700,7 +1700,7 @@ async function loadProjectPickerOptions(params: {
     .eq("archived", false)
     .not("name", "is", null)
     .order("name", { ascending: true })
-    .limit(12);
+    .limit(projectNameHint ? 12 : 40);
 
   if (projectNameHint) {
     query = query.ilike("name", `%${projectNameHint}%`);
@@ -1711,7 +1711,7 @@ async function loadProjectPickerOptions(params: {
     throw new Error(`Loading project options failed: ${error.message}`);
   }
 
-  return (data ?? [])
+  const baseProjects = (data ?? [])
     .filter((project): project is NonNullable<typeof project> & { id: number; name: string } =>
       typeof project.id === "number" && typeof project.name === "string" && project.name.trim().length > 0,
     )
@@ -1729,6 +1729,55 @@ async function loadProjectPickerOptions(params: {
       ].join("\n"),
       contractValue: project.project_number ? `#${project.project_number}` : null,
     }));
+
+  if (projectNameHint || baseProjects.length === 0) {
+    return baseProjects.slice(0, 12);
+  }
+
+  const { data: activityRows, error: activityError } = await params.supabase
+    .from("project_activity_view")
+    .select("project_id,last_meeting_at,last_task_update,meeting_count,open_tasks")
+    .in("project_id", baseProjects.map((project) => project.projectId));
+
+  if (activityError) {
+    return baseProjects.slice(0, 12);
+  }
+
+  const activityByProjectId = new Map(
+    (activityRows ?? [])
+      .filter((row) => typeof row.project_id === "number")
+      .map((row) => [row.project_id as number, row]),
+  );
+
+  return baseProjects
+    .map((project) => {
+      const activity = activityByProjectId.get(project.projectId);
+      const openTasks = Number(activity?.open_tasks ?? 0);
+      const meetings = Number(activity?.meeting_count ?? 0);
+      const lastActivityAt = [
+        asString(activity?.last_task_update),
+        asString(activity?.last_meeting_at),
+      ]
+        .map((value) => (value ? Date.parse(value) : 0))
+        .filter((value) => Number.isFinite(value));
+      const recencyScore =
+        lastActivityAt.length > 0 ? Math.max(...lastActivityAt) / 1000 / 60 / 60 / 24 : 0;
+      const activityLabel = [
+        openTasks > 0 ? `${openTasks} open tasks` : null,
+        meetings > 0 ? `${meetings} meetings` : null,
+      ].filter((part): part is string => Boolean(part)).join(" · ");
+      return {
+        ...project,
+        activityLabel: activityLabel || null,
+        activityScore: openTasks * 3 + meetings + recencyScore / 30,
+      };
+    })
+    .sort((a, b) => {
+      if (b.activityScore !== a.activityScore) return b.activityScore - a.activityScore;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 12)
+    .map(({ activityScore: _activityScore, ...project }) => project);
 }
 
 function buildRfiPreviewContent(params: {
@@ -2741,8 +2790,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               widget: {
                 type: "project_picker",
                 id: "change-event-project-picker",
-                title: "Select project",
-                subtitle: "Pick the project first, then I will collect the change-event details.",
+                title: "Select Project",
+                subtitle:
+                  "To get started, let me know which project we are creating this change event for.",
                 actionLabel: "Use project",
                 intent: "general",
                 projects: projectOptions,

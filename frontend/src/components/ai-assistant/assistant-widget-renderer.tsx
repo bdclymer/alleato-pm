@@ -51,6 +51,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -119,8 +126,8 @@ function WidgetShell({
   className,
 }: {
   title: string;
-  icon: ReactNode;
-  eyebrow: string;
+  icon?: ReactNode;
+  eyebrow?: string;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -134,13 +141,17 @@ function WidgetShell({
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-              {eyebrow}
+          {icon ? (
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
+              {icon}
             </div>
+          ) : null}
+          <div className="min-w-0">
+            {eyebrow ? (
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                {eyebrow}
+              </div>
+            ) : null}
             <div className="truncate text-sm font-semibold text-foreground">
               {title}
             </div>
@@ -3256,50 +3267,84 @@ function ProjectPickerWidget({
   widget: ProjectPickerWidgetPayload;
   onSubmit: (message: string) => void;
 }) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string>();
   const actionLabel =
     widget.actionLabel ??
     (widget.intent === "owner_action_queue" ? "Generate queue" : "Use project");
-  const visibleProjects = widget.projects.slice(0, 6);
+  const visibleProjects = widget.projects.slice(0, 4);
+  const dropdownProjects = widget.projects.slice(4);
+  const selectProject = (project: ProjectPickerWidgetPayload["projects"][number]) => {
+    setSelectedProjectId(String(project.projectId));
+    onSubmit(project.prompt);
+  };
 
   return (
     <WidgetShell
       title={widget.title}
-      eyebrow="Project picker"
-      icon={<FolderIcon className="h-4 w-4" />}
-      actions={<WidgetMeta>{widget.projects.length} projects</WidgetMeta>}
+      actions={<WidgetMeta>{visibleProjects.length} likely</WidgetMeta>}
     >
       <p className="text-sm leading-6 text-muted-foreground">{widget.subtitle}</p>
 
       {widget.projects.length > 0 ? (
-        <div className="space-y-2">
-          <div className="divide-y divide-border/60">
-            {visibleProjects.map((project) => (
-              <Button
-                key={project.projectId}
-                type="button"
-                variant="ghost"
-                className="h-auto w-full justify-start gap-3 px-0 py-2 text-left hover:bg-transparent"
-                onClick={() => onSubmit(project.prompt)}
-                aria-label={`${actionLabel}: ${project.name}`}
-              >
-                <FolderIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-foreground">
-                    {project.name}
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">
+              Most active projects
+            </div>
+            <div className="divide-y divide-border/60">
+              {visibleProjects.map((project) => (
+                <Button
+                  key={project.projectId}
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start gap-3 px-0 py-2 text-left hover:bg-transparent"
+                  onClick={() => selectProject(project)}
+                  aria-label={`${actionLabel}: ${project.name}`}
+                >
+                  <FolderIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-foreground">
+                      {project.name}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+                      {[project.activityLabel, project.client, project.phase, project.state, project.contractValue]
+                        .filter(Boolean)
+                        .join(" - ") || `Project #${project.projectId}`}
+                    </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
-                    {[project.client, project.phase, project.state, project.contractValue]
-                      .filter(Boolean)
-                      .join(" - ") || `Project #${project.projectId}`}
-                  </span>
-                </span>
-                <ArrowRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </Button>
-            ))}
+                  <ArrowRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              ))}
+            </div>
           </div>
-          {widget.projects.length > visibleProjects.length ? (
-            <div className="text-xs text-muted-foreground">
-              Showing {visibleProjects.length} projects. Type the project name if it is not listed.
+          {dropdownProjects.length > 0 ? (
+            <div className="space-y-1.5">
+              <Select
+                value={selectedProjectId}
+                onValueChange={(value) => {
+                  const project = widget.projects.find(
+                    (candidate) => String(candidate.projectId) === value,
+                  );
+                  if (project) selectProject(project);
+                }}
+              >
+                <SelectTrigger size="sm" aria-label="Choose another project">
+                  <SelectValue placeholder="Choose another project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dropdownProjects.map((project) => (
+                    <SelectItem
+                      key={project.projectId}
+                      value={String(project.projectId)}
+                    >
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                You can also type the project name below.
+              </p>
             </div>
           ) : null}
         </div>

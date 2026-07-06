@@ -406,6 +406,10 @@ function isOutlookInboxSummaryWidget(widget: AssistantWidgetPayload): boolean {
   return widget.type === "outlook_inbox_summary";
 }
 
+function isTrailingAssistantWidget(widget: AssistantWidgetPayload): boolean {
+  return isOutlookInboxSummaryWidget(widget) || widget.type === "project_picker";
+}
+
 function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
   for (const part of [...msg.parts].reverse()) {
     if (part.type !== "data-status") continue;
@@ -1954,7 +1958,7 @@ export function ChatArea({
                   ? getAssistantWidgetParts(msg)
                   : [];
                 const leadingAssistantWidgetParts = assistantWidgetParts.filter(
-                  (widget) => !isOutlookInboxSummaryWidget(widget),
+                  (widget) => !isTrailingAssistantWidget(widget),
                 );
                 // Widgets that fully replace the text response — suppress duplicate text
                 const textSuppressingTypes = new Set([
@@ -1965,7 +1969,7 @@ export function ChatArea({
                   (w) => textSuppressingTypes.has(w.type),
                 );
                 const trailingAssistantWidgetParts =
-                  assistantWidgetParts.filter(isOutlookInboxSummaryWidget);
+                  assistantWidgetParts.filter(isTrailingAssistantWidget);
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedActionToolParts =
                   toolParts.length === 0
@@ -1983,6 +1987,8 @@ export function ChatArea({
                 const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
                 const langfuseTraceId = langfuseTraceIdByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
+                const assistantTextIsAnimating =
+                  isStreaming && isLastMessage && trailingAssistantWidgetParts.length === 0;
 
                 // Show tool-only assistant messages with live tool call display.
                 // Falls through when the only tool call is an artifact (which has
@@ -2292,11 +2298,9 @@ export function ChatArea({
                           {!widgetSuppressesText && (
                             <MessageResponse
                               className="text-sm leading-6"
-                              isAnimating={isStreaming && isLastMessage}
+                              isAnimating={assistantTextIsAnimating}
                               caret={
-                                isStreaming && isLastMessage
-                                  ? "block"
-                                  : undefined
+                                assistantTextIsAnimating ? "block" : undefined
                               }
                             >
                               {formattedAssistantText}
