@@ -592,6 +592,67 @@ function priorityLabel(priority: ProjectEmail["assistant_priority"]): string {
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
 }
 
+function actionLabel(action: ProjectEmail["assistant_action"]): string {
+  if (!action) return "No action assigned";
+  return `${action.charAt(0).toUpperCase()}${action.slice(1)}`;
+}
+
+function normalizeForComparison(value: string | null | undefined): string {
+  return (value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function buildAssistantDecisionSummary(email: ProjectEmail): string {
+  const action = actionLabel(email.assistant_action);
+  const priority = priorityLabel(email.assistant_priority);
+  const reason = email.assistant_reason?.trim();
+  const rules = email.assistant_rules_applied?.filter(Boolean) ?? [];
+  const owner = email.assistant_owner?.trim();
+  const project = projectLabel(email.project);
+
+  const parts: string[] = [];
+
+  parts.push(`Marked as ${action.toLowerCase()} with ${priority.toLowerCase()}.`);
+
+  if (reason) {
+    parts.push(reason.endsWith(".") ? reason : `${reason}.`);
+  }
+
+  if (rules.length > 0) {
+    const preview = rules.slice(0, 3).join(", ");
+    parts.push(
+      `Signals used: ${preview}${rules.length > 3 ? ", and more" : ""}.`,
+    );
+  }
+
+  if (owner) {
+    parts.push(`Suggested owner: ${owner}.`);
+  }
+
+  if (project) {
+    parts.push(`Current project match: ${project}.`);
+  }
+
+  return parts.join(" ");
+}
+
+function shouldShowAssistantEvidence(email: ProjectEmail): boolean {
+  const evidence = normalizeForComparison(email.assistant_evidence);
+  if (!evidence) return false;
+
+  const body = normalizeForComparison(plainTextBody(email));
+  const reason = normalizeForComparison(email.assistant_reason);
+  const subject = normalizeForComparison(email.subject);
+
+  if (evidence === body || evidence === reason) return false;
+  if (body && evidence.length > 40 && body.includes(evidence)) return false;
+  if (subject && evidence === subject) return false;
+
+  return true;
+}
+
 function reviewOutcomeLabel(outcome: string | null | undefined): string | null {
   if (!outcome) return null;
   return REVIEW_OUTCOME_LABELS[outcome as BrandonReviewOutcome] ?? outcome;
@@ -2694,7 +2755,13 @@ export function EmailTrainingFeedbackPanel({
       : null;
   const savedLabel = formatFeedbackDate(feedbackProvidedAt);
   const rulesApplied = selectedEmail?.assistant_rules_applied ?? [];
-  const assistantContext = selectedEmail?.assistant_evidence?.trim() ?? "";
+  const assistantDecisionSummary = selectedEmail
+    ? buildAssistantDecisionSummary(selectedEmail)
+    : "";
+  const assistantContext =
+    selectedEmail && shouldShowAssistantEvidence(selectedEmail)
+      ? selectedEmail.assistant_evidence?.trim() ?? ""
+      : "";
   const hasReviewedField = React.useMemo(
     () => Object.values(fieldFeedback).some((value) => value !== "unreviewed"),
     [fieldFeedback],
@@ -3137,6 +3204,11 @@ export function EmailTrainingFeedbackPanel({
 
               <ReviewSection title="Rules Applied">
                 <div className="space-y-2">
+                  {assistantDecisionSummary ? (
+                    <p className="text-[12px] leading-5 text-foreground/80">
+                      {assistantDecisionSummary}
+                    </p>
+                  ) : null}
                   {rulesApplied.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {rulesApplied.map((rule) => (
@@ -3156,7 +3228,7 @@ export function EmailTrainingFeedbackPanel({
                   )}
                   {assistantContext ? (
                     <p className="text-[12px] leading-5 text-muted-foreground">
-                      {assistantContext}
+                      Additional evidence: {assistantContext}
                     </p>
                   ) : null}
                 </div>
