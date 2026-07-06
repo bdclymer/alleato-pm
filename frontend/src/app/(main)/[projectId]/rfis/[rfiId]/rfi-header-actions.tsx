@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { CircleCheck, Download, RotateCcw } from "lucide-react";
 
 import {
   Button,
@@ -106,18 +106,23 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
   // Status transition shown as an overflow-menu action rather than a standalone button.
   const statusAction =
     rfi.status === "draft"
-      ? { label: "Open RFI", next: "open" }
+      ? { label: "Open RFI", next: "open", icon: <CircleCheck className="h-4 w-4" /> }
       : rfi.status === "open"
-        ? { label: "Close RFI", next: "closed" }
+        ? { label: "Close RFI", next: "closed", icon: <CircleCheck className="h-4 w-4" /> }
         : rfi.status === "closed" || rfi.status === "closed-draft"
-          ? { label: "Reopen RFI", next: rfi.status === "closed-draft" ? "draft" : "open" }
+          ? {
+              label: "Reopen RFI",
+              next: rfi.status === "closed-draft" ? "draft" : "open",
+              icon: <RotateCcw className="h-4 w-4" />,
+            }
           : null;
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button
           size="sm"
+          className="min-h-11 flex-1 justify-center sm:min-h-9 sm:flex-none"
           onClick={() => void handleCreateChangeEvent()}
           disabled={isCreatingCE}
         >
@@ -132,6 +137,7 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
               ? [
                   {
                     label: statusAction.label,
+                    icon: statusAction.icon,
                     onClick: () => void handleStatusChange(statusAction.next),
                   },
                 ]

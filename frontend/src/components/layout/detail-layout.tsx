@@ -12,6 +12,12 @@ export interface DetailLayoutProps {
   sidebar?: React.ReactNode;
   /** Optional full-width content rendered below the main/sidebar row. */
   footer?: React.ReactNode;
+  /**
+   * When true, the sidebar only renders inside the desktop two-column grid.
+   * Use this when mobile/tablet should place the same information elsewhere in
+   * the main content flow instead of stacking an inspector below the content.
+   */
+  sidebarDesktopOnly?: boolean;
   className?: string;
 }
 
@@ -28,6 +34,7 @@ export function DetailLayout({
   children,
   sidebar,
   footer,
+  sidebarDesktopOnly = false,
   className,
 }: DetailLayoutProps) {
   if (!sidebar && !footer) {
@@ -35,11 +42,15 @@ export function DetailLayout({
   }
 
   return (
-    <div className={cn("space-y-10", className)}>
+    <div className={cn("space-y-8 md:space-y-10", className)}>
       {sidebar ? (
-        <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+        <div className="grid grid-cols-1 gap-6 md:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-10">
           <div className="min-w-0 space-y-10">{children}</div>
-          <aside className="min-w-0 space-y-8">{sidebar}</aside>
+          {sidebarDesktopOnly ? (
+            <aside className="hidden min-w-0 space-y-8 xl:block">{sidebar}</aside>
+          ) : (
+            <aside className="min-w-0 space-y-8">{sidebar}</aside>
+          )}
         </div>
       ) : (
         <div className="min-w-0">{children}</div>

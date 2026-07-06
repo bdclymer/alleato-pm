@@ -1859,6 +1859,15 @@ velt-comment-dialog-internal .velt-comment-dialog {
 /* The in-canvas thread dialog should read like a compact thread, not a settings
    sheet. Keep the overflow menu as the one secondary-action surface and remove
    redundant banners/buttons that duplicate those actions. */
+velt-comment-dialog-internal velt-comment-dialog-options-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-options-dropdown-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-options-dropdown-trigger-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-dropdown-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-dropdown-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-dropdown-trigger-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-dropdown-trigger-wireframe,
 velt-comment-dialog-internal velt-comment-dialog-assignee-banner,
 velt-comment-dialog-internal velt-comment-dialog-assignee-banner-wireframe,
 velt-comment-dialog-internal velt-comment-dialog-assignee-banner-internal,
@@ -1867,11 +1876,6 @@ velt-comment-dialog-internal velt-comment-dialog-visibility-banner-wireframe,
 velt-comment-dialog-internal velt-comment-dialog-visibility-banner-internal,
 velt-comment-dialog-internal velt-comment-dialog-private-banner-internal,
 velt-comment-dialog-internal velt-comment-dialog-thread-card-assign-button-wireframe,
-velt-comment-dialog-internal velt-comment-dialog-status,
-velt-comment-dialog-internal velt-comment-dialog-status-wireframe,
-velt-comment-dialog-internal velt-comment-dialog-status-dropdown,
-velt-comment-dialog-internal velt-comment-dialog-status-dropdown-wireframe,
-velt-comment-dialog-internal velt-comment-dialog-status-dropdown-internal,
 velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-wireframe,
 velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-internal,
 velt-comment-dialog-internal velt-comment-dialog-hide-reply-wireframe,
@@ -2083,6 +2087,55 @@ velt-comments-sidebar img,
 velt-comments-sidebar-v2 img {
   border-radius: 0.5rem !important;
   box-shadow: none !important;
+}
+
+/* RFI detail thread styling: align the on-page comment surface to the section
+   heading and soften the composer/thread cards to match the detail mock. Scope
+   strictly to the RFI detail page wrapper so other Velt surfaces keep their own
+   layout contracts. */
+.rfi-detail-comments {
+  --rfi-comment-gutter: 3rem;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog {
+  background: transparent !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog-composer {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-composer--input-text-wrap,
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog--line-div {
+  background: hsl(var(--muted-subtle)) !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-composer--input-text-wrap {
+  min-height: 3rem !important;
+  border-radius: 9999px !important;
+  padding-inline: 1rem !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-thread-card--container {
+  padding: 0 0 0 var(--rfi-comment-gutter) !important;
+  margin: 0 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-thread-card {
+  background: hsl(var(--muted-subtle)) !important;
+  border-radius: 1rem !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-message {
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-time,
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-unread {
+  font-size: 0.8125rem !important;
 }
 
 /* The "All comments" footer band is removed at the source by dropping

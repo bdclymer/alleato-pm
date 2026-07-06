@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreVertical, Share2, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -56,6 +56,7 @@ export function DetailActions({ onEdit, onDelete, onShare, extraActions, classNa
           <DropdownMenuContent align="end" className="min-w-40">
             {onEdit && (
               <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="h-4 w-4" />
                 Edit
               </DropdownMenuItem>
             )}

@@ -22,7 +22,14 @@
  */
 
 import * as React from "react";
-import { ExternalLink, Link as LinkIcon, Loader2, X } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  ExternalLink,
+  Link as LinkIcon,
+  Loader2,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -35,6 +42,19 @@ import {
 } from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -94,6 +114,7 @@ function AddLinkDialog({
 }: AddLinkDialogProps) {
   const [targetType, setTargetType] = React.useState<EntityType | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = React.useState<string>("");
   const [linkType, setLinkType] = React.useState<LinkType>("related");
@@ -112,6 +133,7 @@ function AddLinkDialog({
   function resetForm() {
     setTargetType(null);
     setSearchQuery("");
+    setSearchOpen(false);
     setSelectedId(null);
     setSelectedTitle("");
     setLinkType("related");
@@ -156,6 +178,7 @@ function AddLinkDialog({
                 setSelectedId(null);
                 setSelectedTitle("");
                 setSearchQuery("");
+                setSearchOpen(false);
               }}
             >
               <SelectTrigger>
@@ -175,52 +198,87 @@ function AddLinkDialog({
           {targetType && (
             <div className="space-y-1.5">
               <Label>Search {ENTITY_LABEL[targetType]}s</Label>
-              <Input
-                placeholder={`Type to search…`}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSelectedId(null);
-                  setSelectedTitle("");
+              <Popover
+                open={searchOpen}
+                onOpenChange={(open) => {
+                  setSearchOpen(open);
+                  if (!open) setSearchQuery("");
                 }}
-              />
-
-              {/* Results list */}
-              {searchQuery.trim() && (
-                <div className="rounded-md border border-border bg-background max-h-40 overflow-y-auto">
-                  {isSearching ? (
-                    <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Searching…
-                    </div>
-                  ) : !searchResults || searchResults.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">No results found.</p>
-                  ) : (
-                    searchResults.map((r) => (
-                      <Button
-                        key={r.id}
-                        variant="ghost"
-                        className={
-                          "w-full justify-start px-3 py-2 h-auto text-sm " +
-                          (selectedId === r.id ? "bg-primary/10 text-primary" : "")
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={searchOpen}
+                    className="h-11 w-full justify-between px-3 text-sm font-normal"
+                  >
+                    <span className={selectedTitle ? "truncate" : "truncate text-muted-foreground"}>
+                      {selectedTitle || `Search ${ENTITY_LABEL[targetType]}s...`}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                  align="start"
+                  sideOffset={4}
+                >
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder={`Search ${ENTITY_LABEL[targetType]}s...`}
+                      value={searchQuery}
+                      onValueChange={(value) => {
+                        setSearchQuery(value);
+                        if (selectedId) {
+                          setSelectedId(null);
+                          setSelectedTitle("");
                         }
-                        onClick={() => {
-                          setSelectedId(r.id);
-                          setSelectedTitle(r.title);
-                        }}
-                      >
-                        {r.title}
-                      </Button>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {selectedId && (
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-medium text-foreground">{selectedTitle}</span>
-                </p>
-              )}
+                      }}
+                    />
+                    <CommandList className="max-h-56">
+                      {isSearching ? (
+                        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Searching…
+                        </div>
+                      ) : searchQuery.trim() ? (
+                        <>
+                          <CommandEmpty>No {ENTITY_LABEL[targetType].toLowerCase()} found.</CommandEmpty>
+                          <CommandGroup>
+                            {(searchResults ?? []).map((result) => (
+                              <CommandItem
+                                key={result.id}
+                                value={result.title}
+                                onSelect={() => {
+                                  setSelectedId(result.id);
+                                  setSelectedTitle(result.title);
+                                  setSearchOpen(false);
+                                  setSearchQuery("");
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Check
+                                  className={
+                                    selectedId === result.id
+                                      ? "mr-2 h-4 w-4 opacity-100"
+                                      : "mr-2 h-4 w-4 opacity-0"
+                                  }
+                                />
+                                <span className="truncate">{result.title}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          Start typing to search.
+                        </div>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 

@@ -152,6 +152,166 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
     Boolean(rfi.source_project_document_id) ||
     Boolean(rfi.response_project_document_id);
 
+  const inspectorContent = (
+    <InspectorRail className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+      <InspectorSection title="Assignment">
+        <PropertyList>
+          <PropertyRow label="RFI Manager" icon={<UserRound className="h-3.5 w-3.5" />}>
+            {rfi.rfi_manager}
+          </PropertyRow>
+          <PropertyRow label="Received From" icon={<UserRound className="h-3.5 w-3.5" />}>
+            {rfi.received_from}
+          </PropertyRow>
+          <PropertyRow label="Contractor" icon={<UserRound className="h-3.5 w-3.5" />}>
+            {rfi.responsible_contractor}
+          </PropertyRow>
+          <PropertyRow label="Assignees" icon={<Users className="h-3.5 w-3.5" />}>
+            {rfi.assignees?.length ? rfi.assignees.join(", ") : null}
+          </PropertyRow>
+        </PropertyList>
+      </InspectorSection>
+
+      <InspectorSection title="Details">
+        <PropertyList>
+          <PropertyRow label="Stage" icon={<ClipboardList className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Stage"
+              value={rfi.rfi_stage ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("rfi_stage", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Location" icon={<MapPin className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Location"
+              value={rfi.location ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("location", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Drawing #" icon={<FileStack className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Drawing Number"
+              value={rfi.drawing_number ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("drawing_number", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Specification" icon={<ClipboardList className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Specification"
+              value={rfi.specification ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("specification", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Reference" icon={<Link2 className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Reference"
+              value={rfi.reference ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("reference", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Cost Impact" icon={<CircleDollarSign className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Cost Impact"
+              type="select"
+              options={[...RFI_IMPACT_OPTIONS]}
+              value={rfi.cost_impact ?? ""}
+              display={impactLabel(rfi.cost_impact)}
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("cost_impact", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Schedule Impact" icon={<CalendarDays className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Schedule Impact"
+              type="select"
+              options={[...RFI_IMPACT_OPTIONS]}
+              value={rfi.schedule_impact ?? ""}
+              display={impactLabel(rfi.schedule_impact)}
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("schedule_impact", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Cost Code" icon={<CircleDollarSign className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Cost Code"
+              value={rfi.cost_code ?? ""}
+              emptyLabel="—"
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("cost_code", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Private" icon={<Shield className="h-3.5 w-3.5" />}>
+            {rfi.is_private ? "Yes" : "No"}
+          </PropertyRow>
+        </PropertyList>
+      </InspectorSection>
+
+      <InspectorSection title="Dates">
+        <PropertyList>
+          <PropertyRow label="Due Date" icon={<CalendarDays className="h-3.5 w-3.5" />}>
+            <InlineEditField
+              label="Due Date"
+              type="date"
+              value={toDateInputValue(rfi.due_date)}
+              display={rfi.due_date ? formatDate(rfi.due_date) : undefined}
+              className="-mx-1.5 px-0"
+              onSave={(v) => saveField("due_date", v || null)}
+            />
+          </PropertyRow>
+          <PropertyRow label="Initiated" icon={<CalendarDays className="h-3.5 w-3.5" />}>
+            {formatDate(rfi.date_initiated)}
+          </PropertyRow>
+          <PropertyRow label="Closed" icon={<CalendarDays className="h-3.5 w-3.5" />}>
+            {formatDate(rfi.closed_date)}
+          </PropertyRow>
+          <PropertyRow label="Created" icon={<CalendarDays className="h-3.5 w-3.5" />}>
+            {formatDate(rfi.created_at)}
+          </PropertyRow>
+          <PropertyRow label="Created By" icon={<UserRound className="h-3.5 w-3.5" />}>
+            {rfi.created_by}
+          </PropertyRow>
+        </PropertyList>
+      </InspectorSection>
+
+      {hasImportedDocuments ? (
+        <InspectorSection title="Source Documents">
+          <div className="space-y-1">
+            <ImportedDocumentLink
+              label="Question PDF"
+              documentId={rfi.source_project_document_id}
+              fileName={importedMetadata.question_document?.file_name}
+              projectId={projectId}
+            />
+            <ImportedDocumentLink
+              label="Response PDF"
+              documentId={rfi.response_project_document_id}
+              fileName={importedMetadata.response_document?.file_name}
+              projectId={projectId}
+            />
+          </div>
+        </InspectorSection>
+      ) : null}
+
+      <InspectorSection title="Related Items">
+        <RelatedItemsPanel
+          entityType="rfi"
+          entityId={rfi.id}
+          projectId={projectId}
+          flat
+        />
+      </InspectorSection>
+    </InspectorRail>
+  );
+
   // Validate manually (no resolver) so the form's value type stays aligned with
   // the shared RfiFormFields component — matches the create page's pattern.
   const submitEdit = async () => {
@@ -222,173 +382,12 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
   return (
     <ContentSectionStack className="pb-20">
       <DetailLayout
-        sidebar={
-          <InspectorRail className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-            <InspectorSection title="Assignment">
-              <PropertyList>
-                <PropertyRow label="RFI Manager" icon={<UserRound className="h-3.5 w-3.5" />}>
-                  {rfi.rfi_manager}
-                </PropertyRow>
-                <PropertyRow label="Received From" icon={<UserRound className="h-3.5 w-3.5" />}>
-                  {rfi.received_from}
-                </PropertyRow>
-                <PropertyRow label="Contractor" icon={<UserRound className="h-3.5 w-3.5" />}>
-                  {rfi.responsible_contractor}
-                </PropertyRow>
-                <PropertyRow label="Assignees" icon={<Users className="h-3.5 w-3.5" />}>
-                  {rfi.assignees?.length ? rfi.assignees.join(", ") : null}
-                </PropertyRow>
-              </PropertyList>
-            </InspectorSection>
-
-            <InspectorSection title="Details">
-              <PropertyList>
-                <PropertyRow label="Stage" icon={<ClipboardList className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Stage"
-                    value={rfi.rfi_stage ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("rfi_stage", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Location" icon={<MapPin className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Location"
-                    value={rfi.location ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("location", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Drawing #" icon={<FileStack className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Drawing Number"
-                    value={rfi.drawing_number ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("drawing_number", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Specification" icon={<ClipboardList className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Specification"
-                    value={rfi.specification ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("specification", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Reference" icon={<Link2 className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Reference"
-                    value={rfi.reference ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("reference", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Cost Impact" icon={<CircleDollarSign className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Cost Impact"
-                    type="select"
-                    options={[...RFI_IMPACT_OPTIONS]}
-                    value={rfi.cost_impact ?? ""}
-                    display={impactLabel(rfi.cost_impact)}
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("cost_impact", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Schedule Impact" icon={<CalendarDays className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Schedule Impact"
-                    type="select"
-                    options={[...RFI_IMPACT_OPTIONS]}
-                    value={rfi.schedule_impact ?? ""}
-                    display={impactLabel(rfi.schedule_impact)}
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("schedule_impact", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Cost Code" icon={<CircleDollarSign className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Cost Code"
-                    value={rfi.cost_code ?? ""}
-                    emptyLabel="—"
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("cost_code", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Private" icon={<Shield className="h-3.5 w-3.5" />}>
-                  {rfi.is_private ? "Yes" : "No"}
-                </PropertyRow>
-              </PropertyList>
-            </InspectorSection>
-
-            <InspectorSection title="Dates">
-              <PropertyList>
-                <PropertyRow label="Due Date" icon={<CalendarDays className="h-3.5 w-3.5" />}>
-                  <InlineEditField
-                    label="Due Date"
-                    type="date"
-                    value={toDateInputValue(rfi.due_date)}
-                    display={rfi.due_date ? formatDate(rfi.due_date) : undefined}
-                    className="-mx-1.5 px-0"
-                    onSave={(v) => saveField("due_date", v || null)}
-                  />
-                </PropertyRow>
-                <PropertyRow label="Initiated" icon={<CalendarDays className="h-3.5 w-3.5" />}>
-                  {formatDate(rfi.date_initiated)}
-                </PropertyRow>
-                <PropertyRow label="Closed" icon={<CalendarDays className="h-3.5 w-3.5" />}>
-                  {formatDate(rfi.closed_date)}
-                </PropertyRow>
-                <PropertyRow label="Created" icon={<CalendarDays className="h-3.5 w-3.5" />}>
-                  {formatDate(rfi.created_at)}
-                </PropertyRow>
-                <PropertyRow label="Created By" icon={<UserRound className="h-3.5 w-3.5" />}>
-                  {rfi.created_by}
-                </PropertyRow>
-              </PropertyList>
-            </InspectorSection>
-
-            {hasImportedDocuments ? (
-              <InspectorSection title="Source Documents">
-                <div className="space-y-1">
-                  <ImportedDocumentLink
-                    label="Question PDF"
-                    documentId={rfi.source_project_document_id}
-                    fileName={importedMetadata.question_document?.file_name}
-                    projectId={projectId}
-                  />
-                  <ImportedDocumentLink
-                    label="Response PDF"
-                    documentId={rfi.response_project_document_id}
-                    fileName={importedMetadata.response_document?.file_name}
-                    projectId={projectId}
-                  />
-                </div>
-              </InspectorSection>
-            ) : null}
-          </InspectorRail>
-        }
-        footer={
-          <section className="space-y-4">
-            <SectionRuleHeading label="Related Items" className="mb-0 pb-0" />
-            <RelatedItemsPanel
-              entityType="rfi"
-              entityId={rfi.id}
-              projectId={projectId}
-              flat
-            />
-          </section>
-        }
+        sidebar={<div className="xl:block">{inspectorContent}</div>}
+        sidebarDesktopOnly
       >
           <section className="space-y-8">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Subject
-              </p>
+              <SectionRuleHeading label="Subject" className="mb-0 pb-0" />
               <InlineEditField
                 label="Subject"
                 value={rfi.subject ?? ""}
@@ -396,7 +395,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                   <Heading
                     as="h2"
                     level={2}
-                    className="text-[2rem] sm:text-[2.25rem]"
+                    className="text-2xl sm:text-[1.75rem]"
                   >
                     {rfi.subject || "Untitled RFI"}
                   </Heading>
@@ -407,9 +406,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Question
-              </p>
+              <SectionRuleHeading label="Question" className="mb-0 pb-0" />
               <InlineEditField
                 label="Question"
                 type="textarea"
@@ -435,6 +432,10 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             />
           </section>
 
+          <section className="xl:hidden">
+            {inspectorContent}
+          </section>
+
           <section className="space-y-4">
             <SectionRuleHeading label="Responses" className="mb-0 pb-0" />
             <div className="space-y-4">
@@ -447,6 +448,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                 rfiId={rfi.id}
                 projectId={projectId}
                 title=""
+                className="rfi-detail-comments"
               />
             </div>
           </section>

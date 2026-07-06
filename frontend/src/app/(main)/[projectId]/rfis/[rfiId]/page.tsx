@@ -58,9 +58,9 @@ export default async function RfiDetailPage({
       title={rfi ? `RFI #${rfi.number}` : "RFI Detail"}
       titleContent={
         rfi ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 {`RFI #${rfi.number}`}
               </h1>
               <StatusBadge status={formatStatusLabel(rfi.status ?? "open")} />
