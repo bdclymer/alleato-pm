@@ -193,6 +193,19 @@ function inferTitle(prompt: string): string | null {
   return normalized.length > 80 ? `${normalized.slice(0, 77)}...` : normalized;
 }
 
+function inferProjectIdFromPrompt(prompt: string): number | null {
+  const match = prompt.match(/\bproject\s+id\s*[:#-]?\s*(\d+)\b/i);
+  if (!match?.[1]) return null;
+  const projectId = Number(match[1]);
+  return Number.isFinite(projectId) ? projectId : null;
+}
+
+function inferProjectNameFromPrompt(prompt: string): string | null {
+  const explicit = prompt.match(/\bproject\s+name\s*:\s*([^.\n]+?)(?:\s+for\s+this\b|[.\n]|$)/i)?.[1]?.trim();
+  if (explicit) return explicit;
+  return prompt.match(/\buse\s+project\s+\d+\s*-\s*([^.\n]+?)(?:\s+for\s+this\b|[.\n]|$)/i)?.[1]?.trim() ?? null;
+}
+
 function inferCause(lower: string): ChangeEventWorkflowDraft["cause"] {
   if (containsAny(lower, ["owner request", "owner requested", "owner wants", "client request", "client requested"])) {
     return "Owner Requested";
@@ -488,6 +501,8 @@ export function buildChangeEventWorkflowDraft({
   const normalizedPrompt = normalizePrompt(prompt);
   const lower = normalizedPrompt.toLowerCase();
   const previous = readExistingDraft(previousDraft);
+  const promptProjectId = inferProjectIdFromPrompt(normalizedPrompt);
+  const promptProjectName = inferProjectNameFromPrompt(normalizedPrompt);
   const title = inferTitle(normalizedPrompt);
   const cause = inferCause(lower);
   const scope = inferScope(lower, cause);
@@ -504,8 +519,8 @@ export function buildChangeEventWorkflowDraft({
   ]);
 
   return finalizeDraft({
-    projectId: selectedProjectId ?? previous.projectId ?? null,
-    projectName: selectedProjectName ?? previous.projectName ?? null,
+    projectId: selectedProjectId ?? promptProjectId ?? previous.projectId ?? null,
+    projectName: selectedProjectName ?? promptProjectName ?? previous.projectName ?? null,
     title:
       looksLikeNewChangeEventRequest || !previous.title
         ? title ?? previous.title ?? (narrative ? DEFAULT_TITLE : null)

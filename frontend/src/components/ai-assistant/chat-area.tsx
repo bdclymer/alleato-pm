@@ -1957,7 +1957,10 @@ export function ChatArea({
                   (widget) => !isOutlookInboxSummaryWidget(widget),
                 );
                 // Widgets that fully replace the text response — suppress duplicate text
-                const textSuppressingTypes = new Set(["task_summary"]);
+                const textSuppressingTypes = new Set([
+                  "change_event_workflow",
+                  "task_summary",
+                ]);
                 const widgetSuppressesText = leadingAssistantWidgetParts.some(
                   (w) => textSuppressingTypes.has(w.type),
                 );

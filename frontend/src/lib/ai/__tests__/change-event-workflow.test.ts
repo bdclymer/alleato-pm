@@ -57,6 +57,23 @@ describe("change event workflow draft", () => {
     expect(updated.narrative).toContain("Follow-up:");
   });
 
+  it("uses project context from a project-picker follow-up", () => {
+    const draft = buildChangeEventWorkflowDraft({
+      previousDraft: buildChangeEventWorkflowDraft({
+        prompt: "Help me create a change event for owner requested lobby work.",
+      }),
+      prompt: [
+        "Use project 25125 - Allisonville for this change event.",
+        "Project ID: 25125",
+        "Project Name: Allisonville",
+      ].join("\n"),
+    });
+
+    expect(draft.projectId).toBe(25125);
+    expect(draft.projectName).toBe("Allisonville");
+    expect(draft.nextQuestion).toContain("cost impact");
+  });
+
   it("builds persisted metadata with readiness and write ownership", () => {
     const metadata = buildChangeEventWorkflowMetadata({
       updatedAt: "2026-07-06T05:00:00.000Z",

@@ -239,6 +239,7 @@ export type ProjectPickerWidgetPayload = {
   id: string;
   title: string;
   subtitle: string;
+  actionLabel?: string;
   intent: "owner_snapshot" | "owner_action_queue" | "meeting_insights" | "risk_review" | "financial_pulse" | "general";
   projects: Array<{
     projectId: number;

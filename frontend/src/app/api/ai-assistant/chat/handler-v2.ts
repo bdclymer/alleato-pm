@@ -56,6 +56,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type {
   OutlookInboxSummaryWidgetPayload,
+  ProjectPickerWidgetPayload,
   TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import {
@@ -311,7 +312,7 @@ async function loadLatestChangeEventWorkflowDraft(params: {
 }
 
 function isLikelyChangeEventWorkflowFollowup(message: string): boolean {
-  return /\b(cost|price|pricing|estimate|\$[\d,]+|schedule|delay|critical path|owner|client|notified|photo|drawing|rfi|email|meeting|daily log|no impact|no cost|no delay)\b/i.test(
+  return /\b(project|project id|use project|cost|price|pricing|estimate|\$[\d,]+|schedule|delay|critical path|owner|client|notified|photo|drawing|rfi|email|meeting|daily log|no impact|no cost|no delay)\b/i.test(
     message,
   );
 }
@@ -1686,6 +1687,50 @@ async function resolveRfiPreviewProject(params: {
   return project?.id && project?.name ? { id: project.id, name: project.name } : null;
 }
 
+type ProjectPickerOption = ProjectPickerWidgetPayload["projects"][number];
+
+async function loadProjectPickerOptions(params: {
+  supabase: SupabaseClient<Database>;
+  prompt: string;
+}): Promise<ProjectPickerOption[]> {
+  const projectNameHint = params.prompt.match(/\bfor\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:\s+about\b|[.?]|$)/i)?.[1]?.trim();
+  let query = params.supabase
+    .from("projects")
+    .select("id,name,phase,state,health_status,summary,project_number")
+    .eq("archived", false)
+    .not("name", "is", null)
+    .order("name", { ascending: true })
+    .limit(12);
+
+  if (projectNameHint) {
+    query = query.ilike("name", `%${projectNameHint}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Loading project options failed: ${error.message}`);
+  }
+
+  return (data ?? [])
+    .filter((project): project is NonNullable<typeof project> & { id: number; name: string } =>
+      typeof project.id === "number" && typeof project.name === "string" && project.name.trim().length > 0,
+    )
+    .map((project) => ({
+      projectId: project.id,
+      name: project.name,
+      phase: asString(project.phase),
+      state: asString(project.state),
+      healthStatus: asString(project.health_status),
+      summary: asString(project.summary),
+      prompt: [
+        `Use project ${project.id} - ${project.name} for this change event.`,
+        `Project ID: ${project.id}`,
+        `Project Name: ${project.name}`,
+      ].join("\n"),
+      contractValue: project.project_number ? `#${project.project_number}` : null,
+    }));
+}
+
 function buildRfiPreviewContent(params: {
   project: { id: number; name: string };
   subject: string;
@@ -2677,6 +2722,128 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           }
         }
 
+        const initialWorkflow = buildChangeEventWorkflowMetadata({
+          prompt: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+          previousDraft: previousChangeEventWorkflowDraft,
+        });
+
+        if (!initialWorkflow.draft.projectId) {
+          const projectOptions = await loadProjectPickerOptions({
+            supabase: args.supabase,
+            prompt: lastUserContent,
+          });
+          const content = "Which project should I use for this change event?";
+          const dataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-change-event-project-picker",
+            data: {
+              widget: {
+                type: "project_picker",
+                id: "change-event-project-picker",
+                title: "Select project",
+                subtitle: "Pick the project first, then I will collect the change-event details.",
+                actionLabel: "Use project",
+                intent: "general",
+                projects: projectOptions,
+                emptyState: "No active projects were available to choose from.",
+              } satisfies ProjectPickerWidgetPayload,
+            },
+          };
+          const toolTrace = [
+            {
+              tool: "projectContextRequired",
+              toolName: "projectContextRequired",
+              status: projectOptions.length > 0 ? "success" : "missing",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: args.selectedProjectId ?? null,
+              },
+              output: {
+                requiredFor: "change_event_workflow",
+                projectOptionCount: projectOptions.length,
+                expectedNextWidget: "project_picker",
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+
+          writeTextResponse(writer, "strategist-change-event-project-required", content);
+          writer.write(dataPart as never);
+
+          const { error: projectPickerPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-change-event-project-picker",
+                model: null,
+              },
+              provider_path: "deterministic-change-event-project-picker",
+              model: null,
+              retrieval_plan: {
+                intent: "change_event_write",
+                reason: "project_context_required",
+                responseFormat: "project_picker",
+                sources: ["public.projects"],
+              },
+              change_event_workflow: initialWorkflow,
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: {
+                orchestrator: "change-event-project-context-required",
+                evidenceCount: projectOptions.length,
+                sourceCoverage: [
+                  {
+                    sourceType: "public.projects",
+                    status: projectOptions.length > 0 ? "checked" : "missing",
+                    notes:
+                      projectOptions.length > 0
+                        ? `${projectOptions.length} active project option(s) loaded.`
+                        : "No active project options were available.",
+                  },
+                ],
+              },
+              data_parts: [dataPart],
+            }) as Json,
+          });
+          if (projectPickerPersistError) {
+            throw new Error(
+              `Persisting the change-event project picker assistant turn failed: ${projectPickerPersistError.message}`,
+            );
+          }
+
+          const { error: conversationUpdateError } = await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          if (conversationUpdateError) {
+            throw new Error(
+              `Updating the change-event project picker conversation timestamp failed: ${conversationUpdateError.message}`,
+            );
+          }
+
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Project context requested",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
         const changeEventRetrievalCtx = await executeRetrievalPlan(
           plan,
           buildExecutorDeps({
@@ -2725,8 +2892,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           .filter((item) => item.status !== "complete")
           .map((item) => item.label.toLowerCase());
         const content = workflow.readiness.readyForPreview
-          ? "I updated the change-event draft. It is ready for final preview when you are."
-          : `I updated the change-event draft. Next: ${workflow.draft.nextQuestion}`;
+          ? "Ready for final preview."
+          : workflow.draft.projectId
+            ? "Draft updated."
+            : "Ready for your project.";
         const toolTrace = [
           {
             tool: "changeEventWorkflowState",
