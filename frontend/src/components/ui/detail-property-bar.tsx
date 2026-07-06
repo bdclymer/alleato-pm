@@ -66,9 +66,7 @@ export function DetailPropertyItem({
   const content = (
     <>
       <Icon className="h-3.5 w-3.5 shrink-0" />
-      <span className={cn("min-w-0 truncate", contentClassName)}>
-        {children}
-      </span>
+      <div className={cn("min-w-0 truncate", contentClassName)}>{children}</div>
     </>
   );
 
@@ -121,8 +119,8 @@ export function DetailPropertyItem({
   }
 
   return (
-    <span className={itemClassName} title={title} aria-label={ariaLabel}>
+    <div className={itemClassName} title={title} aria-label={ariaLabel}>
       {content}
-    </span>
+    </div>
   );
 }

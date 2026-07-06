@@ -3,9 +3,11 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { CheckSquare2 } from "lucide-react";
 import { TaskFeedbackButtons } from "../TaskFeedbackButtons";
 import { apiFetch } from "@/lib/api-client";
 import type { TaskSnapshot } from "@/lib/ai/task-feedback-types";
+import { DetailPropertyItem } from "@/components/ui/detail-property-bar";
 
 jest.mock("@/lib/api-client", () => ({
   apiFetch: jest.fn(),
@@ -95,6 +97,32 @@ describe("TaskFeedbackButtons — thumbs up context capture", () => {
     );
     expect(requestBody).toMatchObject({
       taskId: "task-2",
+      signal: "good",
+      reason: null,
+    });
+  });
+
+  it("still opens and submits when mounted inside a detail property item", async () => {
+    render(
+      <DetailPropertyItem icon={CheckSquare2} aria-label="Task training feedback">
+        <TaskFeedbackButtons
+          projectId={42}
+          taskId="task-3"
+          taskSnapshot={taskSnapshot}
+          compact
+        />
+      </DetailPropertyItem>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Mark as good example"));
+    fireEvent.click(await screen.findByRole("button", { name: "Submit" }));
+
+    await waitFor(() => expect(apiFetchMock).toHaveBeenCalledTimes(1));
+    const requestBody = JSON.parse(
+      (apiFetchMock.mock.calls[0]?.[1] as { body: string }).body,
+    );
+    expect(requestBody).toMatchObject({
+      taskId: "task-3",
       signal: "good",
       reason: null,
     });
