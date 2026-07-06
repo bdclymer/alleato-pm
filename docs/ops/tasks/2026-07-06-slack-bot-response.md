@@ -1,6 +1,6 @@
 # Task: Slack bot response wiring
 
-Status: In Progress
+Status: Done
 Owner: Codex
 Created: 2026-07-06
 Linear Issue: Not created - single-session provider/runtime verification
@@ -52,6 +52,9 @@ and outbound path separately.
 | AI reply proof | Replayed signed app mention using real Slack message timestamp `1783313111.566889` | Pass | Bot replied in the Slack thread at `1783313799.415219`. |
 | Vercel env add | `vercel env add SLACK_BOT_TOKEN production` and `vercel env add SLACK_SIGNING_SECRET production` | Pass | Secret values were piped from local env and not printed. |
 | Vercel env read-back | `vercel env ls --scope team_lZighRY9Xpkb6qZBqDApczKZ` | Pass | Production shows `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` as encrypted env vars. |
+| Finish flow | `npm run codex:finish -- --message "Fix Slack bot unmapped user replies" --files frontend/src/lib/bot/index.ts docs/ops/tasks/2026-07-06-slack-bot-response.md` | Pass | Published commit `0e52182af` to `origin/main`. |
+| Vercel production deployment | Vercel deployment `dpl_5S9qHHChAKD27Nq9SS8FUWAyvqSf` | Pass | Deployment for commit `0e52182af` reached `READY` and aliases include `projects.alleatogroup.com`. |
+| Production webhook verification | Signed POST to `https://projects.alleatogroup.com/api/bot/slack` | Pass | Returned expected URL-verification challenge with HTTP 200. |
 
 ## Risks / Gaps
 
@@ -67,9 +70,9 @@ and outbound path separately.
 
 ## Final Status
 
-- [ ] All checklist items are complete.
-- [ ] Evidence is recorded.
-- [ ] Any deferred work is explicitly marked Blocked/Deferred with owner and
+- [x] All checklist items are complete.
+- [x] Evidence is recorded.
+- [x] Any deferred work is explicitly marked Blocked/Deferred with owner and
   next action.
-- [ ] Final response includes what is done, what remains, and recommended next
+- [x] Final response includes what is done, what remains, and recommended next
   steps.
