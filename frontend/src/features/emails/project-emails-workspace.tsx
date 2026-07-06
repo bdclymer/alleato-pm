@@ -24,6 +24,7 @@ import {
 } from "@radix-ui/react-icons";
 import {
   ArrowUpDown,
+  ArrowRight,
   Check,
   CheckCheck,
   Download,
@@ -595,6 +596,13 @@ function priorityLabel(priority: ProjectEmail["assistant_priority"]): string {
 function actionLabel(action: ProjectEmail["assistant_action"]): string {
   if (!action) return "No action assigned";
   return `${action.charAt(0).toUpperCase()}${action.slice(1)}`;
+}
+
+function assistantPriorityLabel(
+  priority: AssistantReviewPriority | ProjectEmail["assistant_priority"],
+): string {
+  if (!priority) return "No priority assigned";
+  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)}`;
 }
 
 function normalizeForComparison(value: string | null | undefined): string {
@@ -2583,22 +2591,29 @@ function ReviewSection({
 function ReviewRow({
   icon: Icon,
   label,
-  value,
+  aiValue,
+  correctedValue,
+  correctionControl,
   verdict = "unreviewed",
   onVerdictChange,
   className,
 }: {
   icon: LucideIcon;
   label: string;
-  value: React.ReactNode;
+  aiValue: React.ReactNode;
+  correctedValue?: React.ReactNode;
+  correctionControl?: React.ReactNode;
   verdict?: AssistantFieldVerdict;
   onVerdictChange?: (next: AssistantFieldVerdict) => void;
   className?: string;
 }) {
+  const hasCorrection = verdict === "incorrect" && Boolean(correctionControl);
+  const showReplacement = verdict === "incorrect" && Boolean(correctedValue);
+
   return (
     <div
       className={cn(
-        "flex items-center gap-2 py-1",
+        "flex items-start gap-2 py-2",
         className,
       )}
     >
@@ -2610,8 +2625,42 @@ function ReviewRow({
       >
         <Icon className="h-3 w-3" />
       </span>
-      <div className="min-w-0 flex-1 text-[13px] text-muted-foreground">
-        {value}
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex flex-wrap items-center gap-2 text-[13px]">
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            {label}
+          </span>
+          <span
+            className={cn(
+              "text-foreground",
+              showReplacement && "text-muted-foreground line-through",
+            )}
+          >
+            {aiValue}
+          </span>
+          {showReplacement ? (
+            <>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                Updated
+              </span>
+              <span className="font-medium text-foreground">{correctedValue}</span>
+            </>
+          ) : null}
+          {verdict === "correct" ? (
+            <span className="text-status-success text-[11px] font-medium">
+              Confirmed
+            </span>
+          ) : null}
+          {verdict === "incorrect" && !showReplacement ? (
+            <span className="text-status-error text-[11px] font-medium">
+              Needs correction
+            </span>
+          ) : null}
+        </div>
+        {hasCorrection ? (
+          <div className="space-y-2">{correctionControl}</div>
+        ) : null}
       </div>
       {onVerdictChange ? (
         <VerdictButtons
@@ -2642,13 +2691,13 @@ function VerdictButtons({
         variant="ghost"
         size="icon"
         aria-label={`${label} correct`}
+        aria-pressed={verdict === "correct"}
         onClick={() =>
           onVerdictChange(verdict === "correct" ? "unreviewed" : "correct")
         }
         className={cn(
           compact ? "h-6 w-6" : "h-7 w-7",
-          "rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800",
-          verdict !== "correct" && "opacity-75",
+          "rounded-full border border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
           verdict === "correct" &&
             "!border-emerald-300 !bg-emerald-100 !text-emerald-800 opacity-100 hover:!bg-emerald-100 hover:!text-emerald-800",
         )}
@@ -2660,13 +2709,13 @@ function VerdictButtons({
         variant="ghost"
         size="icon"
         aria-label={`${label} incorrect`}
+        aria-pressed={verdict === "incorrect"}
         onClick={() =>
           onVerdictChange(verdict === "incorrect" ? "unreviewed" : "incorrect")
         }
         className={cn(
           compact ? "h-6 w-6" : "h-7 w-7",
-          "rounded-full border border-red-200/80 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100 hover:text-red-800",
-          verdict !== "incorrect" && "opacity-75",
+          "rounded-full border border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
           verdict === "incorrect" &&
             "!border-red-300 !bg-red-100 !text-red-800 opacity-100 hover:!bg-red-100 hover:!text-red-800",
         )}
@@ -2773,6 +2822,19 @@ export function EmailTrainingFeedbackPanel({
     }
     return Array.from(options);
   }, [quickCategories]);
+  const classificationCategoryOptions = React.useMemo(() => {
+    const options = new Set<string>(ASSISTANT_CATEGORY_OPTIONS);
+    if (assistantCategory.trim()) {
+      options.add(assistantCategory.trim());
+    }
+    return Array.from(options);
+  }, [assistantCategory]);
+  const correctedProjectLabel = React.useMemo(() => {
+    if (!correctedProjectId) return null;
+    const matchingProject = projects.find((project) => project.id === correctedProjectId);
+    if (!matchingProject) return null;
+    return formatProjectOption(matchingProject);
+  }, [correctedProjectId, projects]);
 
   async function handleSave() {
     if (!selectedEmail) return;
@@ -2946,15 +3008,22 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, action: next }))
                     }
-                    value={
+                    aiValue={actionLabel(selectedEmail.assistant_action)}
+                    correctedValue={
+                      fieldFeedback.action === "incorrect"
+                        && assistantAction !== selectedEmail.assistant_action
+                        ? actionLabel(assistantAction)
+                        : undefined
+                    }
+                    correctionControl={
                       <Select
                         value={assistantAction}
                         onValueChange={(value) =>
                           setAssistantAction(value as AssistantReviewAction)
                         }
                       >
-                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
-                          <SelectValue />
+                        <SelectTrigger className="h-8 text-[13px]">
+                          <SelectValue placeholder="Choose correct action" />
                         </SelectTrigger>
                         <SelectContent>
                           {ASSISTANT_ACTION_OPTIONS.map((option) => (
@@ -2973,15 +3042,22 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, priority: next }))
                     }
-                    value={
+                    aiValue={assistantPriorityLabel(selectedEmail.assistant_priority)}
+                    correctedValue={
+                      fieldFeedback.priority === "incorrect"
+                        && assistantPriority !== selectedEmail.assistant_priority
+                        ? assistantPriorityLabel(assistantPriority)
+                        : undefined
+                    }
+                    correctionControl={
                       <Select
                         value={assistantPriority}
                         onValueChange={(value) =>
                           setAssistantPriority(value as AssistantReviewPriority)
                         }
                       >
-                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
-                          <SelectValue />
+                        <SelectTrigger className="h-8 text-[13px]">
+                          <SelectValue placeholder="Choose correct priority" />
                         </SelectTrigger>
                         <SelectContent>
                           {ASSISTANT_PRIORITY_OPTIONS.map((option) => (
@@ -3000,8 +3076,29 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, category: next }))
                     }
-                    value={
-                      assistantCategory
+                    aiValue={defaultAssistantCategory(selectedEmail)}
+                    correctedValue={
+                      fieldFeedback.category === "incorrect"
+                        && assistantCategory !== defaultAssistantCategory(selectedEmail)
+                        ? assistantCategory
+                        : undefined
+                    }
+                    correctionControl={
+                      <Select
+                        value={assistantCategory}
+                        onValueChange={setAssistantCategory}
+                      >
+                        <SelectTrigger className="h-8 text-[13px]">
+                          <SelectValue placeholder="Choose correct category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classificationCategoryOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     }
                   />
                   <ReviewRow
@@ -3012,86 +3109,87 @@ export function EmailTrainingFeedbackPanel({
                       setFieldFeedback((current) => ({ ...current, project: next }));
                       setProjectStatus(next);
                     }}
-                    value={
-                      <div className="space-y-2">
-                        <div>{selectedProjectLabel}</div>
-                        {projectStatus !== "unreviewed" ? (
-                          <div className="grid gap-2.5">
-                            {projectStatus === "incorrect" ? (
-                              <Select
-                                value={
-                                  correctedProjectId
-                                    ? String(correctedProjectId)
-                                    : undefined
-                                }
-                                onValueChange={(value) =>
-                                  setCorrectedProjectId(Number(value))
-                                }
-                              >
-                                <SelectTrigger className="h-8 text-[13px]">
-                                  <SelectValue
-                                    placeholder={
-                                      projectsLoading
-                                        ? "Loading projects..."
-                                        : "Correct project"
-                                    }
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {projects.map((project) => (
-                                    <SelectItem
-                                      key={project.id}
-                                      value={String(project.id)}
-                                    >
-                                      {formatProjectOption(project)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : null}
-                            <div className="space-y-1.5">
-                              <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                                How did you know?
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {PROJECT_ASSIGNMENT_REASON_OPTIONS.map((option) => {
-                                  const selected = projectReasonSignals.includes(option.value);
-                                  return (
-                                    <Button
-                                      key={option.value}
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        setProjectReasonSignals((current) =>
-                                          current.includes(option.value)
-                                            ? current.filter((value) => value !== option.value)
-                                            : [...current, option.value],
-                                        )
-                                      }
-                                      className={cn(
-                                        "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
-                                        selected
-                                          ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
-                                          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
-                                      )}
-                                    >
-                                      {option.label}
-                                    </Button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                            <Textarea
-                              value={projectReasonNote}
-                              onChange={(event) =>
-                                setProjectReasonNote(event.target.value)
+                    aiValue={selectedProjectLabel}
+                    correctedValue={
+                      fieldFeedback.project === "incorrect"
+                        && correctedProjectLabel
+                        && correctedProjectLabel !== selectedProjectLabel
+                        ? correctedProjectLabel
+                        : undefined
+                    }
+                    correctionControl={
+                      <div className="grid gap-2.5">
+                        <Select
+                          value={
+                            correctedProjectId
+                              ? String(correctedProjectId)
+                              : undefined
+                          }
+                          onValueChange={(value) =>
+                            setCorrectedProjectId(Number(value))
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-[13px]">
+                            <SelectValue
+                              placeholder={
+                                projectsLoading
+                                  ? "Loading projects..."
+                                  : "Correct project"
                               }
-                              placeholder="Add context about how you identified the project."
-                              className="min-h-20 resize-y text-[13px] leading-5"
                             />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects.map((project) => (
+                              <SelectItem
+                                key={project.id}
+                                value={String(project.id)}
+                              >
+                                {formatProjectOption(project)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="space-y-1.5">
+                          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                            How did you know?
                           </div>
-                        ) : null}
+                          <div className="flex flex-wrap gap-1.5">
+                            {PROJECT_ASSIGNMENT_REASON_OPTIONS.map((option) => {
+                              const selected = projectReasonSignals.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setProjectReasonSignals((current) =>
+                                      current.includes(option.value)
+                                        ? current.filter((value) => value !== option.value)
+                                        : [...current, option.value],
+                                    )
+                                  }
+                                  className={cn(
+                                    "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
+                                    selected
+                                      ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
+                                      : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+                                  )}
+                                >
+                                  {option.label}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <Textarea
+                          value={projectReasonNote}
+                          onChange={(event) =>
+                            setProjectReasonNote(event.target.value)
+                          }
+                          placeholder="Add context about how you identified the project."
+                          className="min-h-20 resize-y text-[13px] leading-5"
+                        />
                       </div>
                     }
                   />
@@ -3102,7 +3200,7 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, owner: next }))
                     }
-                    value={selectedEmail.assistant_owner ?? "Unknown"}
+                    aiValue={selectedEmail.assistant_owner ?? "Unknown"}
                   />
                   <ReviewRow
                     icon={MessageSquareText}
@@ -3111,10 +3209,9 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, reason: next }))
                     }
-                    value={
+                    aiValue={
                       selectedEmail.assistant_reason ?? "No reason recorded."
                     }
-                    className="items-start"
                   />
                   <ReviewRow
                     icon={Gauge}
@@ -3123,7 +3220,7 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, score: next }))
                     }
-                    value={normalizedScore ?? "Unknown"}
+                    aiValue={normalizedScore ?? "Unknown"}
                   />
                 </div>
               </ReviewSection>
