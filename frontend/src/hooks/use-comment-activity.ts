@@ -13,7 +13,10 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { getCurrentBrowserUser } from "@/lib/supabase/current-user";
 import { createClient } from "@/lib/supabase/client";
-import { getCommentDiscussionHref } from "@/lib/collaboration/notification-links";
+import {
+  getCommentDiscussionHref,
+  getCommentFollowUpAction,
+} from "@/lib/collaboration/notification-links";
 
 export interface CommentActivityItem {
   id: string;
@@ -22,6 +25,8 @@ export interface CommentActivityItem {
   title: string;
   body: string;
   href: string;
+  followUpHref?: string;
+  followUpLabel?: string;
   createdAt: number | null;
   documentLabel: string;
   activityType: "mention" | "reply";
@@ -68,6 +73,9 @@ export function buildCommentActivityItems(
       const title = mention
         ? `${authorName} mentioned you`
         : `${authorName} replied in comments`;
+      const followUp = reply
+        ? getCommentFollowUpAction(comment.annotationId)
+        : null;
 
       return [
         {
@@ -77,6 +85,8 @@ export function buildCommentActivityItems(
           title,
           body: preview,
           href: getCommentDiscussionHref(comment.documentId, comment.annotationId),
+          followUpHref: followUp?.href,
+          followUpLabel: followUp?.label,
           createdAt: latestMessage?.createdAt ?? comment.lastUpdated,
           documentLabel: documentName,
           activityType: mention ? "mention" : "reply",

@@ -7,14 +7,25 @@ import { AlertTriangle, ExternalLink, Minus, MessageSquare, Zap } from "lucide-r
 import { formatDistanceToNow } from "date-fns";
 import {
   UnifiedTablePage,
+  editableSelectColumn,
+  editableTextColumn,
   useUnifiedTableState,
+  type InlineSelectOption,
   type TableColumn,
 } from "@/components/tables/unified";
-import { BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
+import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import { cn } from "@/lib/utils";
 import type { BoardItem } from "./use-product-board";
 import type { BoardItemMeta } from "./use-board-item";
 import { getLinearIssueLink } from "./linear-issue-link";
+import { BOARD_CAPTURE_TOPICS, getBoardCaptureTopics } from "./topics";
+import {
+  getBoardCategory,
+  getBoardItemType,
+  getBoardTool,
+  formatBoardItemTypeLabel,
+} from "./metadata";
+import { useBoardUsers, usePatchBoardItem } from "./use-board-item";
 
 // ─── Status badge ────────────────────────────────────────────────────────────
 
@@ -35,6 +46,21 @@ const STATUS_ORDER: Record<BoardStatus, number> = {
 };
 
 const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+const CLEAR_SELECT_VALUE = "__clear__";
+
+const PRIORITY_EDIT_OPTIONS: InlineSelectOption[] = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
+
+const BOARD_STATUS_EDIT_OPTIONS: InlineSelectOption[] = BOARD_STATUSES.map(
+  (status) => ({
+    value: status,
+    label: BOARD_STATUS_LABELS[status],
+  }),
+);
 
 const SEVERITY_ICONS: Record<string, ReactElement> = {
   high: <AlertTriangle className="h-3.5 w-3.5 text-destructive" />,
@@ -61,7 +87,11 @@ function AssigneeAvatar({ name, email }: { name: string | null; email: string })
 const columnConfigs = [
   { id: "title",         label: "Title",    alwaysVisible: true },
   { id: "board_status",  label: "Status",   defaultVisible: true },
+  { id: "tool",          label: "Tool",     defaultVisible: true },
+  { id: "category",      label: "Category", defaultVisible: true },
+  { id: "type",          label: "Type",     defaultVisible: true },
   { id: "severity",      label: "Priority", defaultVisible: true },
+  { id: "topics",        label: "Topics",   defaultVisible: true },
   { id: "linear_issue",  label: "Linear",   defaultVisible: true },
   { id: "assignee",      label: "Assignee", defaultVisible: true },
   { id: "due_date",      label: "Due Date", defaultVisible: true },
@@ -79,9 +109,10 @@ interface BoardUnifiedTableProps {
   items: BoardItem[];
   isLoading: boolean;
   error: Error | null;
+  isFiltered?: boolean;
 }
 
-export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTableProps) {
+export function BoardUnifiedTable({ items, isLoading, error, isFiltered = false }: BoardUnifiedTableProps) {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
@@ -104,6 +135,9 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
     },
   });
 
+  const { data: usersData } = useBoardUsers();
+  const patchBoardItem = usePatchBoardItem();
+
   // ─── Client-side search + filter ──────────────────────────────────────────
 
   const filtered = React.useMemo(() => {
@@ -118,43 +152,225 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
 
   // ─── Columns ──────────────────────────────────────────────────────────────
 
+  const assigneeOptions = React.useMemo<InlineSelectOption[]>(
+    () => [
+      { value: CLEAR_SELECT_VALUE, label: "Unassigned" },
+      ...(usersData?.users ?? []).map((user) => ({
+        value: user.id,
+        label: user.full_name ?? user.email,
+      })),
+    ],
+    [usersData?.users],
+  );
+
   const tableColumns: TableColumn<BoardItem>[] = React.useMemo(
     () => [
+      editableTextColumn(
+        {
+          id: "title",
+          label: "Title",
+          alwaysVisible: true,
+          render: (item) => (
+            <span className="font-medium line-clamp-2 leading-snug">{item.title}</span>
+          ),
+          sortable: true,
+          sortValue: (item) => item.title,
+        },
+        {
+          getValue: (item) => item.title,
+          onEdit: async (item, value) => {
+            const nextTitle = value.trim();
+            if (!nextTitle) {
+              throw new Error("Title cannot be empty.");
+            }
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: { title: nextTitle },
+            });
+          },
+          emptyLabel: "Edit title",
+        },
+      ),
+      editableSelectColumn(
+        {
+          id: "board_status",
+          label: "Status",
+          defaultVisible: true,
+          render: (item) => (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                STATUS_COLORS[item.board_status],
+              )}
+            >
+              {BOARD_STATUS_LABELS[item.board_status]}
+            </span>
+          ),
+          sortable: true,
+          sortValue: (item) => STATUS_ORDER[item.board_status],
+        },
+        {
+          getValue: (item) => item.board_status,
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: { board_status: value as BoardStatus },
+            });
+          },
+          options: BOARD_STATUS_EDIT_OPTIONS,
+          emptyLabel: "Status",
+        },
+      ),
+      editableSelectColumn(
+        {
+          id: "severity",
+          label: "Priority",
+          defaultVisible: true,
+          render: (item) =>
+            item.severity ? (SEVERITY_ICONS[item.severity] ?? null) : null,
+          sortable: true,
+          sortValue: (item) => SEVERITY_ORDER[item.severity ?? "low"] ?? 2,
+        },
+        {
+          getValue: (item) => item.severity ?? "",
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: { severity: value as "low" | "medium" | "high" },
+            });
+          },
+          options: PRIORITY_EDIT_OPTIONS,
+          emptyLabel: "Priority",
+        },
+      ),
+      editableTextColumn(
+        {
+          id: "tool",
+          label: "Tool",
+          defaultVisible: true,
+          render: (item) => {
+            const tool = getBoardTool(item);
+            if (!tool) return null;
+
+            return (
+              <span className="text-xs text-foreground/80">
+                {tool}
+              </span>
+            );
+          },
+          sortable: true,
+          sortValue: (item) => getBoardTool(item) ?? "",
+        },
+        {
+          getValue: (item) => getBoardTool(item) ?? "",
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: {
+                metadata: {
+                  tool: value.trim() || null,
+                },
+              },
+            });
+          },
+          inputType: "text",
+          emptyLabel: "Tool",
+        },
+      ),
+      editableTextColumn(
+        {
+          id: "category",
+          label: "Category",
+          defaultVisible: true,
+          render: (item) => {
+            const category = getBoardCategory(item);
+            if (!category) return null;
+
+            return (
+              <span className="text-xs text-muted-foreground">
+                {category}
+              </span>
+            );
+          },
+          sortable: true,
+          sortValue: (item) => getBoardCategory(item) ?? "",
+        },
+        {
+          getValue: (item) => getBoardCategory(item) ?? "",
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: {
+                metadata: {
+                  category: value.trim() || null,
+                },
+              },
+            });
+          },
+          inputType: "text",
+          emptyLabel: "Category",
+        },
+      ),
+      editableTextColumn(
+        {
+          id: "type",
+          label: "Type",
+          defaultVisible: true,
+          render: (item) => {
+            const type = getBoardItemType(item);
+            if (!type) return null;
+
+            return (
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {formatBoardItemTypeLabel(type)}
+              </span>
+            );
+          },
+          sortable: true,
+          sortValue: (item) => {
+            const type = getBoardItemType(item);
+            return formatBoardItemTypeLabel(type);
+          },
+        },
+        {
+          getValue: (item) => getBoardItemType(item) ?? "",
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: {
+                metadata: {
+                  type: value.trim() || null,
+                },
+              },
+            });
+          },
+          inputType: "text",
+          emptyLabel: "Type",
+        },
+      ),
       {
-        id: "title",
-        label: "Title",
-        alwaysVisible: true,
-        render: (item) => (
-          <span className="font-medium line-clamp-2 leading-snug">{item.title}</span>
-        ),
-        sortable: true,
-        sortValue: (item) => item.title,
-      },
-      {
-        id: "board_status",
-        label: "Status",
+        id: "topics",
+        label: "Topics",
         defaultVisible: true,
-        render: (item) => (
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-              STATUS_COLORS[item.board_status],
-            )}
-          >
-            {BOARD_STATUS_LABELS[item.board_status]}
-          </span>
-        ),
-        sortable: true,
-        sortValue: (item) => STATUS_ORDER[item.board_status],
-      },
-      {
-        id: "severity",
-        label: "Priority",
-        defaultVisible: true,
-        render: (item) =>
-          item.severity ? (SEVERITY_ICONS[item.severity] ?? null) : null,
-        sortable: true,
-        sortValue: (item) => SEVERITY_ORDER[item.severity ?? "low"] ?? 2,
+        render: (item) => {
+          const topics = getBoardCaptureTopics(item);
+          if (!topics.length) return null;
+
+          return (
+            <div className="flex flex-wrap gap-1.5">
+              {topics.map((topic) => (
+                <span
+                  key={topic}
+                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  <span className={cn("h-1.5 w-1.5 rounded-full", BOARD_CAPTURE_TOPICS[topic].color)} />
+                  {BOARD_CAPTURE_TOPICS[topic].label}
+                </span>
+              ))}
+            </div>
+          );
+        },
+        sortable: false,
       },
       {
         id: "linear_issue",
@@ -180,20 +396,35 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
         sortValue: (item) =>
           getLinearIssueLink((item.metadata as BoardItemMeta | null) ?? {})?.label ?? "",
       },
-      {
-        id: "assignee",
-        label: "Assignee",
-        defaultVisible: true,
-        render: (item) =>
-          item.assignee ? (
-            <AssigneeAvatar
-              name={item.assignee.full_name}
-              email={item.assignee.email}
-            />
-          ) : null,
-        sortable: true,
-        sortValue: (item) => item.assignee?.full_name ?? item.assignee?.email ?? "",
-      },
+      editableSelectColumn(
+        {
+          id: "assignee",
+          label: "Assignee",
+          defaultVisible: true,
+          render: (item) =>
+            item.assignee ? (
+              <AssigneeAvatar
+                name={item.assignee.full_name}
+                email={item.assignee.email}
+              />
+            ) : null,
+          sortable: true,
+          sortValue: (item) => item.assignee?.full_name ?? item.assignee?.email ?? "",
+        },
+        {
+          getValue: (item) => item.assignee_id ?? CLEAR_SELECT_VALUE,
+          onEdit: async (item, value) => {
+            await patchBoardItem.mutateAsync({
+              itemId: item.id,
+              updates: {
+                assignee_id: value === CLEAR_SELECT_VALUE ? null : value,
+              },
+            });
+          },
+          options: assigneeOptions,
+          emptyLabel: "Assignee",
+        },
+      ),
       {
         id: "due_date",
         label: "Due Date",
@@ -239,7 +470,7 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
         sortValue: (item) => item.created_at,
       },
     ],
-    [],
+    [assigneeOptions, items, patchBoardItem],
   );
 
   // ─── Sort ─────────────────────────────────────────────────────────────────
@@ -263,7 +494,7 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
     });
   }, [filtered, tableColumns, tableState.sortBy, tableState.sortDirection]);
 
-  const isFiltered = Boolean(tableState.searchInput);
+  const hasSearchFilter = Boolean(tableState.searchInput);
   const totalItems = sortedItems.length;
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -326,7 +557,7 @@ export function BoardUnifiedTable({ items, isLoading, error }: BoardUnifiedTable
         title: "No feature requests yet",
         description: "Submit ideas via the feedback button — they'll appear here automatically.",
         filteredDescription: "Try adjusting your search.",
-        isFiltered,
+        isFiltered: isFiltered || hasSearchFilter,
       }}
       pagination={{
         page: tableState.page,

@@ -21,12 +21,22 @@ import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { useUnifiedTableState } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
+import { AddBoardItemButton } from "./add-board-item-dialog";
 import { useProductBoard, type BoardItem } from "./use-product-board";
 import { BoardColumn } from "./board-column";
 import { BoardCard, BoardCardOverlay } from "./board-card";
 import { BoardFilterBar, type BoardFilters } from "./board-filter-bar";
 import { loadCardViewSettings, saveCardViewSettings, type CardViewSettings } from "./card-view-settings";
 import { BoardUnifiedTable } from "./board-unified-table";
+import {
+  BOARD_CAPTURE_TOPICS,
+  type BoardCaptureTopicKey,
+  matchesBoardCaptureTopics,
+} from "./topics";
+import {
+  matchesBoardItemType,
+  matchesBoardTextMetadata,
+} from "./metadata";
 
 interface ProductBoardClientProps {
   readonly?: boolean;
@@ -38,17 +48,34 @@ function filterItems(items: BoardItem[], filters: BoardFilters): BoardItem[] {
       const q = filters.search.toLowerCase();
       if (!item.title.toLowerCase().includes(q) && !item.comment?.toLowerCase().includes(q)) return false;
     }
+    if (!matchesBoardCaptureTopics(item, filters.topics)) return false;
     if (filters.assigneeId && item.assignee_id !== filters.assigneeId) return false;
     if (filters.priority && item.severity !== filters.priority) return false;
     if (filters.labelColor) {
       const meta = (item.metadata as { labels?: { color: string }[] } | null) ?? {};
       if (!meta.labels?.some((l) => l.color === filters.labelColor)) return false;
     }
+    if (!matchesBoardTextMetadata(item, "tool", filters.tool)) return false;
+    if (!matchesBoardTextMetadata(item, "category", filters.category)) return false;
+    if (!matchesBoardItemType(item, filters.type)) return false;
     return true;
   });
 }
 
 type ViewMode = "board" | "table";
+
+function hasActiveBoardFilters(filters: BoardFilters): boolean {
+  return Boolean(
+    filters.search ||
+    filters.assigneeId ||
+    filters.priority ||
+    filters.labelColor ||
+    filters.topics?.length ||
+    filters.tool ||
+    filters.category ||
+    filters.type,
+  );
+}
 
 export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   const router = useRouter();
@@ -62,18 +89,18 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     searchParams,
     pathname,
     router,
-    defaults: {
-      view: "board",
-      allowedViews: ["board", "table"],
-      page: 1,
-      perPage: 25,
-      search: "",
-      sortBy: null,
-      sortDirection: "asc",
-      visibleColumns: [],
-      filters: {},
-    },
-  });
+      defaults: {
+        view: "board",
+        allowedViews: ["board", "table"],
+        page: 1,
+        perPage: 25,
+        search: "",
+        sortBy: null,
+        sortDirection: "asc",
+        visibleColumns: [],
+        filters: {},
+      },
+    });
   const viewMode = viewState.currentView as ViewMode;
 
   function updateCardSettings(patch: Partial<CardViewSettings>) {
@@ -89,6 +116,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   );
 
   const filteredItems = useMemo(() => filterItems(items, filters), [items, filters]);
+  const activeFilters = hasActiveBoardFilters(filters);
   const activeItem = items.find((i) => i.id === activeId);
 
   function handleDragStart({ active }: DragStartEvent) {
@@ -195,6 +223,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
+      <AddBoardItemButton />
       {viewToggle}
       <span className="hidden text-[11px] text-muted-foreground/60 sm:inline-flex items-center gap-3 pl-2">
         <span><span className="font-medium text-foreground/80 tabular-nums">{inFlight}</span> in motion</span>
@@ -202,6 +231,41 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         <span><span className="font-medium text-foreground/80 tabular-nums">{shipped}</span> shipped</span>
       </span>
       <div className="flex-1" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {Object.entries(BOARD_CAPTURE_TOPICS).map(([topicKey, topic]) => {
+          const key = topicKey as BoardCaptureTopicKey;
+          const active = filters.topics?.includes(key) ?? false;
+          return (
+            <Button
+              key={key}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setFilters((current) => {
+                  const currentTopics = current.topics ?? [];
+                  const nextTopics = active
+                    ? currentTopics.filter((item) => item !== key)
+                    : [...currentTopics, key];
+                  return {
+                    ...current,
+                    topics: nextTopics.length ? nextTopics : undefined,
+                  };
+                })
+              }
+              className={cn(
+                "h-8 rounded-full px-3 text-xs font-medium",
+                active
+                  ? "bg-muted text-foreground ring-1 ring-border"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <span className={cn("mr-1.5 h-1.5 w-1.5 rounded-full", topic.color)} />
+              {topic.label}
+            </Button>
+          );
+        })}
+      </div>
       <ExpandableSearch
         value={filters.search ?? ""}
         onChange={(v) => setFilters((f) => ({ ...f, search: v || undefined }))}
@@ -223,9 +287,10 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
       <div className="flex flex-col gap-4">
         {toolbar}
         <BoardUnifiedTable
-          items={items}
+          items={filteredItems}
           isLoading={isLoading}
           error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
+          isFiltered={activeFilters}
         />
       </div>
     );
@@ -236,7 +301,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
-        <div className="min-w-0 overflow-x-auto pb-6">
+        <div className="overflow-x-auto pb-6">
           <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
             {BOARD_STATUSES.map((status) => (
               <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
@@ -249,14 +314,14 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
 
   if (error) return <ErrorState title="Couldn't load the board" description={error.message} />;
 
-  if (items.length === 0) {
+  if (filteredItems.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
         <EmptyState
           icon={<Lightbulb />}
-          title="No feature requests yet"
-          description="Submit ideas via the feedback button — they'll appear here automatically."
+          title={activeFilters ? "No items match the current filters" : "No feature requests yet"}
+          description={activeFilters ? "Try clearing or adjusting the tool, category, type, or topic filters." : "Submit ideas via the feedback button — they'll appear here automatically."}
         />
       </div>
     );
@@ -272,7 +337,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="min-w-0 overflow-x-auto pb-6">
+        <div className="overflow-x-auto pb-6">
           <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
             {BOARD_STATUSES.map((status) => (
               <BoardColumn

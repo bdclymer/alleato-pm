@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { ChatHeader } from "./chat-header";
 import { MessageList } from "./message-list";
@@ -13,6 +13,7 @@ export type TeamChatMessage = ChatMessage;
 interface ChatMainProps {
   channel: TeamChannel;
   username: string;
+  focusDiscussionId?: string | null;
   onToggleSidebar: () => void;
   onToggleRightPanel: () => void;
   onMessageSelect?: (message: TeamChatMessage) => void;
@@ -31,6 +32,7 @@ interface MessageRow {
 export function ChatMain({
   channel,
   username,
+  focusDiscussionId,
   onToggleSidebar,
   onToggleRightPanel,
   onMessageSelect,
@@ -39,7 +41,7 @@ export function ChatMain({
   threadReplyCountByMessage = {},
 }: ChatMainProps) {
   const roomName = channel.id ? `${channel.id}-channel` : "team-chat-empty";
-  const canChatInChannel = Boolean(channel.id);
+  const canChatInChannel = Boolean(channel.id) && !channel.readOnly;
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName,
     username,
@@ -50,10 +52,13 @@ export function ChatMain({
   const [reactionsByMessage, setReactionsByMessage] = useState<
     Record<string, Record<string, number>>
   >({});
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const focusedDiscussionRef = useRef<string | null>(null);
 
   useEffect(() => {
     setHistory([]);
     setMessageQuery("");
+    setHistoryError(null);
 
     if (!channel.id) {
       return;
@@ -76,10 +81,34 @@ export function ChatMain({
           })),
         );
       })
-      .catch(() => {
-        // Keep chat usable with realtime only when history fetch fails.
+      .catch((error) => {
+        setHistoryError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load conversation history.",
+        );
       });
   }, [channel.id]);
+
+  useEffect(() => {
+    if (!channel.readOnly || !focusDiscussionId) {
+      focusedDiscussionRef.current = null;
+      return;
+    }
+
+    if (focusedDiscussionRef.current === focusDiscussionId) {
+      return;
+    }
+
+    const targetId = `comment:${focusDiscussionId}`;
+    const matched = history.find((message) => message.id === targetId);
+    if (!matched) {
+      return;
+    }
+
+    focusedDiscussionRef.current = focusDiscussionId;
+    onMessageSelect?.(matched);
+  }, [channel.readOnly, focusDiscussionId, history, onMessageSelect]);
 
   const allMessages = useMemo(() => {
     const merged = [...history, ...realtimeMessages];
@@ -152,6 +181,7 @@ export function ChatMain({
         memberCount={channel.memberCount}
         isDm={channel.isDm}
         dmPartnerName={channel.dmPartnerName}
+        isReadOnly={channel.readOnly}
         onToggleSidebar={onToggleSidebar}
         onToggleRightPanel={onToggleRightPanel}
         isConnected={isConnected}
@@ -160,22 +190,40 @@ export function ChatMain({
       />
 
       <div className="flex-1 overflow-hidden">
-        <MessageList
-          messages={filteredMessages}
-          currentUsername={username}
-          selectedMessageId={selectedMessageId}
-          threadReplyCountByMessage={threadReplyCountByMessage}
-          reactionsByMessage={reactionsByMessage}
-          onMessageSelect={onMessageSelect}
-          onReplyInThread={onMessageSelect}
-          onAddReaction={handleAddReaction}
-        />
+        {historyError ? (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <div className="max-w-sm space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                Unable to load this conversation.
+              </p>
+              <p className="text-sm text-muted-foreground">{historyError}</p>
+            </div>
+          </div>
+        ) : (
+          <MessageList
+            messages={filteredMessages}
+            currentUsername={username}
+            selectedMessageId={selectedMessageId}
+            threadReplyCountByMessage={threadReplyCountByMessage}
+            reactionsByMessage={reactionsByMessage}
+            isReadOnly={channel.readOnly}
+            onMessageSelect={onMessageSelect}
+            onReplyInThread={onMessageSelect}
+            onAddReaction={handleAddReaction}
+          />
+        )}
       </div>
 
       <Composer
         onSend={handleSend}
         channelName={channel.name}
-        placeholder={canChatInChannel ? `Message ${channel.name}` : "Create a channel to start chatting"}
+        placeholder={
+          channel.readOnly
+            ? "Comments inbox is read-only"
+            : canChatInChannel
+              ? `Message ${channel.name}`
+              : "Create a channel to start chatting"
+        }
         disabled={!isConnected || !canChatInChannel}
       />
     </div>

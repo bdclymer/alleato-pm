@@ -4,17 +4,29 @@ import { useMemo } from "react";
 import { Filter, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardLabel, BoardItemMeta } from "./use-board-item";
 import type { CardViewSettings } from "./card-view-settings";
+import type { BoardCaptureTopicKey } from "./topics";
+import {
+  formatBoardItemTypeLabel,
+  getBoardCategory,
+  getBoardItemType,
+  getBoardTool,
+} from "./metadata";
 
 export interface BoardFilters {
   search?: string;
   assigneeId?: string;
   priority?: string;
   labelColor?: string;
+  topics?: BoardCaptureTopicKey[];
+  tool?: string;
+  category?: string;
+  type?: string;
 }
 
 const PRIORITY_OPTIONS = [
@@ -84,13 +96,38 @@ export function BoardFilterBar({
     return Array.from(map.values());
   }, [items]);
 
-  const hasFilters = !!(filters.assigneeId || filters.priority || filters.labelColor);
+  const tools = useMemo(
+    () => Array.from(new Set(items.map((item) => getBoardTool(item)).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b)),
+    [items],
+  );
+  const categories = useMemo(
+    () => Array.from(new Set(items.map((item) => getBoardCategory(item)).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b)),
+    [items],
+  );
+  const types = useMemo(
+    () => Array.from(new Set(items.map((item) => getBoardItemType(item)).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b)),
+    [items],
+  );
+
+  const hasFilters = !!(
+    filters.assigneeId ||
+    filters.priority ||
+    filters.labelColor ||
+    filters.topics?.length ||
+    filters.tool ||
+    filters.category ||
+    filters.type
+  );
 
   function set(patch: Partial<BoardFilters>) {
     onChange({ ...filters, ...patch });
   }
   function clearFilters() {
     onChange({ search: filters.search }); // preserve search when clearing other filters
+  }
+
+  function setTextFilter(key: "tool" | "category", value: string) {
+    set({ [key]: value || undefined });
   }
 
   return (
@@ -176,6 +213,60 @@ export function BoardFilterBar({
               </div>
             </div>
           )}
+
+          {/* Metadata */}
+          <div>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Metadata</p>
+            <div className="space-y-2.5">
+              <div>
+                <Select value={filters.tool ?? "all"} onValueChange={(value) => setTextFilter("tool", value === "all" ? "" : value)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Tool" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All tools</SelectItem>
+                    {tools.map((tool) => (
+                      <SelectItem key={tool} value={tool}>
+                        {tool}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Select value={filters.category ?? "all"} onValueChange={(value) => setTextFilter("category", value === "all" ? "" : value)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Select value={filters.type ?? "all"} onValueChange={(value) => onChange({ ...filters, type: value === "all" ? undefined : value })}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    {types.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {formatBoardItemTypeLabel(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           {/* Clear */}
           {hasFilters && (

@@ -56,6 +56,8 @@ const STATUS_ORDER: Record<BoardStatus, number> = {
 };
 
 const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const horizontalScrollShellClassName =
+  "min-w-0 -mr-4 pr-4 sm:-mr-6 sm:pr-6 lg:-mr-8 lg:pr-8";
 
 export function BoardTableView({ items }: BoardTableViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -85,168 +87,172 @@ export function BoardTableView({ items }: BoardTableViewProps) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/60">
-              <th
-                className="cursor-pointer py-2.5 pl-3 pr-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => toggleSort("title")}
-              >
-                Title <SortIndicator col="title" />
-              </th>
-              <th
-                className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground whitespace-nowrap"
-                onClick={() => toggleSort("board_status")}
-              >
-                Status <SortIndicator col="board_status" />
-              </th>
-              <th
-                className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
-                onClick={() => toggleSort("severity")}
-              >
-                Priority <SortIndicator col="severity" />
-              </th>
-              <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
-                Assignee
-              </th>
-              <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">
-                Due date
-              </th>
-              <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
-                Docs
-              </th>
-              <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
-                Linear
-              </th>
-              <th className="py-2.5 px-4 text-center text-xs font-medium text-muted-foreground">
-                <MessageSquare className="inline h-3.5 w-3.5" />
-              </th>
-              <th
-                className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground whitespace-nowrap"
-                onClick={() => toggleSort("created_at")}
-              >
-                Created <SortIndicator col="created_at" />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((item) => {
-              const meta = (item.metadata as BoardItemMeta | null) ?? {};
-              const docsUrl = meta.docs_url;
-              const dueDate = meta.due_date;
-              const primaryLink = (meta.links ?? [])[0];
-              const linearIssue = getLinearIssueLink(meta);
-
-              return (
-                <tr
-                  key={item.id}
-                  onClick={() => setSelectedId(item.id)}
-                  className="group cursor-pointer border-b border-border/40 hover:bg-muted/40 transition-colors"
+      <div className={horizontalScrollShellClassName}>
+        <div className="overflow-x-auto rounded-xl">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/60">
+                <th
+                  className="cursor-pointer py-2.5 pl-3 pr-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleSort("title")}
                 >
-                  {/* Title */}
-                  <td className="py-2.5 pl-3 pr-4 font-medium text-foreground">
-                    <div className="flex items-start gap-2">
-                      <span className="line-clamp-2 leading-snug">{item.title}</span>
-                      {primaryLink && (
+                  Title <SortIndicator col="title" />
+                </th>
+                <th
+                  className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground whitespace-nowrap"
+                  onClick={() => toggleSort("board_status")}
+                >
+                  Status <SortIndicator col="board_status" />
+                </th>
+                <th
+                  className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleSort("severity")}
+                >
+                  Priority <SortIndicator col="severity" />
+                </th>
+                <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
+                  Assignee
+                </th>
+                <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  Due date
+                </th>
+                <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
+                  Docs
+                </th>
+                <th className="py-2.5 px-4 text-left text-xs font-medium text-muted-foreground">
+                  Linear
+                </th>
+                <th className="py-2.5 px-4 text-center text-xs font-medium text-muted-foreground">
+                  <MessageSquare className="inline h-3.5 w-3.5" />
+                </th>
+                <th
+                  className="cursor-pointer py-2.5 px-4 text-left text-xs font-medium text-muted-foreground hover:text-foreground whitespace-nowrap"
+                  onClick={() => toggleSort("created_at")}
+                >
+                  Created <SortIndicator col="created_at" />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((item) => {
+                const meta = (item.metadata as BoardItemMeta | null) ?? {};
+                const docsUrl = meta.docs_url;
+                const dueDate = meta.due_date;
+                const primaryLink = (meta.links ?? [])[0];
+                const linearIssue = getLinearIssueLink(meta);
+
+                return (
+                  <tr
+                    key={item.id}
+                    onClick={() => setSelectedId(item.id)}
+                    className="group cursor-pointer border-b border-border/40 hover:bg-muted/40 transition-colors"
+                  >
+                    {/* Title */}
+                    <td className="py-2.5 pl-3 pr-4 font-medium text-foreground">
+                      <div className="flex items-start gap-2">
+                        <span className="line-clamp-2 leading-snug">{item.title}</span>
+                        {primaryLink && (
+                          <a
+                            href={primaryLink.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-0.5 flex-none text-muted-foreground hover:text-primary"
+                            title={primaryLink.label}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-2.5 px-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                          STATUS_COLORS[item.board_status],
+                        )}
+                      >
+                        {BOARD_STATUS_LABELS[item.board_status]}
+                      </span>
+                    </td>
+
+                    {/* Priority */}
+                    <td className="py-2.5 px-4">
+                      {item.severity && SEVERITY_ICONS[item.severity as keyof typeof SEVERITY_ICONS]}
+                    </td>
+
+                    {/* Assignee */}
+                    <td className="py-2.5 px-4">
+                      {item.assignee && (
+                        <AssigneeAvatar
+                          name={item.assignee.full_name}
+                          email={item.assignee.email}
+                        />
+                      )}
+                    </td>
+
+                    {/* Due date */}
+                    <td className="py-2.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
+                      {dueDate ? formatDistanceToNow(new Date(dueDate), { addSuffix: true }) : null}
+                    </td>
+
+                    {/* Docs */}
+                    <td className="py-2.5 px-4">
+                      {docsUrl && (
                         <a
-                          href={primaryLink.url}
+                          href={docsUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-0.5 flex-none text-muted-foreground hover:text-primary"
-                          title={primaryLink.label}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-status-success hover:underline"
                         >
-                          <ExternalLink className="h-3 w-3" />
+                          <BookOpen className="h-3 w-3" />
+                          Docs
                         </a>
                       )}
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Status */}
-                  <td className="py-2.5 px-4">
-                    <span className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                      STATUS_COLORS[item.board_status]
-                    )}>
-                      {BOARD_STATUS_LABELS[item.board_status]}
-                    </span>
-                  </td>
+                    {/* Linear */}
+                    <td className="py-2.5 px-4">
+                      {linearIssue && (
+                        <a
+                          href={linearIssue.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {linearIssue.label}
+                        </a>
+                      )}
+                    </td>
 
-                  {/* Priority */}
-                  <td className="py-2.5 px-4">
-                    {item.severity && SEVERITY_ICONS[item.severity as keyof typeof SEVERITY_ICONS]}
-                  </td>
+                    {/* Comments */}
+                    <td className="py-2.5 px-4 text-center text-xs text-muted-foreground">
+                      {item.comment_count > 0 ? item.comment_count : null}
+                    </td>
 
-                  {/* Assignee */}
-                  <td className="py-2.5 px-4">
-                    {item.assignee && (
-                      <AssigneeAvatar
-                        name={item.assignee.full_name}
-                        email={item.assignee.email}
-                      />
-                    )}
-                  </td>
+                    {/* Created */}
+                    <td className="py-2.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-                  {/* Due date */}
-                  <td className="py-2.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
-                    {dueDate ? formatDistanceToNow(new Date(dueDate), { addSuffix: true }) : null}
-                  </td>
-
-                  {/* Docs */}
-                  <td className="py-2.5 px-4">
-                    {docsUrl && (
-                      <a
-                        href={docsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-status-success hover:underline"
-                      >
-                        <BookOpen className="h-3 w-3" />
-                        Docs
-                      </a>
-                    )}
-                  </td>
-
-                  {/* Linear */}
-                  <td className="py-2.5 px-4">
-                    {linearIssue && (
-                      <a
-                        href={linearIssue.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        {linearIssue.label}
-                      </a>
-                    )}
-                  </td>
-
-                  {/* Comments */}
-                  <td className="py-2.5 px-4 text-center text-xs text-muted-foreground">
-                    {item.comment_count > 0 ? item.comment_count : null}
-                  </td>
-
-                  {/* Created */}
-                  <td className="py-2.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {sorted.length === 0 && (
-          <EmptyState
-            icon={<MessageSquare className="h-5 w-5" />}
-            title="No cards match the current filters"
-            description="Try adjusting or clearing your filters."
-          />
-        )}
+          {sorted.length === 0 && (
+            <EmptyState
+              icon={<MessageSquare className="h-5 w-5" />}
+              title="No cards match the current filters"
+              description="Try adjusting or clearing your filters."
+            />
+          )}
+        </div>
       </div>
 
       <Modal open={!!selectedItem} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>

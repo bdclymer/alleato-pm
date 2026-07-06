@@ -32,7 +32,7 @@ function mailboxWorkflowLabel(filter: MailboxWorkflowFilter): string {
     case "archived":
       return "Archived";
     case "feedback_submitted":
-      return "Feedback";
+      return "Feedback Submitted";
     default:
       return "Inbox";
   }

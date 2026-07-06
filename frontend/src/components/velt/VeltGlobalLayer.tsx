@@ -198,6 +198,36 @@ function VeltCommentRestingStateController() {
   const addCommentAnnotationEvent = useCommentEventCallback("addCommentAnnotation");
   const shouldCollapseAfterSubmitRef = useRef(false);
   const collapseVersionRef = useRef(0);
+  const cleanupTimersRef = useRef<{
+    collapse?: number;
+    restoreHover?: number;
+    forceCleanup?: number;
+  }>({});
+
+  const clearCleanupTimers = () => {
+    const timers = cleanupTimersRef.current;
+    if (timers.collapse) {
+      window.clearTimeout(timers.collapse);
+    }
+    if (timers.restoreHover) {
+      window.clearTimeout(timers.restoreHover);
+    }
+    if (timers.forceCleanup) {
+      window.clearTimeout(timers.forceCleanup);
+    }
+    cleanupTimersRef.current = {};
+  };
+
+  const finishCollapse = (collapseVersion: number) => {
+    if (collapseVersionRef.current !== collapseVersion) return;
+
+    commentElement.selectCommentByAnnotationId?.();
+    commentElement.clearPageModeComposerContext?.();
+    commentElement.disableCommentMode?.();
+    commentElement.enableDialogOnHover?.();
+    shouldCollapseAfterSubmitRef.current = false;
+    clearCleanupTimers();
+  };
 
   useEffect(() => {
     if (addCommentEvent || addCommentAnnotationEvent) {
@@ -209,28 +239,27 @@ function VeltCommentRestingStateController() {
     if (!commentElement || commentModeActive !== false) return;
     if (!shouldCollapseAfterSubmitRef.current) return;
 
+    clearCleanupTimers();
     shouldCollapseAfterSubmitRef.current = false;
     collapseVersionRef.current += 1;
     const collapseVersion = collapseVersionRef.current;
 
     commentElement.disableDialogOnHover?.();
 
-    const collapseTimer = window.setTimeout(() => {
-      if (collapseVersionRef.current !== collapseVersion) return;
-      commentElement.selectCommentByAnnotationId?.();
-      commentElement.clearPageModeComposerContext?.();
-      commentElement.disableCommentMode?.();
+    cleanupTimersRef.current.collapse = window.setTimeout(() => {
+      finishCollapse(collapseVersion);
     }, 80);
 
-    const restoreHoverTimer = window.setTimeout(() => {
+    cleanupTimersRef.current.restoreHover = window.setTimeout(() => {
       if (collapseVersionRef.current !== collapseVersion) return;
       commentElement.enableDialogOnHover?.();
     }, 900);
 
-    return () => {
-      window.clearTimeout(collapseTimer);
-      window.clearTimeout(restoreHoverTimer);
-    };
+    cleanupTimersRef.current.forceCleanup = window.setTimeout(() => {
+      finishCollapse(collapseVersion);
+    }, 1500);
+
+    return clearCleanupTimers;
   }, [commentElement, commentModeActive]);
 
   return null;

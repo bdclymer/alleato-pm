@@ -78,7 +78,12 @@ function ChannelRow({
     >
       <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarFallback className={cn("text-[11px] font-semibold", colorClass)}>
+          <AvatarFallback
+            className={cn(
+              "text-[11px] font-semibold",
+              channel.readOnly ? "bg-sky-100 text-sky-700" : colorClass,
+            )}
+          >
             {getInitials(channel.name)}
           </AvatarFallback>
         </Avatar>
@@ -458,7 +463,12 @@ export function ChatSidebar({
                 }}
               >
                 <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
+                  <AvatarFallback
+                    className={cn(
+                      "text-[10px] font-semibold",
+                      dm.readOnly ? "bg-sky-100 text-sky-700" : "bg-muted text-foreground",
+                    )}
+                  >
                     {getInitials(dm.dmPartnerName ?? dm.name)}
                   </AvatarFallback>
                 </Avatar>

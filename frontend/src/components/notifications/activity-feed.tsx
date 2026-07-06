@@ -12,6 +12,8 @@ export interface ActivityFeedItem {
   title: string;
   body: string | null;
   href: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
   createdAt: string | number | null;
   avatarLabel: string;
   sourceLabel?: string | null;
@@ -61,7 +63,10 @@ export function ActivityFeedRow({ item }: { item: ActivityFeedItem }) {
       <Link
         href={item.href}
         onClick={item.onClick}
-        className="flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+        className={cn(
+          "flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50",
+          item.secondaryHref ? "pr-24" : "",
+        )}
       >
         <div
           className={cn(
@@ -98,6 +103,14 @@ export function ActivityFeedRow({ item }: { item: ActivityFeedItem }) {
           </div>
         </div>
       </Link>
+      {item.secondaryHref && item.secondaryLabel ? (
+        <Link
+          href={item.secondaryHref}
+          className="absolute right-4 top-3 rounded-full px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          {item.secondaryLabel}
+        </Link>
+      ) : null}
       {item.onDelete ? (
         <Button
           variant="ghost"

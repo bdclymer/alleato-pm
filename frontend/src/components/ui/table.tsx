@@ -13,7 +13,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
       scrollHideDelay={0}
       className="relative w-full"
     >
-      <ScrollAreaPrimitive.Viewport className="w-full rounded-[inherit]">
+      <ScrollAreaPrimitive.Viewport
+        data-slot="table-viewport"
+        className="w-full rounded-[inherit] pb-3"
+      >
         <table
           data-slot="table"
           className={cn("w-full caption-bottom text-sm", className)}

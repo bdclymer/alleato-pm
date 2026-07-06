@@ -65,6 +65,7 @@ export interface PageShellProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  containerPaddingClassName?: string;
   /** Thread flex height through PageShell so children can fill the viewport */
   fillHeight?: boolean;
 }
@@ -101,6 +102,7 @@ export function PageShell({
   children,
   className,
   contentClassName,
+  containerPaddingClassName,
   fillHeight = false,
 }: PageShellProps) {
   const config = variantConfig[variant];
@@ -184,17 +186,14 @@ export function PageShell({
     />
   ) : null;
 
-  // Shared horizontal gutter — must match PageContainer's px values exactly.
-  const gutterCls = "px-4 sm:px-6 lg:px-8";
-
   // Table variant: tight layout — no extra top padding so header aligns with
   // pages that render ProjectPageHeader outside of PageContainer.
   if (variant === "table") {
     return (
       <PageContainer
         maxWidth={config.containerMaxWidth}
-        padding={false}
-        className={cn(gutterCls, "pb-4", fillHeight && "flex flex-col min-h-0", className)}
+        className={cn(fillHeight && "flex flex-col min-h-0", className)}
+        paddingClassName={containerPaddingClassName ?? "px-4 sm:px-6 lg:px-8 pt-2 pb-4"}
       >
         {header}
         <div className={cn("min-w-0 pt-2 pb-12", fillHeight && "flex flex-1 flex-col min-h-0", contentClassName)}>
@@ -207,7 +206,11 @@ export function PageShell({
   // Form/detail/content/dashboard: constrained inner width
   if (config.contentMaxWidth) {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
+      <PageContainer
+        maxWidth={config.containerMaxWidth}
+        className={cn(fillHeight && "flex flex-col min-h-0", className)}
+        paddingClassName={containerPaddingClassName ?? "px-4 sm:px-6 lg:px-8 pt-2 pb-4"}
+      >
         <div ref={rootRef} className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding, fillHeight && "flex flex-col flex-1 min-h-0")}>
           {header}
           <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>
@@ -218,7 +221,11 @@ export function PageShell({
 
   // Fallback: full width
   return (
-    <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
+    <PageContainer
+      maxWidth={config.containerMaxWidth}
+      className={cn(fillHeight && "flex flex-col min-h-0", className)}
+      paddingClassName={containerPaddingClassName ?? "px-4 sm:px-6 lg:px-8 pt-2 pb-4"}
+    >
       {header}
       <div ref={rootRef} className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>
     </PageContainer>

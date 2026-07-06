@@ -23,6 +23,7 @@ import {
   useSplitPage,
 } from "@/components/ui/split-page";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { cn } from "@/lib/utils";
 import {
   cleanCommentPreview,
@@ -80,11 +81,9 @@ function CommentsListPane({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border/60 px-5 py-4">
+      <div className="space-y-4 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-xl font-semibold tracking-tight text-foreground">
-            Discussion
-          </p>
+          <SectionRuleHeading label="Discussion" className="mb-1 pb-0" />
           <p className="mt-1 text-sm text-muted-foreground">
             {comments.length} visible threads
           </p>
@@ -230,10 +229,10 @@ function CommentsDetailWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border/60 px-6 py-4">
+      <div className="space-y-4 px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2">
               {!isDesktop ? (
                 <Button
                   type="button"
@@ -246,12 +245,10 @@ function CommentsDetailWorkspace({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               ) : (
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                <PanelLeft className="mt-1 h-4 w-4 text-muted-foreground" />
               )}
               <div className="min-w-0">
-                <p className="text-lg font-semibold text-foreground">
-                  Discussion
-                </p>
+                <SectionRuleHeading label="Discussion" className="mb-1 pb-0" />
                 <p className="truncate text-sm text-muted-foreground">
                   {selectedComment
                     ? `${selectedComment.authorName} · ${documentLabel(selectedComment.documentId)}`
@@ -340,12 +337,17 @@ function CommentsPageLoadingState() {
   return <div className="h-svh w-full bg-background" />;
 }
 
-function CommentsPageErrorState() {
+function CommentsPageErrorState({
+  onRetry,
+}: {
+  onRetry: () => void;
+}) {
   return (
     <div className="flex h-svh w-full items-center justify-center bg-background p-6">
       <ErrorState
         title="Couldn't load comments"
         description="The comments service did not respond. Try again in a moment."
+        onRetry={onRetry}
       />
     </div>
   );
@@ -380,7 +382,7 @@ export function CommentsSplitPage() {
       : "unresolved";
   }, [scopeParam]);
 
-  const { data, error, isLoading } = useSWR<{ comments: AllCommentItem[] }>(
+  const { data, error, isLoading, mutate } = useSWR<{ comments: AllCommentItem[] }>(
     "/api/comments/all",
     (url: string) => apiFetch<{ comments: AllCommentItem[] }>(url),
   );
@@ -489,7 +491,7 @@ export function CommentsSplitPage() {
   }
 
   if (error) {
-    return <CommentsPageErrorState />;
+    return <CommentsPageErrorState onRetry={() => void mutate()} />;
   }
 
   if (total === 0) {

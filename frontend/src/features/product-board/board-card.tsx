@@ -18,6 +18,7 @@ import type { BoardItemMeta, BoardLabel } from "./use-board-item";
 import type { CardViewSettings } from "./card-view-settings";
 import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 import { getLinearIssueLink } from "./linear-issue-link";
+import { BOARD_CAPTURE_TOPICS, getBoardCaptureTopics } from "./topics";
 
 type BoardItemWithMeta = BoardItem;
 
@@ -59,6 +60,26 @@ function LabelStrips({ labels }: { labels: BoardLabel[] }) {
   );
 }
 
+function TopicChips({ topics }: { topics: ReturnType<typeof getBoardCaptureTopics> }) {
+  if (!topics.length) return null;
+  return (
+    <div className="mb-2 flex flex-wrap gap-1.5">
+      {topics.map((topic) => {
+        const config = BOARD_CAPTURE_TOPICS[topic];
+        return (
+          <span
+            key={topic}
+            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", config.color)} />
+            {config.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssigneeAvatar({ assignee }: { assignee: BoardAssignee }) {
   const initials = assignee.full_name
     ? assignee.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -86,6 +107,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
   const style = { transform: CSS.Transform.toString(transform), transition };
   const meta = (item.metadata as BoardItemMeta | null) ?? {};
   const labels = meta.labels ?? [];
+  const topics = getBoardCaptureTopics(item);
   const links = meta.links ?? [];
   const dueDate = meta.due_date;
   const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
@@ -129,6 +151,8 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
             )}
 
             <div className="p-3">
+              <TopicChips topics={topics} />
+
               {/* Label strips */}
               {settings.showLabels && labels.length > 0 && (
                 <LabelStrips labels={labels} />

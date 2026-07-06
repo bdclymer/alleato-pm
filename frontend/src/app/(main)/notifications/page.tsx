@@ -62,16 +62,18 @@ export default function NotificationsPage() {
   );
   const commentItems = useMemo<ActivityFeedItem[]>(
     () =>
-      commentActivity.map((item) => ({
-        id: item.id,
-        title: item.title,
-        body: item.body,
-        href: item.href,
-        createdAt: item.createdAt,
-        avatarLabel: initials(item.authorName),
-        sourceLabel: item.documentLabel,
-        kind: "comment",
-      })),
+          commentActivity.map((item) => ({
+            id: item.id,
+            title: item.title,
+            body: item.body,
+            href: item.href,
+            secondaryHref: item.followUpHref,
+            secondaryLabel: item.followUpLabel,
+            createdAt: item.createdAt,
+            avatarLabel: initials(item.authorName),
+            sourceLabel: item.documentLabel,
+            kind: "comment",
+          })),
     [commentActivity],
   );
   const totalUnreadCount = unreadCount + commentUnreadCount;
@@ -96,7 +98,7 @@ export default function NotificationsPage() {
               <div>
                 <SectionRuleHeading label="Comment activity" className="mb-1 pb-0" />
                 <p className="text-sm text-muted-foreground">
-                  Mentions and replies open the source page discussion so you can keep the conversation going.
+                  Mentions open the source page discussion, while replies can continue in team chat when you need a longer follow-up thread.
                 </p>
               </div>
               <Button variant="ghost" size="sm" asChild>

@@ -30,6 +30,7 @@ import {
   useBoardItemComments, useAddComment, useUpdateBoardItem, useDeleteBoardItem, useBoardUsers,
   type BoardItemMeta, type BoardItemLink, type BoardLabel, type ChecklistItem,
 } from "./use-board-item";
+import { formatBoardItemTypeLabel } from "./metadata";
 import type { BoardItem } from "./use-product-board";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -250,6 +251,9 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const [links, setLinks] = useState<BoardItemLink[]>(meta.links ?? []);
   const [labels, setLabels] = useState<BoardLabel[]>(meta.labels ?? []);
   const [dueDate, setDueDate] = useState<string>(meta.due_date ?? "");
+  const [tool, setTool] = useState(meta.tool ?? "");
+  const [category, setCategory] = useState(meta.category ?? "");
+  const [itemType, setItemType] = useState(formatBoardItemTypeLabel(meta.type));
   const [upvotes, setUpvotes] = useState(meta.upvotes ?? 0);
   const [upvotedBy, setUpvotedBy] = useState<string[]>(meta.upvoted_by ?? []);
   const [subtasks, setSubtasks] = useState<ChecklistItem[]>(meta.subtasks ?? []);
@@ -265,6 +269,9 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const savedTitle = useRef(title);
   const savedDescription = useRef(description);
   const savedDueDate = useRef(dueDate);
+  const savedTool = useRef(tool);
+  const savedCategory = useRef(category);
+  const savedType = useRef(itemType);
 
   const save = useCallback(
     (patch: Parameters<typeof updateItem.mutate>[0]) =>
@@ -286,6 +293,23 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
     if (dueDate !== savedDueDate.current) {
       save({ metadata: { due_date: dueDate || null } }); savedDueDate.current = dueDate;
     }
+  }
+  function handleToolBlur() {
+    if (tool !== savedTool.current) {
+      save({ metadata: { tool: tool.trim() || null } });
+      savedTool.current = tool;
+    }
+  }
+  function handleCategoryBlur() {
+    if (category !== savedCategory.current) {
+      save({ metadata: { category: category.trim() || null } });
+      savedCategory.current = category;
+    }
+  }
+  function handleTypeChange(next: string) {
+    setItemType(next);
+    save({ metadata: { type: next.trim() || null } });
+    savedType.current = next;
   }
   function handleStatusChange(s: BoardStatus) { setStatus(s); save({ board_status: s }); }
   function handleSeverityChange(s: "low" | "medium" | "high") { setSeverity(s); save({ severity: s }); }
@@ -898,6 +922,66 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Metadata — quiet, optional classification fields */}
+          <div className="mb-5 space-y-3">
+            <div>
+              <SidebarHeading>Tool</SidebarHeading>
+              <Input
+                value={tool}
+                onChange={(e) => setTool(e.target.value)}
+                onBlur={handleToolBlur}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") { setTool(savedTool.current); e.currentTarget.blur(); }
+                }}
+                placeholder="Optional"
+                className="h-8 text-xs"
+              />
+            </div>
+
+            <div>
+              <SidebarHeading>Category</SidebarHeading>
+              <Input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                onBlur={handleCategoryBlur}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") { setCategory(savedCategory.current); e.currentTarget.blur(); }
+                }}
+                placeholder="Optional"
+                className="h-8 text-xs"
+              />
+            </div>
+
+            <div>
+              <SidebarHeading>Type</SidebarHeading>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={itemType}
+                  onChange={(e) => setItemType(e.target.value)}
+                  onBlur={(e) => handleTypeChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                    if (e.key === "Escape") { setItemType(savedType.current); e.currentTarget.blur(); }
+                  }}
+                  placeholder="Optional"
+                  className="h-8 text-xs"
+                />
+                {itemType && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-[11px] text-muted-foreground"
+                    onClick={() => handleTypeChange("")}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Upvote — icon communicates purpose without a heading */}

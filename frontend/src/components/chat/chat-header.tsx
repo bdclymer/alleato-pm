@@ -10,6 +10,7 @@ interface ChatHeaderProps {
   memberCount: number;
   isDm?: boolean;
   dmPartnerName?: string;
+  isReadOnly?: boolean;
   onToggleSidebar: () => void;
   onToggleRightPanel: () => void;
   isConnected: boolean;
@@ -23,11 +24,12 @@ export function ChatHeader({
   memberCount,
   isDm,
   dmPartnerName,
+  isReadOnly,
   onToggleSidebar,
   onToggleRightPanel,
 }: ChatHeaderProps) {
   const displayName = isDm ? (dmPartnerName ?? channelName) : channelName;
-  const displayTopic = isDm ? "Direct message" : topic;
+  const displayTopic = isReadOnly ? "Read-only comments inbox" : isDm ? "Direct message" : topic;
 
   return (
     <div className="flex h-14 shrink-0 items-center gap-3 bg-background px-4">

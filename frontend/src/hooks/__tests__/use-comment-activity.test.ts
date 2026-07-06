@@ -74,6 +74,8 @@ describe("buildCommentActivityItems", () => {
         activityType: "reply",
         title: "Brandon Clymer replied in comments",
         body: "Following up on this now.",
+        followUpHref: "/team-chat?discussion=annotation-reply",
+        followUpLabel: "Team chat",
       }),
     ]);
   });

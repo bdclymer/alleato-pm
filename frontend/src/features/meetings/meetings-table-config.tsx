@@ -998,7 +998,7 @@ export function buildMeetingTableColumns(
           (item.project ?? "").trim().toLowerCase() === "no project";
 
         return (
-          <div className="w-72" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full min-w-0 max-w-full" onClick={(event) => event.stopPropagation()}>
             <SearchableSelect
               options={[
                 { value: "__none__", label: "No project" },
@@ -1016,7 +1016,7 @@ export function buildMeetingTableColumns(
               searchPlaceholder="Search projects..."
               emptyMessage="No projects found."
               showIndicator={false}
-              className="space-y-0"
+              className="w-full min-w-0"
               triggerClassName={cn(
                 "h-7 border-0 bg-transparent px-1 text-xs font-normal hover:bg-accent/20 focus-visible:ring-1",
                 hasNoProject ? "text-red-600" : "text-muted-foreground",

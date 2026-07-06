@@ -192,7 +192,7 @@ describe("buildMailboxWorkflowTabs", () => {
       "Inbox",
       "Drafts",
       "Archived",
-      "Feedback",
+      "Feedback Submitted",
     ]);
     expect(tabs[0]).toMatchObject({
       href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=inbox",

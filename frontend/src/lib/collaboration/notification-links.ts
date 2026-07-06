@@ -43,3 +43,26 @@ export function getCommentDiscussionHref(
     ? `/?${params.toString()}`
     : `${documentId}?${params.toString()}`;
 }
+
+export function getCommentFollowUpAction(
+  annotationId: string | null | undefined,
+) {
+  if (!annotationId) {
+    return {
+      href: "/comments",
+      label: "Comments workspace",
+    };
+  }
+
+  const params = new URLSearchParams({ discussion: annotationId });
+  return {
+    href: `/team-chat?${params.toString()}`,
+    label: "Team chat",
+  };
+}
+
+export function getCommentTeamChatHref(
+  annotationId: string | null | undefined,
+) {
+  return getCommentFollowUpAction(annotationId).href;
+}

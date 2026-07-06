@@ -19,6 +19,7 @@ interface MessageListProps {
   selectedMessageId?: string | null;
   threadReplyCountByMessage?: Record<string, number>;
   reactionsByMessage?: Record<string, Record<string, number>>;
+  isReadOnly?: boolean;
   onMessageSelect?: (message: Message) => void;
   onReplyInThread?: (message: Message) => void;
   onAddReaction?: (messageId: string, emoji: string) => void;
@@ -36,6 +37,7 @@ export function MessageList({
   selectedMessageId,
   threadReplyCountByMessage = {},
   reactionsByMessage = {},
+  isReadOnly = false,
   onMessageSelect,
   onReplyInThread,
   onAddReaction,
@@ -136,6 +138,7 @@ export function MessageList({
               isSelected={selectedMessageId === message.id}
               threadReplyCount={threadReplyCountByMessage[message.id] ?? 0}
               reactions={reactionsByMessage[message.id]}
+              isReadOnly={isReadOnly}
               onSelect={() => onMessageSelect?.(message)}
               onReplyInThread={() => onReplyInThread?.(message)}
               onAddReaction={(emoji) => onAddReaction?.(message.id, emoji)}

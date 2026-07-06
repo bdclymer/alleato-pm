@@ -24,7 +24,6 @@ import {
 } from "@radix-ui/react-icons";
 import {
   ArrowUpDown,
-  ArrowRight,
   Check,
   CheckCheck,
   Download,
@@ -591,74 +590,6 @@ function priorityDotClass(
 function priorityLabel(priority: ProjectEmail["assistant_priority"]): string {
   if (!priority) return "Priority not assigned";
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
-}
-
-function actionLabel(action: ProjectEmail["assistant_action"]): string {
-  if (!action) return "No action assigned";
-  return `${action.charAt(0).toUpperCase()}${action.slice(1)}`;
-}
-
-function assistantPriorityLabel(
-  priority: AssistantReviewPriority | ProjectEmail["assistant_priority"],
-): string {
-  if (!priority) return "No priority assigned";
-  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)}`;
-}
-
-function normalizeForComparison(value: string | null | undefined): string {
-  return (value ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
-function buildAssistantDecisionSummary(email: ProjectEmail): string {
-  const action = actionLabel(email.assistant_action);
-  const priority = priorityLabel(email.assistant_priority);
-  const reason = email.assistant_reason?.trim();
-  const rules = email.assistant_rules_applied?.filter(Boolean) ?? [];
-  const owner = email.assistant_owner?.trim();
-  const project = projectLabel(email.project);
-
-  const parts: string[] = [];
-
-  parts.push(`Marked as ${action.toLowerCase()} with ${priority.toLowerCase()}.`);
-
-  if (reason) {
-    parts.push(reason.endsWith(".") ? reason : `${reason}.`);
-  }
-
-  if (rules.length > 0) {
-    const preview = rules.slice(0, 3).join(", ");
-    parts.push(
-      `Signals used: ${preview}${rules.length > 3 ? ", and more" : ""}.`,
-    );
-  }
-
-  if (owner) {
-    parts.push(`Suggested owner: ${owner}.`);
-  }
-
-  if (project) {
-    parts.push(`Current project match: ${project}.`);
-  }
-
-  return parts.join(" ");
-}
-
-function shouldShowAssistantEvidence(email: ProjectEmail): boolean {
-  const evidence = normalizeForComparison(email.assistant_evidence);
-  if (!evidence) return false;
-
-  const body = normalizeForComparison(plainTextBody(email));
-  const reason = normalizeForComparison(email.assistant_reason);
-  const subject = normalizeForComparison(email.subject);
-
-  if (evidence === body || evidence === reason) return false;
-  if (body && evidence.length > 40 && body.includes(evidence)) return false;
-  if (subject && evidence === subject) return false;
-
-  return true;
 }
 
 function reviewOutcomeLabel(outcome: string | null | undefined): string | null {
@@ -2454,6 +2385,14 @@ const DEFAULT_FIELD_FEEDBACK: Record<AssistantFieldKey, AssistantFieldVerdict> =
   score: "unreviewed",
 };
 
+const QUICK_CATEGORY_OPTIONS = [
+  "Accounting",
+  "Client Follow-up",
+  "Sales Lead",
+  "Vendor / Subcontractor",
+  "No Action",
+] as const;
+
 const BUSINESS_CATEGORY_OPTIONS = [
   "Accounting",
   "Client Follow-up",
@@ -2469,29 +2408,6 @@ function isBusinessCategory(value: string | null | undefined): boolean {
   return BUSINESS_CATEGORY_OPTIONS.includes(
     (value ?? "") as (typeof BUSINESS_CATEGORY_OPTIONS)[number],
   );
-}
-
-function parseBusinessCategories(value: string | null | undefined): string[] {
-  if (!value?.trim()) return [];
-
-  const parsed = value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return Array.from(new Set(parsed));
-}
-
-function serializeBusinessCategories(values: string[]): string | null {
-  const normalized = Array.from(
-    new Set(
-      values
-        .map((value) => value.trim())
-        .filter(Boolean),
-    ),
-  );
-
-  return normalized.length > 0 ? normalized.join(", ") : null;
 }
 
 function defaultAssistantCategory(email: ProjectEmail): string {
@@ -2591,29 +2507,22 @@ function ReviewSection({
 function ReviewRow({
   icon: Icon,
   label,
-  aiValue,
-  correctedValue,
-  correctionControl,
+  value,
   verdict = "unreviewed",
   onVerdictChange,
   className,
 }: {
   icon: LucideIcon;
   label: string;
-  aiValue: React.ReactNode;
-  correctedValue?: React.ReactNode;
-  correctionControl?: React.ReactNode;
+  value: React.ReactNode;
   verdict?: AssistantFieldVerdict;
   onVerdictChange?: (next: AssistantFieldVerdict) => void;
   className?: string;
 }) {
-  const hasCorrection = verdict === "incorrect" && Boolean(correctionControl);
-  const showReplacement = verdict === "incorrect" && Boolean(correctedValue);
-
   return (
     <div
       className={cn(
-        "flex items-start gap-2 py-2",
+        "flex items-center gap-2 py-1",
         className,
       )}
     >
@@ -2625,42 +2534,8 @@ function ReviewRow({
       >
         <Icon className="h-3 w-3" />
       </span>
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-[13px]">
-          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-            {label}
-          </span>
-          <span
-            className={cn(
-              "text-foreground",
-              showReplacement && "text-muted-foreground line-through",
-            )}
-          >
-            {aiValue}
-          </span>
-          {showReplacement ? (
-            <>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                Updated
-              </span>
-              <span className="font-medium text-foreground">{correctedValue}</span>
-            </>
-          ) : null}
-          {verdict === "correct" ? (
-            <span className="text-status-success text-[11px] font-medium">
-              Confirmed
-            </span>
-          ) : null}
-          {verdict === "incorrect" && !showReplacement ? (
-            <span className="text-status-error text-[11px] font-medium">
-              Needs correction
-            </span>
-          ) : null}
-        </div>
-        {hasCorrection ? (
-          <div className="space-y-2">{correctionControl}</div>
-        ) : null}
+      <div className="min-w-0 flex-1 text-[13px] text-muted-foreground">
+        {value}
       </div>
       {onVerdictChange ? (
         <VerdictButtons
@@ -2691,13 +2566,13 @@ function VerdictButtons({
         variant="ghost"
         size="icon"
         aria-label={`${label} correct`}
-        aria-pressed={verdict === "correct"}
         onClick={() =>
           onVerdictChange(verdict === "correct" ? "unreviewed" : "correct")
         }
         className={cn(
           compact ? "h-6 w-6" : "h-7 w-7",
-          "rounded-full border border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+          "rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800",
+          verdict !== "correct" && "opacity-75",
           verdict === "correct" &&
             "!border-emerald-300 !bg-emerald-100 !text-emerald-800 opacity-100 hover:!bg-emerald-100 hover:!text-emerald-800",
         )}
@@ -2709,13 +2584,13 @@ function VerdictButtons({
         variant="ghost"
         size="icon"
         aria-label={`${label} incorrect`}
-        aria-pressed={verdict === "incorrect"}
         onClick={() =>
           onVerdictChange(verdict === "incorrect" ? "unreviewed" : "incorrect")
         }
         className={cn(
           compact ? "h-6 w-6" : "h-7 w-7",
-          "rounded-full border border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+          "rounded-full border border-red-200/80 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100 hover:text-red-800",
+          verdict !== "incorrect" && "opacity-75",
           verdict === "incorrect" &&
             "!border-red-300 !bg-red-100 !text-red-800 opacity-100 hover:!bg-red-100 hover:!text-red-800",
         )}
@@ -2743,9 +2618,7 @@ export function EmailTrainingFeedbackPanel({
   const [assistantPriority, setAssistantPriority] =
     React.useState<AssistantReviewPriority>("normal");
   const [assistantCategory, setAssistantCategory] = React.useState("FYI");
-  const [quickCategories, setQuickCategories] = React.useState<string[]>([]);
-  const [quickCategoryOpen, setQuickCategoryOpen] = React.useState(false);
-  const [quickCategorySearch, setQuickCategorySearch] = React.useState("");
+  const [quickCategory, setQuickCategory] = React.useState("");
   const [reviewOutcome, setReviewOutcome] =
     React.useState<BrandonReviewOutcome>("skipped");
   const [draftBody, setDraftBody] = React.useState("");
@@ -2766,6 +2639,7 @@ export function EmailTrainingFeedbackPanel({
     string | null
   >(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
 
   React.useEffect(() => {
     if (!selectedEmail) return;
@@ -2774,9 +2648,11 @@ export function EmailTrainingFeedbackPanel({
     setAssistantAction(selectedEmail.assistant_action ?? "watch");
     setAssistantPriority(selectedEmail.assistant_priority ?? "normal");
     setAssistantCategory(defaultAssistantCategory(selectedEmail));
-    setQuickCategories(parseBusinessCategories(selectedEmail.assistant_category));
-    setQuickCategoryOpen(false);
-    setQuickCategorySearch("");
+    setQuickCategory(
+      isBusinessCategory(selectedEmail.assistant_category)
+        ? selectedEmail.assistant_category ?? ""
+        : "",
+    );
     setReviewOutcome(defaultReviewOutcome(selectedEmail));
     setDraftBody(selectedEmail.assistant_review?.draftBody ?? "");
     setReviewerNote(selectedEmail.assistant_review?.reviewerNote ?? "");
@@ -2801,40 +2677,19 @@ export function EmailTrainingFeedbackPanel({
     typeof selectedEmail?.assistant_score === "number"
       ? Math.round(selectedEmail.assistant_score)
       : null;
-  const hasAiDraftReply = draftBody.trim().length > 0;
   const savedLabel = formatFeedbackDate(feedbackProvidedAt);
   const rulesApplied = selectedEmail?.assistant_rules_applied ?? [];
-  const assistantDecisionSummary = selectedEmail
-    ? buildAssistantDecisionSummary(selectedEmail)
-    : "";
-  const assistantContext =
-    selectedEmail && shouldShowAssistantEvidence(selectedEmail)
-      ? selectedEmail.assistant_evidence?.trim() ?? ""
-      : "";
+  const assistantContext = selectedEmail?.assistant_evidence?.trim() ?? "";
   const hasReviewedField = React.useMemo(
     () => Object.values(fieldFeedback).some((value) => value !== "unreviewed"),
     [fieldFeedback],
   );
   const categoryOptions = React.useMemo(() => {
     const options = new Set<string>(BUSINESS_CATEGORY_OPTIONS);
-    for (const category of quickCategories) {
-      if (category.trim()) options.add(category.trim());
-    }
+    const current = quickCategory.trim();
+    if (current) options.add(current);
     return Array.from(options);
-  }, [quickCategories]);
-  const classificationCategoryOptions = React.useMemo(() => {
-    const options = new Set<string>(ASSISTANT_CATEGORY_OPTIONS);
-    if (assistantCategory.trim()) {
-      options.add(assistantCategory.trim());
-    }
-    return Array.from(options);
-  }, [assistantCategory]);
-  const correctedProjectLabel = React.useMemo(() => {
-    if (!correctedProjectId) return null;
-    const matchingProject = projects.find((project) => project.id === correctedProjectId);
-    if (!matchingProject) return null;
-    return formatProjectOption(matchingProject);
-  }, [correctedProjectId, projects]);
+  }, [quickCategory]);
 
   async function handleSave() {
     if (!selectedEmail) return;
@@ -2864,13 +2719,11 @@ export function EmailTrainingFeedbackPanel({
         reasonNote:
           projectStatus === "unreviewed" ? null : projectReasonNote.trim() || null,
       };
-      const serializedQuickCategories =
-        serializeBusinessCategories(quickCategories);
       const commonPayload = {
         assistantAction,
         assistantPriority,
         assistantCategory:
-          serializedQuickCategories || assistantCategory.trim() || null,
+          quickCategory.trim() || assistantCategory.trim() || null,
         reviewOutcome,
         reviewerNote: reviewerNote.trim() || null,
         draftBody: draftBody.trim() || null,
@@ -2921,49 +2774,52 @@ export function EmailTrainingFeedbackPanel({
 
   const quickCategoryDirty = React.useMemo(() => {
     if (!selectedEmail) return false;
-    const baseline = parseBusinessCategories(selectedEmail.assistant_category);
-    return serializeBusinessCategories(quickCategories) !== serializeBusinessCategories(baseline);
-  }, [quickCategories, selectedEmail]);
+    const baseline = isBusinessCategory(selectedEmail.assistant_category)
+      ? selectedEmail.assistant_category ?? ""
+      : "";
+    return quickCategory.trim() !== baseline;
+  }, [quickCategory, selectedEmail]);
 
-  const updateQuickCategories = React.useCallback(
-    (nextCategories: string[]) => {
-      setQuickCategories(
-        Array.from(
-          new Set(
-            nextCategories
-              .map((value) => value.trim())
-              .filter(Boolean),
-          ),
-        ),
-      );
+  const updateQuickCategory = React.useCallback(
+    (nextCategory: string) => {
+      setQuickCategory(nextCategory);
       setFieldFeedback((current) => ({
         ...current,
-        category:
-          nextCategories.some((value) => value.trim()) ? "incorrect" : "unreviewed",
+        category: nextCategory.trim() ? "incorrect" : "unreviewed",
       }));
     },
     [],
   );
 
-  const toggleQuickCategory = React.useCallback(
-    (category: string) => {
-      updateQuickCategories(
-        quickCategories.includes(category)
-          ? quickCategories.filter((value) => value !== category)
-          : [...quickCategories, category],
-      );
-    },
-    [quickCategories, updateQuickCategories],
-  );
+  async function handleGenerateDraft() {
+    if (!selectedEmail) return;
 
-  const createQuickCategory = React.useCallback(() => {
-    const trimmed = quickCategorySearch.trim();
-    if (!trimmed) return;
-    if (!quickCategories.includes(trimmed)) {
-      updateQuickCategories([...quickCategories, trimmed]);
+    setIsGeneratingDraft(true);
+    try {
+      const result = await apiFetch<{ draft: string }>(
+        `/api/email-inbox/${selectedEmail.id}/draft-reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: selectedEmail.subject,
+            fromName: selectedEmail.from_name,
+            fromEmail: selectedEmail.from_email,
+            bodyText: selectedEmail.body_text ?? selectedEmail.body,
+            projectName: selectedEmail.project?.name ?? null,
+            tone: "professional",
+          }),
+        },
+      );
+      setDraftBody(result.draft);
+      toast.success("Sandbox draft generated.");
+    } catch (error) {
+      console.error("Could not generate sandbox email draft.", error);
+      toast.error("Could not generate sandbox draft. Check AI configuration.");
+    } finally {
+      setIsGeneratingDraft(false);
     }
-    setQuickCategorySearch("");
-  }, [quickCategories, quickCategorySearch, updateQuickCategories]);
+  }
 
   return (
     <ScrollArea className={cn("h-full", className)}>
@@ -3008,22 +2864,15 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, action: next }))
                     }
-                    aiValue={actionLabel(selectedEmail.assistant_action)}
-                    correctedValue={
-                      fieldFeedback.action === "incorrect"
-                        && assistantAction !== selectedEmail.assistant_action
-                        ? actionLabel(assistantAction)
-                        : undefined
-                    }
-                    correctionControl={
+                    value={
                       <Select
                         value={assistantAction}
                         onValueChange={(value) =>
                           setAssistantAction(value as AssistantReviewAction)
                         }
                       >
-                        <SelectTrigger className="h-8 text-[13px]">
-                          <SelectValue placeholder="Choose correct action" />
+                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {ASSISTANT_ACTION_OPTIONS.map((option) => (
@@ -3042,22 +2891,15 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, priority: next }))
                     }
-                    aiValue={assistantPriorityLabel(selectedEmail.assistant_priority)}
-                    correctedValue={
-                      fieldFeedback.priority === "incorrect"
-                        && assistantPriority !== selectedEmail.assistant_priority
-                        ? assistantPriorityLabel(assistantPriority)
-                        : undefined
-                    }
-                    correctionControl={
+                    value={
                       <Select
                         value={assistantPriority}
                         onValueChange={(value) =>
                           setAssistantPriority(value as AssistantReviewPriority)
                         }
                       >
-                        <SelectTrigger className="h-8 text-[13px]">
-                          <SelectValue placeholder="Choose correct priority" />
+                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {ASSISTANT_PRIORITY_OPTIONS.map((option) => (
@@ -3076,29 +2918,8 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, category: next }))
                     }
-                    aiValue={defaultAssistantCategory(selectedEmail)}
-                    correctedValue={
-                      fieldFeedback.category === "incorrect"
-                        && assistantCategory !== defaultAssistantCategory(selectedEmail)
-                        ? assistantCategory
-                        : undefined
-                    }
-                    correctionControl={
-                      <Select
-                        value={assistantCategory}
-                        onValueChange={setAssistantCategory}
-                      >
-                        <SelectTrigger className="h-8 text-[13px]">
-                          <SelectValue placeholder="Choose correct category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {classificationCategoryOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    value={
+                      assistantCategory
                     }
                   />
                   <ReviewRow
@@ -3109,87 +2930,86 @@ export function EmailTrainingFeedbackPanel({
                       setFieldFeedback((current) => ({ ...current, project: next }));
                       setProjectStatus(next);
                     }}
-                    aiValue={selectedProjectLabel}
-                    correctedValue={
-                      fieldFeedback.project === "incorrect"
-                        && correctedProjectLabel
-                        && correctedProjectLabel !== selectedProjectLabel
-                        ? correctedProjectLabel
-                        : undefined
-                    }
-                    correctionControl={
-                      <div className="grid gap-2.5">
-                        <Select
-                          value={
-                            correctedProjectId
-                              ? String(correctedProjectId)
-                              : undefined
-                          }
-                          onValueChange={(value) =>
-                            setCorrectedProjectId(Number(value))
-                          }
-                        >
-                          <SelectTrigger className="h-8 text-[13px]">
-                            <SelectValue
-                              placeholder={
-                                projectsLoading
-                                  ? "Loading projects..."
-                                  : "Correct project"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {projects.map((project) => (
-                              <SelectItem
-                                key={project.id}
-                                value={String(project.id)}
+                    value={
+                      <div className="space-y-2">
+                        <div>{selectedProjectLabel}</div>
+                        {projectStatus !== "unreviewed" ? (
+                          <div className="grid gap-2.5">
+                            {projectStatus === "incorrect" ? (
+                              <Select
+                                value={
+                                  correctedProjectId
+                                    ? String(correctedProjectId)
+                                    : undefined
+                                }
+                                onValueChange={(value) =>
+                                  setCorrectedProjectId(Number(value))
+                                }
                               >
-                                {formatProjectOption(project)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="space-y-1.5">
-                          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                            How did you know?
+                                <SelectTrigger className="h-8 text-[13px]">
+                                  <SelectValue
+                                    placeholder={
+                                      projectsLoading
+                                        ? "Loading projects..."
+                                        : "Correct project"
+                                    }
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {projects.map((project) => (
+                                    <SelectItem
+                                      key={project.id}
+                                      value={String(project.id)}
+                                    >
+                                      {formatProjectOption(project)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : null}
+                            <div className="space-y-1.5">
+                              <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                                How did you know?
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {PROJECT_ASSIGNMENT_REASON_OPTIONS.map((option) => {
+                                  const selected = projectReasonSignals.includes(option.value);
+                                  return (
+                                    <Button
+                                      key={option.value}
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        setProjectReasonSignals((current) =>
+                                          current.includes(option.value)
+                                            ? current.filter((value) => value !== option.value)
+                                            : [...current, option.value],
+                                        )
+                                      }
+                                      className={cn(
+                                        "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
+                                        selected
+                                          ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
+                                          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+                                      )}
+                                    >
+                                      {option.label}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <Textarea
+                              value={projectReasonNote}
+                              onChange={(event) =>
+                                setProjectReasonNote(event.target.value)
+                              }
+                              placeholder="Add context about how you identified the project."
+                              className="min-h-20 resize-y text-[13px] leading-5"
+                            />
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {PROJECT_ASSIGNMENT_REASON_OPTIONS.map((option) => {
-                              const selected = projectReasonSignals.includes(option.value);
-                              return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    setProjectReasonSignals((current) =>
-                                      current.includes(option.value)
-                                        ? current.filter((value) => value !== option.value)
-                                        : [...current, option.value],
-                                    )
-                                  }
-                                  className={cn(
-                                    "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
-                                    selected
-                                      ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
-                                      : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
-                                  )}
-                                >
-                                  {option.label}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <Textarea
-                          value={projectReasonNote}
-                          onChange={(event) =>
-                            setProjectReasonNote(event.target.value)
-                          }
-                          placeholder="Add context about how you identified the project."
-                          className="min-h-20 resize-y text-[13px] leading-5"
-                        />
+                        ) : null}
                       </div>
                     }
                   />
@@ -3200,7 +3020,7 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, owner: next }))
                     }
-                    aiValue={selectedEmail.assistant_owner ?? "Unknown"}
+                    value={selectedEmail.assistant_owner ?? "Unknown"}
                   />
                   <ReviewRow
                     icon={MessageSquareText}
@@ -3209,9 +3029,10 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, reason: next }))
                     }
-                    aiValue={
+                    value={
                       selectedEmail.assistant_reason ?? "No reason recorded."
                     }
+                    className="items-start"
                   />
                   <ReviewRow
                     icon={Gauge}
@@ -3220,15 +3041,15 @@ export function EmailTrainingFeedbackPanel({
                     onVerdictChange={(next) =>
                       setFieldFeedback((current) => ({ ...current, score: next }))
                     }
-                    aiValue={normalizedScore ?? "Unknown"}
+                    value={normalizedScore ?? "Unknown"}
                   />
                 </div>
               </ReviewSection>
 
-              {hasAiDraftReply ? (
-                <ReviewSection
-                  title="Draft Reply"
-                  headerAction={
+              <ReviewSection
+                title="Draft Reply"
+                headerAction={
+                  <div className="flex items-center gap-2">
                     <VerdictButtons
                       label="Draft reply"
                       verdict={fieldFeedback.draft}
@@ -3240,24 +3061,37 @@ export function EmailTrainingFeedbackPanel({
                       }
                       compact={false}
                     />
-                  }
-                >
-                  <Textarea
-                    value={draftBody}
-                    onChange={(event) => setDraftBody(event.target.value)}
-                    placeholder="Draft response"
-                    className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
-                  />
-                </ReviewSection>
-              ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleGenerateDraft()}
+                      disabled={isGeneratingDraft}
+                      className="h-7 text-[12px]"
+                    >
+                      {isGeneratingDraft ? (
+                        <Loader2
+                          className="mr-2 h-3.5 w-3.5 animate-spin"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
+                      )}
+                      {isGeneratingDraft ? "Generating..." : "Generate"}
+                    </Button>
+                  </div>
+                }
+              >
+                <Textarea
+                  value={draftBody}
+                  onChange={(event) => setDraftBody(event.target.value)}
+                  placeholder="Draft response"
+                  className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
+                />
+              </ReviewSection>
 
               <ReviewSection title="Rules Applied">
                 <div className="space-y-2">
-                  {assistantDecisionSummary ? (
-                    <p className="text-[12px] leading-5 text-foreground/80">
-                      {assistantDecisionSummary}
-                    </p>
-                  ) : null}
                   {rulesApplied.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {rulesApplied.map((rule) => (
@@ -3277,7 +3111,7 @@ export function EmailTrainingFeedbackPanel({
                   )}
                   {assistantContext ? (
                     <p className="text-[12px] leading-5 text-muted-foreground">
-                      Additional evidence: {assistantContext}
+                      {assistantContext}
                     </p>
                   ) : null}
                 </div>
@@ -3285,106 +3119,65 @@ export function EmailTrainingFeedbackPanel({
 
               <ReviewSection
                 title="Quick Category"
+                headerAction={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleSave()}
+                    disabled={isSaving || !quickCategoryDirty}
+                    className="h-7 text-[12px]"
+                  >
+                    {isSaving ? "Saving..." : "Save category"}
+                  </Button>
+                }
               >
                 <div className="space-y-3">
+                  <p className="text-[12px] leading-5 text-muted-foreground">
+                    Use this for the business label on the email. The AI
+                    workflow bucket above can still stay as delegate, reply, or
+                    watch.
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {quickCategories.length > 0 ? (
-                      quickCategories.map((category) => (
+                    {QUICK_CATEGORY_OPTIONS.map((category) => {
+                      const selected = quickCategory === category;
+                      return (
                         <Button
                           key={category}
                           type="button"
-                          onClick={() => toggleQuickCategory(category)}
                           variant="ghost"
                           size="sm"
-                          className="h-7 rounded-full border border-primary/40 bg-primary/10 px-2.5 text-[11px] font-medium text-primary shadow-none hover:bg-primary/15 hover:text-primary"
-                          aria-label={`Remove ${category}`}
+                          onClick={() => updateQuickCategory(category)}
+                          className={cn(
+                            "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
+                            selected
+                              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
+                              : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+                          )}
                         >
-                          <span>{category}</span>
-                          <X className="h-3 w-3" />
+                          {category}
                         </Button>
-                      ))
-                    ) : (
-                      <span className="text-[12px] text-muted-foreground">
-                        No business categories selected.
-                      </span>
-                    )}
+                      );
+                    })}
                   </div>
-                  <Popover
-                    open={quickCategoryOpen}
-                    onOpenChange={(open) => {
-                      setQuickCategoryOpen(open);
-                      if (!open) setQuickCategorySearch("");
-                    }}
+                  <Select
+                    value={quickCategory || "__none__"}
+                    onValueChange={(value) =>
+                      updateQuickCategory(value === "__none__" ? "" : value)
+                    }
                   >
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 justify-between text-[13px] shadow-none"
-                      >
-                        <span>Add or edit categories</span>
-                        <ChevronDownIcon className="h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      align="start"
-                      className="w-72 p-0"
-                    >
-                      <Command>
-                        <CommandInput
-                          value={quickCategorySearch}
-                          onValueChange={setQuickCategorySearch}
-                          placeholder="Search or create category"
-                        />
-                        <CommandList>
-                          <CommandEmpty>No categories found.</CommandEmpty>
-                          <CommandGroup>
-                            {categoryOptions.map((category) => {
-                              const selected =
-                                quickCategories.includes(category);
-                              return (
-                                <CommandItem
-                                  key={category}
-                                  value={category}
-                                  onSelect={() => toggleQuickCategory(category)}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selected
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-                                  {category}
-                                </CommandItem>
-                              );
-                            })}
-                            {quickCategorySearch.trim() &&
-                            !categoryOptions.some(
-                              (category) =>
-                                category.toLowerCase() ===
-                                quickCategorySearch.trim().toLowerCase(),
-                            ) ? (
-                              <CommandItem
-                                value={`create ${quickCategorySearch}`}
-                                onSelect={createQuickCategory}
-                              >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create "{quickCategorySearch.trim()}"
-                              </CommandItem>
-                            ) : null}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  {quickCategoryDirty ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      Save feedback below to persist category changes.
-                    </p>
-                  ) : null}
+                    <SelectTrigger className="h-8 text-[13px]">
+                      <SelectValue placeholder="Choose business category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No business category</SelectItem>
+                      {categoryOptions.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </ReviewSection>
 
@@ -3768,11 +3561,6 @@ export function ProjectEmailsWorkspace({
                   <Link
                     key={tab.href}
                     href={tab.href}
-                    title={
-                      typeof tab.count === "number"
-                        ? `${tab.label} (${tab.count})`
-                        : tab.label
-                    }
                     className={cn(
                       "relative transition-colors",
                       tab.compact
@@ -3785,6 +3573,16 @@ export function ProjectEmailsWorkspace({
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>{tab.label}</span>
+                      {typeof tab.count === "number" ? (
+                        <span
+                          className={cn(
+                            "tabular-nums",
+                            tab.compact ? "text-[10px]" : "text-xs",
+                          )}
+                        >
+                          {tab.count}
+                        </span>
+                      ) : null}
                     </span>
                     <span
                       aria-hidden="true"

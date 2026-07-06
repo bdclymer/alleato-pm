@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -71,7 +72,6 @@ import {
 } from "@/components/ui/select";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
-  EmptyState,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
@@ -302,8 +302,16 @@ function parseDefaultDistributionSelection(
           typeof candidate === "string" && validOptionIds.has(candidate),
       );
     }
-  } catch {
-    // Fall back to legacy plain-text matching.
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "submittals.default-distribution",
+      message:
+        "Failed to parse saved default submittal distribution as JSON. Falling back to legacy text matching.",
+      error,
+      meta: {
+        valuePreview: value.slice(0, 200),
+      },
+    });
   }
 
   const tokens = value
@@ -1308,25 +1316,23 @@ function renderWorkflowTemplateAssignee(
   );
 }
 
-function WorkflowTemplateManageDialog({
+function WorkflowTemplateEditor({
   mode,
   projectDirectoryOptions,
   initialTemplate,
-  open,
-  onOpenChange,
   onSave,
+  onCancel,
   isPending,
 }: {
   mode: "create" | "edit";
   projectDirectoryOptions: ProjectDirectoryOption[];
   initialTemplate: WorkflowTemplateRecord | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onSave: (payload: {
     name: string;
     description: string | null;
     steps: WorkflowTemplateStepDefinition[];
   }) => Promise<void>;
+  onCancel?: () => void;
   isPending: boolean;
 }) {
   const [name, setName] = React.useState(initialTemplate?.name ?? "");
@@ -1340,7 +1346,6 @@ function WorkflowTemplateManageDialog({
   );
 
   React.useEffect(() => {
-    if (!open) return;
     setName(initialTemplate?.name ?? "");
     setDescription(initialTemplate?.description ?? "");
     setSteps(
@@ -1348,7 +1353,7 @@ function WorkflowTemplateManageDialog({
         ? initialTemplate.steps
         : [createEmptyWorkflowTemplateStep()],
     );
-  }, [initialTemplate, open]);
+  }, [initialTemplate, mode]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -1373,16 +1378,22 @@ function WorkflowTemplateManageDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Create Workflow Template" : "Edit Workflow Template"}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="space-y-2">
+    <SettingsTable>
+      <form onSubmit={handleSubmit} className="divide-y divide-border/60">
+        <div className="space-y-5 p-4 md:p-5">
+          <div>
+            <SectionRuleHeading
+              label={
+                mode === "create"
+                  ? "Create Workflow Template"
+                  : "Edit Workflow Template"
+              }
+              className="mb-0 pb-0"
+            />
+          </div>
+
+          <div className="space-y-4 md:flex md:gap-4 md:space-y-0">
+            <div className="space-y-2 md:flex-1">
               <Label htmlFor="workflow-template-name">Template Name</Label>
               <Input
                 id="workflow-template-name"
@@ -1403,148 +1414,140 @@ function WorkflowTemplateManageDialog({
               />
             </div>
           </div>
+        </div>
 
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Workflow Steps
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Add submitter and approver steps in the order they should happen.
-                </p>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  setSteps((current) => [
-                    ...current,
-                    createEmptyWorkflowTemplateStep(),
-                  ])
-                }
+        <div className="space-y-4 p-4 md:p-5">
+          <p className="text-sm font-semibold text-foreground">Workflow Steps</p>
+
+          <div className="space-y-0">
+            {steps.map((step, index) => (
+              <div
+                key={`${step.step_type}-${index}`}
+                className="space-y-3 border-b border-border/60 py-4 last:border-b-0 first:pt-0 last:pb-0"
               >
-                <Plus className="h-4 w-4" />
-                Add Step
-              </Button>
-            </div>
+                <div className="space-y-3 md:flex md:items-start md:gap-3 md:space-y-0">
+                  <div className="space-y-2 md:w-32 md:shrink-0">
+                    <Label>{`Step ${index + 1}`}</Label>
+                    <Select
+                      value={step.step_type}
+                      onValueChange={(value) =>
+                        updateStep(index, {
+                          ...step,
+                          step_type:
+                            value as WorkflowTemplateStepDefinition["step_type"],
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WORKFLOW_TEMPLATE_ROLE_OPTIONS.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-3">
-              {steps.map((step, index) => (
-                <div
-                  key={`${step.step_type}-${index}`}
-                  className="rounded-md border border-border/60 p-4"
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start">
-                    <div className="space-y-2 md:w-32">
-                      <Label>{`Step ${index + 1}`}</Label>
-                      <Select
-                        value={step.step_type}
-                        onValueChange={(value) =>
-                          updateStep(index, {
-                            ...step,
-                            step_type:
-                              value as WorkflowTemplateStepDefinition["step_type"],
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {WORKFLOW_TEMPLATE_ROLE_OPTIONS.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2 md:flex-1">
-                      <Label>Assignee</Label>
-                      <Select
-                        value={step.user_id ?? "_unassigned"}
-                        onValueChange={(value) =>
-                          updateStep(index, {
-                            ...step,
-                            user_id: value === "_unassigned" ? null : value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select assignee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_unassigned">Unassigned</SelectItem>
-                          {projectDirectoryOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.email
-                                ? `${option.label} (${option.email})`
-                                : option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-0 text-sm font-medium text-foreground md:pt-7">
-                      <Checkbox
-                        checked={step.required}
-                        onCheckedChange={(checked) =>
-                          updateStep(index, {
-                            ...step,
-                            required: checked === true,
-                          })
-                        }
-                      />
-                      <span>Required</span>
-                    </div>
-
-                    <div className="flex items-start justify-end md:pt-6">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={steps.length === 1}
-                        onClick={() =>
-                          setSteps((current) =>
-                            current.filter((_, stepIndex) => stepIndex !== index),
-                          )
-                        }
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                  <div className="space-y-2 md:min-w-0 md:flex-1">
+                    <Label>Assignee</Label>
+                    <Select
+                      value={step.user_id ?? "_unassigned"}
+                      onValueChange={(value) =>
+                        updateStep(index, {
+                          ...step,
+                          user_id: value === "_unassigned" ? null : value,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select assignee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_unassigned">Unassigned</SelectItem>
+                        {projectDirectoryOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.email
+                              ? `${option.label} (${option.email})`
+                              : option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
 
-          <div className="flex items-center justify-end gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <label className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-foreground">
+                    <Checkbox
+                      checked={step.required}
+                      onCheckedChange={(checked) =>
+                        updateStep(index, {
+                          ...step,
+                          required: checked === true,
+                        })
+                      }
+                    />
+                    Required
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto justify-start px-0 text-muted-foreground hover:text-foreground"
+                    disabled={steps.length === 1}
+                    onClick={() =>
+                      setSteps((current) =>
+                        current.filter((_, stepIndex) => stepIndex !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
-              variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              variant="outline"
+              onClick={() =>
+                setSteps((current) => [
+                  ...current,
+                  createEmptyWorkflowTemplateStep(),
+                ])
+              }
             >
-              Cancel
+              <Plus className="h-4 w-4" />
+              Add Step
             </Button>
-            <Button type="submit" size="sm" disabled={isPending || !name.trim()}>
-              {isPending
-                ? mode === "create"
-                  ? "Creating..."
-                  : "Saving..."
-                : mode === "create"
-                  ? "Create Template"
-                  : "Save Changes"}
-            </Button>
+
+            <div className="flex items-center justify-end gap-2">
+              {onCancel ? (
+                <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+                  Cancel
+                </Button>
+              ) : null}
+              <Button type="submit" size="sm" disabled={isPending || !name.trim()}>
+                {isPending
+                  ? mode === "create"
+                    ? "Creating..."
+                    : "Saving..."
+                  : mode === "create"
+                    ? "Create Template"
+                    : "Save Changes"}
+              </Button>
+            </div>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </form>
+    </SettingsTable>
   );
 }
 
@@ -1559,9 +1562,8 @@ function WorkflowTemplatesPanel({
   const [templates, setTemplates] = React.useState<WorkflowTemplateRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [manageOpen, setManageOpen] = React.useState(false);
-  const [manageMode, setManageMode] = React.useState<"create" | "edit">(
-    "create",
+  const [editorMode, setEditorMode] = React.useState<"create" | "edit" | null>(
+    null,
   );
   const [editingTemplate, setEditingTemplate] =
     React.useState<WorkflowTemplateRecord | null>(null);
@@ -1569,6 +1571,7 @@ function WorkflowTemplatesPanel({
   const [deletePendingId, setDeletePendingId] = React.useState<string | null>(
     null,
   );
+  const editorRef = React.useRef<HTMLDivElement | null>(null);
 
   const loadTemplates = React.useCallback(async () => {
     try {
@@ -1597,19 +1600,29 @@ function WorkflowTemplatesPanel({
     void loadTemplates();
   }, [loadTemplates]);
 
+  const activeEditorMode =
+    editorMode ??
+    (!loading && !loadError && templates.length === 0 ? "create" : null);
+
+  React.useEffect(() => {
+    if (!activeEditorMode) return;
+    editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeEditorMode]);
+
   async function handleSaveTemplate(payload: {
     name: string;
     description: string | null;
     steps: WorkflowTemplateStepDefinition[];
   }) {
+    const isCreateMode = activeEditorMode !== "edit" || !editingTemplate;
+
     try {
       setSavePending(true);
       const endpoint =
-        manageMode === "create" || !editingTemplate
+        isCreateMode
           ? `/api/projects/${projectId}/submittals/workflow-templates`
           : `/api/projects/${projectId}/submittals/workflow-templates/${editingTemplate.id}`;
-      const method =
-        manageMode === "create" || !editingTemplate ? "POST" : "PUT";
+      const method = isCreateMode ? "POST" : "PUT";
 
       const saved = await apiFetch<unknown>(endpoint, {
         method,
@@ -1622,7 +1635,7 @@ function WorkflowTemplatesPanel({
       }
 
       setTemplates((current) => {
-        if (manageMode === "create" || !editingTemplate) {
+        if (isCreateMode) {
           return [...current, normalized].sort((a, b) =>
             a.name.localeCompare(b.name),
           );
@@ -1633,17 +1646,17 @@ function WorkflowTemplatesPanel({
           )
           .sort((a, b) => a.name.localeCompare(b.name));
       });
-      setManageOpen(false);
+      setEditorMode(null);
       setEditingTemplate(null);
       toast.success(
-        manageMode === "create"
+        isCreateMode
           ? "Workflow template created"
           : "Workflow template updated",
       );
     } catch (error) {
       handleFormError(error, {
         entity: "workflow template",
-        action: manageMode === "create" ? "create" : "save",
+        action: isCreateMode ? "create" : "save",
       });
     } finally {
       setSavePending(false);
@@ -1679,32 +1692,47 @@ function WorkflowTemplatesPanel({
     }
   }
 
-  function openCreateDialog() {
-    setManageMode("create");
+  function openCreateEditor() {
+    setEditorMode("create");
     setEditingTemplate(null);
-    setManageOpen(true);
   }
 
-  function openEditDialog(template: WorkflowTemplateRecord) {
-    setManageMode("edit");
+  function openEditEditor(template: WorkflowTemplateRecord) {
+    setEditorMode("edit");
     setEditingTemplate(template);
-    setManageOpen(true);
+  }
+
+  function closeEditor() {
+    setEditorMode(null);
+    setEditingTemplate(null);
   }
 
   return (
     <>
       <FormSection
         title="Workflow Templates"
-        description="Create workflow templates for your project's submittal review process by defining the submitters and approvers for each workflow step."
         actions={
-          templates.length > 0 ? (
-            <Button size="sm" onClick={openCreateDialog}>
+          templates.length > 0 && !activeEditorMode ? (
+            <Button size="sm" onClick={openCreateEditor}>
               <Plus className="h-4 w-4" />
               Create New Template
             </Button>
           ) : null
         }
       >
+        {activeEditorMode ? (
+          <div ref={editorRef}>
+            <WorkflowTemplateEditor
+              mode={activeEditorMode}
+              projectDirectoryOptions={projectDirectoryOptions}
+              initialTemplate={editingTemplate}
+              onCancel={templates.length > 0 ? closeEditor : undefined}
+              onSave={handleSaveTemplate}
+              isPending={savePending}
+            />
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="space-y-3 py-6">
             <Skeleton className="h-10 w-full" />
@@ -1722,17 +1750,6 @@ function WorkflowTemplatesPanel({
               Retry
             </Button>
           </div>
-        ) : templates.length === 0 ? (
-          <EmptyState
-            title="Create Workflow Templates to Get Started"
-            description="Save reusable submitter and approver workflows for this project's submittals."
-            action={
-              <Button size="sm" variant="outline" onClick={openCreateDialog}>
-                <Plus className="h-4 w-4" />
-                Create New Template
-              </Button>
-            }
-          />
         ) : (
           <SettingsTable>
             <InlineTable variant="read">
@@ -1787,7 +1804,7 @@ function WorkflowTemplatesPanel({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => openEditDialog(template)}
+                          onClick={() => openEditEditor(template)}
                         >
                           Edit
                         </Button>
@@ -1808,21 +1825,6 @@ function WorkflowTemplatesPanel({
           </SettingsTable>
         )}
       </FormSection>
-
-      <WorkflowTemplateManageDialog
-        mode={manageMode}
-        projectDirectoryOptions={projectDirectoryOptions}
-        initialTemplate={editingTemplate}
-        open={manageOpen}
-        onOpenChange={(open) => {
-          setManageOpen(open);
-          if (!open) {
-            setEditingTemplate(null);
-          }
-        }}
-        onSave={handleSaveTemplate}
-        isPending={savePending}
-      />
       {ConfirmDialog}
     </>
   );
