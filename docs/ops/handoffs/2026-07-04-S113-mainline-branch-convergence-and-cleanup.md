@@ -6,7 +6,7 @@
 2) Task ID: AAI-932
 3) Linear issue: AAI-932
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-932/audit-and-publish-all-active-alleato-pm-worktree-changes-to-main
-5) Current status: Blocked
+5) Current status: In Progress
 6) Files changed (absolute paths):
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-07-04-mainline-branch-convergence-and-cleanup.md
    - /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-07-04-S113-mainline-branch-convergence-and-cleanup.md
@@ -22,13 +22,17 @@
    - pass: `git branch -D ...` delete-safe local branches
    - pass: `git push origin --delete codex/feedback-category-filter-checkpoint`
    - partial: `git diff --name-only HEAD..origin/main`
+   - pass: branch classification against `origin/main` plus subset comparison for meetings branches
+   - pass: pushed local-only refs `chore/docs-ops-backfill-commit` and `fix/meetings-detail-transcript-first`
+   - pass: opened draft PRs `#674`, `#675`, `#676`, `#677`, `#678`, `#679`, `#680`
 8) Evidence artifacts (screenshot/video/report/log paths):
    - branch/worktree audit in shell history for this session
+   - PRs: `#674`, `#675`, `#676`, `#677`, `#678`, `#679`, `#680`; existing `#528`
 9) Top 3 findings (frontend-visible issues first):
    - No frontend route work was changed in this slice; this is repo-state cleanup only.
    - 22 delete-safe local branches have now been removed after clearing two clean redundant worktrees.
-   - Remaining unpublished work is concentrated in a small set of meetings, export, budget, change-events, and feedback-reconcile bundles.
-10) Recommended next action (one line): resume from a clean checkout or after publishing the overlapping prime-contract dirt, then fast-forward `main` and clear the remaining attached redundant worktrees.
+   - Every real remaining branch now has an explicit review lane, existing PR, subset classification, or superseded-on-main disposition.
+10) Recommended next action (one line): review/merge or close draft PRs `#674`-`#680`, then run a final delete-safe branch/worktree cleanup pass for the redundant subset and already-landed refs.
 11) Handoff file path: /Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-07-04-S113-mainline-branch-convergence-and-cleanup.md
 12) Migration ledger evidence: Not applicable; no `supabase/migrations/*.sql` changes in scope.
 
@@ -40,15 +44,19 @@
 
 ## Current Status
 
-Initial audit and the first cleanup batch are complete. The repo has been
-reduced by 22 already-landed local branches and 2 redundant clean worktrees,
-while the remaining non-main branches are now explicitly classified.
+The repo-state audit is now past the blocker that left unpublished work
+ambiguous. Real remaining branches now have explicit review lanes:
+`#674`, `#675`, `#676`, `#677`, `#678`, `#679`, and `#680`, while
+`codex/eve-agent` was already covered by `#528`. The meetings subset branches
+(`feat/meetings-agenda`, `feat/meetings-pdf`, `feat/meetings-admin-templates`)
+do not need separate PRs because their unique work is already contained in
+`feat/meetings-tool`.
 
 ## Exact Next Step
 
-Record the blocker update in Linear, then resume from a clean checkout or after
-the overlapping prime-contract dirt is published/rebased so `main` can be
-fast-forwarded safely.
+Triage the new draft PR set into merge, split, or close outcomes, then come
+back for a narrow cleanup pass that deletes redundant subset branches and any
+already-landed attached worktrees once ownership is cleared.
 
 ## Known Pitfalls
 
@@ -56,8 +64,10 @@ fast-forwarded safely.
 - Do not treat `git branch --no-merged` as sufficient truth for cleanup.
 - Do not collapse meetings branches until the superset/subset relationship is
   recorded in the cleanup ledger.
-- Do not fast-forward this dirty `main` checkout while `origin/main` touches
-  the same prime-contract files.
+- Do not assume a branch needs its own PR just because `git branch --no-merged`
+  lists it; the meetings side branches were subsets of `feat/meetings-tool`.
+- Do not force old taskdoc-only branches onto `main` when a detached
+  cherry-pick proves the same file has already evolved on `main`.
 
 ## Resume Commands
 
@@ -66,7 +76,7 @@ git fetch origin --prune
 git worktree list
 git branch -vv
 git status --short --branch
-git diff --name-only HEAD..origin/main
+gh pr list --state open --json number,title,headRefName,url
 ```
 
 ## Evidence
@@ -79,3 +89,9 @@ git diff --name-only HEAD..origin/main
   attached to active worktrees.
 - Deleted the redundant remote branch
   `origin/codex/feedback-category-filter-checkpoint`.
+- Opened draft PRs `#674` `#675` `#676` `#677` `#678` `#679` `#680`.
+- Confirmed existing PR `#528` already covers `codex/eve-agent`.
+- Confirmed `feat/meetings-agenda`, `feat/meetings-pdf`, and
+  `feat/meetings-admin-templates` are subsets of `feat/meetings-tool`.
+- Confirmed `codex/subcontractor-invoice-procore-pdf-parity-taskdoc` is
+  superseded by taskdoc content already on `main`.

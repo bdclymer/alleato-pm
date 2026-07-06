@@ -1,6 +1,6 @@
 # Task: Mainline Branch Convergence And Cleanup
 
-Status: Blocked/Deferred
+Status: In Progress
 Owner: Codex
 Created: 2026-07-04
 Linear Issue: AAI-932 - https://linear.app/megankharrison/issue/AAI-932/audit-and-publish-all-active-alleato-pm-worktree-changes-to-main
@@ -45,9 +45,9 @@ next action instead of deleting optimistically.
 - [ ] Branches already proven patch-equivalent to `origin/main` are deleted
       locally once their attached worktrees are removed.
 - [ ] Stale remote-tracking refs are pruned.
-- [ ] Any branch with real outstanding work has a concrete disposition:
+- [x] Any branch with real outstanding work has a concrete disposition:
       publish now, defer with owner, or preserve intentionally.
-- [ ] The final ledger states exactly what remains and why.
+- [x] The final ledger states exactly what remains and why.
 
 ## Implementation Plan
 
@@ -70,7 +70,7 @@ next action instead of deleting optimistically.
 - [x] Remove delete-safe worktrees that only point at already-landed branches.
 - [x] Delete local branches already proven patch-equivalent to `origin/main`.
 - [x] Record outstanding merge/defer candidates with exact branch names and file scope.
-- [ ] Validate the handoff with `npm run linear:codex:check -- ...`.
+- [x] Validate the handoff with `npm run linear:codex:check -- ...`.
 
 ## Files To Change
 
@@ -93,13 +93,13 @@ next action instead of deleting optimistically.
 - [x] Files/modules to change listed before edits.
 - [x] External system owner chosen for issue/workflow tracking (`AAI-932`).
 - [ ] Local `main` updated to the remote source of truth.
-- [ ] Branch cleanup limited to delete-safe refs only.
+- [x] Branch cleanup limited to delete-safe refs only.
 - [x] Branch cleanup limited to delete-safe refs only.
 - [ ] No unrelated feature work is reverted or silently discarded.
 - [x] No unrelated feature work is reverted or silently discarded.
-- [ ] Checkpoint/docs branches are separated from product-code merge candidates.
 - [x] Checkpoint/docs branches are separated from product-code merge candidates.
-- [ ] Errors remain specific and actionable; no silent git cleanup.
+- [x] Checkpoint/docs branches are separated from product-code merge candidates.
+- [x] Errors remain specific and actionable; no silent git cleanup.
 - [x] Errors remain specific and actionable; no silent git cleanup.
 
 ## Integration Checklist
@@ -110,7 +110,7 @@ next action instead of deleting optimistically.
 - [x] Worktree inventory and branch inventory resolve to one canonical ledger.
 - [ ] Delete actions occur only after worktree ownership is cleared.
 - [x] Delete actions occur only after worktree ownership is cleared.
-- [ ] Deferred branches have explicit next owner action.
+- [x] Deferred branches have explicit next owner action.
 - [x] Deferred branches have explicit next owner action.
 
 ## Regression Guardrails
@@ -121,14 +121,14 @@ next action instead of deleting optimistically.
       not only `git branch --no-merged`.
 - [ ] Cleanup fails loudly when a branch is still attached to a worktree.
 - [x] Cleanup fails loudly when a branch is still attached to a worktree.
-- [ ] Cleanup ledger is written so future sessions can avoid repeating the audit.
+- [x] Cleanup ledger is written so future sessions can avoid repeating the audit.
 - [x] Cleanup ledger is written so future sessions can avoid repeating the audit.
 
 ## Verification Checklist
 
 - [ ] Static/process verification: task doc, handoff, session board, Linear kickoff.
 - [ ] Targeted git verification on branch divergence and worktree ownership.
-- [ ] Final handoff validation command run.
+- [x] Final handoff validation command run.
 - [ ] Evidence artifacts recorded below.
 - [ ] Known unrelated blockers documented with exact branch/worktree names.
 - [x] Static/process verification: task doc, handoff, session board, Linear kickoff.
@@ -149,37 +149,42 @@ next action instead of deleting optimistically.
 | Delete-safe branch cleanup | `git branch -D ...` | Pass | Deleted 22 local branches already proven patch-equivalent to `origin/main` and not attached to active worktrees. |
 | Redundant remote cleanup | `git push origin --delete codex/feedback-category-filter-checkpoint` | Pass | Removed the one clearly redundant remote checkpoint branch after confirming its patch-equivalent content was already on `main`. |
 | Post-cleanup branch audit | commit-level comparison script; `git worktree list`; `git status --short --branch`; `git diff --name-only HEAD..origin/main` | Partial | Remaining blockers are now explicit: dirty attached redundant worktrees and a dirty `main` checkout that overlaps the one-commit remote fast-forward. |
+| Branch publication triage | `git log --cherry-pick --right-only origin/main...<branch>`; `git diff --name-only origin/main...<branch>`; branch subset compare against `feat/meetings-tool` | Pass | Reduced the real remaining branches to publishable candidates, proved `feat/meetings-agenda`, `feat/meetings-pdf`, and `feat/meetings-admin-templates` are subsets of `feat/meetings-tool`, and proved `codex/subcontractor-invoice-procore-pdf-parity-taskdoc` is superseded by richer task content already on `main`. |
+| Draft PR creation | PRs `#674`, `#675`, `#676`, `#677`, `#678`, `#679`, `#680`; existing PR `#528` | Pass | Every real remaining branch now has an explicit review lane or an existing PR. |
+| Handoff validation | `npm run linear:codex:check -- docs/ops/handoffs/2026-07-04-S113-mainline-branch-convergence-and-cleanup.md` | Pass | Handoff format and required fields validate after the PR/disposition update. |
+
+## Remaining Ledger
+
+- Existing review lane: `codex/eve-agent` already has open PR `#528`, so no new
+  PR was needed.
+- New draft PRs opened from the branch audit:
+  `#674` `chore/docs-ops-backfill-commit`,
+  `#675` `claude/issue-613-20260701-2240`,
+  `#676` `codex/change-order-flow-rehome`,
+  `#677` `codex/eve-pr-527-fixes`,
+  `#678` `feat/2026-07-03-batch-financial-and-feedback-updates`,
+  `#679` `fix/meetings-detail-transcript-first`,
+  `#680` `feat/meetings-tool`.
+- Covered by a superset branch, so no separate PR is needed:
+  `feat/meetings-agenda`,
+  `feat/meetings-pdf`,
+  `feat/meetings-admin-templates` are subsets of `feat/meetings-tool`.
+- Superseded on `main`, so no separate PR or direct push is needed:
+  `codex/subcontractor-invoice-procore-pdf-parity-taskdoc`. A clean detached
+  cherry-pick attempt hit an add/add conflict because `main` already has a
+  richer version of the same task doc.
+- Still cleanup-only work after the PR pass:
+  attached redundant worktrees and local branches that are already
+  patch-equivalent or intentionally preserved still need a later delete pass.
 
 ## Risks / Gaps
 
-- Several patch-equivalent branches are still attached to named worktrees, so
-  deletion must be sequenced through worktree removal first.
-- Some remaining non-main branches are mixed checkpoint/docs bundles; deleting
-  them is safe only after their evidence is captured or intentionally deferred.
-- Meetings branches overlap and have subset relationships; deleting the smaller
-  branches before deciding on the superset publish path could hide useful review
-  history.
-
-## Blocked / Deferred
-
-- Cause: local `main` is behind `origin/main` by one commit, but that remote
-  commit touches files that are already dirty in this checkout
-  (`frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx`,
-  `.../types.ts`, and
-  `frontend/src/components/domain/contracts/prime-contract-detail/PrimeContractInvoicesTab.tsx`),
-  so a fast-forward would risk colliding with unrelated in-progress work.
-- Detection gap: `main` drift was easy to see, but only the file-level diff to
-  `origin/main` exposed that the fast-forward overlaps current dirty files.
-- Prevention step: keep branch cleanup in a clean checkout or detached worktree
-  so `main` can be fast-forwarded before repo-state cleanup begins.
-- Owner: Codex for a later clean-checkout cleanup pass, or Megan if those
-  overlapping dirty files should be published/rebased first.
-- Next action: either publish/rehome the overlapping prime-contract dirt, or
-  resume this cleanup from a clean checkout and then remove the remaining
-  attached redundant worktrees:
-  `codex/commitment-cco-email-delivery`,
-  `codex/nightly-tight-checks-20260703`,
-  `codex/nightly-tight-checks-20260704-020227`.
+- Several already-landed branches are still attached to named worktrees, so
+  final deletion must be sequenced through worktree removal first.
+- The new PRs are intentionally drafts. Some are broad checkpoint branches and
+  still need review, possible splitting, or rebasing before merge.
+- The main checkout remains dirty with unrelated July 6 work, so no direct
+  publish-through on those paths was attempted from this convergence pass.
 
 ## Final Status
 
