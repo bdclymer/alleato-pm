@@ -33,12 +33,18 @@ import {
 import { useProject } from "@/contexts/project-context";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ds/text";
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
+import { ChangeEventsSettingsTab } from "@/features/change-events/change-events-settings-tab";
 
 type ChangeEventFilterState = Record<string, FilterValue>;
+type ChangeEventsSettingsSection = "change-events-settings" | "permissions";
+
+function normalizeSettingsSection(value: string | null): ChangeEventsSettingsSection {
+  return value === "permissions" ? "permissions" : "change-events-settings";
+}
 
 // Normalize scope values for comparison: "Out of Scope" and "out_of_scope" both → "out_of_scope".
 // The DB stores human-readable scope ("Out of Scope") but filter options use snake_case.
@@ -84,8 +90,16 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const { selectedProject } = useProject();
 
-  // Tab state — All | Line Items | No Line Items | RFQs | Recycle Bin
+  // Tab state — All | Line Items | No Line Items | RFQs | Recycle Bin | Settings
   const activeTab = searchParams.get("tab") ?? "all";
+  const settingsSection = normalizeSettingsSection(searchParams.get("settings_tab"));
+  const activeDataTab =
+    activeTab === "line_items" ||
+    activeTab === "no_line_items" ||
+    activeTab === "rfqs" ||
+    activeTab === "recycle_bin"
+      ? activeTab
+      : "all";
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialScope = searchParams.get("scope") ?? "";
@@ -190,7 +204,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
     scope: scopeParam || undefined,
     page: tableState.page,
     perPage: tableState.perPage,
-    tab: activeTab as "line_items" | "no_line_items" | "rfqs" | "recycle_bin" | "all",
+    tab: activeDataTab,
     enabled: hasValidProjectId,
   });
 
@@ -689,7 +703,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const totalItems = serverTotal;
   const filteredItems = filteredEvents.length;
 
-  // Tabs: All | Line Items | No Line Items | RFQs | Recycle Bin
+  // Tabs: All | Line Items | No Line Items | RFQs | Recycle Bin | Settings
   const tabs = React.useMemo(
     () => [
       {
@@ -731,8 +745,32 @@ export default function ProjectChangeEventsPage(): ReactElement {
         isActive: activeTab === "recycle_bin",
         testId: "change-events-tab-recycle-bin",
       },
+      {
+        label: "Settings",
+        href: `/${projectId}/change-events?tab=settings&settings_tab=change-events-settings`,
+        isActive: activeTab === "settings",
+        testId: "change-events-tab-settings",
+      },
     ],
     [projectId, activeTab, lineItemsCount, noLineItemsCount, rfqsCount, tabSummary],
+  );
+
+  const settingsTabs = React.useMemo(
+    () => [
+      {
+        label: "Change Events Settings",
+        href: `/${projectId}/change-events?tab=settings&settings_tab=change-events-settings`,
+        isActive: settingsSection === "change-events-settings",
+        testId: "change-events-settings-tab-general",
+      },
+      {
+        label: "Permissions Table",
+        href: `/${projectId}/change-events?tab=settings&settings_tab=permissions`,
+        isActive: settingsSection === "permissions",
+        testId: "change-events-settings-tab-permissions",
+      },
+    ],
+    [projectId, settingsSection],
   );
 
   // Grand Totals — sum monetary columns
@@ -829,6 +867,23 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const selectedChangeEvents = filteredEvents.filter((e) =>
     tableState.selectedIds.includes(String(e.id)),
   );
+
+  if (activeTab === "settings") {
+    return (
+      <PageShell
+        variant="table"
+        title="Change Events"
+        description="Track scope changes, approvals, and financial impact."
+      >
+        <PageTabs tabs={tabs} variant="inline" className="mb-0" />
+        <PageTabs tabs={settingsTabs} variant="inline" className="mb-6" />
+        <ChangeEventsSettingsTab
+          projectId={projectId}
+          section={settingsSection}
+        />
+      </PageShell>
+    );
+  }
 
   return (
     <>

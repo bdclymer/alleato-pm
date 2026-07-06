@@ -66,4 +66,21 @@ describe("SplitPage variants", () => {
       expect(screen.getByText("Auxiliary rail")).toBeVisible(),
     );
   });
+
+  it("supports a configured desktop width for the first pane", async () => {
+    render(
+      <SplitPage variant="two-column" firstPaneWidth="30rem">
+        {[
+          <div key="list">List</div>,
+          <div key="detail">Detail</div>,
+        ]}
+      </SplitPage>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("List").parentElement).toHaveStyle({
+        width: "30rem",
+      }),
+    );
+  });
 });

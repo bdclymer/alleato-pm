@@ -12,6 +12,7 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
+import { editableTextColumn } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getDrawingDisplayIdentity } from "@/lib/drawings/drawing-identity";
@@ -127,7 +128,7 @@ export interface DrawingInlineEditHandlers {
   /** Persists a single-field change for one drawing. Throws on failure so the cell can revert. */
   onUpdate: (
     drawingId: string,
-    data: { discipline?: string; drawing_type?: string },
+    data: { title?: string; discipline?: string; drawing_type?: string },
   ) => Promise<void>;
 }
 
@@ -147,6 +148,20 @@ export function buildDrawingTableColumns(
   const disciplineOptions = (
     inlineEdit?.disciplines ?? DRAWING_DISCIPLINES
   ).map((v) => ({ value: v, label: v }));
+  const titleColumnBase: TableColumn<DrawingLogTableRow> = {
+    ...drawingColumns[1],
+    render: (item) => {
+      const identity = getDrawingDisplayIdentity(item);
+      const title = identity.title || "Untitled";
+      return (
+        <span className="max-w-64 truncate block" title={title}>
+          {title}
+        </span>
+      );
+    },
+    sortValue: (item) => getDrawingDisplayIdentity(item).title || item.title,
+  };
+
   return [
     {
       ...drawingColumns[0],
@@ -157,19 +172,20 @@ export function buildDrawingTableColumns(
       sortValue: (item) =>
         getDrawingDisplayIdentity(item).number || item.drawingNumber,
     },
-    {
-      ...drawingColumns[1],
-      render: (item) => {
-        const identity = getDrawingDisplayIdentity(item);
-        const title = identity.title || "Untitled";
-        return (
-          <span className="max-w-64 truncate block" title={title}>
-            {title}
-          </span>
-        );
-      },
-      sortValue: (item) => getDrawingDisplayIdentity(item).title || item.title,
-    },
+    inlineEdit
+      ? editableTextColumn(
+          titleColumnBase,
+          {
+            getValue: (item) => item.title,
+            emptyLabel: "Enter title",
+            onEdit: async (item, value) => {
+              await inlineEdit.onUpdate(item.id, {
+                title: value.trim() || "",
+              });
+            },
+          },
+        )
+      : titleColumnBase,
     {
       ...drawingColumns[2],
       render: (item) => (

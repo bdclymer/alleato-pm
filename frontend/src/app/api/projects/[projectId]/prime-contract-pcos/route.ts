@@ -135,11 +135,21 @@ export const GET = withApiGuardrails(
     const lineItemTotals: Record<string, { count: number; amount: number }> = {};
     const pcoIds = (pcos || []).map((pco) => pco.id);
     const linkedChangeEventCounts: Record<string, number> = {};
+    const firstLinkedChangeEventByPco: Record<string, { number: string | null; type: string | null }> = {};
+    const promotedCoNumberMap: Record<string, string | null> = {};
 
     if (pcoIds.length > 0) {
       const { data: links, error: linksError } = await supabase
         .from("change_event_pco_links")
-        .select("pco_id")
+        .select(
+          `
+          pco_id,
+          change_event:change_events!change_event_pco_links_change_event_id_fkey(
+            number,
+            type
+          )
+        `,
+        )
         .in("pco_id", pcoIds)
         .eq("pco_type", "prime");
 
@@ -150,6 +160,32 @@ export const GET = withApiGuardrails(
       for (const link of links || []) {
         linkedChangeEventCounts[link.pco_id] =
           (linkedChangeEventCounts[link.pco_id] || 0) + 1;
+        if (!firstLinkedChangeEventByPco[link.pco_id]) {
+          const changeEvent = Array.isArray(link.change_event) ? link.change_event[0] : link.change_event;
+          firstLinkedChangeEventByPco[link.pco_id] = {
+            number: changeEvent?.number ?? null,
+            type: changeEvent?.type ?? null,
+          };
+        }
+      }
+
+      const promotedCoIds = (pcos || [])
+        .map((pco) => pco.promoted_to_co_id)
+        .filter((id): id is number => typeof id === "number");
+
+      if (promotedCoIds.length > 0) {
+        const { data: promotedCoRows, error: promotedCoError } = await supabase
+          .from("prime_contract_change_orders")
+          .select("id, pcco_number")
+          .in("id", promotedCoIds);
+
+        if (promotedCoError) {
+          return apiErrorResponse(promotedCoError);
+        }
+
+        for (const row of promotedCoRows || []) {
+          promotedCoNumberMap[String(row.id)] = row.pcco_number ?? null;
+        }
       }
     }
 
@@ -161,6 +197,11 @@ export const GET = withApiGuardrails(
         line_items_count: totals.count,
         calculated_amount: pco.total_amount ?? totals.amount,
         linked_change_events_count: linkedChangeEventCounts[pco.id] || 0,
+        linked_change_event_number: firstLinkedChangeEventByPco[pco.id]?.number ?? null,
+        linked_change_event_type: firstLinkedChangeEventByPco[pco.id]?.type ?? null,
+        promoted_co_number: pco.promoted_to_co_id
+          ? (promotedCoNumberMap[String(pco.promoted_to_co_id)] ?? null)
+          : null,
       };
     });
 

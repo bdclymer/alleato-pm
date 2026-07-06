@@ -13,7 +13,11 @@ interface Props {
 
 type SubmittalDetailBase = Omit<
   SubmittalDetail,
-  "attachments" | "responsible_contractor" | "responsible_contractor_id" | "linked_rfis"
+  | "attachments"
+  | "responsible_contractor"
+  | "responsible_contractor_id"
+  | "linked_rfis"
+  | "received_from"
 >;
 
 type SubmittalDetailRow = SubmittalDetailBase & {
@@ -85,6 +89,35 @@ export default async function SubmittalDetailPage({ params }: Props) {
     entityId: submittalId,
   });
 
+  let responsibleContractor: { id: string; name: string } | null = null;
+  if (submittal.responsible_contractor_id) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("id, name")
+      .eq("id", submittal.responsible_contractor_id)
+      .maybeSingle();
+
+    if (company) {
+      responsibleContractor = company;
+    }
+  }
+
+  let receivedFrom: string | null = null;
+  if (submittal.received_from_id) {
+    const { data: person } = await supabase
+      .from("people")
+      .select("first_name, last_name, email")
+      .eq("id", submittal.received_from_id)
+      .maybeSingle();
+
+    if (person) {
+      receivedFrom =
+        [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+        person.email ||
+        null;
+    }
+  }
+
   const submittalRow = submittal as SubmittalDetailRow;
   const submittalDetail: SubmittalDetail = {
     ...submittalRow,
@@ -92,7 +125,8 @@ export default async function SubmittalDetailPage({ params }: Props) {
       submittalRow.responsible_contractor_id === null
         ? null
         : String(submittalRow.responsible_contractor_id),
-    responsible_contractor: null,
+    responsible_contractor: responsibleContractor,
+    received_from: receivedFrom,
     linked_rfis: [],
     attachments: attachments.map((attachment) => ({
       id: attachment.document_metadata_id,

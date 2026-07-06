@@ -30,7 +30,14 @@ for (const file of requiredFiles) {
 }
 
 const instructions = await readFile(path.join(repoRoot, "agent/instructions.md"), "utf8");
-for (const phrase of ["Alleato App Expert", "search_app_help", "read-only", "Do not claim"]) {
+for (const phrase of [
+  "Alleato App Expert Eve Lab",
+  "experimental read-only assistant",
+  "not the production App Expert",
+  "search_app_help",
+  "read-only",
+  "Do not claim",
+]) {
   if (!instructions.includes(phrase)) {
     failures.push(`agent/instructions.md must include "${phrase}".`);
   }

@@ -420,7 +420,7 @@ export default function ProjectDrawingsPage() {
   const handleInlineUpdate = useCallback(
     async (
       drawingId: string,
-      data: { discipline?: string; drawing_type?: string },
+      data: { title?: string; discipline?: string; drawing_type?: string },
     ) => {
       await apiFetch(`/api/projects/${projectId}/drawings/${drawingId}`, {
         method: "PATCH",

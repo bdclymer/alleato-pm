@@ -29,6 +29,8 @@ export interface SplitPageProps {
   variant?: SplitPageVariant;
   /** Breakpoint above which both panes are always visible */
   breakpoint?: Breakpoint;
+  /** Desktop width for the first pane. Defaults to content/class sizing. */
+  firstPaneWidth?: number | string;
   /** Whether the first pane is open on mobile by default */
   defaultIsOpen?: boolean;
   /** Layout direction */
@@ -93,6 +95,7 @@ export function SplitPage({
   children,
   variant = "two-column",
   breakpoint = "md",
+  firstPaneWidth,
   defaultIsOpen = true,
   orientation = "horizontal",
   className,
@@ -107,6 +110,15 @@ export function SplitPage({
   const isHorizontal = orientation === "horizontal";
   const showThirdPane =
     variant === "three-column" && thirdPane !== undefined && isDesktop;
+  const firstPaneStyle =
+    isDesktop && isHorizontal && firstPaneWidth !== undefined
+      ? {
+          width:
+            typeof firstPaneWidth === "number"
+              ? `${firstPaneWidth}px`
+              : firstPaneWidth,
+        }
+      : undefined;
 
   return (
     <SplitPageContext.Provider
@@ -126,6 +138,7 @@ export function SplitPage({
       >
         {/* First pane (left / top) */}
         <div
+          style={firstPaneStyle}
           className={cn(
             "shrink-0 overflow-hidden",
             isHorizontal ? "h-full" : "w-full",

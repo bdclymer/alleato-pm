@@ -60,7 +60,7 @@ export async function judgeChatResponse(params: {
   const { object } = await generateObject({
     model: getLanguageModel(modelId),
     schema: judgeSchema,
-    system: JUDGE_SYSTEM,
+    instructions: JUDGE_SYSTEM,
     prompt: [
       `USER QUESTION:\n${params.question}`,
       "",

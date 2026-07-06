@@ -1,0 +1,10 @@
+562 budget PDF export
+565 submittals list PDF export
+566 submittal detail PDF export
+568 RFI PDF export
+571 progress report generate PDF
+573 drawings PDF export
+590 commitment change order export PDF
+594 subcontractor invoice PDF export formatting
+596 commitment PDF export
+556 change event detail export function (treated as PDF export workflow check)

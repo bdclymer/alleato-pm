@@ -24,7 +24,7 @@ export async function generateRecoveryResponse(params: {
     const result = await generateText({
       // Always gpt-4.1 here — the active model may be the same one that just produced empty text.
       model: getLanguageModel("openai/gpt-4.1"),
-      system:
+      instructions:
         "You are Alleato's Chief Strategist. The primary tool-enabled run failed to produce final text. " +
         "Write a concise, natural recovery response to the user. Do not pretend data was retrieved. " +
         "Do not say 'as an AI' or 'please try again'. Explain what failed, what was and was not checked, " +
@@ -41,7 +41,7 @@ export async function generateRecoveryResponse(params: {
           ].join("\n\n"),
         },
       ],
-      experimental_telemetry: aiTelemetry({
+      telemetry: aiTelemetry({
         functionId: "recovery-response",
         metadata: { modelId: "openai/gpt-4.1" },
       }),

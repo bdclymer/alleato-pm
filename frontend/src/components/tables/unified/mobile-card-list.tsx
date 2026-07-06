@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ReactNode } from "react";
-import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -34,6 +35,10 @@ interface MobileCardListProps<T> {
   isFetching?: boolean;
   /** Custom row actions renderer (same as the desktop table) */
   rowActions?: (item: T) => ReactNode;
+  /** Default view handler — renders a simple "..." > View menu item when no custom rowActions */
+  onView?: (item: T) => void;
+  /** Default edit handler — renders a simple "..." > Edit menu item when no custom rowActions */
+  onEdit?: (item: T) => void;
   /** Default delete handler — renders a simple "..." > Delete menu when no custom rowActions */
   onDelete?: (item: T) => void;
   hasRowActions: boolean;
@@ -47,6 +52,8 @@ export function MobileCardList<T>({
   onRowClick,
   isFetching,
   rowActions,
+  onView,
+  onEdit,
   onDelete,
   hasRowActions,
 }: MobileCardListProps<T>) {
@@ -118,7 +125,7 @@ export function MobileCardList<T>({
                   >
                     {rowActions ? (
                       rowActions(item)
-                    ) : onDelete ? (
+                    ) : onView || onEdit || onDelete ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -130,13 +137,31 @@ export function MobileCardList<T>({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => onDelete(item)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          {onView && (
+                            <DropdownMenuItem onClick={() => onView(item)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                          )}
+                          {onView && (onEdit || onDelete) ? (
+                            <DropdownMenuSeparator />
+                          ) : null}
+                          {onEdit && (
+                            <DropdownMenuItem onClick={() => onEdit(item)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {onEdit && onDelete ? <DropdownMenuSeparator /> : null}
+                          {onDelete && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => onDelete(item)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : null}

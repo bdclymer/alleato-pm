@@ -2,13 +2,21 @@
 
 import { useMemo } from "react";
 
+import Link from "next/link";
+
+import { StatusBadge } from "@/components/ds";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { useChangeEvents } from "@/hooks/use-change-events";
 import type { ChangeEvent } from "@/types/change-events";
-
-import {
-  PrimeContractQuickViewSection,
-  type QuickViewRecord,
-} from "./PrimeContractQuickViewSection";
 
 interface PrimeContractChangeEventsTabProps {
   projectId: string;
@@ -42,40 +50,68 @@ export function PrimeContractChangeEventsTab({
     [changeEvents, contractId],
   );
 
-  const records = useMemo<QuickViewRecord[]>(
-    () =>
-      rows.map((changeEvent) => ({
-        id: String(changeEvent.id),
-        eyebrow: changeEvent.number ?? "Change event",
-        title: changeEvent.title || "Untitled change event",
-        status: changeEvent.status ?? "Open",
-        summary: changeEvent.description,
-        meta: [
-          changeEvent.type || "No type",
-          changeEvent.scope || "No scope",
-          changeEvent.cost_rom != null ? formatCurrency(Number(changeEvent.cost_rom)) : "No ROM",
-        ],
-        href: `/${projectId}/change-events/${changeEvent.id}`,
-        linkLabel: "Open change event",
-        fields: [
-          { label: "Type", value: changeEvent.type || "—" },
-          { label: "Scope", value: changeEvent.scope || "—" },
-          { label: "Cost ROM", value: changeEvent.cost_rom != null ? formatCurrency(Number(changeEvent.cost_rom)) : "—" },
-          { label: "Potential PCO", value: changeEvent.prime_pco || "Not linked" },
-          { label: "Reason", value: changeEvent.reason || "—" },
-          { label: "Origin", value: changeEvent.origin || "—" },
-          { label: "Description", value: changeEvent.description || "No description provided.", fullWidth: true },
-        ],
-      })),
-    [formatCurrency, projectId, rows],
-  );
-
   return (
-    <PrimeContractQuickViewSection
-      label="Change Events"
-      items={records}
-      isLoading={isLoading}
-      emptyMessage="No change events associated with this prime contract yet."
-    />
+    <section className="space-y-3">
+      <SectionRuleHeading label="Change Events" />
+      <InlineTable variant="read" tableClassName="min-w-full">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>#</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Scope</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Cost ROM</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Potential PCO</InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {isLoading ? (
+            <InlineTableRow>
+              <InlineTableCell colSpan={7} className="py-5 text-sm text-muted-foreground">
+                Loading change events...
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : rows.length === 0 ? (
+            <InlineTableRow>
+              <InlineTableCell colSpan={7} className="py-5 text-sm text-muted-foreground">
+                No change events associated with this prime contract yet.
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : (
+            rows.map((changeEvent) => (
+              <InlineTableRow key={String(changeEvent.id)}>
+                <InlineTableCell className="font-medium text-foreground">
+                  {changeEvent.number || "—"}
+                </InlineTableCell>
+                <InlineTableCell>
+                  <Link
+                    href={`/${projectId}/change-events/${changeEvent.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {changeEvent.title || "Untitled"}
+                  </Link>
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {changeEvent.type || "—"}
+                </InlineTableCell>
+                <InlineTableCell>
+                  <StatusBadge status={changeEvent.status ?? "Open"} />
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {changeEvent.scope || "—"}
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric>
+                  {changeEvent.cost_rom != null ? formatCurrency(Number(changeEvent.cost_rom)) : "—"}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {changeEvent.prime_pco || "—"}
+                </InlineTableCell>
+              </InlineTableRow>
+            ))
+          )}
+        </InlineTableBody>
+      </InlineTable>
+    </section>
   );
 }

@@ -396,7 +396,7 @@ function ToolsDropdown({
   }, [open, projectId]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -425,7 +425,7 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           aria-label="Close tools menu"
-          className="fixed inset-x-0 bottom-0 top-12 z-30 h-auto cursor-default rounded-none bg-background/55 p-0 backdrop-blur-sm animate-in fade-in duration-150 hover:bg-background/55 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="fixed inset-x-0 bottom-0 top-12 z-[10000] h-auto cursor-default rounded-none bg-background/55 p-0 backdrop-blur-sm animate-in fade-in duration-150 hover:bg-background/55 focus-visible:ring-0 focus-visible:ring-offset-0"
           onClick={() => setOpen(false)}
         />
       )}
@@ -433,7 +433,7 @@ function ToolsDropdown({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="border border-border bg-popover p-0 shadow-sm"
+        className="z-[10010] overflow-hidden border border-border bg-popover p-0 shadow-sm"
         style={{
           width: "min(1040px, calc(100vw - 1.5rem))",
           maxWidth: "calc(100vw - 1.5rem)",

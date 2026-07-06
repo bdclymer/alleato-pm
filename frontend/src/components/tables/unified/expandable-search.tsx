@@ -18,14 +18,16 @@ export function ExpandableSearch({
   placeholder = "Search...",
   ariaLabel = "Search table",
   defaultExpanded = false,
+  collapsible = true,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   ariaLabel?: string;
   defaultExpanded?: boolean;
+  collapsible?: boolean;
 }): React.ReactElement {
-  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
+  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded || !collapsible);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -38,9 +40,15 @@ export function ExpandableSearch({
     if (value) setIsExpanded(true);
   }, [value]);
 
+  React.useEffect(() => {
+    if (!collapsible) {
+      setIsExpanded(true);
+    }
+  }, [collapsible]);
+
   return (
     <div className="relative flex items-center">
-      {!isExpanded ? (
+      {collapsible && !isExpanded ? (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -58,7 +66,7 @@ export function ExpandableSearch({
           </Tooltip>
         </TooltipProvider>
       ) : (
-        <div className="relative flex items-center animate-in slide-in-from-left-2 duration-200">
+        <div className="relative flex w-full items-center animate-in slide-in-from-left-2 duration-200">
           <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             ref={inputRef}
@@ -66,10 +74,10 @@ export function ExpandableSearch({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onBlur={() => {
-              if (!value) setIsExpanded(false);
+              if (collapsible && !value) setIsExpanded(false);
             }}
             placeholder={placeholder}
-            className="h-8 w-50 pl-8 pr-8 text-sm"
+            className={collapsible ? "h-8 w-50 pl-8 pr-8 text-sm" : "h-8 w-full pl-8 pr-8 text-sm"}
             aria-label={ariaLabel}
           />
           {value && (

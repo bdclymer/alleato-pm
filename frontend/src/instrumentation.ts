@@ -67,7 +67,7 @@ export async function register() {
       // EU endpoint https://cloud.langfuse.com. Our project is on US cloud, so
       // without this every OTel span was POSTed to the wrong region and silently
       // dropped — the real reason chat traces vanished on 2026-06-10 when the
-      // handler moved to the experimental_telemetry/OTel path.
+      // handler moved to the AI SDK telemetry/OTel path.
       const langfuseBaseUrl =
         process.env.LANGFUSE_BASE_URL?.trim() ||
         process.env.LANGFUSE_HOST?.trim() ||

@@ -219,7 +219,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           name: "meetingPrepSuggestions",
           description: "Prioritized meeting prep suggestions for a construction project meeting.",
         }),
-        system: [
+        instructions: [
           "You generate meeting prep suggestions for construction project meetings.",
           "Use only the provided source candidates. Do not invent links, records, people, dates, or facts.",
           "Use prior meeting context only to prioritize and phrase suggestions; do not cite a prior meeting unless it is represented as a source candidate.",

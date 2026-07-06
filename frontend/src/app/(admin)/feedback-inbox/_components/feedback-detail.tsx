@@ -382,7 +382,7 @@ export function FeedbackDetail({
         </section>
 
         <CollapsibleDetailSection key={`${item.id}-routing`} label="Routing">
-          <ToolContextSection item={item} />
+          <ToolContextSection item={item} onAssignmentChanged={onRefresh} />
         </CollapsibleDetailSection>
 
         <CollapsibleDetailSection key={`${item.id}-resources`} label="Resources">

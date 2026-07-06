@@ -260,7 +260,7 @@ export async function generateExecutiveIntelligenceBrief(
   const sourceSummary = buildSourceSummary(packet);
 
   const isMorning = briefType === "morning";
-  const system = isMorning ? MORNING_SYSTEM : EVENING_SYSTEM;
+  const instructions = isMorning ? MORNING_SYSTEM : EVENING_SYSTEM;
   const userPrompt = (
     isMorning ? MORNING_USER_TEMPLATE : EVENING_USER_TEMPLATE
   ).replace("{SOURCE_SUMMARY}", sourceSummary);
@@ -269,9 +269,9 @@ export async function generateExecutiveIntelligenceBrief(
     const result = await generateText({
       model: getLanguageModel(model),
       temperature: 0.15,
-      system,
+      instructions,
       messages: [{ role: "user", content: userPrompt }],
-      experimental_telemetry: aiTelemetry({
+      telemetry: aiTelemetry({
         functionId: "executive-daily-brief.intelligence-synthesis",
         metadata: {
           workflow: "executive_daily_brief",

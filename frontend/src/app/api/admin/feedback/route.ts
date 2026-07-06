@@ -23,6 +23,10 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 import { logger } from "@/lib/logger";
+import {
+  expandFeedbackStatusAliases,
+  normalizeFeedbackStoredStatus,
+} from "@/app/(admin)/feedback-inbox/status-aliases";
 
 const feedbackPayloadSchema = z.object({
   category: z.string().trim().min(1).max(100).nullable().optional(),
@@ -512,7 +516,15 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     .range(offset, offset + limit - 1);
 
   if (status) {
-    const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+    const statuses = [
+      ...new Set(
+        status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .flatMap((value) => expandFeedbackStatusAliases(value)),
+      ),
+    ];
     if (statuses.length === 1) {
       query = query.eq("status", statuses[0]);
     } else if (statuses.length > 1) {
@@ -589,7 +601,7 @@ const patchSchema = z.object({
   id: z.string().uuid(),
   category: z.string().trim().min(1).max(100).nullable().optional(),
   severity: z.enum(ADMIN_FEEDBACK_SEVERITIES).optional(),
-  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "pr_created", "deferred", "resolved", "closed", "archived"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "pr_created", "deferred", "resolved", "verified", "closed", "archived"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
@@ -619,7 +631,12 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
   }
 
   const serviceSupabase = createServiceClient();
-  const mergedUpdates: Record<string, unknown> = { ...updates };
+  const mergedUpdates: Record<string, unknown> = {
+    ...updates,
+    ...(updates.status
+      ? { status: normalizeFeedbackStoredStatus(updates.status) }
+      : {}),
+  };
 
   if (metadata) {
     const { data: existingItem, error: existingError } = await serviceSupabase

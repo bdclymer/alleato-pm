@@ -12,7 +12,7 @@
 export function shouldSyncInitialMessages(params: {
   /**
    * True when this `initialMessages` change is the reload we deliberately
-   * trigger in `onFinish`. The live list is already the freshest copy (and
+   * trigger in `onEnd`. The live list is already the freshest copy (and
    * carries in-memory status/data parts the DB copy lacks), so don't replace it.
    */
   skipPostFinishReload: boolean;

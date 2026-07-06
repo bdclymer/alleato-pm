@@ -1,20 +1,31 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/permissions-guard";
-import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+
 import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
+import { getPublicAssetDataUri } from "@/lib/documents/branded-letterhead";
+import { requirePermission } from "@/lib/permissions-guard";
 import {
-  buildBrandedDocumentHtml,
-  buildBrandedFooterTemplate,
-  BRANDED_FOOTER_MARGIN,
-} from "@/lib/documents/branded-letterhead";
+  buildSubmittalExportFilename,
+  COVER_SHEET_EXPORT_ITEM,
+  isPdfPacketPartSupported,
+  mergeSubmittalExportPacket,
+  parseSelectedSubmittalExportItems,
+  type SubmittalExportPacketPart,
+} from "@/lib/submittals/export-packet";
+import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
-// Puppeteer requires the Node.js runtime — Edge runtime does not support it.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const COMPANY_NAME = "Alleato Group";
+const COMPANY_ADDRESS_LINES = [
+  "8383 Craig Street, Suite 150",
+  "Indianapolis, Indiana 46250",
+  "P: +13177600088",
+];
 
 function esc(value: string | number | null | undefined): string {
   if (value == null) return "";
@@ -30,33 +41,86 @@ function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleDateString("en-US");
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleString("en-US");
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
-/**
- * GET /api/projects/[projectId]/submittals/[submittalId]/pdf
- * Renders a branded submittal "cover sheet" PDF: submittal info, review
- * workflow steps, distribution list, linked drawings, attachments, and
- * status history.
- */
+function formatProjectLines(project: {
+  project_number?: string | null;
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+} | null): string[] {
+  if (!project) return [];
+
+  const lines = [
+    project.project_number || project.name
+      ? `Project: ${[project.project_number, project.name].filter(Boolean).join(" ")}`
+      : null,
+    project.address ?? null,
+    [project.city, project.state].filter(Boolean).join(", ") || null,
+  ];
+
+  return lines.filter((line): line is string => Boolean(line && line.trim()));
+}
+
+function buildMetaRows(
+  rows: Array<
+    [string, string | null | undefined, string, string | null | undefined]
+  >,
+): string {
+  return rows
+    .map(
+      ([leftLabel, leftValue, rightLabel, rightValue]) => `
+        <tr>
+          <td class="meta-label">${esc(leftLabel)}</td>
+          <td class="meta-value">${esc(leftValue || "—")}</td>
+          <td class="meta-label">${esc(rightLabel)}</td>
+          <td class="meta-value">${esc(rightValue || "—")}</td>
+        </tr>
+      `,
+    )
+    .join("");
+}
+
+function resolveProjectFieldValue(
+  value: string | number | null | undefined,
+): string {
+  if (value == null) return "—";
+  const stringValue = String(value).trim();
+  return stringValue.length > 0 ? stringValue : "—";
+}
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/submittals/[submittalId]/pdf#GET",
-  async ({ params }) => {
+  async ({ request, params }) => {
     const { projectId, submittalId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
+    const projectIdNum = Number.parseInt(projectId, 10);
 
     const guard = await requirePermission(projectIdNum, "submittals", "read");
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
     const serviceClient = createServiceClient();
+    const searchParams = new URL(request.url).searchParams;
+    const selectedItems = parseSelectedSubmittalExportItems(searchParams);
 
     const { data: submittal, error } = await supabase
       .from("submittals")
@@ -65,16 +129,18 @@ export const GET = withApiGuardrails(
          submittal_type:submittal_types(id, name),
          submittal_package:submittal_packages(id, name),
          submittal_workflow_steps(
-           id, step_order, step_type,
+           id,
+           created_at,
+           step_order,
+           step_type,
            submittal_responses(id, responder_id, response_status, comments, responded_at)
          ),
          submittal_distributions(
-           id, from_id, message, distributed_at,
+           id,
+           from_id,
+           message,
+           distributed_at,
            submittal_distribution_recipients(id, recipient_id)
-         ),
-         submittal_linked_drawings(
-           id, drawing_id,
-           drawings!submittal_linked_drawings_drawing_id_fkey(drawing_number, title, discipline)
          ),
          submittal_history(id, action, actor_id, new_status, occurred_at)
         `,
@@ -85,49 +151,106 @@ export const GET = withApiGuardrails(
       .single();
 
     if (error || !submittal) {
-      throw new GuardrailError({ code: "NOT_FOUND", where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf", message: "Submittal not found", cause: error });
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf",
+        message: "Submittal not found.",
+        cause: error,
+      });
     }
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("name, project_number")
-      .eq("id", projectIdNum)
-      .single();
+    const attachments = await listLinkedPatternCDocuments({
+      supabase,
+      serviceClient,
+      entityType: "submittal",
+      entityId: submittalId,
+    });
 
-    // --- Batch-resolve display names for every referenced auth user id ---
-    const workflowSteps = submittal.submittal_workflow_steps ?? [];
-    const distributions = submittal.submittal_distributions ?? [];
-    const history = submittal.submittal_history ?? [];
-    const linkedDrawings = submittal.submittal_linked_drawings ?? [];
+    const [{ data: project }, { data: responsibleContractor }] =
+      await Promise.all([
+        supabase
+          .from("projects")
+          .select("name, project_number, address, city, state")
+          .eq("id", projectIdNum)
+          .single(),
+        submittal.responsible_contractor_id
+          ? supabase
+              .from("companies")
+              .select("name")
+              .eq("id", submittal.responsible_contractor_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
 
-    const authUserIds = new Set<string>();
-    for (const step of workflowSteps) {
+    const authOrPersonIds = new Set<string>();
+    for (const step of submittal.submittal_workflow_steps ?? []) {
       for (const response of step.submittal_responses ?? []) {
-        if (response.responder_id) authUserIds.add(response.responder_id);
+        if (response.responder_id) authOrPersonIds.add(response.responder_id);
       }
     }
-    for (const dist of distributions) {
-      if (dist.from_id) authUserIds.add(dist.from_id);
-      for (const recipient of dist.submittal_distribution_recipients ?? []) {
-        if (recipient.recipient_id) authUserIds.add(recipient.recipient_id);
+    for (const distribution of submittal.submittal_distributions ?? []) {
+      if (distribution.from_id) authOrPersonIds.add(distribution.from_id);
+      for (const recipient of distribution.submittal_distribution_recipients ??
+        []) {
+        if (recipient.recipient_id) authOrPersonIds.add(recipient.recipient_id);
       }
     }
-    for (const entry of history) {
-      if (entry.actor_id) authUserIds.add(entry.actor_id);
+    for (const entry of submittal.submittal_history ?? []) {
+      if (entry.actor_id) authOrPersonIds.add(entry.actor_id);
     }
-    if (submittal.received_from_id) authUserIds.add(submittal.received_from_id);
-    if (submittal.submittal_manager_id) authUserIds.add(submittal.submittal_manager_id);
+    if (submittal.received_from_id) authOrPersonIds.add(submittal.received_from_id);
+    if (submittal.submittal_manager_id) {
+      authOrPersonIds.add(submittal.submittal_manager_id);
+    }
 
     const nameById = new Map<string, string>();
-    if (authUserIds.size > 0) {
-      const { data: authRows } = await supabase
-        .from("users_auth")
-        .select("auth_user_id, person:people!users_auth_person_id_fkey(first_name, last_name, email)")
-        .in("auth_user_id", Array.from(authUserIds));
-      for (const row of authRows ?? []) {
-        const person = row.person as { first_name?: string | null; last_name?: string | null; email?: string | null } | null;
-        const name = [person?.first_name, person?.last_name].filter(Boolean).join(" ") || person?.email || null;
-        if (row.auth_user_id && name) nameById.set(row.auth_user_id, name);
+
+    if (authOrPersonIds.size > 0) {
+      const ids = Array.from(authOrPersonIds);
+      const [
+        { data: authUserRows },
+        { data: personLinkedRows },
+        { data: peopleRows },
+      ] = await Promise.all([
+        supabase
+          .from("users_auth")
+          .select(
+            "auth_user_id, person_id, person:people!users_auth_person_id_fkey(first_name, last_name, email)",
+          )
+          .in("auth_user_id", ids),
+        supabase
+          .from("users_auth")
+          .select(
+            "auth_user_id, person_id, person:people!users_auth_person_id_fkey(first_name, last_name, email)",
+          )
+          .in("person_id", ids),
+        supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
+          .in("id", ids),
+      ]);
+
+      for (const row of [...(authUserRows ?? []), ...(personLinkedRows ?? [])]) {
+        const person = row.person as {
+          first_name?: string | null;
+          last_name?: string | null;
+          email?: string | null;
+        } | null;
+        const name =
+          [person?.first_name, person?.last_name].filter(Boolean).join(" ") ||
+          person?.email ||
+          null;
+        if (name && row.auth_user_id) nameById.set(row.auth_user_id, name);
+        if (name && row.person_id) nameById.set(row.person_id, name);
+      }
+
+      for (const row of peopleRows ?? []) {
+        if (nameById.has(row.id)) continue;
+        const name =
+          [row.first_name, row.last_name].filter(Boolean).join(" ") ||
+          row.email ||
+          null;
+        if (name) nameById.set(row.id, name);
       }
     }
 
@@ -136,185 +259,452 @@ export const GET = withApiGuardrails(
       return nameById.get(id) || "—";
     }
 
-    // --- Attachments ---
-    const attachments = await listLinkedPatternCDocuments({
-      supabase,
-      serviceClient,
-      entityType: "submittal",
-      entityId: submittalId,
-    });
+    const workflowSteps = (submittal.submittal_workflow_steps ?? []).slice().sort(
+      (left, right) => left.step_order - right.step_order,
+    );
+    const workflowResponses = workflowSteps
+      .flatMap((step) =>
+        (step.submittal_responses ?? []).map((response) => ({
+          ...response,
+          stepCreatedAt: step.created_at,
+          stepType: step.step_type,
+        })),
+      )
+      .filter(
+        (response) =>
+          response.response_status &&
+          response.response_status.toLowerCase() !== "pending",
+      )
+      .sort(
+        (left, right) =>
+          new Date(right.responded_at ?? right.stepCreatedAt ?? 0).getTime() -
+          new Date(left.responded_at ?? left.stepCreatedAt ?? 0).getTime(),
+      );
 
-    // --- Build HTML sections ---
-    const metaGrid = `
-      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;font-size:11px;">
-        <tr>
-          <td style="width:25%;padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Status</td>
-          <td style="width:25%;padding:4px 8px;">${esc(submittal.status)}</td>
-          <td style="width:25%;padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Ball In Court</td>
-          <td style="width:25%;padding:4px 8px;">${esc(submittal.ball_in_court)}</td>
-        </tr>
-        <tr>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Type</td>
-          <td style="padding:4px 8px;">${esc(submittal.submittal_type?.name)}</td>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Package</td>
-          <td style="padding:4px 8px;">${esc(submittal.submittal_package?.name)}</td>
-        </tr>
-        <tr>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Spec Section</td>
-          <td style="padding:4px 8px;">${esc(submittal.specification_section)}</td>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Division</td>
-          <td style="padding:4px 8px;">${esc(submittal.division)}</td>
-        </tr>
-        <tr>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Received From</td>
-          <td style="padding:4px 8px;">${resolveName(submittal.received_from_id)}</td>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Submittal Manager</td>
-          <td style="padding:4px 8px;">${resolveName(submittal.submittal_manager_id)}</td>
-        </tr>
-        <tr>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Sent Date</td>
-          <td style="padding:4px 8px;">${formatDate(submittal.sent_date)}</td>
-          <td style="padding:4px 8px 4px 0;color:#6b6762;font-weight:700;">Final Due Date</td>
-          <td style="padding:4px 8px;">${formatDate(submittal.final_due_date)}</td>
-        </tr>
-      </table>
-      ${
-        submittal.description
-          ? `<div style="margin-bottom:18px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6b6762;margin-bottom:4px;">Description</div><div style="font-size:11px;">${esc(submittal.description)}</div></div>`
-          : ""
-      }
-    `;
+    const latestResponse = workflowResponses[0] ?? null;
+    const distributions = (submittal.submittal_distributions ?? []).slice().sort(
+      (left, right) =>
+        new Date(right.distributed_at ?? 0).getTime() -
+        new Date(left.distributed_at ?? 0).getTime(),
+    );
+    const latestDistribution = distributions[0] ?? null;
+    const currentAttachmentNames = attachments.map(
+      (attachment) => attachment.file_name ?? attachment.title ?? "Attachment",
+    );
+    const attachmentSummary = currentAttachmentNames.length
+      ? currentAttachmentNames.join(", ")
+      : "—";
+    const approvers = Array.from(
+      new Set(
+        workflowResponses
+          .map((response) => resolveName(response.responder_id))
+          .filter((name) => name !== "—"),
+      ),
+    );
+    const recipientSummary = latestDistribution
+      ? (latestDistribution.submittal_distribution_recipients ?? [])
+          .map((recipient) => resolveName(recipient.recipient_id))
+          .filter((name) => name !== "—")
+          .join(", ") || "—"
+      : "—";
 
-    function sectionHeading(label: string): string {
-      return `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#242424;border-bottom:1px solid #ece7e2;padding-bottom:4px;margin:20px 0 8px;">${esc(label)}</div>`;
-    }
+    const headerImageSrc = getPublicAssetDataUri(
+      "export-assets/submittal-cover-header.png",
+    );
+    const footerImageSrc = getPublicAssetDataUri(
+      "export-assets/submittal-cover-footer.png",
+    );
 
-    const workflowRows = workflowSteps
-      .sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0))
-      .map((step) => {
+    const submittalDisplayNumber =
+      submittal.revision !== null && submittal.revision !== undefined
+        ? `${submittal.submittal_number}.${submittal.revision}`
+        : String(submittal.submittal_number ?? "");
+
+    const summaryRows = buildMetaRows([
+      [
+        "Revision",
+        resolveProjectFieldValue(submittal.revision),
+        "Submittal Manager",
+        resolveName(submittal.submittal_manager_id),
+      ],
+      [
+        "Status",
+        submittal.status,
+        "Date Created",
+        formatDate(submittal.created_at),
+      ],
+      [
+        "Responsible Contractor",
+        responsibleContractor?.name ?? "—",
+        "Received From",
+        resolveName(submittal.received_from_id),
+      ],
+      [
+        "Final Due Date",
+        formatDate(submittal.final_due_date),
+        "Lead Time",
+        submittal.lead_time != null ? `${submittal.lead_time}` : "—",
+      ],
+      [
+        "Location",
+        resolveProjectFieldValue(submittal.location_id),
+        "Type",
+        submittal.submittal_type?.name ?? "—",
+      ],
+      [
+        "Submittal Package",
+        submittal.submittal_package?.name ?? "—",
+        "Approvers",
+        approvers.join(", ") || "—",
+      ],
+      [
+        "Ball in Court",
+        resolveName(submittal.ball_in_court),
+        "Distribution",
+        recipientSummary,
+      ],
+      [
+        "Spec Section",
+        submittal.specification_section ?? "—",
+        "Description",
+        submittal.description ?? "—",
+      ],
+    ]);
+
+    const workflowRows = [
+      `<tr>
+        <td>General Information Attachments</td>
+        <td>${formatDate(submittal.sent_date)}</td>
+        <td>${formatDate(submittal.final_due_date)}</td>
+        <td>—</td>
+        <td>—</td>
+        <td class="attachments-cell">${esc(attachmentSummary)}</td>
+      </tr>`,
+      ...workflowSteps.flatMap((step) => {
         const responses = step.submittal_responses ?? [];
         if (responses.length === 0) {
-          return `<tr><td style="padding:4px 6px;border:1px solid #e2ddd7;">${step.step_order ?? "—"}</td><td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(step.step_type)}</td><td style="padding:4px 6px;border:1px solid #e2ddd7;" colspan="3">No response recorded</td></tr>`;
-        }
-        return responses
-          .map(
-            (r) => `<tr>
-              <td style="padding:4px 6px;border:1px solid #e2ddd7;">${step.step_order ?? "—"}</td>
-              <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(step.step_type)}</td>
-              <td style="padding:4px 6px;border:1px solid #e2ddd7;">${resolveName(r.responder_id)}</td>
-              <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(r.response_status)}</td>
-              <td style="padding:4px 6px;border:1px solid #e2ddd7;">${formatDate(r.responded_at)}</td>
+          return [
+            `<tr>
+              <td>${esc(step.step_type)}</td>
+              <td>${formatDate(step.created_at)}</td>
+              <td>—</td>
+              <td>—</td>
+              <td>No response recorded</td>
+              <td>—</td>
             </tr>`,
-          )
-          .join("");
-      })
-      .join("");
+          ];
+        }
 
-    const workflowSection = workflowSteps.length
-      ? `${sectionHeading("Review Workflow")}
-        <table style="width:100%;border-collapse:collapse;font-size:10px;">
-          <thead><tr style="background:#f3f1ee;">
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Step</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Type</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Responder</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Status</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Responded</th>
-          </tr></thead>
-          <tbody>${workflowRows}</tbody>
-        </table>`
-      : "";
+        return responses.map(
+          (response) => `<tr>
+            <td>${esc(resolveName(response.responder_id) || step.step_type)}</td>
+            <td>${formatDate(step.created_at)}</td>
+            <td>—</td>
+            <td>${formatDate(response.responded_at)}</td>
+            <td>${esc(response.response_status || "—")}</td>
+            <td class="attachments-cell">${esc(attachmentSummary)}</td>
+          </tr>`,
+        );
+      }),
+    ].join("");
 
-    const distributionSection = distributions.length
-      ? `${sectionHeading("Distribution")}
-        ${distributions
-          .map((dist) => {
-            const recipients = (dist.submittal_distribution_recipients ?? [])
-              .map((r) => resolveName(r.recipient_id))
-              .join(", ");
-            return `<div style="font-size:10px;margin-bottom:8px;">
-              <div><strong>From:</strong> ${resolveName(dist.from_id)} &middot; <strong>Sent:</strong> ${formatDateTime(dist.distributed_at)}</div>
-              <div><strong>To:</strong> ${esc(recipients || "—")}</div>
-              ${dist.message ? `<div style="color:#5f5b56;margin-top:2px;">${esc(dist.message)}</div>` : ""}
-            </div>`;
-          })
-          .join("")}`
-      : "";
+    const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>${esc(submittal.title || "Submittal Export")}</title>
+    <style>
+      @page {
+        size: Letter;
+        margin: 0.5in;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #111827;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .header-image,
+      .footer-image {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        pointer-events: none;
+      }
+      .header-image {
+        top: 0;
+        height: 86px;
+        object-fit: cover;
+      }
+      .footer-image {
+        bottom: 0;
+        height: 34px;
+        object-fit: cover;
+      }
+      .page {
+        padding: 58px 24px 40px;
+      }
+      .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        margin-top: 10px;
+      }
+      .company-block,
+      .project-block {
+        width: 46%;
+      }
+      .company-name,
+      .project-label {
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .company-line,
+      .project-line {
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      .title-band {
+        margin: 18px 0 14px;
+        border-top: 1px solid #d1d5db;
+        border-bottom: 1px solid #d1d5db;
+        padding: 8px 0 10px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+      }
+      .section-heading {
+        font-size: 12px;
+        font-weight: 700;
+        margin: 0 0 6px;
+      }
+      .distribution-note {
+        margin-bottom: 12px;
+        font-size: 11px;
+        font-style: italic;
+      }
+      .distribution-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 4px 12px;
+        margin-bottom: 12px;
+      }
+      .label {
+        font-weight: 700;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .summary-table th,
+      .workflow-table th {
+        background: #ececec;
+        border: 1px solid #d1d5db;
+        padding: 8px;
+        font-size: 11px;
+        text-align: left;
+      }
+      .summary-table td,
+      .workflow-table td {
+        border: 1px solid #d1d5db;
+        padding: 7px 8px;
+        vertical-align: top;
+        font-size: 11px;
+      }
+      .meta-table {
+        margin-top: 16px;
+        border-top: 1px solid #d1d5db;
+        border-bottom: 1px solid #d1d5db;
+      }
+      .meta-table td {
+        padding: 8px 6px;
+        vertical-align: top;
+      }
+      .meta-label {
+        width: 16%;
+        font-weight: 700;
+      }
+      .meta-value {
+        width: 34%;
+      }
+      .workflow-heading,
+      .comments-heading {
+        border-top: 1px solid #d1d5db;
+        margin-top: 18px;
+        padding-top: 12px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .attachments-cell {
+        word-break: break-word;
+      }
+      .comments-box {
+        min-height: 52px;
+        border-bottom: 1px solid #d1d5db;
+        padding: 8px 0 0;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    ${
+      headerImageSrc
+        ? `<img class="header-image" src="${headerImageSrc}" alt="" />`
+        : ""
+    }
+    ${
+      footerImageSrc
+        ? `<img class="footer-image" src="${footerImageSrc}" alt="" />`
+        : ""
+    }
+    <main class="page">
+      <section class="top-row">
+        <div class="company-block">
+          <div class="company-name">${esc(COMPANY_NAME)}</div>
+          ${COMPANY_ADDRESS_LINES.map(
+            (line) => `<div class="company-line">${esc(line)}</div>`,
+          ).join("")}
+        </div>
+        <div class="project-block" style="text-align:right;">
+          ${formatProjectLines(project).map((line, index) => {
+            const className = index === 0 ? "project-label" : "project-line";
+            return `<div class="${className}">${esc(line)}</div>`;
+          }).join("")}
+        </div>
+      </section>
 
-    const drawingsSection = linkedDrawings.length
-      ? `${sectionHeading("Linked Drawings")}
-        <table style="width:100%;border-collapse:collapse;font-size:10px;">
-          <thead><tr style="background:#f3f1ee;">
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Number</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Title</th>
-            <th style="padding:4px 6px;border:1px solid #e2ddd7;text-align:left;">Discipline</th>
-          </tr></thead>
-          <tbody>
-            ${linkedDrawings
-              .map((link) => {
-                const drawing = link.drawings as { drawing_number?: string | null; title?: string | null; discipline?: string | null } | null;
-                return `<tr>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(drawing?.drawing_number)}</td>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(drawing?.title)}</td>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(drawing?.discipline)}</td>
-                </tr>`;
-              })
-              .join("")}
-          </tbody>
-        </table>`
-      : "";
+      <div class="title-band">Submittal #${esc(submittalDisplayNumber)}${submittal.title ? ` - ${esc(submittal.title)}` : ""}</div>
 
-    const attachmentsSection = attachments.length
-      ? `${sectionHeading("Attachments")}
-        <ul style="margin:0;padding-left:18px;font-size:10px;">
-          ${attachments.map((a) => `<li>${esc(a.title || a.file_name)}</li>`).join("")}
-        </ul>`
-      : "";
+      <div class="section-heading">Distribution Summary</div>
+      <div class="distribution-note">
+        Distributed by ${esc(resolveName(latestDistribution?.from_id) || "—")} on ${esc(formatDate(latestDistribution?.distributed_at))}
+      </div>
+      <div class="distribution-grid">
+        <div class="label">To</div>
+        <div>${esc(recipientSummary)}</div>
+        <div class="label">Message</div>
+        <div>${esc(latestDistribution?.message || "None")}</div>
+        <div class="label">Attachments</div>
+        <div>${esc(attachmentSummary)}</div>
+      </div>
 
-    const historySection = history.length
-      ? `${sectionHeading("Status History")}
-        <table style="width:100%;border-collapse:collapse;font-size:10px;">
-          <tbody>
-            ${history
-              .slice()
-              .sort((a, b) => new Date(b.occurred_at ?? 0).getTime() - new Date(a.occurred_at ?? 0).getTime())
-              .map(
-                (entry) => `<tr>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;white-space:nowrap;">${formatDateTime(entry.occurred_at)}</td>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(entry.action)}</td>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${esc(entry.new_status)}</td>
-                  <td style="padding:4px 6px;border:1px solid #e2ddd7;">${resolveName(entry.actor_id)}</td>
-                </tr>`,
-              )
-              .join("")}
-          </tbody>
-        </table>`
-      : "";
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Response</th>
+            <th>Attachments</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${esc(resolveName(latestResponse?.responder_id) || "—")}</td>
+            <td>${esc(latestResponse?.response_status || "—")}</td>
+            <td class="attachments-cell">${esc(attachmentSummary)}</td>
+            <td>${esc(latestResponse?.comments || "—")}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    const bodyHtml = `${metaGrid}${workflowSection}${distributionSection}${drawingsSection}${attachmentsSection}${historySection}`;
+      <table class="meta-table">
+        <tbody>${summaryRows}</tbody>
+      </table>
 
-    const projectLabel = project
-      ? [project.project_number, project.name].filter(Boolean).join(" — ")
-      : `Project ${projectId}`;
+      <div class="workflow-heading">Submittal Workflow</div>
+      <table class="workflow-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Sent Date</th>
+            <th>Due Date</th>
+            <th>Returned Date</th>
+            <th>Response</th>
+            <th>Attachments</th>
+          </tr>
+        </thead>
+        <tbody>${workflowRows}</tbody>
+      </table>
 
-    const html = buildBrandedDocumentHtml({
-      title: `Submittal #${submittal.submittal_number}${submittal.revision ? ` Rev ${submittal.revision}` : ""}`,
-      subtitle: submittal.title || undefined,
-      detail: projectLabel,
-      bodyHtml,
-      renderFooterInBody: false,
-      contentWidth: "720px",
+      <div class="comments-heading">Comments</div>
+      <div class="comments-box">${esc(latestResponse?.comments || "")}</div>
+    </main>
+  </body>
+</html>`;
+
+    const coverSheetPdfBuffer = await renderPdfFromHtml(html);
+    const attachmentById = new Map(
+      attachments.map((attachment) => [attachment.document_metadata_id, attachment]),
+    );
+
+    const packetParts: SubmittalExportPacketPart[] = [];
+    for (const item of selectedItems) {
+      if (item === COVER_SHEET_EXPORT_ITEM) {
+        packetParts.push({
+          fileName: "cover-sheet.pdf",
+          mimeType: "application/pdf",
+          bytes: new Uint8Array(coverSheetPdfBuffer),
+        });
+        continue;
+      }
+
+      const attachment = attachmentById.get(item);
+      if (!attachment) {
+        throw new GuardrailError({
+          code: "BAD_REQUEST",
+          where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf",
+          message: `Selected attachment "${item}" is not linked to this submittal.`,
+        });
+      }
+
+      const fileName = attachment.file_name ?? attachment.title ?? "attachment";
+      if (!isPdfPacketPartSupported({ fileName, mimeType: attachment.mime_type })) {
+        throw new GuardrailError({
+          code: "BAD_REQUEST",
+          where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf",
+          message: `Attachment "${fileName}" cannot be included in a PDF packet. Supported types: PDF, PNG, JPG, JPEG.`,
+        });
+      }
+      if (!attachment.download_url) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf",
+          message: `Attachment "${fileName}" is missing a download URL.`,
+        });
+      }
+
+      const response = await fetch(attachment.download_url);
+      if (!response.ok) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "GET /api/projects/[projectId]/submittals/[submittalId]/pdf",
+          message: `Failed to download attachment "${fileName}" for export.`,
+        });
+      }
+
+      packetParts.push({
+        fileName,
+        mimeType: attachment.mime_type,
+        bytes: new Uint8Array(await response.arrayBuffer()),
+      });
+    }
+
+    const mergedPacket = await mergeSubmittalExportPacket(packetParts);
+    const filename = buildSubmittalExportFilename({
+      submittalNumber: submittal.submittal_number,
+      title: submittal.title,
     });
 
-    const pdfBuffer = await renderPdfFromHtml(html, {
-      footerTemplate: buildBrandedFooterTemplate(),
-      marginBottom: BRANDED_FOOTER_MARGIN,
-    });
-
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    return new NextResponse(mergedPacket as unknown as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="submittal-${submittal.submittal_number}.pdf"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   },

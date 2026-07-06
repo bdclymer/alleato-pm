@@ -8,15 +8,15 @@ export const textDocumentHandler = createDocumentHandler<"text">({
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = "";
 
-    const { fullStream } = streamText({
+    const { stream } = streamText({
       model: getArtifactModel(),
-      system:
+      instructions:
         "Write about the given topic. Markdown is supported. Use headings wherever appropriate.",
       experimental_transform: smoothStream({ chunking: "word" }),
       prompt: title,
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of stream) {
       const { type } = delta;
 
       if (type === "text-delta") {
@@ -37,9 +37,9 @@ export const textDocumentHandler = createDocumentHandler<"text">({
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = "";
 
-    const { fullStream } = streamText({
+    const { stream } = streamText({
       model: getArtifactModel(),
-      system: updateDocumentPrompt(document.content, "text"),
+      instructions: updateDocumentPrompt(document.content, "text"),
       experimental_transform: smoothStream({ chunking: "word" }),
       prompt: description,
       providerOptions: {
@@ -52,7 +52,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
       },
     });
 
-    for await (const delta of fullStream) {
+    for await (const delta of stream) {
       const { type } = delta;
 
       if (type === "text-delta") {

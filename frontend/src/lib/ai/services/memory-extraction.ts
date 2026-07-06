@@ -67,7 +67,7 @@ async function extractMemoriesFromTranscript(
       description:
         "Durable memories extracted from an AI assistant conversation.",
     }),
-    system: `You extract durable memories from AI assistant conversations in a construction project management platform.
+    instructions: `You extract durable memories from AI assistant conversations in a construction project management platform.
 
 Return structured output with a memories array. Each memory has:
 - type: "fact" | "preference" | "lesson" | "commitment" | "context"

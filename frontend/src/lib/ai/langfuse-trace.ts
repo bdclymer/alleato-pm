@@ -28,7 +28,11 @@ type TraceParams = {
   input: string;
   output: string;
   generationName?: string;
-  usage?: { inputTokens?: number; outputTokens?: number; cachedInputTokens?: number };
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    inputTokenDetails?: { cacheReadTokens?: number };
+  };
   intent?: string;
   qualityScore?: number;
   qualityReasons?: string[];
@@ -58,7 +62,7 @@ export type TraceToolCall = {
  * Attach derived quality scores to an EXISTING Langfuse trace by id — used for the
  * streamText synthesis path, where the trace, generation, tool spans, model, and
  * token usage are already captured automatically by the `@langfuse/otel` span
- * processor (via `experimental_telemetry`). This function therefore creates no
+ * processor (via AI SDK telemetry). This function therefore creates no
  * trace and no generation; it only scores, which avoids the duplicate-trace
  * problem the old `traceChatCompletion` would cause on the OTel path.
  *
@@ -241,7 +245,7 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
       unit: "TOKENS",
     },
     metadata: {
-      cachedInputTokens: params.usage?.cachedInputTokens,
+      cachedInputTokens: params.usage?.inputTokenDetails?.cacheReadTokens,
       stepCount: params.stepCount,
       toolCallNames: params.toolCallNames,
       intent: params.intent,

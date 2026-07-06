@@ -6,7 +6,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { sendDocumentEmail } from "@/lib/documents/email";
 import { fetchSubcontractorInvoicePdfData } from "../pdf/route";
-import { renderSubcontractorInvoicePdfBuffer } from "@/lib/subcontractor-invoice-pdf";
+import {
+  buildSubcontractorInvoicePdfFilename,
+  renderSubcontractorInvoicePdfBuffer,
+} from "@/lib/subcontractor-invoice-pdf";
 
 function metadataRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -179,6 +182,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         : `Please find attached invoice ${invoiceNumber}.`;
 
     const pdfBuffer = await renderSubcontractorInvoicePdfBuffer(invoiceData);
+    const pdfFilename = buildSubcontractorInvoicePdfFilename(invoiceData);
     const safeMessage = resolvedBody
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -203,7 +207,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         text: resolvedBody,
         attachments: [
           {
-            filename: `subcontract-invoice-${invoiceNumber}.pdf`,
+            filename: pdfFilename,
             content: Buffer.from(pdfBuffer).toString("base64"),
           },
         ],

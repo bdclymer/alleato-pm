@@ -90,7 +90,7 @@ async function scoreCandidate(candidate: CandidateRow): Promise<TriageVerdict> {
       description:
         "Whether a candidate agent-learning should be promoted to active, archived as junk, or kept for human review.",
     }),
-    system: `You triage "agent learnings" for a construction project-management AI. An agent learning is a prevention prompt that gets injected into the assistant's context to stop a repeated mistake. Decide ONE action for the candidate:
+    instructions: `You triage "agent learnings" for a construction project-management AI. An agent learning is a prevention prompt that gets injected into the assistant's context to stop a repeated mistake. Decide ONE action for the candidate:
 - promote: specific, clearly correct, reusable, and safe to always inject. It prevents a real recurring mistake without over-constraining unrelated answers.
 - archive: vague, one-off, contradictory, nonsensical, or so generic it would only add noise.
 - keep: plausible but you are not confident — leave it for a human.

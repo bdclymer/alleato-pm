@@ -6,7 +6,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
+  buildSubcontractorInvoicePdfFilename,
   renderSubcontractorInvoicePdfBuffer,
+  type SubcontractorInvoicePdfChangeOrder,
+  type SubcontractorInvoicePdfContractLine,
   type SubcontractorInvoicePdfData,
   type SubcontractorInvoicePdfLineItem,
   type SubcontractorInvoicePdfRollup,
@@ -15,16 +18,6 @@ import { resolveGeneralContractorCompany } from "@/lib/invoicing/subcontractor-i
 
 // Node runtime is required for React PDF rendering.
 export const runtime = "nodejs";
-
-// Matches Procore's export naming convention, e.g.
-// "24-102-Wesleyan_Office-2-Invoice_2-2026-07-01.pdf".
-function buildProcoreStyleFilename(data: SubcontractorInvoicePdfData): string {
-  const projectNumber = (data.project_number || "project").replace(/\s+/g, "-");
-  const projectName = (data.project_name || "Project").trim().replace(/[^a-zA-Z0-9]+/g, "_");
-  const sequence = data.application_number;
-  const date = new Date().toISOString().split("T")[0];
-  return `${projectNumber}-${projectName}-${sequence}-Invoice_${sequence}-${date}.pdf`;
-}
 
 type SubcontractInvoicePdfFetchResult =
   | { data: SubcontractorInvoicePdfData; error: null }
@@ -91,10 +84,16 @@ async function buildRollup(
 
   let originalContractSum = 0;
   if (contractId) {
+    const sovTable = invoice.subcontract_id
+      ? "subcontract_sov_items"
+      : "purchase_order_sov_items";
+    const sovForeignKey = invoice.subcontract_id
+      ? "subcontract_id"
+      : "purchase_order_id";
     const { data: sovRows } = await supabase
-      .from("subcontract_sov_items")
+      .from(sovTable)
       .select("amount")
-      .eq("subcontract_id", contractId);
+      .eq(sovForeignKey, contractId);
 
     originalContractSum = (sovRows ?? []).reduce(
       (sum, row) => sum + (Number(row.amount) || 0),
@@ -205,6 +204,69 @@ async function buildRollup(
     change_order_additions: coAdditions,
     change_order_deductions: coDeductions,
   };
+}
+
+async function loadContractLines(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  invoice: InvoiceWithJoins,
+): Promise<SubcontractorInvoicePdfContractLine[]> {
+  const contractId = invoice.subcontract_id ?? invoice.purchase_order_id ?? null;
+  if (!contractId) return [];
+
+  if (invoice.subcontract_id) {
+    const { data } = await supabase
+      .from("subcontract_sov_items")
+      .select("id, line_number, sort_order, budget_code, description, amount")
+      .eq("subcontract_id", contractId)
+      .order("line_number", { ascending: true });
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      line_number: row.line_number ?? null,
+      sort_order: row.sort_order ?? null,
+      budget_code: row.budget_code ?? null,
+      description: row.description ?? null,
+      amount: row.amount ?? null,
+    }));
+  }
+
+  const { data } = await supabase
+    .from("purchase_order_sov_items")
+    .select("id, line_number, sort_order, budget_code, description, amount")
+    .eq("purchase_order_id", contractId)
+    .order("line_number", { ascending: true });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    line_number: row.line_number ?? null,
+    sort_order: row.sort_order ?? null,
+    budget_code: row.budget_code ?? null,
+    description: row.description ?? null,
+    amount: row.amount ?? null,
+  }));
+}
+
+async function loadApprovedChangeOrders(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  invoice: InvoiceWithJoins,
+): Promise<SubcontractorInvoicePdfChangeOrder[]> {
+  const contractId = invoice.subcontract_id ?? invoice.purchase_order_id ?? null;
+  if (!contractId) return [];
+
+  const { data } = await supabase
+    .from("contract_change_orders")
+    .select("id, change_order_number, title, description, amount")
+    .eq("contract_id", contractId)
+    .eq("status", "approved")
+    .order("requested_date", { ascending: true });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    change_order_number: row.change_order_number ?? null,
+    title: row.title ?? null,
+    description: row.description ?? null,
+    amount: row.amount ?? null,
+  }));
 }
 
 // Loads and assembles all data required to render a subcontractor invoice PDF.
@@ -328,6 +390,8 @@ export async function fetchSubcontractorInvoicePdfData(
 
   const lineItems = normalizeLineItems(invoiceRow.subcontractor_invoice_line_items);
   const rollup = await buildRollup(supabase, invoiceRow, invoiceIdNum);
+  const contractLines = await loadContractLines(supabase, invoiceRow);
+  const approvedChangeOrders = await loadApprovedChangeOrders(supabase, invoiceRow);
 
   const serviceClient = createServiceClient();
   const linkedAttachments = await listLinkedPatternCDocuments({
@@ -347,6 +411,7 @@ export async function fetchSubcontractorInvoicePdfData(
       period_start: invoiceRow.period_start,
       period_end: invoiceRow.period_end,
       billing_date: invoiceRow.billing_date,
+      created_at: invoiceRow.created_at,
       notes: invoiceRow.notes,
       project_name: project?.name ?? null,
       project_number: project?.project_number ?? null,
@@ -365,6 +430,8 @@ export async function fetchSubcontractorInvoicePdfData(
       contract_company_state: subcontractorCompany?.state ?? null,
       contract_company_zip: subcontractorCompany?.zip_code ?? null,
       line_items: lineItems,
+      contract_lines: contractLines,
+      approved_change_orders: approvedChangeOrders,
       rollup,
       attachments,
     },
@@ -432,7 +499,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const pdfBuffer = await renderSubcontractorInvoicePdfBuffer(result.data);
-    const filename = buildProcoreStyleFilename(result.data);
+    const filename = buildSubcontractorInvoicePdfFilename(result.data);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

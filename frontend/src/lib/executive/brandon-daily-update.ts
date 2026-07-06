@@ -1915,19 +1915,15 @@ export function shouldSuppressDailyBriefGenericItem(
   if (genericTitles.has(title)) return true;
 
   const text = dailyBriefItemSearchText(item);
-  return (
-    title.length < 8 ||
-    (genericTitles.has(title.replace(/:$/, "")) &&
-      !hasAny(text, [
-        "permit",
-        "rfi",
-        "submittal",
-        "change order",
-        "client",
-        "owner",
-        "deadline",
-      ]))
-  );
+  return (title.length < 8 || (genericTitles.has(title.replace(/:$/, "")) && !hasAny(text, [
+    "permit",
+    "rfi",
+    "submittal",
+    "change order",
+    "client",
+    "owner",
+    "deadline",
+  ])));
 }
 
 function filterSupportedSections(
@@ -2819,7 +2815,7 @@ async function synthesizeSections(
     );
   }
 
-  const system =
+  const instructions =
     "You are Brandon's trusted operating partner. Brandon owns Alleato Group, a commercial construction company. You write his daily brief. He is busy and practical. He wants to know what is going on, what it means, what needs his decision, and who owns the next step. " +
     "Today is " +
     todayLabel +
@@ -2871,9 +2867,9 @@ async function synthesizeSections(
     const result = await withBriefingTimeout(
       generateText({
         model: getLanguageModel(synthesisModel),
-        system,
+        instructions,
         messages: [{ role: "user", content: user }],
-        experimental_telemetry: aiTelemetry({
+        telemetry: aiTelemetry({
           functionId: "executive-daily-brief.synthesize-sections",
           metadata: {
             workflow: "executive_daily_brief",
@@ -3937,7 +3933,7 @@ async function enrichBriefSections(
     timeZone: "America/New_York",
   }).format(new Date());
 
-  const system =
+  const instructions =
     "You refine executive briefing items for Brandon, owner of Alleato Group, a commercial construction company. " +
     "Today is " +
     todayLabel +
@@ -3963,9 +3959,9 @@ async function enrichBriefSections(
     const result = await withBriefingTimeout(
       generateText({
         model: getLanguageModel(synthesisModel),
-        system,
+        instructions,
         messages: [{ role: "user", content: user }],
-        experimental_telemetry: aiTelemetry({
+        telemetry: aiTelemetry({
           functionId: "executive-daily-brief.enrich-evidence",
           metadata: {
             workflow: "executive_daily_brief",

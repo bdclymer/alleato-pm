@@ -2165,6 +2165,10 @@ export default function SubmittalsPage(): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
+          onView: (item) =>
+            router.push(`/${projectId}/submittals/${item.id}`),
+          onEdit: (item) =>
+            router.push(`/${projectId}/submittals/${item.id}/edit`),
           onRowClick: (item) =>
             router.push(`/${projectId}/submittals/${item.id}`),
           onDelete:

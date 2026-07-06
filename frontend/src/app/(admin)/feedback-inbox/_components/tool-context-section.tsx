@@ -22,13 +22,17 @@ import { notifyFeedbackInboxFailure } from "../helpers";
 export function ToolContextSection({
   item,
   showSectionChrome = true,
+  onAssignmentChanged,
 }: {
   item: FeedbackItem;
   showSectionChrome?: boolean;
+  onAssignmentChanged?: () => void;
 }) {
   const [tools, setTools] = useState<ToolOption[]>([]);
   const [assignedToolId, setAssignedToolId] = useState<number | null>(null);
+  const [suggestedToolId, setSuggestedToolId] = useState<number | null>(null);
   const [context, setContext] = useState<ToolContextData | null>(null);
+  const [suggestedContext, setSuggestedContext] = useState<ToolContextData | null>(null);
   const [loading, setLoading] = useState(false);
   const [crawling, setCrawling] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -65,9 +69,27 @@ export function ToolContextSection({
 
         if (matchResult.status === "fulfilled") {
           const data = matchResult.value;
-          if (data.match) {
-            setAssignedToolId(data.match.id);
-            setContext(data.context ?? null);
+          if (item.tool_id) {
+            setAssignedToolId(item.tool_id);
+            try {
+              const assignedData = await apiFetch<{ context?: ToolContextData | null }>(
+                `/api/admin/feedback/tools?action=resolve&toolId=${item.tool_id}`,
+              );
+              if (!cancelled) {
+                setContext(assignedData.context ?? null);
+              }
+            } catch (err) {
+              reportNonCriticalFailure({
+                area: "feedback-inbox",
+                operation: "load-saved-tool-context",
+                error: err,
+                userVisibleFallback: "Saved tool context could not be loaded.",
+                metadata: { feedbackId: item.id, toolId: item.tool_id },
+              });
+            }
+          } else if (data.match) {
+            setSuggestedToolId(data.match.id);
+            setSuggestedContext(data.context ?? null);
           }
         } else {
           reportNonCriticalFailure({
@@ -95,9 +117,9 @@ export function ToolContextSection({
     return () => {
       cancelled = true;
     };
-  }, [item.id]);
+  }, [item.id, item.tool_id]);
 
-  async function handleAssign(toolId: number) {
+  async function handleAssign(toolId: number | null) {
     setLoading(true);
     try {
       await apiFetch("/api/admin/feedback/tools", {
@@ -105,21 +127,26 @@ export function ToolContextSection({
         body: JSON.stringify({ feedbackId: item.id, toolId }),
       });
       setAssignedToolId(toolId);
-      try {
-        const data = await apiFetch<{ context?: ToolContextData | null }>(
-          `/api/admin/feedback/tools?action=resolve&toolId=${toolId}`,
-        );
-        setContext(data.context ?? null);
-      } catch (err) {
-        reportNonCriticalFailure({
-          area: "feedback-inbox",
-          operation: "load-assigned-tool-context",
-          error: err,
-          userVisibleFallback: "Tool assignment saved, but context could not be loaded.",
-          metadata: { feedbackId: item.id, toolId },
-        });
+      if (toolId) {
+        try {
+          const data = await apiFetch<{ context?: ToolContextData | null }>(
+            `/api/admin/feedback/tools?action=resolve&toolId=${toolId}`,
+          );
+          setContext(data.context ?? null);
+        } catch (err) {
+          reportNonCriticalFailure({
+            area: "feedback-inbox",
+            operation: "load-assigned-tool-context",
+            error: err,
+            userVisibleFallback: "Tool assignment saved, but context could not be loaded.",
+            metadata: { feedbackId: item.id, toolId },
+          });
+        }
+      } else {
+        setContext(null);
       }
-      toast.success("Tool assigned");
+      onAssignmentChanged?.();
+      toast.success(toolId ? "Tool assigned" : "Tool cleared");
     } catch (err) {
       notifyFeedbackInboxFailure({
         operation: "assign-tool",
@@ -145,12 +172,14 @@ export function ToolContextSection({
       );
       const newToolId = data.item?.tool_id;
       setAssignedToolId(newToolId ?? null);
+      setSuggestedToolId(newToolId ?? null);
       if (newToolId) {
         try {
           const ctxData = await apiFetch<{ context?: ToolContextData | null }>(
             `/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`,
           );
           setContext(ctxData.context ?? null);
+          setSuggestedContext(ctxData.context ?? null);
         } catch (err) {
           reportNonCriticalFailure({
             area: "feedback-inbox",
@@ -160,9 +189,11 @@ export function ToolContextSection({
             metadata: { feedbackId: item.id, toolId: newToolId },
           });
         }
+        onAssignmentChanged?.();
         toast.success("Tool auto-matched");
       } else {
         setContext(null);
+        setSuggestedContext(null);
         toast("No matching tool found", { description: "Assign one manually." });
       }
     } catch (err) {
@@ -209,6 +240,11 @@ export function ToolContextSection({
   }
 
   const assignedTool = tools.find((t) => t.id === assignedToolId);
+  const suggestedTool =
+    suggestedToolId && suggestedToolId !== assignedToolId
+      ? tools.find((t) => t.id === suggestedToolId) ?? null
+      : null;
+  const activeContext = assignedToolId ? context : suggestedContext;
 
   return (
     <div>
@@ -216,9 +252,12 @@ export function ToolContextSection({
         <div className="flex flex-wrap items-center gap-2">
           <div className="min-w-56 flex-1">
             <Select
-              value={assignedToolId ? String(assignedToolId) : "none"}
+              value={assignedToolId ? String(assignedToolId) : "unassigned"}
               onValueChange={(value) => {
-                if (value === "none") return;
+                if (value === "unassigned") {
+                  void handleAssign(null);
+                  return;
+                }
                 void handleAssign(Number(value));
               }}
               disabled={loading}
@@ -230,6 +269,7 @@ export function ToolContextSection({
                 </span>
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="unassigned">No assigned tool</SelectItem>
                 {tools.map((tool) => (
                   <SelectItem key={tool.id} value={String(tool.id)}>
                     {tool.name}
@@ -257,6 +297,17 @@ export function ToolContextSection({
           </Button>
         </div>
 
+        {suggestedTool ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span>Suggested:</span>
+            <span className="font-medium text-foreground">{suggestedTool.name}</span>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            <span>{suggestedTool.category}</span>
+          </div>
+        ) : null}
+
         {assignedTool ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{assignedTool.name}</span>
@@ -264,7 +315,7 @@ export function ToolContextSection({
               /
             </span>
             <span>{assignedTool.category}</span>
-            {context ? (
+            {activeContext ? (
               <>
                 <span aria-hidden className="text-border">
                   /
@@ -290,41 +341,41 @@ export function ToolContextSection({
         ) : null}
       </div>
 
-      {context && showDetails ? (
+      {activeContext && showDetails ? (
         <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
-          {context.procore_url ? (
+          {activeContext.procore_url ? (
             <a
-              href={context.procore_url}
+              href={activeContext.procore_url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-w-0 items-center gap-1.5 text-xs text-primary hover:underline"
             >
               <Link2 className="h-3 w-3 shrink-0" />
               <span className="truncate">
-                {context.procore_url.replace(/https?:\/\/[^/]+/, "")}
+                {activeContext.procore_url.replace(/https?:\/\/[^/]+/, "")}
               </span>
             </a>
           ) : null}
           <div className="space-y-1 text-xs text-muted-foreground">
-            {context.prp_path ? (
+            {activeContext.prp_path ? (
               <p className="truncate">
                 <span className="font-medium text-foreground">PRP:</span>{" "}
-                <code>{context.prp_path}</code>
+                <code>{activeContext.prp_path}</code>
               </p>
             ) : null}
             <p className="truncate">
               <span className="font-medium text-foreground">Research:</span>{" "}
-              <code>{context.research_folder}</code>
+              <code>{activeContext.research_folder}</code>
             </p>
             <p className="truncate">
               <span className="font-medium text-foreground">Manifest:</span>{" "}
-              <code>{context.manifest_path}</code>
+              <code>{activeContext.manifest_path}</code>
             </p>
           </div>
         </div>
       ) : null}
 
-      {context ? (
+      {activeContext ? (
         <div className="mt-3">
           <Button
             type="button"
@@ -344,11 +395,15 @@ export function ToolContextSection({
         </div>
       ) : null}
 
-      {!context && !loading && showSectionChrome && (
+      {!activeContext && !loading && showSectionChrome && (
         <EmptyState
           icon={<Wrench />}
-          title="No tool matched"
-          description="Assign one manually or click Auto-match."
+          title={suggestedTool ? "Tool suggestion available" : "No tool matched"}
+          description={
+            suggestedTool
+              ? "Review the suggestion or assign the correct tool manually."
+              : "Assign one manually or click Auto-match."
+          }
         />
       )}
     </div>

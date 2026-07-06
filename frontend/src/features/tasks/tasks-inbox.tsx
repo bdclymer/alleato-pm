@@ -22,7 +22,6 @@ import {
   Tag,
   Table2,
   Trash2,
-  ThumbsUp,
   UserRound,
   X,
 } from "lucide-react";
@@ -196,6 +195,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 
 export const TASKS_SPLIT_WORKSPACE_CLASSNAME =
   "relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background";
+export const TASKS_SPLIT_FIRST_PANE_WIDTH = "30rem";
 
 const DONE_STATUSES = new Set(["complete", "closed", "done", "cancelled"]);
 const IN_PROGRESS_STATUSES = new Set(["in_progress", "started", "active"]);
@@ -258,6 +258,7 @@ const DETAIL_META_DATE_TRIGGER_CLASS =
   "h-7 min-w-0 justify-start gap-1.5 px-0 text-sm font-medium text-foreground hover:bg-transparent";
 
 export const TASK_DETAIL_PROPERTY_BAR_CLASSNAME = "mt-3 mb-0";
+export const TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME = "mt-2 mb-0 pb-0";
 
 function TaskListHeader({
   allVisibleSelected,
@@ -679,7 +680,7 @@ function SourceContextBlock({ value }: { value: string }) {
 
   if (teamsConversation && teamsConversation.messages.length > 0) {
     return (
-      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+      <div className="w-full">
         <div className="mb-2 flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <div className="min-w-0 truncate text-xs font-semibold text-foreground">
             Teams: {teamsConversation.title}
@@ -706,7 +707,7 @@ function SourceContextBlock({ value }: { value: string }) {
 
   if (meetingContext && meetingContext.sections.length > 0) {
     return (
-      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+      <div className="w-full">
         {meetingContext.sections.map((section, index) => (
           <MeetingContextSectionBlock
             key={`${section.title}-${index}`}
@@ -721,7 +722,7 @@ function SourceContextBlock({ value }: { value: string }) {
 
   if (messages.length > 1) {
     return (
-      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+      <div className="w-full">
         {messages.map((message, index) => (
           <MessageCard
             key={`${message.subject ?? "message"}-${message.date ?? index}`}
@@ -877,7 +878,6 @@ export function TaskListItem({
   const sourceDate = formatShortDate(item.source_date);
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
   const projectLabel = taskProjectLabel(item, projects);
-  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
   const pinnedCellClassName = isSelected
     ? "bg-accent"
     : "bg-background group-hover:bg-muted/50";
@@ -937,20 +937,6 @@ export function TaskListItem({
             >
               {item.description || item.title || "Untitled task"}
             </p>
-            {showFeedback && item.id ? (
-              <div
-                className="mt-1 flex items-center"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <TaskFeedbackButtons
-                  projectId={buildTaskFeedbackSnapshot(item).projectId}
-                  taskId={item.id}
-                  taskSnapshot={buildTaskFeedbackSnapshot(item)}
-                  onRemove={onDelete}
-                  className="text-[11px]"
-                />
-              </div>
-            ) : null}
           </div>
         </div>
         <div
@@ -1017,7 +1003,6 @@ function TaskSplitListItem({
   isChecked,
   onClick,
   onCheckedChange,
-  onDelete,
 }: {
   item: TasksRow;
   projects: ProjectOption[];
@@ -1025,7 +1010,6 @@ function TaskSplitListItem({
   isChecked: boolean;
   onClick: () => void;
   onCheckedChange: (checked: boolean) => void;
-  onDelete?: () => void;
 }) {
   const ds = toDisplayStatus(item.status);
   const priority = (item.priority ?? "").toLowerCase();
@@ -1034,7 +1018,6 @@ function TaskSplitListItem({
   const projectLabel = taskProjectLabel(item, projects);
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
   const dateLabel = formatShortDate(item.source_date ?? item.created_at);
-  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
 
   return (
     <div
@@ -1093,21 +1076,6 @@ function TaskSplitListItem({
                 {formatPriorityLabel(priority)}
               </span>
             </>
-          ) : null}
-          {showFeedback && item.id ? (
-            <span
-              className="ml-auto shrink-0"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <TaskFeedbackButtons
-                projectId={buildTaskFeedbackSnapshot(item).projectId}
-                taskId={item.id}
-                taskSnapshot={buildTaskFeedbackSnapshot(item)}
-                onRemove={onDelete}
-                compact
-                className="text-[11px]"
-              />
-            </span>
           ) : null}
         </div>
       </div>
@@ -1494,53 +1462,6 @@ function TaskDetail({
           </DetailPropertyItem>
 
           <DetailPropertyItem
-            icon={Flag}
-            contentClassName="overflow-visible"
-            muted={selectedPriorityValue === "__none__"}
-            aria-label="Task priority"
-          >
-            <Select
-              value={selectedPriorityValue}
-              onValueChange={(value) => {
-                if (!task.id) return;
-                const nextPriority = value === "__none__" ? null : value;
-                onUpdateTask(
-                  task.id,
-                  { priority: nextPriority },
-                  { priority: nextPriority },
-                );
-              }}
-              disabled={updatingId === task.id}
-            >
-              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
-                {updatingId === task.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <SelectValue />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                {TASK_PRIORITY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <span className="inline-flex items-center gap-2">
-                      {option.value !== "__none__" &&
-                        PRIORITY_META[option.value] && (
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full",
-                              PRIORITY_META[option.value].dot,
-                            )}
-                          />
-                        )}
-                      {option.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </DetailPropertyItem>
-
-          <DetailPropertyItem
             icon={UserRound}
             contentClassName="overflow-visible"
             muted={!fallbackAssigneeLabel && !matchedAssigneeUser}
@@ -1664,6 +1585,78 @@ function TaskDetail({
           </DetailPropertyItem>
 
           <DetailPropertyItem
+            icon={Flag}
+            contentClassName="overflow-visible"
+            muted={selectedPriorityValue === "__none__"}
+            aria-label="Task priority"
+          >
+            <Select
+              value={selectedPriorityValue}
+              onValueChange={(value) => {
+                if (!task.id) return;
+                const nextPriority = value === "__none__" ? null : value;
+                onUpdateTask(
+                  task.id,
+                  { priority: nextPriority },
+                  { priority: nextPriority },
+                );
+              }}
+              disabled={updatingId === task.id}
+            >
+              <SelectTrigger className={DETAIL_META_SELECT_CLASS}>
+                {updatingId === task.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <SelectValue />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                {TASK_PRIORITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <span className="inline-flex items-center gap-2">
+                      {option.value !== "__none__" &&
+                        PRIORITY_META[option.value] && (
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full",
+                              PRIORITY_META[option.value].dot,
+                            )}
+                          />
+                        )}
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DetailPropertyItem>
+        </DetailPropertyBar>
+
+        <DetailPropertyBar
+          className={TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME}
+        >
+          <DetailPropertyItem
+            icon={CalendarDays}
+            contentClassName="overflow-visible"
+            muted={!task.due_date}
+            aria-label="Task due date"
+          >
+            <TaskDueDatePicker
+              value={task.due_date}
+              overdue={overdue && ds !== "done"}
+              disabled={updatingId === task.id}
+              onChange={(dueDate) => {
+                if (!task.id) return;
+                onUpdateTask(
+                  task.id,
+                  { due_date: dueDate },
+                  { due_date: dueDate },
+                );
+              }}
+            />
+          </DetailPropertyItem>
+
+          <DetailPropertyItem
             icon={Tag}
             contentClassName="overflow-visible"
             muted={selectedCategoryValue === "__none__"}
@@ -1701,27 +1694,6 @@ function TaskDetail({
           </DetailPropertyItem>
 
           <DetailPropertyItem
-            icon={CalendarDays}
-            contentClassName="overflow-visible"
-            muted={!task.due_date}
-            aria-label="Task due date"
-          >
-            <TaskDueDatePicker
-              value={task.due_date}
-              overdue={overdue && ds !== "done"}
-              disabled={updatingId === task.id}
-              onChange={(dueDate) => {
-                if (!task.id) return;
-                onUpdateTask(
-                  task.id,
-                  { due_date: dueDate },
-                  { due_date: dueDate },
-                );
-              }}
-            />
-          </DetailPropertyItem>
-
-          <DetailPropertyItem
             icon={ArrowUpRight}
             href={sourceTarget?.href}
             external={sourceTarget?.external}
@@ -1739,7 +1711,7 @@ function TaskDetail({
 
           {task.id && isAiGeneratedTask(task) && (
             <DetailPropertyItem
-              icon={ThumbsUp}
+              icon={CheckSquare2}
               contentClassName="overflow-visible"
               aria-label="Task training feedback"
             >
@@ -2770,12 +2742,13 @@ export function TasksInbox({
           <SplitPage
             variant="two-column"
             breakpoint="xl"
+            firstPaneWidth={TASKS_SPLIT_FIRST_PANE_WIDTH}
             defaultIsOpen={!selectedWithContext}
             className="min-h-0 flex-1"
           >
             <div
               className={cn(
-                "relative flex h-full w-full min-w-0 flex-col overflow-hidden border-b border-border/70 bg-background xl:w-96 xl:shrink-0 xl:border-b-0 xl:border-r",
+                "relative flex h-full w-full min-w-0 flex-col overflow-hidden border-b border-border/70 bg-background xl:border-b-0 xl:border-r",
                 mobileShowDetail ? "hidden xl:flex" : "flex",
               )}
             >
@@ -2924,7 +2897,6 @@ export function TasksInbox({
                       onCheckedChange={(checked) =>
                         item.id && toggleTaskSelection(item.id, checked)
                       }
-                      onDelete={() => item.id && deleteItem(item.id)}
                     />
                   ))
                 )}

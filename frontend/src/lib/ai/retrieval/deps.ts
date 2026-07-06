@@ -8,6 +8,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ToolExecutionOptions } from "ai";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -31,7 +32,11 @@ import type { ExternalSource } from "./types";
 
 // Minimal ToolExecutionOptions satisfying the AI SDK execute() signature when
 // called outside of a live LLM tool-calling context (direct server-side calls).
-const DIRECT_EXEC_OPTIONS = { toolCallId: "direct", messages: [] as never[] };
+const DIRECT_EXEC_OPTIONS: ToolExecutionOptions<Record<string, never>> = {
+  toolCallId: "direct",
+  messages: [],
+  context: {},
+};
 
 // ---------------------------------------------------------------------------
 // Synthetic SourceSpecificRagRequest builder

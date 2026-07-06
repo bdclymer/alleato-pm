@@ -1856,14 +1856,56 @@ velt-comment-dialog-internal .velt-comment-dialog {
   border-color: transparent !important;
 }
 
-/* Keep the in-canvas thread card clean: no extra rule between header actions
-   and message content, and no card-like border chrome on internal containers. */
+/* The in-canvas thread dialog should read like a compact thread, not a settings
+   sheet. Keep the overflow menu as the one secondary-action surface and remove
+   redundant banners/buttons that duplicate those actions. */
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner,
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-private-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-status,
+velt-comment-dialog-internal velt-comment-dialog-status-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-status-dropdown,
+velt-comment-dialog-internal velt-comment-dialog-status-dropdown-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-status-dropdown-internal,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-internal,
+velt-comment-dialog-internal velt-comment-dialog-hide-reply-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-hide-reply-internal,
+velt-comment-dialog-internal velt-comment-dialog-more-reply-wireframe {
+  display: none !important;
+}
+
+/* Keep the in-canvas thread card clean: no extra rule between actions and
+   content, and no card-like border chrome on internal containers. */
 velt-comment-dialog-internal .velt-comment-dialog--line-div,
 velt-comment-dialog-internal .velt-thread-card--container,
 velt-comment-dialog-internal .velt-thread-card,
 velt-comment-dialog-internal .velt-comment-dialog-composer {
   border-color: transparent !important;
   box-shadow: none !important;
+}
+
+velt-comment-dialog-internal .velt-comment-dialog,
+velt-comment-dialog-internal .velt-thread-card,
+velt-comment-dialog-internal .velt-thread-card--container {
+  background: hsl(var(--background)) !important;
+}
+
+velt-comment-dialog-internal .velt-thread-card {
+  padding: 0 !important;
+}
+
+velt-comment-dialog-internal .velt-thread-card--container {
+  padding: 1rem 1.25rem 0 !important;
+}
+
+velt-comment-dialog-internal .velt-comment-dialog-composer {
+  padding: 0 1.25rem 1rem !important;
 }
 
 /* Keep on-page annotations quiet. The marker should read as a lightweight
@@ -1919,8 +1961,12 @@ velt-comment-dialog-internal {
    keep the overflow menu available for secondary actions. */
 velt-comment-dialog-internal [aria-label="Copy link"],
 velt-comment-dialog-internal [aria-label="Copy Link"],
+velt-comment-dialog-internal [aria-label="Copy thread link"],
 velt-comment-dialog-internal [title="Copy link"],
-velt-comment-dialog-internal [title="Copy Link"] {
+velt-comment-dialog-internal [title="Copy Link"],
+velt-comment-dialog-internal velt-comment-dialog-copy-link,
+velt-comment-dialog-internal velt-comment-dialog-copy-link-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-copy-link-internal {
   display: none !important;
 }
 
@@ -1948,6 +1994,21 @@ velt-comment-dialog-internal .velt-composer--input-text-wrap,
 velt-comment-dialog-internal .velt-composer--line-div,
 velt-comment-dialog-internal .velt-comment-dialog--line-div {
   border-color: hsl(var(--border)) !important;
+}
+
+velt-comment-dialog-internal .velt-composer--input-text-wrap {
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+}
+
+velt-comment-dialog-internal velt-comment-dialog-thread-card-message {
+  font-size: 0.975rem !important;
+  line-height: 1.6 !important;
+}
+
+velt-comment-dialog-internal velt-comment-dialog-thread-card-time,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-unread {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 /* The sidebar should read like a quiet message list, not a ticket board.

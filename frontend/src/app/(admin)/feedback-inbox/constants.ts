@@ -125,7 +125,7 @@ export const IN_PROGRESS_STATUSES = new Set([
 ]);
 export const PR_CREATED_STATUSES = new Set(["pr_created"]);
 export const IN_REVIEW_STATUSES = new Set(["resolved", "in_review"]);
-export const VERIFIED_STATUSES = new Set(["closed"]);
+export const VERIFIED_STATUSES = new Set(["closed", "verified"]);
 export const DEFERRED_STATUSES = new Set(["deferred"]);
 export const ARCHIVED_STATUSES = new Set(["archived"]);
 export const LIST_SECTION_ORDER: DisplayStatus[] = [

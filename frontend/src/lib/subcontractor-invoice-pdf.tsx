@@ -1,18 +1,17 @@
 import {
   Document,
-  Image as PdfImage,
   Page,
-  Path,
-  Svg,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
 import React from "react";
-
-const ALLEATO_ORANGE = "#df8324";
-const ALLEATO_BLACK = "#2f2f2f";
+import {
+  buildContinuationSections,
+  buildSubcontractorInvoicePdfFilename,
+  type ContinuationRow,
+} from "@/lib/subcontractor-invoice-pdf-helpers";
 
 export interface SubcontractorInvoicePdfLineItem {
   id: number;
@@ -47,6 +46,23 @@ export interface SubcontractorInvoicePdfRollup {
   change_order_deductions?: number;
 }
 
+export interface SubcontractorInvoicePdfContractLine {
+  id: string;
+  line_number: number | null;
+  sort_order: number | null;
+  budget_code: string | null;
+  description: string | null;
+  amount: number | null;
+}
+
+export interface SubcontractorInvoicePdfChangeOrder {
+  id: string;
+  change_order_number: string | null;
+  title: string | null;
+  description: string | null;
+  amount: number | null;
+}
+
 export interface SubcontractorInvoicePdfData {
   id: number;
   invoice_number: string | null;
@@ -55,6 +71,7 @@ export interface SubcontractorInvoicePdfData {
   period_start: string | null;
   period_end: string | null;
   billing_date: string | null;
+  created_at?: string | null;
   notes: string | null;
   project_name: string | null;
   project_number: string | null;
@@ -73,11 +90,12 @@ export interface SubcontractorInvoicePdfData {
   contract_company_state: string | null;
   contract_company_zip: string | null;
   line_items: SubcontractorInvoicePdfLineItem[];
+  contract_lines?: SubcontractorInvoicePdfContractLine[];
+  approved_change_orders?: SubcontractorInvoicePdfChangeOrder[];
   rollup: SubcontractorInvoicePdfRollup;
   attachments?: string[];
 }
 
-// Formats dollar values for display in the invoice PDF.
 function formatMoney(value: number | null | undefined): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -85,15 +103,28 @@ function formatMoney(value: number | null | undefined): string {
   }).format(value ?? 0);
 }
 
-// Formats dates in mm/dd/yyyy style for the invoice PDF.
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
+function formatPercent(value: number | null | undefined): string {
+  return `${(value ?? 0).toFixed(2)}%`;
+}
+
+function formatDate(value: string | null | undefined, blank = "—"): string {
+  if (!value) return blank;
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
+  if (Number.isNaN(parsed.getTime())) return blank;
   return parsed.toLocaleDateString("en-US");
 }
 
-// Joins city/state/zip values into one printable address line.
+function formatDateShort(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+}
+
 function formatCityStateZip(
   city: string | null,
   state: string | null,
@@ -103,226 +134,422 @@ function formatCityStateZip(
   return [cityState, zip].filter(Boolean).join(" ");
 }
 
-// Calculates totals for the detailed schedule table.
-function computeTableTotals(items: SubcontractorInvoicePdfLineItem[]) {
-  return items.reduce(
-    (acc, item) => {
-      acc.scheduled += item.scheduled_value ?? 0;
-      acc.previous += item.work_completed_previous ?? 0;
-      acc.thisPeriod += item.work_completed_period ?? 0;
-      acc.materials += item.materials_stored ?? 0;
-      acc.completed += item.total_completed_stored ?? 0;
-      acc.workRetainage += item.retainage_amount ?? 0;
-      acc.materialRetainage += item.materials_retainage_amount ?? 0;
-      acc.net += item.net_amount_this_period ?? 0;
-      return acc;
-    },
-    {
-      scheduled: 0,
-      previous: 0,
-      thisPeriod: 0,
-      materials: 0,
-      completed: 0,
-      workRetainage: 0,
-      materialRetainage: 0,
-      net: 0,
-    },
+function formatAddressBlock(
+  name: string | null,
+  address: string | null,
+  city: string | null,
+  state: string | null,
+  zip: string | null,
+): string[] {
+  return [name, address, formatCityStateZip(city, state, zip)].filter(
+    (value): value is string => Boolean(value && value.trim()),
   );
 }
 
+function safeText(value: string | null | undefined, blank = "—"): string {
+  return value && value.trim() ? value.trim() : blank;
+}
+
+export { buildContinuationSections, buildSubcontractorInvoicePdfFilename };
+
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 20,
-    paddingBottom: 34,
-    paddingHorizontal: 26,
+    paddingTop: 18,
+    paddingHorizontal: 22,
+    paddingBottom: 20,
     fontFamily: "Helvetica",
     fontSize: 8,
-    color: "#111827",
+    color: "#111111",
+    lineHeight: 1.25,
   },
-  logoWrap: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  logo: {
-    width: 150,
-    objectFit: "contain",
-  },
-  topRule: {
-    height: 10,
-    marginHorizontal: -26,
-    marginBottom: 12,
-  },
-  footerRule: {
-    height: 10,
-    marginHorizontal: -26,
-  },
-  title: {
-    fontSize: 13,
-    fontFamily: "Helvetica-Bold",
-    textAlign: "center",
-    marginBottom: 8,
-    letterSpacing: 0.4,
-  },
-  thinRule: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#111827",
-    marginBottom: 8,
-  },
-  row: {
-    flexDirection: "row",
-  },
-  section: {
-    marginBottom: 10,
-  },
-  col: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  label: {
-    fontFamily: "Helvetica-Bold",
-  },
-  muted: {
-    color: "#4B5563",
-  },
-  box: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  boxTitle: {
-    fontSize: 8,
-    fontFamily: "Helvetica-Bold",
-    marginBottom: 4,
-  },
-  sectionHeading: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    marginTop: 10,
-    marginBottom: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    marginTop: 6,
-  },
-  tableHeaderRow: {
-    flexDirection: "row",
-    backgroundColor: "#F3F4F6",
-    borderBottomWidth: 1,
-    borderBottomColor: "#D1D5DB",
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  tableCellHeader: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
-    textAlign: "center",
-  },
-  tableCell: {
-    paddingHorizontal: 4,
-    paddingVertical: 3,
-    fontSize: 7,
-    textAlign: "right",
-  },
-  leftCell: {
-    textAlign: "left",
-  },
-  lineNoCol: { width: "4%" },
-  budgetCodeCol: { width: "9%" },
-  descCol: { width: "16%" },
-  schedCol: { width: "10%" },
-  prevCol: { width: "8%" },
-  periodCol: { width: "8%" },
-  storedCol: { width: "8%" },
-  completedCol: { width: "9%" },
-  workRetCol: { width: "7%" },
-  matRetCol: { width: "7%" },
-  netCol: { width: "6%" },
-  balanceCol: { width: "8%" },
-  totalRow: {
-    backgroundColor: "#F9FAFB",
-    borderTopWidth: 1,
-    borderTopColor: "#9CA3AF",
-  },
-  rollupGrid: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  rollupRow: {
+  pageHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    alignItems: "flex-start",
+    marginBottom: 8,
   },
-  rollupNumber: {
-    width: 20,
-    color: "#6B7280",
+  headerTitle: {
     fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    letterSpacing: 0.4,
   },
-  rollupLabel: {
-    flexGrow: 1,
-    color: "#374151",
-  },
-  rollupLabelIndent: {
-    paddingLeft: 14,
-  },
-  rollupValue: {
+  headerSubTitle: {
     fontFamily: "Helvetica-Bold",
+    fontSize: 9,
+    letterSpacing: 0.3,
   },
-  coTable: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+  pageCount: {
+    fontSize: 7,
   },
-  attachmentsSection: {
-    marginTop: 10,
+  twoColumn: {
+    flexDirection: "row",
+    gap: 14,
   },
-  attachmentRow: {
-    fontSize: 8,
-    color: "#374151",
+  leftColumn: {
+    width: "58%",
+  },
+  rightColumn: {
+    width: "42%",
+  },
+  metaGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  metaColumn: {
+    width: "48%",
+  },
+  fieldGroup: {
+    marginBottom: 8,
+  },
+  fieldLabel: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 7,
     marginBottom: 2,
   },
-  footer: {
-    position: "absolute",
-    left: 26,
-    right: 26,
-    bottom: 12,
-    alignItems: "center",
+  fieldLine: {
+    marginBottom: 1,
   },
-  footerAddress: {
-    fontSize: 7,
-    color: ALLEATO_BLACK,
-    marginBottom: 6,
+  summarySheet: {
+    borderWidth: 1,
+    borderColor: "#111111",
+    padding: 7,
+    marginBottom: 8,
+  },
+  summarySheetRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 3,
+  },
+  summarySheetLabel: {
+    fontFamily: "Helvetica-Bold",
+    width: "44%",
+  },
+  summarySheetValue: {
+    width: "54%",
+    textAlign: "left",
+  },
+  sectionTitle: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    marginBottom: 5,
+  },
+  bodyText: {
+    marginBottom: 4,
+  },
+  ruleTable: {
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: "#111111",
+    marginTop: 4,
+  },
+  ruleRow: {
+    flexDirection: "row",
+  },
+  ruleCellNumber: {
+    width: "8%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+  },
+  ruleCellLabel: {
+    width: "62%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+  },
+  ruleCellValue: {
+    width: "30%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+    textAlign: "right",
+  },
+  emphasized: {
+    fontFamily: "Helvetica-Bold",
+  },
+  signatureBlock: {
+    borderWidth: 1,
+    borderColor: "#111111",
+    padding: 7,
+    minHeight: 220,
+  },
+  signatureLineRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  signatureLine: {
+    width: "68%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    minHeight: 12,
+  },
+  shortLine: {
+    width: "25%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    minHeight: 12,
+  },
+  notaryLine: {
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    minHeight: 12,
+    marginTop: 6,
+  },
+  changeSummary: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: "#111111",
+  },
+  changeSummaryHeader: {
+    flexDirection: "row",
+    backgroundColor: "#F3F3F3",
+  },
+  changeSummaryRow: {
+    flexDirection: "row",
+  },
+  changeCellLabel: {
+    width: "56%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+  },
+  changeCellValue: {
+    width: "22%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+    textAlign: "right",
+  },
+  changeCellValueLast: {
+    width: "22%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+    textAlign: "right",
+  },
+  continuationMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  continuationMetaBlock: {
+    width: "31%",
+  },
+  detailTable: {
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: "#111111",
+    marginTop: 4,
+  },
+  detailHeaderRow: {
+    flexDirection: "row",
+    backgroundColor: "#F3F3F3",
+  },
+  detailRow: {
+    flexDirection: "row",
+  },
+  detailItem: {
+    width: "6%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
     textAlign: "center",
+    fontSize: 7,
+  },
+  detailBudget: {
+    width: "14%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    fontSize: 7,
+  },
+  detailDescription: {
+    width: "22%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 3,
+    fontSize: 7,
+  },
+  detailNumber: {
+    width: "10%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    textAlign: "right",
+    fontSize: 7,
+  },
+  detailPercent: {
+    width: "8%",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    textAlign: "right",
+    fontSize: 7,
+  },
+  detailLast: {
+    width: "8%",
+    borderBottomWidth: 1,
+    borderColor: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    textAlign: "right",
+    fontSize: 7,
+  },
+  tableSectionTitle: {
+    marginTop: 8,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+  },
+  footerNote: {
+    marginTop: 6,
+    fontSize: 7,
   },
 });
 
-function Rule({ flipped = false }: { flipped?: boolean }) {
+function SummaryRuleRow({
+  number,
+  label,
+  value,
+  emphasize = false,
+}: {
+  number: string;
+  label: string;
+  value: number;
+  emphasize?: boolean;
+}) {
   return (
-    <Svg style={flipped ? styles.footerRule : styles.topRule} viewBox="0 0 612 18">
-      {flipped ? (
-        <>
-          <Path d="M0 0 H315 L346 18 H0 Z" fill={ALLEATO_BLACK} />
-          <Path d="M354 0 H612 V18 H386 Z" fill={ALLEATO_ORANGE} />
-        </>
-      ) : (
-        <>
-          <Path d="M0 0 H286 L278 18 H0 Z" fill={ALLEATO_ORANGE} />
-          <Path d="M302 0 H612 V18 H294 Z" fill={ALLEATO_BLACK} />
-        </>
-      )}
-    </Svg>
+    <View style={styles.ruleRow}>
+      <Text style={[styles.ruleCellNumber, emphasize ? styles.emphasized : null]}>
+        {number}
+      </Text>
+      <Text style={[styles.ruleCellLabel, emphasize ? styles.emphasized : null]}>
+        {label}
+      </Text>
+      <Text style={[styles.ruleCellValue, emphasize ? styles.emphasized : null]}>
+        {formatMoney(value)}
+      </Text>
+    </View>
+  );
+}
+
+function DetailTable({
+  rows,
+  totalsLabel,
+}: {
+  rows: ContinuationRow[];
+  totalsLabel: string;
+}) {
+  const totals = rows.reduce<ContinuationRow>(
+    (acc, row) => ({
+      itemNo: "",
+      budgetCode: "",
+      description: totalsLabel,
+      scheduledValue: acc.scheduledValue + row.scheduledValue,
+      previousWork: acc.previousWork + row.previousWork,
+      thisPeriodWork: acc.thisPeriodWork + row.thisPeriodWork,
+      materialsStored: acc.materialsStored + row.materialsStored,
+      totalCompletedStored: acc.totalCompletedStored + row.totalCompletedStored,
+      percentComplete: 0,
+      balanceToFinish: acc.balanceToFinish + row.balanceToFinish,
+      retainage: acc.retainage + row.retainage,
+    }),
+    {
+      itemNo: "",
+      budgetCode: "",
+      description: totalsLabel,
+      scheduledValue: 0,
+      previousWork: 0,
+      thisPeriodWork: 0,
+      materialsStored: 0,
+      totalCompletedStored: 0,
+      percentComplete: 0,
+      balanceToFinish: 0,
+      retainage: 0,
+    },
+  );
+
+  totals.percentComplete =
+    totals.scheduledValue > 0
+      ? (totals.totalCompletedStored / totals.scheduledValue) * 100
+      : 0;
+
+  const renderRow = (row: ContinuationRow, key: string, emphasize = false) => (
+    <View key={key} style={styles.detailRow} wrap={false}>
+      <Text style={[styles.detailItem, emphasize ? styles.emphasized : null]}>
+        {row.itemNo}
+      </Text>
+      <Text style={[styles.detailBudget, emphasize ? styles.emphasized : null]}>
+        {row.budgetCode}
+      </Text>
+      <Text
+        style={[styles.detailDescription, emphasize ? styles.emphasized : null]}
+      >
+        {row.description}
+      </Text>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.scheduledValue)}
+      </Text>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.previousWork)}
+      </Text>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.thisPeriodWork)}
+      </Text>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.materialsStored)}
+      </Text>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.totalCompletedStored)}
+      </Text>
+      <Text style={[styles.detailPercent, emphasize ? styles.emphasized : null]}>
+        {formatPercent(row.percentComplete)}
+      </Text>
+      <Text style={[styles.detailLast, emphasize ? styles.emphasized : null]}>
+        {formatMoney(row.balanceToFinish)}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.detailTable}>
+      <View style={styles.detailHeaderRow} wrap={false}>
+        <Text style={styles.detailItem}>ITEM NO.</Text>
+        <Text style={styles.detailBudget}>BUDGET CODE</Text>
+        <Text style={styles.detailDescription}>DESCRIPTION OF WORK</Text>
+        <Text style={styles.detailNumber}>SCHEDULED VALUE</Text>
+        <Text style={styles.detailNumber}>FROM PREVIOUS APPLICATION</Text>
+        <Text style={styles.detailNumber}>THIS PERIOD</Text>
+        <Text style={styles.detailNumber}>MATERIALS STORED</Text>
+        <Text style={styles.detailNumber}>TOTAL COMPLETED AND STORED</Text>
+        <Text style={styles.detailPercent}>%</Text>
+        <Text style={styles.detailLast}>BALANCE TO FINISH</Text>
+      </View>
+      {rows.map((row, index) => renderRow(row, `${row.itemNo}-${index}`))}
+      {renderRow(totals, `${totalsLabel}-totals`, true)}
+    </View>
   );
 }
 
@@ -331,338 +558,340 @@ export function SubcontractorInvoicePdfDocument({
 }: {
   data: SubcontractorInvoicePdfData;
 }) {
-  const tableTotals = computeTableTotals(data.line_items);
   const invoiceNumber = data.invoice_number || `APP-${data.application_number}`;
-  const generatedAt = new Date().toLocaleString("en-US");
-  const projectCityStateZip = formatCityStateZip(
+  const contractorBlock = formatAddressBlock(
+    data.gc_company_name,
+    data.gc_company_address,
     data.gc_company_city,
     data.gc_company_state,
     data.gc_company_zip,
   );
-  const contractorCityStateZip = formatCityStateZip(
+  const subcontractorBlock = formatAddressBlock(
+    data.contract_company_name,
+    data.contract_company_address,
     data.contract_company_city,
     data.contract_company_state,
     data.contract_company_zip,
   );
-
-  const logoPath = `${process.cwd()}/public/Alleato-Group-Logo_Dark.png`;
+  const periodText =
+    data.period_start && data.period_end
+      ? `${formatDateShort(data.period_start)} - ${formatDateShort(data.period_end)}`
+      : "—";
+  const certificateDate = formatDate(data.billing_date || data.created_at);
+  const submittedDate = formatDate(data.created_at, "");
+  const { contractRows, changeOrderRows, grandTotals } = buildContinuationSections(
+    data,
+  );
 
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
-        <View style={styles.logoWrap}>
-          <PdfImage src={logoPath} style={styles.logo} />
-        </View>
-        <Rule />
-        <Text style={styles.title}>APPLICATION AND CERTIFICATE FOR PAYMENT</Text>
-        <View style={styles.thinRule} />
-
-        <View style={[styles.row, styles.section]}>
-          <View style={[styles.col, styles.box]}>
-            <Text style={styles.boxTitle}>Project</Text>
-            <Text>{data.project_name || "—"}</Text>
-            <Text style={styles.muted}>{data.project_number || "—"}</Text>
-            {data.project_address ? <Text>{data.project_address}</Text> : null}
-          </View>
-          <View style={[styles.col, styles.box]}>
-            <Text style={styles.boxTitle}>General Contractor</Text>
-            <Text>{data.gc_company_name || "—"}</Text>
-            {data.gc_company_address ? <Text>{data.gc_company_address}</Text> : null}
-            {projectCityStateZip ? <Text>{projectCityStateZip}</Text> : null}
-          </View>
-          <View style={[styles.col, styles.box]}>
-            <Text style={styles.boxTitle}>Subcontractor</Text>
-            <Text>{data.contract_company_name || "—"}</Text>
-            {data.contract_company_address ? (
-              <Text>{data.contract_company_address}</Text>
-            ) : null}
-            {contractorCityStateZip ? <Text>{contractorCityStateZip}</Text> : null}
+        <View style={styles.pageHeader}>
+          <Text style={styles.headerTitle}>
+            APPLICATION AND CERTIFICATE FOR PAYMENT
+          </Text>
+          <View>
+            <Text style={styles.headerSubTitle}>DOCUMENT SUMMARY SHEET</Text>
+            <Text style={styles.pageCount}>Page 1 of 2</Text>
           </View>
         </View>
 
-        <View style={[styles.row, styles.section]}>
-          <View style={styles.col}>
-            <Text>
-              <Text style={styles.label}>Invoice Number: </Text>
-              {invoiceNumber}
-            </Text>
-            <Text>
-              <Text style={styles.label}>Application #: </Text>
-              {String(data.application_number)}
-            </Text>
-            <Text>
-              <Text style={styles.label}>Status: </Text>
-              {data.status || "draft"}
-            </Text>
-          </View>
-          <View style={styles.col}>
-            <Text>
-              <Text style={styles.label}>Contract: </Text>
-              {data.contract_number || "—"}
-              {data.contract_title ? ` — ${data.contract_title}` : ""}
-            </Text>
-            <Text>
-              <Text style={styles.label}>Contract Date: </Text>
-              {formatDate(data.contract_date)}
-            </Text>
-            <Text>
-              <Text style={styles.label}>Billing Date: </Text>
-              {formatDate(data.billing_date)}
-            </Text>
-          </View>
-          <View style={styles.col}>
-            <Text>
-              <Text style={styles.label}>Period Start: </Text>
-              {formatDate(data.period_start)}
-            </Text>
-            <Text>
-              <Text style={styles.label}>Period End: </Text>
-              {formatDate(data.period_end)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.table}>
-          <View style={styles.tableHeaderRow}>
-            <Text style={[styles.tableCellHeader, styles.lineNoCol]}>#</Text>
-            <Text style={[styles.tableCellHeader, styles.budgetCodeCol]}>Budget Code</Text>
-            <Text style={[styles.tableCellHeader, styles.descCol]}>Description</Text>
-            <Text style={[styles.tableCellHeader, styles.schedCol]}>Scheduled</Text>
-            <Text style={[styles.tableCellHeader, styles.prevCol]}>Previous</Text>
-            <Text style={[styles.tableCellHeader, styles.periodCol]}>This Period</Text>
-            <Text style={[styles.tableCellHeader, styles.storedCol]}>Stored</Text>
-            <Text style={[styles.tableCellHeader, styles.completedCol]}>Completed</Text>
-            <Text style={[styles.tableCellHeader, styles.workRetCol]}>Work Ret.</Text>
-            <Text style={[styles.tableCellHeader, styles.matRetCol]}>Mat. Ret.</Text>
-            <Text style={[styles.tableCellHeader, styles.netCol]}>Net</Text>
-            <Text style={[styles.tableCellHeader, styles.balanceCol]}>Balance</Text>
-          </View>
-
-          {data.line_items.map((item) => (
-            <View key={item.id} style={styles.tableRow} wrap={false}>
-              <Text style={[styles.tableCell, styles.lineNoCol]}>
-                {item.sort_order ?? "—"}
-              </Text>
-              <Text style={[styles.tableCell, styles.budgetCodeCol, styles.leftCell]}>
-                {item.budget_code || "—"}
-              </Text>
-              <Text style={[styles.tableCell, styles.descCol, styles.leftCell]}>
-                {item.description || "—"}
-              </Text>
-              <Text style={[styles.tableCell, styles.schedCol]}>
-                {formatMoney(item.scheduled_value)}
-              </Text>
-              <Text style={[styles.tableCell, styles.prevCol]}>
-                {formatMoney(item.work_completed_previous)}
-              </Text>
-              <Text style={[styles.tableCell, styles.periodCol]}>
-                {formatMoney(item.work_completed_period)}
-              </Text>
-              <Text style={[styles.tableCell, styles.storedCol]}>
-                {formatMoney(item.materials_stored)}
-              </Text>
-              <Text style={[styles.tableCell, styles.completedCol]}>
-                {formatMoney(item.total_completed_stored)}
-              </Text>
-              <Text style={[styles.tableCell, styles.workRetCol]}>
-                {formatMoney(item.retainage_amount)}
-              </Text>
-              <Text style={[styles.tableCell, styles.matRetCol]}>
-                {formatMoney(item.materials_retainage_amount)}
-              </Text>
-              <Text style={[styles.tableCell, styles.netCol]}>
-                {formatMoney(item.net_amount_this_period)}
-              </Text>
-              <Text style={[styles.tableCell, styles.balanceCol]}>
-                {formatMoney((item.scheduled_value ?? 0) - (item.total_completed_stored ?? 0))}
-              </Text>
-            </View>
-          ))}
-
-          <View style={[styles.tableRow, styles.totalRow]} wrap={false}>
-            <Text style={[styles.tableCell, styles.lineNoCol]} />
-            <Text style={[styles.tableCell, styles.budgetCodeCol, styles.leftCell]} />
-            <Text style={[styles.tableCell, styles.descCol, styles.leftCell, styles.label]}>
-              Totals
-            </Text>
-            <Text style={[styles.tableCell, styles.schedCol]}>
-              {formatMoney(tableTotals.scheduled)}
-            </Text>
-            <Text style={[styles.tableCell, styles.prevCol]}>
-              {formatMoney(tableTotals.previous)}
-            </Text>
-            <Text style={[styles.tableCell, styles.periodCol]}>
-              {formatMoney(tableTotals.thisPeriod)}
-            </Text>
-            <Text style={[styles.tableCell, styles.storedCol]}>
-              {formatMoney(tableTotals.materials)}
-            </Text>
-            <Text style={[styles.tableCell, styles.completedCol]}>
-              {formatMoney(tableTotals.completed)}
-            </Text>
-            <Text style={[styles.tableCell, styles.workRetCol]}>
-              {formatMoney(tableTotals.workRetainage)}
-            </Text>
-            <Text style={[styles.tableCell, styles.matRetCol]}>
-              {formatMoney(tableTotals.materialRetainage)}
-            </Text>
-            <Text style={[styles.tableCell, styles.netCol]}>
-              {formatMoney(tableTotals.net)}
-            </Text>
-            <Text style={[styles.tableCell, styles.balanceCol]}>
-              {formatMoney(tableTotals.scheduled - tableTotals.completed)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.rollupGrid}>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>1.</Text>
-            <Text style={styles.rollupLabel}>Original Contract Sum</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.original_contract_sum)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>2.</Text>
-            <Text style={styles.rollupLabel}>Net Change by Change Orders</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.net_change_by_change_orders)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>3.</Text>
-            <Text style={[styles.rollupLabel, styles.label]}>
-              Contract Sum to Date (1 + 2)
-            </Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.contract_sum_to_date)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>4.</Text>
-            <Text style={styles.rollupLabel}>Total Completed &amp; Stored to Date</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.total_completed_and_stored)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>5a.</Text>
-            <Text style={[styles.rollupLabel, styles.rollupLabelIndent]}>Work Retainage</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.total_work_retainage)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>5b.</Text>
-            <Text style={[styles.rollupLabel, styles.rollupLabelIndent]}>Materials Retainage</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.total_materials_retainage)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>5.</Text>
-            <Text style={[styles.rollupLabel, styles.label]}>Total Retainage (5a + 5b)</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.total_retainage)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>6.</Text>
-            <Text style={styles.rollupLabel}>Total Earned Less Retainage (4 − 5)</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.total_earned_less_retainage)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>7.</Text>
-            <Text style={styles.rollupLabel}>Less Previous Certificates for Payment</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.less_previous_certificates)}
-            </Text>
-          </View>
-          <View style={styles.rollupRow}>
-            <Text style={styles.rollupNumber}>8.</Text>
-            <Text style={[styles.rollupLabel, styles.label]}>Current Payment Due (6 − 7)</Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.current_payment_due)}
-            </Text>
-          </View>
-          <View style={[styles.rollupRow, { borderBottomWidth: 0 }]}>
-            <Text style={styles.rollupNumber}>9.</Text>
-            <Text style={styles.rollupLabel}>
-              Balance to Finish, Including Retainage (3 − 6)
-            </Text>
-            <Text style={styles.rollupValue}>
-              {formatMoney(data.rollup.balance_to_finish_including_retainage)}
-            </Text>
-          </View>
-        </View>
-
-        {(data.rollup.change_order_additions ?? 0) !== 0 ||
-        (data.rollup.change_order_deductions ?? 0) !== 0 ? (
-          <>
-            <Text style={styles.sectionHeading}>Change Order Summary</Text>
-            <View style={styles.coTable}>
-              <View style={styles.tableHeaderRow}>
-                <Text style={[styles.tableCellHeader, { width: "40%", textAlign: "left" }]}>
-                  Type
-                </Text>
-                <Text style={[styles.tableCellHeader, { width: "20%" }]}>Additions</Text>
-                <Text style={[styles.tableCellHeader, { width: "20%" }]}>Deductions</Text>
-                <Text style={[styles.tableCellHeader, { width: "20%" }]}>Net Change</Text>
+        <View style={styles.twoColumn}>
+          <View style={styles.leftColumn}>
+            <View style={styles.metaGrid}>
+              <View style={styles.metaColumn}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>TO CONTRACTOR:</Text>
+                  {contractorBlock.map((line) => (
+                    <Text key={`to-${line}`} style={styles.fieldLine}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>FROM SUBCONTRACTOR:</Text>
+                  {subcontractorBlock.map((line) => (
+                    <Text key={`from-${line}`} style={styles.fieldLine}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>SUBCONTRACT FOR:</Text>
+                  <Text>{safeText(data.contract_title || data.project_name)}</Text>
+                </View>
               </View>
-              <View style={styles.tableRow}>
-                <Text style={[styles.tableCell, { width: "40%" }, styles.leftCell]}>
-                  Approved Change Orders
+
+              <View style={styles.metaColumn}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>PROJECT:</Text>
+                  <Text style={styles.fieldLine}>{safeText(data.project_name)}</Text>
+                  <Text style={styles.fieldLine}>{safeText(data.project_address)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.sectionTitle}>
+              SUBCONTRACTOR'S APPLICATION FOR PAYMENT
+            </Text>
+            <Text style={styles.bodyText}>
+              Application is made for payment, as shown below, in connection with
+              the Subcontract. Continuation Sheet is attached.
+            </Text>
+
+            <View style={styles.ruleTable}>
+              <SummaryRuleRow
+                number="1."
+                label="Original Contract Sum"
+                value={data.rollup.original_contract_sum}
+              />
+              <SummaryRuleRow
+                number="2."
+                label="Net change by change orders"
+                value={data.rollup.net_change_by_change_orders}
+              />
+              <SummaryRuleRow
+                number="3."
+                label="Contract Sum to date (Line 1 ± 2)"
+                value={data.rollup.contract_sum_to_date}
+                emphasize
+              />
+              <SummaryRuleRow
+                number="4."
+                label="Total completed and stored to date (Column G on detail sheet)"
+                value={data.rollup.total_completed_and_stored}
+              />
+              <SummaryRuleRow
+                number="5a."
+                label="0.00% of completed work"
+                value={data.rollup.total_work_retainage}
+              />
+              <SummaryRuleRow
+                number="5b."
+                label="0.00% of stored material"
+                value={data.rollup.total_materials_retainage}
+              />
+              <SummaryRuleRow
+                number="5."
+                label="Total retainage"
+                value={data.rollup.total_retainage}
+              />
+              <SummaryRuleRow
+                number="6."
+                label="Total earned less retainage (Line 4 less Line 5)"
+                value={data.rollup.total_earned_less_retainage}
+                emphasize
+              />
+              <SummaryRuleRow
+                number="7."
+                label="Less previous certificates for payment"
+                value={data.rollup.less_previous_certificates}
+              />
+              <SummaryRuleRow
+                number="8."
+                label="Current payment due"
+                value={data.rollup.current_payment_due}
+                emphasize
+              />
+              <SummaryRuleRow
+                number="9."
+                label="Balance to finish, including retainage (Line 3 less Line 6)"
+                value={data.rollup.balance_to_finish_including_retainage}
+              />
+            </View>
+
+            <View style={styles.changeSummary}>
+              <View style={styles.changeSummaryHeader}>
+                <Text style={[styles.changeCellLabel, styles.emphasized]}>
+                  CHANGE ORDER SUMMARY
                 </Text>
-                <Text style={[styles.tableCell, { width: "20%" }]}>
-                  {formatMoney(data.rollup.change_order_additions)}
+                <Text style={[styles.changeCellValue, styles.emphasized]}>
+                  ADDITIONS
                 </Text>
-                <Text style={[styles.tableCell, { width: "20%" }]}>
-                  {formatMoney(data.rollup.change_order_deductions)}
+                <Text style={[styles.changeCellValueLast, styles.emphasized]}>
+                  DEDUCTIONS
                 </Text>
-                <Text style={[styles.tableCell, { width: "20%" }, styles.label]}>
+              </View>
+              <View style={styles.changeSummaryRow}>
+                <Text style={styles.changeCellLabel}>
+                  Total changes approved in previous months by Owner/Client:
+                </Text>
+                <Text style={styles.changeCellValue}>
+                  {formatMoney(data.rollup.change_order_additions ?? 0)}
+                </Text>
+                <Text style={styles.changeCellValueLast}>
+                  {formatMoney(Math.abs(data.rollup.change_order_deductions ?? 0))}
+                </Text>
+              </View>
+              <View style={styles.changeSummaryRow}>
+                <Text style={styles.changeCellLabel}>Total approved this month:</Text>
+                <Text style={styles.changeCellValue}>{formatMoney(0)}</Text>
+                <Text style={styles.changeCellValueLast}>{formatMoney(0)}</Text>
+              </View>
+              <View style={styles.changeSummaryRow}>
+                <Text style={[styles.changeCellLabel, styles.emphasized]}>Totals:</Text>
+                <Text style={[styles.changeCellValue, styles.emphasized]}>
+                  {formatMoney(data.rollup.change_order_additions ?? 0)}
+                </Text>
+                <Text style={[styles.changeCellValueLast, styles.emphasized]}>
+                  {formatMoney(Math.abs(data.rollup.change_order_deductions ?? 0))}
+                </Text>
+              </View>
+              <View style={styles.changeSummaryRow}>
+                <Text style={styles.changeCellLabel}>Net change by change orders:</Text>
+                <Text style={styles.changeCellValueLast}>
                   {formatMoney(data.rollup.net_change_by_change_orders)}
                 </Text>
+                <Text style={styles.changeCellValueLast} />
               </View>
             </View>
-          </>
-        ) : null}
-
-        {data.attachments && data.attachments.length > 0 ? (
-          <View style={styles.attachmentsSection}>
-            <Text style={styles.sectionHeading}>Attachments</Text>
-            {data.attachments.map((name, index) => (
-              <Text key={`${name}-${index}`} style={styles.attachmentRow}>
-                • {name}
-              </Text>
-            ))}
           </View>
-        ) : null}
+
+          <View style={styles.rightColumn}>
+            <View style={styles.summarySheet}>
+              {[
+                ["APPLICATION NO:", String(data.application_number)],
+                ["INVOICE NO:", invoiceNumber],
+                ["PERIOD:", periodText],
+                ["PROJECT NO:", safeText(data.project_number)],
+                ["CONTRACT NO:", safeText(data.contract_number)],
+                ["CONTRACT DATE:", formatDate(data.contract_date)],
+                ["CERTIFICATE DATE:", certificateDate],
+                ["SUBMITTED DATE:", submittedDate || "—"],
+              ].map(([label, value]) => (
+                <View key={label} style={styles.summarySheetRow}>
+                  <Text style={styles.summarySheetLabel}>{label}</Text>
+                  <Text style={styles.summarySheetValue}>{value}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.signatureBlock}>
+              <Text style={styles.bodyText}>
+                The undersigned certifies that to the best of the
+                Subcontractor&apos;s knowledge, information and belief, the Work
+                covered by this Application for Payment has been completed in
+                accordance with the Subcontract Documents, that all amounts have
+                been paid by the Subcontractor for Work which previous
+                Certificates for payment were issued and payments received from
+                the Owner/Client, and that current payments shown herein is now
+                due.
+              </Text>
+              <Text style={styles.bodyText}>
+                SUBCONTRACTOR: {safeText(data.contract_company_name)}
+              </Text>
+              <View style={styles.signatureLineRow}>
+                <Text>By:</Text>
+                <View style={styles.signatureLine} />
+                <Text>Date:</Text>
+                <View style={styles.shortLine} />
+              </View>
+              <Text style={[styles.bodyText, { marginTop: 10 }]}>State of:</Text>
+              <View style={styles.notaryLine} />
+              <Text style={[styles.bodyText, { marginTop: 8 }]}>County of:</Text>
+              <View style={styles.notaryLine} />
+              <Text style={[styles.bodyText, { marginTop: 8 }]}>
+                Subscribed and sworn to before me this day of
+              </Text>
+              <View style={styles.notaryLine} />
+              <Text style={[styles.bodyText, { marginTop: 8 }]}>Notary Public:</Text>
+              <View style={styles.notaryLine} />
+              <Text style={[styles.bodyText, { marginTop: 8 }]}>
+                My commission expires:
+              </Text>
+              <View style={styles.notaryLine} />
+            </View>
+          </View>
+        </View>
+      </Page>
+
+      <Page size="LETTER" style={styles.page}>
+        <View style={styles.pageHeader}>
+          <Text style={styles.headerTitle}>CONTINUATION SHEET</Text>
+          <View>
+            <Text style={styles.headerSubTitle}>DOCUMENT DETAIL SHEET</Text>
+            <Text style={styles.pageCount}>Page 2 of 2</Text>
+          </View>
+        </View>
+
+        <Text style={styles.bodyText}>
+          Document SUMMARY SHEET, APPLICATION AND CERTIFICATE FOR PAYMENT,
+          containing Contractor&apos;s signed Certification is attached.
+        </Text>
+
+        <View style={styles.continuationMeta}>
+          <View style={styles.continuationMetaBlock}>
+            <Text style={styles.fieldLabel}>APPLICATION NUMBER:</Text>
+            <Text>{String(data.application_number)}</Text>
+          </View>
+          <View style={styles.continuationMetaBlock}>
+            <Text style={styles.fieldLabel}>APPLICATION DATE:</Text>
+            <Text>{formatDate(data.billing_date)}</Text>
+          </View>
+          <View style={styles.continuationMetaBlock}>
+            <Text style={styles.fieldLabel}>PERIOD:</Text>
+            <Text>{periodText}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.tableSectionTitle}>Contract Lines</Text>
+        <DetailTable rows={contractRows} totalsLabel="TOTALS:" />
+
+        <Text style={styles.tableSectionTitle}>Change Orders</Text>
+        <DetailTable rows={changeOrderRows} totalsLabel="TOTALS:" />
+
+        <Text style={styles.tableSectionTitle}>Grand Totals</Text>
+        <View style={styles.detailTable}>
+          <View style={styles.detailHeaderRow} wrap={false}>
+            <Text style={styles.detailItem}>ITEM NO.</Text>
+            <Text style={styles.detailBudget}>BUDGET CODE</Text>
+            <Text style={styles.detailDescription}>DESCRIPTION OF WORK</Text>
+            <Text style={styles.detailNumber}>SCHEDULED VALUE</Text>
+            <Text style={styles.detailNumber}>FROM PREVIOUS APPLICATION</Text>
+            <Text style={styles.detailNumber}>THIS PERIOD</Text>
+            <Text style={styles.detailNumber}>MATERIALS STORED</Text>
+            <Text style={styles.detailNumber}>TOTAL COMPLETED AND STORED</Text>
+            <Text style={styles.detailPercent}>%</Text>
+            <Text style={styles.detailLast}>BALANCE TO FINISH</Text>
+          </View>
+          <View style={styles.detailRow} wrap={false}>
+            <Text style={styles.detailItem} />
+            <Text style={styles.detailBudget} />
+            <Text style={[styles.detailDescription, styles.emphasized]}>
+              {grandTotals.description}
+            </Text>
+            <Text style={[styles.detailNumber, styles.emphasized]}>
+              {formatMoney(grandTotals.scheduledValue)}
+            </Text>
+            <Text style={[styles.detailNumber, styles.emphasized]}>
+              {formatMoney(grandTotals.previousWork)}
+            </Text>
+            <Text style={[styles.detailNumber, styles.emphasized]}>
+              {formatMoney(grandTotals.thisPeriodWork)}
+            </Text>
+            <Text style={[styles.detailNumber, styles.emphasized]}>
+              {formatMoney(grandTotals.materialsStored)}
+            </Text>
+            <Text style={[styles.detailNumber, styles.emphasized]}>
+              {formatMoney(grandTotals.totalCompletedStored)}
+            </Text>
+            <Text style={[styles.detailPercent, styles.emphasized]}>
+              {formatPercent(grandTotals.percentComplete)}
+            </Text>
+            <Text style={[styles.detailLast, styles.emphasized]}>
+              {formatMoney(grandTotals.balanceToFinish)}
+            </Text>
+          </View>
+        </View>
 
         {data.notes ? (
-          <View style={{ marginTop: 10 }}>
-            <Text style={styles.label}>Notes</Text>
-            <Text style={{ marginTop: 3 }}>{data.notes}</Text>
-          </View>
+          <Text style={styles.footerNote}>Notes: {data.notes}</Text>
         ) : null}
-
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerAddress}>
-            {data.project_name || "Project"} · Generated {generatedAt}
-          </Text>
-          <Text style={styles.footerAddress}>
-            701 94th Ave. N, Suite #118 St. Petersburg, FL 33702      8383 Craig Street #150 Indianapolis, IN 46250
-          </Text>
-          <Rule flipped />
-        </View>
       </Page>
     </Document>
   );
 }
 
-// Renders the subcontractor invoice PDF as a Node buffer for download/email.
 export async function renderSubcontractorInvoicePdfBuffer(
   data: SubcontractorInvoicePdfData,
 ): Promise<Buffer> {

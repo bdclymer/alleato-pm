@@ -188,7 +188,7 @@ describe("summarizeProjectIntelligence", () => {
     );
     expect(generateObjectMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        system: expect.stringContaining(
+        instructions: expect.stringContaining(
           "Lead with Brandon-specific priorities whenever the evidence shows something the owner must personally handle",
         ),
       }),

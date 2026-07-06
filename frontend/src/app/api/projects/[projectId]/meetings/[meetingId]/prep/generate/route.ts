@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
-import { generateText, stepCountIs } from "ai";
+import { generateText, isStepCount } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import {
@@ -114,10 +114,10 @@ export const POST = withApiGuardrails(
 
     const result = await generateText({
       model: getLanguageModel(MODEL_ID),
-      system: systemPrompt,
+      instructions: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       tools,
-      stopWhen: stepCountIs(7),
+      stopWhen: isStepCount(7),
     });
 
     const generationTimeMs = Date.now() - startTime;

@@ -5,7 +5,9 @@ import { render, screen } from "@testing-library/react";
 
 import {
   TASKS_SPLIT_WORKSPACE_CLASSNAME,
+  TASKS_SPLIT_FIRST_PANE_WIDTH,
   TASK_DETAIL_PROPERTY_BAR_CLASSNAME,
+  TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME,
   TaskListItem,
 } from "../tasks-inbox";
 import type { TasksRow } from "../task-utils";
@@ -75,7 +77,7 @@ function buildTask(overrides: Partial<TasksRow> = {}): TasksRow {
 }
 
 describe("TaskListItem feedback visibility", () => {
-  it("shows compact feedback controls only for AI-generated tasks in split-view rows", () => {
+  it("keeps generated-task feedback out of list rows so detail owns the correction path", () => {
     const { rerender } = render(
       <TaskListItem
         item={buildTask()}
@@ -87,9 +89,9 @@ describe("TaskListItem feedback visibility", () => {
       />,
     );
 
-    expect(screen.getByTestId("task-feedback-buttons")).toHaveTextContent(
-      "task-1",
-    );
+    expect(
+      screen.queryByTestId("task-feedback-buttons"),
+    ).not.toBeInTheDocument();
 
     rerender(
       <TaskListItem
@@ -122,9 +124,16 @@ describe("Tasks split layout", () => {
     expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).not.toContain("100dvh");
   });
 
+  it("uses the shared split-page width API for the wider tasks list pane", () => {
+    expect(TASKS_SPLIT_FIRST_PANE_WIDTH).toBe("30rem");
+  });
+
   it("keeps task detail metadata on the shared property-bar spacing contract", () => {
     expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mt-3");
     expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mb-0");
     expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).not.toContain("grid");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).toContain("mt-2");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).toContain("mb-0");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).not.toContain("grid");
   });
 });

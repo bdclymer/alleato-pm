@@ -497,7 +497,7 @@ export async function generateProgressReportSections({
   // concise, grounded, and repeatable is more valuable than creative variation.
   const result = await generateText({
     model: getLanguageModel(MODEL_ID),
-    system: systemPrompt,
+    instructions: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
     temperature: 0.4,
   });

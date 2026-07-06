@@ -1,21 +1,37 @@
 "use client";
 
 import * as React from "react";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 import { cn } from "@/lib/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div
+    <ScrollAreaPrimitive.Root
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      type="always"
+      scrollHideDelay={0}
+      className="relative w-full"
     >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
+      <ScrollAreaPrimitive.Viewport className="w-full rounded-[inherit]">
+        <table
+          data-slot="table"
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </ScrollAreaPrimitive.Viewport>
+      <ScrollAreaPrimitive.ScrollAreaScrollbar
+        data-slot="table-scrollbar"
+        orientation="horizontal"
+        className="flex h-3 touch-none select-none border-t border-transparent bg-muted/30 p-px"
+      >
+        <ScrollAreaPrimitive.ScrollAreaThumb
+          data-slot="table-scrollbar-thumb"
+          className="relative flex-1 rounded-full bg-border"
+        />
+      </ScrollAreaPrimitive.ScrollAreaScrollbar>
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
   );
 }
 

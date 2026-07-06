@@ -17,7 +17,7 @@
  * See: docs/AI-CSUITE-ARCHITECTURE.md
  */
 
-import { ToolLoopAgent, stepCountIs, tool, type ModelMessage, type ToolSet } from "ai";
+import { ToolLoopAgent, isStepCount, tool, type ModelMessage, type ToolSet } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
@@ -984,7 +984,7 @@ export async function consultAgent(
       model: getLanguageModel(config.modelId),
       instructions: `${config.systemPrompt}${SPECIALIST_WEB_SEARCH_INSTRUCTIONS}`,
       tools: agentTools,
-      stopWhen: stepCountIs(5),
+      stopWhen: isStepCount(5),
     });
 
     const SUB_AGENT_TIMEOUT_MS = Number(
@@ -1109,7 +1109,10 @@ function makeConsultTool(
           `Optional additional context to help the ${contextRole} understand the broader question being answered.`,
         ),
     }),
-    execute: async ({ question, context }, { messages } = { messages: [], toolCallId: "" }) => {
+    execute: async (
+      { question, context },
+      { messages } = { messages: [], toolCallId: "", context: {} },
+    ) => {
       const conversationHistory = extractConversationHistory(messages, agentId);
       const response = await consultAgent(agentId, question, userId, context, {
         onTrace: options.onTrace,

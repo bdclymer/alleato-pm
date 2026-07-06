@@ -8,7 +8,7 @@ jest.mock("@/lib/ai/orchestrator", () => ({
 jest.mock("ai", () => ({
   generateText: jest.fn(),
   streamText: jest.fn(),
-  stepCountIs: jest.fn((count: number) => ({ count })),
+  isStepCount: jest.fn((count: number) => ({ count })),
 }));
 
 jest.mock("@/lib/ai/providers", () => ({
@@ -351,7 +351,7 @@ describe("bot-core response normalization", () => {
     );
     expect(mockGenerateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        system: expect.stringContaining(
+        instructions: expect.stringContaining(
           "in Teams, that tool call writes the task directly",
         ),
       }),

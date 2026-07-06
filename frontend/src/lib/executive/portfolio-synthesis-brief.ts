@@ -261,7 +261,7 @@ export async function buildPortfolioSynthesisBrief(options?: {
     const result = await generateText({
       model: getLanguageModel(model),
       temperature: 0.2,
-      system: PORTFOLIO_SYSTEM,
+      instructions: PORTFOLIO_SYSTEM,
       messages: [{ role: "user", content: buildUserPrompt(digests, financialContext) }],
       abortSignal: controller.signal,
     });

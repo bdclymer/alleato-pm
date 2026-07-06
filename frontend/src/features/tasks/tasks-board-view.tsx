@@ -7,13 +7,8 @@ import {
   type BoardColumnDefinition,
   TableTagBadge,
 } from "@/components/tables/unified";
-import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { cn } from "@/lib/utils";
 import { type TasksRow, getTaskSourceLabel } from "@/features/tasks/task-utils";
-import {
-  buildTaskFeedbackSnapshot,
-  isAiGeneratedTask,
-} from "@/features/tasks/tasks-table-config";
 
 type TaskBoardStatus = "open" | "in_progress" | "done";
 
@@ -90,9 +85,6 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
   const overdue =
     isOverdue(item.due_date) && toBoardStatus(item.status) !== "done";
   const priorityKey = (item.priority ?? "").toLowerCase();
-  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
-  const taskSnapshot = showFeedback ? buildTaskFeedbackSnapshot(item) : null;
-
   return (
     <div
       data-task-board-card
@@ -146,21 +138,6 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
         ) : null}
         {sourceLabel ? (
           <TableTagBadge label={sourceLabel} variant="outline" />
-        ) : null}
-        {showFeedback && item.id && taskSnapshot ? (
-          <div
-            className="ml-auto flex items-center"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <TaskFeedbackButtons
-              projectId={taskSnapshot.projectId}
-              taskId={item.id}
-              taskSnapshot={taskSnapshot}
-              compact
-              className="text-[11px]"
-            />
-          </div>
         ) : null}
       </div>
     </div>

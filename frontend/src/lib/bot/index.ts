@@ -183,7 +183,7 @@ bot.onNewMention(async (thread, message) => {
   });
 
   // Post the streaming response — Chat SDK handles post+edit fallback
-  await thread.post(result.fullStream);
+  await thread.post(result.stream);
 
   // Persist the assistant response
   const fullText = await result.text;
@@ -308,7 +308,7 @@ bot.onDirectMessage(async (thread, message) => {
     },
   });
 
-  await thread.post(result.fullStream);
+  await thread.post(result.stream);
 
   const fullText = await result.text;
   await persistChatMessage({
@@ -378,7 +378,7 @@ bot.onSubscribedMessage(async (thread, message) => {
     },
   });
 
-  await thread.post(result.fullStream);
+  await thread.post(result.stream);
 
   const fullText = await result.text;
   await persistChatMessage({

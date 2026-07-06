@@ -140,10 +140,13 @@ export function buildAiSdkPromptPayload(params: {
   systemPrompt: string;
   messages: ModelMessage[];
   tools?: ToolSet;
-}): { system: string; messages: ModelMessage[]; tools?: ToolSet } {
-  const system = assertNonEmptySystemPrompt(params.systemPrompt, params.where);
+}): { instructions: string; messages: ModelMessage[]; tools?: ToolSet } {
+  const instructions = assertNonEmptySystemPrompt(
+    params.systemPrompt,
+    params.where,
+  );
   return {
-    system,
+    instructions,
     messages: params.messages,
     ...(params.tools ? { tools: params.tools } : {}),
   };

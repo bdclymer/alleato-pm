@@ -1789,6 +1789,66 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_feedback_assistant_threads: {
+        Row: {
+          assistant_session_id: string
+          created_at: string
+          created_by: string
+          feedback_item_id: string
+          id: string
+          last_error: string | null
+          last_message_at: string | null
+          metadata: Json
+          relay_comments: boolean
+          runtime: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_session_id: string
+          created_at?: string
+          created_by: string
+          feedback_item_id: string
+          id?: string
+          last_error?: string | null
+          last_message_at?: string | null
+          metadata?: Json
+          relay_comments?: boolean
+          runtime?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_session_id?: string
+          created_at?: string
+          created_by?: string
+          feedback_item_id?: string
+          id?: string
+          last_error?: string | null
+          last_message_at?: string | null
+          metadata?: Json
+          relay_comments?: boolean
+          runtime?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_assistant_threads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_assistant_threads_feedback_item_id_fkey"
+            columns: ["feedback_item_id"]
+            isOneToOne: true
+            referencedRelation: "admin_feedback_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_feedback_comments: {
         Row: {
           author_id: string
@@ -6909,6 +6969,103 @@ export type Database = {
             columns: ["change_event_id"]
             isOneToOne: false
             referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      change_event_project_settings: {
+        Row: {
+          allow_line_item_autopopulation: boolean
+          always_create_commitment_cos_using_latest_cost: boolean
+          budget_rom_in_scope: string
+          budget_rom_out_of_scope: string
+          budget_rom_tbd_scope: string
+          copy_attachments_to_commitment_cos: boolean
+          copy_attachments_to_prime_pcos: boolean
+          created_at: string
+          display_revenue_rom_columns: boolean
+          display_unit_columns: boolean
+          maintain_budget_codes_in_sync: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item: boolean
+          project_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_line_item_autopopulation?: boolean
+          always_create_commitment_cos_using_latest_cost?: boolean
+          budget_rom_in_scope?: string
+          budget_rom_out_of_scope?: string
+          budget_rom_tbd_scope?: string
+          copy_attachments_to_commitment_cos?: boolean
+          copy_attachments_to_prime_pcos?: boolean
+          created_at?: string
+          display_revenue_rom_columns?: boolean
+          display_unit_columns?: boolean
+          maintain_budget_codes_in_sync?: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item?: boolean
+          project_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_line_item_autopopulation?: boolean
+          always_create_commitment_cos_using_latest_cost?: boolean
+          budget_rom_in_scope?: string
+          budget_rom_out_of_scope?: string
+          budget_rom_tbd_scope?: string
+          copy_attachments_to_commitment_cos?: boolean
+          copy_attachments_to_prime_pcos?: boolean
+          created_at?: string
+          display_revenue_rom_columns?: boolean
+          display_unit_columns?: boolean
+          maintain_budget_codes_in_sync?: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item?: boolean
+          project_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]

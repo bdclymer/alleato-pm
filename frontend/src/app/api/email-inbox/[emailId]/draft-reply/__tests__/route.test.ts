@@ -160,12 +160,12 @@ describe("/api/email-inbox/[emailId]/draft-reply", () => {
     expect(reviewBuilder.limit).toHaveBeenCalledWith(25);
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        system: expect.stringContaining("Brandon review learnings"),
+        instructions: expect.stringContaining("Brandon review learnings"),
       }),
     );
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        system: expect.stringContaining('"Thank You"'),
+        instructions: expect.stringContaining('"Thank You"'),
       }),
     );
   });

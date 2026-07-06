@@ -2,6 +2,11 @@
 
 import dynamic from "next/dynamic";
 import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -16,10 +21,12 @@ import {
   ArrowUpDown,
   Check,
   Columns3,
+  ExternalLink,
   Filter,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRight,
+  Table2,
   X,
 } from "lucide-react";
 import {
@@ -46,9 +53,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SplitPage, SplitPageFrame, useSplitPage } from "@/components/ui/split-page";
 import {
-  BoardView,
-  type BoardColumnDefinition,
-} from "@/components/tables/unified/board-view";
+  EmbeddedUnifiedTablePage,
+  type TableColumn,
+  useUnifiedTableState,
+} from "@/components/tables/unified";
+import { BoardView, type BoardColumnDefinition } from "@/components/tables/unified/board-view";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import {
   displayAdminFeedbackTitle,
@@ -76,9 +85,14 @@ import {
   getAssignedAgent,
   getDispatchStatus,
   notifyFeedbackInboxFailure,
+  submitterLabel,
   toDisplayStatus,
   toolLabelFromPath,
 } from "./helpers";
+import {
+  expandFeedbackStatusAliases,
+  normalizeFeedbackStoredStatus,
+} from "./status-aliases";
 import type {
   DisplayStatus,
   FeedbackInboxTab,
@@ -104,7 +118,7 @@ type FeedbackSortValue =
   | "source"
   | "status";
 type FeedbackDateFilter = "all" | "today" | "7d" | "30d" | "older";
-type FeedbackViewMode = "split" | "board";
+type FeedbackViewMode = "split" | "board" | "table";
 type FeedbackSeverity = "low" | "medium" | "high";
 
 const FEEDBACK_SORT_OPTIONS: {
@@ -144,22 +158,20 @@ const FEEDBACK_BOARD_COLUMNS: BoardColumnDefinition[] = STATUS_OPTIONS
     emptyLabel: `No ${option.label.toLowerCase()} feedback`,
   }));
 
+const FEEDBACK_TABLE_DEFAULT_VISIBLE_COLUMNS = [
+  "created_at",
+  "status",
+  "severity",
+  "title",
+  "tool",
+  "source",
+  "submitter",
+  "category",
+  "github_issue",
+] as const;
+
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function formatFeedbackResultSummary({
-  visibleCount,
-  currentFilterLabel,
-  currentTabLabel,
-}: {
-  visibleCount: number;
-  currentFilterLabel: string;
-  currentTabLabel: string;
-}) {
-  const scope = `${currentFilterLabel} ${currentTabLabel}`.trim().toLowerCase();
-  const noun = visibleCount === 1 ? "item" : "items";
-  return `${visibleCount} ${noun} in ${scope}`;
 }
 
 function loadFeedbackLayout() {
@@ -200,9 +212,9 @@ function saveFeedbackLayout(preference: {
 
 function loadFeedbackViewMode(): FeedbackViewMode {
   if (typeof window === "undefined") return "split";
-  return window.localStorage.getItem(FEEDBACK_VIEW_STORAGE_KEY) === "board"
-    ? "board"
-    : "split";
+  const stored = window.localStorage.getItem(FEEDBACK_VIEW_STORAGE_KEY);
+  if (stored === "board" || stored === "table") return stored;
+  return "split";
 }
 
 function saveFeedbackViewMode(viewMode: FeedbackViewMode) {
@@ -218,8 +230,8 @@ function feedbackStatusQuery(filter: StatusFilter): string | null {
   }
   if (filter === "in_progress")
     return "in_progress,triaged,diagnosing,fixing,verifying,pr_created";
-  if (filter === "in_review") return "resolved,in_review";
-  if (filter === "verified") return "closed";
+  if (filter === "in_review") return expandFeedbackStatusAliases("in_review").join(",");
+  if (filter === "verified") return expandFeedbackStatusAliases("verified").join(",");
   if (filter === "dispatched") return ALL_STATUS_QUERY;
   if (filter === "deferred") return "deferred";
   return filter;
@@ -249,6 +261,259 @@ function feedbackBoardColumnId(item: FeedbackItem): DisplayStatus {
   return toDisplayStatus(item.status);
 }
 
+function formatFeedbackTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function buildFeedbackTableColumns(): TableColumn<FeedbackItem>[] {
+  return [
+    {
+      id: "created_at",
+      label: "Submitted",
+      defaultVisible: true,
+      sortable: false,
+      width: 150,
+      render: (item) => (
+        <div className="space-y-0.5">
+          <span className="block whitespace-nowrap text-xs text-foreground">
+            {formatFeedbackTimestamp(item.created_at)}
+          </span>
+          <span className="block whitespace-nowrap text-[11px] text-muted-foreground">
+            {relativeTime(item.created_at)}
+          </span>
+        </div>
+      ),
+      csvValue: (item) => item.created_at,
+    },
+    {
+      id: "status",
+      label: "Status",
+      defaultVisible: true,
+      sortable: false,
+      width: 120,
+      render: (item) => {
+        const displayStatus = toDisplayStatus(item.status);
+        const meta = STATUS_META[displayStatus];
+        return (
+          <div className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-foreground">
+            <span className={cn("h-2 w-2 rounded-full", meta.dotClassName)} />
+            <span>{meta.label}</span>
+          </div>
+        );
+      },
+      csvValue: (item) => STATUS_META[toDisplayStatus(item.status)].label,
+    },
+    {
+      id: "severity",
+      label: "Priority",
+      defaultVisible: true,
+      sortable: false,
+      width: 90,
+      render: (item) => (
+        <span
+          className={cn(
+            "text-xs",
+            item.severity === "high"
+              ? "font-medium text-status-error"
+              : "text-muted-foreground",
+          )}
+        >
+          {item.severity ? item.severity.replace(/^\w/, (char) => char.toUpperCase()) : "—"}
+        </span>
+      ),
+      csvValue: (item) => item.severity ?? "",
+    },
+    {
+      id: "title",
+      label: "Feedback",
+      alwaysVisible: true,
+      sortable: false,
+      render: (item) => {
+        const title = displayAdminFeedbackTitle({
+          storedTitle: item.title,
+          requestType: item.request_type,
+          comment: item.comment,
+          targetText: item.target_text,
+          pageTitle: item.page_title,
+        });
+        const showCommentPreview = !isCommentRedundantWithTitle(title, item.comment);
+        return (
+          <div className="min-w-0 space-y-0.5">
+            <span className="block line-clamp-2 text-xs font-medium leading-snug text-foreground">
+              {title}
+            </span>
+            {showCommentPreview ? (
+              <span className="block line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                {item.comment}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
+      csvValue: (item) =>
+        displayAdminFeedbackTitle({
+          storedTitle: item.title,
+          requestType: item.request_type,
+          comment: item.comment,
+          targetText: item.target_text,
+          pageTitle: item.page_title,
+        }),
+    },
+    {
+      id: "request_type",
+      label: "Type",
+      defaultVisible: false,
+      sortable: false,
+      width: 120,
+      render: (item) => (
+        <span className="text-xs text-muted-foreground">
+          {item.request_type.replace(/_/g, " ")}
+        </span>
+      ),
+      csvValue: (item) => item.request_type,
+    },
+    {
+      id: "tool",
+      label: "Tool",
+      defaultVisible: true,
+      sortable: false,
+      width: 140,
+      render: (item) => (
+        <span className="text-xs text-foreground">
+          {itemToolLabel(item)}
+        </span>
+      ),
+      csvValue: (item) => itemToolLabel(item),
+    },
+    {
+      id: "source",
+      label: "Source",
+      defaultVisible: true,
+      sortable: false,
+      width: 180,
+      render: (item) => (
+        <div className="min-w-0 space-y-0.5">
+          <span className="block line-clamp-2 text-xs text-foreground">
+            {item.page_title ?? item.page_path}
+          </span>
+          <span className="block line-clamp-1 text-[11px] text-muted-foreground">
+            {item.page_path}
+          </span>
+        </div>
+      ),
+      csvValue: (item) => `${item.page_title ?? ""} ${item.page_path}`.trim(),
+    },
+    {
+      id: "page_link",
+      label: "Page",
+      defaultVisible: false,
+      sortable: false,
+      width: 90,
+      render: (item) => (
+        <a
+          href={item.page_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <ExternalLink className="h-3 w-3" />
+          Open
+        </a>
+      ),
+      csvValue: (item) => item.page_url,
+    },
+    {
+      id: "submitter",
+      label: "Submitted by",
+      defaultVisible: true,
+      sortable: false,
+      width: 150,
+      render: (item) => (
+        <span className="text-xs text-foreground">{submitterLabel(item)}</span>
+      ),
+      csvValue: (item) => submitterLabel(item),
+    },
+    {
+      id: "category",
+      label: "Category",
+      defaultVisible: true,
+      sortable: false,
+      width: 140,
+      render: (item) => (
+        <span className="text-xs text-muted-foreground">{item.category ?? "—"}</span>
+      ),
+      csvValue: (item) => item.category ?? "",
+    },
+    {
+      id: "github_issue",
+      label: "GitHub",
+      defaultVisible: true,
+      sortable: false,
+      width: 110,
+      render: (item) =>
+        item.github_issue_number && item.github_issue_url ? (
+          <a
+            href={item.github_issue_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3" />
+            #{item.github_issue_number}
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+      csvValue: (item) => item.github_issue_url ?? "",
+    },
+    {
+      id: "screenshot",
+      label: "Screenshot",
+      defaultVisible: false,
+      sortable: false,
+      width: 100,
+      render: (item) =>
+        item.screenshot_url ? (
+          <a
+            href={item.screenshot_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3" />
+            View
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+      csvValue: (item) => item.screenshot_url ?? "",
+    },
+    {
+      id: "updated_at",
+      label: "Updated",
+      defaultVisible: false,
+      sortable: false,
+      width: 140,
+      render: (item) => (
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
+          {formatFeedbackTimestamp(item.updated_at)}
+        </span>
+      ),
+      csvValue: (item) => item.updated_at,
+    },
+  ];
+}
+
 function matchesDateFilter(item: FeedbackItem, filter: FeedbackDateFilter): boolean {
   if (filter === "all") return true;
 
@@ -266,6 +531,9 @@ function matchesDateFilter(item: FeedbackItem, filter: FeedbackDateFilter): bool
 }
 
 export default function FeedbackInboxPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [allTools, setAllTools] = useState<ToolOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -531,11 +799,17 @@ export default function FeedbackInboxPage() {
       return;
     }
     const currentExists = selectedId && visibleItems.some((i) => i.id === selectedId);
+    if (viewMode === "table") {
+      if (selectedId && !currentExists) {
+        setSelectedId(null);
+      }
+      return;
+    }
     if (!currentExists) {
       setSelectedId(visibleItems[0].id);
       setFocusedIndex(0);
     }
-  }, [loading, visibleItems, selectedId]);
+  }, [loading, selectedId, viewMode, visibleItems]);
 
   // Keep focusedIndex in sync with selectedId
   useEffect(() => {
@@ -610,13 +884,11 @@ export default function FeedbackInboxPage() {
   // ---- Update status ----
   async function updateStatus(id: string, status: DisplayStatus) {
     setUpdatingId(id);
+    const persistedStatus =
+      status === "in_review"
+        ? "resolved"
+        : normalizeFeedbackStoredStatus(status);
     try {
-      const persistedStatus =
-        status === "in_review"
-          ? "resolved"
-          : status === "verified"
-            ? "closed"
-            : status;
       await apiFetch("/api/admin/feedback", {
         method: "PATCH",
         body: JSON.stringify({ id, status: persistedStatus }),
@@ -685,13 +957,11 @@ export default function FeedbackInboxPage() {
   async function applyBulkStatus() {
     if (bulkStatus === "none" || selectedIds.length === 0) return;
     setBulkUpdating(true);
+    const persistedStatus =
+      bulkStatus === "in_review"
+        ? "resolved"
+        : normalizeFeedbackStoredStatus(bulkStatus);
     try {
-      const persistedStatus =
-        bulkStatus === "in_review"
-          ? "resolved"
-          : bulkStatus === "verified"
-            ? "closed"
-            : bulkStatus;
       await Promise.all(
         selectedIds.map((id) =>
           apiFetch("/api/admin/feedback", {
@@ -991,6 +1261,59 @@ export default function FeedbackInboxPage() {
             onViewModeChange={setViewMode}
             viewMode={viewMode}
           />
+        ) : viewMode === "table" ? (
+          <FeedbackTablePane
+            activeFilterCount={activeFilterCount}
+            activeTab={activeTab}
+            allVisibleSelected={allVisibleSelected}
+            categoryFilter={categoryFilter}
+            categoryOptions={categoryOptions}
+            commentInputRef={commentInputRef}
+            currentFilterLabel={currentFilterLabel}
+            currentTabLabel={currentTabLabel}
+            dateFilter={dateFilter}
+            deletingId={deletingId}
+            featureRequestCount={featureRequestItems.length}
+            filter={filter}
+            issueCount={issueItems.length}
+            items={visibleItems}
+            loading={loading}
+            searchValue={searchValue}
+            selected={selected}
+            selectedId={selectedId}
+            selectedIds={selectedIds}
+            sortBy={sortBy}
+            submitterFilter={submitterFilter}
+            submitterOptions={submitterOptions}
+            toolFilter={toolFilter}
+            toolOptions={toolOptions}
+            totalCount={dispatchScoped(items).length}
+            updatingId={updatingId}
+            sendingToGitHub={sendingToGitHub}
+            viewMode={viewMode}
+            onCategoryFilterChange={setCategoryFilter}
+            onCloseDetail={() => setSelectedId(null)}
+            onDateFilterChange={setDateFilter}
+            onDelete={deleteItem}
+            onFilterChange={handleFilterTabClick}
+            onInboxTabChange={handleInboxTabClick}
+            onSearchChange={setSearchValue}
+            onSelect={selectItem}
+            onSendToGitHub={sendToGitHub}
+            onSortChange={setSortBy}
+            onSubmitterFilterChange={setSubmitterFilter}
+            onToggleSelectAllVisible={toggleSelectAllVisible}
+            onToggleBulkSelected={toggleBulkSelected}
+            onToolFilterChange={setToolFilter}
+            onUpdateCategory={updateCategory}
+            onUpdateStatus={updateStatus}
+            onUpdateTitle={updateTitle}
+            onRefresh={fetchItems}
+            onViewModeChange={setViewMode}
+            pathname={pathname}
+            router={router}
+            searchParams={searchParams}
+          />
         ) : (
           <SplitPage
             variant="two-column"
@@ -1202,12 +1525,6 @@ function FeedbackListPane({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   const splitPage = useSplitPage();
-  const resultSummary = formatFeedbackResultSummary({
-    visibleCount: items.length,
-    currentFilterLabel,
-    currentTabLabel,
-  });
-
   function handleSelect(id: string) {
     onSelect(id);
     if (!splitPage.isDesktop) splitPage.onClose();
@@ -1238,7 +1555,6 @@ function FeedbackListPane({
     >
       <div className="border-b border-border/70 bg-background px-4 py-4">
         <FeedbackWorkspaceHeader
-          resultSummary={resultSummary}
           activeFilterCount={activeFilterCount}
           activeTab={activeTab}
           categoryFilter={categoryFilter}
@@ -1397,17 +1713,10 @@ function FeedbackBoardPane({
   onToolFilterChange: (value: string) => void;
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
-  const resultSummary = formatFeedbackResultSummary({
-    visibleCount: items.length,
-    currentFilterLabel,
-    currentTabLabel,
-  });
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="shrink-0 border-b border-border/70 bg-background px-4 py-4">
         <FeedbackWorkspaceHeader
-          resultSummary={resultSummary}
           activeFilterCount={activeFilterCount}
           activeTab={activeTab}
           categoryFilter={categoryFilter}
@@ -1471,6 +1780,268 @@ function FeedbackBoardPane({
             columnsClassName="min-w-72"
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+function FeedbackTablePane({
+  activeFilterCount,
+  activeTab,
+  allVisibleSelected,
+  categoryFilter,
+  categoryOptions,
+  commentInputRef,
+  currentFilterLabel,
+  currentTabLabel,
+  dateFilter,
+  deletingId,
+  featureRequestCount,
+  filter,
+  issueCount,
+  items,
+  loading,
+  pathname,
+  router,
+  searchParams,
+  searchValue,
+  selected,
+  selectedId,
+  selectedIds,
+  sendingToGitHub,
+  sortBy,
+  submitterFilter,
+  submitterOptions,
+  toolFilter,
+  toolOptions,
+  totalCount,
+  updatingId,
+  viewMode,
+  onCategoryFilterChange,
+  onCloseDetail,
+  onDateFilterChange,
+  onDelete,
+  onFilterChange,
+  onInboxTabChange,
+  onRefresh,
+  onSearchChange,
+  onSelect,
+  onSendToGitHub,
+  onSortChange,
+  onSubmitterFilterChange,
+  onToggleBulkSelected,
+  onToggleSelectAllVisible,
+  onToolFilterChange,
+  onUpdateCategory,
+  onUpdateStatus,
+  onUpdateTitle,
+  onViewModeChange,
+}: {
+  activeFilterCount: number;
+  activeTab: FeedbackInboxTab;
+  allVisibleSelected: boolean;
+  categoryFilter: string;
+  categoryOptions: { value: string; label: string }[];
+  commentInputRef: RefObject<HTMLTextAreaElement | null>;
+  currentFilterLabel: string;
+  currentTabLabel: string;
+  dateFilter: FeedbackDateFilter;
+  deletingId: string | null;
+  featureRequestCount: number;
+  filter: StatusFilter;
+  issueCount: number;
+  items: FeedbackItem[];
+  loading: boolean;
+  pathname: string;
+  router: ReturnType<typeof useRouter>;
+  searchParams: ReturnType<typeof useSearchParams>;
+  searchValue: string;
+  selected: FeedbackItem | null;
+  selectedId: string | null;
+  selectedIds: string[];
+  sendingToGitHub: boolean;
+  sortBy: FeedbackSortValue;
+  submitterFilter: string;
+  submitterOptions: { value: string; label: string }[];
+  toolFilter: string;
+  toolOptions: { value: string; label: string }[];
+  totalCount: number;
+  updatingId: string | null;
+  viewMode: FeedbackViewMode;
+  onCategoryFilterChange: (value: string) => void;
+  onCloseDetail: () => void;
+  onDateFilterChange: (value: FeedbackDateFilter) => void;
+  onDelete: (id: string) => void;
+  onFilterChange: (value: string) => void;
+  onInboxTabChange: (value: string) => void;
+  onRefresh: () => void;
+  onSearchChange: (value: string) => void;
+  onSelect: (id: string) => void;
+  onSendToGitHub: (id: string) => void;
+  onSortChange: (value: FeedbackSortValue) => void;
+  onSubmitterFilterChange: (value: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
+  onToggleSelectAllVisible: (checked: boolean) => void;
+  onToolFilterChange: (value: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+  onViewModeChange: (value: FeedbackViewMode) => void;
+}) {
+  const tableState = useUnifiedTableState({
+    entityKey: "feedback-inbox-table",
+    searchParams,
+    pathname,
+    router: {
+      replace: (url: string) => {
+        router.replace(url);
+      },
+    },
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: null,
+      sortDirection: "desc",
+      visibleColumns: [...FEEDBACK_TABLE_DEFAULT_VISIBLE_COLUMNS],
+      filters: {},
+    },
+  });
+  const tableColumns = useMemo(() => buildFeedbackTableColumns(), []);
+  const hasFilters = activeFilterCount > 0 || searchValue.trim().length > 0;
+  const totalPages = Math.max(1, Math.ceil(items.length / tableState.perPage));
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="shrink-0 border-b border-border/70 bg-background px-4 py-4">
+        <FeedbackWorkspaceHeader
+          activeFilterCount={activeFilterCount}
+          activeTab={activeTab}
+          categoryFilter={categoryFilter}
+          categoryOptions={categoryOptions}
+          dateFilter={dateFilter}
+          featureRequestCount={featureRequestCount}
+          issueCount={issueCount}
+          searchValue={searchValue}
+          sortBy={sortBy}
+          submitterFilter={submitterFilter}
+          submitterOptions={submitterOptions}
+          toolFilter={toolFilter}
+          toolOptions={toolOptions}
+          totalCount={totalCount}
+          viewMode={viewMode}
+          onCategoryFilterChange={onCategoryFilterChange}
+          onDateFilterChange={onDateFilterChange}
+          onInboxTabChange={onInboxTabChange}
+          onSearchChange={onSearchChange}
+          onSortChange={onSortChange}
+          onSubmitterFilterChange={onSubmitterFilterChange}
+          onToolFilterChange={onToolFilterChange}
+          onViewModeChange={onViewModeChange}
+        />
+        <div className="mt-4">
+          <FeedbackStatusTabs
+            value={filter}
+            onValueChange={onFilterChange}
+            allVisibleSelected={allVisibleSelected}
+            selectedCount={selectedIds.length}
+            onToggleSelectAllVisible={onToggleSelectAllVisible}
+          />
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-hidden px-4 py-4">
+        <EmbeddedUnifiedTablePage
+          title="Feedback Inbox"
+          description="Dense table view for feedback triage."
+          data={{
+            items,
+            isLoading: loading,
+          }}
+          toolbar={{
+            totalItems: items.length,
+            filteredItems: items.length,
+            selectedCount: selectedIds.length,
+            searchValue,
+            onSearchChange,
+            currentView: "table",
+            onViewChange: () => undefined,
+            enabledViews: ["table"],
+            visibleColumns: tableState.visibleColumns,
+            onColumnVisibilityChange: tableState.setVisibleColumns,
+            savedViewsScope: "feedback-inbox-table",
+            savedViewsDefaults: {
+              visibleColumns: [...FEEDBACK_TABLE_DEFAULT_VISIBLE_COLUMNS],
+              sortBy: null,
+              sortDirection: "desc",
+              filters: {},
+            },
+          }}
+          table={{
+            columns: tableColumns,
+            getRowId: (item) => item.id,
+            activeRowId: selectedId,
+            onRowClick: (item) => onSelect(item.id),
+            onView: (item) => onSelect(item.id),
+            onDelete: (item) => onDelete(item.id),
+            density: "compact",
+          }}
+          selection={{
+            selectedIds,
+            onSelectAll: onToggleSelectAllVisible,
+            onSelectRow: onToggleBulkSelected,
+          }}
+          emptyState={{
+            title: "No feedback items",
+            description: "Feedback appears here when items are submitted.",
+            filteredDescription: "No feedback matches the current search or filters.",
+            isFiltered: hasFilters,
+          }}
+          pagination={{
+            page: Math.min(tableState.page, totalPages),
+            totalPages,
+            perPage: tableState.perPage,
+            onPageChange: tableState.setPage,
+            onPerPageChange: (value) => tableState.setPerPage(Number(value)),
+            clientSide: true,
+          }}
+          sidePanel={
+            selected
+              ? {
+                  content: (
+                    <FeedbackTableDetailPanel
+                      commentInputRef={commentInputRef}
+                      deletingId={deletingId}
+                      item={selected}
+                      sendingToGitHub={sendingToGitHub}
+                      updatingId={updatingId}
+                      onDelete={onDelete}
+                      onRefresh={onRefresh}
+                      onSendToGitHub={onSendToGitHub}
+                      onUpdateCategory={onUpdateCategory}
+                      onUpdateStatus={onUpdateStatus}
+                      onUpdateTitle={onUpdateTitle}
+                    />
+                  ),
+                  onClose: onCloseDetail,
+                  storageKey: "feedback-inbox-table-detail",
+                  contentClassName: "pl-0 pr-0",
+                }
+              : undefined
+          }
+          layout={{
+            containerPadding: false,
+            removeTableFrame: false,
+            fullBleedTable: true,
+          }}
+          features={{
+            enableSearch: false,
+            enableViews: false,
+            enableFilters: false,
+          }}
+        />
       </div>
     </div>
   );
@@ -1638,7 +2209,6 @@ function BulkEditBar({
 }
 
 function FeedbackWorkspaceHeader({
-  resultSummary,
   activeFilterCount,
   activeTab,
   categoryFilter,
@@ -1664,7 +2234,6 @@ function FeedbackWorkspaceHeader({
   onToolFilterChange,
   onViewModeChange,
 }: {
-  resultSummary: string;
   activeFilterCount: number;
   activeTab: FeedbackInboxTab;
   categoryFilter: string;
@@ -1691,13 +2260,12 @@ function FeedbackWorkspaceHeader({
   onViewModeChange: (value: FeedbackViewMode) => void;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold leading-7 text-foreground">
             Feedback
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{resultSummary}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {trailingActions}
@@ -1708,14 +2276,15 @@ function FeedbackWorkspaceHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-[14rem] flex-1">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
           <ExpandableSearch
             value={searchValue}
             onChange={onSearchChange}
             placeholder="Search feedback"
-            ariaLabel="Search feedback"
+            aria-label="Search feedback"
             defaultExpanded
+            collapsible={false}
           />
         </div>
         <FeedbackFilterPopover
@@ -1834,7 +2403,8 @@ function FeedbackViewMenu({
   value: FeedbackViewMode;
   onValueChange: (value: FeedbackViewMode) => void;
 }) {
-  const TriggerIcon = value === "board" ? Columns3 : PanelRight;
+  const TriggerIcon =
+    value === "board" ? Columns3 : value === "table" ? Table2 : PanelRight;
   const options: {
     value: FeedbackViewMode;
     label: string;
@@ -1842,6 +2412,7 @@ function FeedbackViewMenu({
   }[] = [
     { value: "split", label: "Split page", icon: PanelRight },
     { value: "board", label: "Board", icon: Columns3 },
+    { value: "table", label: "Table", icon: Table2 },
   ];
 
   return (
@@ -2155,7 +2726,7 @@ function FeedbackStatusTabs({
   const showSelectionControl = typeof onToggleSelectAllVisible === "function";
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-4 border-b border-border/70">
+    <div className="mt-2 flex items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         {FEEDBACK_STATUS_TABS.map((tab) => (
           <Button
@@ -2165,10 +2736,10 @@ function FeedbackStatusTabs({
             size="sm"
             onClick={() => onValueChange(tab.value)}
             className={cn(
-              "h-5 rounded-none px-0 text-[11px] font-medium shadow-none",
+              "h-7 rounded-md px-2.5 text-[11px] font-medium shadow-none",
               value === tab.value
-                ? "text-foreground shadow-[inset_0_-1px_0_hsl(var(--primary))]"
-                : "text-muted-foreground hover:bg-transparent hover:text-foreground",
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
             <span className="truncate">{tab.label}</span>
@@ -2177,7 +2748,7 @@ function FeedbackStatusTabs({
       </div>
 
       {showSelectionControl ? (
-        <label className="mb-1 flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+        <label className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
           <Checkbox
             checked={allVisibleSelected}
             onCheckedChange={(checked) =>
@@ -2291,6 +2862,51 @@ function FeedbackDetailPane({
         onDelete={onDelete}
         onRefresh={onRefresh}
         onBack={splitPage.isDesktop ? undefined : splitPage.onOpen}
+        commentInputRef={commentInputRef}
+      />
+    </div>
+  );
+}
+
+function FeedbackTableDetailPanel({
+  commentInputRef,
+  deletingId,
+  item,
+  sendingToGitHub,
+  updatingId,
+  onDelete,
+  onRefresh,
+  onSendToGitHub,
+  onUpdateCategory,
+  onUpdateStatus,
+  onUpdateTitle,
+}: {
+  commentInputRef: RefObject<HTMLTextAreaElement | null>;
+  deletingId: string | null;
+  item: FeedbackItem;
+  sendingToGitHub: boolean;
+  updatingId: string | null;
+  onDelete: (id: string) => void;
+  onRefresh: () => void;
+  onSendToGitHub: (id: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
+  onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+}) {
+  return (
+    <div className="h-full min-h-0 overflow-y-auto bg-background">
+      <FeedbackDetail
+        item={item}
+        updatingId={updatingId}
+        sendingToGitHub={sendingToGitHub}
+        deletingId={deletingId}
+        onUpdateStatus={onUpdateStatus}
+        onUpdateTitle={onUpdateTitle}
+        onUpdateCategory={onUpdateCategory}
+        onSendToGitHub={onSendToGitHub}
+        onDelete={onDelete}
+        onRefresh={onRefresh}
+        onBack={undefined}
         commentInputRef={commentInputRef}
       />
     </div>

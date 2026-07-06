@@ -84,6 +84,7 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronUp,
+  Eye,
   EyeOff,
   GripVertical,
   Inbox,
@@ -129,6 +130,9 @@ export const TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME =
   "flex h-full min-h-0 flex-1 min-w-0 overflow-hidden";
 export const TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME =
   "flex h-full min-h-0 flex-col overflow-hidden pb-0";
+export const TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME = "overflow-x-visible";
+export const TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME =
+  "-mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]";
 
 export function shouldRenderRowSelection(
   features?: UnifiedTableFeatures,
@@ -436,9 +440,11 @@ export interface UnifiedTablePageProps<T> {
     defaultPinnedLeftColumns?: string[];
     defaultPinnedRightColumns?: string[];
     rowActions?: (item: T) => ReactNode;
+    /** Called when user clicks View in the default row-actions menu. */
+    onView?: (item: T) => void;
     /** Called when user clicks Edit in the default row-actions menu. */
     onEdit?: (item: T) => void;
-    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Edit + Delete. */
+    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with View/Edit/Delete as available. */
     onDelete?: (item: T) => void;
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
@@ -702,7 +708,7 @@ export function UnifiedTablePage<T>({
   const hasRowSelection = shouldRenderRowSelection(features);
   const hasRowActions =
     resolvedFeatures.enableRowActions &&
-    Boolean(table.rowActions || table.onDelete || table.onEdit);
+    Boolean(table.rowActions || table.onView || table.onDelete || table.onEdit);
 
   // Built-in delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -865,6 +871,8 @@ export function UnifiedTablePage<T>({
   const containerMaxWidth = layout?.maxWidth ?? "full";
   const containerClassName = layout?.containerClassName;
   const containerPadding = layout?.containerPadding !== false;
+  const shouldUseFullBleedDesktopScrollShell =
+    isFullBleedTable && containerPadding && !sidePanel;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -2094,6 +2102,8 @@ export function UnifiedTablePage<T>({
           onRowClick={table.onRowClick ? activateRow : undefined}
           isFetching={data.isFetching}
           rowActions={table.rowActions}
+          onView={table.onView}
+          onEdit={table.onEdit}
           onDelete={table.onDelete ? handleDeleteIntent : undefined}
           hasRowActions={hasRowActions}
         />
@@ -2105,6 +2115,8 @@ export function UnifiedTablePage<T>({
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              shouldUseFullBleedDesktopScrollShell &&
+                TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME,
               removeTableFrame ? "border-0 rounded-none" : "",
               sidePanel
                 ? removeTableFrame
@@ -2800,7 +2812,7 @@ export function UnifiedTablePage<T>({
                           >
                             {table.rowActions ? (
                               table.rowActions(item)
-                            ) : table.onDelete || table.onEdit ? (
+                            ) : table.onView || table.onDelete || table.onEdit ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
@@ -2813,10 +2825,23 @@ export function UnifiedTablePage<T>({
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  {table.onView && (
+                                    <DropdownMenuItem
+                                      onClick={() => table.onView!(item)}
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      View
+                                    </DropdownMenuItem>
+                                  )}
+                                  {table.onView &&
+                                  (table.onEdit || table.onDelete) ? (
+                                    <DropdownMenuSeparator />
+                                  ) : null}
                                   {table.onEdit && (
                                     <DropdownMenuItem
                                       onClick={() => table.onEdit!(item)}
                                     >
+                                      <Pencil className="mr-2 h-4 w-4" />
                                       Edit
                                     </DropdownMenuItem>
                                   )}
@@ -3082,6 +3107,7 @@ export function UnifiedTablePage<T>({
         className={cn(
           "pb-12",
           canRenderSplitView && TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
+          isFullBleedTable && TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME,
           sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}

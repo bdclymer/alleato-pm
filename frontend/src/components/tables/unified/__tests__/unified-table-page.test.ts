@@ -1,5 +1,7 @@
 import {
   TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
+  TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME,
+  TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME,
   TABLE_HEADER_LABEL_CLASSNAME,
   TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME,
   TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME,
@@ -43,6 +45,24 @@ describe("UnifiedTablePage header labels", () => {
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("overflow-hidden");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).toContain("pb-0");
     expect(TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME).not.toContain("100dvh");
+  });
+
+  it("lets full-bleed tables escape the page gutter instead of clipping the last columns", () => {
+    expect(TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME).toContain(
+      "overflow-x-visible",
+    );
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain("-mx-4");
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain(
+      "w-[calc(100%+2rem)]",
+    );
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain("sm:-mx-6");
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain(
+      "sm:w-[calc(100%+3rem)]",
+    );
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain("lg:-mx-8");
+    expect(TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME).toContain(
+      "lg:w-[calc(100%+4rem)]",
+    );
   });
 
   it("defaults row selection on unless a page explicitly opts out", () => {

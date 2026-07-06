@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import {
   Activity,
   ArrowLeftRight,
@@ -228,6 +230,14 @@ const sections: AdminMenuSection[] = [
             description:
               "Inspect assembled assistant system prompts, context blocks, and prompt size before model calls.",
             icon: Terminal,
+          },
+          {
+            label: "AI Assistant Debug Console",
+            href: "/ai-assistant-debug",
+            route: "/ai-assistant-debug",
+            description:
+              "Inspect assistant routing, retrieval, tool calls, agent handoffs, source metadata, and quality signals.",
+            icon: BrainCircuit,
           },
           {
             label: "Intelligence Packets",

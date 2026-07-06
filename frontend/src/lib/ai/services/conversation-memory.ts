@@ -71,7 +71,7 @@ async function summarizeConversation(
 
   const result = await generateText({
     model: getLanguageModel("openai/gpt-4.1-nano"),
-    system: `You are a conversation summarizer for a construction project management AI assistant.
+    instructions: `You are a conversation summarizer for a construction project management AI assistant.
 Produce a concise 2-4 sentence summary that captures:
 - The main topics discussed (e.g., "budget for Cedar Park project", "cash flow concerns")
 - Any decisions made or action items identified
