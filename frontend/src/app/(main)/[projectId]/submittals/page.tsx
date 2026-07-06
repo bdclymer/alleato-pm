@@ -108,6 +108,7 @@ import {
   type PermissionLevel,
 } from "@/hooks/use-directory-permissions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScanDrawingsSheet } from "@/features/submittals/scan-drawings-sheet";
 import { cn } from "@/lib/utils";
 
@@ -1836,7 +1837,31 @@ function SubmittalSettingsTab({
       }
     >
       <PageTabs tabs={tabs} variant="inline" className="mb-0" />
-      <PageTabs tabs={settingsTabs} className="mb-6" />
+      <Tabs
+        value={settingsSection}
+        onValueChange={(value) => {
+          const nextTab = settingsTabs.find(
+            (tab) =>
+              getSettingsSection(
+                new URL(tab.href, "http://localhost").searchParams.get(
+                  SETTINGS_TAB_PARAM,
+                ),
+              ) === value,
+          );
+          if (nextTab) {
+            router.push(nextTab.href);
+          }
+        }}
+        className="mb-6"
+      >
+        <TabsList className="max-w-full justify-start">
+          {SUBMITTAL_SETTINGS_TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       {renderActiveSettingsPanel()}
     </PageShell>
   );
