@@ -9,7 +9,9 @@ import {
   useSearchParams,
 } from "next/navigation";
 import {
+  Check,
   ChevronDown,
+  ChevronsUpDown,
   Download,
   FileText,
   MoreVertical,
@@ -33,6 +35,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -46,6 +56,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -55,7 +70,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { Textarea } from "@/components/ui/textarea";
 import {
   InlineTable,
   InlineTableBody,
@@ -95,6 +109,7 @@ import {
 } from "@/hooks/use-directory-permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScanDrawingsSheet } from "@/features/submittals/scan-drawings-sheet";
+import { cn } from "@/lib/utils";
 
 type SubmittalFilterState = Record<string, FilterValue>;
 
@@ -154,6 +169,13 @@ type EmailNotificationRole =
 type EmailNotificationRow = {
   event: string;
 } & Record<EmailNotificationRole, boolean>;
+
+type ProjectDirectoryOption = {
+  value: string;
+  label: string;
+  email?: string;
+  keywords?: string[];
+};
 
 const SETTINGS_TAB_PARAM = "settings_tab";
 
@@ -251,6 +273,159 @@ function getSettingsSection(value: string | null): SubmittalSettingsSection {
   return (
     SUBMITTAL_SETTINGS_TABS.find((tab) => tab.value === value)?.value ??
     "general"
+  );
+}
+
+function parseDefaultDistributionSelection(
+  value: string | null,
+  options: ProjectDirectoryOption[],
+): string[] {
+  if (!value) return [];
+
+  const validOptionIds = new Set(options.map((option) => option.value));
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (candidate): candidate is string =>
+          typeof candidate === "string" && validOptionIds.has(candidate),
+      );
+    }
+  } catch {
+    // Fall back to legacy plain-text matching.
+  }
+
+  const tokens = value
+    .split(/[\n,]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+
+  return options
+    .filter((option) => {
+      const label = option.label.trim().toLowerCase();
+      const email = option.email?.trim().toLowerCase();
+      return tokens.some((token) => token === label || token === email);
+    })
+    .map((option) => option.value);
+}
+
+function serializeDefaultDistributionSelection(
+  selectedIds: string[],
+): string | null {
+  return selectedIds.length > 0 ? JSON.stringify(selectedIds) : null;
+}
+
+function DefaultDistributionSelect({
+  value,
+  onChange,
+  options,
+  isLoading,
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  options: ProjectDirectoryOption[];
+  isLoading: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const selectedIds = React.useMemo(
+    () => parseDefaultDistributionSelection(value, options),
+    [options, value],
+  );
+  const selectedLabels = React.useMemo(
+    () =>
+      selectedIds
+        .map((selectedId) => options.find((option) => option.value === selectedId))
+        .filter((option): option is ProjectDirectoryOption => Boolean(option))
+        .map((option) => option.label),
+    [options, selectedIds],
+  );
+
+  const toggle = React.useCallback(
+    (selectedId: string) => {
+      const nextSelectedIds = selectedIds.includes(selectedId)
+        ? selectedIds.filter((value) => value !== selectedId)
+        : [...selectedIds, selectedId];
+      onChange(serializeDefaultDistributionSelection(nextSelectedIds));
+    },
+    [onChange, selectedIds],
+  );
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="default-distribution">Default Distribution</Label>
+      <p className="text-xs text-muted-foreground">
+        People you select will automatically populate on the distribution list
+        when new submittals are created.
+      </p>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id="default-distribution"
+            type="button"
+            variant="outline"
+            role="combobox"
+            disabled={isLoading}
+            className={cn(
+              "h-auto min-h-10 w-full justify-between px-3 py-2 text-left font-normal",
+              selectedLabels.length === 0 && "text-muted-foreground",
+            )}
+          >
+            <span className="truncate">
+              {isLoading
+                ? "Loading project directory..."
+                : selectedLabels.length > 0
+                  ? `${selectedLabels.length} selected`
+                  : "Select project directory members"}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search project directory..." />
+            <CommandList className="max-h-72">
+              <CommandEmpty>No project directory members found.</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={[
+                      option.label,
+                      option.email ?? "",
+                      ...(option.keywords ?? []),
+                    ].join(" ")}
+                    onSelect={() => toggle(option.value)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedIds.includes(option.value)
+                          ? "opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                    <div className="min-w-0">
+                      <div className="truncate">{option.label}</div>
+                      {option.email ? (
+                        <div className="truncate text-xs text-muted-foreground">
+                          {option.email}
+                        </div>
+                      ) : null}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {selectedLabels.length > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {selectedLabels.join(", ")}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -770,6 +945,8 @@ function SubmittalGeneralSettingsPanel({
   update,
   managerOptions,
   contactsLoading,
+  projectDirectoryOptions,
+  projectDirectoryLoading,
 }: {
   settings: SubmittalSettings;
   update: <K extends SubmittalSettingsKey>(
@@ -778,6 +955,8 @@ function SubmittalGeneralSettingsPanel({
   ) => void;
   managerOptions: Array<{ value: string; label: string; email?: string }>;
   contactsLoading: boolean;
+  projectDirectoryOptions: ProjectDirectoryOption[];
+  projectDirectoryLoading: boolean;
 }) {
   const descriptionTextClassName = "text-xs text-muted-foreground";
   const toggleHintClassName = "text-xs text-muted-foreground";
@@ -851,21 +1030,6 @@ function SubmittalGeneralSettingsPanel({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="default-distribution">Default Distribution</Label>
-          <Textarea
-            id="default-distribution"
-            value={settings.default_distribution ?? ""}
-            onChange={(event) =>
-              update(
-                "default_distribution",
-                event.target.value.trim() ? event.target.value : null,
-              )
-            }
-            placeholder="Add default recipients or distribution notes"
-            className="min-h-24"
-          />
-        </div>
       </FormSection>
 
       <FormSection title="Submittal Numbering">
@@ -957,8 +1121,7 @@ function SubmittalGeneralSettingsPanel({
         title="Access and Delivery"
         description={
           <span className={descriptionTextClassName}>
-            Privacy, reminders, QR codes, schedule calculations, and email
-            attachment access.
+            Privacy, QR codes, and schedule calculation defaults.
           </span>
         }
       >
@@ -971,14 +1134,6 @@ function SubmittalGeneralSettingsPanel({
             checked={settings.submittals_private_by_default}
             onCheckedChange={(checked) =>
               update("submittals_private_by_default", checked)
-            }
-          />
-          <ToggleField
-            label="Enable email reminders for overdue submittals"
-            controlPosition="left"
-            checked={settings.enable_overdue_email_reminders}
-            onCheckedChange={(checked) =>
-              update("enable_overdue_email_reminders", checked)
             }
           />
           <ToggleField
@@ -1012,8 +1167,29 @@ function SubmittalGeneralSettingsPanel({
 
       <FormSection
         title="Email Notifications"
-        description="Recipient routing for default Submittals email events."
+        description={
+          <span className={descriptionTextClassName}>
+            Recipient routing and reminder defaults for Submittals emails.
+          </span>
+        }
       >
+        <div className="space-y-4">
+          <ToggleField
+            label="Enable email reminders for overdue submittals"
+            controlPosition="left"
+            checked={settings.enable_overdue_email_reminders}
+            onCheckedChange={(checked) =>
+              update("enable_overdue_email_reminders", checked)
+            }
+          />
+          <DefaultDistributionSelect
+            value={settings.default_distribution}
+            onChange={(value) => update("default_distribution", value)}
+            options={projectDirectoryOptions}
+            isLoading={projectDirectoryLoading}
+          />
+        </div>
+
         <SettingsTable>
           <InlineTable variant="read">
             <InlineTableHeader>
@@ -1060,6 +1236,7 @@ function SubmittalGeneralSettingsPanel({
           </InlineTable>
         </SettingsTable>
       </FormSection>
+
     </div>
   );
 }
@@ -1416,14 +1593,15 @@ function SubmittalSettingsTab({
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const {
-    contacts,
-    options: managerOptions,
-    isLoading: contactsLoading,
-  } = useContacts({
+  const { options: managerOptions, isLoading: contactsLoading } = useContacts({
     projectId: String(projectId),
     enabled: Number.isFinite(projectId),
   });
+  const [projectDirectoryOptions, setProjectDirectoryOptions] = React.useState<
+    ProjectDirectoryOption[]
+  >([]);
+  const [projectDirectoryLoading, setProjectDirectoryLoading] =
+    React.useState(true);
 
   const settingsTabs = React.useMemo(
     () =>
@@ -1466,6 +1644,53 @@ function SubmittalSettingsTab({
     if (Number.isFinite(projectId)) {
       void loadSettings();
     }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadProjectDirectoryOptions() {
+      if (!Number.isFinite(projectId)) return;
+
+      try {
+        setProjectDirectoryLoading(true);
+        const contacts = await apiFetch<
+          Array<{
+            id: string;
+            name: string;
+            email?: string | null;
+            person_type?: string | null;
+          }>
+        >(`/api/projects/${projectId}/contacts`);
+
+        if (cancelled) return;
+
+        setProjectDirectoryOptions(
+          contacts.map((contact) => ({
+            value: contact.id,
+            label: contact.name,
+            email: contact.email ?? undefined,
+            keywords: [contact.email ?? "", contact.person_type ?? ""].filter(
+              Boolean,
+            ),
+          })),
+        );
+      } catch {
+        if (!cancelled) {
+          setProjectDirectoryOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setProjectDirectoryLoading(false);
+        }
+      }
+    }
+
+    void loadProjectDirectoryOptions();
 
     return () => {
       cancelled = true;
@@ -1566,6 +1791,8 @@ function SubmittalSettingsTab({
             update={update}
             managerOptions={managerOptions}
             contactsLoading={contactsLoading}
+            projectDirectoryOptions={projectDirectoryOptions}
+            projectDirectoryLoading={projectDirectoryLoading}
           />
         );
       }

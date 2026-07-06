@@ -569,7 +569,7 @@
     {
       "url": "/[projectId]/submittals",
       "title": "General Settings",
-      "description": "Recipient routing for default Submittals email events."
+      "description": "Procore provides default submittal responses that you can modify as needed. You can also add new custom responses that map to the defaults."
     },
     {
       "url": "/[projectId]/submittals/[submittalId]",
