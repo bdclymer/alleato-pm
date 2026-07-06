@@ -863,7 +863,6 @@ function SubmittalGeneralSettingsPanel({
 
       <FormSection
         title="Submittal Numbering"
-        description="Controls whether new submittal numbers include the specification section."
       >
         <ToggleField
           label="Include Spec Section Number"
