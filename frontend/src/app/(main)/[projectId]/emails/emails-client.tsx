@@ -60,10 +60,11 @@ import {
 } from "@/features/emails/email-view-switcher";
 import { EmailFilterPopover } from "@/features/emails/email-filter-popover";
 import {
-  buildMailboxPriorityTabs,
-  countMailboxEmailsByPriority,
-  normalizeMailboxPriorityFilter,
-} from "@/features/emails/mailbox-priority-tabs";
+  buildMailboxWorkflowTabs,
+  countMailboxEmailsByWorkflow,
+  matchesMailboxWorkflowFilter,
+  normalizeMailboxWorkflowFilter,
+} from "@/features/emails/mailbox-workflow-tabs";
 import {
   EMAIL_IMPORTANCE_DEFAULT_FILTER,
   getEmailsRefreshInterval,
@@ -381,32 +382,35 @@ export function EmailsClient({
     activeFilters.importance as string | undefined,
   );
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
-  const priorityFilter = normalizeMailboxPriorityFilter(
-    searchParams.get("priority"),
+  const workflowFilter = normalizeMailboxWorkflowFilter(
+    searchParams.get("workflow"),
   );
-  const mailboxPriorityCounts = React.useMemo(
-    () => countMailboxEmailsByPriority(emails),
-    [emails],
+  const mailboxWorkflowCounts = React.useMemo(
+    () => countMailboxEmailsByWorkflow(emails, importanceFeedbackByEmailId),
+    [emails, importanceFeedbackByEmailId],
   );
-  const mailboxPriorityTabs = React.useMemo(
+  const mailboxWorkflowTabs = React.useMemo(
     () =>
       isMailboxReviewMode
-        ? buildMailboxPriorityTabs({
+        ? buildMailboxWorkflowTabs({
             pathname,
             searchParams: new URLSearchParams(searchParams.toString()),
-            counts: mailboxPriorityCounts,
-            activePriority: priorityFilter,
+            counts: mailboxWorkflowCounts,
+            activeWorkflow: workflowFilter,
           })
         : null,
-    [isMailboxReviewMode, mailboxPriorityCounts, pathname, priorityFilter, searchParams],
+    [isMailboxReviewMode, mailboxWorkflowCounts, pathname, workflowFilter, searchParams],
   );
-  const tabs = mailboxPriorityTabs ?? navigationTabs ?? outlookTabs;
+  const tabs = mailboxWorkflowTabs ?? navigationTabs ?? outlookTabs;
 
   const filteredEmails = emails.filter((email) => {
     if (
       isMailboxReviewMode &&
-      priorityFilter !== "all" &&
-      email.assistant_priority !== priorityFilter
+      !matchesMailboxWorkflowFilter(
+        email,
+        workflowFilter,
+        importanceFeedbackByEmailId,
+      )
     ) {
       return false;
     }
@@ -676,6 +680,7 @@ export function EmailsClient({
       ...prev,
       [String(emailId)]: feedback,
     }));
+    void refetchEmails();
   };
 
   const handleImportanceCleared = (emailId: number) => {

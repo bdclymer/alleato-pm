@@ -100,6 +100,7 @@ import {
   buildEmailImportanceSnapshot,
   EmailImportanceFeedbackDialog,
 } from "@/features/emails/email-importance-feedback-dialog";
+import { hasMailboxDraft } from "@/features/emails/mailbox-workflow-tabs";
 import {
   EMAIL_IMPORTANCE_REASON_LABELS,
   type EmailImportanceFeedbackState,
@@ -182,7 +183,7 @@ interface ProjectEmailsWorkspaceProps {
   onImportanceRecorded?: (
     emailId: number,
     feedback: EmailImportanceFeedbackState,
-  ) => void;
+  ) => Promise<void> | void;
   onImportanceCleared?: (emailId: number) => void;
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
@@ -591,10 +592,6 @@ function priorityLabel(priority: ProjectEmail["assistant_priority"]): string {
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
 }
 
-function hasAssistantDraft(email: ProjectEmail): boolean {
-  return Boolean(email.assistant_review?.draftBody?.trim());
-}
-
 function reviewOutcomeLabel(outcome: string | null | undefined): string | null {
   if (!outcome) return null;
   return REVIEW_OUTCOME_LABELS[outcome as BrandonReviewOutcome] ?? outcome;
@@ -692,19 +689,22 @@ function InboxRow({
   email,
   isActive,
   onSelect,
+  showCategory = false,
 }: {
   email: ProjectEmail;
   isActive: boolean;
   onSelect: () => void;
+  showCategory?: boolean;
 }) {
   const { onClose } = useSplitPage();
   const senderName = email.from_name || email.from_email || "Unknown sender";
-  const hasDraft = hasAssistantDraft(email);
+  const hasDraft = hasMailboxDraft(email);
   const reviewOutcome = defaultReviewOutcome(email);
   const reviewLabel =
     email.assistant_review?.reviewId || hasDraft
       ? reviewOutcomeLabel(reviewOutcome)
       : "Pending review";
+  const categoryLabel = defaultAssistantCategory(email);
 
   return (
     <Button
@@ -749,6 +749,11 @@ function InboxRow({
           {hasDraft ? (
             <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
               AI draft
+            </span>
+          ) : null}
+          {showCategory ? (
+            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-3 text-muted-foreground">
+              {categoryLabel}
             </span>
           ) : null}
         </div>
@@ -1094,7 +1099,7 @@ interface EmailReadingPanelProps {
   onImportanceRecorded?: (
     emailId: number,
     feedback: EmailImportanceFeedbackState,
-  ) => void;
+  ) => Promise<void> | void;
   onImportanceCleared?: (emailId: number) => void;
   className?: string;
 }
@@ -1108,6 +1113,8 @@ interface EmailActionControlsProps {
   onCreateTask?: () => void;
   className?: string;
   orientation?: "row" | "column";
+  showImportanceControls?: boolean;
+  showTaskActions?: boolean;
 }
 
 function importanceSignalLabel(signal: EmailImportanceSignal): string {
@@ -1129,6 +1136,8 @@ function EmailActionControls({
   onCreateTask,
   className,
   orientation = "row",
+  showImportanceControls = true,
+  showTaskActions = true,
 }: EmailActionControlsProps) {
   const oppositeSignal = importanceFeedback
     ? oppositeImportanceSignal(importanceFeedback.signal)
@@ -1146,7 +1155,7 @@ function EmailActionControls({
         className,
       )}
     >
-      {onSummarize ? (
+      {showTaskActions && onSummarize ? (
         <Button
           type="button"
           variant="ghost"
@@ -1162,7 +1171,7 @@ function EmailActionControls({
         </Button>
       ) : null}
 
-      {importanceFeedback ? (
+      {showImportanceControls && importanceFeedback ? (
         <div
           className={cn(
             "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs",
@@ -1218,7 +1227,7 @@ function EmailActionControls({
             </Button>
           ) : null}
         </div>
-      ) : (
+      ) : showImportanceControls ? (
         <>
           <Button
             type="button"
@@ -1247,9 +1256,9 @@ function EmailActionControls({
             Not important
           </Button>
         </>
-      )}
+      ) : null}
 
-      {onCreateTask ? (
+      {showTaskActions && onCreateTask ? (
         <Button
           type="button"
           variant="ghost"
@@ -1354,6 +1363,147 @@ export function EmailReadingPanel({
     },
     [],
   );
+
+  const handleSyncImportanceClassification = React.useCallback(
+    async (signal: EmailImportanceSignal) => {
+      if (!email) return;
+
+      const projectAssignment =
+        email.assistant_review?.projectAssignmentFeedback ?? {
+          status: "unreviewed" as const,
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        };
+      const fieldFeedback =
+        email.assistant_review?.fieldFeedback ?? DEFAULT_FIELD_FEEDBACK;
+      const existingReviewId = email.assistant_review?.reviewId;
+
+      if (signal === "not_important") {
+        if (existingReviewId) {
+          await apiFetch("/api/email-inbox/reviewed", {
+            method: "PATCH",
+            body: JSON.stringify({
+              reviewId: existingReviewId,
+              assistantAction: "ignore",
+              assistantPriority: "low",
+              assistantCategory: "No Action",
+              reviewOutcome: "marked_no_action",
+              reviewerNote: email.assistant_review?.reviewerNote ?? null,
+              draftBody: null,
+              projectAssignment,
+              fieldFeedback: {
+                ...fieldFeedback,
+                action: "incorrect",
+                priority: "incorrect",
+                category: "incorrect",
+              },
+            }),
+          });
+          return;
+        }
+
+        await apiFetch(`/api/email-inbox/${email.id}/assistant-review`, {
+          method: "POST",
+          body: JSON.stringify({
+            assistantAction: "ignore",
+            assistantPriority: "low",
+            assistantCategory: "No Action",
+            assistantScore: email.assistant_score ?? null,
+            reviewOutcome: "marked_no_action",
+            draftBody: null,
+            reviewerNote: "Marked not important from inbox triage.",
+            assistantReason: email.assistant_reason ?? null,
+            assistantOwner: email.assistant_owner ?? null,
+            assistantRisk: email.assistant_risk ?? null,
+            assistantEvidence: email.assistant_evidence ?? null,
+            projectAssignment,
+            fieldFeedback: {
+              ...fieldFeedback,
+              action: "incorrect",
+              priority: "incorrect",
+              category: "incorrect",
+            },
+          }),
+        });
+        return;
+      }
+
+      const isArchivedAsNoAction =
+        email.assistant_action === "ignore" ||
+        email.assistant_review?.reviewOutcome === "marked_no_action";
+
+      if (!isArchivedAsNoAction) {
+        return;
+      }
+
+      const restoredCategory =
+        email.assistant_category?.trim() &&
+        email.assistant_category.trim() !== "No Action"
+          ? email.assistant_category.trim()
+          : email.assistant_review?.assistantCategory?.trim() &&
+              email.assistant_review.assistantCategory.trim() !== "No Action"
+            ? email.assistant_review.assistantCategory.trim()
+            : null;
+
+      if (existingReviewId) {
+        await apiFetch("/api/email-inbox/reviewed", {
+          method: "PATCH",
+          body: JSON.stringify({
+            reviewId: existingReviewId,
+            assistantAction: "watch",
+            assistantPriority: "normal",
+            assistantCategory: restoredCategory,
+            reviewOutcome: "watched",
+            reviewerNote:
+              email.assistant_review?.reviewerNote ??
+              "Marked important from inbox triage.",
+            draftBody: email.assistant_review?.draftBody ?? null,
+            projectAssignment,
+            fieldFeedback: {
+              ...fieldFeedback,
+              action: "incorrect",
+              priority: "incorrect",
+              category:
+                fieldFeedback.category === "correct" ? "correct" : "unreviewed",
+            },
+          }),
+        });
+        return;
+      }
+
+      await apiFetch(`/api/email-inbox/${email.id}/assistant-review`, {
+        method: "POST",
+        body: JSON.stringify({
+          assistantAction: "watch",
+          assistantPriority: "normal",
+          assistantCategory: restoredCategory,
+          assistantScore: email.assistant_score ?? null,
+          reviewOutcome: "watched",
+          draftBody: null,
+          reviewerNote: "Marked important from inbox triage.",
+          assistantReason: email.assistant_reason ?? null,
+          assistantOwner: email.assistant_owner ?? null,
+          assistantRisk: email.assistant_risk ?? null,
+          assistantEvidence: email.assistant_evidence ?? null,
+          projectAssignment,
+          fieldFeedback: {
+            ...fieldFeedback,
+            action: "incorrect",
+            priority: "incorrect",
+            category:
+              fieldFeedback.category === "correct" ? "correct" : "unreviewed",
+          },
+        }),
+      });
+    },
+    [email],
+  );
+
+  const handleAutoArchiveNotImportant = React.useCallback(async () => {
+    if (!email) return;
+    await handleSyncImportanceClassification("not_important");
+  }, [email, handleSyncImportanceClassification]);
 
   const handleImportanceClear = React.useCallback(async () => {
     if (!email || isClearingImportance) return;
@@ -1533,6 +1683,23 @@ export function EmailReadingPanel({
                       </span>
                     )}
                   </div>
+                  <EmailActionControls
+                    onSummarize={
+                      canProjectEmailActions
+                        ? () => void handleSummarize()
+                        : undefined
+                    }
+                    importanceFeedback={importanceFeedback}
+                    onImportanceIntent={handleImportanceIntent}
+                    onImportanceClear={
+                      importanceFeedback
+                        ? () => void handleImportanceClear()
+                        : undefined
+                    }
+                    isClearingImportance={isClearingImportance}
+                    className="mt-4 border-t border-border/60 pt-4"
+                    showTaskActions={false}
+                  />
                 </div>
 
                 <div className="flex items-center gap-1 text-muted-foreground">
@@ -1769,6 +1936,7 @@ export function EmailReadingPanel({
                     canProjectEmailActions ? handleOpenCreateTask : undefined
                   }
                   className="border-t border-border/60 pt-5"
+                  showImportanceControls={false}
                 />
               </div>
             </ScrollArea>
@@ -1829,6 +1997,7 @@ export function EmailReadingPanel({
                 canProjectEmailActions ? handleOpenCreateTask : undefined
               }
               orientation="column"
+              showImportanceControls={false}
             />,
             desktopActionsSlot,
           )
@@ -1844,10 +2013,15 @@ export function EmailReadingPanel({
             setImportanceSignal(null);
           }
         }}
-        onRecorded={(emailId, feedback) => {
+        onRecorded={async (emailId, feedback) => {
+          if (feedback.signal === "not_important") {
+            await handleAutoArchiveNotImportant();
+          } else {
+            await handleSyncImportanceClassification("important");
+          }
           setImportanceDialogOpen(false);
           setImportanceSignal(null);
-          onImportanceRecorded?.(emailId, feedback);
+          await onImportanceRecorded?.(emailId, feedback);
         }}
       />
       <AttachmentPreviewModal
@@ -2173,6 +2347,13 @@ const ASSISTANT_PRIORITY_OPTIONS: {
 ];
 
 const ASSISTANT_CATEGORY_OPTIONS = [
+  "Accounting",
+  "Client Follow-up",
+  "Sales Lead",
+  "Vendor / Subcontractor",
+  "Internal Coordination",
+  "Scheduling",
+  "Operations / Admin",
   "Reply Needed",
   "To Delegate",
   "Watching",
@@ -2203,6 +2384,31 @@ const DEFAULT_FIELD_FEEDBACK: Record<AssistantFieldKey, AssistantFieldVerdict> =
   reason: "unreviewed",
   score: "unreviewed",
 };
+
+const QUICK_CATEGORY_OPTIONS = [
+  "Accounting",
+  "Client Follow-up",
+  "Sales Lead",
+  "Vendor / Subcontractor",
+  "No Action",
+] as const;
+
+const BUSINESS_CATEGORY_OPTIONS = [
+  "Accounting",
+  "Client Follow-up",
+  "Sales Lead",
+  "Vendor / Subcontractor",
+  "Internal Coordination",
+  "Scheduling",
+  "Operations / Admin",
+  "No Action",
+] as const;
+
+function isBusinessCategory(value: string | null | undefined): boolean {
+  return BUSINESS_CATEGORY_OPTIONS.includes(
+    (value ?? "") as (typeof BUSINESS_CATEGORY_OPTIONS)[number],
+  );
+}
 
 function defaultAssistantCategory(email: ProjectEmail): string {
   if (email.assistant_category?.trim()) return email.assistant_category.trim();
@@ -2412,6 +2618,7 @@ export function EmailTrainingFeedbackPanel({
   const [assistantPriority, setAssistantPriority] =
     React.useState<AssistantReviewPriority>("normal");
   const [assistantCategory, setAssistantCategory] = React.useState("FYI");
+  const [quickCategory, setQuickCategory] = React.useState("");
   const [reviewOutcome, setReviewOutcome] =
     React.useState<BrandonReviewOutcome>("skipped");
   const [draftBody, setDraftBody] = React.useState("");
@@ -2441,6 +2648,11 @@ export function EmailTrainingFeedbackPanel({
     setAssistantAction(selectedEmail.assistant_action ?? "watch");
     setAssistantPriority(selectedEmail.assistant_priority ?? "normal");
     setAssistantCategory(defaultAssistantCategory(selectedEmail));
+    setQuickCategory(
+      isBusinessCategory(selectedEmail.assistant_category)
+        ? selectedEmail.assistant_category ?? ""
+        : "",
+    );
     setReviewOutcome(defaultReviewOutcome(selectedEmail));
     setDraftBody(selectedEmail.assistant_review?.draftBody ?? "");
     setReviewerNote(selectedEmail.assistant_review?.reviewerNote ?? "");
@@ -2472,6 +2684,12 @@ export function EmailTrainingFeedbackPanel({
     () => Object.values(fieldFeedback).some((value) => value !== "unreviewed"),
     [fieldFeedback],
   );
+  const categoryOptions = React.useMemo(() => {
+    const options = new Set<string>(BUSINESS_CATEGORY_OPTIONS);
+    const current = quickCategory.trim();
+    if (current) options.add(current);
+    return Array.from(options);
+  }, [quickCategory]);
 
   async function handleSave() {
     if (!selectedEmail) return;
@@ -2504,7 +2722,8 @@ export function EmailTrainingFeedbackPanel({
       const commonPayload = {
         assistantAction,
         assistantPriority,
-        assistantCategory: assistantCategory.trim() || null,
+        assistantCategory:
+          quickCategory.trim() || assistantCategory.trim() || null,
         reviewOutcome,
         reviewerNote: reviewerNote.trim() || null,
         draftBody: draftBody.trim() || null,
@@ -2552,6 +2771,25 @@ export function EmailTrainingFeedbackPanel({
       setIsSaving(false);
     }
   }
+
+  const quickCategoryDirty = React.useMemo(() => {
+    if (!selectedEmail) return false;
+    const baseline = isBusinessCategory(selectedEmail.assistant_category)
+      ? selectedEmail.assistant_category ?? ""
+      : "";
+    return quickCategory.trim() !== baseline;
+  }, [quickCategory, selectedEmail]);
+
+  const updateQuickCategory = React.useCallback(
+    (nextCategory: string) => {
+      setQuickCategory(nextCategory);
+      setFieldFeedback((current) => ({
+        ...current,
+        category: nextCategory.trim() ? "incorrect" : "unreviewed",
+      }));
+    },
+    [],
+  );
 
   async function handleGenerateDraft() {
     if (!selectedEmail) return;
@@ -2681,21 +2919,7 @@ export function EmailTrainingFeedbackPanel({
                       setFieldFeedback((current) => ({ ...current, category: next }))
                     }
                     value={
-                      <Select
-                        value={assistantCategory}
-                        onValueChange={setAssistantCategory}
-                      >
-                        <SelectTrigger className="h-7 border-0 bg-transparent px-0 text-[13px] shadow-none">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ASSISTANT_CATEGORY_OPTIONS.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      assistantCategory
                     }
                   />
                   <ReviewRow
@@ -2890,6 +3114,70 @@ export function EmailTrainingFeedbackPanel({
                       {assistantContext}
                     </p>
                   ) : null}
+                </div>
+              </ReviewSection>
+
+              <ReviewSection
+                title="Quick Category"
+                headerAction={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handleSave()}
+                    disabled={isSaving || !quickCategoryDirty}
+                    className="h-7 text-[12px]"
+                  >
+                    {isSaving ? "Saving..." : "Save category"}
+                  </Button>
+                }
+              >
+                <div className="space-y-3">
+                  <p className="text-[12px] leading-5 text-muted-foreground">
+                    Use this for the business label on the email. The AI
+                    workflow bucket above can still stay as delegate, reply, or
+                    watch.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_CATEGORY_OPTIONS.map((category) => {
+                      const selected = quickCategory === category;
+                      return (
+                        <Button
+                          key={category}
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateQuickCategory(category)}
+                          className={cn(
+                            "h-7 rounded-full border px-2.5 text-[11px] font-medium shadow-none",
+                            selected
+                              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/10"
+                              : "border-border/60 bg-background text-muted-foreground hover:bg-muted/60",
+                          )}
+                        >
+                          {category}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Select
+                    value={quickCategory || "__none__"}
+                    onValueChange={(value) =>
+                      updateQuickCategory(value === "__none__" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-[13px]">
+                      <SelectValue placeholder="Choose business category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No business category</SelectItem>
+                      {categoryOptions.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </ReviewSection>
 
@@ -3410,6 +3698,7 @@ export function ProjectEmailsWorkspace({
                     email={email}
                     isActive={selectedEmail?.id === email.id}
                     onSelect={() => handleSelectEmail(email)}
+                    showCategory={draftFeedbackMode}
                   />
                 ))}
               </motion.div>

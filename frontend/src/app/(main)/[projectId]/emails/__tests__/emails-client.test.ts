@@ -6,10 +6,13 @@ import {
   reconcileSelectedEmail,
 } from "@/app/(main)/[projectId]/emails/emails-client.helpers";
 import {
-  buildMailboxPriorityTabs,
-  countMailboxEmailsByPriority,
-  normalizeMailboxPriorityFilter,
-} from "@/features/emails/mailbox-priority-tabs";
+  buildMailboxWorkflowTabs,
+  countMailboxEmailsByWorkflow,
+  isArchivedMailboxEmail,
+  isDraftMailboxEmail,
+  matchesMailboxWorkflowFilter,
+  normalizeMailboxWorkflowFilter,
+} from "@/features/emails/mailbox-workflow-tabs";
 
 function buildEmail(
   priority: ProjectEmail["assistant_priority"],
@@ -47,68 +50,169 @@ function buildEmail(
   };
 }
 
-describe("normalizeMailboxPriorityFilter", () => {
-  it("falls back invalid values to all", () => {
-    expect(normalizeMailboxPriorityFilter("urgent")).toBe("urgent");
-    expect(normalizeMailboxPriorityFilter("invalid")).toBe("all");
-    expect(normalizeMailboxPriorityFilter(null)).toBe("all");
+describe("normalizeMailboxWorkflowFilter", () => {
+  it("falls back invalid values to inbox", () => {
+    expect(normalizeMailboxWorkflowFilter("drafts")).toBe("drafts");
+    expect(normalizeMailboxWorkflowFilter("invalid")).toBe("inbox");
+    expect(normalizeMailboxWorkflowFilter(null)).toBe("inbox");
   });
 });
 
-describe("countMailboxEmailsByPriority", () => {
-  it("counts assistant-priority buckets from the shared email dataset", () => {
-    const counts = countMailboxEmailsByPriority([
-      buildEmail("urgent"),
-      buildEmail("high"),
-      buildEmail("high"),
-      buildEmail("low"),
-      buildEmail(null),
+describe("mailbox workflow classification", () => {
+  it("separates inbox, drafts, archived, and feedback-submitted emails from the shared dataset", () => {
+    const inboxEmail = buildEmail("high", { id: 1, assistant_action: "reply" });
+    const draftEmail = buildEmail("normal", {
+      id: 2,
+      assistant_action: "reply",
+      assistant_review: {
+        reviewId: "review-2",
+        reviewOutcome: "draft_edited",
+        reviewerNote: null,
+        draftBody: "Draft response",
+        assistantCategory: "Client Follow-up",
+        feedbackProvidedAt: null,
+        fieldFeedback: {
+          action: "unreviewed",
+          priority: "unreviewed",
+          category: "unreviewed",
+          draft: "unreviewed",
+          project: "unreviewed",
+          owner: "unreviewed",
+          reason: "unreviewed",
+          score: "unreviewed",
+        },
+        projectAssignmentFeedback: {
+          status: "unreviewed",
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        },
+      },
+    });
+    const archivedEmail = buildEmail("low", {
+      id: 3,
+      assistant_action: "ignore",
+      assistant_review: {
+        reviewId: "review-3",
+        reviewOutcome: "marked_no_action",
+        reviewerNote: null,
+        draftBody: null,
+        assistantCategory: "No Action",
+        feedbackProvidedAt: null,
+        fieldFeedback: {
+          action: "unreviewed",
+          priority: "unreviewed",
+          category: "unreviewed",
+          draft: "unreviewed",
+          project: "unreviewed",
+          owner: "unreviewed",
+          reason: "unreviewed",
+          score: "unreviewed",
+        },
+        projectAssignmentFeedback: {
+          status: "unreviewed",
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        },
+      },
+    });
+    const feedbackSubmittedEmail = buildEmail("normal", {
+      id: 4,
+      assistant_action: "watch",
+      assistant_review: {
+        reviewId: "review-4",
+        reviewOutcome: "watched",
+        reviewerNote: "This was corrected already.",
+        draftBody: null,
+        assistantCategory: "Accounting",
+        feedbackProvidedAt: "2026-07-06T13:00:00.000Z",
+        fieldFeedback: {
+          action: "correct",
+          priority: "incorrect",
+          category: "correct",
+          draft: "unreviewed",
+          project: "unreviewed",
+          owner: "unreviewed",
+          reason: "unreviewed",
+          score: "unreviewed",
+        },
+        projectAssignmentFeedback: {
+          status: "unreviewed",
+          correctedProjectId: null,
+          reasonSignals: [],
+          reasonNote: null,
+        },
+      },
+    });
+
+    const counts = countMailboxEmailsByWorkflow([
+      inboxEmail,
+      draftEmail,
+      archivedEmail,
+      feedbackSubmittedEmail,
     ]);
 
     expect(counts).toEqual({
-      all: 5,
-      urgent: 1,
-      high: 2,
-      normal: 0,
-      low: 1,
+      inbox: 3,
+      drafts: 1,
+      archived: 1,
+      feedback_submitted: 1,
     });
+    expect(isDraftMailboxEmail(draftEmail)).toBe(true);
+    expect(isArchivedMailboxEmail(archivedEmail)).toBe(true);
+    expect(matchesMailboxWorkflowFilter(inboxEmail, "inbox")).toBe(true);
+    expect(matchesMailboxWorkflowFilter(archivedEmail, "inbox")).toBe(false);
+    expect(
+      matchesMailboxWorkflowFilter(
+        feedbackSubmittedEmail,
+        "feedback_submitted",
+      ),
+    ).toBe(true);
   });
 });
 
-describe("buildMailboxPriorityTabs", () => {
-  it("preserves existing query state while swapping the priority filter", () => {
-    const tabs = buildMailboxPriorityTabs({
+describe("buildMailboxWorkflowTabs", () => {
+  it("preserves existing query state while swapping the workflow filter", () => {
+    const tabs = buildMailboxWorkflowTabs({
       pathname: "/outlook-draft-feedback",
-      searchParams: new URLSearchParams("view=mail&search=invoice&page=3"),
+      searchParams: new URLSearchParams(
+        "view=mail&search=invoice&page=3&priority=high",
+      ),
       counts: {
-        all: 8,
-        urgent: 1,
-        high: 2,
-        normal: 3,
-        low: 2,
+        inbox: 8,
+        drafts: 2,
+        archived: 3,
+        feedback_submitted: 5,
       },
-      activePriority: "high",
+      activeWorkflow: "drafts",
     });
 
     expect(tabs.map((tab) => tab.label)).toEqual([
-      "All",
-      "Urgent",
-      "High",
-      "Normal",
-      "Low",
+      "Inbox",
+      "Drafts",
+      "Archived",
+      "Feedback Submitted",
     ]);
     expect(tabs[0]).toMatchObject({
-      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1",
+      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=inbox",
       count: 8,
       isActive: false,
       compact: true,
     });
-    expect(tabs[2]).toMatchObject({
-      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&priority=high",
+    expect(tabs[1]).toMatchObject({
+      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=drafts",
       count: 2,
       isActive: true,
       compact: true,
     });
+    expect(tabs[3]).toMatchObject({
+      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=feedback_submitted",
+      count: 5,
+      isActive: false,
+      compact: true,
+    });
+    expect(tabs[1]?.href.includes("priority=")).toBe(false);
   });
 });
 

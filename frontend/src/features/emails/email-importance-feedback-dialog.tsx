@@ -59,7 +59,7 @@ interface EmailImportanceFeedbackDialogProps {
   onRecorded: (
     emailId: number,
     feedback: EmailImportanceFeedbackState,
-  ) => void;
+  ) => Promise<void> | void;
 }
 
 export function buildEmailImportanceSnapshot(email: ProjectEmail) {
@@ -147,7 +147,7 @@ export function EmailImportanceFeedbackDialog({
         }),
       });
 
-      onRecorded(email.id, {
+      await onRecorded(email.id, {
         signal,
         reasonCategory,
         reason: reason.trim() || null,
