@@ -2878,6 +2878,33 @@ function ChangeEventWorkflowWidget({
         </div>
       ) : null}
 
+      {draft.relatedEvidence.length > 0 ? (
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Related evidence</div>
+          <div className="divide-y divide-border/60">
+            {draft.relatedEvidence.slice(0, 3).map((item) => (
+              <div key={item.id} className="flex gap-3 py-2">
+                <FileTextIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {item.title}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {item.sourceLabel}
+                      {item.date ? ` - ${item.date.slice(0, 10)}` : ""}
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                    {item.snippet}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <InfoAlert variant="info">
         <span>{draft.nextQuestion}</span>
       </InfoAlert>

@@ -59,6 +59,7 @@ import type {
   TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
 import {
+  buildChangeEventRelatedEvidence,
   buildChangeEventWorkflowMetadata,
   isChangeEventFinalPreviewRequest,
 } from "@/lib/ai/change-event-workflow";
@@ -2676,10 +2677,37 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           }
         }
 
+        const changeEventRetrievalCtx = await executeRetrievalPlan(
+          plan,
+          buildExecutorDeps({
+            supabase: args.supabase,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+          }),
+          { sessionId: args.sessionId, message: lastUserContent },
+        );
+        latestRetrievalCtx = changeEventRetrievalCtx;
+        const relatedEvidence = buildChangeEventRelatedEvidence(changeEventRetrievalCtx);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-evidence",
+            message:
+              relatedEvidence.length > 0
+                ? `Found ${relatedEvidence.length} related source${relatedEvidence.length === 1 ? "" : "s"}`
+                : "Checked related project evidence",
+            status: changeEventRetrievalCtx.warnings.length > 0 ? "warning" : "success",
+            durations: changeEventRetrievalCtx.durationsMs,
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
         const workflow = buildChangeEventWorkflowMetadata({
           prompt: lastUserContent,
           selectedProjectId: args.selectedProjectId ?? null,
           previousDraft: previousChangeEventWorkflowDraft,
+          relatedEvidence,
         });
         const dataPart = {
           type: "data-assistant-widget",
@@ -2713,7 +2741,24 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               readyForPreview: workflow.readiness.readyForPreview,
               activeChecklistKey: workflow.readiness.activeChecklistKey,
               missingChecklistKeys: workflow.readiness.missingChecklistKeys,
+              evidenceCount: workflow.readiness.evidenceCount,
+              evidenceSourcePath: workflow.readiness.evidenceSourcePath,
               expectedNativeTool: workflow.expectedNativeTool,
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "semanticVectorSearch",
+            toolName: "semanticVectorSearch",
+            status: changeEventRetrievalCtx.semanticVectorResults ? "success" : "missing",
+            input: {
+              query: plan.sources.semanticVectorSearch?.query ?? lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              resultCount: summarizeEvalCount(changeEventRetrievalCtx.semanticVectorResults) ?? 0,
+              relatedEvidenceCount: relatedEvidence.length,
+              warnings: changeEventRetrievalCtx.warnings,
             },
             timestamp: new Date().toISOString(),
           },
@@ -2739,7 +2784,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               intent: "change_event_write",
               reason: "change_event_workflow_intake",
               responseFormat: "workflow_intake",
-              sources: ["chat_history.change_event_workflow"],
+              sources: [
+                "chat_history.change_event_workflow",
+                "semantic_vector_search",
+              ],
             },
             change_event_workflow: workflow,
             tool_trace: toolTrace,
@@ -2749,7 +2797,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             }),
             source_debug: {
               orchestrator: "change-event-workflow-intake",
-              evidenceCount: 0,
+              evidenceCount: workflow.readiness.evidenceCount,
               sourceCoverage: [
                 {
                   sourceType: "chat_history.change_event_workflow",
@@ -2757,6 +2805,16 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                   notes: missingLabels.length
                     ? `Missing: ${missingLabels.join(", ")}`
                     : "Workflow intake is ready for final preview.",
+                },
+                {
+                  sourceType: "semantic_vector_search",
+                  status: changeEventRetrievalCtx.semanticVectorResults ? "checked" : "missing",
+                  notes:
+                    relatedEvidence.length > 0
+                      ? `${relatedEvidence.length} related source${relatedEvidence.length === 1 ? "" : "s"} attached to the workflow.`
+                      : `No related evidence suggestions attached from ${
+                          summarizeEvalCount(changeEventRetrievalCtx.semanticVectorResults) ?? 0
+                        } retrieval result(s).`,
                 },
               ],
             },

@@ -2,6 +2,7 @@ import {
   CHANGE_REQUEST_SCOPE_OPTIONS,
   CHANGE_REQUEST_TYPE_OPTIONS,
 } from "@/lib/ai/workflow-registry";
+import type { RetrievalContext } from "@/lib/ai/retrieval/types";
 
 export type ChangeEventWorkflowChecklistKey =
   | "project"
@@ -22,6 +23,17 @@ export type ChangeEventWorkflowChecklistItem = {
   helper: string;
 };
 
+export type ChangeEventWorkflowEvidenceSuggestion = {
+  id: string;
+  title: string;
+  sourceType: "meeting" | "email" | "teams" | "document" | "project_record" | "knowledge";
+  sourceLabel: string;
+  snippet: string;
+  date: string | null;
+  confidence: "low" | "medium" | "high";
+  recordId: string | null;
+};
+
 export type ChangeEventWorkflowDraft = {
   projectId: number | null;
   projectName: string | null;
@@ -34,6 +46,7 @@ export type ChangeEventWorkflowDraft = {
   ownerNotified: "yes" | "no" | "unknown";
   supportingDocs: string[];
   relatedRecordHints: string[];
+  relatedEvidence: ChangeEventWorkflowEvidenceSuggestion[];
   recommendedImpacts: string[];
   missingRisks: string[];
   nextQuestion: string;
@@ -47,6 +60,7 @@ type BuildChangeEventWorkflowDraftParams = {
   selectedProjectId?: number | null;
   selectedProjectName?: string | null;
   previousDraft?: unknown;
+  relatedEvidence?: ChangeEventWorkflowEvidenceSuggestion[];
 };
 
 const DEFAULT_TITLE = "New change event";
@@ -65,6 +79,8 @@ export type ChangeEventWorkflowMetadata = {
     readyForPreview: boolean;
     missingChecklistKeys: ChangeEventWorkflowChecklistKey[];
     activeChecklistKey: ChangeEventWorkflowChecklistKey | null;
+    evidenceCount: number;
+    evidenceSourcePath: "semantic_vector_search" | "none";
   };
 };
 
@@ -96,6 +112,47 @@ function readStringArray(value: unknown): string[] {
     : [];
 }
 
+function readEvidenceSuggestion(value: unknown): ChangeEventWorkflowEvidenceSuggestion | null {
+  const record = readRecord(value);
+  if (!record) return null;
+  const id = readString(record.id);
+  const title = readString(record.title);
+  const snippet = readString(record.snippet);
+  const sourceLabel = readString(record.sourceLabel);
+  const sourceType = record.sourceType;
+  const confidence = record.confidence;
+  if (!id || !title || !snippet || !sourceLabel) return null;
+  if (
+    sourceType !== "meeting" &&
+    sourceType !== "email" &&
+    sourceType !== "teams" &&
+    sourceType !== "document" &&
+    sourceType !== "project_record" &&
+    sourceType !== "knowledge"
+  ) {
+    return null;
+  }
+  return {
+    id,
+    title,
+    sourceType,
+    sourceLabel,
+    snippet,
+    date: readString(record.date),
+    confidence:
+      confidence === "high" || confidence === "medium" || confidence === "low"
+        ? confidence
+        : "medium",
+    recordId: readString(record.recordId),
+  };
+}
+
+function readEvidenceSuggestions(value: unknown): ChangeEventWorkflowEvidenceSuggestion[] {
+  return Array.isArray(value)
+    ? value.map(readEvidenceSuggestion).filter((item): item is ChangeEventWorkflowEvidenceSuggestion => Boolean(item))
+    : [];
+}
+
 function readExistingDraft(value: unknown): Partial<ChangeEventWorkflowDraft> {
   const draft = readRecord(value);
   if (!draft) return {};
@@ -120,6 +177,7 @@ function readExistingDraft(value: unknown): Partial<ChangeEventWorkflowDraft> {
           : undefined,
     supportingDocs: readStringArray(draft.supportingDocs),
     relatedRecordHints: readStringArray(draft.relatedRecordHints),
+    relatedEvidence: readEvidenceSuggestions(draft.relatedEvidence),
   };
 }
 
@@ -266,7 +324,7 @@ function buildChecklist(draft: Omit<ChangeEventWorkflowDraft, "checklist">): Cha
   const hasCost = Boolean(draft.costImpact);
   const hasSchedule = Boolean(draft.scheduleImpact);
   const hasDocs = draft.supportingDocs.length > 0;
-  const hasRelatedRecords = draft.relatedRecordHints.length > 0;
+  const hasRelatedRecords = draft.relatedRecordHints.length > 0 || draft.relatedEvidence.length > 0;
   const readyForReview = hasProject && Boolean(draft.title) && hasNarrative && hasCause;
 
   return [
@@ -310,7 +368,11 @@ function buildChecklist(draft: Omit<ChangeEventWorkflowDraft, "checklist">): Cha
       key: "related_records",
       label: "Related records",
       status: status(hasRelatedRecords, hasCause && !hasRelatedRecords),
-      helper: hasRelatedRecords ? draft.relatedRecordHints.join(", ") : "No related record hints yet.",
+      helper: hasRelatedRecords
+        ? draft.relatedEvidence.length > 0
+          ? `${draft.relatedEvidence.length} related source${draft.relatedEvidence.length === 1 ? "" : "s"} found.`
+          : draft.relatedRecordHints.join(", ")
+        : "No related record hints yet.",
     },
     {
       key: "review_create",
@@ -355,6 +417,11 @@ function buildConfirmPrompt(draft: Omit<ChangeEventWorkflowDraft, "checklist" | 
     `Schedule impact: ${draft.scheduleImpact ?? "missing"}`,
     `Owner/client notified: ${draft.ownerNotified}`,
     `Supporting docs: ${draft.supportingDocs.length > 0 ? draft.supportingDocs.join(", ") : "missing"}`,
+    `Related evidence: ${
+      draft.relatedEvidence.length > 0
+        ? draft.relatedEvidence.map((item) => `${item.sourceLabel}: ${item.title}`).join("; ")
+        : "none attached"
+    }`,
   ].join("\n");
 }
 
@@ -362,6 +429,19 @@ function mergeUnique(...values: Array<string[] | undefined>): string[] {
   return Array.from(
     new Set(values.flatMap((items) => items ?? []).filter((item) => item.trim())),
   );
+}
+
+function mergeEvidenceSuggestions(
+  ...values: Array<ChangeEventWorkflowEvidenceSuggestion[] | undefined>
+): ChangeEventWorkflowEvidenceSuggestion[] {
+  const merged = new Map<string, ChangeEventWorkflowEvidenceSuggestion>();
+  for (const item of values.flatMap((items) => items ?? [])) {
+    const key = `${item.sourceType}:${item.recordId ?? item.title}:${item.snippet.slice(0, 80)}`.toLowerCase();
+    if (!merged.has(key)) {
+      merged.set(key, item);
+    }
+  }
+  return Array.from(merged.values()).slice(0, 5);
 }
 
 function combineNarrative(previous: string | null | undefined, current: string | null): string | null {
@@ -403,6 +483,7 @@ export function buildChangeEventWorkflowDraft({
   selectedProjectId = null,
   selectedProjectName = null,
   previousDraft,
+  relatedEvidence,
 }: BuildChangeEventWorkflowDraftParams): ChangeEventWorkflowDraft {
   const normalizedPrompt = normalizePrompt(prompt);
   const lower = normalizedPrompt.toLowerCase();
@@ -438,6 +519,7 @@ export function buildChangeEventWorkflowDraft({
       ownerNotified !== "unknown" ? ownerNotified : previous.ownerNotified ?? ownerNotified,
     supportingDocs: mergeUnique(previous.supportingDocs, supportingDocs),
     relatedRecordHints: mergeUnique(previous.relatedRecordHints, relatedRecordHints),
+    relatedEvidence: mergeEvidenceSuggestions(relatedEvidence, previous.relatedEvidence),
   });
 }
 
@@ -446,6 +528,7 @@ export function buildChangeEventWorkflowMetadata(params: {
   selectedProjectId?: number | null;
   selectedProjectName?: string | null;
   previousDraft?: unknown;
+  relatedEvidence?: ChangeEventWorkflowEvidenceSuggestion[];
   updatedAt?: string;
 }): ChangeEventWorkflowMetadata {
   const draft = buildChangeEventWorkflowDraft(params);
@@ -468,8 +551,110 @@ export function buildChangeEventWorkflowMetadata(params: {
       readyForPreview: draft.readyForPreview,
       missingChecklistKeys,
       activeChecklistKey,
+      evidenceCount: draft.relatedEvidence.length,
+      evidenceSourcePath: draft.relatedEvidence.length > 0 ? "semantic_vector_search" : "none",
     },
   };
+}
+
+type SemanticResult = {
+  content?: string;
+  sourceTable?: string;
+  recordId?: string | number;
+  similarity?: number;
+  finalScore?: number;
+  createdAt?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+function normalizeEvidenceText(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function confidenceFromScore(score: unknown): ChangeEventWorkflowEvidenceSuggestion["confidence"] {
+  if (typeof score !== "number" || !Number.isFinite(score)) return "medium";
+  if (score >= 0.72) return "high";
+  if (score >= 0.45) return "medium";
+  return "low";
+}
+
+function sourceTypeFromResult(result: SemanticResult): ChangeEventWorkflowEvidenceSuggestion["sourceType"] {
+  const source = `${result.sourceTable ?? ""} ${String(result.metadata?.type ?? "")} ${String(result.metadata?.source ?? "")}`.toLowerCase();
+  if (source.includes("meeting") || source.includes("fireflies")) return "meeting";
+  if (source.includes("email") || source.includes("outlook")) return "email";
+  if (source.includes("teams")) return "teams";
+  if (source.includes("project")) return "project_record";
+  if (source.includes("document") || source.includes("drawing") || source.includes("spec")) return "document";
+  return "knowledge";
+}
+
+function sourceLabelFor(sourceType: ChangeEventWorkflowEvidenceSuggestion["sourceType"]): string {
+  switch (sourceType) {
+    case "meeting":
+      return "Meeting";
+    case "email":
+      return "Email";
+    case "teams":
+      return "Teams";
+    case "document":
+      return "Document";
+    case "project_record":
+      return "Project record";
+    case "knowledge":
+      return "Knowledge";
+  }
+}
+
+function evidenceTitleFromResult(result: SemanticResult, index: number): string {
+  const metadata = result.metadata ?? {};
+  return (
+    readString(metadata.subject) ??
+    readString(metadata.title) ??
+    readString(metadata.meeting_title) ??
+    readString(metadata.file_name) ??
+    readString(metadata.name) ??
+    result.sourceTable ??
+    `Related source ${index + 1}`
+  );
+}
+
+function evidenceDateFromResult(result: SemanticResult): string | null {
+  const metadata = result.metadata ?? {};
+  return (
+    readString(result.createdAt) ??
+    readString(metadata.date) ??
+    readString(metadata.sent_at) ??
+    readString(metadata.meeting_date) ??
+    readString(metadata.created_at)
+  );
+}
+
+export function buildChangeEventRelatedEvidence(
+  retrievalCtx: Pick<RetrievalContext, "semanticVectorResults"> | null | undefined,
+): ChangeEventWorkflowEvidenceSuggestion[] {
+  const wrapper = readRecord(retrievalCtx?.semanticVectorResults);
+  const results = Array.isArray(wrapper?.results) ? (wrapper.results as SemanticResult[]) : [];
+  return mergeEvidenceSuggestions(
+    results
+      .map((result, index) => {
+        const snippet = normalizeEvidenceText(result.content ?? "").slice(0, 240);
+        if (!snippet) return null;
+        const sourceType = sourceTypeFromResult(result);
+        const recordId =
+          result.recordId === undefined || result.recordId === null ? null : String(result.recordId);
+        return {
+          id: `retrieval-${sourceType}-${recordId ?? index}`,
+          title: evidenceTitleFromResult(result, index),
+          sourceType,
+          sourceLabel: sourceLabelFor(sourceType),
+          snippet,
+          date: evidenceDateFromResult(result),
+          confidence: confidenceFromScore(result.finalScore ?? result.similarity),
+          recordId,
+        } satisfies ChangeEventWorkflowEvidenceSuggestion;
+      })
+      .filter((item): item is ChangeEventWorkflowEvidenceSuggestion => Boolean(item)),
+  );
 }
 
 export function isChangeEventFinalPreviewRequest(prompt: string): boolean {

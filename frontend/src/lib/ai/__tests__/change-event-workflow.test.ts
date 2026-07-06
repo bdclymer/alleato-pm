@@ -1,4 +1,5 @@
 import {
+  buildChangeEventRelatedEvidence,
   buildChangeEventWorkflowDraft,
   buildChangeEventWorkflowMetadata,
   isChangeEventFinalPreviewRequest,
@@ -73,9 +74,50 @@ describe("change event workflow draft", () => {
       readiness: {
         readyForPreview: false,
         activeChecklistKey: "cause_identified",
+        evidenceCount: 0,
+        evidenceSourcePath: "none",
       },
     });
     expect(metadata.readiness.missingChecklistKeys).toContain("cost_impact");
+  });
+
+  it("attaches retrieval-backed related evidence to workflow metadata", () => {
+    const relatedEvidence = buildChangeEventRelatedEvidence({
+      semanticVectorResults: {
+        results: [
+          {
+            content:
+              "Owner coordination meeting discussed relocating the lobby plumbing and tracking pricing as a change event.",
+            sourceTable: "meeting_transcript",
+            recordId: "meeting-1",
+            finalScore: 0.82,
+            createdAt: "2026-07-01T12:00:00.000Z",
+            metadata: { meeting_title: "Owner coordination meeting" },
+          },
+        ],
+      },
+    });
+
+    const metadata = buildChangeEventWorkflowMetadata({
+      updatedAt: "2026-07-06T05:00:00.000Z",
+      selectedProjectId: 25125,
+      prompt: "Create a change event because the owner requested relocated plumbing.",
+      relatedEvidence,
+    });
+
+    expect(metadata.readiness.evidenceCount).toBe(1);
+    expect(metadata.readiness.evidenceSourcePath).toBe("semantic_vector_search");
+    expect(metadata.draft.relatedEvidence[0]).toMatchObject({
+      title: "Owner coordination meeting",
+      sourceType: "meeting",
+      sourceLabel: "Meeting",
+      confidence: "high",
+      recordId: "meeting-1",
+    });
+    expect(metadata.draft.checklist.find((item) => item.key === "related_records")?.status).toBe(
+      "complete",
+    );
+    expect(metadata.draft.confirmPrompt).toContain("Meeting: Owner coordination meeting");
   });
 
   it("lets final preview requests continue to the write tool loop", () => {
