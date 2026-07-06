@@ -2717,7 +2717,6 @@ export function EmailTrainingFeedbackPanel({
     string | null
   >(null);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [isGeneratingDraft, setIsGeneratingDraft] = React.useState(false);
 
   React.useEffect(() => {
     if (!selectedEmail) return;
@@ -2753,6 +2752,7 @@ export function EmailTrainingFeedbackPanel({
     typeof selectedEmail?.assistant_score === "number"
       ? Math.round(selectedEmail.assistant_score)
       : null;
+  const hasAiDraftReply = draftBody.trim().length > 0;
   const savedLabel = formatFeedbackDate(feedbackProvidedAt);
   const rulesApplied = selectedEmail?.assistant_rules_applied ?? [];
   const assistantDecisionSummary = selectedEmail
@@ -2902,36 +2902,6 @@ export function EmailTrainingFeedbackPanel({
     }
     setQuickCategorySearch("");
   }, [quickCategories, quickCategorySearch, updateQuickCategories]);
-
-  async function handleGenerateDraft() {
-    if (!selectedEmail) return;
-
-    setIsGeneratingDraft(true);
-    try {
-      const result = await apiFetch<{ draft: string }>(
-        `/api/email-inbox/${selectedEmail.id}/draft-reply`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subject: selectedEmail.subject,
-            fromName: selectedEmail.from_name,
-            fromEmail: selectedEmail.from_email,
-            bodyText: selectedEmail.body_text ?? selectedEmail.body,
-            projectName: selectedEmail.project?.name ?? null,
-            tone: "professional",
-          }),
-        },
-      );
-      setDraftBody(result.draft);
-      toast.success("Sandbox draft generated.");
-    } catch (error) {
-      console.error("Could not generate sandbox email draft.", error);
-      toast.error("Could not generate sandbox draft. Check AI configuration.");
-    } finally {
-      setIsGeneratingDraft(false);
-    }
-  }
 
   return (
     <ScrollArea className={cn("h-full", className)}>
@@ -3158,10 +3128,10 @@ export function EmailTrainingFeedbackPanel({
                 </div>
               </ReviewSection>
 
-              <ReviewSection
-                title="Draft Reply"
-                headerAction={
-                  <div className="flex items-center gap-2">
+              {hasAiDraftReply ? (
+                <ReviewSection
+                  title="Draft Reply"
+                  headerAction={
                     <VerdictButtons
                       label="Draft reply"
                       verdict={fieldFeedback.draft}
@@ -3173,34 +3143,16 @@ export function EmailTrainingFeedbackPanel({
                       }
                       compact={false}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => void handleGenerateDraft()}
-                      disabled={isGeneratingDraft}
-                      className="h-7 text-[12px]"
-                    >
-                      {isGeneratingDraft ? (
-                        <Loader2
-                          className="mr-2 h-3.5 w-3.5 animate-spin"
-                          aria-hidden
-                        />
-                      ) : (
-                        <Sparkles className="mr-2 h-3.5 w-3.5" aria-hidden />
-                      )}
-                      {isGeneratingDraft ? "Generating..." : "Generate"}
-                    </Button>
-                  </div>
-                }
-              >
-                <Textarea
-                  value={draftBody}
-                  onChange={(event) => setDraftBody(event.target.value)}
-                  placeholder="Draft response"
-                  className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
-                />
-              </ReviewSection>
+                  }
+                >
+                  <Textarea
+                    value={draftBody}
+                    onChange={(event) => setDraftBody(event.target.value)}
+                    placeholder="Draft response"
+                    className="min-h-24 resize-y border-0 bg-transparent px-0 text-[13px] leading-5 shadow-none"
+                  />
+                </ReviewSection>
+              ) : null}
 
               <ReviewSection title="Rules Applied">
                 <div className="space-y-2">
