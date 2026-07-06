@@ -1820,7 +1820,6 @@ function SubmittalSettingsTab({
     <PageShell
       variant="table"
       title="Submittals"
-      description="Manage submittal items, packages, and review workflows"
       actions={
         settingsSection === "general" ? (
           <Button
@@ -2364,7 +2363,6 @@ export default function SubmittalsPage(): ReactElement {
       <UnifiedTablePage
         header={{
           title: "Submittals",
-          description: "Manage submittal items, packages, and review workflows",
           actions: (
             <div className="flex items-center gap-1.5">
               <Button
