@@ -585,7 +585,7 @@ export function SubcontractorInvoicePdfDocument({
 
   return (
     <Document>
-      <Page size="LETTER" style={styles.page}>
+      <Page size="LETTER" orientation="landscape" style={styles.page}>
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>
             APPLICATION AND CERTIFICATE FOR PAYMENT
@@ -805,7 +805,7 @@ export function SubcontractorInvoicePdfDocument({
         </View>
       </Page>
 
-      <Page size="LETTER" style={styles.page}>
+      <Page size="LETTER" orientation="landscape" style={styles.page}>
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>CONTINUATION SHEET</Text>
           <View>

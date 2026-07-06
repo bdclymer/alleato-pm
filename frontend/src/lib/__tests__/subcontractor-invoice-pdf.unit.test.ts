@@ -2,6 +2,26 @@ import {
   buildContinuationSections,
   buildSubcontractorInvoicePdfFilename,
 } from "@/lib/subcontractor-invoice-pdf-helpers";
+import React from "react";
+
+jest.mock("@react-pdf/renderer", () => {
+  const React = require("react");
+  return {
+    Document: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("Document", null, children),
+    Page: ({ children, ...props }: { children: React.ReactNode }) =>
+      React.createElement("Page", props, children),
+    StyleSheet: { create: (styles: unknown) => styles },
+    Text: ({ children, ...props }: { children: React.ReactNode }) =>
+      React.createElement("Text", props, children),
+    View: ({ children, ...props }: { children: React.ReactNode }) =>
+      React.createElement("View", props, children),
+    renderToBuffer: jest.fn(),
+  };
+});
+
+import { Page } from "@react-pdf/renderer";
+import { SubcontractorInvoicePdfDocument } from "@/lib/subcontractor-invoice-pdf";
 
 function makeBaseData() {
   return {
@@ -127,5 +147,18 @@ describe("subcontractor invoice pdf helpers", () => {
       totalCompletedStored: 2000,
       balanceToFinish: 26500,
     });
+  });
+
+  it("renders all invoice PDF pages in landscape orientation", () => {
+    const document = SubcontractorInvoicePdfDocument({ data: makeBaseData() });
+    const pages = React.Children.toArray(document.props.children).filter(
+      (child): child is React.ReactElement<{ orientation?: string }> =>
+        React.isValidElement(child) && child.type === Page,
+    );
+
+    expect(pages).toHaveLength(2);
+    expect(pages.every((page) => page.props.orientation === "landscape")).toBe(
+      true,
+    );
   });
 });
