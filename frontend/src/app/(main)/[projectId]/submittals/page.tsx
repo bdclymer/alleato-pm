@@ -864,12 +864,13 @@ function SubmittalGeneralSettingsPanel({
       <FormSection
         title="Submittal Numbering"
       >
-        <ToggleField
-          label="Include Spec Section Number"
-          hint="Example: the first submittal in spec section 03-3000-Concrete is numbered 03-3000-1."
-          checked={settings.include_spec_section_number}
-          onCheckedChange={(checked) =>
-            update("include_spec_section_number", checked)
+          <ToggleField
+            label="Include Spec Section Number"
+            hint="Example: the first submittal in spec section 03-3000-Concrete is numbered 03-3000-1."
+            controlPosition="left"
+            checked={settings.include_spec_section_number}
+            onCheckedChange={(checked) =>
+              update("include_spec_section_number", checked)
           }
         />
       </FormSection>
@@ -906,6 +907,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Allow approvers to add reviewers"
             hint="Reviewers can view and respond, but cannot add more reviewers."
+            controlPosition="left"
             checked={settings.allow_approvers_to_add_reviewers}
             onCheckedChange={(checked) =>
               update("allow_approvers_to_add_reviewers", checked)
@@ -913,6 +915,7 @@ function SubmittalGeneralSettingsPanel({
           />
           <ToggleField
             label="Approver responses are required by default"
+            controlPosition="left"
             checked={settings.approver_responses_required_by_default}
             onCheckedChange={(checked) =>
               update("approver_responses_required_by_default", checked)
@@ -921,6 +924,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Enable Reject Workflow"
             hint="Reject or Revise and Resubmit responses route Ball in Court to the Submittal Manager for the next step."
+            controlPosition="left"
             checked={settings.enable_reject_workflow}
             onCheckedChange={(checked) =>
               update("enable_reject_workflow", checked)
@@ -928,6 +932,7 @@ function SubmittalGeneralSettingsPanel({
           />
           <ToggleField
             label="Enable dynamic approver due dates"
+            controlPosition="left"
             checked={settings.enable_dynamic_approver_due_dates}
             onCheckedChange={(checked) =>
               update("enable_dynamic_approver_due_dates", checked)
@@ -944,6 +949,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Submittals private by default"
             hint="Limits new submittals to admins, distribution members, and assigned workflow reviewers."
+            controlPosition="left"
             checked={settings.submittals_private_by_default}
             onCheckedChange={(checked) =>
               update("submittals_private_by_default", checked)
@@ -951,6 +957,7 @@ function SubmittalGeneralSettingsPanel({
           />
           <ToggleField
             label="Enable email reminders for overdue submittals"
+            controlPosition="left"
             checked={settings.enable_overdue_email_reminders}
             onCheckedChange={(checked) =>
               update("enable_overdue_email_reminders", checked)
@@ -958,12 +965,14 @@ function SubmittalGeneralSettingsPanel({
           />
           <ToggleField
             label="Enable QR codes"
+            controlPosition="left"
             checked={settings.enable_qr_codes}
             onCheckedChange={(checked) => update("enable_qr_codes", checked)}
           />
           <ToggleField
             label="Enable submittal schedule calculations"
             hint="Adds schedule calculation defaults for required on-site and planned return dates."
+            controlPosition="left"
             checked={settings.enable_schedule_calculations}
             onCheckedChange={(checked) =>
               update("enable_schedule_calculations", checked)
@@ -972,6 +981,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Allow email attachment downloads without login"
             hint="Email attachment links expire 14 calendar days after the email is sent."
+            controlPosition="left"
             checked={settings.allow_email_attachment_download_without_login}
             onCheckedChange={(checked) =>
               update("allow_email_attachment_download_without_login", checked)

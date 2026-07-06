@@ -14,6 +14,7 @@ interface ToggleFieldProps {
   className?: string;
   labelClassName?: string;
   hintClassName?: string;
+  controlPosition?: "left" | "right";
 }
 
 export function ToggleField({
@@ -26,21 +27,35 @@ export function ToggleField({
   className,
   labelClassName,
   hintClassName,
+  controlPosition = "right",
 }: ToggleFieldProps) {
+  const switchControl = (
+    <Switch
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      disabled={disabled}
+      className={cn("shrink-0", error && "border-destructive/50")}
+      aria-invalid={!!error}
+    />
+  );
+
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div
+      className={cn(
+        "flex gap-3",
+        controlPosition === "left"
+          ? "items-start justify-start"
+          : "items-center justify-between",
+        className,
+      )}
+    >
+      {controlPosition === "left" ? switchControl : null}
       <div className="flex-1">
         <label className={cn("text-sm font-medium text-foreground", labelClassName)}>{label}</label>
         {hint && !error && <p className={cn("text-sm text-muted-foreground", hintClassName)}>{hint}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
-      <Switch
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        disabled={disabled}
-        className={cn(error && "border-destructive/50")}
-        aria-invalid={!!error}
-      />
+      {controlPosition === "right" ? switchControl : null}
     </div>
   );
 }
