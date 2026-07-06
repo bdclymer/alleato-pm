@@ -879,10 +879,14 @@ function SubmittalGeneralSettingsPanel({
         title="Workflow Defaults"
         description="Defaults for submit/respond due dates and approval routing."
       >
-        <div className="max-w-xs space-y-2">
+        <div className="max-w-xl space-y-2">
           <Label htmlFor="default-submit-response-days">
             Default Number of Days to Submit/Respond
           </Label>
+          <p className="text-sm text-muted-foreground">
+            Enter the number of working days users in each workflow step have
+            to submit/respond.
+          </p>
           <Input
             id="default-submit-response-days"
             type="number"
@@ -896,11 +900,6 @@ function SubmittalGeneralSettingsPanel({
               )
             }
           />
-          <p className="text-sm text-muted-foreground">
-            Enter the number of working days users in each workflow step have
-            to submit/respond. You can define the project's working days in the
-            Admin tool.
-          </p>
         </div>
 
         <div className="space-y-4">
