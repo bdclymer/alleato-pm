@@ -71,19 +71,33 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
           method: "POST",
           body: JSON.stringify({
             title: rfi.subject,
+            type: "TBD",
+            scope: "TBD",
             origin: "rfis",
-            origin_id: rfi.id,
+            originId: rfi.id,
             status: "Open",
           }),
         },
       );
       const newId = result?.data?.id ?? result?.id;
-      toast.success("Change event created from RFI");
-      if (newId) {
-        router.push(`/${projectId}/change-events/${newId}`);
+      if (!newId) {
+        throw new Error("Change event creation succeeded without returning an id.");
       }
+      toast.success("Change event created from RFI");
+      router.push(`/${projectId}/change-events/${newId}`);
     } catch (err) {
-      toast.error("Failed to create change event");
+      reportNonCriticalFailure({
+        area: "rfi-header-actions",
+        operation: "create-change-event",
+        error: err,
+        userVisibleFallback: "The change event could not be created from this RFI.",
+        metadata: { projectId, rfiId: rfi.id },
+      });
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "The change event could not be created from this RFI.";
+      toast.error(message);
     } finally {
       setIsCreatingCE(false);
     }
@@ -104,7 +118,6 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          variant="outline"
           onClick={() => void handleCreateChangeEvent()}
           disabled={isCreatingCE}
         >

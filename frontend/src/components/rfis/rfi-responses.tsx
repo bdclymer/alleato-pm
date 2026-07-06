@@ -7,6 +7,7 @@ interface RfiResponsesProps {
   rfiId: string;
   projectId?: number;
   className?: string;
+  title?: string;
 }
 
 /**
@@ -23,10 +24,15 @@ interface RfiResponsesProps {
  * <RfiResponses rfiId={rfi.id} />
  * ```
  */
-export function RfiResponses({ rfiId, projectId, className }: RfiResponsesProps) {
+export function RfiResponses({
+  rfiId,
+  projectId,
+  className,
+  title = "Responses",
+}: RfiResponsesProps) {
   return (
     <EntityRoom entityType="rfi" entityId={rfiId} projectId={projectId}>
-      <EntityComments title="Responses" className={className} />
+      <EntityComments title={title} className={className} />
     </EntityRoom>
   );
 }

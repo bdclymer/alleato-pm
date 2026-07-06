@@ -39,9 +39,14 @@ const SOURCE_LABEL: Record<RfiFormalResponse["source"], string> = {
 interface RfiFormalResponsesProps {
   projectId: number;
   rfiId: string;
+  hideHeading?: boolean;
 }
 
-export function RfiFormalResponses({ projectId, rfiId }: RfiFormalResponsesProps) {
+export function RfiFormalResponses({
+  projectId,
+  rfiId,
+  hideHeading = false,
+}: RfiFormalResponsesProps) {
   const queryClient = useQueryClient();
   const queryKey = ["rfi-responses", projectId, rfiId] as const;
 
@@ -71,8 +76,10 @@ export function RfiFormalResponses({ projectId, rfiId }: RfiFormalResponsesProps
 
   return (
     <div>
-      <SectionRuleHeading label={`Responses (${responses.length})`} />
-      <div className="mt-3 space-y-3">
+      {!hideHeading ? (
+        <SectionRuleHeading label={`Responses (${responses.length})`} />
+      ) : null}
+      <div className={hideHeading ? "space-y-3" : "mt-3 space-y-3"}>
         {responses.map((response) => (
           <div key={response.id} className="rounded-md bg-muted/40 p-3">
             <div className="flex items-center justify-between gap-2">
