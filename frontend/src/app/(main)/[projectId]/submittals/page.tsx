@@ -66,6 +66,7 @@ import {
   InlineTableRow,
 } from "@/components/ds";
 import { PageShell, PageTabs } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { FormSection, ToggleField } from "@/components/forms";
 import {
   useSubmittals,
@@ -1036,8 +1037,16 @@ function SubmittalResponsesPanel() {
   return (
     <FormSection
       title="Workflow Responses"
-      description="Configured response labels mapped to standard submittal response categories."
+      description="Procore provides default submittal responses that you can modify as needed. You can also add new custom responses that map to the defaults."
+      actions={
+        <Button size="sm" disabled>
+          Add Response
+        </Button>
+      }
     >
+      <p className="text-sm text-muted-foreground">
+        Custom response editing is not yet available on this Alleato route.
+      </p>
       <SettingsTable>
         <InlineTable variant="read">
           <InlineTableHeader>
@@ -1066,14 +1075,19 @@ function WorkflowTemplatesPanel() {
   return (
     <FormSection
       title="Workflow Templates"
-      description="Create workflow templates by defining submitters and approvers for each workflow step."
+      description="Create workflow templates for your project's submittal review process by defining the submitters and approvers for each workflow step."
+      actions={
+        <Button size="sm" disabled>
+          Create New Template
+        </Button>
+      }
     >
       <div className="py-12 text-center">
         <p className="text-sm font-medium text-foreground">
-          No workflow templates created
+          Create Workflow Templates to Get Started
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          No templates exist for this project.
+          Template creation is not yet available on this Alleato route.
         </p>
       </div>
     </FormSection>
@@ -1094,22 +1108,34 @@ function ReplaceWorkflowUserPanel({
   return (
     <FormSection
       title="Replace Workflow User"
-      description="Replace a user in active submittal workflows where the current user still has a Pending response."
+      description="If there is a user who has either left your project or who will be leaving the project, you can replace them in the submittal workflow with another user on all submittals that they have a Pending response for."
       actions={
-        <Button size="sm" disabled={!canReplace}>
-          Replace and Save
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" disabled>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!canReplace}>
+            Replace and Save
+          </Button>
+        </div>
       }
     >
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
-          Only workflow users with a Pending status are replaced. Users who have
-          already responded remain on those workflows, and the new user receives
-          new workflow emails only.
+          Only current users with a Pending status will be replaced by the new
+          user.
         </p>
         <p>
-          This action does not replace users in workflow templates; template
-          members must be changed separately.
+          If a current user has already responded in a workflow, they will not
+          be replaced by the new user.
+        </p>
+        <p>
+          The new user will only receive new workflow emails. They will not
+          receive any workflow emails previously sent to the current user.
+        </p>
+        <p>
+          This action will not replace users in any workflow templates. To
+          replace users in a template, you'll need to change them manually.
         </p>
       </div>
 
@@ -1125,7 +1151,7 @@ function ReplaceWorkflowUserPanel({
             disabled={contactsLoading}
           >
             <SelectTrigger id="replace-current-user">
-              <SelectValue placeholder="Select a user" />
+              <SelectValue placeholder="Select A User" />
             </SelectTrigger>
             <SelectContent>
               {managerOptions.map((option) => (
@@ -1150,7 +1176,7 @@ function ReplaceWorkflowUserPanel({
             disabled={contactsLoading}
           >
             <SelectTrigger id="replace-new-user">
-              <SelectValue placeholder="Select a user" />
+              <SelectValue placeholder="Select A User" />
             </SelectTrigger>
             <SelectContent>
               {managerOptions.map((option) => (
@@ -1172,41 +1198,30 @@ function ImportsPanel() {
   return (
     <FormSection
       title="Submittal Imports"
-      description="Reference settings for bulk submittal imports."
+      description="Procore Imports is only available on computers running Microsoft Windows 7 or newer."
     >
-      <SettingsTable>
-        <InlineTable variant="read">
-          <InlineTableHeader>
-            <InlineTableHeaderRow>
-              <InlineTableHeaderCell>Setting</InlineTableHeaderCell>
-              <InlineTableHeaderCell>Value</InlineTableHeaderCell>
-            </InlineTableHeaderRow>
-          </InlineTableHeader>
-          <InlineTableBody>
-            <InlineTableRow>
-              <InlineTableCell className="font-medium text-foreground">
-                Submittal Imports
-              </InlineTableCell>
-              <InlineTableCell>
-                Available via the desktop import app on Windows 7 or
-                newer.
-              </InlineTableCell>
-            </InlineTableRow>
-            <InlineTableRow>
-              <InlineTableCell className="font-medium text-foreground">
-                Import Template
-              </InlineTableCell>
-              <InlineTableCell>.xlsx template available for download.</InlineTableCell>
-            </InlineTableRow>
-            <InlineTableRow>
-              <InlineTableCell className="font-medium text-foreground">
-                Import Method
-              </InlineTableCell>
-              <InlineTableCell>Desktop import application.</InlineTableCell>
-            </InlineTableRow>
-          </InlineTableBody>
-        </InlineTable>
-      </SettingsTable>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <SectionRuleHeading label="Import Submittals with Procore Imports" />
+          <p className="text-sm text-muted-foreground">
+            Procore Imports allows you to add your project's submittals in bulk
+            without having to manually create them in the Submittals tool. Once
+            you download the app and fill out the provided Submittals Import
+            Template, you can start importing submittals into Procore.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Import downloads are not yet available on this Alleato route.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled>
+            Download .xlsx Template
+          </Button>
+          <Button size="sm" disabled>
+            Download Procore Imports
+          </Button>
+        </div>
+      </div>
     </FormSection>
   );
 }
@@ -1214,24 +1229,36 @@ function ImportsPanel() {
 function CustomReportsPanel() {
   return (
     <div className="space-y-8">
-      <FormSection title="Custom Reports">
+      <FormSection
+        title="Custom Reports"
+        actions={
+          <Button size="sm" variant="outline" disabled>
+            Go to Reports
+          </Button>
+        }
+      >
         <div className="py-12 text-center">
-          <p className="text-sm font-medium text-foreground">
-            No custom reports
-          </p>
+          <p className="text-sm font-medium text-foreground">No Custom Reports</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            No custom reports are configured for this project.
+            There are no custom reports to display. You can create and view
+            custom reports in the Reports tool.
           </p>
         </div>
       </FormSection>
 
-      <FormSection title="My Reports">
+      <FormSection
+        title="My Reports"
+        actions={
+          <Button size="sm" variant="outline" disabled>
+            Go to Reports
+          </Button>
+        }
+      >
         <div className="py-12 text-center">
-          <p className="text-sm font-medium text-foreground">
-            No custom reports
-          </p>
+          <p className="text-sm font-medium text-foreground">No Custom Reports</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            No personal custom reports are configured for this project.
+            There are no custom reports to display. You can create and view
+            custom reports in the Reports tool.
           </p>
         </div>
       </FormSection>
@@ -1260,7 +1287,7 @@ function PermissionsPanel({ projectId }: { projectId: number }) {
   return (
     <FormSection
       title="User Permissions for Submittals"
-      description="View user permissions for Submittals. Company Admins and users assigned through permission templates are managed in Admin."
+      description="View user permissions for Submittals. You can't adjust permissions for Company Admins or users with assigned permission templates here. As a best practice, always manage user permissions through permission templates."
     >
       <div className="max-w-sm">
         <Input
