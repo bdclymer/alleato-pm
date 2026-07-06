@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   page: {
     paddingTop: 18,
     paddingHorizontal: 22,
-    paddingBottom: 20,
+    paddingBottom: 28,
     fontFamily: "Helvetica",
     fontSize: 8,
     color: "#111111",
@@ -180,6 +180,15 @@ const styles = StyleSheet.create({
   },
   pageCount: {
     fontSize: 7,
+  },
+  pageFooter: {
+    position: "absolute",
+    left: 22,
+    right: 22,
+    bottom: 8,
+    textAlign: "center",
+    fontSize: 7,
+    color: "#555555",
   },
   twoColumn: {
     flexDirection: "row",
@@ -586,6 +595,9 @@ export function SubcontractorInvoicePdfDocument({
   return (
     <Document>
       <Page size="LETTER" orientation="landscape" style={styles.page}>
+        <Text style={styles.pageFooter} fixed>
+          Alleato group subcontractor invoice
+        </Text>
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>
             APPLICATION AND CERTIFICATE FOR PAYMENT
@@ -806,6 +818,9 @@ export function SubcontractorInvoicePdfDocument({
       </Page>
 
       <Page size="LETTER" orientation="landscape" style={styles.page}>
+        <Text style={styles.pageFooter} fixed>
+          Alleato group subcontractor invoice
+        </Text>
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>CONTINUATION SHEET</Text>
           <View>

@@ -161,4 +161,18 @@ describe("subcontractor invoice pdf helpers", () => {
       true,
     );
   });
+
+  it("renders the Alleato footer on every invoice PDF page", () => {
+    const document = SubcontractorInvoicePdfDocument({ data: makeBaseData() });
+    const pages = React.Children.toArray(document.props.children).filter(
+      (child): child is React.ReactElement<{ children?: React.ReactNode }> =>
+        React.isValidElement(child) && child.type === Page,
+    );
+
+    expect(pages).toHaveLength(2);
+    for (const page of pages) {
+      const pageText = JSON.stringify(page.props.children);
+      expect(pageText).toContain("Alleato group subcontractor invoice");
+    }
+  });
 });
