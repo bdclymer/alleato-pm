@@ -215,7 +215,11 @@ describe("navigation config", () => {
     const expectedTools = [
       { name: "Meetings", path: "meetings", href: "/meetings" },
       { name: "Tasks", path: "tasks", href: "/tasks" },
-      { name: "Knowledge Base", path: "knowledge", href: "/knowledge" },
+      {
+        name: "Documentation",
+        path: "https://alleato-docs-site.vercel.app/",
+        href: "https://alleato-docs-site.vercel.app/",
+      },
     ];
 
     for (const expectedTool of expectedTools) {

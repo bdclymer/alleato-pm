@@ -157,18 +157,11 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "Company task board",
   },
   {
-    name: "Knowledge Base",
-    path: "knowledge",
-    requiresProject: false,
-    icon: Brain,
-    description: "Team knowledge, insights, and lessons learned",
-  },
-  {
     name: "Documentation",
-    path: "https://alleato-os-docs.vercel.app/",
+    path: "https://alleato-docs-site.vercel.app/",
     requiresProject: false,
     icon: BookOpen,
-    description: "Alleato OS documentation site",
+    description: "Alleato documentation site",
   },
   {
     name: "Estimates",
@@ -470,7 +463,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "Work",
-    toolNames: ["Meetings", "Tasks", "Knowledge Base", "Documentation"],
+    toolNames: ["Meetings", "Tasks", "Documentation"],
   },
   {
     label: "Financial",
@@ -742,7 +735,7 @@ export const adminTools: NavigationTool[] = [
   },
   {
     name: "Documentation",
-    path: "/docs",
+    path: "https://alleato-docs-site.vercel.app/",
     icon: MessageCircle,
     requiresProject: false,
   },
