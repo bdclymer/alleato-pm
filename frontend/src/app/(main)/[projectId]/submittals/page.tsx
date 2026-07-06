@@ -108,6 +108,11 @@ import {
   useDirectoryPermissions,
   type PermissionLevel,
 } from "@/hooks/use-directory-permissions";
+import {
+  normalizeWorkflowTemplateRecord,
+  type WorkflowTemplateRecord,
+  type WorkflowTemplateStepDefinition,
+} from "@/lib/submittals/workflow-template-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScanDrawingsSheet } from "@/features/submittals/scan-drawings-sheet";
@@ -178,6 +183,9 @@ type ProjectDirectoryOption = {
   email?: string;
   keywords?: string[];
 };
+
+const WORKFLOW_TEMPLATE_ROLE_OPTIONS: WorkflowTemplateStepDefinition["step_type"][] =
+  ["Submitter", "Approver"];
 
 const SETTINGS_TAB_PARAM = "settings_tab";
 
@@ -1281,23 +1289,542 @@ function SubmittalResponsesPanel() {
   );
 }
 
-function WorkflowTemplatesPanel() {
+function createEmptyWorkflowTemplateStep(): WorkflowTemplateStepDefinition {
+  return {
+    step_type: "Approver",
+    required: true,
+    user_id: null,
+  };
+}
+
+function renderWorkflowTemplateAssignee(
+  userId: string | null,
+  projectDirectoryOptions: ProjectDirectoryOption[],
+): string {
+  if (!userId) return "Unassigned";
   return (
-    <FormSection
-      title="Workflow Templates"
-      description="Create workflow templates for your project's submittal review process by defining the submitters and approvers for each workflow step."
-    >
-      <EmptyState
-        title="Create Workflow Templates to Get Started"
-        description="Template creation is not yet available on this Alleato route."
-        action={
-          <Button size="sm" variant="outline" disabled>
-            <Plus className="h-4 w-4" />
-            Create New Template
-          </Button>
+    projectDirectoryOptions.find((option) => option.value === userId)?.label ??
+    "Unknown assignee"
+  );
+}
+
+function WorkflowTemplateManageDialog({
+  mode,
+  projectDirectoryOptions,
+  initialTemplate,
+  open,
+  onOpenChange,
+  onSave,
+  isPending,
+}: {
+  mode: "create" | "edit";
+  projectDirectoryOptions: ProjectDirectoryOption[];
+  initialTemplate: WorkflowTemplateRecord | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (payload: {
+    name: string;
+    description: string | null;
+    steps: WorkflowTemplateStepDefinition[];
+  }) => Promise<void>;
+  isPending: boolean;
+}) {
+  const [name, setName] = React.useState(initialTemplate?.name ?? "");
+  const [description, setDescription] = React.useState(
+    initialTemplate?.description ?? "",
+  );
+  const [steps, setSteps] = React.useState<WorkflowTemplateStepDefinition[]>(
+    initialTemplate?.steps.length
+      ? initialTemplate.steps
+      : [createEmptyWorkflowTemplateStep()],
+  );
+
+  React.useEffect(() => {
+    if (!open) return;
+    setName(initialTemplate?.name ?? "");
+    setDescription(initialTemplate?.description ?? "");
+    setSteps(
+      initialTemplate?.steps.length
+        ? initialTemplate.steps
+        : [createEmptyWorkflowTemplateStep()],
+    );
+  }, [initialTemplate, open]);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!name.trim()) return;
+
+    await onSave({
+      name: name.trim(),
+      description: description.trim() ? description.trim() : null,
+      steps,
+    });
+  }
+
+  function updateStep(
+    index: number,
+    nextStep: WorkflowTemplateStepDefinition,
+  ) {
+    setSteps((current) =>
+      current.map((step, stepIndex) =>
+        stepIndex === index ? nextStep : step,
+      ),
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "create" ? "Create Workflow Template" : "Edit Workflow Template"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="space-y-2">
+              <Label htmlFor="workflow-template-name">Template Name</Label>
+              <Input
+                id="workflow-template-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Architect Review"
+                autoFocus
+                required
+              />
+            </div>
+            <div className="space-y-2 md:flex-1">
+              <Label htmlFor="workflow-template-description">Description</Label>
+              <Input
+                id="workflow-template-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Optional template description"
+              />
+            </div>
+          </div>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Workflow Steps
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Add submitter and approver steps in the order they should happen.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setSteps((current) => [
+                    ...current,
+                    createEmptyWorkflowTemplateStep(),
+                  ])
+                }
+              >
+                <Plus className="h-4 w-4" />
+                Add Step
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {steps.map((step, index) => (
+                <div
+                  key={`${step.step_type}-${index}`}
+                  className="rounded-md border border-border/60 p-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start">
+                    <div className="space-y-2 md:w-32">
+                      <Label>{`Step ${index + 1}`}</Label>
+                      <Select
+                        value={step.step_type}
+                        onValueChange={(value) =>
+                          updateStep(index, {
+                            ...step,
+                            step_type:
+                              value as WorkflowTemplateStepDefinition["step_type"],
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {WORKFLOW_TEMPLATE_ROLE_OPTIONS.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2 md:flex-1">
+                      <Label>Assignee</Label>
+                      <Select
+                        value={step.user_id ?? "_unassigned"}
+                        onValueChange={(value) =>
+                          updateStep(index, {
+                            ...step,
+                            user_id: value === "_unassigned" ? null : value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select assignee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_unassigned">Unassigned</SelectItem>
+                          {projectDirectoryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.email
+                                ? `${option.label} (${option.email})`
+                                : option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-0 text-sm font-medium text-foreground md:pt-7">
+                      <Checkbox
+                        checked={step.required}
+                        onCheckedChange={(checked) =>
+                          updateStep(index, {
+                            ...step,
+                            required: checked === true,
+                          })
+                        }
+                      />
+                      <span>Required</span>
+                    </div>
+
+                    <div className="flex items-start justify-end md:pt-6">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={steps.length === 1}
+                        onClick={() =>
+                          setSteps((current) =>
+                            current.filter((_, stepIndex) => stepIndex !== index),
+                          )
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" disabled={isPending || !name.trim()}>
+              {isPending
+                ? mode === "create"
+                  ? "Creating..."
+                  : "Saving..."
+                : mode === "create"
+                  ? "Create Template"
+                  : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function WorkflowTemplatesPanel({
+  projectId,
+  projectDirectoryOptions,
+}: {
+  projectId: number;
+  projectDirectoryOptions: ProjectDirectoryOption[];
+}) {
+  const { confirm, ConfirmDialog } = useConfirm();
+  const [templates, setTemplates] = React.useState<WorkflowTemplateRecord[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [manageOpen, setManageOpen] = React.useState(false);
+  const [manageMode, setManageMode] = React.useState<"create" | "edit">(
+    "create",
+  );
+  const [editingTemplate, setEditingTemplate] =
+    React.useState<WorkflowTemplateRecord | null>(null);
+  const [savePending, setSavePending] = React.useState(false);
+  const [deletePendingId, setDeletePendingId] = React.useState<string | null>(
+    null,
+  );
+
+  const loadTemplates = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const response = await apiFetch<unknown[]>(
+        `/api/projects/${projectId}/submittals/workflow-templates`,
+      );
+      setTemplates(
+        response
+          .map((item) => normalizeWorkflowTemplateRecord(item))
+          .filter((item): item is WorkflowTemplateRecord => item !== null),
+      );
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load workflow templates.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  React.useEffect(() => {
+    void loadTemplates();
+  }, [loadTemplates]);
+
+  async function handleSaveTemplate(payload: {
+    name: string;
+    description: string | null;
+    steps: WorkflowTemplateStepDefinition[];
+  }) {
+    try {
+      setSavePending(true);
+      const endpoint =
+        manageMode === "create" || !editingTemplate
+          ? `/api/projects/${projectId}/submittals/workflow-templates`
+          : `/api/projects/${projectId}/submittals/workflow-templates/${editingTemplate.id}`;
+      const method =
+        manageMode === "create" || !editingTemplate ? "POST" : "PUT";
+
+      const saved = await apiFetch<unknown>(endpoint, {
+        method,
+        body: JSON.stringify(payload),
+      });
+
+      const normalized = normalizeWorkflowTemplateRecord(saved);
+      if (!normalized) {
+        throw new Error("Workflow template response was invalid.");
+      }
+
+      setTemplates((current) => {
+        if (manageMode === "create" || !editingTemplate) {
+          return [...current, normalized].sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
         }
+        return current
+          .map((template) =>
+            template.id === normalized.id ? normalized : template,
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
+      });
+      setManageOpen(false);
+      setEditingTemplate(null);
+      toast.success(
+        manageMode === "create"
+          ? "Workflow template created"
+          : "Workflow template updated",
+      );
+    } catch (error) {
+      handleFormError(error, {
+        entity: "workflow template",
+        action: manageMode === "create" ? "create" : "save",
+      });
+    } finally {
+      setSavePending(false);
+    }
+  }
+
+  async function handleDeleteTemplate(template: WorkflowTemplateRecord) {
+    const confirmed = await confirm({
+      title: "Delete workflow template?",
+      description: `Delete "${template.name}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      setDeletePendingId(template.id);
+      await apiFetch(
+        `/api/projects/${projectId}/submittals/workflow-templates/${template.id}`,
+        { method: "DELETE" },
+      );
+      setTemplates((current) =>
+        current.filter((currentTemplate) => currentTemplate.id !== template.id),
+      );
+      toast.success("Workflow template deleted");
+    } catch (error) {
+      handleFormError(error, {
+        entity: "workflow template",
+        action: "delete",
+      });
+    } finally {
+      setDeletePendingId(null);
+    }
+  }
+
+  function openCreateDialog() {
+    setManageMode("create");
+    setEditingTemplate(null);
+    setManageOpen(true);
+  }
+
+  function openEditDialog(template: WorkflowTemplateRecord) {
+    setManageMode("edit");
+    setEditingTemplate(template);
+    setManageOpen(true);
+  }
+
+  return (
+    <>
+      <FormSection
+        title="Workflow Templates"
+        description="Create workflow templates for your project's submittal review process by defining the submitters and approvers for each workflow step."
+        actions={
+          templates.length > 0 ? (
+            <Button size="sm" onClick={openCreateDialog}>
+              <Plus className="h-4 w-4" />
+              Create New Template
+            </Button>
+          ) : null
+        }
+      >
+        {loading ? (
+          <div className="space-y-3 py-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-3/4" />
+          </div>
+        ) : loadError ? (
+          <div className="space-y-3 py-6">
+            <p className="text-sm font-semibold text-destructive">
+              Workflow templates failed to load
+            </p>
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+            <Button size="sm" variant="outline" onClick={() => void loadTemplates()}>
+              <RotateCcw className="h-4 w-4" />
+              Retry
+            </Button>
+          </div>
+        ) : templates.length === 0 ? (
+          <EmptyState
+            title="Create Workflow Templates to Get Started"
+            description="Save reusable submitter and approver workflows for this project's submittals."
+            action={
+              <Button size="sm" variant="outline" onClick={openCreateDialog}>
+                <Plus className="h-4 w-4" />
+                Create New Template
+              </Button>
+            }
+          />
+        ) : (
+          <SettingsTable>
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Template</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Workflow Steps</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {templates.map((template) => (
+                  <InlineTableRow key={template.id}>
+                    <InlineTableCell className="align-top">
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">{template.name}</p>
+                        {template.description ? (
+                          <p className="text-sm text-muted-foreground">
+                            {template.description}
+                          </p>
+                        ) : null}
+                      </div>
+                    </InlineTableCell>
+                    <InlineTableCell className="align-top">
+                      <div className="space-y-1">
+                        {template.steps.length > 0 ? (
+                          template.steps.map((step, index) => (
+                            <p
+                              key={`${template.id}-${index}`}
+                              className="text-sm text-muted-foreground"
+                            >
+                              <span className="font-medium text-foreground">
+                                {index + 1}. {step.step_type}
+                              </span>
+                              {" - "}
+                              {renderWorkflowTemplateAssignee(
+                                step.user_id,
+                                projectDirectoryOptions,
+                              )}
+                              {step.required ? "" : " (optional)"}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No workflow steps configured.
+                          </p>
+                        )}
+                      </div>
+                    </InlineTableCell>
+                    <InlineTableCell align="right" className="align-top">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditDialog(template)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={deletePendingId === template.id}
+                          onClick={() => void handleDeleteTemplate(template)}
+                        >
+                          {deletePendingId === template.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))}
+              </InlineTableBody>
+            </InlineTable>
+          </SettingsTable>
+        )}
+      </FormSection>
+
+      <WorkflowTemplateManageDialog
+        mode={manageMode}
+        projectDirectoryOptions={projectDirectoryOptions}
+        initialTemplate={editingTemplate}
+        open={manageOpen}
+        onOpenChange={(open) => {
+          setManageOpen(open);
+          if (!open) {
+            setEditingTemplate(null);
+          }
+        }}
+        onSave={handleSaveTemplate}
+        isPending={savePending}
       />
-    </FormSection>
+      {ConfirmDialog}
+    </>
   );
 }
 
@@ -1801,7 +2328,12 @@ function SubmittalSettingsTab({
 
     if (settingsSection === "responses") return <SubmittalResponsesPanel />;
     if (settingsSection === "workflow-templates") {
-      return <WorkflowTemplatesPanel />;
+      return (
+        <WorkflowTemplatesPanel
+          projectId={projectId}
+          projectDirectoryOptions={projectDirectoryOptions}
+        />
+      );
     }
     if (settingsSection === "replace-workflow-user") {
       return (
