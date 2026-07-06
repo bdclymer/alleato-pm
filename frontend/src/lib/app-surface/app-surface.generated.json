@@ -569,7 +569,7 @@
     {
       "url": "/[projectId]/submittals",
       "title": "General Settings",
-      "description": "Project defaults applied when new submittals are created."
+      "description": "Recipient routing for default Submittals email events."
     },
     {
       "url": "/[projectId]/submittals/[submittalId]",

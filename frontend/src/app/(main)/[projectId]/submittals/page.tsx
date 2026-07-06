@@ -779,11 +779,18 @@ function SubmittalGeneralSettingsPanel({
   managerOptions: Array<{ value: string; label: string; email?: string }>;
   contactsLoading: boolean;
 }) {
+  const descriptionTextClassName = "text-xs text-muted-foreground";
+  const toggleHintClassName = "text-xs text-muted-foreground";
+
   return (
     <div className="space-y-8">
       <FormSection
         title="General Settings"
-        description="Project defaults applied when new submittals are created."
+        description={
+          <span className={descriptionTextClassName}>
+            Project defaults applied when new submittals are created.
+          </span>
+        }
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -861,35 +868,39 @@ function SubmittalGeneralSettingsPanel({
         </div>
       </FormSection>
 
-      <FormSection
-        title="Submittal Numbering"
-      >
-          <ToggleField
-            label="Include Spec Section Number"
-            hint="Example: the first submittal in spec section 03-3000-Concrete is numbered 03-3000-1."
-            controlPosition="left"
-            checked={settings.include_spec_section_number}
-            onCheckedChange={(checked) =>
-              update("include_spec_section_number", checked)
+      <FormSection title="Submittal Numbering">
+        <ToggleField
+          label="Include Spec Section Number"
+          hint="Example: the first submittal in spec section 03-3000-Concrete is numbered 03-3000-1."
+          hintClassName={toggleHintClassName}
+          controlPosition="left"
+          checked={settings.include_spec_section_number}
+          onCheckedChange={(checked) =>
+            update("include_spec_section_number", checked)
           }
         />
       </FormSection>
 
       <FormSection
         title="Workflow Defaults"
-        description="Defaults for submit/respond due dates and approval routing."
+        description={
+          <span className={descriptionTextClassName}>
+            Defaults for submit/respond due dates and approval routing.
+          </span>
+        }
       >
-        <div className="max-w-xl space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="default-submit-response-days">
             Default Number of Days to Submit/Respond
           </Label>
-          <p className="text-sm text-muted-foreground">
+          <p className="max-w-xl text-xs text-muted-foreground">
             Enter the number of working days users in each workflow step have
             to submit/respond.
           </p>
           <Input
             id="default-submit-response-days"
             type="number"
+            className="max-w-xs"
             min={0}
             max={365}
             value={settings.default_submit_response_days}
@@ -906,6 +917,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Allow approvers to add reviewers"
             hint="Reviewers can view and respond, but cannot add more reviewers."
+            hintClassName={toggleHintClassName}
             controlPosition="left"
             checked={settings.allow_approvers_to_add_reviewers}
             onCheckedChange={(checked) =>
@@ -923,6 +935,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Enable Reject Workflow"
             hint="Reject or Revise and Resubmit responses route Ball in Court to the Submittal Manager for the next step."
+            hintClassName={toggleHintClassName}
             controlPosition="left"
             checked={settings.enable_reject_workflow}
             onCheckedChange={(checked) =>
@@ -942,12 +955,18 @@ function SubmittalGeneralSettingsPanel({
 
       <FormSection
         title="Access and Delivery"
-        description="Privacy, reminders, QR codes, schedule calculations, and email attachment access."
+        description={
+          <span className={descriptionTextClassName}>
+            Privacy, reminders, QR codes, schedule calculations, and email
+            attachment access.
+          </span>
+        }
       >
         <div className="space-y-4">
           <ToggleField
             label="Submittals private by default"
             hint="Limits new submittals to admins, distribution members, and assigned workflow reviewers."
+            hintClassName={toggleHintClassName}
             controlPosition="left"
             checked={settings.submittals_private_by_default}
             onCheckedChange={(checked) =>
@@ -971,6 +990,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Enable submittal schedule calculations"
             hint="Adds schedule calculation defaults for required on-site and planned return dates."
+            hintClassName={toggleHintClassName}
             controlPosition="left"
             checked={settings.enable_schedule_calculations}
             onCheckedChange={(checked) =>
@@ -980,6 +1000,7 @@ function SubmittalGeneralSettingsPanel({
           <ToggleField
             label="Allow email attachment downloads without login"
             hint="Email attachment links expire 14 calendar days after the email is sent."
+            hintClassName={toggleHintClassName}
             controlPosition="left"
             checked={settings.allow_email_attachment_download_without_login}
             onCheckedChange={(checked) =>

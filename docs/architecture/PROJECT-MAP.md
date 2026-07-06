@@ -130,7 +130,7 @@ _299/330 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/specifications` | Browse, upload, and manage project specifications by section with revision tracking | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
 | `/[projectId]/specifications/[sectionId]` | Upload a revision to start tracking changes to this specification section. | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
 | `/[projectId]/specifications/settings` | Create a division from the Specifications page. | frontend/src/app/(main)/[projectId]/specifications/settings/page.tsx |
-| `/[projectId]/submittals` | Project defaults applied when new submittals are created. | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
+| `/[projectId]/submittals` | Recipient routing for default Submittals email events. | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
 | `/[projectId]/submittals/[submittalId]` | View submittal detail, workflow responses, and linked attachments | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
 | `/[projectId]/submittals/[submittalId]/edit` | Edit submittal metadata, type, package, and specification associations | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
 | `/[projectId]/submittals/new` | Create new submittal with optional package or spec section prefill | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
