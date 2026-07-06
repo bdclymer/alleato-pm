@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/select";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
+  EmptyState,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
@@ -1285,20 +1286,17 @@ function WorkflowTemplatesPanel() {
     <FormSection
       title="Workflow Templates"
       description="Create workflow templates for your project's submittal review process by defining the submitters and approvers for each workflow step."
-      actions={
-        <Button size="sm" disabled>
-          Create New Template
-        </Button>
-      }
     >
-      <div className="py-12 text-center">
-        <p className="text-sm font-medium text-foreground">
-          Create Workflow Templates to Get Started
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Template creation is not yet available on this Alleato route.
-        </p>
-      </div>
+      <EmptyState
+        title="Create Workflow Templates to Get Started"
+        description="Template creation is not yet available on this Alleato route."
+        action={
+          <Button size="sm" variant="outline" disabled>
+            <Plus className="h-4 w-4" />
+            Create New Template
+          </Button>
+        }
+      />
     </FormSection>
   );
 }
