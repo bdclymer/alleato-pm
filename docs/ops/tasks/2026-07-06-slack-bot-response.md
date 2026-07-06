@@ -1,6 +1,6 @@
 # Task: Slack bot response wiring
 
-Status: Done
+Status: Blocked/Deferred
 Owner: Codex
 Created: 2026-07-06
 Linear Issue: Not created - single-session provider/runtime verification
@@ -20,6 +20,8 @@ and outbound path separately.
 - [x] Confirm inbound Slack event delivery reaches the active runtime.
 - [x] Confirm the runtime has Slack credentials loaded.
 - [x] Record whether production Vercel env/redeploy is required.
+- [x] Check whether fresh Slack mention reaches Vercel production logs.
+- [x] Check whether available Slack token can read/update Event Subscriptions.
 
 ## Verification Checklist
 
@@ -55,6 +57,8 @@ and outbound path separately.
 | Finish flow | `npm run codex:finish -- --message "Fix Slack bot unmapped user replies" --files frontend/src/lib/bot/index.ts docs/ops/tasks/2026-07-06-slack-bot-response.md` | Pass | Published commit `0e52182af` to `origin/main`. |
 | Vercel production deployment | Vercel deployment `dpl_5S9qHHChAKD27Nq9SS8FUWAyvqSf` | Pass | Deployment for commit `0e52182af` reached `READY` and aliases include `projects.alleatogroup.com`. |
 | Production webhook verification | Signed POST to `https://projects.alleatogroup.com/api/bot/slack` | Pass | Returned expected URL-verification challenge with HTTP 200. |
+| Fresh Slack mention | Slack history + Vercel runtime logs | Blocked | Fresh mention at `1783317362.556999` did not produce any `/api/bot/slack` production log entry. |
+| Slack app config API access | Slack Web API `apps.manifest.export` / `apps.event.authorizations.list` using bot token | Blocked | Slack returned `not_allowed_token_type`; no app-level token is available in env. |
 
 ## Risks / Gaps
 
@@ -67,10 +71,23 @@ and outbound path separately.
   `invalid_thread_ts`.
 - Production needs a redeploy after adding Vercel env vars before Slack events
   can use the new runtime configuration.
+- Cause: Slack is not delivering the channel mention event to
+  `https://projects.alleatogroup.com/api/bot/slack`; production logs show no
+  webhook request for the fresh mention.
+- Detection gap: outbound bot posting and signed webhook probes were green, but
+  they do not verify the Slack app's Event Subscriptions request URL or
+  subscribed event list.
+- Prevention: keep signed production webhook verification plus Vercel runtime
+  log checks as separate gates; do not treat outbound posting as inbound event
+  delivery proof.
+- Owner / next action: Slack app owner must set Event Subscriptions request URL
+  to `https://projects.alleatogroup.com/api/bot/slack` and subscribe the bot to
+  `app_mention` for channel mentions. If message events are desired, subscribe
+  the relevant bot events such as `message.channels` / `message.groups`.
 
 ## Final Status
 
-- [x] All checklist items are complete.
+- [x] Code/provider/runtime checklist items are complete.
 - [x] Evidence is recorded.
 - [x] Any deferred work is explicitly marked Blocked/Deferred with owner and
   next action.
