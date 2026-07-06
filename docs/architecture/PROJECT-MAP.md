@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (329)
+## UI Routes (330)
 
-_298/329 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_299/330 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -161,6 +161,7 @@ _298/329 have a description (from the page's `PageShell` or the curated `fronten
 | `/admin/errors` | Redirect to /errors; grouped application errors and issue review | frontend/src/app/admin/errors/page.tsx |
 | `/ai` | AI chat interface for conversing with Alleato AI and running workflows | frontend/src/app/(main)/ai/page.tsx |
 | `/ai-assistant` | Redirect to /ai; AI assistant and chat interface for projects | frontend/src/app/(main)/ai-assistant/page.tsx |
+| `/ai-assistant-debug` | Inspect routing, retrieval, tools, agents, model path, sources, and quality signals for assistant answers. | frontend/src/app/(admin)/ai-assistant-debug/page.tsx |
 | `/ai-assistant/feature-requests` | Durable AIS request packets, readiness state, and implementation handoffs. | frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx |
 | `/ai-assistant/feature-requests/[requestId]` | Feature request workspace and details for AI assistant improvements | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
 | `/ai-assistant/marketing` | Review source-backed CMO content plans, draft assets, citations, and approval states. | frontend/src/app/(main)/ai-assistant/marketing/page.tsx |
@@ -347,7 +348,7 @@ _298/329 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (740)
+## API Endpoints (743)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -369,6 +370,7 @@ _298/329 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/accounting/wip` | GET | frontend/src/app/api/accounting/wip/route.ts |
 | `/api/admin/acumatica-outbound-logs` | GET | frontend/src/app/api/admin/acumatica-outbound-logs/route.ts |
 | `/api/admin/ai-agents` | GET, PATCH | frontend/src/app/api/admin/ai-agents/route.ts |
+| `/api/admin/ai-assistant-debug` | GET | frontend/src/app/api/admin/ai-assistant-debug/route.ts |
 | `/api/admin/ai-assistant/prompt-diagnostics` | POST | frontend/src/app/api/admin/ai-assistant/prompt-diagnostics/route.ts |
 | `/api/admin/ai-chat-history` | GET | frontend/src/app/api/admin/ai-chat-history/route.ts |
 | `/api/admin/ai-learning-promotions` | GET, POST | frontend/src/app/api/admin/ai-learning-promotions/route.ts |
@@ -530,6 +532,7 @@ _298/329 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
+| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -713,6 +716,7 @@ _298/329 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/change-events/rfqs` | GET, POST | frontend/src/app/api/projects/[projectId]/change-events/rfqs/route.ts |
 | `/api/projects/[projectId]/change-events/rfqs/[rfqId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/change-events/rfqs/[rfqId]/route.ts |
 | `/api/projects/[projectId]/change-events/rfqs/[rfqId]/responses` | GET, POST | frontend/src/app/api/projects/[projectId]/change-events/rfqs/[rfqId]/responses/route.ts |
+| `/api/projects/[projectId]/change-events/settings` | GET, PUT | frontend/src/app/api/projects/[projectId]/change-events/settings/route.ts |
 | `/api/projects/[projectId]/checklist` | GET | frontend/src/app/api/projects/[projectId]/checklist/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders` | GET, POST | frontend/src/app/api/projects/[projectId]/commitment-change-orders/route.ts |
 | `/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]` | GET, PUT, DELETE | frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/route.ts |

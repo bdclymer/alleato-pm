@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import type {
   AiAssistantDebugItemView,
   AiAssistantDebugResponse,
+  AiAssistantDebugToolDiscoveryView,
   AiAssistantDebugToolView,
 } from "@/app/api/admin/ai-assistant-debug/route";
 
@@ -59,7 +60,7 @@ function tokenTotal(item: AiAssistantDebugItemView): string {
 }
 
 function toolSummary(tools: AiAssistantDebugToolView[]): string {
-  if (tools.length === 0) return "No tools";
+  if (tools.length === 0) return "No model tools";
   const names = Array.from(new Set(tools.map((tool) => tool.name)));
   return names.length <= 2
     ? names.join(", ")
@@ -107,7 +108,7 @@ function ToolsTable({ tools }: { tools: AiAssistantDebugToolView[] }) {
   if (tools.length === 0) {
     return (
       <div className="py-4 text-sm text-destructive">
-        Missing tool_trace metadata.
+        No model-selected tool calls were recorded for this answer.
       </div>
     );
   }
@@ -154,6 +155,64 @@ function ToolsTable({ tools }: { tools: AiAssistantDebugToolView[] }) {
   );
 }
 
+function DiscoveryTable({
+  discoveries,
+}: {
+  discoveries: AiAssistantDebugToolDiscoveryView[];
+}) {
+  if (discoveries.length === 0) {
+    return (
+      <div className="py-4 text-sm text-muted-foreground">
+        No MCP/tool discovery bookkeeping was recorded.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr className="border-b">
+            <th className="py-2 pr-3 font-medium">Server</th>
+            <th className="py-2 pr-3 font-medium">Status</th>
+            <th className="py-2 pr-3 font-medium">Discovered</th>
+            <th className="py-2 pr-3 font-medium">Exposed</th>
+            <th className="py-2 pr-3 font-medium">Denied</th>
+            <th className="py-2 pr-3 font-medium">Enabled tools</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {discoveries.map((discovery) => (
+            <tr key={discovery.server}>
+              <td className="py-2 pr-3 align-top font-medium text-foreground">
+                {discovery.server}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {discovery.status}
+                {discovery.error ? `: ${discovery.error}` : ""}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatNumber(discovery.discoveredToolCount)}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatNumber(discovery.enabledToolCount)}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatNumber(discovery.deniedToolCount)}
+              </td>
+              <td className="max-w-md py-2 pr-3 align-top text-muted-foreground">
+                {discovery.enabledTools.length > 0
+                  ? discovery.enabledTools.join(", ")
+                  : "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function DetailHeader({ item }: { item: AiAssistantDebugItemView }) {
   return (
     <div className="space-y-3">
@@ -165,6 +224,11 @@ function DetailHeader({ item }: { item: AiAssistantDebugItemView }) {
           <div className="text-sm text-muted-foreground">
             {formatDateTime(item.createdAt)} · {item.providerPath ?? "Missing provider"} ·{" "}
             {item.model ?? "Missing model"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Model-selected tools: {item.tools.length} · Discovery records:{" "}
+            {item.toolDiscovery.length} · Quality score:{" "}
+            {item.responseQuality?.score ?? "-"}
           </div>
         </div>
         {item.traceUrl ? (
@@ -220,25 +284,59 @@ function FlowTab({ item }: { item: AiAssistantDebugItemView }) {
             state={signalState(item.memoryUsage)}
             value={<JsonBlock value={item.memoryUsage} />}
           />
+          <SignalRow
+            label="Expected native tool"
+            state={signalState(item.expectedNativeTool)}
+            value={item.expectedNativeTool}
+          />
+          <SignalRow
+            label="Model-selected calls"
+            state="recorded"
+            value={formatNumber(item.tools.length)}
+          />
+          <SignalRow
+            label="Discovery records"
+            state="recorded"
+            value={formatNumber(item.toolDiscovery.length)}
+          />
+          <SignalRow
+            label="Raw trace entries"
+            state="recorded"
+            value={`${formatNumber(item.rawToolTraceCount)} total before filtering discovery`}
+          />
         </div>
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">Tool Calls</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          Model-Selected Tool Calls
+        </h3>
         <ToolsTable tools={item.tools} />
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">
+          Tool Availability Discovery
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          These records show which MCP tools were available to the assistant.
+          They are setup/discovery bookkeeping, not proof that the model used
+          those tools to answer.
+        </p>
+        <DiscoveryTable discoveries={item.toolDiscovery} />
       </section>
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-foreground">Quality</h3>
         <div className="divide-y">
           <SignalRow
-            label="Response quality"
+            label="Quality score"
             state={signalState(item.responseQuality)}
             value={
               item.responseQuality
                 ? `${item.responseQuality.score ?? "-"}${
                     item.responseQuality.reasons.length
-                      ? ` · ${item.responseQuality.reasons.join("; ")}`
+                      ? ` · Reasons: ${item.responseQuality.reasons.join("; ")}`
                       : ""
                   }`
                 : "-"
@@ -446,6 +544,9 @@ export function AiAssistantDebugConsoleClient() {
                     <span>{formatDateTime(item.createdAt)}</span>
                     <span>{item.providerPath ?? "No provider"}</span>
                     <span>{toolSummary(item.tools)}</span>
+                    {item.toolDiscovery.length > 0 && (
+                      <span>{item.toolDiscovery.length} discovery records</span>
+                    )}
                   </div>
                 </div>
               </Button>

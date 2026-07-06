@@ -722,6 +722,11 @@
       "description": "Redirect to /ai; AI assistant and chat interface for projects"
     },
     {
+      "url": "/ai-assistant-debug",
+      "title": "AI Assistant Debug Console",
+      "description": "Inspect routing, retrieval, tools, agents, model path, sources, and quality signals for assistant answers."
+    },
+    {
       "url": "/ai-assistant/feature-requests",
       "title": "Feature requests could not load",
       "description": "Durable AIS request packets, readiness state, and implementation handoffs."

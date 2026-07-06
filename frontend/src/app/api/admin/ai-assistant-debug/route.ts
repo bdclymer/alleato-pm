@@ -42,6 +42,16 @@ export type AiAssistantDebugToolView = {
   error: string | null;
 };
 
+export type AiAssistantDebugToolDiscoveryView = {
+  server: string;
+  status: "available" | "failed";
+  discoveredToolCount: number | null;
+  enabledToolCount: number | null;
+  enabledTools: string[];
+  deniedToolCount: number | null;
+  error: string | null;
+};
+
 export type AiAssistantDebugScoreView = {
   score: number | null;
   reasons: string[];
@@ -68,6 +78,9 @@ export type AiAssistantDebugItemView = {
   };
   responseQuality: AiAssistantDebugScoreView | null;
   tools: AiAssistantDebugToolView[];
+  toolDiscovery: AiAssistantDebugToolDiscoveryView[];
+  rawToolTraceCount: number;
+  expectedNativeTool: string | null;
   retrievalPlan: unknown;
   sourceDebug: unknown;
   backendDeepAgent: unknown;
@@ -162,6 +175,7 @@ function toolStatus(
 function normalizeTool(tool: unknown): AiAssistantDebugToolView | null {
   if (!isRecord(tool)) return null;
   const name = toolName(tool);
+  if (name === "mcpToolDiscovery") return null;
   const input = isRecord(tool.input) ? tool.input : null;
   const writeCandidate = isWriteToolName(name) || input?.confirmed !== undefined;
 
@@ -179,6 +193,33 @@ function normalizeTool(tool: unknown): AiAssistantDebugToolView | null {
   };
 }
 
+function normalizeToolDiscovery(
+  tool: unknown,
+): AiAssistantDebugToolDiscoveryView | null {
+  if (!isRecord(tool)) return null;
+  if (toolName(tool) !== "mcpToolDiscovery") return null;
+
+  const input = isRecord(tool.input) ? tool.input : {};
+  const output = isRecord(tool.output) ? tool.output : {};
+  const enabledTools = Array.isArray(output.enabledTools)
+    ? output.enabledTools.filter((item): item is string => typeof item === "string")
+    : [];
+  const error = toStringValue(output.error);
+  const deniedDescriptors = Array.isArray(output.deniedToolDescriptors)
+    ? output.deniedToolDescriptors
+    : null;
+
+  return {
+    server: toStringValue(input.server) ?? "unknown",
+    status: error ? "failed" : "available",
+    discoveredToolCount: toNumberValue(output.discoveredToolCount),
+    enabledToolCount: toNumberValue(output.enabledToolCount),
+    enabledTools,
+    deniedToolCount: deniedDescriptors ? deniedDescriptors.length : null,
+    error,
+  };
+}
+
 function normalizeResponseQuality(
   metadata: JsonObject,
 ): AiAssistantDebugScoreView | null {
@@ -193,6 +234,16 @@ function normalizeResponseQuality(
       ? responseQuality.reasons.filter((item): item is string => typeof item === "string")
       : [],
   };
+}
+
+function expectedNativeTool(metadata: JsonObject): string | null {
+  const retrievalPlan = isRecord(metadata.retrieval_plan)
+    ? metadata.retrieval_plan
+    : null;
+  const intent = toStringValue(retrievalPlan?.intent);
+
+  if (intent === "change_event_write") return "createChangeEvent";
+  return null;
 }
 
 function missingInstrumentation(metadata: JsonObject, sources: unknown[]): string[] {
@@ -251,6 +302,12 @@ function mapRows(
     const usage = isRecord(metadata.usage) ? metadata.usage : {};
     const sources = Array.isArray(row.sources) ? row.sources : [];
     const toolTrace = Array.isArray(metadata.tool_trace) ? metadata.tool_trace : [];
+    const tools = toolTrace
+      .map(normalizeTool)
+      .filter((tool): tool is AiAssistantDebugToolView => Boolean(tool));
+    const toolDiscovery = toolTrace
+      .map(normalizeToolDiscovery)
+      .filter((tool): tool is AiAssistantDebugToolDiscoveryView => Boolean(tool));
     const traceId = extractLangfuseTraceIdFromMetadata(metadata);
 
     return {
@@ -274,9 +331,10 @@ function mapRows(
         totalTokens: toNumberValue(usage.totalTokens),
       },
       responseQuality: normalizeResponseQuality(metadata),
-      tools: toolTrace
-        .map(normalizeTool)
-        .filter((tool): tool is AiAssistantDebugToolView => Boolean(tool)),
+      tools,
+      toolDiscovery,
+      rawToolTraceCount: toolTrace.length,
+      expectedNativeTool: expectedNativeTool(metadata),
       retrievalPlan: metadata.retrieval_plan ?? null,
       sourceDebug: metadata.source_debug ?? null,
       backendDeepAgent: metadata.backend_deep_agent ?? null,
