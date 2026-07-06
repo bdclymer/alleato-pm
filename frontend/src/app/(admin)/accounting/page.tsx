@@ -26,6 +26,13 @@ import { PaymentGuardrailAlerts } from "@/components/accounting/payment-guardrai
 import { KpiRow } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -78,6 +85,19 @@ interface ProjectNetMargin {
   netMarginPercent: number | null;
 }
 
+interface CostBreakdownMonth {
+  month: string;
+  total: number;
+}
+
+interface CostBreakdownSeries {
+  groupKey: string;
+  groupLabel: string;
+  totalCost: number;
+  billCount: number;
+  monthlyCosts: CostBreakdownMonth[];
+}
+
 interface RecentPayment {
   referenceNbr: string;
   customerName: string | null;
@@ -111,6 +131,11 @@ interface DashboardResponse {
   arByProject: ProjectRevenue[];
   apByProject: ProjectBalance[];
   netMarginByProject: ProjectNetMargin[];
+  projectCostSeries: ProjectCostSeries[];
+  costBreakdownSeries: {
+    byDivision: CostBreakdownSeries[];
+    byAccount: CostBreakdownSeries[];
+  };
   monthlyRevenueMargin: MonthlyRevenueMargin[];
   recentActivity: {
     payments: RecentPayment[];
@@ -202,6 +227,12 @@ function formatMonthLabel(month: string): string {
   const date = new Date(`${month}-01T00:00:00`);
   if (Number.isNaN(date.getTime())) return month;
   return date.toLocaleDateString("en-US", { month: "short" });
+}
+
+function formatProjectRevenueLabel(project: ProjectRevenue): string {
+  return project.description
+    ? `${project.projectCode}, ${project.description}`
+    : project.projectCode;
 }
 
 function formatPercent(value: number | null): string {
@@ -678,16 +709,188 @@ function ProjectNetMarginChart({ projects }: { projects: ProjectNetMargin[] }) {
   );
 }
 
-function RevenueRows({ projects }: { projects: ProjectRevenue[] }) {
-  const rows = projects.slice(0, 6);
-  const maxValue = Math.max(
-    ...rows.flatMap((project) => [
-      project.totalInvoiced,
-      project.totalCollected,
-      project.outstandingBalance,
-    ]),
-    1,
+function CostBreakdownChart({
+  breakdown,
+}: {
+  breakdown: DashboardResponse["costBreakdownSeries"];
+}) {
+  const [selectedDimension, setSelectedDimension] = useState<"division" | "account">(
+    "division",
   );
+  const [selectedGroupKey, setSelectedGroupKey] = useState("");
+  const groups =
+    selectedDimension === "division" ? breakdown.byDivision : breakdown.byAccount;
+
+  useEffect(() => {
+    if (groups.length === 0) {
+      if (selectedGroupKey) {
+        setSelectedGroupKey("");
+      }
+      return;
+    }
+
+    if (groups.some((group) => group.groupKey === selectedGroupKey)) {
+      return;
+    }
+
+    setSelectedGroupKey(groups[0].groupKey);
+  }, [groups, selectedGroupKey]);
+
+  const selectedGroup =
+    groups.find((group) => group.groupKey === selectedGroupKey) ?? groups[0];
+
+  if (!selectedGroup) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No cost breakdown data available.
+      </p>
+    );
+  }
+
+  const chartData = selectedGroup.monthlyCosts.map((point) => ({
+    ...point,
+    label: formatMonthLabel(point.month),
+  }));
+  const ytdCost = chartData.reduce((sum, point) => sum + point.total, 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            {formatCurrencyFull(selectedGroup.totalCost)} total cost
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {selectedGroup.billCount} bills · {formatCurrencyFull(ytdCost)}{" "}
+            year-to-date
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Select
+            value={selectedDimension}
+            onValueChange={(value) =>
+              setSelectedDimension(value as "division" | "account")
+            }
+          >
+            <SelectTrigger className="h-8 w-full sm:w-56">
+              <SelectValue placeholder="Group by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="division">Cost code division</SelectItem>
+              <SelectItem value="account">Chart of account</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedGroup.groupKey}
+            onValueChange={setSelectedGroupKey}
+          >
+            <SelectTrigger className="h-8 w-full sm:w-80">
+              <SelectValue placeholder="Select group" />
+            </SelectTrigger>
+            <SelectContent>
+              {groups.map((group) => (
+                <SelectItem key={group.groupKey} value={group.groupKey}>
+                  {group.groupLabel}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            margin={{ top: 8, right: 12, bottom: 36, left: 8 }}
+            barCategoryGap="24%"
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              interval={0}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatCurrency}
+              width={58}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <Tooltip
+              cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0]?.payload as {
+                  label: string;
+                  total: number;
+                  month: string;
+                };
+                return (
+                  <div className="space-y-1 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
+                    <p className="font-medium text-foreground">{item.label}</p>
+                    <p className="text-muted-foreground">
+                      {formatMonthLabel(item.month)}
+                    </p>
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-muted-foreground">Cost</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatCurrencyFull(item.total)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar
+              dataKey="total"
+              name="Cost"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={40}
+              isAnimationActive={false}
+            >
+              {chartData.map((point) => (
+                <Cell
+                  key={point.month}
+                  fill={
+                    point.total > 0
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--muted-foreground))"
+                  }
+                  fillOpacity={point.total > 0 ? 0.9 : 0.18}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function ProjectRevenueStackedChart({
+  projects,
+}: {
+  projects: ProjectRevenue[];
+}) {
+  const rows = projects.slice(0, 6).map((project) => ({
+    ...project,
+    label: project.projectCode,
+    projectLabel: formatProjectRevenueLabel(project),
+    collected: project.totalCollected,
+    open: project.outstandingBalance,
+  }));
 
   if (rows.length === 0) {
     return (
@@ -698,60 +901,124 @@ function RevenueRows({ projects }: { projects: ProjectRevenue[] }) {
   }
 
   return (
-    <div className="divide-y divide-border/40">
-      {rows.map((project) => (
-        <div
-          key={project.projectCode}
-          className="grid gap-3 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,24rem)]"
-        >
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">
-              {project.projectCode}
-              {project.description ? `, ${project.description}` : ""}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {project.customer ?? "No customer listed"}
-            </p>
-          </div>
-          <div className="grid gap-2 text-xs">
-            {[
-              {
-                label: "Invoiced",
-                value: project.totalInvoiced,
-                className: "bg-primary",
-              },
-              {
-                label: "Collected",
-                value: project.totalCollected,
-                className: "bg-status-success",
-              },
-              {
-                label: "Open",
-                value: project.outstandingBalance,
-                className: "bg-status-warning",
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="grid grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] items-center gap-2"
-              >
-                <span className="text-muted-foreground">{item.label}</span>
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn("h-full rounded-full", item.className)}
-                    style={{
-                      width: `${Math.max(percent(item.value, maxValue), item.value > 0 ? 3 : 0)}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-right tabular-nums text-foreground">
-                  {formatCurrency(item.value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-4 text-xs">
+        <span className="inline-flex items-center gap-2 text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-status-success" />
+          Collected
+        </span>
+        <span className="inline-flex items-center gap-2 text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-status-warning" />
+          Open
+        </span>
+      </div>
+
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={rows}
+            margin={{ top: 8, right: 12, bottom: 40, left: 8 }}
+            barCategoryGap="26%"
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              interval={0}
+              angle={-28}
+              textAnchor="end"
+              height={56}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatCurrency}
+              width={58}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <Tooltip
+              cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0]?.payload as ProjectRevenue & {
+                  label: string;
+                  projectLabel: string;
+                  collected: number;
+                  open: number;
+                };
+                return (
+                  <div className="space-y-1 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
+                    <p className="font-medium text-foreground">
+                      {item.projectLabel}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {item.customer ?? "No customer listed"}
+                    </p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">Invoiced</span>
+                        <span className="tabular-nums text-foreground">
+                          {formatCurrencyFull(item.totalInvoiced)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">Collected</span>
+                        <span className="tabular-nums text-foreground">
+                          {formatCurrencyFull(item.collected)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">Open</span>
+                        <span className="tabular-nums text-foreground">
+                          {formatCurrencyFull(item.open)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar
+              dataKey="collected"
+              name="Collected"
+              stackId="revenue"
+              radius={[0, 0, 4, 4]}
+              maxBarSize={44}
+              isAnimationActive={false}
+            >
+              {rows.map((project) => (
+                <Cell
+                  key={`${project.projectCode}-collected`}
+                  fill="hsl(var(--status-success))"
+                />
+              ))}
+            </Bar>
+            <Bar
+              dataKey="open"
+              name="Open"
+              stackId="revenue"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={false}
+            >
+              {rows.map((project) => (
+                <Cell
+                  key={`${project.projectCode}-open`}
+                  fill="hsl(var(--status-warning))"
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -1119,6 +1386,7 @@ export default function AccountingDashboardPage() {
     guardrailAlerts,
     monthlyRevenueMargin,
     netMarginByProject,
+    costBreakdownSeries,
     recentActivity,
     revenueByProject,
   } = data;
@@ -1166,8 +1434,6 @@ export default function AccountingDashboardPage() {
           ? `${data.reconciliation.onHoldCount} bills still on hold (unreviewed) — figures may shift as they're cleared.`
           : "No bills on hold — figures are stable."}
       </p>
-
-      <AttentionStrip data={data} arLate={arLate} />
 
       <section className="grid gap-4 lg:grid-cols-4">
         <MetricPanel
@@ -1224,6 +1490,10 @@ export default function AccountingDashboardPage() {
         <ProjectNetMarginChart projects={netMarginByProject} />
       </Section>
 
+      <Section title="Cost Breakdown">
+        <CostBreakdownChart breakdown={costBreakdownSeries} />
+      </Section>
+
       <Section title="Revenue and Net Margin">
         <MonthlyRevenueMarginChart series={monthlyRevenueMargin} />
       </Section>
@@ -1233,7 +1503,7 @@ export default function AccountingDashboardPage() {
           title="Revenue by Project"
           action={<TextLink href="/accounting/projects">All projects</TextLink>}
         >
-          <RevenueRows projects={revenueByProject} />
+          <ProjectRevenueStackedChart projects={revenueByProject} />
         </Section>
 
         <Section title="Reports">
@@ -1329,6 +1599,8 @@ export default function AccountingDashboardPage() {
           ]}
         />
       </Section>
+
+      <AttentionStrip data={data} arLate={arLate} />
     </PageShell>
   );
 }
