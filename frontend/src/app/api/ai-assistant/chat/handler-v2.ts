@@ -2894,6 +2894,127 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           return;
         }
 
+        if (!initialWorkflow.draft.narrative) {
+          const dataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-change-event-workflow",
+            data: {
+              widget: {
+                type: "change_event_workflow",
+                id: "change-event-workflow",
+                title: "Change event workflow",
+                draft: initialWorkflow.draft,
+              },
+            },
+          };
+          const projectName =
+            initialWorkflow.draft.projectName ??
+            (initialWorkflow.draft.projectId
+              ? `project #${initialWorkflow.draft.projectId}`
+              : "this project");
+          const content = `We'll create this for ${projectName}.\n\n${initialWorkflow.draft.nextQuestion}`;
+          const toolTrace = [
+            {
+              tool: "changeEventWorkflowState",
+              toolName: "changeEventWorkflowState",
+              status: "missing",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId:
+                  args.selectedProjectId ??
+                  initialWorkflow.draft.projectId ??
+                  null,
+                hadPriorDraft: Boolean(previousChangeEventWorkflowDraft),
+              },
+              output: {
+                readyForPreview: false,
+                activeChecklistKey: initialWorkflow.readiness.activeChecklistKey,
+                missingChecklistKeys:
+                  initialWorkflow.readiness.missingChecklistKeys,
+                expectedNextStep: "collect_event_description",
+                expectedNativeTool: initialWorkflow.expectedNativeTool,
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+
+          writeTextResponse(writer, "strategist-change-event-description-required", content);
+          writer.write(dataPart as never);
+
+          const { error: descriptionPromptPersistError } =
+            await args.supabase.from("chat_history").insert({
+              session_id: args.sessionId,
+              user_id: args.user.id,
+              role: "assistant",
+              content,
+              metadata: toJsonValue({
+                architecture: "retrieval-planner-v2",
+                provider_decision: {
+                  providerPath:
+                    "deterministic-change-event-description-required",
+                  model: null,
+                },
+                provider_path:
+                  "deterministic-change-event-description-required",
+                model: null,
+                retrieval_plan: {
+                  intent: "change_event_write",
+                  reason: "event_description_required",
+                  responseFormat: "workflow_intake",
+                  sources: ["chat_history.change_event_workflow"],
+                },
+                change_event_workflow: initialWorkflow,
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                source_debug: {
+                  orchestrator: "change-event-description-required",
+                  evidenceCount: 0,
+                  sourceCoverage: [
+                    {
+                      sourceType: "chat_history.change_event_workflow",
+                      status: "checked",
+                      notes:
+                        "Project context is available; event description is still needed before related-record search.",
+                    },
+                  ],
+                },
+                data_parts: [dataPart],
+              }) as Json,
+            });
+          if (descriptionPromptPersistError) {
+            throw new Error(
+              `Persisting the change-event description prompt failed: ${descriptionPromptPersistError.message}`,
+            );
+          }
+
+          const { error: conversationUpdateError } = await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          if (conversationUpdateError) {
+            throw new Error(
+              `Updating the change-event description prompt timestamp failed: ${conversationUpdateError.message}`,
+            );
+          }
+
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Event description requested",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
         const changeEventRetrievalCtx = await executeRetrievalPlan(
           plan,
           buildExecutorDeps({

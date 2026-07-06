@@ -29,6 +29,8 @@ describe("change event workflow draft", () => {
     });
 
     expect(draft.projectId).toBeNull();
+    expect(draft.narrative).toBeNull();
+    expect(draft.title).toBeNull();
     expect(draft.readyForPreview).toBe(false);
     expect(draft.nextQuestion).toBe("What project is this change event for?");
     expect(draft.checklist.find((item) => item.key === "project")?.status).toBe("active");
@@ -60,7 +62,7 @@ describe("change event workflow draft", () => {
   it("uses project context from a project-picker follow-up", () => {
     const draft = buildChangeEventWorkflowDraft({
       previousDraft: buildChangeEventWorkflowDraft({
-        prompt: "Help me create a change event for owner requested lobby work.",
+        prompt: "Help me create a change event.",
       }),
       prompt: [
         "Use project 25125 - Allisonville for this change event.",
@@ -71,7 +73,10 @@ describe("change event workflow draft", () => {
 
     expect(draft.projectId).toBe(25125);
     expect(draft.projectName).toBe("Allisonville");
-    expect(draft.nextQuestion).toContain("cost impact");
+    expect(draft.narrative).toBeNull();
+    expect(draft.title).toBeNull();
+    expect(draft.readyForPreview).toBe(false);
+    expect(draft.nextQuestion).toContain("Tell me what happened");
   });
 
   it("builds persisted metadata with readiness and write ownership", () => {
@@ -90,12 +95,29 @@ describe("change event workflow draft", () => {
       updatedAt: "2026-07-06T05:00:00.000Z",
       readiness: {
         readyForPreview: false,
-        activeChecklistKey: "cause_identified",
+        activeChecklistKey: "event_understood",
         evidenceCount: 0,
         evidenceSourcePath: "none",
       },
     });
     expect(metadata.readiness.missingChecklistKeys).toContain("cost_impact");
+  });
+
+  it("asks for the event narrative before extracting workflow fields", () => {
+    const draft = buildChangeEventWorkflowDraft({
+      selectedProjectId: 25125,
+      selectedProjectName: "Allisonville",
+      prompt: "Help me create a change event",
+    });
+
+    expect(draft.projectId).toBe(25125);
+    expect(draft.projectName).toBe("Allisonville");
+    expect(draft.narrative).toBeNull();
+    expect(draft.cause).toBeNull();
+    expect(draft.readyForPreview).toBe(false);
+    expect(draft.nextQuestion).toBe(
+      "Tell me what happened. Do not worry about organizing it, I will structure it into a clean change event draft.",
+    );
   });
 
   it("attaches retrieval-backed related evidence to workflow metadata", () => {

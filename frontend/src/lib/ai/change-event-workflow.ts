@@ -206,6 +206,26 @@ function inferProjectNameFromPrompt(prompt: string): string | null {
   return prompt.match(/\buse\s+project\s+\d+\s*-\s*([^.\n]+?)(?:\s+for\s+this\b|[.\n]|$)/i)?.[1]?.trim() ?? null;
 }
 
+function isProjectSelectionResponse(prompt: string): boolean {
+  return (
+    /\buse\s+project\s+\d+\s*-/i.test(prompt) ||
+    (/\bproject\s+id\s*[:#-]?\s*\d+\b/i.test(prompt) &&
+      /\bproject\s+name\s*:/i.test(prompt))
+  );
+}
+
+function isGenericChangeEventStart(prompt: string): boolean {
+  const normalized = normalizePrompt(prompt).toLowerCase();
+  return (
+    /^(can you\s+)?(please\s+)?(help me\s+)?(create|make|start|draft|log|document)\s+(a\s+new\s+|a\s+|new\s+)?change\s+(event|request)[?.!]*$/.test(
+      normalized,
+    ) ||
+    /^(can you\s+)?help me\s+(create|make|start|draft|log|document)\s+(a\s+new\s+|a\s+|new\s+)?change\s+(event|request)[?.!]*$/.test(
+      normalized,
+    )
+  );
+}
+
 function inferCause(lower: string): ChangeEventWorkflowDraft["cause"] {
   if (containsAny(lower, ["owner request", "owner requested", "owner wants", "client request", "client requested"])) {
     return "Owner Requested";
@@ -333,12 +353,14 @@ function status(complete: boolean, active: boolean): ChangeEventWorkflowStatus {
 function buildChecklist(draft: Omit<ChangeEventWorkflowDraft, "checklist">): ChangeEventWorkflowChecklistItem[] {
   const hasProject = Boolean(draft.projectId);
   const hasNarrative = Boolean(draft.narrative && draft.narrative.length >= 24);
+  const hasTitle = Boolean(draft.title);
   const hasCause = Boolean(draft.cause);
+  const hasCreateRequiredFields = hasProject && hasTitle && hasCause && Boolean(draft.scope);
   const hasCost = Boolean(draft.costImpact);
   const hasSchedule = Boolean(draft.scheduleImpact);
   const hasDocs = draft.supportingDocs.length > 0;
   const hasRelatedRecords = draft.relatedRecordHints.length > 0 || draft.relatedEvidence.length > 0;
-  const readyForReview = hasProject && Boolean(draft.title) && hasNarrative && hasCause;
+  const readyForReview = hasCreateRequiredFields;
 
   return [
     {
@@ -391,7 +413,9 @@ function buildChecklist(draft: Omit<ChangeEventWorkflowDraft, "checklist">): Cha
       key: "review_create",
       label: "Review and create",
       status: status(readyForReview, readyForReview),
-      helper: readyForReview ? "Ready to prepare the final create preview." : "Complete the required intake before final review.",
+      helper: readyForReview
+        ? "Ready to prepare the final create preview."
+        : "Needs project, title, type, and scope before final review.",
     },
   ];
 }
@@ -399,7 +423,7 @@ function buildChecklist(draft: Omit<ChangeEventWorkflowDraft, "checklist">): Cha
 function nextQuestionFor(draft: Omit<ChangeEventWorkflowDraft, "checklist" | "nextQuestion" | "confirmPrompt">): string {
   if (!draft.projectId) return "What project is this change event for?";
   if (!draft.narrative || draft.narrative.length < 24) {
-    return "Walk me through what happened in the field or from the owner. What changed, where, and why does it matter?";
+    return "Tell me what happened. Do not worry about organizing it, I will structure it into a clean change event draft.";
   }
   if (!draft.cause) {
     return "What caused this change: owner request, design change, unforeseen condition, field issue, code requirement, value engineering, allowance, or something else?";
@@ -413,7 +437,7 @@ function nextQuestionFor(draft: Omit<ChangeEventWorkflowDraft, "checklist" | "ne
   if (draft.ownerNotified === "unknown") {
     return "Has the owner or client already been notified about this?";
   }
-  return "I have enough to prepare the final change-event preview. Do you want me to review it before creating it?";
+  return "There is enough information to prepare the final change-event preview. Review it before creating it?";
 }
 
 function buildConfirmPrompt(draft: Omit<ChangeEventWorkflowDraft, "checklist" | "confirmPrompt">): string {
@@ -483,7 +507,7 @@ function finalizeDraft(
   draft.recommendedImpacts = buildRecommendedImpacts(draft);
   draft.missingRisks = buildMissingRisks(draft);
   draft.readyForPreview = Boolean(
-    draft.projectId && draft.title && draft.narrative && draft.cause,
+    draft.projectId && draft.title && draft.cause && draft.scope,
   );
   draft.nextQuestion = nextQuestionFor(draft);
   draft.confirmPrompt = buildConfirmPrompt(draft);
@@ -503,15 +527,23 @@ export function buildChangeEventWorkflowDraft({
   const previous = readExistingDraft(previousDraft);
   const promptProjectId = inferProjectIdFromPrompt(normalizedPrompt);
   const promptProjectName = inferProjectNameFromPrompt(normalizedPrompt);
-  const title = inferTitle(normalizedPrompt);
-  const cause = inferCause(lower);
-  const scope = inferScope(lower, cause);
-  const costImpact = inferCostImpact(lower);
-  const scheduleImpact = inferScheduleImpact(lower);
-  const ownerNotified = inferOwnerNotified(lower);
-  const supportingDocs = inferSupportingDocs(lower);
-  const relatedRecordHints = buildRelatedRecordHints(lower);
-  const narrative = normalizedPrompt.length >= 24 ? normalizedPrompt : null;
+  const workflowControlOnly =
+    isProjectSelectionResponse(normalizedPrompt) ||
+    isGenericChangeEventStart(normalizedPrompt);
+  const title = workflowControlOnly ? null : inferTitle(normalizedPrompt);
+  const cause = workflowControlOnly ? null : inferCause(lower);
+  const scope = workflowControlOnly ? "TBD" : inferScope(lower, cause);
+  const costImpact = workflowControlOnly ? null : inferCostImpact(lower);
+  const scheduleImpact = workflowControlOnly ? null : inferScheduleImpact(lower);
+  const ownerNotified = workflowControlOnly ? "unknown" : inferOwnerNotified(lower);
+  const supportingDocs = workflowControlOnly ? [] : inferSupportingDocs(lower);
+  const relatedRecordHints = workflowControlOnly ? [] : buildRelatedRecordHints(lower);
+  const narrative =
+    !workflowControlOnly && normalizedPrompt.length >= 24 ? normalizedPrompt : null;
+  const previousNarrative =
+    previous.narrative && !isGenericChangeEventStart(previous.narrative)
+      ? previous.narrative
+      : null;
   const looksLikeNewChangeEventRequest = containsAny(lower, [
     "change event",
     "change request",
@@ -525,7 +557,7 @@ export function buildChangeEventWorkflowDraft({
       looksLikeNewChangeEventRequest || !previous.title
         ? title ?? previous.title ?? (narrative ? DEFAULT_TITLE : null)
         : previous.title,
-    narrative: combineNarrative(previous.narrative, narrative),
+    narrative: combineNarrative(previousNarrative, narrative),
     cause: cause ?? previous.cause ?? null,
     scope: scope !== "TBD" ? scope : previous.scope ?? scope,
     costImpact: costImpact ?? previous.costImpact ?? null,

@@ -141,6 +141,7 @@ import {
   isAssistantWidgetPayload,
   type AssistantWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
+import type { ChangeEventWorkflowDraft } from "@/lib/ai/change-event-workflow";
 import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
@@ -160,6 +161,7 @@ import {
 import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
 import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
 import { isStandalonePreviewCardPart } from "./preview-review-card";
+import { ChangeEventDraftArtifact } from "./change-event-draft-artifact";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -400,6 +402,21 @@ function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
     widgets.push(widget);
     return widgets;
   }, []);
+}
+
+function getLatestChangeEventWorkflowDraft(
+  messages: UIMessage[],
+): ChangeEventWorkflowDraft | null {
+  for (const msg of [...messages].reverse()) {
+    if (msg.role !== "assistant") continue;
+    const widget = getAssistantWidgetParts(msg)
+      .reverse()
+      .find((part) => part.type === "change_event_workflow");
+    if (widget?.type === "change_event_workflow") {
+      return widget.draft;
+    }
+  }
+  return null;
 }
 
 function isOutlookInboxSummaryWidget(widget: AssistantWidgetPayload): boolean {
@@ -1249,6 +1266,10 @@ export function ChatArea({
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
     AI_ASSISTANT_MODELS[0];
   const councilMode = councilModeProp ?? councilModeInternal;
+  const activeChangeEventDraft = useMemo(
+    () => getLatestChangeEventWorkflowDraft(messages),
+    [messages],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1928,8 +1949,10 @@ export function ChatArea({
         </div>
       ) : (
         <>
-          <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
+          <div className="flex min-h-0 flex-1">
+            <div className="relative min-w-0 flex-1">
+              <Conversation className="min-h-0">
+                <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -1957,19 +1980,23 @@ export function ChatArea({
                 const assistantWidgetParts = isAssistant
                   ? getAssistantWidgetParts(msg)
                   : [];
-                const leadingAssistantWidgetParts = assistantWidgetParts.filter(
-                  (widget) => !isTrailingAssistantWidget(widget),
-                );
+                const inlineAssistantWidgetParts =
+                  assistantWidgetParts.filter(
+                    (widget) => widget.type !== "change_event_workflow",
+                  );
+                const leadingAssistantWidgetParts =
+                  inlineAssistantWidgetParts.filter(
+                    (widget) => !isTrailingAssistantWidget(widget),
+                  );
                 // Widgets that fully replace the text response — suppress duplicate text
                 const textSuppressingTypes = new Set([
-                  "change_event_workflow",
                   "task_summary",
                 ]);
                 const widgetSuppressesText = leadingAssistantWidgetParts.some(
                   (w) => textSuppressingTypes.has(w.type),
                 );
                 const trailingAssistantWidgetParts =
-                  assistantWidgetParts.filter(isTrailingAssistantWidget);
+                  inlineAssistantWidgetParts.filter(isTrailingAssistantWidget);
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedActionToolParts =
                   toolParts.length === 0
@@ -2470,15 +2497,39 @@ export function ChatArea({
                   <CrossSourceTimeline projectId={selectedProjectIdProp} />
                 </div>
               )}
-            </ConversationContent>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
-            <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
-          </Conversation>
+                </ConversationContent>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
+                <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
+              </Conversation>
+            </div>
+            {activeChangeEventDraft ? (
+              <div className="hidden w-96 shrink-0 border-l border-border/60 lg:block">
+                <ChangeEventDraftArtifact
+                  draft={activeChangeEventDraft}
+                  onSubmit={onSubmit}
+                />
+              </div>
+            ) : null}
+          </div>
         </>
       )}
 
+      {!showWelcome && activeChangeEventDraft ? (
+        <div className="max-h-80 shrink-0 overflow-hidden border-t border-border/60 lg:hidden">
+          <ChangeEventDraftArtifact
+            draft={activeChangeEventDraft}
+            onSubmit={onSubmit}
+          />
+        </div>
+      ) : null}
+
       {!showWelcome && (
-        <div className="z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6">
+        <div
+          className={cn(
+            "z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6",
+            activeChangeEventDraft && "lg:pr-96",
+          )}
+        >
           <div className="mx-auto w-full max-w-3xl">
             {chatError && (
               <InfoAlert variant="error" className="mb-2 py-2">

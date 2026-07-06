@@ -2799,153 +2799,63 @@ function ChangeEventWorkflowWidget({
   onEditDraft: (message: string) => void;
 }) {
   const { draft } = widget;
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const draftFields = [
-    { label: "Project", value: draft.projectName ?? (draft.projectId ? `#${draft.projectId}` : "Missing") },
-    { label: "Title", value: draft.title ?? "Missing" },
-    { label: "Cause", value: draft.cause ?? "Needs confirmation" },
+    {
+      label: "Project",
+      value: draft.projectName ?? (draft.projectId ? `#${draft.projectId}` : "Missing"),
+    },
+    { label: "Title", value: draft.title ?? "Draft title pending" },
+    { label: "Type", value: draft.cause ?? "Needs classification" },
     { label: "Scope", value: draft.scope },
-    { label: "Cost", value: draft.costImpact ?? "Missing" },
-    { label: "Schedule", value: draft.scheduleImpact ?? "Missing" },
+    { label: "Cost", value: draft.costImpact ?? "TBD" },
+    { label: "Schedule", value: draft.scheduleImpact ?? "TBD" },
   ];
-  const missingCount = draft.checklist.filter((item) => item.status !== "complete").length;
   const hasEvidence = draft.relatedEvidence.length > 0;
-  const statusText = draft.readyForPreview
-    ? "Ready for final preview."
+  const summary = draft.narrative
+    ? draft.readyForPreview
+      ? "This is organized into a working Change Event draft with enough information for review."
+      : "This is organized into a working Change Event draft."
     : draft.projectId
-      ? `${missingCount} item${missingCount === 1 ? "" : "s"} left before preview.`
-      : "Select a project to continue.";
+      ? "The project is set. Tell me what happened and the draft will be structured from there."
+      : "Select the project first, then the draft can start.";
+  const missingInformation = draft.missingRisks.slice(0, 3);
+  const recommendations = draft.recommendedImpacts.slice(0, 3);
 
   return (
     <WidgetShell
-      eyebrow="Live intake"
-      title={widget.title}
-      icon={<ListChecksIcon className="h-4 w-4" />}
-      actions={<WidgetMeta>{draft.readyForPreview ? "Preview ready" : "In progress"}</WidgetMeta>}
+      title="Change Event Draft"
+      actions={<WidgetMeta>{draft.readyForPreview ? "Ready to review" : "Building"}</WidgetMeta>}
     >
-      <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">{statusText}</div>
+      <div className="space-y-1">
+        <div className="text-xs font-medium text-muted-foreground">What I’m doing</div>
+        <p className="text-sm leading-6 text-foreground">{summary}</p>
+      </div>
+
+      {draft.narrative ? (
         <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">Next</div>
-          <p className="text-sm text-foreground">{draft.nextQuestion}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => onEditDraft(draft.nextQuestion)}>
-          <SquarePenIcon className="h-4 w-4" />
-          Answer next question
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!draft.readyForPreview}
-          onClick={() => onSubmit(draft.confirmPrompt)}
-        >
-          <ShieldCheckIcon className="h-4 w-4" />
-          Prepare final preview
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setDetailsOpen((open) => !open)}
-          className="h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-          aria-expanded={detailsOpen}
-        >
-          <ChevronDownIcon
-            className={cn("h-3.5 w-3.5 transition-transform", detailsOpen ? "rotate-180" : "")}
-          />
-          Review details
-        </Button>
-        {hasEvidence ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setEvidenceOpen((open) => !open)}
-            className="h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-            aria-expanded={evidenceOpen}
-          >
-            <ChevronDownIcon
-              className={cn("h-3.5 w-3.5 transition-transform", evidenceOpen ? "rotate-180" : "")}
-            />
-            Sources ({draft.relatedEvidence.length})
-          </Button>
-        ) : null}
-      </div>
-
-      {detailsOpen ? (
-        <div className="space-y-3 border-t border-border/60 pt-3">
-          {draft.narrative ? (
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">What happened</div>
-              <p className="line-clamp-3 text-sm text-foreground">{draft.narrative}</p>
-            </div>
-          ) : null}
-
-          <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
-            {draftFields.map((field) => (
-              <div key={field.label} className="min-w-0">
-                <div className="text-[11px] font-medium uppercase text-muted-foreground/80">{field.label}</div>
-                <div className="truncate text-sm text-foreground">{field.value}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="divide-y divide-border/60">
-            {draft.checklist.map((item) => {
-              const isComplete = item.status === "complete";
-              const isActive = item.status === "active";
-              return (
-                <div key={item.key} className="flex gap-3 py-2">
-                  <div
-                    className={cn(
-                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                      isComplete
-                        ? "bg-emerald-100 text-emerald-700"
-                        : isActive
-                          ? "bg-primary/10 text-primary"
-                          : "bg-background text-muted-foreground",
-                    )}
-                  >
-                    {isComplete ? (
-                      <CheckIcon className="h-3.5 w-3.5" />
-                    ) : isActive ? (
-                      <ArrowRightIcon className="h-3.5 w-3.5" />
-                    ) : (
-                      <AlertTriangleIcon className="h-3.5 w-3.5" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-foreground">{item.label}</div>
-                    <div className="text-xs text-muted-foreground">{item.helper}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {draft.missingRisks.length > 0 ? (
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">Missing risks</div>
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                {draft.missingRisks.slice(0, 3).map((risk) => (
-                  <li key={risk}>- {risk}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          <div className="text-xs font-medium text-muted-foreground">What happened</div>
+          <p className="line-clamp-3 text-sm leading-6 text-foreground">
+            {draft.narrative}
+          </p>
         </div>
       ) : null}
 
-      {evidenceOpen && hasEvidence ? (
-        <div className="space-y-2 border-t border-border/60 pt-3">
-          <div className="text-xs font-medium text-muted-foreground">Related sources</div>
+      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+        {draftFields.map((field) => (
+          <div key={field.label} className="min-w-0">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground/80">
+              {field.label}
+            </div>
+            <div className="truncate text-sm text-foreground">{field.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {hasEvidence ? (
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">
+            Related project records
+          </div>
           <div className="divide-y divide-border/60">
             {draft.relatedEvidence.slice(0, 3).map((item) => (
               <div key={item.id} className="flex gap-3 py-2">
@@ -2968,7 +2878,63 @@ function ChangeEventWorkflowWidget({
             ))}
           </div>
         </div>
+      ) : draft.narrative ? (
+        <div className="text-sm text-muted-foreground">
+          Related project records were checked. No confident match was found yet.
+        </div>
       ) : null}
+
+      {recommendations.length > 0 || missingInformation.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {recommendations.length > 0 ? (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">
+                Recommendations
+              </div>
+              <ul className="space-y-1 text-xs leading-5 text-muted-foreground">
+                {recommendations.map((recommendation) => (
+                  <li key={recommendation}>- {recommendation}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {missingInformation.length > 0 ? (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">
+                Still unclear
+              </div>
+              <ul className="space-y-1 text-xs leading-5 text-muted-foreground">
+                {missingInformation.map((risk) => (
+                  <li key={risk}>- {risk}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-muted-foreground">
+          One thing I still need
+        </div>
+        <p className="text-sm leading-6 text-foreground">{draft.nextQuestion}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onEditDraft(draft.nextQuestion)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Add missing detail
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!draft.readyForPreview}
+          onClick={() => onSubmit(draft.confirmPrompt)}
+        >
+          <ShieldCheckIcon className="h-4 w-4" />
+          Review before creating
+        </Button>
+      </div>
     </WidgetShell>
   );
 }
