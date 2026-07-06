@@ -18,9 +18,7 @@ export function AppTrainingDocPage({
   backLabel: string;
   doc: TrainingDocWithAssets;
 }) {
-  const bodyMarkdown = doc.steps.length
-    ? stripGeneratedManualSections(doc.body_markdown)
-    : doc.body_markdown;
+  const bodyMarkdown = prepareTrainingDocBodyMarkdown(doc);
   const sortedSteps = doc.steps
     .slice()
     .sort((left, right) => left.step_order - right.step_order);
@@ -234,6 +232,60 @@ function stripGeneratedManualSections(markdown: string): string {
     .replace(/\n?## Quality Check\n[\s\S]*?(?=\n##\s|$)/, "\n")
     .replace(/\n?## Common Issues\n[\s\S]*?(?=\n##\s|$)/, "\n")
     .trim();
+}
+
+function prepareTrainingDocBodyMarkdown(doc: TrainingDocWithAssets): string {
+  const withoutManualSections = doc.steps.length
+    ? stripGeneratedManualSections(doc.body_markdown)
+    : doc.body_markdown;
+
+  return stripGeneratedOverview(withoutManualSections, doc.title, doc.summary);
+}
+
+function stripGeneratedOverview(
+  markdown: string,
+  title: string,
+  summary: string | null,
+): string {
+  const lines = markdown.split("\n");
+  let startIndex = 0;
+
+  while (startIndex < lines.length && !lines[startIndex]?.trim()) {
+    startIndex += 1;
+  }
+
+  const firstLine = lines[startIndex]?.trim();
+  if (!firstLine || !firstLine.startsWith("# ")) {
+    return markdown.trim();
+  }
+
+  const headingText = normalizeMarkdownText(firstLine.replace(/^#\s+/, ""));
+  if (headingText !== normalizeMarkdownText(title)) {
+    return markdown.trim();
+  }
+
+  let nextIndex = startIndex + 1;
+  while (nextIndex < lines.length && !lines[nextIndex]?.trim()) {
+    nextIndex += 1;
+  }
+
+  const summaryText = summary ? normalizeMarkdownText(summary) : "";
+  if (
+    summaryText &&
+    normalizeMarkdownText(lines[nextIndex]?.trim() ?? "") === summaryText
+  ) {
+    nextIndex += 1;
+  }
+
+  return lines.slice(nextIndex).join("\n").trim();
+}
+
+function normalizeMarkdownText(value: string): string {
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/[*_`]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
 function formatInlineMarkdown(value: string) {
