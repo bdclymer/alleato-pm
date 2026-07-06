@@ -164,7 +164,10 @@ import {
 import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
 import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
 import { isStandalonePreviewCardPart } from "./preview-review-card";
-import { ChangeEventDraftArtifact } from "./change-event-draft-artifact";
+import {
+  ChangeEventDraftArtifact,
+  type ChangeEventDraftProjectOption,
+} from "./change-event-draft-artifact";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -1293,6 +1296,18 @@ export function ChatArea({
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 500 });
   const selectedProject =
     projects.find((p) => p.id === selectedProjectIdProp) ?? null;
+  const changeEventDraftProjectOptions =
+    useMemo<ChangeEventDraftProjectOption[]>(
+      () =>
+        projects.map((project) => ({
+          id: project.id,
+          name: project.name ?? `Project #${project.id}`,
+          meta: [project.project_number, project.phase, project.state]
+            .filter(Boolean)
+            .join(" - "),
+        })),
+      [projects],
+    );
   const selectedModelOption =
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
     AI_ASSISTANT_MODELS[0];
@@ -2610,6 +2625,8 @@ export function ChatArea({
               <div className="hidden w-96 shrink-0 border-l border-border/60 lg:block">
                 <ChangeEventDraftArtifact
                   draft={activeChangeEventDraft}
+                  projectOptions={changeEventDraftProjectOptions}
+                  projectsLoading={projectsLoading}
                   onSubmit={onSubmit}
                   onSaveDraft={saveChangeEventDraftArtifact}
                 />
@@ -2623,6 +2640,8 @@ export function ChatArea({
         <div className="max-h-80 shrink-0 overflow-hidden border-t border-border/60 lg:hidden">
           <ChangeEventDraftArtifact
             draft={activeChangeEventDraft}
+            projectOptions={changeEventDraftProjectOptions}
+            projectsLoading={projectsLoading}
             onSubmit={onSubmit}
             onSaveDraft={saveChangeEventDraftArtifact}
           />

@@ -17,6 +17,8 @@ import {
 } from "@/lib/ai/workflow-registry";
 
 const changeEventDraftEditsSchema = z.object({
+  projectId: z.number().int().positive().nullable().optional(),
+  projectName: z.string().trim().nullable().optional(),
   title: z.string().trim().nullable().optional(),
   narrative: z.string().trim().nullable().optional(),
   cause: z.enum(CHANGE_REQUEST_TYPE_OPTIONS).nullable().optional(),

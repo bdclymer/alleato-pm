@@ -200,4 +200,35 @@ describe("change event workflow draft", () => {
     expect(updated.draft.confirmPrompt).toContain("Project ID: 25125");
     expect(updated.draft.confirmPrompt).toContain("confirmed=false");
   });
+
+  it("applies artifact project edits and resolves project readiness", () => {
+    const metadata = buildChangeEventWorkflowMetadata({
+      updatedAt: "2026-07-06T05:00:00.000Z",
+      prompt:
+        "Create a change event because the owner requested restroom relocation after framing. Cost is about $18,000 with no schedule impact.",
+    });
+
+    expect(metadata.draft.projectId).toBeNull();
+    expect(metadata.draft.readyForPreview).toBe(false);
+    expect(metadata.readiness.missingChecklistKeys).toContain("project");
+
+    const updated = applyChangeEventWorkflowDraftEdits({
+      workflow: metadata,
+      updatedAt: "2026-07-06T06:00:00.000Z",
+      edits: {
+        projectId: 760,
+        projectName: "Exol Wilmer",
+      },
+    });
+
+    expect(updated.draft.projectId).toBe(760);
+    expect(updated.draft.projectName).toBe("Exol Wilmer");
+    expect(updated.draft.readyForPreview).toBe(true);
+    expect(updated.readiness.readyForPreview).toBe(true);
+    expect(updated.readiness.missingChecklistKeys).not.toContain("project");
+    expect(updated.draft.checklist.find((item) => item.key === "project")?.status).toBe(
+      "complete",
+    );
+    expect(updated.draft.confirmPrompt).toContain("Project ID: 760");
+  });
 });

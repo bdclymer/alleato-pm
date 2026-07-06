@@ -29,8 +29,16 @@ type EditableDraft = {
   scheduleImpact: string;
 };
 
+export type ChangeEventDraftProjectOption = {
+  id: number;
+  name: string;
+  meta?: string;
+};
+
 type ChangeEventDraftArtifactProps = {
   draft: ChangeEventWorkflowDraft;
+  projectOptions: ChangeEventDraftProjectOption[];
+  projectsLoading?: boolean;
   onSubmit: (message: string) => void;
   onSaveDraft: (edits: ChangeEventWorkflowDraftEdits) => Promise<void>;
 };
@@ -74,6 +82,8 @@ function fieldsChanged(a: EditableDraft, b: EditableDraft): boolean {
 
 export function ChangeEventDraftArtifact({
   draft,
+  projectOptions,
+  projectsLoading = false,
   onSubmit,
   onSaveDraft,
 }: ChangeEventDraftArtifactProps) {
@@ -83,6 +93,19 @@ export function ChangeEventDraftArtifact({
 
   const baseline = useMemo(() => toEditableDraft(draft), [draft]);
   const hasChanges = fieldsChanged(editable, baseline);
+  const resolvedProjectOptions = useMemo(() => {
+    if (!draft.projectId) return projectOptions;
+    if (projectOptions.some((project) => project.id === draft.projectId)) {
+      return projectOptions;
+    }
+    return [
+      {
+        id: draft.projectId,
+        name: draft.projectName ?? `Project #${draft.projectId}`,
+      },
+      ...projectOptions,
+    ];
+  }, [draft.projectId, draft.projectName, projectOptions]);
   const missingFields = draft.checklist
     .filter((item) => item.status !== "complete")
     .map((item) => item.label)
@@ -106,6 +129,37 @@ export function ChangeEventDraftArtifact({
     (value: string) => {
       setEditable((current) => ({ ...current, [field]: value }));
     };
+
+  const handleProjectChange = async (value: string) => {
+    const selectedProjectId =
+      value === "__unset__" ? null : Number.parseInt(value, 10);
+    const selectedProject =
+      selectedProjectId === null
+        ? null
+        : resolvedProjectOptions.find((project) => project.id === selectedProjectId) ?? null;
+
+    if (selectedProjectId !== null && !selectedProject) {
+      setSaveError("That project could not be selected. Refresh and try again.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSaveDraft({
+        projectId: selectedProjectId,
+        projectName: selectedProject?.name ?? null,
+      });
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "The project could not be saved. Try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSyncDraft = async () => {
     setIsSaving(true);
@@ -171,6 +225,28 @@ export function ChangeEventDraftArtifact({
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <div className="space-y-6">
           <section className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                Project
+              </label>
+              <Select
+                value={draft.projectId ? String(draft.projectId) : "__unset__"}
+                onValueChange={handleProjectChange}
+                disabled={projectsLoading || isSaving}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unset__">Project not selected</SelectItem>
+                  {resolvedProjectOptions.map((project) => (
+                    <SelectItem key={project.id} value={String(project.id)}>
+                      {project.meta ? `${project.name} - ${project.meta}` : project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">
                 Title

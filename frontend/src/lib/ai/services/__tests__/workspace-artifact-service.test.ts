@@ -261,4 +261,85 @@ describe("workspace artifact change-event drafts", () => {
       }),
     );
   });
+
+  it("persists project selection edits to the draft artifact", async () => {
+    const workflow = buildChangeEventWorkflowMetadata({
+      updatedAt: "2026-07-06T05:00:00.000Z",
+      prompt:
+        "Create a change event because the owner requested restroom relocation after framing. Cost is about $18,000 with no schedule impact.",
+    });
+    const listChain = createListChain({
+      data: [
+        {
+          id: "artifact-1",
+          user_id: "user-1",
+          project_id: null,
+          artifact_type: "change_event_draft",
+          title: "Change Event Draft",
+          status: "draft",
+          version: 1,
+          content: { workflow },
+          context_snapshot: {},
+          session_id: "session-1",
+          promoted_to: null,
+          promoted_at: null,
+          tags: ["change-event", "ai-workflow"],
+          created_at: "2026-07-06T05:00:00.000Z",
+          updated_at: "2026-07-06T05:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    const fetchChain = createUpdateFetchChain({
+      data: {
+        version: 1,
+        artifact_type: "change_event_draft",
+        title: "Change Event Draft",
+        content: { workflow },
+        project_id: null,
+      },
+      error: null,
+    });
+    const updateChain = createUpdateChain({ error: null });
+
+    createServiceClientMock
+      .mockReturnValueOnce({ from: jest.fn(() => listChain) } as never)
+      .mockReturnValueOnce({
+        from: jest
+          .fn()
+          .mockReturnValueOnce(fetchChain)
+          .mockReturnValueOnce(updateChain),
+      } as never);
+
+    const result = await updateChangeEventDraftArtifactEdits({
+      userId: "user-1",
+      sessionId: "session-1",
+      edits: {
+        projectId: 760,
+        projectName: "Exol Wilmer",
+      },
+    });
+
+    expect(result).toMatchObject({
+      id: "artifact-1",
+      version: 2,
+      workflow: {
+        draft: {
+          projectId: 760,
+          projectName: "Exol Wilmer",
+          readyForPreview: true,
+        },
+        readiness: {
+          readyForPreview: true,
+        },
+      },
+    });
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 2,
+        project_id: 760,
+        session_id: "session-1",
+      }),
+    );
+  });
 });

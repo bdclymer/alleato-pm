@@ -85,6 +85,8 @@ export type ChangeEventWorkflowMetadata = {
 };
 
 export type ChangeEventWorkflowDraftEdits = {
+  projectId?: number | null;
+  projectName?: string | null;
   title?: string | null;
   narrative?: string | null;
   cause?: ChangeEventWorkflowDraft["cause"];
@@ -529,7 +531,7 @@ function finalizeDraft(
 
 function optionalEditedString(
   edits: ChangeEventWorkflowDraftEdits,
-  key: "title" | "narrative" | "costImpact" | "scheduleImpact",
+  key: "projectName" | "title" | "narrative" | "costImpact" | "scheduleImpact",
   fallback: string | null,
 ): string | null {
   if (!Object.prototype.hasOwnProperty.call(edits, key)) return fallback;
@@ -548,8 +550,10 @@ export function applyChangeEventWorkflowDraftEdits({
 }): ChangeEventWorkflowMetadata {
   const current = workflow.draft;
   const draft = finalizeDraft({
-    projectId: current.projectId,
-    projectName: current.projectName,
+    projectId: Object.prototype.hasOwnProperty.call(edits, "projectId")
+      ? edits.projectId ?? null
+      : current.projectId,
+    projectName: optionalEditedString(edits, "projectName", current.projectName),
     title: optionalEditedString(edits, "title", current.title),
     narrative: optionalEditedString(edits, "narrative", current.narrative),
     cause: Object.prototype.hasOwnProperty.call(edits, "cause")
