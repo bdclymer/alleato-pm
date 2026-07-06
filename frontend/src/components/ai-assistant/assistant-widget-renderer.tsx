@@ -67,6 +67,7 @@ import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
   CalendarInviteWidgetPayload,
+  ChangeEventWorkflowWidgetPayload,
   CommitmentDraftWidgetPayload,
   CreateContactWidgetPayload,
   CreateEventWidgetPayload,
@@ -2785,6 +2786,121 @@ function CreateEventWidget({
   );
 }
 
+function ChangeEventWorkflowWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: ChangeEventWorkflowWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const { draft } = widget;
+  const draftFields = [
+    { label: "Project", value: draft.projectName ?? (draft.projectId ? `#${draft.projectId}` : "Missing") },
+    { label: "Title", value: draft.title ?? "Missing" },
+    { label: "Cause", value: draft.cause ?? "Needs confirmation" },
+    { label: "Scope", value: draft.scope },
+    { label: "Cost", value: draft.costImpact ?? "Missing" },
+    { label: "Schedule", value: draft.scheduleImpact ?? "Missing" },
+  ];
+
+  return (
+    <WidgetShell
+      eyebrow="Live intake"
+      title={widget.title}
+      icon={<ListChecksIcon className="h-4 w-4" />}
+      actions={<WidgetMeta>{draft.readyForPreview ? "Preview ready" : "In progress"}</WidgetMeta>}
+    >
+      {!draft.projectId ? (
+        <InfoAlert variant="warning">
+          <span>This needs a selected project before the final change-event preview can run.</span>
+        </InfoAlert>
+      ) : null}
+
+      {draft.narrative ? (
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground">What happened</div>
+          <p className="line-clamp-3 text-sm text-foreground">{draft.narrative}</p>
+        </div>
+      ) : null}
+
+      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+        {draftFields.map((field) => (
+          <div key={field.label} className="min-w-0">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground/80">{field.label}</div>
+            <div className="truncate text-sm text-foreground">{field.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="divide-y divide-border/60">
+        {draft.checklist.map((item) => {
+          const isComplete = item.status === "complete";
+          const isActive = item.status === "active";
+          return (
+            <div key={item.key} className="flex gap-3 py-2">
+              <div
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                  isComplete
+                    ? "bg-emerald-100 text-emerald-700"
+                    : isActive
+                      ? "bg-primary/10 text-primary"
+                      : "bg-background text-muted-foreground",
+                )}
+              >
+                {isComplete ? (
+                  <CheckIcon className="h-3.5 w-3.5" />
+                ) : isActive ? (
+                  <ArrowRightIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <AlertTriangleIcon className="h-3.5 w-3.5" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground">{item.label}</div>
+                <div className="text-xs text-muted-foreground">{item.helper}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {draft.missingRisks.length > 0 ? (
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground">Missing risks</div>
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {draft.missingRisks.slice(0, 3).map((risk) => (
+              <li key={risk}>- {risk}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <InfoAlert variant="info">
+        <span>{draft.nextQuestion}</span>
+      </InfoAlert>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onEditDraft(draft.nextQuestion)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Answer next question
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!draft.readyForPreview}
+          onClick={() => onSubmit(draft.confirmPrompt)}
+        >
+          <ShieldCheckIcon className="h-4 w-4" />
+          Prepare final preview
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
 function ProjectActionPreviewWidget({
   widget,
   selectedProjectId,
@@ -3530,6 +3646,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
   create_event: (props) =>
     props.widget.type === "create_event" ? (
       <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
+    ) : null,
+  change_event_workflow: (props) =>
+    props.widget.type === "change_event_workflow" ? (
+      <ChangeEventWorkflowWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
     ) : null,
   project_action_preview: (props) =>
     props.widget.type === "project_action_preview" ? (
