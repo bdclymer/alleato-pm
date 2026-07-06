@@ -12,6 +12,7 @@ This is a surface-by-surface recommendation for where Eve should and should not 
 | Frontend strategist/specialist orchestration | AI SDK `ToolLoopAgent` in frontend | **Candidate for selective Eve migration later** | The orchestration concerns are real, but this should only move after a deliberate UI/streaming contract migration plan exists. |
 | Frontend Procore docs chat | Next.js + AI SDK stream route | **Keep on current AI SDK stack** | This is a narrow streaming RAG endpoint, not a durable workflow problem. Eve adds little here. |
 | Frontend MCP tool bridge | `@ai-sdk/mcp` | **Keep on current AI SDK stack** | This is already a clean adapter layer for the chat assistant. No clear Eve benefit. |
+| AI Assistant change-event intake workflow | Next.js + AI SDK widget stream + `createChangeEvent` preview/write tool | **Keep on current AI SDK stack; optionally consult backend Deep Agents for evidence** | The user-facing flow is an interactive, turn-by-turn product workflow with live draft state, widget rendering, and preview-first write confirmation. Eve would be too coarse as the primary runtime here; Deep Agents fit only as delegated evidence/research helpers, not as the owner of the form/create loop. |
 | Alleato App Expert Eve Lab under `agent/` | Eve + AI SDK v7 | **Keep on Eve as an experimental comparison surface** | It is already the correct runtime family for a standalone durable agent package, but it should remain clearly distinct from the production backend App Expert. |
 | Backend research agent | Python `deepagents` runtime | **Keep as backend agent runtime** | This is already a durable/backend-style agent with subagents, memory, filesystem backend, and mixed public/internal research tools. |
 | Backend app expert | Python `deepagents` runtime | **Keep as backend agent runtime** | Strong fit for skill-driven, read-only, evidence-based delegated work behind a bridge endpoint. |
@@ -218,6 +219,46 @@ Recommendation:
 - resumable approvals/workflows inside the main product assistant
 - repeated pressure to move strategist logic out of the request/response route
 - duplicated orchestration semantics across frontend AI SDK and backend deep-agent services
+
+## Change-event assistant workflow decision
+
+The conversational change-event flow should stay owned by the main AI Assistant
+stack for now.
+
+Use the **AI SDK / frontend assistant path** for:
+
+- intent routing from chat into `change_event_write`
+- live intake widgets such as `change_event_workflow`
+- turn-by-turn draft updates visible to the user
+- preview-first `createChangeEvent confirmed=false`
+- explicit user confirmation before `confirmed=true`
+- trace/debug metadata that explains why the final preview is or is not ready
+
+Use **backend Deep Agents** only as delegated support when the change event needs
+evidence that does not fit a single lightweight retrieval pass, such as:
+
+- researching related RFIs, meetings, drawings, emails, Teams messages, specs,
+  daily logs, or project history
+- summarizing evidence gaps and source confidence
+- preparing a broader project-risk or change-exposure packet
+
+Do **not** make Eve the primary runtime for this workflow yet. Eve is a better
+fit for standalone durable agents, scheduled maintainers, webhook/channel
+agents, approval workflows outside the product chat, or experimental comparison
+surfaces. The change-event assistant is currently a product UI workflow with a
+native write tool and custom React cards, so moving it to Eve would require a
+larger streaming/UI/tool-contract migration without solving the immediate
+problem of bad intake, missing state, or poor tool selection.
+
+Recommended architecture:
+
+1. Frontend chat route owns the conversational product contract.
+2. Shared workflow model owns draft/checklist/readiness state.
+3. `createChangeEvent` remains the only write owner for change-event creation.
+4. Backend Deep Agents can attach evidence packets, but cannot bypass preview
+   and confirmation.
+5. Debug console should show the routing decision, workflow state, retrieval
+   sources, delegated deep-agent calls, and final write-tool readiness.
 
 ## Practical decision framework
 
