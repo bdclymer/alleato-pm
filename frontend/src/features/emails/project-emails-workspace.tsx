@@ -3768,6 +3768,11 @@ export function ProjectEmailsWorkspace({
                   <Link
                     key={tab.href}
                     href={tab.href}
+                    title={
+                      typeof tab.count === "number"
+                        ? `${tab.label} (${tab.count})`
+                        : tab.label
+                    }
                     className={cn(
                       "relative transition-colors",
                       tab.compact
@@ -3780,16 +3785,6 @@ export function ProjectEmailsWorkspace({
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>{tab.label}</span>
-                      {typeof tab.count === "number" ? (
-                        <span
-                          className={cn(
-                            "tabular-nums",
-                            tab.compact ? "text-[10px]" : "text-xs",
-                          )}
-                        >
-                          {tab.count}
-                        </span>
-                      ) : null}
                     </span>
                     <span
                       aria-hidden="true"
