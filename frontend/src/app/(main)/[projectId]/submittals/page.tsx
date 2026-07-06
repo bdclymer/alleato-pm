@@ -1578,7 +1578,7 @@ function SubmittalSettingsTab({
       }
     >
       <PageTabs tabs={tabs} variant="inline" className="mb-0" />
-      <PageTabs tabs={settingsTabs} variant="inline" className="mb-6" />
+      <PageTabs tabs={settingsTabs} className="mb-6" />
       {renderActiveSettingsPanel()}
     </PageShell>
   );
