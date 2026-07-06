@@ -2,7 +2,7 @@
 
 Date: 2026-07-06
 Linear: AAI-947
-Status: Blocked/Partial
+Status: Complete
 
 ## Objective
 
@@ -29,12 +29,13 @@ the backend Deep Agent is unavailable.
 - [x] Add backend-derived capability/error handling with persisted debug detail.
 - [x] Add guardrail preventing broad portfolio prompts from single-project fallback.
 - [x] Run focused tests/checks and record evidence.
-- [ ] Post Linear closeout comment.
-- [ ] Verify backend research endpoint live after deploy.
+- [x] Post Linear closeout comment.
+- [x] Verify backend research endpoint live after deploy.
 
 ## Evidence
 
 - Linear issue: `AAI-947`.
+- Linear closeout comment: `3194c70e-4d2f-480a-a95d-4079f87cbf9c`.
 - Removed active frontend flag references:
   - `frontend/src/lib/ai/deep-agent-bridge.ts`
   - `frontend/src/lib/ai/__tests__/deep-agent-bridge.test.ts`
@@ -51,6 +52,11 @@ the backend Deep Agent is unavailable.
   - First deploy after env update, `dep-d95iqttckfvc73bdc2s0`, failed with `nonZeroExit=1`.
   - Render logs showed backend startup failure: `ModuleNotFoundError: No module named 'mcp.server'`.
   - `backend/src/services/mcp/alleato_system.py` now lazy-loads MCP and reports unavailable instead of crashing the backend import.
+  - Published fix to `origin/main` at `ada247b096`.
+  - Render deploy `dep-d95iuebtqb8s73espcdg` reached `live` on `2026-07-06T04:30:52.309008Z`.
+  - Backend `GET /health` returned `200`.
+  - Backend `POST /api/intelligence/research` returned `200` with `mode: deep_agents`, proving the backend-owned flag is active.
+  - Research endpoint still reported internal portfolio database evidence unavailable because the Deep Agent DB tool hit `psycopg2.OperationalError` / `Network is unreachable`; this is separate source-access work.
 - Checks:
   - `cd frontend && npx jest src/lib/ai/__tests__/deep-agent-bridge.test.ts src/lib/ai/retrieval/__tests__/planner.test.ts --runInBand` passed: 61 tests.
   - `cd frontend && npx eslint 'src/lib/ai/deep-agent-bridge.ts' 'src/lib/ai/__tests__/deep-agent-bridge.test.ts' 'src/lib/ai/retrieval/planner.ts' 'src/lib/ai/retrieval/__tests__/planner.test.ts' 'src/app/api/ai-assistant/chat/handler-v2.ts'` passed.
@@ -60,12 +66,13 @@ the backend Deep Agent is unavailable.
   - `npx markdownlint-cli2 --no-globs docs/ops/tasks/2026-07-06-collapse-deep-agents-bridge-flag.md` passed.
   - Active search for `AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED` across frontend source, active env, scripts, architecture docs, and task docs returned no matches.
 
-## Blocker
+## Remaining Risk
 
-Backend research endpoint is not live yet because Render must successfully
-deploy/restart with the new env. The first deploy was blocked by an existing
-backend startup crash in the hosted MCP module. The MCP crash has been patched
-locally and must be published before the backend endpoint can be verified live.
+The duplicate frontend flag is removed and the backend research endpoint is
+live, but portfolio-quality answers still depend on fixing the Deep Agent
+internal database tool. The endpoint currently fails loudly when internal
+portfolio evidence is unreachable instead of silently falling back to a
+single-project RAG answer.
 
 ## Failure Contract
 
