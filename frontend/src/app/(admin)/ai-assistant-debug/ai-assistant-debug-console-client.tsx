@@ -290,6 +290,11 @@ function FlowTab({ item }: { item: AiAssistantDebugItemView }) {
             value={item.expectedNativeTool}
           />
           <SignalRow
+            label="Change event workflow"
+            state={signalState(item.changeEventWorkflow)}
+            value={<JsonBlock value={item.changeEventWorkflow} />}
+          />
+          <SignalRow
             label="Model-selected calls"
             state="recorded"
             value={formatNumber(item.tools.length)}

@@ -82,6 +82,7 @@ export type AiAssistantDebugItemView = {
   rawToolTraceCount: number;
   expectedNativeTool: string | null;
   retrievalPlan: unknown;
+  changeEventWorkflow: unknown;
   sourceDebug: unknown;
   backendDeepAgent: unknown;
   memoryUsage: unknown;
@@ -281,7 +282,7 @@ function mostRecentUserPrompt(
   return preview(userMessage?.content, 260);
 }
 
-function mapRows(
+export function mapRows(
   rows: ChatHistoryRow[],
   conversations: ConversationRow[],
   sessionMessages: ChatHistoryRow[],
@@ -336,6 +337,7 @@ function mapRows(
       rawToolTraceCount: toolTrace.length,
       expectedNativeTool: expectedNativeTool(metadata),
       retrievalPlan: metadata.retrieval_plan ?? null,
+      changeEventWorkflow: metadata.change_event_workflow ?? null,
       sourceDebug: metadata.source_debug ?? null,
       backendDeepAgent: metadata.backend_deep_agent ?? null,
       memoryUsage: metadata.memory_usage ?? null,

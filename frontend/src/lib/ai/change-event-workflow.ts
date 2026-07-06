@@ -46,9 +46,27 @@ type BuildChangeEventWorkflowDraftParams = {
   prompt: string;
   selectedProjectId?: number | null;
   selectedProjectName?: string | null;
+  previousDraft?: unknown;
 };
 
 const DEFAULT_TITLE = "New change event";
+export const CHANGE_EVENT_WORKFLOW_METADATA_VERSION = 1;
+
+export type ChangeEventWorkflowMetadata = {
+  version: typeof CHANGE_EVENT_WORKFLOW_METADATA_VERSION;
+  workflowKey: "change_event";
+  widgetType: "change_event_workflow";
+  expectedNativeTool: "createChangeEvent";
+  writeOwner: "createChangeEvent";
+  updatedAt: string;
+  source: "ai_assistant_chat";
+  draft: ChangeEventWorkflowDraft;
+  readiness: {
+    readyForPreview: boolean;
+    missingChecklistKeys: ChangeEventWorkflowChecklistKey[];
+    activeChecklistKey: ChangeEventWorkflowChecklistKey | null;
+  };
+};
 
 function normalizePrompt(prompt: string): string {
   return prompt.trim().replace(/\s+/g, " ");
@@ -56,6 +74,53 @@ function normalizePrompt(prompt: string): string {
 
 function containsAny(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term));
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+}
+
+function readExistingDraft(value: unknown): Partial<ChangeEventWorkflowDraft> {
+  const draft = readRecord(value);
+  if (!draft) return {};
+  return {
+    projectId: readNumber(draft.projectId),
+    projectName: readString(draft.projectName),
+    title: readString(draft.title),
+    narrative: readString(draft.narrative),
+    cause: CHANGE_REQUEST_TYPE_OPTIONS.includes(draft.cause as never)
+      ? (draft.cause as ChangeEventWorkflowDraft["cause"])
+      : null,
+    scope: CHANGE_REQUEST_SCOPE_OPTIONS.includes(draft.scope as never)
+      ? (draft.scope as ChangeEventWorkflowDraft["scope"])
+      : undefined,
+    costImpact: readString(draft.costImpact),
+    scheduleImpact: readString(draft.scheduleImpact),
+    ownerNotified:
+      draft.ownerNotified === "yes" || draft.ownerNotified === "no"
+        ? draft.ownerNotified
+        : draft.ownerNotified === "unknown"
+          ? "unknown"
+          : undefined,
+    supportingDocs: readStringArray(draft.supportingDocs),
+    relatedRecordHints: readStringArray(draft.relatedRecordHints),
+  };
 }
 
 function inferTitle(prompt: string): string | null {
@@ -131,7 +196,17 @@ function inferScheduleImpact(lower: string): string | null {
 }
 
 function inferOwnerNotified(lower: string): ChangeEventWorkflowDraft["ownerNotified"] {
-  if (containsAny(lower, ["owner approved", "owner notified", "told the owner", "sent to owner", "client approved"])) {
+  if (
+    containsAny(lower, [
+      "owner approved",
+      "owner notified",
+      "owner was notified",
+      "told the owner",
+      "sent to owner",
+      "client approved",
+      "client was notified",
+    ])
+  ) {
     return "yes";
   }
   if (containsAny(lower, ["owner not notified", "not told owner", "client not notified"])) {
@@ -283,13 +358,55 @@ function buildConfirmPrompt(draft: Omit<ChangeEventWorkflowDraft, "checklist" | 
   ].join("\n");
 }
 
+function mergeUnique(...values: Array<string[] | undefined>): string[] {
+  return Array.from(
+    new Set(values.flatMap((items) => items ?? []).filter((item) => item.trim())),
+  );
+}
+
+function combineNarrative(previous: string | null | undefined, current: string | null): string | null {
+  if (!previous) return current;
+  if (!current) return previous;
+  if (previous.includes(current)) return previous;
+  return `${previous}\n\nFollow-up: ${current}`;
+}
+
+function finalizeDraft(
+  draftBase: Omit<
+    ChangeEventWorkflowDraft,
+    "recommendedImpacts" | "missingRisks" | "nextQuestion" | "readyForPreview" | "confirmPrompt" | "checklist"
+  >,
+): ChangeEventWorkflowDraft {
+  const draft = {
+    ...draftBase,
+    recommendedImpacts: [] as string[],
+    missingRisks: [] as string[],
+    nextQuestion: "",
+    readyForPreview: false,
+    confirmPrompt: "",
+    checklist: [] as ChangeEventWorkflowChecklistItem[],
+  };
+
+  draft.recommendedImpacts = buildRecommendedImpacts(draft);
+  draft.missingRisks = buildMissingRisks(draft);
+  draft.readyForPreview = Boolean(
+    draft.projectId && draft.title && draft.narrative && draft.cause,
+  );
+  draft.nextQuestion = nextQuestionFor(draft);
+  draft.confirmPrompt = buildConfirmPrompt(draft);
+  draft.checklist = buildChecklist(draft);
+  return draft;
+}
+
 export function buildChangeEventWorkflowDraft({
   prompt,
   selectedProjectId = null,
   selectedProjectName = null,
+  previousDraft,
 }: BuildChangeEventWorkflowDraftParams): ChangeEventWorkflowDraft {
   const normalizedPrompt = normalizePrompt(prompt);
   const lower = normalizedPrompt.toLowerCase();
+  const previous = readExistingDraft(previousDraft);
   const title = inferTitle(normalizedPrompt);
   const cause = inferCause(lower);
   const scope = inferScope(lower, cause);
@@ -299,36 +416,67 @@ export function buildChangeEventWorkflowDraft({
   const supportingDocs = inferSupportingDocs(lower);
   const relatedRecordHints = buildRelatedRecordHints(lower);
   const narrative = normalizedPrompt.length >= 24 ? normalizedPrompt : null;
+  const looksLikeNewChangeEventRequest = containsAny(lower, [
+    "change event",
+    "change request",
+    "potential change",
+  ]);
 
-  const draftBase = {
-    projectId: selectedProjectId ?? null,
-    projectName: selectedProjectName ?? null,
-    title: title ?? (narrative ? DEFAULT_TITLE : null),
-    narrative,
-    cause,
-    scope,
-    costImpact,
-    scheduleImpact,
-    ownerNotified,
-    supportingDocs,
-    relatedRecordHints,
-    recommendedImpacts: [] as string[],
-    missingRisks: [] as string[],
-    nextQuestion: "",
-    readyForPreview: false,
-    confirmPrompt: "",
-  };
+  return finalizeDraft({
+    projectId: selectedProjectId ?? previous.projectId ?? null,
+    projectName: selectedProjectName ?? previous.projectName ?? null,
+    title:
+      looksLikeNewChangeEventRequest || !previous.title
+        ? title ?? previous.title ?? (narrative ? DEFAULT_TITLE : null)
+        : previous.title,
+    narrative: combineNarrative(previous.narrative, narrative),
+    cause: cause ?? previous.cause ?? null,
+    scope: scope !== "TBD" ? scope : previous.scope ?? scope,
+    costImpact: costImpact ?? previous.costImpact ?? null,
+    scheduleImpact: scheduleImpact ?? previous.scheduleImpact ?? null,
+    ownerNotified:
+      ownerNotified !== "unknown" ? ownerNotified : previous.ownerNotified ?? ownerNotified,
+    supportingDocs: mergeUnique(previous.supportingDocs, supportingDocs),
+    relatedRecordHints: mergeUnique(previous.relatedRecordHints, relatedRecordHints),
+  });
+}
 
-  draftBase.recommendedImpacts = buildRecommendedImpacts(draftBase);
-  draftBase.missingRisks = buildMissingRisks(draftBase);
-  draftBase.readyForPreview = Boolean(
-    draftBase.projectId && draftBase.title && draftBase.narrative && draftBase.cause,
-  );
-  draftBase.nextQuestion = nextQuestionFor(draftBase);
-  draftBase.confirmPrompt = buildConfirmPrompt(draftBase);
+export function buildChangeEventWorkflowMetadata(params: {
+  prompt: string;
+  selectedProjectId?: number | null;
+  selectedProjectName?: string | null;
+  previousDraft?: unknown;
+  updatedAt?: string;
+}): ChangeEventWorkflowMetadata {
+  const draft = buildChangeEventWorkflowDraft(params);
+  const missingChecklistKeys = draft.checklist
+    .filter((item) => item.status !== "complete")
+    .map((item) => item.key);
+  const activeChecklistKey =
+    draft.checklist.find((item) => item.status === "active")?.key ?? null;
 
   return {
-    ...draftBase,
-    checklist: buildChecklist(draftBase),
+    version: CHANGE_EVENT_WORKFLOW_METADATA_VERSION,
+    workflowKey: "change_event",
+    widgetType: "change_event_workflow",
+    expectedNativeTool: "createChangeEvent",
+    writeOwner: "createChangeEvent",
+    updatedAt: params.updatedAt ?? new Date().toISOString(),
+    source: "ai_assistant_chat",
+    draft,
+    readiness: {
+      readyForPreview: draft.readyForPreview,
+      missingChecklistKeys,
+      activeChecklistKey,
+    },
   };
+}
+
+export function isChangeEventFinalPreviewRequest(prompt: string): boolean {
+  const normalized = normalizePrompt(prompt).toLowerCase();
+  return (
+    normalized.includes("prepare the final createchangeevent preview") ||
+    normalized.includes("call createchangeevent with confirmed=false") ||
+    normalized.includes("confirmed=false")
+  );
 }

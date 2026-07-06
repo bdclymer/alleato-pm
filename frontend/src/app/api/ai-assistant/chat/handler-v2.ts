@@ -58,6 +58,10 @@ import type {
   OutlookInboxSummaryWidgetPayload,
   TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
+import {
+  buildChangeEventWorkflowMetadata,
+  isChangeEventFinalPreviewRequest,
+} from "@/lib/ai/change-event-workflow";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
   CHARS_PER_TOKEN,
@@ -265,6 +269,50 @@ function extractPersistableDataParts(message: UIMessage): Json[] {
     })
     .map(toJsonValue)
     .filter((part): part is Json => part !== undefined);
+}
+
+function changeEventWorkflowDraftFromMetadata(metadata: unknown): unknown | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  const workflow = (metadata as Record<string, unknown>).change_event_workflow;
+  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) {
+    return null;
+  }
+  return (workflow as Record<string, unknown>).draft ?? null;
+}
+
+async function loadLatestChangeEventWorkflowDraft(params: {
+  supabase: SupabaseClient<Database>;
+  sessionId: string;
+  userId: string;
+}): Promise<unknown | null> {
+  const { data, error } = await params.supabase
+    .from("chat_history")
+    .select("metadata")
+    .eq("session_id", params.sessionId)
+    .eq("user_id", params.userId)
+    .eq("role", "assistant")
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    throw new Error(`Loading change-event workflow state failed: ${error.message}`);
+  }
+
+  for (const row of data ?? []) {
+    const draft = changeEventWorkflowDraftFromMetadata(
+      (row as { metadata?: unknown }).metadata,
+    );
+    if (draft) return draft;
+  }
+  return null;
+}
+
+function isLikelyChangeEventWorkflowFollowup(message: string): boolean {
+  return /\b(cost|price|pricing|estimate|\$[\d,]+|schedule|delay|critical path|owner|client|notified|photo|drawing|rfi|email|meeting|daily log|no impact|no cost|no delay)\b/i.test(
+    message,
+  );
 }
 
 function buildResponseQualityMetadata(params: {
@@ -2289,12 +2337,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         if (lastUserContent.trim()) {
-          await args.supabase.from("chat_history").insert({
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "user",
             content: lastUserContent,
           });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the change-event workflow user turn failed: ${userPersistError.message}`,
+            );
+          }
         }
 
         const metadataLookup = await loadLatestExecutiveBriefingMetadata(
@@ -2578,6 +2631,164 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           data: {
             stage: "complete",
             message: "RFI preview prepared",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      const previousChangeEventWorkflowDraft =
+        await loadLatestChangeEventWorkflowDraft({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+        });
+      const shouldUseChangeEventWorkflow =
+        !isChangeEventFinalPreviewRequest(lastUserContent) &&
+        (plan.intent === "change_event_write" ||
+          (Boolean(previousChangeEventWorkflowDraft) &&
+            isLikelyChangeEventWorkflowFollowup(lastUserContent)));
+
+      if (shouldUseChangeEventWorkflow) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-workflow",
+            message: "Updating change-event intake workflow",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the change-event workflow user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const workflow = buildChangeEventWorkflowMetadata({
+          prompt: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+          previousDraft: previousChangeEventWorkflowDraft,
+        });
+        const dataPart = {
+          type: "data-assistant-widget",
+          id: "assistant-widget-change-event-workflow",
+          data: {
+            widget: {
+              type: "change_event_workflow",
+              id: "change-event-workflow",
+              title: "Change event workflow",
+              draft: workflow.draft,
+            },
+          },
+        };
+        const missingLabels = workflow.draft.checklist
+          .filter((item) => item.status !== "complete")
+          .map((item) => item.label.toLowerCase());
+        const content = workflow.readiness.readyForPreview
+          ? "I updated the change-event draft. It is ready for final preview when you are."
+          : `I updated the change-event draft. Next: ${workflow.draft.nextQuestion}`;
+        const toolTrace = [
+          {
+            tool: "changeEventWorkflowState",
+            toolName: "changeEventWorkflowState",
+            status: "success",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+              hadPriorDraft: Boolean(previousChangeEventWorkflowDraft),
+            },
+            output: {
+              readyForPreview: workflow.readiness.readyForPreview,
+              activeChecklistKey: workflow.readiness.activeChecklistKey,
+              missingChecklistKeys: workflow.readiness.missingChecklistKeys,
+              expectedNativeTool: workflow.expectedNativeTool,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+
+        writer.write(dataPart as never);
+        writeTextResponse(writer, "strategist-change-event-workflow", content);
+
+        const { error: workflowPersistError } = await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: toJsonValue({
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-change-event-workflow",
+              model: null,
+            },
+            provider_path: "deterministic-change-event-workflow",
+            model: null,
+            retrieval_plan: {
+              intent: "change_event_write",
+              reason: "change_event_workflow_intake",
+              responseFormat: "workflow_intake",
+              sources: ["chat_history.change_event_workflow"],
+            },
+            change_event_workflow: workflow,
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: {
+              orchestrator: "change-event-workflow-intake",
+              evidenceCount: 0,
+              sourceCoverage: [
+                {
+                  sourceType: "chat_history.change_event_workflow",
+                  status: "checked",
+                  notes: missingLabels.length
+                    ? `Missing: ${missingLabels.join(", ")}`
+                    : "Workflow intake is ready for final preview.",
+                },
+              ],
+            },
+            data_parts: [dataPart],
+          }) as Json,
+        });
+        if (workflowPersistError) {
+          throw new Error(
+            `Persisting the change-event workflow assistant turn failed: ${workflowPersistError.message}`,
+          );
+        }
+
+        const { error: conversationUpdateError } = await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        if (conversationUpdateError) {
+          throw new Error(
+            `Updating the change-event workflow conversation timestamp failed: ${conversationUpdateError.message}`,
+          );
+        }
+
+        responseAlreadyPersisted = true;
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: workflow.readiness.readyForPreview
+              ? "Change-event workflow ready for final preview"
+              : "Change-event workflow updated",
             status: "success",
             timestamp: new Date().toISOString(),
           },
