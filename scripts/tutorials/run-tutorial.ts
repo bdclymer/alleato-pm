@@ -5,6 +5,7 @@ import { runTutorial, type TutorialDefinition } from "./tutorial-recorder";
 
 interface CliOptions {
   baseUrl: string;
+  docsScreenshots: boolean;
   headed: boolean;
   outputDir?: string;
   storageState?: string;
@@ -14,6 +15,7 @@ interface CliOptions {
 function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     baseUrl: process.env.TUTORIAL_BASE_URL ?? "http://localhost:3001",
+    docsScreenshots: false,
     headed: false,
     storageState: process.env.TUTORIAL_STORAGE_STATE,
   };
@@ -26,6 +28,8 @@ function parseArgs(argv: string[]): CliOptions {
     }
     if (arg === "--base-url") {
       options.baseUrl = requireValue(argv, ++index, arg);
+    } else if (arg === "--docs-screenshots") {
+      options.docsScreenshots = true;
     } else if (arg === "--headed") {
       options.headed = true;
     } else if (arg === "--output-dir") {
@@ -59,6 +63,7 @@ function printHelp() {
 
 Options:
   --base-url <url>        App origin. Default: TUTORIAL_BASE_URL or http://localhost:3001
+  --docs-screenshots      Hide persistent app chrome before capturing screenshots
   --storage-state <file>  Playwright storage state JSON for authenticated routes
   --output-dir <dir>      Output directory. Default: docs/tutorials/{module}/{tutorial}
   --headed                Run browser headed
@@ -86,6 +91,7 @@ async function main() {
 
   const result = await runTutorial(definition, {
     baseUrl: options.baseUrl,
+    docsScreenshots: options.docsScreenshots,
     headed: options.headed,
     outputDir,
     storageState: options.storageState,

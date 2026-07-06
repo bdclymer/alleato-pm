@@ -48,6 +48,7 @@ export interface TutorialWorkflowContext<TData extends TutorialSeedData = Tutori
 
 export interface TutorialRunOptions {
   baseUrl: string;
+  docsScreenshots?: boolean;
   headed: boolean;
   outputDir: string;
   storageState?: string;
@@ -77,6 +78,7 @@ export function defineTutorial<TData extends TutorialSeedData>(
 export class TutorialRecorder {
   private readonly baseUrl: string;
   private readonly definition: TutorialDefinition;
+  private readonly docsScreenshots: boolean;
   private readonly outputDir: string;
   private readonly page: Page;
   private readonly screenshotsDir: string;
@@ -85,16 +87,19 @@ export class TutorialRecorder {
   constructor({
     definition,
     baseUrl,
+    docsScreenshots = false,
     outputDir,
     page,
   }: {
     definition: TutorialDefinition;
     baseUrl: string;
+    docsScreenshots?: boolean;
     outputDir: string;
     page: Page;
   }) {
     this.baseUrl = baseUrl;
     this.definition = definition;
+    this.docsScreenshots = docsScreenshots;
     this.outputDir = outputDir;
     this.page = page;
     this.screenshotsDir = path.join(outputDir, "screenshots");
@@ -190,6 +195,16 @@ export class TutorialRecorder {
         mask,
         path: screenshotPath,
       });
+    } else if (this.docsScreenshots) {
+      const clip = await this.getDocsScreenshotClip(screenshotMode);
+      await this.withDocsScreenshotChromeHidden(async () => {
+        await this.page.screenshot({
+          clip,
+          fullPage: false,
+          mask,
+          path: screenshotPath,
+        });
+      });
     } else {
       await this.page.screenshot({
         fullPage: screenshotMode === "fullPage",
@@ -277,6 +292,60 @@ export class TutorialRecorder {
     return selectors.map((selector) => this.page.locator(selector));
   }
 
+  private async getDocsScreenshotClip(screenshotMode: ScreenshotMode) {
+    return this.page.evaluate((mode) => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const documentHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body?.scrollHeight ?? 0,
+      );
+      const x = 0;
+      const y = 48;
+      const width = Math.max(320, Math.floor(viewportWidth - x));
+      const height =
+        mode === "fullPage"
+          ? Math.max(320, Math.floor(documentHeight - y))
+          : Math.max(320, Math.floor(viewportHeight - y));
+
+      return { x, y, width, height };
+    }, screenshotMode);
+  }
+
+  private async withDocsScreenshotChromeHidden(capture: () => Promise<void>) {
+    await this.page.evaluate(() => {
+      document.querySelector("[data-tutorial-docs-screenshot-style]")?.remove();
+      const style = document.createElement("style");
+      style.setAttribute("data-tutorial-docs-screenshot-style", "true");
+      style.textContent = `
+        [data-slot="sidebar"],
+        [data-slot="sidebar-content"],
+        [data-slot="sidebar-header"],
+        [data-slot="sidebar-footer"],
+        [data-slot="sidebar-rail"],
+        [data-sidebar="sidebar"],
+        [data-sidebar="rail"],
+        aside {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    });
+
+    try {
+      await capture();
+    } finally {
+      await this.page
+        .evaluate(() => {
+          document.querySelector("[data-tutorial-docs-screenshot-style]")?.remove();
+        })
+        .catch(() => undefined);
+    }
+  }
+
   private async waitForStability() {
     await this.page.waitForLoadState("domcontentloaded").catch(() => undefined);
     // Wait until the route has actually painted real content. In dev, Turbopack
@@ -361,6 +430,7 @@ export async function runTutorial(
     const recorder = new TutorialRecorder({
       definition,
       baseUrl: options.baseUrl,
+      docsScreenshots: options.docsScreenshots,
       outputDir: options.outputDir,
       page,
     });
