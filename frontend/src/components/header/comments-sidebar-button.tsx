@@ -514,7 +514,7 @@ function PageDiscussionSheet({
             )}
           </SidePanelBody>
           <SidePanelFooter className="border-t border-border/60 px-4 py-3">
-            <div className="flex flex-col gap-3">
+            <div className="flex w-full flex-col gap-3">
               <Button
                 type="button"
                 variant="ghost"

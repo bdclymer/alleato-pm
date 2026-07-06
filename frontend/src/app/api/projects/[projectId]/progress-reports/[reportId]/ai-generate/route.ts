@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requireDeveloperApi } from "@/lib/auth/require-developer";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { generateProgressReportSections } from "@/lib/progress-reports/ai-generate";
@@ -11,11 +11,11 @@ export const dynamic = "force-dynamic";
 
 export const POST = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/ai-generate#POST",
-  async ({ params }) => {
-    const developerGuard = await requireDeveloperApi();
+  async ({ request, params }) => {
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

@@ -1,23 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowUpRight,
-  Clock,
-  Copy,
-  Download,
-  Inbox,
-  Link2,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
+import { Clock, Inbox, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
+import { shouldLoadPrimeContractPcoFinancialMarkup } from "@/lib/prime-contract-pcos/financial-markup-load";
 import {
   PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
 } from "@/lib/change-orders/prime-contract-change-order-statuses";
@@ -34,14 +27,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Inline } from "@/components/layout/inline";
+  Skeleton,
+} from "@/components/ui/skeleton";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -62,7 +49,6 @@ import {
 } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { ErrorState, StatusBadge } from "@/components/ds";
-import { PrimeContractFinancialMarkupTab } from "@/components/domain/contracts/prime-contract-detail";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import {
   InlineTable,
@@ -73,6 +59,14 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds";
+import { PrimeContractPcoHeaderActions } from "./prime-contract-pco-header-actions";
+
+const PrimeContractFinancialMarkupTab = dynamic(
+  () =>
+    import(
+      "@/components/domain/contracts/prime-contract-detail/PrimeContractFinancialMarkupTab"
+    ).then((module) => module.PrimeContractFinancialMarkupTab),
+);
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -219,6 +213,7 @@ export default function PrimeContractPcoDetailPage() {
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [savedVerticalMarkups, setSavedVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
+  const [hasLoadedFinancialMarkupData, setHasLoadedFinancialMarkupData] = useState(false);
 
   const buildPcoDetailPath = useCallback(
     (primeContractId: string | null | undefined) => {
@@ -258,49 +253,37 @@ export default function PrimeContractPcoDetailPage() {
   }, [contractIdFromRoute, pco?.prime_contract_id, router, buildPcoDetailPath]);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (
+      !shouldLoadPrimeContractPcoFinancialMarkup({
+        projectId,
+        activeTab,
+        hasLoadedFinancialMarkupData,
+      })
+    ) {
+      return;
+    }
 
     let active = true;
-    const fetchBudgetCodes = async () => {
-      try {
-        const response = await apiFetch<{ budgetCodes: BudgetCode[] }>(
-          `/api/projects/${projectId}/budget-codes`,
-        );
-        if (active) {
-          setBudgetCodes(response.budgetCodes || []);
-        }
-      } catch {
-        if (active) {
-          setBudgetCodes([]);
-        }
-      }
-    };
-
-    void fetchBudgetCodes();
-    return () => {
-      active = false;
-    };
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-
-    let active = true;
-    const fetchVerticalMarkups = async () => {
+    const fetchFinancialMarkupData = async () => {
       setMarkupsLoading(true);
       try {
-        const data = await apiFetch<{ markups?: VerticalMarkup[] }>(
-          `/api/projects/${projectId}/vertical-markup`,
-        );
+        const [budgetCodeResponse, markupResponse] = await Promise.all([
+          apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`),
+          apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`),
+        ]);
         if (!active) return;
-        const fetched = data.markups || [];
-        setVerticalMarkups(fetched);
-        setSavedVerticalMarkups(fetched);
+
+        const fetchedMarkups = markupResponse.markups || [];
+        setBudgetCodes(budgetCodeResponse.budgetCodes || []);
+        setVerticalMarkups(fetchedMarkups);
+        setSavedVerticalMarkups(fetchedMarkups);
+        setHasLoadedFinancialMarkupData(true);
       } catch {
-        if (active) {
-          setVerticalMarkups([]);
-          setSavedVerticalMarkups([]);
-        }
+        if (!active) return;
+        setBudgetCodes([]);
+        setVerticalMarkups([]);
+        setSavedVerticalMarkups([]);
+        setHasLoadedFinancialMarkupData(true);
       } finally {
         if (active) {
           setMarkupsLoading(false);
@@ -308,11 +291,11 @@ export default function PrimeContractPcoDetailPage() {
       }
     };
 
-    void fetchVerticalMarkups();
+    void fetchFinancialMarkupData();
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [activeTab, hasLoadedFinancialMarkupData, projectId]);
 
   /* ── Navigation ────────────────────────────────────────────────── */
 
@@ -323,6 +306,17 @@ export default function PrimeContractPcoDetailPage() {
     }
     router.push(`/${projectId}/prime-contract-pcos`);
   }, [router, projectId, contractIdFromRoute]);
+
+  const buildPcoEditPath = useCallback(
+    (primeContractId: string | null | undefined) => {
+      const resolvedContractId = contractIdFromRoute ?? primeContractId ?? null;
+      if (resolvedContractId) {
+        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}/edit`;
+      }
+      return `/${projectId}/prime-contract-pcos/${pcoId}/edit`;
+    },
+    [contractIdFromRoute, pcoId, projectId],
+  );
 
   /* ── Actions ───────────────────────────────────────────────────── */
 
@@ -582,43 +576,16 @@ export default function PrimeContractPcoDetailPage() {
     : "Prime Contract";
 
   const headerActions = (
-    <Inline gap="sm">
-      {canPromote && (
-        <Button size="sm" onClick={() => setShowPromoteDialog(true)}>
-          <ArrowUpRight className="mr-1 h-4 w-4" />
-          Promote to PCCO
-        </Button>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export as CSV
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopyId}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy ID
-          </DropdownMenuItem>
-          {canDelete && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Inline>
+    <PrimeContractPcoHeaderActions
+      canDelete={canDelete}
+      canEdit={canEdit}
+      canPromote={canPromote}
+      onCopyId={handleCopyId}
+      onDelete={() => setShowDeleteDialog(true)}
+      onEdit={() => router.push(buildPcoEditPath(pco.prime_contract_id))}
+      onExport={handleExport}
+      onPromote={() => setShowPromoteDialog(true)}
+    />
   );
 
   /* ── Main render ────────────────────────────────────────────────── */
@@ -1151,15 +1118,28 @@ export default function PrimeContractPcoDetailPage() {
         )}
 
         {activeTab === "financial-markup" && (
-          <PrimeContractFinancialMarkupTab
-            projectId={String(projectId)}
-            budgetCodes={budgetCodes}
-            verticalMarkups={verticalMarkups}
-            setVerticalMarkups={setVerticalMarkups}
-            savedVerticalMarkups={savedVerticalMarkups}
-            setSavedVerticalMarkups={setSavedVerticalMarkups}
-            markupsLoading={markupsLoading}
-          />
+          markupsLoading && !hasLoadedFinancialMarkupData ? (
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Financial Markup"
+                className="[&_span]:text-primary"
+              />
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-44 w-full" />
+              </div>
+            </section>
+          ) : (
+            <PrimeContractFinancialMarkupTab
+              projectId={String(projectId)}
+              budgetCodes={budgetCodes}
+              verticalMarkups={verticalMarkups}
+              setVerticalMarkups={setVerticalMarkups}
+              savedVerticalMarkups={savedVerticalMarkups}
+              setSavedVerticalMarkups={setSavedVerticalMarkups}
+              markupsLoading={markupsLoading}
+            />
+          )
         )}
 
         {activeTab === "history" && (

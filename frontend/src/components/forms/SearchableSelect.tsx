@@ -34,6 +34,7 @@ interface SearchableSelectProps {
   onCreateNew?: () => void;
   createNewLabel?: string;
   showIndicator?: boolean;
+  triggerVariant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
   triggerTestId?: string;
   optionTestIdPrefix?: string;
   searchInputTestId?: string;
@@ -55,6 +56,7 @@ export function SearchableSelect({
   onCreateNew,
   createNewLabel = "+ Create New",
   showIndicator = true,
+  triggerVariant = "outline",
   triggerTestId,
   optionTestIdPrefix,
   searchInputTestId,
@@ -86,7 +88,7 @@ export function SearchableSelect({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant={triggerVariant}
               role="combobox"
               aria-expanded={open}
               className={cn(

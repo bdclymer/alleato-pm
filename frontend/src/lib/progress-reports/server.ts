@@ -246,10 +246,8 @@ export { mergeProgressReportContacts, resolveProgressReportContacts };
  *
  * Source priority:
  * 1. `project_roles` + `project_role_members`, which the Directory role UI owns.
- * 2. `project_directory_memberships`, for legacy/direct membership role labels.
- *
- * The merge step dedupes by email/name/phone/role so the same person can appear
- * through both systems without duplicating on the report.
+ * 2. `project_directory_memberships`, only as a legacy fallback when no roles
+ *    are configured for the project yet.
  */
 export async function listProjectTeamContacts(projectId: number): Promise<ProgressReportContact[]> {
   const db = createServiceClient();
@@ -285,10 +283,11 @@ export async function listProjectTeamContacts(projectId: number): Promise<Progre
   if (roleMembersResult.error) throw new Error(roleMembersResult.error.message);
 
   const roleMembers = (roleMembersResult.data ?? []) as ProjectRoleMemberRow[];
+  const membershipsAsFallback = roleIds.length === 0 ? memberships : [];
   const personIds = Array.from(
     new Set([
       ...roleMembers.map((member) => member.person_id),
-      ...memberships.map((membership) => membership.person_id),
+      ...membershipsAsFallback.map((membership) => membership.person_id),
     ]),
   );
 
@@ -319,7 +318,7 @@ export async function listProjectTeamContacts(projectId: number): Promise<Progre
     });
   }
 
-  for (const membership of memberships) {
+  for (const membership of membershipsAsFallback) {
     const person = peopleById.get(membership.person_id);
     if (!person) continue;
     contacts.push({
@@ -474,7 +473,7 @@ export async function getProgressReportDetail(
     throw new Error(reportError?.message ?? "Progress report not found");
   }
 
-  const [photoLinksResult, availablePhotosResult] = await Promise.all([
+  const [photoLinksResult, availablePhotosResult, currentProjectContacts] = await Promise.all([
     db
       .from("project_progress_report_photos")
       .select("*")
@@ -488,6 +487,7 @@ export async function getProgressReportDetail(
       .order("date_taken", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(60),
+    listProjectTeamContacts(projectId),
   ]);
 
   if (photoLinksResult.error) throw new Error(photoLinksResult.error.message);
@@ -509,8 +509,17 @@ export async function getProgressReportDetail(
     })
     .filter((item): item is ProgressReportPhotoSelection => item !== null);
 
+  const mappedReport = mapReport(reportRow as ProgressReportRow);
+  const report =
+    mappedReport.status === "draft"
+      ? {
+          ...mappedReport,
+          contacts: currentProjectContacts,
+        }
+      : mappedReport;
+
   return {
-    report: mapReport(reportRow as ProgressReportRow),
+    report,
     selectedPhotos,
     availablePhotos,
   };

@@ -3,11 +3,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import { buildProgressReportHtml } from "@/lib/progress-reports/pdf";
-import {
-  BRANDED_FOOTER_MARGIN,
-  buildBrandedFooterTemplate,
-} from "@/lib/documents/branded-letterhead";
+import { buildProgressReportPdfLayout } from "@/lib/progress-reports/pdf";
 import {
   getProgressReportDetail,
   listProjectTeamContacts,
@@ -55,7 +51,7 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const html = buildProgressReportHtml({
+    const layout = buildProgressReportPdfLayout({
       project: projectResult.data,
       report: {
         ...detail.report,
@@ -63,9 +59,8 @@ export const GET = withApiGuardrails(
       },
       selectedPhotos: detail.selectedPhotos,
     });
-    const pdfBuffer = await renderPdfFromHtml(html, {
-      footerTemplate: buildBrandedFooterTemplate(),
-      marginBottom: BRANDED_FOOTER_MARGIN,
+    const pdfBuffer = await renderPdfFromHtml(layout.html, {
+      footerOverlayPlan: layout.footerOverlayPlan,
     });
     const safeName = (projectResult.data.name ?? "project")
       .replace(/[^a-zA-Z0-9]+/g, "-")

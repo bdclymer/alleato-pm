@@ -119,6 +119,8 @@ Failure-loudly behavior: if direct source routing fails, keep the canonical comm
 | Browser thread proof | `node` Playwright browser check against `http://localhost:3001/team-chat` after opening `Comments inbox` | Pass | Imported comment rows render in the panel after the history load settles; screenshot saved at `/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/team-chat-comments-inbox-open-late.png`. |
 | Comments retry action | `cd frontend && ./node_modules/.bin/eslint src/features/comments/comments-split-page.tsx && npm run typecheck:changed -- --staged` | Pass | The comments workspace error state now exposes a retry action instead of leaving a dead-end screen. |
 | Design ratchet | `cd frontend && npm run design:ratchet` | Pass | Design lint count improved by 1151; no new design-system regressions introduced by this slice. |
+| Velt comment chrome cleanup | `agent-browser --session-name alleato-test-3001 screenshot /tmp/velt-comments-panel.png` and `agent-browser --session-name alleato-test-3001 screenshot /tmp/velt-comments-hover.png` | Pass | The page comments sidebar now hides the redundant dialog-level options surface; screenshots confirm the top menu is gone while the per-thread panel remains usable. |
+| Thread menu placement | `frontend/src/app/globals.css` + browser check on `/meetings` comments popup | Pass | The thread-card options selector was missing, so the top-row ellipsis survived. Hiding `velt-comment-dialog-thread-card-options-wireframe` removes the extra header menu and leaves the row-level actions intact. |
 
 ## Files Changed
 
@@ -145,12 +147,14 @@ Failure-loudly behavior: if direct source routing fails, keep the canonical comm
 - `frontend/src/app/(main)/team-chat/page.tsx` - deep-link entry for comment discussion context.
 - `frontend/src/features/comments/comments-split-page.tsx` - comments workspace error state now exposes a retry action.
 - `frontend/src/components/velt/VeltGlobalLayer.tsx` - comment chrome now force-cleans after submit if the SDK misses the normal collapse path.
+- `frontend/src/app/globals.css` - hides the redundant dialog-level Velt options surface while preserving the per-thread action surface.
 
 ## Risks / Gaps
 
 - The repository already has adjacent task files for comments annotation and comment notification routing, so this work needs to avoid duplicating ownership or drifting into a second parallel comment system.
 - `/team-chat` is a separate chat stack today; any comment handoff into that page needs a precise link contract and failure-loud fallback.
 - Live browser/user-flow proof is now captured for the authenticated `/team-chat` shell and the opened comments inbox thread, but the notifications-page clickthrough and full reply/reopen loop still need explicit end-to-end proof.
+- The current Velt thread-menu slice is verified on the page-comments sidebar, but the page-comment reply/reopen loop still needs one more direct interaction proof against the lower thread-row menu.
 - Existing design-system warnings in `frontend/src/components/chat/chat-sidebar.tsx` and `frontend/src/components/chat/message-group.tsx` are unrelated repo debt and remain outside this slice.
 
 ## Final Status

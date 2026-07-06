@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import type { PdfFooterOverlayPlan } from "@/lib/documents/print-layout";
 
 interface BrandedDocumentHtmlOptions {
   title: string;
@@ -27,6 +28,7 @@ interface BrandedDocumentHtmlOptions {
 
 /** Page bottom margin reserved for `buildBrandedFooterTemplate`. */
 export const BRANDED_FOOTER_MARGIN = "0.9in";
+export const BRANDED_LAST_PAGE_FOOTER_MARGIN = "1.35in";
 
 const COMPANY_PHONE = "(317) 760-0088";
 const COMPANY_EMAIL = "info@alleatogroup.com";
@@ -142,6 +144,49 @@ export function buildBrandedFooterTemplate(): string {
     `<img src="${footerRuleSvgDataUri()}" style="display:block;width:100%;height:14px;" alt="" />` +
     `</div>`
   );
+}
+
+export function buildSimpleFooterOverlay({
+  documentTitle,
+  generatedAtLabel,
+}: {
+  documentTitle: string;
+  generatedAtLabel: string;
+}) {
+  return {
+    kind: "simple" as const,
+    companyName: "Alleato Group",
+    documentTitle,
+    generatedAtLabel,
+  };
+}
+
+export function buildDetailedFooterOverlay() {
+  return {
+    kind: "detailed" as const,
+    companyName: "Alleato Group",
+    phone: COMPANY_PHONE,
+    website: COMPANY_WEBSITE,
+    email: COMPANY_EMAIL,
+    locations: COMPANY_LOCATIONS,
+  };
+}
+
+export function buildBrandedLastPageFooterOverlayPlan({
+  documentTitle,
+  generatedAtLabel,
+}: {
+  documentTitle: string;
+  generatedAtLabel: string;
+}): PdfFooterOverlayPlan {
+  return {
+    marginBottom: BRANDED_LAST_PAGE_FOOTER_MARGIN,
+    defaultVariant: buildSimpleFooterOverlay({
+      documentTitle,
+      generatedAtLabel,
+    }),
+    lastPageVariant: buildDetailedFooterOverlay(),
+  };
 }
 
 export function buildBrandedDocumentHtml({

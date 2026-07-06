@@ -1,5 +1,11 @@
 import { logger } from "@/lib/logger";
 import { getPublicAssetDataUri } from "@/lib/documents/branded-letterhead";
+import type {
+  DetailedPdfFooterOverlayVariant,
+  PdfFooterOverlayPlan,
+  PdfFooterOverlayVariant,
+  SimplePdfFooterOverlayVariant,
+} from "@/lib/documents/print-layout";
 
 /**
  * Must match the installed @sparticuz/chromium version — the guardrail test in
@@ -500,6 +506,199 @@ export interface RenderPdfOptions {
   marginBottom?: string;
   /** Print in landscape orientation (wide tables). Defaults to portrait. */
   landscape?: boolean;
+  /** Shared branded footer overlays applied after render; supports last-page-only variants. */
+  footerOverlayPlan?: PdfFooterOverlayPlan;
+}
+
+function rgbFromHex(hex: string): [number, number, number] {
+  const normalized = hex.replace("#", "");
+  const full =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((value) => value + value)
+          .join("")
+      : normalized.padEnd(6, "0").slice(0, 6);
+
+  const value = Number.parseInt(full, 16);
+  return [
+    ((value >> 16) & 0xff) / 255,
+    ((value >> 8) & 0xff) / 255,
+    (value & 0xff) / 255,
+  ];
+}
+
+async function applyFooterOverlayPlan(
+  pdfBytes: Buffer,
+  plan: PdfFooterOverlayPlan,
+): Promise<Buffer> {
+  const pdfLib = await import("pdf-lib");
+  const pdfDoc = await pdfLib.PDFDocument.load(pdfBytes);
+  const regularFont = await pdfDoc.embedFont(pdfLib.StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(pdfLib.StandardFonts.HelveticaBold);
+  const pages = pdfDoc.getPages();
+  const totalPages = pages.length;
+  const colors = {
+    text: pdfLib.rgb(...rgbFromHex("#6f6a64")),
+    muted: pdfLib.rgb(...rgbFromHex("#9d968f")),
+    border: pdfLib.rgb(...rgbFromHex("#e5dfd8")),
+    dark: pdfLib.rgb(...rgbFromHex("#2f3030")),
+    orange: pdfLib.rgb(...rgbFromHex("#df8127")),
+    white: pdfLib.rgb(1, 1, 1),
+  };
+
+  const drawAlignedText = ({
+    page,
+    text,
+    font,
+    size,
+    y,
+    align,
+    padding = 36,
+    color = colors.text,
+  }: {
+    page: (typeof pages)[number];
+    text: string;
+    font: typeof regularFont;
+    size: number;
+    y: number;
+    align: "left" | "center" | "right";
+    padding?: number;
+    color?: ReturnType<typeof pdfLib.rgb>;
+  }) => {
+    const pageWidth = page.getWidth();
+    const textWidth = font.widthOfTextAtSize(text, size);
+    const x =
+      align === "left"
+        ? padding
+        : align === "right"
+          ? pageWidth - padding - textWidth
+          : Math.max(padding, (pageWidth - textWidth) / 2);
+
+    page.drawText(text, { x, y, size, font, color });
+  };
+
+  const drawSimpleFooter = (
+    page: (typeof pages)[number],
+    variant: SimplePdfFooterOverlayVariant,
+    pageNumber: number,
+  ) => {
+    const pageWidth = page.getWidth();
+    page.drawLine({
+      start: { x: 36, y: 28 },
+      end: { x: pageWidth - 36, y: 28 },
+      thickness: 1,
+      color: colors.border,
+    });
+    drawAlignedText({
+      page,
+      text: `${variant.companyName} - ${variant.documentTitle} - ${variant.generatedAtLabel}`,
+      font: regularFont,
+      size: 9,
+      y: 14,
+      align: "left",
+    });
+    drawAlignedText({
+      page,
+      text: `Page ${pageNumber} of ${totalPages}`,
+      font: regularFont,
+      size: 9,
+      y: 14,
+      align: "right",
+      color: colors.muted,
+    });
+  };
+
+  const drawDetailedFooter = (
+    page: (typeof pages)[number],
+    variant: DetailedPdfFooterOverlayVariant,
+    pageNumber: number,
+  ) => {
+    const pageWidth = page.getWidth();
+    const brandBarHeight = 14;
+
+    page.drawLine({
+      start: { x: 36, y: 78 },
+      end: { x: pageWidth - 36, y: 78 },
+      thickness: 1,
+      color: colors.border,
+    });
+    drawAlignedText({
+      page,
+      text: `Page ${pageNumber} of ${totalPages}`,
+      font: regularFont,
+      size: 8,
+      y: 84,
+      align: "right",
+      color: colors.muted,
+    });
+    drawAlignedText({
+      page,
+      text: `${variant.phone}  |  ${variant.website}  |  ${variant.email}`,
+      font: regularFont,
+      size: 9,
+      y: 58,
+      align: "center",
+    });
+    drawAlignedText({
+      page,
+      text: variant.locations.join(" · "),
+      font: regularFont,
+      size: 8,
+      y: 42,
+      align: "center",
+      color: colors.muted,
+    });
+
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: pageWidth,
+      height: brandBarHeight,
+      color: colors.orange,
+    });
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: pageWidth * 0.55,
+      height: brandBarHeight,
+      color: colors.dark,
+    });
+    page.drawRectangle({
+      x: pageWidth * 0.545,
+      y: -2,
+      width: 16,
+      height: brandBarHeight + 4,
+      rotate: pdfLib.degrees(-42),
+      color: colors.white,
+    });
+    drawAlignedText({
+      page,
+      text: variant.companyName,
+      font: boldFont,
+      size: 8,
+      y: brandBarHeight + 4,
+      align: "left",
+      color: colors.muted,
+    });
+  };
+
+  pages.forEach((page, index) => {
+    const pageNumber = index + 1;
+    const variant: PdfFooterOverlayVariant =
+      pageNumber === totalPages && plan.lastPageVariant
+        ? plan.lastPageVariant
+        : plan.defaultVariant;
+
+    if (variant.kind === "simple") {
+      drawSimpleFooter(page, variant, pageNumber);
+      return;
+    }
+
+    drawDetailedFooter(page, variant, pageNumber);
+  });
+
+  return Buffer.from(await pdfDoc.save());
 }
 
 export async function renderPdfFromHtml(
@@ -545,7 +744,11 @@ export async function renderPdfFromHtml(
           details ? `Local PDF renderer failed via ${nodeBinary}: ${details}` : String(error),
         );
       }
-      return await fs.readFile(outputPath);
+      const renderedPdf = await fs.readFile(outputPath);
+      if (options.footerOverlayPlan) {
+        return applyFooterOverlayPlan(renderedPdf, options.footerOverlayPlan);
+      }
+      return renderedPdf;
     } finally {
       await Promise.allSettled([
         fs.rm(htmlPath, { force: true }),
@@ -586,12 +789,17 @@ export async function renderPdfFromHtml(
       margin: {
         top: "0.5in",
         right: "0.5in",
-        bottom: options.marginBottom ?? "0.5in",
+        bottom:
+          options.marginBottom ?? options.footerOverlayPlan?.marginBottom ?? "0.5in",
         left: "0.5in",
       },
     });
 
-    return Buffer.from(pdf);
+    const pdfBuffer = Buffer.from(pdf);
+    if (options.footerOverlayPlan) {
+      return applyFooterOverlayPlan(pdfBuffer, options.footerOverlayPlan);
+    }
+    return pdfBuffer;
   } finally {
     await browser.close();
   }

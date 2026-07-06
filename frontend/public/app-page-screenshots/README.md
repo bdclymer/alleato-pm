@@ -1,9 +1,9 @@
 # App Page Screenshots
 
-Generated from 320 Next.js page routes.
+Generated from 330 Next.js page routes.
 
-Base URL: https://projects.alleatogroup.com
+Base URL: http://localhost:3001
 Project ID: 1034
-Route set: product-tools
+Route set: all
 
 See `manifest.json` for route status, final URL, screenshot path, and skipped dynamic record routes.

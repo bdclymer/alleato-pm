@@ -9,6 +9,7 @@ import {
   DetailPanel,
   SectionRuleHeading,
 } from "@/components/layout";
+import { ErrorState } from "@/components/ds/error-state";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { Markdown } from "@/components/misc/markdown";
@@ -489,6 +490,16 @@ export function ProgressReportEditor({
     } finally {
       setIsSending(false);
     }
+  }
+
+  if (reportQuery.isError) {
+    return (
+      <ErrorState
+        title="Could not load progress report"
+        error={reportQuery.error}
+        onRetry={() => void reportQuery.refetch()}
+      />
+    );
   }
 
   // ── Loading ──
@@ -983,13 +994,12 @@ export function ProgressReportEditor({
   // ── View mode ──
   return (
     <ContentSectionStack>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2.5">
           <p className="text-sm font-medium text-foreground">{draft.title}</p>
           <p className="text-xs text-muted-foreground">{weekRange}</p>
         </div>
         <div className="flex items-center gap-2">
-          <StatusBadge status={draft.status} />
           <Button
             size="sm"
             variant="outline"
@@ -1136,35 +1146,37 @@ export function ProgressReportEditor({
                   <SideRailEmpty>No recipients saved.</SideRailEmpty>
                 )}
               </div>
+            </div>
+          </SideRailSection>
 
+          <SideRailSection title="Project Team">
+            {draft.contacts.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">Project team</p>
-                {draft.contacts.length > 0 ? (
-                  <div className="divide-y divide-border/60">
-                    {draft.contacts.map((contact, index) => (
-                      <div key={`${contact.email}-${index}`} className="space-y-0.5 py-3 first:pt-0 last:pb-0">
-                        {contact.role ? (
-                          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                            {contact.role}
-                          </div>
-                        ) : null}
+                {draft.contacts.map((contact, index) => (
+                  <SideRailRow
+                    key={`${contact.email}-${index}`}
+                    label={contact.role || "Project team"}
+                    value={
+                      <div className="space-y-0.5">
                         <div className="text-sm font-medium text-foreground">
                           {contact.name || "Unnamed contact"}
                         </div>
                         {contact.email ? (
-                          <div className="break-words text-xs text-muted-foreground">{contact.email}</div>
+                          <div className="break-words text-xs text-muted-foreground">
+                            {contact.email}
+                          </div>
                         ) : null}
                         {contact.phone ? (
                           <div className="text-xs text-muted-foreground">{contact.phone}</div>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <SideRailEmpty>No project team contacts added.</SideRailEmpty>
-                )}
+                    }
+                  />
+                ))}
               </div>
-            </div>
+            ) : (
+              <SideRailEmpty>No project team contacts added.</SideRailEmpty>
+            )}
           </SideRailSection>
 
           <SideRailSection title="Source Context">

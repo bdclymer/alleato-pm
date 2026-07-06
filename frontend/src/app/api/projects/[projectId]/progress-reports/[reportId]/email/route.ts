@@ -7,14 +7,10 @@ import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import { sendDocumentEmail } from "@/lib/documents/email";
 import {
   buildProgressReportEmailHtml,
-  buildProgressReportHtml,
+  buildProgressReportPdfLayout,
 } from "@/lib/progress-reports/pdf";
-import {
-  BRANDED_FOOTER_MARGIN,
-  buildBrandedFooterTemplate,
-} from "@/lib/documents/branded-letterhead";
 import { getProgressReportDetail } from "@/lib/progress-reports/server";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const emailSchema = z.object({
@@ -28,10 +24,10 @@ export const dynamic = "force-dynamic";
 export const POST = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/email#POST",
   async ({ request, params }) => {
-    const developerGuard = await requireDeveloperApi();
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
@@ -67,14 +63,13 @@ export const POST = withApiGuardrails(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const html = buildProgressReportHtml({
+    const layout = buildProgressReportPdfLayout({
       project: projectResult.data,
       report: detail.report,
       selectedPhotos: detail.selectedPhotos,
     });
-    const pdfBuffer = await renderPdfFromHtml(html, {
-      footerTemplate: buildBrandedFooterTemplate(),
-      marginBottom: BRANDED_FOOTER_MARGIN,
+    const pdfBuffer = await renderPdfFromHtml(layout.html, {
+      footerOverlayPlan: layout.footerOverlayPlan,
     });
     const projectName = projectResult.data.name ?? "Project";
     const safeName = projectName

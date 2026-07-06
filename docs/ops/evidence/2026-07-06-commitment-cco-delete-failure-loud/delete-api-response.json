@@ -1,0 +1,13 @@
+{
+  "status": 412,
+  "body": {
+    "details": {
+      "change_order_id": "aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "code": "CHANGE_ORDER_NOT_DRAFT",
+      "status": "pending"
+    },
+    "error_code": "PRECONDITION_FAILED",
+    "error_message": "CE-001 is currently pending. Only draft change orders can be deleted. Change the status back to draft first.",
+    "where_it_failed": "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE"
+  }
+}

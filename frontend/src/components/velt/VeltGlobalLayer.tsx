@@ -308,8 +308,9 @@ export function VeltGlobalLayer() {
         recordings="all"
         recordingTranscription
         recordingCountdown
+        dialogShadowDom={false}
         commentIndex={false}
-        status={false}
+        visibilityOptions={false}
         priority={false}
         ghostComments
         ghostCommentsIndicator

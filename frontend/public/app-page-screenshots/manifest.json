@@ -1,574 +1,879 @@
 {
-  "generatedAt": "2026-06-30T22:04:32.591Z",
-  "baseUrl": "https://projects.alleatogroup.com",
+  "generatedAt": "2026-07-06T16:35:22.858Z",
+  "baseUrl": "http://localhost:3001",
   "projectId": "1034",
-  "routeSet": "product-tools",
+  "routeSet": "all",
   "storageState": "frontend/tests/.auth/user.json",
-  "totalPageRoutes": 320,
-  "targetRoutes": 41,
+  "totalPageRoutes": 330,
+  "targetRoutes": 261,
   "summary": {
-    "skipped_non_app_scope": 250,
-    "captured": 41,
-    "skipped_dynamic_record": 28,
-    "skipped_unknown_param": 1
+    "captured_login_redirect": 60,
+    "capture_error": 201,
+    "skipped_unknown_param": 5,
+    "skipped_dynamic_record": 49,
+    "skipped_non_app_scope": 15
   },
   "results": [
     {
       "source": "frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx",
       "route": "/procore-tools/[slug]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/procore-tools/overview"
+      "status": "captured_login_redirect",
+      "urlPath": "/procore-tools/overview",
+      "url": "http://localhost:3001/procore-tools/overview",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fprocore-tools%2Foverview",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/(procore)/procore-tools/page.tsx",
       "route": "/procore-tools",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/procore-tools"
+      "status": "captured_login_redirect",
+      "urlPath": "/procore-tools",
+      "url": "http://localhost:3001/procore-tools",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fprocore-tools",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx",
       "route": "/support-articles/[articleId]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/support-articles/overview"
+      "status": "captured_login_redirect",
+      "urlPath": "/support-articles/overview",
+      "url": "http://localhost:3001/support-articles/overview",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fsupport-articles%2Foverview",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/(procore)/support-articles/page.tsx",
       "route": "/support-articles",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/support-articles"
+      "status": "captured_login_redirect",
+      "urlPath": "/support-articles",
+      "url": "http://localhost:3001/support-articles",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fsupport-articles",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/ap-invoices/page.tsx",
       "route": "/accounting/ap-invoices",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/ap-invoices"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/ap-invoices",
+      "url": "http://localhost:3001/accounting/ap-invoices",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fap-invoices",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/ap-payments/page.tsx",
       "route": "/accounting/ap-payments",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/ap-payments"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/ap-payments",
+      "url": "http://localhost:3001/accounting/ap-payments",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fap-payments",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/bills/page.tsx",
       "route": "/accounting/bills",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/bills"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/bills",
+      "url": "http://localhost:3001/accounting/bills",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fbills",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/checks/page.tsx",
       "route": "/accounting/checks",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/checks"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/checks",
+      "url": "http://localhost:3001/accounting/checks",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fchecks",
+      "title": "Alleato Construction PM"
+    },
+    {
+      "source": "frontend/src/app/(admin)/accounting/direct-costs/page.tsx",
+      "route": "/accounting/direct-costs",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/direct-costs",
+      "url": "http://localhost:3001/accounting/direct-costs",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fdirect-costs",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/finance-spend/page.tsx",
       "route": "/accounting/finance-spend",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/finance-spend"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/finance-spend",
+      "url": "http://localhost:3001/accounting/finance-spend",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Ffinance-spend",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/invoices/page.tsx",
       "route": "/accounting/invoices",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/invoices"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/invoices",
+      "url": "http://localhost:3001/accounting/invoices",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Finvoices",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/page.tsx",
       "route": "/accounting",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting",
+      "url": "http://localhost:3001/accounting",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/payments/page.tsx",
       "route": "/accounting/payments",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/payments"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/payments",
+      "url": "http://localhost:3001/accounting/payments",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fpayments",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/projects/page.tsx",
       "route": "/accounting/projects",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/projects"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/projects",
+      "url": "http://localhost:3001/accounting/projects",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fprojects",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/reconciliation/page.tsx",
       "route": "/accounting/reconciliation",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/reconciliation"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/reconciliation",
+      "url": "http://localhost:3001/accounting/reconciliation",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Freconciliation",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/sop-backlog/page.tsx",
       "route": "/accounting/sop-backlog",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/sop-backlog"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/sop-backlog",
+      "url": "http://localhost:3001/accounting/sop-backlog",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fsop-backlog",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/accounting/wip/page.tsx",
       "route": "/accounting/wip",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/accounting/wip"
+      "status": "captured_login_redirect",
+      "urlPath": "/accounting/wip",
+      "url": "http://localhost:3001/accounting/wip",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Faccounting%2Fwip",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/actions/page.tsx",
       "route": "/actions",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/actions"
+      "status": "captured_login_redirect",
+      "urlPath": "/actions",
+      "url": "http://localhost:3001/actions",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Factions",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/acumatica-sync-logs/page.tsx",
       "route": "/acumatica-sync-logs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/acumatica-sync-logs"
+      "status": "captured_login_redirect",
+      "urlPath": "/acumatica-sync-logs",
+      "url": "http://localhost:3001/acumatica-sync-logs",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Facumatica-sync-logs",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/admin-check/page.tsx",
       "route": "/admin-check",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/admin-check"
+      "status": "captured_login_redirect",
+      "urlPath": "/admin-check",
+      "url": "http://localhost:3001/admin-check",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fadmin-check",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/admin/company-info/page.tsx",
       "route": "/admin/company-info",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/admin/company-info"
+      "status": "captured_login_redirect",
+      "urlPath": "/admin/company-info",
+      "url": "http://localhost:3001/admin/company-info",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fadmin%2Fcompany-info",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/admin/page.tsx",
       "route": "/admin",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/admin"
+      "status": "captured_login_redirect",
+      "urlPath": "/admin",
+      "url": "http://localhost:3001/admin",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fadmin",
+      "title": "Alleato Construction PM"
+    },
+    {
+      "source": "frontend/src/app/(admin)/ai-assistant-debug/page.tsx",
+      "route": "/ai-assistant-debug",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-assistant-debug",
+      "url": "http://localhost:3001/ai-assistant-debug",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-assistant-debug",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-chat-history/page.tsx",
       "route": "/ai-chat-history",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-chat-history"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-chat-history",
+      "url": "http://localhost:3001/ai-chat-history",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-chat-history",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-learning-promotions/page.tsx",
       "route": "/ai-learning-promotions",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-learning-promotions"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-learning-promotions",
+      "url": "http://localhost:3001/ai-learning-promotions",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-learning-promotions",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx",
       "route": "/ai-prompt-diagnostics",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-prompt-diagnostics"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-prompt-diagnostics",
+      "url": "http://localhost:3001/ai-prompt-diagnostics",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-prompt-diagnostics",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-skills/page.tsx",
       "route": "/ai-skills",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-skills"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-skills",
+      "url": "http://localhost:3001/ai-skills",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-skills",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-system-health/page.tsx",
       "route": "/ai-system-health",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-system-health"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-system-health",
+      "url": "http://localhost:3001/ai-system-health",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-system-health",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-vision/page.tsx",
       "route": "/ai-vision",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-vision"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-vision",
+      "url": "http://localhost:3001/ai-vision",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-vision",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai-work-runs/page.tsx",
       "route": "/ai-work-runs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-work-runs"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai-work-runs",
+      "url": "http://localhost:3001/ai-work-runs",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai-work-runs",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai/admin/agents/page.tsx",
       "route": "/ai/admin/agents",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/admin/agents"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai/admin/agents",
+      "url": "http://localhost:3001/ai/admin/agents",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai%2Fadmin%2Fagents",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai/admin/skills/page.tsx",
       "route": "/ai/admin/skills",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/admin/skills"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai/admin/skills",
+      "url": "http://localhost:3001/ai/admin/skills",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai%2Fadmin%2Fskills",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/ai/learning-promotions/page.tsx",
       "route": "/ai/learning-promotions",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/learning-promotions"
+      "status": "captured_login_redirect",
+      "urlPath": "/ai/learning-promotions",
+      "url": "http://localhost:3001/ai/learning-promotions",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fai%2Flearning-promotions",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/analytics/page.tsx",
       "route": "/analytics",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/analytics"
+      "status": "captured_login_redirect",
+      "urlPath": "/analytics",
+      "url": "http://localhost:3001/analytics",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fanalytics",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/annotation-inbox/page.tsx",
       "route": "/annotation-inbox",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/annotation-inbox"
+      "status": "captured_login_redirect",
+      "urlPath": "/annotation-inbox",
+      "url": "http://localhost:3001/annotation-inbox",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fannotation-inbox",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/api-docs/page.tsx",
       "route": "/api-docs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/api-docs"
+      "status": "captured_login_redirect",
+      "urlPath": "/api-docs",
+      "url": "http://localhost:3001/api-docs",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fapi-docs",
+      "title": "Alleato Construction PM"
+    },
+    {
+      "source": "frontend/src/app/(admin)/command-center/file/page.tsx",
+      "route": "/command-center/file",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "captured_login_redirect",
+      "urlPath": "/command-center/file",
+      "url": "http://localhost:3001/command-center/file",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fcommand-center%2Ffile",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/command-center/page.tsx",
       "route": "/command-center",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/command-center"
+      "status": "captured_login_redirect",
+      "urlPath": "/command-center",
+      "url": "http://localhost:3001/command-center",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fcommand-center",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/database-inventory/page.tsx",
       "route": "/database-inventory",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/database-inventory"
+      "status": "captured_login_redirect",
+      "urlPath": "/database-inventory",
+      "url": "http://localhost:3001/database-inventory",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdatabase-inventory",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/db-audit-log/page.tsx",
       "route": "/db-audit-log",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/db-audit-log"
+      "status": "captured_login_redirect",
+      "urlPath": "/db-audit-log",
+      "url": "http://localhost:3001/db-audit-log",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdb-audit-log",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/deep-research/page.tsx",
       "route": "/deep-research",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/deep-research"
+      "status": "captured_login_redirect",
+      "urlPath": "/deep-research",
+      "url": "http://localhost:3001/deep-research",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdeep-research",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/design-ideas/page.tsx",
       "route": "/design-ideas",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/design-ideas"
+      "status": "captured_login_redirect",
+      "urlPath": "/design-ideas",
+      "url": "http://localhost:3001/design-ideas",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdesign-ideas",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/design-system-update/page.tsx",
       "route": "/design-system-update",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/design-system-update"
+      "status": "captured_login_redirect",
+      "urlPath": "/design-system-update",
+      "url": "http://localhost:3001/design-system-update",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdesign-system-update",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/design-violations/page.tsx",
       "route": "/design-violations",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/design-violations"
+      "status": "captured_login_redirect",
+      "urlPath": "/design-violations",
+      "url": "http://localhost:3001/design-violations",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdesign-violations",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/design/page.tsx",
       "route": "/design",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/design"
+      "status": "captured_login_redirect",
+      "urlPath": "/design",
+      "url": "http://localhost:3001/design",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdesign",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/dev/table-generator/page.tsx",
       "route": "/dev/table-generator",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/dev/table-generator"
+      "status": "captured_login_redirect",
+      "urlPath": "/dev/table-generator",
+      "url": "http://localhost:3001/dev/table-generator",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdev%2Ftable-generator",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/docs/[[...slug]]/page.tsx",
       "route": "/docs/[[...slug]]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/overview"
+      "status": "capture_error",
+      "urlPath": "/docs/overview",
+      "url": "http://localhost:3001/docs/overview",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx",
       "route": "/docs/ai-overview/data-sources",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/data-sources"
+      "status": "capture_error",
+      "urlPath": "/docs/ai-overview/data-sources",
+      "url": "http://localhost:3001/docs/ai-overview/data-sources",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx",
       "route": "/docs/ai-overview/learning",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/learning"
+      "status": "captured_login_redirect",
+      "urlPath": "/docs/ai-overview/learning",
+      "url": "http://localhost:3001/docs/ai-overview/learning",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocs%2Fai-overview%2Flearning",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx",
       "route": "/docs/ai-overview/memory",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/memory"
+      "status": "capture_error",
+      "urlPath": "/docs/ai-overview/memory",
+      "url": "http://localhost:3001/docs/ai-overview/memory",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/models-and-cost/page.tsx",
       "route": "/docs/ai-overview/models-and-cost",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/models-and-cost"
+      "status": "captured_login_redirect",
+      "urlPath": "/docs/ai-overview/models-and-cost",
+      "url": "http://localhost:3001/docs/ai-overview/models-and-cost",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocs%2Fai-overview%2Fmodels-and-cost",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/page.tsx",
       "route": "/docs/ai-overview",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview"
+      "status": "captured_login_redirect",
+      "urlPath": "/docs/ai-overview",
+      "url": "http://localhost:3001/docs/ai-overview",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocs%2Fai-overview",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/team/page.tsx",
       "route": "/docs/ai-overview/team",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/team"
+      "status": "captured_login_redirect",
+      "urlPath": "/docs/ai-overview/team",
+      "url": "http://localhost:3001/docs/ai-overview/team",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocs%2Fai-overview%2Fteam",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/docs/ai-overview/tools/page.tsx",
       "route": "/docs/ai-overview/tools",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/docs/ai-overview/tools"
+      "status": "captured_login_redirect",
+      "urlPath": "/docs/ai-overview/tools",
+      "url": "http://localhost:3001/docs/ai-overview/tools",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocs%2Fai-overview%2Ftools",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/document-metadata/page.tsx",
       "route": "/document-metadata",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/document-metadata"
+      "status": "captured_login_redirect",
+      "urlPath": "/document-metadata",
+      "url": "http://localhost:3001/document-metadata",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fdocument-metadata",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/errors/page.tsx",
       "route": "/errors",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/errors"
+      "status": "capture_error",
+      "urlPath": "/errors",
+      "url": "http://localhost:3001/errors",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/eval-runs/page.tsx",
       "route": "/eval-runs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/eval-runs"
+      "status": "captured_login_redirect",
+      "urlPath": "/eval-runs",
+      "url": "http://localhost:3001/eval-runs",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Feval-runs",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
       "route": "/feedback-inbox",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/feedback-inbox"
+      "status": "captured_login_redirect",
+      "urlPath": "/feedback-inbox",
+      "url": "http://localhost:3001/feedback-inbox",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Ffeedback-inbox",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/intelligence-packets/page.tsx",
       "route": "/intelligence-packets",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/intelligence-packets"
+      "status": "captured_login_redirect",
+      "urlPath": "/intelligence-packets",
+      "url": "http://localhost:3001/intelligence-packets",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fintelligence-packets",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/intelligence-vision/page.tsx",
       "route": "/intelligence-vision",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/intelligence-vision"
+      "status": "capture_error",
+      "urlPath": "/intelligence-vision",
+      "url": "http://localhost:3001/intelligence-vision",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/learning-feedback/page.tsx",
       "route": "/learning-feedback",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/learning-feedback"
+      "status": "capture_error",
+      "urlPath": "/learning-feedback",
+      "url": "http://localhost:3001/learning-feedback",
+      "error": "page.goto: Timeout 30000ms exceeded."
+    },
+    {
+      "source": "frontend/src/app/(admin)/meeting-templates/[templateId]/page.tsx",
+      "route": "/meeting-templates/[templateId]",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "skipped_unknown_param",
+      "unresolved": [
+        "templateId"
+      ]
+    },
+    {
+      "source": "frontend/src/app/(admin)/meeting-templates/page.tsx",
+      "route": "/meeting-templates",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "captured_login_redirect",
+      "urlPath": "/meeting-templates",
+      "url": "http://localhost:3001/meeting-templates",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fmeeting-templates",
+      "title": "Alleato Construction PM"
+    },
+    {
+      "source": "frontend/src/app/(admin)/my-feedback/page.tsx",
+      "route": "/my-feedback",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "captured_login_redirect",
+      "urlPath": "/my-feedback",
+      "url": "http://localhost:3001/my-feedback",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fmy-feedback",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/operations-readiness/page.tsx",
       "route": "/operations-readiness",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/operations-readiness"
+      "status": "captured_login_redirect",
+      "urlPath": "/operations-readiness",
+      "url": "http://localhost:3001/operations-readiness",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Foperations-readiness",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/outlook-draft-feedback/page.tsx",
       "route": "/outlook-draft-feedback",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/outlook-draft-feedback"
+      "status": "capture_error",
+      "urlPath": "/outlook-draft-feedback",
+      "url": "http://localhost:3001/outlook-draft-feedback",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/permissions/page.tsx",
       "route": "/permissions",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/permissions"
+      "status": "capture_error",
+      "urlPath": "/permissions",
+      "url": "http://localhost:3001/permissions",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/permissions/users/[personId]/page.tsx",
       "route": "/permissions/users/[personId]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "personId"
       ]
@@ -577,243 +882,310 @@
       "source": "frontend/src/app/(admin)/pipeline-health/page.tsx",
       "route": "/pipeline-health",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/pipeline-health"
+      "status": "captured_login_redirect",
+      "urlPath": "/pipeline-health",
+      "url": "http://localhost:3001/pipeline-health",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fpipeline-health",
+      "title": "Alleato Construction PM"
+    },
+    {
+      "source": "frontend/src/app/(admin)/prime-contract-change-order-orphans/page.tsx",
+      "route": "/prime-contract-change-order-orphans",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "capture_error",
+      "urlPath": "/prime-contract-change-order-orphans",
+      "url": "http://localhost:3001/prime-contract-change-order-orphans",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx",
       "route": "/procore-docs/[...slug]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/procore-docs/overview"
+      "status": "capture_error",
+      "urlPath": "/procore-docs/overview",
+      "url": "http://localhost:3001/procore-docs/overview",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/procore-docs/page.tsx",
       "route": "/procore-docs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/procore-docs"
+      "status": "capture_error",
+      "urlPath": "/procore-docs",
+      "url": "http://localhost:3001/procore-docs",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/product-board/page.tsx",
       "route": "/product-board",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/product-board"
+      "status": "captured_login_redirect",
+      "urlPath": "/product-board",
+      "url": "http://localhost:3001/product-board",
+      "httpStatus": 200,
+      "finalUrl": "http://localhost:3001/auth/login?callbackUrl=%2Fproduct-board",
+      "title": "Alleato Construction PM"
     },
     {
       "source": "frontend/src/app/(admin)/project-attribution/page.tsx",
       "route": "/project-attribution",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/project-attribution"
+      "status": "capture_error",
+      "urlPath": "/project-attribution",
+      "url": "http://localhost:3001/project-attribution",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/projects-table-demo/page.tsx",
       "route": "/projects-table-demo",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/projects-table-demo"
+      "status": "capture_error",
+      "urlPath": "/projects-table-demo",
+      "url": "http://localhost:3001/projects-table-demo",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/prp-status/page.tsx",
       "route": "/prp-status",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/prp-status"
+      "status": "capture_error",
+      "urlPath": "/prp-status",
+      "url": "http://localhost:3001/prp-status",
+      "error": "page.goto: Timeout 30000ms exceeded."
     },
     {
       "source": "frontend/src/app/(admin)/rag-eval/page.tsx",
       "route": "/rag-eval",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/rag-eval"
+      "status": "capture_error",
+      "urlPath": "/rag-eval",
+      "url": "http://localhost:3001/rag-eval",
+      "error": "page.goto: net::ERR_CONNECTION_RESET at http://localhost:3001/rag-eval"
     },
     {
       "source": "frontend/src/app/(admin)/rag/page.tsx",
       "route": "/rag",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/rag"
+      "status": "capture_error",
+      "urlPath": "/rag",
+      "url": "http://localhost:3001/rag",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/rag"
     },
     {
       "source": "frontend/src/app/(admin)/redoc/page.tsx",
       "route": "/redoc",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/redoc"
+      "status": "capture_error",
+      "urlPath": "/redoc",
+      "url": "http://localhost:3001/redoc",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/redoc"
     },
     {
       "source": "frontend/src/app/(admin)/site-map/page.tsx",
       "route": "/site-map",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/site-map"
+      "status": "capture_error",
+      "urlPath": "/site-map",
+      "url": "http://localhost:3001/site-map",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/site-map"
     },
     {
       "source": "frontend/src/app/(admin)/source-sync/page.tsx",
       "route": "/source-sync",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/source-sync"
+      "status": "capture_error",
+      "urlPath": "/source-sync",
+      "url": "http://localhost:3001/source-sync",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/source-sync"
     },
     {
       "source": "frontend/src/app/(admin)/tables-directory/page.tsx",
       "route": "/tables-directory",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/tables-directory"
+      "status": "capture_error",
+      "urlPath": "/tables-directory",
+      "url": "http://localhost:3001/tables-directory",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/tables-directory"
     },
     {
       "source": "frontend/src/app/(admin)/task-training/page.tsx",
       "route": "/task-training",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/task-training"
+      "status": "capture_error",
+      "urlPath": "/task-training",
+      "url": "http://localhost:3001/task-training",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/task-training"
     },
     {
       "source": "frontend/src/app/(admin)/template/form-standard/page.tsx",
       "route": "/template/form-standard",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/template/form-standard"
+      "status": "capture_error",
+      "urlPath": "/template/form-standard",
+      "url": "http://localhost:3001/template/form-standard",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/template/form-standard"
     },
     {
       "source": "frontend/src/app/(admin)/template/form-template/page.tsx",
       "route": "/template/form-template",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/template/form-template"
+      "status": "capture_error",
+      "urlPath": "/template/form-template",
+      "url": "http://localhost:3001/template/form-template",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/template/form-template"
     },
     {
       "source": "frontend/src/app/(admin)/test-cases/page.tsx",
       "route": "/test-cases",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/test-cases"
+      "status": "capture_error",
+      "urlPath": "/test-cases",
+      "url": "http://localhost:3001/test-cases",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/test-cases"
     },
     {
       "source": "frontend/src/app/(admin)/test-matrix/page.tsx",
       "route": "/test-matrix",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/test-matrix"
+      "status": "capture_error",
+      "urlPath": "/test-matrix",
+      "url": "http://localhost:3001/test-matrix",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/test-matrix"
     },
     {
       "source": "frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx",
       "route": "/testing/[tool]/cases/[caseId]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/commitments/cases/1"
+      "status": "capture_error",
+      "urlPath": "/testing/commitments/cases/1",
+      "url": "http://localhost:3001/testing/commitments/cases/1",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/commitments/cases/1"
     },
     {
       "source": "frontend/src/app/(admin)/testing/[tool]/page.tsx",
       "route": "/testing/[tool]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/commitments"
+      "status": "capture_error",
+      "urlPath": "/testing/commitments",
+      "url": "http://localhost:3001/testing/commitments",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/commitments"
     },
     {
       "source": "frontend/src/app/(admin)/testing/page.tsx",
       "route": "/testing",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing"
+      "status": "capture_error",
+      "urlPath": "/testing",
+      "url": "http://localhost:3001/testing",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing"
     },
     {
       "source": "frontend/src/app/(admin)/testing/parity/page.tsx",
       "route": "/testing/parity",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/parity"
+      "status": "capture_error",
+      "urlPath": "/testing/parity",
+      "url": "http://localhost:3001/testing/parity",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/parity"
     },
     {
       "source": "frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx",
       "route": "/testing/runs/[runId]/case/[caseNumber]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/runs/1/case/1"
+      "status": "capture_error",
+      "urlPath": "/testing/runs/1/case/1",
+      "url": "http://localhost:3001/testing/runs/1/case/1",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/runs/1/case/1"
     },
     {
       "source": "frontend/src/app/(admin)/testing/runs/[runId]/page.tsx",
       "route": "/testing/runs/[runId]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/runs/1"
+      "status": "capture_error",
+      "urlPath": "/testing/runs/1",
+      "url": "http://localhost:3001/testing/runs/1",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/runs/1"
     },
     {
       "source": "frontend/src/app/(admin)/testing/runs/page.tsx",
       "route": "/testing/runs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/testing/runs"
+      "status": "capture_error",
+      "urlPath": "/testing/runs",
+      "url": "http://localhost:3001/testing/runs",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/testing/runs"
     },
     {
       "source": "frontend/src/app/(admin)/tools/page.tsx",
       "route": "/tools",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/tools"
+      "status": "capture_error",
+      "urlPath": "/tools",
+      "url": "http://localhost:3001/tools",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/tools"
     },
     {
       "source": "frontend/src/app/(admin)/training-docs/[docId]/page.tsx",
       "route": "/training-docs/[docId]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_unknown_param",
       "unresolved": [
         "docId"
       ]
@@ -822,9 +1194,9 @@
       "source": "frontend/src/app/(admin)/training-docs/[docId]/preview/page.tsx",
       "route": "/training-docs/[docId]/preview",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_unknown_param",
       "unresolved": [
         "docId"
       ]
@@ -833,54 +1205,75 @@
       "source": "frontend/src/app/(admin)/training-docs/page.tsx",
       "route": "/training-docs",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/training-docs"
+      "status": "capture_error",
+      "urlPath": "/training-docs",
+      "url": "http://localhost:3001/training-docs",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/training-docs"
     },
     {
       "source": "frontend/src/app/(admin)/training-map/page.tsx",
       "route": "/training-map",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/training-map"
+      "status": "capture_error",
+      "urlPath": "/training-map",
+      "url": "http://localhost:3001/training-map",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/training-map"
     },
     {
       "source": "frontend/src/app/(admin)/ui-library/page.tsx",
       "route": "/ui-library",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ui-library"
+      "status": "capture_error",
+      "urlPath": "/ui-library",
+      "url": "http://localhost:3001/ui-library",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ui-library"
     },
     {
       "source": "frontend/src/app/(admin)/updates/page.tsx",
       "route": "/updates",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/updates"
+      "status": "capture_error",
+      "urlPath": "/updates",
+      "url": "http://localhost:3001/updates",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/updates"
     },
     {
       "source": "frontend/src/app/(admin)/user-management/page.tsx",
       "route": "/user-management",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/user-management"
+      "status": "capture_error",
+      "urlPath": "/user-management",
+      "url": "http://localhost:3001/user-management",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/user-management"
+    },
+    {
+      "source": "frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx",
+      "route": "/user-management/templates/[templateId]",
+      "scope": "admin",
+      "included": true,
+      "tool": null,
+      "status": "skipped_unknown_param",
+      "unresolved": [
+        "templateId"
+      ]
     },
     {
       "source": "frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx",
       "route": "/user-management/users/[userSlug]",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "userSlug"
       ]
@@ -889,55 +1282,67 @@
       "source": "frontend/src/app/(dashboard)/invoice/add/page.tsx",
       "route": "/invoice/add",
       "scope": "dashboard",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/invoice/add"
+      "status": "capture_error",
+      "urlPath": "/invoice/add",
+      "url": "http://localhost:3001/invoice/add",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/invoice/add"
     },
     {
       "source": "frontend/src/app/(dashboard)/invoice/edit/page.tsx",
       "route": "/invoice/edit",
       "scope": "dashboard",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/invoice/edit"
+      "status": "capture_error",
+      "urlPath": "/invoice/edit",
+      "url": "http://localhost:3001/invoice/edit",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/invoice/edit"
     },
     {
       "source": "frontend/src/app/(dashboard)/invoice/list/page.tsx",
       "route": "/invoice/list",
       "scope": "dashboard",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/invoice/list"
+      "status": "capture_error",
+      "urlPath": "/invoice/list",
+      "url": "http://localhost:3001/invoice/list",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/invoice/list"
     },
     {
       "source": "frontend/src/app/(dashboard)/invoice/preview/page.tsx",
       "route": "/invoice/preview",
       "scope": "dashboard",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/invoice/preview"
+      "status": "capture_error",
+      "urlPath": "/invoice/preview",
+      "url": "http://localhost:3001/invoice/preview",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/invoice/preview"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/admin/page.tsx",
       "route": "/[projectId]/admin",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "admin",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/admin"
+      "status": "capture_error",
+      "urlPath": "/1034/admin",
+      "url": "http://localhost:3001/1034/admin",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/admin"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/billing-periods/page.tsx",
       "route": "/[projectId]/billing-periods",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "billing-periods",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/billing-periods"
+      "status": "capture_error",
+      "urlPath": "/1034/billing-periods",
+      "url": "http://localhost:3001/1034/billing-periods",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/billing-periods"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx",
@@ -945,19 +1350,10 @@
       "scope": "main",
       "included": true,
       "tool": "budget",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/budget/line-item/new",
-      "url": "https://projects.alleatogroup.com/1034/budget/line-item/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/budget/line-item/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/001-1034__budget__line-item__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/budget/line-item/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/budget/line-item/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/budget/page.tsx",
@@ -965,19 +1361,10 @@
       "scope": "main",
       "included": true,
       "tool": "budget",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/budget",
-      "url": "https://projects.alleatogroup.com/1034/budget",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/budget",
-      "title": "Budget - Project - Test 26-5-14",
-      "screenshot": "screenshots/002-1034__budget.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/budget",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/budget"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/budget/setup/page.tsx",
@@ -985,19 +1372,10 @@
       "scope": "main",
       "included": true,
       "tool": "budget",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/budget/setup",
-      "url": "https://projects.alleatogroup.com/1034/budget/setup",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/budget/setup",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/003-1034__budget__setup.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/budget/setup",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/budget/setup"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx",
@@ -1027,19 +1405,10 @@
       "scope": "main",
       "included": true,
       "tool": "change-events",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-events/new",
-      "url": "https://projects.alleatogroup.com/1034/change-events/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/change-events/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/004-1034__change-events__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-events/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-events/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
@@ -1047,28 +1416,21 @@
       "scope": "main",
       "included": true,
       "tool": "change-events",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-events",
-      "url": "https://projects.alleatogroup.com/1034/change-events",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/change-events",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/005-1034__change-events.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-events",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-events"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-management/page.tsx",
       "route": "/[projectId]/change-management",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "change-management",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/change-management"
+      "status": "capture_error",
+      "urlPath": "/1034/change-management",
+      "url": "http://localhost:3001/1034/change-management",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-management"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx",
@@ -1098,19 +1460,10 @@
       "scope": "main",
       "included": true,
       "tool": "change-orders",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-orders/commitment/new",
-      "url": "https://projects.alleatogroup.com/1034/change-orders/commitment/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitment-pcos/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/006-1034__change-orders__commitment__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-orders/commitment/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-orders/commitment/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx",
@@ -1118,19 +1471,10 @@
       "scope": "main",
       "included": true,
       "tool": "change-orders",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-orders/new",
-      "url": "https://projects.alleatogroup.com/1034/change-orders/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/007-1034__change-orders__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-orders/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-orders/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-orders/page.tsx",
@@ -1138,19 +1482,10 @@
       "scope": "main",
       "included": true,
       "tool": "change-orders",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-orders",
-      "url": "https://projects.alleatogroup.com/1034/change-orders",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/change-orders",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/008-1034__change-orders.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-orders",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-orders"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx",
@@ -1169,36 +1504,29 @@
       "scope": "main",
       "included": true,
       "tool": "change-orders",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/change-orders/prime/new",
-      "url": "https://projects.alleatogroup.com/1034/change-orders/prime/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contract-pcos/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/009-1034__change-orders__prime__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/change-orders/prime/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/change-orders/prime/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx",
       "route": "/[projectId]/client-dashboard",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "client-dashboard",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/client-dashboard"
+      "status": "capture_error",
+      "urlPath": "/1034/client-dashboard",
+      "url": "http://localhost:3001/1034/client-dashboard",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/client-dashboard"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/[pcoId]/page.tsx",
       "route": "/[projectId]/commitment-pcos/[pcoId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "commitment-pcos",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "pcoId"
       ]
@@ -1207,19 +1535,23 @@
       "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/new/page.tsx",
       "route": "/[projectId]/commitment-pcos/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "commitment-pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/commitment-pcos/new"
+      "status": "capture_error",
+      "urlPath": "/1034/commitment-pcos/new",
+      "url": "http://localhost:3001/1034/commitment-pcos/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitment-pcos/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitment-pcos/page.tsx",
       "route": "/[projectId]/commitment-pcos",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "commitment-pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/commitment-pcos"
+      "status": "capture_error",
+      "urlPath": "/1034/commitment-pcos",
+      "url": "http://localhost:3001/1034/commitment-pcos",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitment-pcos"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx",
@@ -1272,19 +1604,10 @@
       "scope": "main",
       "included": true,
       "tool": "commitments",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/commitments/configure",
-      "url": "https://projects.alleatogroup.com/1034/commitments/configure",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/configure",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/010-1034__commitments__configure.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/commitments/configure",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitments/configure"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitments/new/page.tsx",
@@ -1292,19 +1615,10 @@
       "scope": "main",
       "included": true,
       "tool": "commitments",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/commitments/new",
-      "url": "https://projects.alleatogroup.com/1034/commitments/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/011-1034__commitments__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/commitments/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitments/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitments/page.tsx",
@@ -1312,19 +1626,10 @@
       "scope": "main",
       "included": true,
       "tool": "commitments",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/commitments",
-      "url": "https://projects.alleatogroup.com/1034/commitments",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitments",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/012-1034__commitments.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/commitments",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitments"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx",
@@ -1332,19 +1637,10 @@
       "scope": "main",
       "included": true,
       "tool": "commitments",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/commitments/recycle-bin",
-      "url": "https://projects.alleatogroup.com/1034/commitments/recycle-bin",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitments?tab=recycle-bin",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/013-1034__commitments__recycle-bin.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/commitments/recycle-bin",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitments/recycle-bin"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx",
@@ -1352,19 +1648,10 @@
       "scope": "main",
       "included": true,
       "tool": "commitments",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/commitments/settings",
-      "url": "https://projects.alleatogroup.com/1034/commitments/settings",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/commitments/settings",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/014-1034__commitments__settings.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/commitments/settings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/commitments/settings"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx",
@@ -1383,19 +1670,10 @@
       "scope": "main",
       "included": true,
       "tool": "daily-log",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/daily-log/new",
-      "url": "https://projects.alleatogroup.com/1034/daily-log/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/015-1034__daily-log__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/daily-log/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/daily-log/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/daily-log/page.tsx",
@@ -1403,19 +1681,21 @@
       "scope": "main",
       "included": true,
       "tool": "daily-log",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/daily-log",
-      "url": "https://projects.alleatogroup.com/1034/daily-log",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/016-1034__daily-log.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/daily-log",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/daily-log"
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/daily-log/site-lead-checklist/page.tsx",
+      "route": "/[projectId]/daily-log/site-lead-checklist",
+      "scope": "main",
+      "included": true,
+      "tool": "daily-log",
+      "status": "capture_error",
+      "urlPath": "/1034/daily-log/site-lead-checklist",
+      "url": "http://localhost:3001/1034/daily-log/site-lead-checklist",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/daily-log/site-lead-checklist"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx",
@@ -1423,27 +1703,18 @@
       "scope": "main",
       "included": true,
       "tool": "daily-log",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/daily-log/site-scribe",
-      "url": "https://projects.alleatogroup.com/1034/daily-log/site-scribe",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/daily-log/site-scribe",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/017-1034__daily-log__site-scribe.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/daily-log/site-scribe",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/daily-log/site-scribe"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx",
       "route": "/[projectId]/direct-costs/[costId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "direct-costs",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "costId"
       ]
@@ -1452,28 +1723,34 @@
       "source": "frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx",
       "route": "/[projectId]/direct-costs/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "direct-costs",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/direct-costs/new"
+      "status": "capture_error",
+      "urlPath": "/1034/direct-costs/new",
+      "url": "http://localhost:3001/1034/direct-costs/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/direct-costs/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/direct-costs/page.tsx",
       "route": "/[projectId]/direct-costs",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "direct-costs",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/direct-costs"
+      "status": "capture_error",
+      "urlPath": "/1034/direct-costs",
+      "url": "http://localhost:3001/1034/direct-costs",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/direct-costs"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/directory/page.tsx",
       "route": "/[projectId]/directory",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "directory",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/directory"
+      "status": "capture_error",
+      "urlPath": "/1034/directory",
+      "url": "http://localhost:3001/1034/directory",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/directory"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx",
@@ -1492,19 +1769,10 @@
       "scope": "main",
       "included": true,
       "tool": "documents",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/documents",
-      "url": "https://projects.alleatogroup.com/1034/documents",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/documents",
-      "title": "Documents",
-      "screenshot": "screenshots/018-1034__documents.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/documents",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/documents"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx",
@@ -1523,19 +1791,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings/areas",
-      "url": "https://projects.alleatogroup.com/1034/drawings/areas",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/areas",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/019-1034__drawings__areas.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings/areas",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings/areas"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/board/page.tsx",
@@ -1543,19 +1802,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings/board",
-      "url": "https://projects.alleatogroup.com/1034/drawings/board",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/board",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/020-1034__drawings__board.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings/board",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings/board"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/page.tsx",
@@ -1563,19 +1813,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings",
-      "url": "https://projects.alleatogroup.com/1034/drawings",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/021-1034__drawings.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/recycle-bin/page.tsx",
@@ -1583,19 +1824,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings/recycle-bin",
-      "url": "https://projects.alleatogroup.com/1034/drawings/recycle-bin",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/recycle-bin",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/022-1034__drawings__recycle-bin.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings/recycle-bin",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings/recycle-bin"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx",
@@ -1603,19 +1835,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings/revisions-report",
-      "url": "https://projects.alleatogroup.com/1034/drawings/revisions-report",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/revisions-report",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/023-1034__drawings__revisions-report.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings/revisions-report",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings/revisions-report"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx",
@@ -1623,19 +1846,10 @@
       "scope": "main",
       "included": true,
       "tool": "drawings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/drawings/sets",
-      "url": "https://projects.alleatogroup.com/1034/drawings/sets",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/drawings/sets",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/024-1034__drawings__sets.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/drawings/sets",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/drawings/sets"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx",
@@ -1674,18 +1888,20 @@
       "source": "frontend/src/app/(main)/[projectId]/emails/page.tsx",
       "route": "/[projectId]/emails",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "emails",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/emails"
+      "status": "capture_error",
+      "urlPath": "/1034/emails",
+      "url": "http://localhost:3001/1034/emails",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/emails"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx",
       "route": "/[projectId]/estimates/[estimateId]/edit",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "estimates",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "estimateId"
       ]
@@ -1694,9 +1910,9 @@
       "source": "frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx",
       "route": "/[projectId]/estimates/[estimateId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "estimates",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "estimateId"
       ]
@@ -1705,90 +1921,108 @@
       "source": "frontend/src/app/(main)/[projectId]/estimates/new/page.tsx",
       "route": "/[projectId]/estimates/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "estimates",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/estimates/new"
+      "status": "capture_error",
+      "urlPath": "/1034/estimates/new",
+      "url": "http://localhost:3001/1034/estimates/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/estimates/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/estimates/page.tsx",
       "route": "/[projectId]/estimates",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "estimates",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/estimates"
+      "status": "capture_error",
+      "urlPath": "/1034/estimates",
+      "url": "http://localhost:3001/1034/estimates",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/estimates"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/home/page.tsx",
       "route": "/[projectId]/home",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "home",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/home"
+      "status": "capture_error",
+      "urlPath": "/1034/home",
+      "url": "http://localhost:3001/1034/home",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/home"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/hub/page.tsx",
       "route": "/[projectId]/hub",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "hub",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/hub"
+      "status": "capture_error",
+      "urlPath": "/1034/hub",
+      "url": "http://localhost:3001/1034/hub",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/hub"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/intelligence/page.tsx",
       "route": "/[projectId]/intelligence",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "intelligence",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/intelligence"
+      "status": "capture_error",
+      "urlPath": "/1034/intelligence",
+      "url": "http://localhost:3001/1034/intelligence",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/intelligence"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx",
       "route": "/[projectId]/intelligence/sources/[sourceDocumentId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "intelligence",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/intelligence/sources/sample"
+      "status": "capture_error",
+      "urlPath": "/1034/intelligence/sources/sample",
+      "url": "http://localhost:3001/1034/intelligence/sources/sample",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/intelligence/sources/sample"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoices/new/page.tsx",
       "route": "/[projectId]/invoices/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoices",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoices/new"
+      "status": "capture_error",
+      "urlPath": "/1034/invoices/new",
+      "url": "http://localhost:3001/1034/invoices/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoices/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx",
       "route": "/[projectId]/invoices/owner/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoices",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoices/owner/new"
+      "status": "capture_error",
+      "urlPath": "/1034/invoices/owner/new",
+      "url": "http://localhost:3001/1034/invoices/owner/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoices/owner/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoices/page.tsx",
       "route": "/[projectId]/invoices",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoices",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoices"
+      "status": "capture_error",
+      "urlPath": "/1034/invoices",
+      "url": "http://localhost:3001/1034/invoices",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoices"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
       "route": "/[projectId]/invoicing/[invoiceId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "invoiceId"
       ]
@@ -1797,27 +2031,31 @@
       "source": "frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx",
       "route": "/[projectId]/invoicing/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoicing/new"
+      "status": "capture_error",
+      "urlPath": "/1034/invoicing/new",
+      "url": "http://localhost:3001/1034/invoicing/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoicing/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoicing/page.tsx",
       "route": "/[projectId]/invoicing",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoicing"
+      "status": "capture_error",
+      "urlPath": "/1034/invoicing",
+      "url": "http://localhost:3001/1034/invoicing",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoicing"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx",
       "route": "/[projectId]/invoicing/subcontractor/[invoiceId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "invoiceId"
       ]
@@ -1826,19 +2064,34 @@
       "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx",
       "route": "/[projectId]/invoicing/subcontractor/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoicing/subcontractor/new"
+      "status": "capture_error",
+      "urlPath": "/1034/invoicing/subcontractor/new",
+      "url": "http://localhost:3001/1034/invoicing/subcontractor/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoicing/subcontractor/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx",
       "route": "/[projectId]/invoicing/subcontractor",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "invoicing",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/invoicing/subcontractor"
+      "status": "capture_error",
+      "urlPath": "/1034/invoicing/subcontractor",
+      "url": "http://localhost:3001/1034/invoicing/subcontractor",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/invoicing/subcontractor"
+    },
+    {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/agenda/page.tsx",
+      "route": "/[projectId]/meetings/[meetingId]/agenda",
+      "scope": "main",
+      "included": true,
+      "tool": "meetings",
+      "status": "skipped_dynamic_record",
+      "unresolved": [
+        "meetingId"
+      ]
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx",
@@ -1863,61 +2116,45 @@
       ]
     },
     {
+      "source": "frontend/src/app/(main)/[projectId]/meetings/new/page.tsx",
+      "route": "/[projectId]/meetings/new",
+      "scope": "main",
+      "included": true,
+      "tool": "meetings",
+      "status": "capture_error",
+      "urlPath": "/1034/meetings/new",
+      "url": "http://localhost:3001/1034/meetings/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/meetings/new"
+    },
+    {
       "source": "frontend/src/app/(main)/[projectId]/meetings/page.tsx",
       "route": "/[projectId]/meetings",
       "scope": "main",
       "included": true,
       "tool": "meetings",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/meetings",
-      "url": "https://projects.alleatogroup.com/1034/meetings",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/meetings",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/025-1034__meetings.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
-    },
-    {
-      "source": "frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx",
-      "route": "/[projectId]/meetings/schedule",
-      "scope": "main",
-      "included": true,
-      "tool": "meetings",
-      "status": "captured",
-      "urlPath": "/1034/meetings/schedule",
-      "url": "https://projects.alleatogroup.com/1034/meetings/schedule",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/meetings/schedule",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/026-1034__meetings__schedule.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/meetings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/meetings"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/my-work/page.tsx",
       "route": "/[projectId]/my-work",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "my-work",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/my-work"
+      "status": "capture_error",
+      "urlPath": "/1034/my-work",
+      "url": "http://localhost:3001/1034/my-work",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/my-work"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx",
       "route": "/[projectId]/pcos/[pcoId]/edit",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "pcos",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "pcoId"
       ]
@@ -1926,9 +2163,9 @@
       "source": "frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx",
       "route": "/[projectId]/pcos/[pcoId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "pcos",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "pcoId"
       ]
@@ -1937,28 +2174,34 @@
       "source": "frontend/src/app/(main)/[projectId]/pcos/new/page.tsx",
       "route": "/[projectId]/pcos/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/pcos/new"
+      "status": "capture_error",
+      "urlPath": "/1034/pcos/new",
+      "url": "http://localhost:3001/1034/pcos/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/pcos/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/pcos/page.tsx",
       "route": "/[projectId]/pcos",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/pcos"
+      "status": "capture_error",
+      "urlPath": "/1034/pcos",
+      "url": "http://localhost:3001/1034/pcos",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/pcos"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/permissions/page.tsx",
       "route": "/[projectId]/permissions",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "permissions",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/permissions"
+      "status": "capture_error",
+      "urlPath": "/1034/permissions",
+      "url": "http://localhost:3001/1034/permissions",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/permissions"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/photos/page.tsx",
@@ -1966,27 +2209,18 @@
       "scope": "main",
       "included": true,
       "tool": "photos",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/photos",
-      "url": "https://projects.alleatogroup.com/1034/photos",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/photos",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/027-1034__photos.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/photos",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/photos"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx",
       "route": "/[projectId]/prime-contract-pcos/[pcoId]/edit",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "prime-contract-pcos",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "pcoId"
       ]
@@ -1995,9 +2229,9 @@
       "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx",
       "route": "/[projectId]/prime-contract-pcos/[pcoId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "prime-contract-pcos",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "pcoId"
       ]
@@ -2006,19 +2240,23 @@
       "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx",
       "route": "/[projectId]/prime-contract-pcos/new",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "prime-contract-pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/prime-contract-pcos/new"
+      "status": "capture_error",
+      "urlPath": "/1034/prime-contract-pcos/new",
+      "url": "http://localhost:3001/1034/prime-contract-pcos/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contract-pcos/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx",
       "route": "/[projectId]/prime-contract-pcos",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "prime-contract-pcos",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/prime-contract-pcos"
+      "status": "capture_error",
+      "urlPath": "/1034/prime-contract-pcos",
+      "url": "http://localhost:3001/1034/prime-contract-pcos",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contract-pcos"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx",
@@ -2106,19 +2344,10 @@
       "scope": "main",
       "included": true,
       "tool": "prime-contracts",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/prime-contracts/change-orders",
-      "url": "https://projects.alleatogroup.com/1034/prime-contracts/change-orders",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/change-orders?tab=prime",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/028-1034__prime-contracts__change-orders.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/prime-contracts/change-orders",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contracts/change-orders"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx",
@@ -2126,19 +2355,10 @@
       "scope": "main",
       "included": true,
       "tool": "prime-contracts",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/prime-contracts/configure",
-      "url": "https://projects.alleatogroup.com/1034/prime-contracts/configure",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts/configure",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/029-1034__prime-contracts__configure.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/prime-contracts/configure",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contracts/configure"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx",
@@ -2146,19 +2366,10 @@
       "scope": "main",
       "included": true,
       "tool": "prime-contracts",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/prime-contracts/new",
-      "url": "https://projects.alleatogroup.com/1034/prime-contracts/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/030-1034__prime-contracts__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/prime-contracts/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contracts/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx",
@@ -2166,27 +2377,18 @@
       "scope": "main",
       "included": true,
       "tool": "prime-contracts",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/prime-contracts",
-      "url": "https://projects.alleatogroup.com/1034/prime-contracts",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/prime-contracts",
-      "title": "Prime Contracts - Project - Test 26-5-14",
-      "screenshot": "screenshots/031-1034__prime-contracts.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/prime-contracts",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/prime-contracts"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx",
       "route": "/[projectId]/progress-reports/[reportId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "progress-reports",
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "reportId"
       ]
@@ -2195,19 +2397,23 @@
       "source": "frontend/src/app/(main)/[projectId]/progress-reports/page.tsx",
       "route": "/[projectId]/progress-reports",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "progress-reports",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/progress-reports"
+      "status": "capture_error",
+      "urlPath": "/1034/progress-reports",
+      "url": "http://localhost:3001/1034/progress-reports",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/progress-reports"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/project-status-report/page.tsx",
       "route": "/[projectId]/project-status-report",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "project-status-report",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/project-status-report"
+      "status": "capture_error",
+      "urlPath": "/1034/project-status-report",
+      "url": "http://localhost:3001/1034/project-status-report",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/project-status-report"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx",
@@ -2226,28 +2432,21 @@
       "scope": "main",
       "included": true,
       "tool": "punch-list",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/punch-list",
-      "url": "https://projects.alleatogroup.com/1034/punch-list",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/punch-list",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/032-1034__punch-list.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/punch-list",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/punch-list"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/reporting/page.tsx",
       "route": "/[projectId]/reporting",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "reporting",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/reporting"
+      "status": "capture_error",
+      "urlPath": "/1034/reporting",
+      "url": "http://localhost:3001/1034/reporting",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/reporting"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx",
@@ -2266,19 +2465,10 @@
       "scope": "main",
       "included": true,
       "tool": "rfis",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/rfis/new",
-      "url": "https://projects.alleatogroup.com/1034/rfis/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/rfis/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/033-1034__rfis__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/rfis/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/rfis/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/rfis/page.tsx",
@@ -2286,19 +2476,10 @@
       "scope": "main",
       "included": true,
       "tool": "rfis",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/rfis",
-      "url": "https://projects.alleatogroup.com/1034/rfis",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/rfis",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/034-1034__rfis.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/rfis",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/rfis"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/schedule/import/page.tsx",
@@ -2306,19 +2487,10 @@
       "scope": "main",
       "included": true,
       "tool": "schedule",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/schedule/import",
-      "url": "https://projects.alleatogroup.com/1034/schedule/import",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/schedule/import",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/035-1034__schedule__import.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/schedule/import",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/schedule/import"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/schedule/page.tsx",
@@ -2326,37 +2498,32 @@
       "scope": "main",
       "included": true,
       "tool": "schedule",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/schedule",
-      "url": "https://projects.alleatogroup.com/1034/schedule",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/schedule",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/036-1034__schedule.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/schedule",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/schedule"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/setup/page.tsx",
       "route": "/[projectId]/setup",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "setup",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/setup"
+      "status": "capture_error",
+      "urlPath": "/1034/setup",
+      "url": "http://localhost:3001/1034/setup",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/setup"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/sov/page.tsx",
       "route": "/[projectId]/sov",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "sov",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/sov"
+      "status": "capture_error",
+      "urlPath": "/1034/sov",
+      "url": "http://localhost:3001/1034/sov",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/sov"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx",
@@ -2375,19 +2542,10 @@
       "scope": "main",
       "included": true,
       "tool": "specifications",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/specifications",
-      "url": "https://projects.alleatogroup.com/1034/specifications",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/specifications",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/037-1034__specifications.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/specifications",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/specifications"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/specifications/settings/page.tsx",
@@ -2395,19 +2553,10 @@
       "scope": "main",
       "included": true,
       "tool": "specifications",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/specifications/settings",
-      "url": "https://projects.alleatogroup.com/1034/specifications/settings",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/specifications/settings",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/038-1034__specifications__settings.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/specifications/settings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/specifications/settings"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx",
@@ -2437,19 +2586,10 @@
       "scope": "main",
       "included": true,
       "tool": "submittals",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/submittals/new",
-      "url": "https://projects.alleatogroup.com/1034/submittals/new",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/submittals/new",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/039-1034__submittals__new.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/submittals/new",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/submittals/new"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/submittals/page.tsx",
@@ -2457,46 +2597,43 @@
       "scope": "main",
       "included": true,
       "tool": "submittals",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/submittals",
-      "url": "https://projects.alleatogroup.com/1034/submittals",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/submittals",
-      "title": "Alleato AI - Project Management",
-      "screenshot": "screenshots/040-1034__submittals.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/submittals",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/submittals"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx",
       "route": "/[projectId]/tasks/kanban",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "tasks",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/tasks/kanban"
+      "status": "capture_error",
+      "urlPath": "/1034/tasks/kanban",
+      "url": "http://localhost:3001/1034/tasks/kanban",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/tasks/kanban"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/tasks/page.tsx",
       "route": "/[projectId]/tasks",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "tasks",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/tasks"
+      "status": "capture_error",
+      "urlPath": "/1034/tasks",
+      "url": "http://localhost:3001/1034/tasks",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/tasks"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/timeline/page.tsx",
       "route": "/[projectId]/timeline",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "timeline",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/timeline"
+      "status": "capture_error",
+      "urlPath": "/1034/timeline",
+      "url": "http://localhost:3001/1034/timeline",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/timeline"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/transmittals/page.tsx",
@@ -2504,45 +2641,40 @@
       "scope": "main",
       "included": true,
       "tool": "transmittals",
-      "status": "captured",
+      "status": "capture_error",
       "urlPath": "/1034/transmittals",
-      "url": "https://projects.alleatogroup.com/1034/transmittals",
-      "httpStatus": 200,
-      "finalUrl": "https://projects.alleatogroup.com/1034/transmittals",
-      "title": "Transmittals - Project - Test 26-5-14",
-      "screenshot": "screenshots/041-1034__transmittals.png",
-      "clip": {
-        "x": 56,
-        "y": 0,
-        "width": 1384,
-        "height": 1000
-      }
+      "url": "http://localhost:3001/1034/transmittals",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/transmittals"
     },
     {
       "source": "frontend/src/app/(main)/[projectId]/user-management/page.tsx",
       "route": "/[projectId]/user-management",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": "user-management",
-      "status": "skipped_non_app_scope",
-      "urlPath": "/1034/user-management"
+      "status": "capture_error",
+      "urlPath": "/1034/user-management",
+      "url": "http://localhost:3001/1034/user-management",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/1034/user-management"
     },
     {
       "source": "frontend/src/app/(main)/access-denied/page.tsx",
       "route": "/access-denied",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/access-denied"
+      "status": "capture_error",
+      "urlPath": "/access-denied",
+      "url": "http://localhost:3001/access-denied",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/access-denied"
     },
     {
       "source": "frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx",
       "route": "/ai-assistant/feature-requests/[requestId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "requestId"
       ]
@@ -2551,153 +2683,185 @@
       "source": "frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx",
       "route": "/ai-assistant/feature-requests",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-assistant/feature-requests"
+      "status": "capture_error",
+      "urlPath": "/ai-assistant/feature-requests",
+      "url": "http://localhost:3001/ai-assistant/feature-requests",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai-assistant/feature-requests"
     },
     {
       "source": "frontend/src/app/(main)/ai-assistant/marketing/page.tsx",
       "route": "/ai-assistant/marketing",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-assistant/marketing"
+      "status": "capture_error",
+      "urlPath": "/ai-assistant/marketing",
+      "url": "http://localhost:3001/ai-assistant/marketing",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai-assistant/marketing"
     },
     {
       "source": "frontend/src/app/(main)/ai-assistant/page.tsx",
       "route": "/ai-assistant",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-assistant"
+      "status": "capture_error",
+      "urlPath": "/ai-assistant",
+      "url": "http://localhost:3001/ai-assistant",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai-assistant"
     },
     {
       "source": "frontend/src/app/(main)/ai-assistant/teach/page.tsx",
       "route": "/ai-assistant/teach",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-assistant/teach"
+      "status": "capture_error",
+      "urlPath": "/ai-assistant/teach",
+      "url": "http://localhost:3001/ai-assistant/teach",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai-assistant/teach"
     },
     {
       "source": "frontend/src/app/(main)/ai-avatar/page.tsx",
       "route": "/ai-avatar",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai-avatar"
+      "status": "capture_error",
+      "urlPath": "/ai-avatar",
+      "url": "http://localhost:3001/ai-avatar",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai-avatar"
     },
     {
       "source": "frontend/src/app/(main)/ai/approvals/page.tsx",
       "route": "/ai/approvals",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/approvals"
+      "status": "capture_error",
+      "urlPath": "/ai/approvals",
+      "url": "http://localhost:3001/ai/approvals",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai/approvals"
     },
     {
       "source": "frontend/src/app/(main)/ai/page.tsx",
       "route": "/ai",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai"
+      "status": "capture_error",
+      "urlPath": "/ai",
+      "url": "http://localhost:3001/ai",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai"
     },
     {
       "source": "frontend/src/app/(main)/ai/profile/page.tsx",
       "route": "/ai/profile",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/profile"
+      "status": "capture_error",
+      "urlPath": "/ai/profile",
+      "url": "http://localhost:3001/ai/profile",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai/profile"
     },
     {
       "source": "frontend/src/app/(main)/ai/skills/page.tsx",
       "route": "/ai/skills",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/skills"
+      "status": "capture_error",
+      "urlPath": "/ai/skills",
+      "url": "http://localhost:3001/ai/skills",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai/skills"
     },
     {
       "source": "frontend/src/app/(main)/ai/teach/page.tsx",
       "route": "/ai/teach",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ai/teach"
+      "status": "capture_error",
+      "urlPath": "/ai/teach",
+      "url": "http://localhost:3001/ai/teach",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ai/teach"
     },
     {
       "source": "frontend/src/app/(main)/billing-periods/page.tsx",
       "route": "/billing-periods",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/billing-periods"
+      "status": "capture_error",
+      "urlPath": "/billing-periods",
+      "url": "http://localhost:3001/billing-periods",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/billing-periods"
     },
     {
       "source": "frontend/src/app/(main)/calendar/page.tsx",
       "route": "/calendar",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/calendar"
+      "status": "capture_error",
+      "urlPath": "/calendar",
+      "url": "http://localhost:3001/calendar",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/calendar"
     },
     {
       "source": "frontend/src/app/(main)/comments/page.tsx",
       "route": "/comments",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/comments"
+      "status": "capture_error",
+      "urlPath": "/comments",
+      "url": "http://localhost:3001/comments",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/comments"
     },
     {
       "source": "frontend/src/app/(main)/create-project/page.tsx",
       "route": "/create-project",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/create-project"
+      "status": "capture_error",
+      "urlPath": "/create-project",
+      "url": "http://localhost:3001/create-project",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/create-project"
     },
     {
       "source": "frontend/src/app/(main)/demo/page.tsx",
       "route": "/demo",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/demo"
+      "status": "capture_error",
+      "urlPath": "/demo",
+      "url": "http://localhost:3001/demo",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/demo"
     },
     {
       "source": "frontend/src/app/(main)/directory/clients/page.tsx",
       "route": "/directory/clients",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/clients"
+      "status": "capture_error",
+      "urlPath": "/directory/clients",
+      "url": "http://localhost:3001/directory/clients",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/clients"
     },
     {
       "source": "frontend/src/app/(main)/directory/companies/[companyId]/page.tsx",
       "route": "/directory/companies/[companyId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "companyId"
       ]
@@ -2706,18 +2870,20 @@
       "source": "frontend/src/app/(main)/directory/companies/page.tsx",
       "route": "/directory/companies",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/companies"
+      "status": "capture_error",
+      "urlPath": "/directory/companies",
+      "url": "http://localhost:3001/directory/companies",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/companies"
     },
     {
       "source": "frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx",
       "route": "/directory/contacts/[contactId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "contactId"
       ]
@@ -2726,54 +2892,64 @@
       "source": "frontend/src/app/(main)/directory/contacts/page.tsx",
       "route": "/directory/contacts",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/contacts"
+      "status": "capture_error",
+      "urlPath": "/directory/contacts",
+      "url": "http://localhost:3001/directory/contacts",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/contacts"
     },
     {
       "source": "frontend/src/app/(main)/directory/employees/page.tsx",
       "route": "/directory/employees",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/employees"
+      "status": "capture_error",
+      "urlPath": "/directory/employees",
+      "url": "http://localhost:3001/directory/employees",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/employees"
     },
     {
       "source": "frontend/src/app/(main)/directory/groups/page.tsx",
       "route": "/directory/groups",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/groups"
+      "status": "capture_error",
+      "urlPath": "/directory/groups",
+      "url": "http://localhost:3001/directory/groups",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/groups"
     },
     {
       "source": "frontend/src/app/(main)/directory/page.tsx",
       "route": "/directory",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory"
+      "status": "capture_error",
+      "urlPath": "/directory",
+      "url": "http://localhost:3001/directory",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory"
     },
     {
       "source": "frontend/src/app/(main)/directory/prospects/page.tsx",
       "route": "/directory/prospects",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/prospects"
+      "status": "capture_error",
+      "urlPath": "/directory/prospects",
+      "url": "http://localhost:3001/directory/prospects",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/prospects"
     },
     {
       "source": "frontend/src/app/(main)/directory/vendors/[vendorId]/page.tsx",
       "route": "/directory/vendors/[vendorId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "vendorId"
       ]
@@ -2782,289 +2958,353 @@
       "source": "frontend/src/app/(main)/directory/vendors/page.tsx",
       "route": "/directory/vendors",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/directory/vendors"
+      "status": "capture_error",
+      "urlPath": "/directory/vendors",
+      "url": "http://localhost:3001/directory/vendors",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/directory/vendors"
     },
     {
       "source": "frontend/src/app/(main)/estimates/[type]/page.tsx",
       "route": "/estimates/[type]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/estimates/all"
+      "status": "capture_error",
+      "urlPath": "/estimates/all",
+      "url": "http://localhost:3001/estimates/all",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/estimates/all"
     },
     {
       "source": "frontend/src/app/(main)/executive/capabilities/page.tsx",
       "route": "/executive/capabilities",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/executive/capabilities"
+      "status": "capture_error",
+      "urlPath": "/executive/capabilities",
+      "url": "http://localhost:3001/executive/capabilities",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/executive/capabilities"
     },
     {
       "source": "frontend/src/app/(main)/executive/intelligence-brief/page.tsx",
       "route": "/executive/intelligence-brief",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/executive/intelligence-brief"
+      "status": "capture_error",
+      "urlPath": "/executive/intelligence-brief",
+      "url": "http://localhost:3001/executive/intelligence-brief",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/executive/intelligence-brief"
     },
     {
       "source": "frontend/src/app/(main)/executive/page.tsx",
       "route": "/executive",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/executive"
+      "status": "capture_error",
+      "urlPath": "/executive",
+      "url": "http://localhost:3001/executive",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/executive"
     },
     {
       "source": "frontend/src/app/(main)/financial-insights/page.tsx",
       "route": "/financial-insights",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/financial-insights"
+      "status": "capture_error",
+      "urlPath": "/financial-insights",
+      "url": "http://localhost:3001/financial-insights",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/financial-insights"
     },
     {
       "source": "frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx",
       "route": "/fm-global/fm_global_tables",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/fm-global/fm_global_tables"
+      "status": "capture_error",
+      "urlPath": "/fm-global/fm_global_tables",
+      "url": "http://localhost:3001/fm-global/fm_global_tables",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/fm-global/fm_global_tables"
     },
     {
       "source": "frontend/src/app/(main)/fm-global/page.tsx",
       "route": "/fm-global",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/fm-global"
+      "status": "capture_error",
+      "urlPath": "/fm-global",
+      "url": "http://localhost:3001/fm-global",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/fm-global"
     },
     {
       "source": "frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx",
       "route": "/fm-global/submissions/[submissionId]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/fm-global/submissions/sample"
+      "status": "capture_error",
+      "urlPath": "/fm-global/submissions/sample",
+      "url": "http://localhost:3001/fm-global/submissions/sample",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/fm-global/submissions/sample"
     },
     {
       "source": "frontend/src/app/(main)/fm-global/submissions/page.tsx",
       "route": "/fm-global/submissions",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/fm-global/submissions"
+      "status": "capture_error",
+      "urlPath": "/fm-global/submissions",
+      "url": "http://localhost:3001/fm-global/submissions",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/fm-global/submissions"
     },
     {
       "source": "frontend/src/app/(main)/home/page.tsx",
       "route": "/home",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/home"
+      "status": "capture_error",
+      "urlPath": "/home",
+      "url": "http://localhost:3001/home",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/home"
     },
     {
       "source": "frontend/src/app/(main)/ideas/page.tsx",
       "route": "/ideas",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/ideas"
+      "status": "capture_error",
+      "urlPath": "/ideas",
+      "url": "http://localhost:3001/ideas",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/ideas"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/app/[toolCategory]/[docSlug]/page.tsx",
       "route": "/knowledge/app/[toolCategory]/[docSlug]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/app/commitments/create-a-commitment"
+      "status": "capture_error",
+      "urlPath": "/knowledge/app/commitments/create-a-commitment",
+      "url": "http://localhost:3001/knowledge/app/commitments/create-a-commitment",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/app/commitments/create-a-commitment"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/app/[toolCategory]/page.tsx",
       "route": "/knowledge/app/[toolCategory]",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/app/commitments"
+      "status": "capture_error",
+      "urlPath": "/knowledge/app/commitments",
+      "url": "http://localhost:3001/knowledge/app/commitments",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/app/commitments"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/app/page.tsx",
       "route": "/knowledge/app",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/app"
+      "status": "capture_error",
+      "urlPath": "/knowledge/app",
+      "url": "http://localhost:3001/knowledge/app",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/app"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/app/screenshots/page.tsx",
       "route": "/knowledge/app/screenshots",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/app/screenshots"
+      "status": "capture_error",
+      "urlPath": "/knowledge/app/screenshots",
+      "url": "http://localhost:3001/knowledge/app/screenshots",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/app/screenshots"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/company/page.tsx",
       "route": "/knowledge/company",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/company"
+      "status": "capture_error",
+      "urlPath": "/knowledge/company",
+      "url": "http://localhost:3001/knowledge/company",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/company"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/manage/page.tsx",
       "route": "/knowledge/manage",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge/manage"
+      "status": "capture_error",
+      "urlPath": "/knowledge/manage",
+      "url": "http://localhost:3001/knowledge/manage",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge/manage"
     },
     {
       "source": "frontend/src/app/(main)/knowledge/page.tsx",
       "route": "/knowledge",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/knowledge"
+      "status": "capture_error",
+      "urlPath": "/knowledge",
+      "url": "http://localhost:3001/knowledge",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/knowledge"
     },
     {
       "source": "frontend/src/app/(main)/manpower/page.tsx",
       "route": "/manpower",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/manpower"
+      "status": "capture_error",
+      "urlPath": "/manpower",
+      "url": "http://localhost:3001/manpower",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/manpower"
     },
     {
       "source": "frontend/src/app/(main)/notifications/page.tsx",
       "route": "/notifications",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/notifications"
+      "status": "capture_error",
+      "urlPath": "/notifications",
+      "url": "http://localhost:3001/notifications",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/notifications"
     },
     {
       "source": "frontend/src/app/(main)/page.tsx",
       "route": "/",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/"
+      "status": "capture_error",
+      "urlPath": "/",
+      "url": "http://localhost:3001/",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/"
     },
     {
       "source": "frontend/src/app/(main)/pipeline/page.tsx",
       "route": "/pipeline",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/pipeline"
+      "status": "capture_error",
+      "urlPath": "/pipeline",
+      "url": "http://localhost:3001/pipeline",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/pipeline"
     },
     {
       "source": "frontend/src/app/(main)/settings/account/page.tsx",
       "route": "/settings/account",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/account"
+      "status": "capture_error",
+      "urlPath": "/settings/account",
+      "url": "http://localhost:3001/settings/account",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/account"
     },
     {
       "source": "frontend/src/app/(main)/settings/audit/page.tsx",
       "route": "/settings/audit",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/audit"
+      "status": "capture_error",
+      "urlPath": "/settings/audit",
+      "url": "http://localhost:3001/settings/audit",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/audit"
     },
     {
       "source": "frontend/src/app/(main)/settings/memory/page.tsx",
       "route": "/settings/memory",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/memory"
+      "status": "capture_error",
+      "urlPath": "/settings/memory",
+      "url": "http://localhost:3001/settings/memory",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/memory"
     },
     {
       "source": "frontend/src/app/(main)/settings/page.tsx",
       "route": "/settings",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings"
+      "status": "capture_error",
+      "urlPath": "/settings",
+      "url": "http://localhost:3001/settings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings"
     },
     {
       "source": "frontend/src/app/(main)/settings/preferences/page.tsx",
       "route": "/settings/preferences",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/preferences"
+      "status": "capture_error",
+      "urlPath": "/settings/preferences",
+      "url": "http://localhost:3001/settings/preferences",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/preferences"
     },
     {
       "source": "frontend/src/app/(main)/settings/profile/page.tsx",
       "route": "/settings/profile",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/profile"
+      "status": "capture_error",
+      "urlPath": "/settings/profile",
+      "url": "http://localhost:3001/settings/profile",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/profile"
     },
     {
       "source": "frontend/src/app/(main)/settings/security/page.tsx",
       "route": "/settings/security",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/settings/security"
+      "status": "capture_error",
+      "urlPath": "/settings/security",
+      "url": "http://localhost:3001/settings/security",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/settings/security"
     },
     {
       "source": "frontend/src/app/(main)/stats/page.tsx",
       "route": "/stats",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/stats"
+      "status": "capture_error",
+      "urlPath": "/stats",
+      "url": "http://localhost:3001/stats",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/stats"
     },
     {
       "source": "frontend/src/app/(main)/team-chat/page.tsx",
       "route": "/team-chat",
       "scope": "main",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/team-chat"
+      "status": "capture_error",
+      "urlPath": "/team-chat",
+      "url": "http://localhost:3001/team-chat",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/team-chat"
     },
     {
       "source": "frontend/src/app/(public)/fm-global/form/page.tsx",
@@ -3088,45 +3328,53 @@
       "source": "frontend/src/app/(tables)/assignment-inbox/page.tsx",
       "route": "/assignment-inbox",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/assignment-inbox"
+      "status": "capture_error",
+      "urlPath": "/assignment-inbox",
+      "url": "http://localhost:3001/assignment-inbox",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/assignment-inbox"
     },
     {
       "source": "frontend/src/app/(tables)/change-events/page.tsx",
       "route": "/change-events",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/change-events"
+      "status": "capture_error",
+      "urlPath": "/change-events",
+      "url": "http://localhost:3001/change-events",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/change-events"
     },
     {
       "source": "frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx",
       "route": "/daily-briefs/[briefId]",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/daily-briefs/sample"
+      "status": "capture_error",
+      "urlPath": "/daily-briefs/sample",
+      "url": "http://localhost:3001/daily-briefs/sample",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/daily-briefs/sample"
     },
     {
       "source": "frontend/src/app/(tables)/daily-briefs/page.tsx",
       "route": "/daily-briefs",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/daily-briefs"
+      "status": "capture_error",
+      "urlPath": "/daily-briefs",
+      "url": "http://localhost:3001/daily-briefs",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/daily-briefs"
     },
     {
       "source": "frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx",
       "route": "/daily-logs/[dailyLogId]",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "dailyLogId"
       ]
@@ -3135,72 +3383,86 @@
       "source": "frontend/src/app/(tables)/daily-logs/page.tsx",
       "route": "/daily-logs",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/daily-logs"
+      "status": "capture_error",
+      "urlPath": "/daily-logs",
+      "url": "http://localhost:3001/daily-logs",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/daily-logs"
     },
     {
       "source": "frontend/src/app/(tables)/daily-reports/page.tsx",
       "route": "/daily-reports",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/daily-reports"
+      "status": "capture_error",
+      "urlPath": "/daily-reports",
+      "url": "http://localhost:3001/daily-reports",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/daily-reports"
     },
     {
       "source": "frontend/src/app/(tables)/documents/page.tsx",
       "route": "/documents",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/documents"
+      "status": "capture_error",
+      "urlPath": "/documents",
+      "url": "http://localhost:3001/documents",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/documents"
     },
     {
       "source": "frontend/src/app/(tables)/drawings/page.tsx",
       "route": "/drawings",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/drawings"
+      "status": "capture_error",
+      "urlPath": "/drawings",
+      "url": "http://localhost:3001/drawings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/drawings"
     },
     {
       "source": "frontend/src/app/(tables)/emails/page.tsx",
       "route": "/emails",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/emails"
+      "status": "capture_error",
+      "urlPath": "/emails",
+      "url": "http://localhost:3001/emails",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/emails"
     },
     {
       "source": "frontend/src/app/(tables)/estimates/page.tsx",
       "route": "/estimates",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/estimates"
+      "status": "capture_error",
+      "urlPath": "/estimates",
+      "url": "http://localhost:3001/estimates",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/estimates"
     },
     {
       "source": "frontend/src/app/(tables)/files/page.tsx",
       "route": "/files",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/files"
+      "status": "capture_error",
+      "urlPath": "/files",
+      "url": "http://localhost:3001/files",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/files"
     },
     {
       "source": "frontend/src/app/(tables)/insights/[insightId]/page.tsx",
       "route": "/insights/[insightId]",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "insightId"
       ]
@@ -3209,27 +3471,31 @@
       "source": "frontend/src/app/(tables)/insights/page.tsx",
       "route": "/insights",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/insights"
+      "status": "capture_error",
+      "urlPath": "/insights",
+      "url": "http://localhost:3001/insights",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/insights"
     },
     {
       "source": "frontend/src/app/(tables)/meeting-segments/page.tsx",
       "route": "/meeting-segments",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/meeting-segments"
+      "status": "capture_error",
+      "urlPath": "/meeting-segments",
+      "url": "http://localhost:3001/meeting-segments",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/meeting-segments"
     },
     {
       "source": "frontend/src/app/(tables)/meetings/[meetingId]/page.tsx",
       "route": "/meetings/[meetingId]",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
+      "status": "skipped_dynamic_record",
       "unresolved": [
         "meetingId"
       ]
@@ -3238,100 +3504,122 @@
       "source": "frontend/src/app/(tables)/meetings/page.tsx",
       "route": "/meetings",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/meetings"
+      "status": "capture_error",
+      "urlPath": "/meetings",
+      "url": "http://localhost:3001/meetings",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/meetings"
     },
     {
       "source": "frontend/src/app/(tables)/outlook-intake/page.tsx",
       "route": "/outlook-intake",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/outlook-intake"
+      "status": "capture_error",
+      "urlPath": "/outlook-intake",
+      "url": "http://localhost:3001/outlook-intake",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/outlook-intake"
     },
     {
       "source": "frontend/src/app/(tables)/potential-change-orders/page.tsx",
       "route": "/potential-change-orders",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/potential-change-orders"
+      "status": "capture_error",
+      "urlPath": "/potential-change-orders",
+      "url": "http://localhost:3001/potential-change-orders",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/potential-change-orders"
     },
     {
       "source": "frontend/src/app/(tables)/prime-contracts/page.tsx",
       "route": "/prime-contracts",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/prime-contracts"
+      "status": "capture_error",
+      "urlPath": "/prime-contracts",
+      "url": "http://localhost:3001/prime-contracts",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/prime-contracts"
     },
     {
       "source": "frontend/src/app/(tables)/progress-reports/page.tsx",
       "route": "/progress-reports",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/progress-reports"
+      "status": "capture_error",
+      "urlPath": "/progress-reports",
+      "url": "http://localhost:3001/progress-reports",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/progress-reports"
     },
     {
       "source": "frontend/src/app/(tables)/project-documents/page.tsx",
       "route": "/project-documents",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/project-documents"
+      "status": "capture_error",
+      "urlPath": "/project-documents",
+      "url": "http://localhost:3001/project-documents",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/project-documents"
     },
     {
       "source": "frontend/src/app/(tables)/projects/page.tsx",
       "route": "/projects",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/projects"
+      "status": "capture_error",
+      "urlPath": "/projects",
+      "url": "http://localhost:3001/projects",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/projects"
     },
     {
       "source": "frontend/src/app/(tables)/tasks/page.tsx",
       "route": "/tasks",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/tasks"
+      "status": "capture_error",
+      "urlPath": "/tasks",
+      "url": "http://localhost:3001/tasks",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/tasks"
     },
     {
       "source": "frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx",
       "route": "/teams-conversations/[sourceDocumentId]",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/teams-conversations/sample"
+      "status": "capture_error",
+      "urlPath": "/teams-conversations/sample",
+      "url": "http://localhost:3001/teams-conversations/sample",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/teams-conversations/sample"
     },
     {
       "source": "frontend/src/app/(tables)/teams-conversations/page.tsx",
       "route": "/teams-conversations",
       "scope": "tables",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/teams-conversations"
+      "status": "capture_error",
+      "urlPath": "/teams-conversations",
+      "url": "http://localhost:3001/teams-conversations",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/teams-conversations"
     },
     {
       "source": "frontend/src/app/admin/errors/page.tsx",
       "route": "/admin/errors",
       "scope": "admin",
-      "included": false,
+      "included": true,
       "tool": null,
-      "status": "skipped_non_app_scope",
-      "urlPath": "/admin/errors"
+      "status": "capture_error",
+      "urlPath": "/admin/errors",
+      "url": "http://localhost:3001/admin/errors",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3001/admin/errors"
     },
     {
       "source": "frontend/src/app/auth/ai-change-event-preview-card/page.tsx",

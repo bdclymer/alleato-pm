@@ -557,7 +557,10 @@ export default function CommitmentCODetailPage() {
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=commitment`);
     } catch (err) {
-      toast.error("Failed to delete");
+      toast.error("Could not delete change order", {
+        description:
+          err instanceof Error ? err.message : "an unexpected error occurred",
+      });
     }
   }, [co, contractId, projectId, commitmentCoId, router, confirm]);
 

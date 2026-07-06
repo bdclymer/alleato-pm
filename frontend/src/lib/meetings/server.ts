@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
 import { deriveMeetingStatus, numberAgenda } from "./domain";
+import { dedupeSemanticItems } from "./text-dedupe";
 
 type ServiceClient = SupabaseClient<Database>;
 
@@ -274,7 +275,7 @@ export async function loadCuratedMeetingRisks(
     throw new Error(`Failed to load meeting risk cards: ${cardError.message}`);
   }
 
-  return (cardRows ?? [])
+  const risks = (cardRows ?? [])
     .slice()
     .sort((a, b) => {
       const severityDelta = (b.severity ?? -1) - (a.severity ?? -1);
@@ -291,6 +292,12 @@ export async function loadCuratedMeetingRisks(
       source: "curated" as const,
     }))
     .filter((card) => card.text.trim().length > 0);
+
+  return dedupeSemanticItems(
+    dedupeSemanticItems(risks, (card) => card.text, 0.5),
+    (card) => card.whyItMatters ?? card.text,
+    0.5,
+  );
 }
 
 export type ResolvedMeetingDocumentId =

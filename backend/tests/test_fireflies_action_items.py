@@ -1053,3 +1053,64 @@ class TestUpsertStructuredMeeting:
         # Exactly 2 insert attempts: the initial insert plus one retry — the
         # helper must not loop beyond a single retry.
         assert insert_attempts["count"] == 2
+
+
+class TestStableContentHash:
+    """The Fireflies sync is an hourly poll that re-fetches recent transcripts
+    and re-runs the whole pipeline on each. The only thing stopping an unchanged
+    meeting from being re-embedded + re-extracted (which mints duplicate insight
+    cards) is the content-hash skip guard. The formatted markdown embeds
+    presigned ``**Audio:**`` / ``**Video:**`` URLs whose signature token is
+    regenerated on EVERY API fetch, so hashing the raw markdown made every hour
+    look like new content — the loop that duplicated meeting risks. The hash
+    must key on durable content only.
+    """
+
+    _BASE = """# Sprinkler Division Morning Huddle
+
+**Fireflies ID:** ff-abc
+**Date:** 2026-07-06
+**Audio:** https://cdn.fireflies.ai/audio/x.mp3?sig=AAA&expires=1000
+**Video:** https://cdn.fireflies.ai/video/x.mp4?sig=BBB&expires=1000
+**Fireflies Link:** https://app.fireflies.ai/view/x
+
+## Summary
+Overview one.
+
+## Transcript
+[00:01] **Brandon**: We need to reorder sprinkler heads.
+[00:05] **Jason**: The hazmat brackets are still unresolved.
+"""
+
+    # Same meeting, next hourly fetch: only the presigned media URL signatures
+    # rotated. This is the exact churn that drove the re-extraction loop.
+    _ROTATED_URLS = _BASE.replace("sig=AAA", "sig=ZZZ").replace(
+        "expires=1000", "expires=9999"
+    ).replace("sig=BBB", "sig=YYY")
+
+    # A genuinely different meeting: the transcript body changed.
+    _CHANGED_BODY = _BASE.replace(
+        "The hazmat brackets are still unresolved.",
+        "The hazmat brackets were sourced and installed.",
+    )
+
+    def test_rotated_media_urls_do_not_change_hash(self):
+        assert (
+            FirefliesIngestionPipeline._stable_content_hash(self._BASE)
+            == FirefliesIngestionPipeline._stable_content_hash(self._ROTATED_URLS)
+        )
+
+    def test_changed_transcript_body_changes_hash(self):
+        assert (
+            FirefliesIngestionPipeline._stable_content_hash(self._BASE)
+            != FirefliesIngestionPipeline._stable_content_hash(self._CHANGED_BODY)
+        )
+
+    def test_regenerated_summary_does_not_change_hash(self):
+        # AI-summary fields are non-deterministically refined by Fireflies and
+        # carry nothing the skip decision needs — they must not force reprocess.
+        refined = self._BASE.replace("Overview one.", "A completely reworded overview.")
+        assert (
+            FirefliesIngestionPipeline._stable_content_hash(self._BASE)
+            == FirefliesIngestionPipeline._stable_content_hash(refined)
+        )

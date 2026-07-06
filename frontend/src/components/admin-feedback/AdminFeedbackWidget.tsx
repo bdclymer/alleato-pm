@@ -35,6 +35,7 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
+import { getBestComposerTarget } from "@/lib/admin-feedback/launcher-target";
 import { compressImageDataUrl } from "@/lib/admin-feedback/compress-image";
 import {
   MAX_RECORDING_DURATION_MS,
@@ -177,27 +178,6 @@ function inferProjectId(pathname: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getBestComposerTarget() {
-  const candidates = [
-    "[role='dialog']:not([data-admin-feedback-root='true'])",
-    "[data-feedback-id='app.main-content']",
-    "main",
-  ];
-
-  for (const selector of candidates) {
-    const target = document.querySelector(selector);
-    if (
-      target instanceof HTMLElement &&
-      target.offsetParent !== null &&
-      !isOverlayHost(target)
-    ) {
-      return target;
-    }
-  }
-
-  return document.body;
-}
-
 function waitForComposerToLeaveViewport() {
   return new Promise<void>((resolve) => {
     window.requestAnimationFrame(() => {
@@ -297,6 +277,7 @@ export function AdminFeedbackWidget() {
   });
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Any new base screenshot (capture / upload / re-pick / clear) discards the
   // prior annotation so a stale overlay can never be submitted with a new image.
@@ -706,6 +687,18 @@ export function AdminFeedbackWidget() {
       isCancelled = true;
     };
   }, [dialogOpen, selectedElement, screenshotDataUrl, pagePath, selectedTarget]);
+
+  useEffect(() => {
+    if (!dialogOpen || !selectedTarget) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      commentInputRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [dialogOpen, selectedTarget]);
 
   useEffect(() => {
     const openComposer = () => {
@@ -1124,6 +1117,7 @@ export function AdminFeedbackWidget() {
                 <InputGroup className="rounded-2xl border-border/70 focus-within:border-border">
                   <InputGroupTextarea
                     id="feedback-comment"
+                    ref={commentInputRef}
                     rows={5}
                     placeholder="Describe the issue, idea, or question."
                     value={form.comment}

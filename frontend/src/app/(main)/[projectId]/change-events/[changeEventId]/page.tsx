@@ -472,6 +472,17 @@ export default function ChangeEventDetailPage() {
               </DropdownMenuItem>
             </>
           )}
+          {normalizedStatus !== "open" &&
+            normalizedStatus !== "converted" &&
+            normalizedStatus !== "void" && (
+              <DropdownMenuItem
+                onClick={() => actions.updateStatus("open")}
+                data-testid="change-event-reopen"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Reopen
+              </DropdownMenuItem>
+            )}
           {normalizedStatus !== "closed" && normalizedStatus !== "converted" && (
             <DropdownMenuItem onClick={() => actions.updateStatus("closed")}>
               <X className="mr-2 h-4 w-4" />

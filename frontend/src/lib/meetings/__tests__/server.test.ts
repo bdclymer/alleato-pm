@@ -1,4 +1,9 @@
-import { loadMeetingDetail, loadPreviousMinutes, resolveMeetingDocumentId } from "../server";
+import {
+  loadCuratedMeetingRisks,
+  loadMeetingDetail,
+  loadPreviousMinutes,
+  resolveMeetingDocumentId,
+} from "../server";
 
 type TableRows = Record<string, unknown[]>;
 
@@ -250,6 +255,73 @@ describe("loadMeetingDetail", () => {
 
     const detail = await loadMeetingDetail(supabase, projectId, meetingId);
     expect(detail!.meeting.series_name).toBe("");
+  });
+});
+
+describe("loadCuratedMeetingRisks", () => {
+  it("collapses near-duplicate curated risk cards before rendering", async () => {
+    const documentId = "doc-1";
+    const duplicateRiskA = "risk-a";
+    const duplicateRiskB = "risk-b";
+    const distinctRisk = "risk-c";
+
+    const { from } = createMockSupabase({
+      insight_card_evidence: [
+        { insight_card_id: duplicateRiskA, source_document_id: documentId },
+        { insight_card_id: duplicateRiskB, source_document_id: documentId },
+        { insight_card_id: distinctRisk, source_document_id: documentId },
+      ],
+      insight_cards: [
+        {
+          id: duplicateRiskA,
+          title: "Severe storms and related power disruptions may delay worker arrival",
+          summary: "high",
+          why_it_matters:
+            "Severe storms and related power disruptions may continue to delay worker arrival and reduce productivity at the site.",
+          confidence: "high",
+          card_type: "schedule_risk",
+          current_status: "open",
+          attribution_status: "auto_assigned",
+          severity: 5,
+          last_seen_at: "2026-07-06T12:30:00+00:00",
+          updated_at: "2026-07-06T12:31:00+00:00",
+        },
+        {
+          id: duplicateRiskB,
+          title: "Severe weather and power disruptions can delay worker arrival",
+          summary: "high",
+          why_it_matters:
+            "Severe weather and power disruptions can delay worker arrival and reduce productivity at the site.",
+          confidence: "high",
+          card_type: "schedule_risk",
+          current_status: "open",
+          attribution_status: "auto_assigned",
+          severity: 5,
+          last_seen_at: "2026-07-06T12:30:00+00:00",
+          updated_at: "2026-07-06T12:30:00+00:00",
+        },
+        {
+          id: distinctRisk,
+          title: "Hazmat bracket sourcing remains unresolved",
+          summary: "high",
+          why_it_matters:
+            "Hazmat bracket sourcing remains unresolved, and delays in finding a stronger bracket design could block safe installation progress.",
+          confidence: "high",
+          card_type: "risk",
+          current_status: "open",
+          attribution_status: "auto_assigned",
+          severity: 5,
+          last_seen_at: "2026-07-06T12:30:00+00:00",
+          updated_at: "2026-07-06T12:29:00+00:00",
+        },
+      ],
+    });
+
+    const supabase = asLoaderClient(from);
+    const risks = await loadCuratedMeetingRisks(supabase, documentId);
+
+    expect(risks).toHaveLength(2);
+    expect(risks.map((risk) => risk.id)).toEqual([duplicateRiskA, distinctRisk]);
   });
 });
 

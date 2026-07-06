@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requireDeveloperApi } from "@/lib/auth/require-developer";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
 import {
   deleteProgressReport,
   getProgressReportDetail,
@@ -43,11 +43,11 @@ const updateSchema = z.object({
 
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#GET",
-  async ({ params }) => {
-    const developerGuard = await requireDeveloperApi();
+  async ({ request, params }) => {
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
@@ -80,10 +80,10 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#PUT",
   async ({ request, params }) => {
-    const developerGuard = await requireDeveloperApi();
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
@@ -121,11 +121,11 @@ export const PUT = withApiGuardrails(
 
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]#DELETE",
-  async ({ params }) => {
-    const developerGuard = await requireDeveloperApi();
+  async ({ request, params }) => {
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",

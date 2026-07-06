@@ -8,6 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { buildPrintPageCss } from "@/lib/documents/print-layout";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -581,9 +582,7 @@ function generateListPDFHTML(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Commitments Export</title>
   <style>
-    @media print {
-      @page { margin: 0.5in; size: landscape; }
-    }
+    ${buildPrintPageCss({ landscape: true })}
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 9pt;

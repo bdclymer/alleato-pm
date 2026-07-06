@@ -3,7 +3,11 @@ import type {
   ProgressReportPhotoSelection,
   ProgressReportRecord,
 } from "@/lib/progress-reports/types";
-import { buildBrandedDocumentHtml } from "@/lib/documents/branded-letterhead";
+import {
+  buildBrandedDocumentHtml,
+  buildBrandedLastPageFooterOverlayPlan,
+} from "@/lib/documents/branded-letterhead";
+import type { PdfFooterOverlayPlan } from "@/lib/documents/print-layout";
 import { parseProgressReportDate } from "@/lib/progress-reports/date-format";
 
 function esc(value: string | number | null | undefined): string {
@@ -284,6 +288,45 @@ export function buildProgressReportHtml({
     bodyHtml,
     renderFooterInBody: false,
   });
+}
+
+function formatFooterGeneratedAt(value: Date): string {
+  return value.toLocaleDateString("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function buildProgressReportPdfLayout({
+  project,
+  report,
+  selectedPhotos,
+  generatedAt = new Date(),
+}: {
+  project: {
+    name: string | null;
+    project_number: string | null;
+    address: string | null;
+  };
+  report: ProgressReportRecord;
+  selectedPhotos: ProgressReportPhotoSelection[];
+  generatedAt?: Date;
+}): {
+  html: string;
+  footerOverlayPlan: PdfFooterOverlayPlan;
+} {
+  const documentTitle = project.name
+    ? `${project.name} Progress Report`
+    : report.title;
+
+  return {
+    html: buildProgressReportHtml({ project, report, selectedPhotos }),
+    footerOverlayPlan: buildBrandedLastPageFooterOverlayPlan({
+      documentTitle,
+      generatedAtLabel: formatFooterGeneratedAt(generatedAt),
+    }),
+  };
 }
 
 export function buildProgressReportEmailHtml({

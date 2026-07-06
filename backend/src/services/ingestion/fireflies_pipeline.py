@@ -616,7 +616,7 @@ class FirefliesIngestionPipeline:
             except Exception:
                 # Fall back to provided content if Fireflies API is unavailable.
                 pass
-        content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
+        content_hash = self._stable_content_hash(parsed.raw_text)
         source_item_id = parsed.fireflies_id or content_hash
         source_context = SourceProcessingContext(
             source_system="fireflies",
@@ -1129,7 +1129,7 @@ class FirefliesIngestionPipeline:
 
                 apps_outputs = self._fetch_apps_outputs(transcript_id)
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
-                content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
+                content_hash = self._stable_content_hash(markdown)
                 existing = self.store.find_document_by_hash(content_hash)
                 existing_document_id = str(existing.get("id") or "") if existing else None
                 if (
@@ -1654,6 +1654,42 @@ class FirefliesIngestionPipeline:
                 buffer.append(line)
         sections[current] = "\n".join(buffer).strip()
         return sections
+
+    @classmethod
+    def _stable_content_hash(cls, markdown: str) -> str:
+        """Idempotency key over DURABLE meeting content only.
+
+        The formatted Fireflies markdown embeds presigned ``**Audio:**`` /
+        ``**Video:**`` URLs whose signature/expiry token is regenerated on
+        EVERY Fireflies API fetch. Hashing the raw markdown therefore makes the
+        same unchanged meeting look like new content on every hourly sync poll,
+        which defeats the ingest/embed skip guards and re-runs the whole
+        pipeline (re-embed + LLM signal extraction) hour after hour, minting a
+        fresh batch of near-duplicate insight cards each time.
+
+        Key on identity (fireflies id + title + date) plus the transcript body
+        instead. These are stable across fetches, so an unchanged meeting hashes
+        identically and the skip guards fire. AI-summary/keyword header fields
+        are intentionally excluded — they carry no content the skip decision
+        needs and can be non-deterministically refined by Fireflies.
+        """
+        sections = cls._split_sections(markdown)
+        header = sections.get("header", "")
+        title = cls._extract_title(header) or ""
+        fireflies_id = (
+            cls._extract_metadata_value(header, "Fireflies ID")
+            or cls._extract_metadata_value(header, "ID")
+            or ""
+        )
+        date = cls._extract_metadata_value(header, "Date") or ""
+        body = (
+            sections.get("Transcript", "")
+            or sections.get("Full Transcript", "")
+        )
+        canonical = "\x1f".join(
+            part.strip() for part in (fireflies_id, title, date, body)  # sep below
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @staticmethod
     def _extract_title(header_block: str) -> Optional[str]:

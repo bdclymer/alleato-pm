@@ -10,12 +10,12 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
+import { requirePermission } from "@/lib/permissions-guard";
+import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import {
   PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
   type PrimeContractChangeOrderStatus,
@@ -57,16 +57,14 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
   async ({ request, params }) => {
   
     const { projectId, pcoId } = await params;
-    const supabase = await createClient();
-    const serviceClient = createServiceClient();
-
-    // Auth check
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#GET", message: "Authentication required." });
-    }
-
     const projectIdNum = parseInt(projectId, 10);
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) {
+      return authResult;
+    }
+    const { serviceClient } = authResult;
+    const supabase = serviceClient;
+
     // Get PCO with prime contract info
     const { data: pco, error } = await supabase
       .from("prime_contract_pcos")
@@ -193,15 +191,18 @@ export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
   async ({ request, params }) => {
   
     const { projectId, pcoId } = await params;
-    const supabase = await createClient();
+    const projectIdNum = parseInt(projectId, 10);
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) {
+      return authResult;
+    }
+    const { membership, serviceClient: supabase } = authResult;
 
-    // Auth check
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#PATCH", message: "Authentication required." });
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) {
+      return guard.response;
     }
 
-    const projectIdNum = parseInt(projectId, 10);
     const body = await request.json();
     const validatedData = updatePcoSchema.parse(body);
 
@@ -235,7 +236,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
     // Build update payload
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
-      updated_by: user.id,
+      updated_by: membership.authUserId,
     };
 
     if (validatedData.title !== undefined) updates.title = validatedData.title;
@@ -302,15 +303,18 @@ export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
   async ({ request, params }) => {
   
     const { projectId, pcoId } = await params;
-    const supabase = await createClient();
+    const projectIdNum = parseInt(projectId, 10);
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) {
+      return authResult;
+    }
+    const { serviceClient: supabase } = authResult;
 
-    // Auth check
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#DELETE", message: "Authentication required." });
+    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    if (guard.denied) {
+      return guard.response;
     }
 
-    const projectIdNum = parseInt(projectId, 10);
     // Get existing PCO
     const { data: existingPco, error: fetchError } = await supabase
       .from("prime_contract_pcos")

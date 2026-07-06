@@ -1016,9 +1016,10 @@ export function buildMeetingTableColumns(
               searchPlaceholder="Search projects..."
               emptyMessage="No projects found."
               showIndicator={false}
+              triggerVariant="ghost"
               className="w-full min-w-0"
               triggerClassName={cn(
-                "h-7 border-0 bg-transparent px-1 text-xs font-normal hover:bg-accent/20 focus-visible:ring-1",
+                "h-7 w-full rounded-sm px-1 text-xs font-normal text-muted-foreground hover:bg-accent/20 focus-visible:ring-1",
                 hasNoProject ? "text-red-600" : "text-muted-foreground",
               )}
             />

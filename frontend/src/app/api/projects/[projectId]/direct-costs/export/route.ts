@@ -9,6 +9,7 @@
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { buildPrintPageCss } from "@/lib/documents/print-layout";
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient, getApiRouteUser } from '@/lib/supabase/server';
@@ -409,11 +410,7 @@ function generatePDFHTML(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Direct Costs Export</title>
   <style>
-    @media print {
-      @page {
-        margin: 0.5in;
-      }
-    }
+    ${buildPrintPageCss({ landscape: true })}
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 10pt;

@@ -223,56 +223,126 @@ export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
 export const DELETE = withApiGuardrails<{ commitmentId: string; changeOrderId: string }>(
   "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE",
   async ({ request, params }) => {
-  
+    const where = "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE";
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
 
     // Get the current user
     const user = await getApiRouteUser();
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     // Verify the change order exists and belongs to this commitment
     const { data: existingCO, error: fetchError } = await supabase
       .from("contract_change_orders")
-      .select("id, status")
+      .select("id, status, change_order_number")
       .eq("id", changeOrderId)
       .eq("contract_id", commitmentId)
       .single();
 
     if (fetchError || !existingCO) {
-      return NextResponse.json(
-        { error: "Change order not found" },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where,
+        message: "Change order not found.",
+        status: 404,
+      });
     }
 
     // Only allow deletion of draft change orders
     if (existingCO.status !== "draft") {
-      return NextResponse.json(
-        {
-          error: "Cannot delete change order",
-          message:
-            "Only draft change orders can be deleted. Change the status to draft first.",
+      const number = existingCO.change_order_number?.trim() || "This change order";
+      throw new GuardrailError({
+        code: "PRECONDITION_FAILED",
+        where,
+        message:
+          `${number} is currently ${existingCO.status}. Only draft change orders can be deleted. ` +
+          "Change the status back to draft first.",
+        details: {
+          code: "CHANGE_ORDER_NOT_DRAFT",
+          status: existingCO.status,
+          change_order_id: existingCO.id,
         },
-        { status: 400 },
-      );
+      });
+    }
+
+    // Fail loudly when financial-history rows still reference this change
+    // order. Deleting a draft shell is fine; deleting invoiced history is not.
+    const { data: paymentApplicationLines, error: paymentApplicationError } =
+      await supabase
+        .from("payment_application_line_items")
+        .select("id, payment_application_id")
+        .eq("change_order_id", changeOrderId);
+
+    if (paymentApplicationError) {
+      return apiErrorResponse(paymentApplicationError);
+    }
+
+    if (paymentApplicationLines && paymentApplicationLines.length > 0) {
+      throw new GuardrailError({
+        code: "PRECONDITION_FAILED",
+        where,
+        status: 409,
+        message:
+          `Cannot delete this change order because ${paymentApplicationLines.length} subcontractor invoice line item${paymentApplicationLines.length === 1 ? "" : "s"} still reference${paymentApplicationLines.length === 1 ? "s" : ""} it. ` +
+          "Remove the change order from those payment applications first.",
+        details: {
+          code: "CHANGE_ORDER_HAS_PAYMENT_APPLICATION_LINES",
+          references: paymentApplicationLines.map((line) => ({
+            id: line.id,
+            payment_application_id: line.payment_application_id,
+          })),
+        },
+      });
+    }
+
+    // This table currently lacks a database FK back to contract_change_orders,
+    // so the delete owner must clean up scoped child rows explicitly to avoid
+    // orphaned line items when a draft change order is removed.
+    const { data: lineItems, error: lineItemsError } = await supabase
+      .from("commitment_change_order_lines")
+      .select("id")
+      .eq("commitment_change_order_id", changeOrderId);
+
+    if (lineItemsError) {
+      return apiErrorResponse(lineItemsError);
+    }
+
+    if (lineItems && lineItems.length > 0) {
+      const { error: deleteLineItemsError } = await supabase
+        .from("commitment_change_order_lines")
+        .delete()
+        .eq("commitment_change_order_id", changeOrderId);
+
+      if (deleteLineItemsError) {
+        return apiErrorResponse(deleteLineItemsError);
+      }
     }
 
     // Delete the change order
-    const { error: deleteError } = await supabase
+    const { error: deleteError, count } = await supabase
       .from("contract_change_orders")
-      .delete()
+      .delete({ count: "exact" })
       .eq("id", changeOrderId);
 
+    if (!deleteError && count === 0) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where,
+        message: "Change order not found.",
+        status: 404,
+      });
+    }
+
     if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 400 });
+      return apiErrorResponse(deleteError);
     }
 
     return NextResponse.json({
       success: true,
       message: "Change order deleted successfully",
+      deleted_line_item_count: lineItems?.length ?? 0,
     });
-    },
+  },
 );
