@@ -29,6 +29,7 @@ function sovLine(overrides: Partial<CommitmentSovLineItem>): CommitmentSovLineIt
   return {
     id: "sov-line-1",
     budget_code: "04-2200",
+    project_budget_code_id: null,
     description: "Concrete Unit Masonry-Block",
     line_number: 1,
     ...overrides,
@@ -62,12 +63,72 @@ describe("change-event budget-code matching", () => {
     });
   });
 
+  it("prefers project_budget_code_id over stale legacy SOV text", () => {
+    expect(
+      resolveBudgetCodeFromSov(
+        [
+          sovLine({
+            budget_code: "99-9999",
+            project_budget_code_id: "project-budget-code-042200",
+          }),
+        ],
+        budgetCodes,
+      ),
+    ).toEqual({
+      budgetCodeId: "project-budget-code-042200",
+      description: "Concrete Unit Masonry-Block",
+    });
+  });
+
+  it("treats repeated FK-backed SOV lines as unambiguous even when display text differs", () => {
+    expect(
+      resolveBudgetCodeFromSov(
+        [
+          sovLine({
+            id: "sov-line-1",
+            budget_code: "04-2200.S",
+            project_budget_code_id: "project-budget-code-042200",
+          }),
+          sovLine({
+            id: "sov-line-2",
+            budget_code: "042200",
+            project_budget_code_id: "project-budget-code-042200",
+            description: "Second line",
+          }),
+        ],
+        budgetCodes,
+      ),
+    ).toEqual({
+      budgetCodeId: "project-budget-code-042200",
+    });
+  });
+
   it("fails loudly when multiple commitment SOV budget codes are present", () => {
     expect(
       resolveBudgetCodeFromSov(
         [
           sovLine({ id: "sov-line-1", budget_code: "04-2200" }),
           sovLine({ id: "sov-line-2", budget_code: "01-3126" }),
+        ],
+        budgetCodes,
+      ),
+    ).toEqual({ reason: "multiple_codes" });
+  });
+
+  it("fails loudly when multiple FK-backed commitment SOV budget codes are present", () => {
+    expect(
+      resolveBudgetCodeFromSov(
+        [
+          sovLine({
+            id: "sov-line-1",
+            budget_code: "04-2200",
+            project_budget_code_id: "project-budget-code-042200",
+          }),
+          sovLine({
+            id: "sov-line-2",
+            budget_code: "01-3126",
+            project_budget_code_id: "project-budget-code-013126",
+          }),
         ],
         budgetCodes,
       ),

@@ -70,14 +70,31 @@ export function resolveBudgetCodeFromSov(
 ): BudgetCodeResolution {
   if (items.length === 0) return { reason: "no_sov" };
 
+  const projectBudgetCodeIds = [
+    ...new Set(
+      items
+        .map((item) => item.project_budget_code_id ?? null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (projectBudgetCodeIds.length > 1) {
+    return { reason: "multiple_codes" };
+  }
+  const singleProjectBudgetCodeId = projectBudgetCodeIds[0] ?? null;
+
   const firstCode = items[0].budget_code;
   const allSameCode =
     firstCode !== null && items.every((i) => i.budget_code === firstCode);
 
-  if (!allSameCode) return { reason: "multiple_codes" };
+  if (!singleProjectBudgetCodeId && !allSameCode) {
+    return { reason: "multiple_codes" };
+  }
 
   const resolution: BudgetCodeResolution = {};
-  const match = findBudgetCode(firstCode, budgetCodes);
+  const match = findBudgetCode(
+    singleProjectBudgetCodeId ?? firstCode,
+    budgetCodes,
+  );
   if (match) {
     resolution.budgetCodeId = match.id;
   } else {

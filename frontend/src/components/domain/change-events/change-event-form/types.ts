@@ -97,6 +97,7 @@ export interface ContractOption {
 export interface CommitmentSovLineItem {
   id: string;
   budget_code: string | null;
+  project_budget_code_id?: string | null;
   description: string | null;
   line_number: number | null;
 }
