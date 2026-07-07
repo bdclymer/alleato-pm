@@ -161,6 +161,7 @@ def test_sync_user_chat_messages_uses_user_export_endpoint(monkeypatch):
     monkeypatch.setattr(teams, "infer_project_id", lambda *_args, **_kwargs: (None, "none", 0.0))
     monkeypatch.setattr(teams, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(teams, "SupabaseRagStore", _FakeRagStore)
+    monkeypatch.setattr(teams, "get_rag_write_client", lambda: supabase)
 
     count, new_ts = teams.sync_user_chat_messages(
         supabase,
@@ -185,6 +186,7 @@ def test_sync_user_chat_messages_uses_user_export_endpoint(monkeypatch):
     assert "Andrew Cannon" in row["participants"]
     rag_row = supabase.tables["rag_document_metadata"][0]
     assert rag_row["id"] == row["id"]
+    assert rag_row["embedding_status"] is None
     assert rag_row["storage_bucket"] == "documents"
     assert rag_row["storage_path"] == "teams/chats/chat-1/2026-05-06.txt"
     assert "Westfield owner billing" in rag_row["content"]
@@ -209,6 +211,7 @@ def test_process_teams_channel_thread_persists_replay_metadata(monkeypatch):
     monkeypatch.setattr(teams, "infer_project_id", lambda *_args, **_kwargs: (None, "none", 0.0))
     monkeypatch.setattr(teams, "_run_source_intelligence_compiler", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(teams, "SupabaseRagStore", _FakeRagStore)
+    monkeypatch.setattr(teams, "get_rag_write_client", lambda: supabase)
 
     teams._process_teams_message(
         supabase,
@@ -242,6 +245,7 @@ def test_process_teams_channel_thread_persists_replay_metadata(monkeypatch):
     }
     rag_row = supabase.tables["rag_document_metadata"][0]
     assert rag_row["id"] == row["id"]
+    assert rag_row["embedding_status"] is None
     assert rag_row["storage_bucket"] == "documents"
     assert rag_row["storage_path"] == "teams/team-1/channel-1/root-1.txt"
     assert "Westfield site logistics" in rag_row["content"]

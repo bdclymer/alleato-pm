@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from ...intelligence.compiler import process_source_document_to_packet
-from ...supabase_helpers import SupabaseRagStore, get_rag_read_client, storage_upload_with_retry
+from ...supabase_helpers import SupabaseRagStore, get_rag_read_client, get_rag_write_client, storage_upload_with_retry
 from .client import get_graph_client
 from .project_inference import infer_project_id
 
@@ -52,6 +52,16 @@ def _fetch_rag_document_text(doc_id: str) -> str:
         return str(row.get("content") or row.get("raw_text") or "")
     except Exception:
         return ""
+
+
+def _mark_graph_embedding_pending(doc_id: str) -> None:
+    """Reset RAG embedding status after a Teams conversation document changes."""
+    try:
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": None}
+        ).eq("id", doc_id).execute()
+    except Exception as exc:
+        logger.warning("[Teams] Could not reset RAG embedding status for %s: %s", doc_id, exc)
 
 
 def _strip_html(text: str) -> str:
@@ -276,6 +286,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         "category": "teams_message",
         "type": "teams_message",
         "content": thread_text,
+        "embedding_status": None,
         "storage_bucket": "documents",
         "storage_path": storage_path,
         "date": created[:10] if created else None,
@@ -293,6 +304,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
             "message_count": len(thread_messages),
         },
     })
+    _mark_graph_embedding_pending(doc_id)
     _run_source_intelligence_compiler(supabase_client, doc_id)
     if project_id:
         logger.info(
@@ -562,6 +574,7 @@ def _process_chat_message(
         "category": "teams_message",  # same category → picked up by searchTeamsMessages tool
         "type": "teams_dm_conversation",
         "content": text,
+        "embedding_status": None,
         "storage_bucket": "documents",
         "storage_path": storage_path,
         "date": date_key,
@@ -581,6 +594,7 @@ def _process_chat_message(
         },
     }
     SupabaseRagStore(supabase_client).upsert_document_metadata(row)
+    _mark_graph_embedding_pending(doc_id)
     if is_embedding_ready:
         _run_source_intelligence_compiler(supabase_client, doc_id)
 
