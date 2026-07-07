@@ -609,7 +609,12 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
     failed_states = [
         state
         for state in parsed_states
-        if state.get("status") == "failed" or state.get("last_error")
+        if state.get("status") == "failed"
+    ]
+    warning_states = [
+        state
+        for state in parsed_states
+        if state.get("status") == "warning" or (state.get("last_error") and state not in failed_states)
     ]
     latest_success = max(
         (state["_last_success"] for state in parsed_states if state.get("_last_success")),
@@ -627,6 +632,8 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
     stale = _age_minutes(latest_success or latest_seen, now)
     last_error = None
     last_error_at = None
+    latest_warning = None
+    latest_warning_at = None
     if failed_states:
         latest_failed = max(
             failed_states,
@@ -634,31 +641,44 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
         )
         last_error = latest_failed.get("last_error") or f"{latest_failed.get('entity_name')} failed"
         last_error_at = latest_failed.get("_updated_at") or latest_failed.get("_last_started")
+    elif warning_states:
+        latest_warning_state = max(
+            warning_states,
+            key=lambda state: state.get("_updated_at") or state.get("_last_started") or datetime.min.replace(tzinfo=timezone.utc),
+        )
+        latest_warning = latest_warning_state.get("last_error") or f"{latest_warning_state.get('entity_name')} warning"
+        latest_warning_at = latest_warning_state.get("_updated_at") or latest_warning_state.get("_last_started")
 
     items_synced = 0
     entity_statuses: Dict[str, str] = {}
     failed_entities: List[str] = []
+    warning_entities: List[str] = []
     for state in parsed_states:
         entity = str(state.get("entity_name") or "unknown")
         entity_statuses[entity] = str(state.get("status") or "unknown")
         if state in failed_states:
             failed_entities.append(entity)
+        elif state in warning_states:
+            warning_entities.append(entity)
         stats = _metadata_dict(state.get("last_stats"))
         items_synced += int(stats.get("upserted") or 0) + int(stats.get("projected") or 0)
+    status = _health_status(
+        stale_minutes=stale,
+        stale_threshold=STALE_ACUMATICA_SYNC_MINUTES,
+        last_error=last_error,
+    )
+    if status == "healthy" and warning_states:
+        status = "warning"
 
     return _source_row(
         source="acumatica_financial_sync",
         resource_id="acumatica_sync_state",
         resource_name="Acumatica financial sync",
-        status=_health_status(
-            stale_minutes=stale,
-            stale_threshold=STALE_ACUMATICA_SYNC_MINUTES,
-            last_error=last_error,
-        ),
+        status=status,
         last_sync_at=latest_seen,
         last_success_at=latest_success,
-        last_error_at=last_error_at,
-        last_error_message=last_error,
+        last_error_at=last_error_at or latest_warning_at,
+        last_error_message=last_error or latest_warning,
         items_synced=items_synced,
         stale_minutes=stale,
         unprocessed_count=0,
@@ -667,6 +687,7 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
         metadata={
             "source": "acumatica_sync_state",
             "failedEntities": failed_entities,
+            "warningEntities": warning_entities,
             "entityStatuses": entity_statuses,
         },
     )

@@ -638,6 +638,43 @@ def test_get_source_sync_health_surfaces_acumatica_payment_application_failure()
     assert row["metadata"]["failedEntities"] == ["payment_applications"]
 
 
+def test_get_source_sync_health_treats_acumatica_warning_fallback_as_warning_not_critical():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    now = datetime.now(timezone.utc).isoformat()
+    supabase.tables["acumatica_sync_state"] = [
+        {
+            "entity_name": "ar_payments",
+            "status": "success",
+            "last_started_at": now,
+            "last_success_at": now,
+            "last_error": None,
+            "last_stats": {"upserted": 31},
+            "updated_at": now,
+        },
+        {
+            "entity_name": "payment_applications",
+            "status": "warning",
+            "last_started_at": now,
+            "last_success_at": now,
+            "last_error": "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping.",
+            "last_stats": {"projected": 43, "errors": 0, "warnings": ["fallback projection"]},
+            "updated_at": now,
+        },
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    row = next(source for source in health["sources"] if source["source"] == "acumatica_financial_sync")
+    assert health["status"] == "degraded"
+    assert row["status"] == "warning"
+    assert row["metadata"]["failedEntities"] == []
+    assert row["metadata"]["warningEntities"] == ["payment_applications"]
+    alert = next(alert for alert in health["alerts"] if alert["source"] == "acumatica_financial_sync")
+    assert alert["severity"] == "warning"
+    assert alert["code"] == "source_sync_error"
+
+
 def test_get_source_sync_health_alerts_when_graph_docs_missing_project_documents():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)
