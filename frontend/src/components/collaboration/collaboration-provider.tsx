@@ -16,6 +16,20 @@ async function resolveUsers(userIds: readonly string[]) {
   return data.users.map((user) => user ?? undefined);
 }
 
+// Powers the "@" mention menu in the comment composer — returns teammate user
+// ids matching the typed text. Backed by /api/liveblocks/mentions. Best-effort:
+// returns [] on any failure so the composer never breaks.
+async function resolveMentionSuggestions({ text }: { text: string }) {
+  try {
+    const data = await apiFetch<{ users: string[] }>(
+      `/api/liveblocks/mentions?text=${encodeURIComponent(text)}`,
+    );
+    return data.users;
+  } catch {
+    return [];
+  }
+}
+
 // A Liveblocks connection failure must never take the app down with it. The
 // provider sits high in the tree (wraps the whole authenticated app), so we
 // swallow render errors and fall back to rendering children with no provider —
@@ -53,6 +67,7 @@ export function CollaborationProvider({
       <LiveblocksProvider
         authEndpoint="/api/liveblocks/auth"
         resolveUsers={({ userIds }) => resolveUsers(userIds)}
+        resolveMentionSuggestions={resolveMentionSuggestions}
       >
         {children}
       </LiveblocksProvider>
