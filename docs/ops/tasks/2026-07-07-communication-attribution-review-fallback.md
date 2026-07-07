@@ -1,6 +1,6 @@
 # Communication Attribution Review Fallback
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Linear: AAI-1008
 Linear URL: https://linear.app/megankharrison/issue/AAI-1008/fail-loud-when-communication-project-attribution-is-unresolved
@@ -34,7 +34,7 @@ Make unresolved project attribution for synced communication sources fail loudly
 - [x] Targeted tests pass.
 - [x] Live RAG lifecycle warning is cleared or reduced to explicit review state.
 - [x] Evidence section filled.
-- [ ] Task-owned files pushed to `origin/main`.
+- [x] Task-owned files pushed to `origin/main`.
 
 ## Evidence
 
@@ -80,3 +80,6 @@ Make unresolved project attribution for synced communication sources fail loudly
   - Emails: `129` synced today, `128/128` vector-required rows vectorized, `0` missing.
   - Meetings: `7` synced today, `7/7` vector-required rows vectorized, `0` missing.
   - Teams: `10` synced today, `8/8` vector-required rows vectorized, `0` missing.
+- Publish evidence:
+  - `npm run codex:finish -- --message "Fail loud on unresolved communication attribution" --files backend/src/services/ingestion/communication_project_backfill.py backend/tests/test_communication_project_backfill.py docs/ops/tasks/2026-07-07-communication-attribution-review-fallback.md`
+  - Result: published task-owned files to `origin/main` at `05d02e664`.
