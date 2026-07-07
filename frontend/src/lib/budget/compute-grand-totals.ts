@@ -91,6 +91,7 @@ function getDirectCostParent(
 
 interface SOVItem {
   budget_code: string | null;
+  project_budget_code_id: string | null;
   amount: number | null;
 }
 
@@ -506,6 +507,33 @@ export function normalizeBudgetCodeLookupKey(budgetCode: string): string {
     .toUpperCase();
 }
 
+export function resolveSovBudgetCodeToCostCodeId({
+  projectBudgetCodeId,
+  budgetCode,
+  pccToCostCodeId,
+  costCodeIdByLookupKey,
+}: {
+  projectBudgetCodeId: string | null;
+  budgetCode: string | null;
+  pccToCostCodeId: Record<string, string>;
+  costCodeIdByLookupKey: Map<string, string>;
+}): string | null {
+  if (projectBudgetCodeId) {
+    const mappedProjectBudgetCode = pccToCostCodeId[projectBudgetCodeId];
+    if (mappedProjectBudgetCode) return mappedProjectBudgetCode;
+  }
+
+  if (!budgetCode) return null;
+  const mappedLegacyProjectBudgetCode = pccToCostCodeId[budgetCode];
+  if (mappedLegacyProjectBudgetCode) return mappedLegacyProjectBudgetCode;
+
+  const normalizedBudgetCode = normalizeBudgetCode(budgetCode);
+  return (
+    costCodeIdByLookupKey.get(normalizeBudgetCodeLookupKey(normalizedBudgetCode)) ??
+    normalizedBudgetCode
+  );
+}
+
 export function buildBudgetLineRollupKey(
   costCodeId: string | null | undefined,
   costTypeId: string | null | undefined,
@@ -757,14 +785,14 @@ export async function computeBudgetGrandTotals(
 
     supabase
       .from("subcontract_sov_items")
-      .select("budget_code, amount, subcontracts!inner(status, project_id)")
+      .select("budget_code, project_budget_code_id, amount, subcontracts!inner(status, project_id)")
       .eq("subcontracts.project_id", projectIdNum)
       .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES),
 
     supabase
       .from("purchase_order_sov_items")
       .select(
-        "budget_code, amount, purchase_orders!inner(status, project_id)",
+        "budget_code, project_budget_code_id, amount, purchase_orders!inner(status, project_id)",
       )
       .eq("purchase_orders.project_id", projectIdNum)
       .in("purchase_orders.status", PENDING_PO_STATUSES),
@@ -775,14 +803,14 @@ export async function computeBudgetGrandTotals(
 
     supabase
       .from("subcontract_sov_items")
-      .select("budget_code, amount, subcontracts!inner(status, project_id)")
+      .select("budget_code, project_budget_code_id, amount, subcontracts!inner(status, project_id)")
       .eq("subcontracts.project_id", projectIdNum)
       .in("subcontracts.status", EXECUTED_SUBCONTRACT_STATUSES),
 
     supabase
       .from("purchase_order_sov_items")
       .select(
-        "budget_code, amount, purchase_orders!inner(status, project_id)",
+        "budget_code, project_budget_code_id, amount, purchase_orders!inner(status, project_id)",
       )
       .eq("purchase_orders.project_id", projectIdNum)
       .in("purchase_orders.status", EXECUTED_PO_STATUSES),
@@ -919,18 +947,6 @@ export async function computeBudgetGrandTotals(
     costCodeIdByLookupKey.set(normalizeBudgetCodeLookupKey(costCodeId), costCodeId);
   }
 
-  const resolveBudgetCodeToCostCodeId = (budgetCode: string | null) => {
-    if (!budgetCode) return null;
-    const mappedProjectBudgetCode = pccToCostCodeId[budgetCode];
-    if (mappedProjectBudgetCode) return mappedProjectBudgetCode;
-
-    const normalizedBudgetCode = normalizeBudgetCode(budgetCode);
-    return (
-      costCodeIdByLookupKey.get(normalizeBudgetCodeLookupKey(normalizedBudgetCode)) ??
-      normalizedBudgetCode
-    );
-  };
-
   // Direct costs (approved only) → JTD + Direct Costs
   for (const cost of (directCostsRes.data || []) as DirectCostWithRelations[]) {
     const codeId = cost.budget_code_id
@@ -954,13 +970,23 @@ export async function computeBudgetGrandTotals(
 
   // Pending Cost Changes: subcontracts, POs, commitment COs
   for (const item of (subcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
+    const codeId = resolveSovBudgetCodeToCostCodeId({
+      projectBudgetCodeId: item.project_budget_code_id,
+      budgetCode: item.budget_code,
+      pccToCostCodeId,
+      costCodeIdByLookupKey,
+    });
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
   }
   for (const item of (poSovRes.data || []) as SOVItem[]) {
-    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
+    const codeId = resolveSovBudgetCodeToCostCodeId({
+      projectBudgetCodeId: item.project_budget_code_id,
+      budgetCode: item.budget_code,
+      pccToCostCodeId,
+      costCodeIdByLookupKey,
+    });
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
@@ -1000,13 +1026,23 @@ export async function computeBudgetGrandTotals(
 
   // Committed Costs: executed subs + POs + approved commitment COs
   for (const item of (executedSubcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
+    const codeId = resolveSovBudgetCodeToCostCodeId({
+      projectBudgetCodeId: item.project_budget_code_id,
+      budgetCode: item.budget_code,
+      pccToCostCodeId,
+      costCodeIdByLookupKey,
+    });
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;
   }
   for (const item of (executedPoSovRes.data || []) as SOVItem[]) {
-    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
+    const codeId = resolveSovBudgetCodeToCostCodeId({
+      projectBudgetCodeId: item.project_budget_code_id,
+      budgetCode: item.budget_code,
+      pccToCostCodeId,
+      costCodeIdByLookupKey,
+    });
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;

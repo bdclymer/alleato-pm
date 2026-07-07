@@ -9,6 +9,7 @@ import {
   normalizeBudgetCodeLookupKey,
   reduceGrandTotals,
   resolveBudgetModificationTotal,
+  resolveSovBudgetCodeToCostCodeId,
   type BudgetLineItem,
   type GrandTotals,
 } from "./compute-grand-totals";
@@ -70,6 +71,61 @@ describe("normalizeBudgetCodeLookupKey", () => {
   it("ignores cost-type suffixes while building comparison keys", () => {
     expect(normalizeBudgetCodeLookupKey("03 00 00.L")).toBe("030000");
     expect(normalizeBudgetCodeLookupKey("03-00-00")).toBe("030000");
+  });
+});
+
+describe("resolveSovBudgetCodeToCostCodeId", () => {
+  const pccToCostCodeId = {
+    "project-budget-code-1": "04-2200",
+    "legacy-project-budget-code": "01-3126",
+  };
+  const costCodeIdByLookupKey = new Map([
+    ["099723", "09-9723"],
+    ["033000", "03-3000"],
+  ]);
+
+  it("prefers project_budget_code_id over stale legacy text", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: "project-budget-code-1",
+        budgetCode: "99-9999",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("04-2200");
+  });
+
+  it("falls back to legacy project-budget-code IDs stored in budget_code", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: "legacy-project-budget-code",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("01-3126");
+  });
+
+  it("falls back to normalized text matching for legacy rows", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: "099723",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("09-9723");
+  });
+
+  it("returns null when neither FK nor text exists", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: null,
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBeNull();
   });
 });
 
