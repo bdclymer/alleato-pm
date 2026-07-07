@@ -17,6 +17,7 @@ from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
 from .embed import embed_pending_graph_documents, embed_pending_attachment_documents, embed_pending_fireflies_meetings
 from .attachment_promotion import promote_outlook_intake_attachments
+from .outlook_conversations import compile_outlook_conversations
 
 logger = logging.getLogger(__name__)
 OUTLOOK_WEBHOOK_PENDING_STATUS = "webhook_pending"
@@ -809,12 +810,51 @@ def _run_graph_downstream_processing(
         "errors": [],
         "phases": {
             "source_sync": source_summary.get("status", "complete"),
+            "outlook_conversations": (
+                "enabled"
+                if source_summary.get("sync_emails_enabled")
+                and os.environ.get("GRAPH_COMPILE_OUTLOOK_CONVERSATIONS", "true").lower() == "true"
+                else "skipped"
+            ),
             "embedding": "enabled" if run_embedding else "skipped",
             "ocr": "enabled" if run_ocr else "skipped",
             "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
         },
     }
     ocr_result: dict[str, Any] = {"ocr_full": 0, "ocr_partial": 0}
+
+    if summary["phases"]["outlook_conversations"] == "enabled":
+        conversation_results: dict[str, Any] = {}
+        compile_limit = _bounded_int_env("OUTLOOK_CONVERSATION_COMPILE_LIMIT", 25, 1, 200)
+        for user_email in source_summary.get("outlook_users_selected") or [None]:
+            label = user_email or "all_mailboxes"
+            try:
+                result = compile_outlook_conversations(
+                    supabase,
+                    mailbox_user_id=user_email,
+                    since=sync_started_at.isoformat(),
+                    limit=compile_limit,
+                )
+                conversation_results[label] = result
+                if result.get("errors"):
+                    summary["errors"].append(
+                        f"Outlook conversation compile failed for {label}: "
+                        + "; ".join(str(error) for error in result["errors"][:3])
+                    )
+            except Exception as exc:
+                logger.error("[GraphSync] Outlook conversation compilation failed for %s: %s", label, exc)
+                summary["errors"].append(f"Outlook conversation compile failed for {label}: {exc}")
+                conversation_results[label] = {"status": "failed", "error": str(exc)}
+        summary["outlook_conversations"] = conversation_results
+    else:
+        summary["outlook_conversations"] = {
+            "status": "skipped",
+            "reason": (
+                "sync_emails_disabled"
+                if not source_summary.get("sync_emails_enabled")
+                else "GRAPH_COMPILE_OUTLOOK_CONVERSATIONS=false"
+            ),
+        }
 
     if run_embedding:
         try:
@@ -1057,6 +1097,7 @@ def run_graph_sync(
         items_failed=len(downstream_errors),
         error_message="; ".join(str(error) for error in downstream_errors[:3]) if downstream_errors else None,
         metadata={
+            "outlook_conversations": downstream_summary.get("outlook_conversations"),
             "embedding": downstream_summary.get("embed"),
             "ocr": downstream_summary.get("ocr"),
             "attachment_promotion": downstream_summary.get("attachment_promotion"),
