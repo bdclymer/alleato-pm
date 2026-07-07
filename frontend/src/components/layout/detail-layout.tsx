@@ -23,6 +23,8 @@ export interface DetailLayoutProps {
    * `equal` is for peer content columns where neither side is an inspector.
    */
   variant?: "sidebar" | "equal";
+  /** Breakpoint where the sidebar moves beside the main content. */
+  sidebarAt?: "lg" | "xl";
   className?: string;
 }
 
@@ -41,6 +43,7 @@ export function DetailLayout({
   footer,
   sidebarDesktopOnly = false,
   variant = "sidebar",
+  sidebarAt = "xl",
   className,
 }: DetailLayoutProps) {
   if (!sidebar && !footer) {
@@ -52,15 +55,28 @@ export function DetailLayout({
       {sidebar ? (
         <div
           className={cn(
-            "grid grid-cols-1 gap-6 md:gap-8 xl:gap-10",
-            variant === "equal"
-              ? "xl:grid-cols-2"
-              : "xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]",
+            "grid grid-cols-1 gap-6 md:gap-8",
+            sidebarAt === "lg" ? "lg:gap-10" : "xl:gap-10",
+            variant === "equal" && sidebarAt === "lg" ? "lg:grid-cols-2" : null,
+            variant === "equal" && sidebarAt === "xl" ? "xl:grid-cols-2" : null,
+            variant === "sidebar" && sidebarAt === "lg"
+              ? "lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
+              : null,
+            variant === "sidebar" && sidebarAt === "xl"
+              ? "xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]"
+              : null,
           )}
         >
           <div className="min-w-0 space-y-10">{children}</div>
           {sidebarDesktopOnly ? (
-            <aside className="hidden min-w-0 space-y-8 xl:block">{sidebar}</aside>
+            <aside
+              className={cn(
+                "hidden min-w-0 space-y-8",
+                sidebarAt === "lg" ? "lg:block" : "xl:block",
+              )}
+            >
+              {sidebar}
+            </aside>
           ) : (
             <aside className="min-w-0 space-y-8">{sidebar}</aside>
           )}

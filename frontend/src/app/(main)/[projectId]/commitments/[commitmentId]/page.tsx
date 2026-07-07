@@ -650,7 +650,10 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   return (
     <ContentSectionStack className="pb-20">
       <section className="pt-4">
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        <DetailLayout
+          sidebarAt="lg"
+          sidebar={<FinancialSummaryPanel commitment={commitment} />}
+        >
           <div className="space-y-6">
             {/* General Information */}
             <DetailPanel>
@@ -712,9 +715,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           onSaveField("default_retainage_percent", v === "" ? null : Number(v))
                         }
                       />
-                    </DetailField>
-                    <DetailField label="Non-Admin SOV">
-                      {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
                     </DetailField>
                     {!isPO ? (
                       <DetailField label="Start Date">
@@ -798,6 +798,9 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           : "—"}
                       </DetailField>
                     )}
+                    <DetailField label="Non-Admin SOV">
+                      {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
+                    </DetailField>
                     {!isPO && (
                       <DetailField label="Est. Completion">
                         <InlineEditField
@@ -927,11 +930,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
               </Collapsible>
             </DetailPanel>
           </div>
-
-          <aside>
-            <FinancialSummaryPanel commitment={commitment} />
-          </aside>
-        </div>
+        </DetailLayout>
       </section>
 
       {/* Schedule of Values */}
