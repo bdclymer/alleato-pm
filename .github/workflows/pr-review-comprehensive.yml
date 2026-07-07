@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 1
 
       - name: PR Review with Progress Tracking
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -71,6 +72,32 @@ jobs:
           # Tools for comprehensive PR review
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+      # The action exits 0 even when the run errored (is_error) — the truth is
+      # the final "result" entry in its execution_file. Fail loudly instead of a
+      # silent green check. Common cause: invalid/expired/malformed
+      # CLAUDE_CODE_OAUTH_TOKEN (stray whitespace) or an account usage limit.
+      - name: Assert Claude review ran
+        if: ${{ always() }}
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.claude.outcome }}
+          EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
+          LABEL: "PR review"
+        run: |
+          if [ "$STEP_OUTCOME" = "skipped" ]; then echo "$LABEL skipped — nothing to assert."; exit 0; fi
+          if [ -z "$EXEC_FILE" ] || [ ! -f "$EXEC_FILE" ]; then
+            echo "::error::$LABEL produced no execution_file — the action did not run to completion (likely a credential/setup failure)."
+            exit 1
+          fi
+          is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error | if . == null then true else . end' "$EXEC_FILE" 2>/dev/null || echo true)
+          cost=$(jq -r '[.[] | select(.type == "result")] | last | .total_cost_usd // 0' "$EXEC_FILE" 2>/dev/null || echo 0)
+          turns=$(jq -r '[.[] | select(.type == "result")] | last | .num_turns // 0' "$EXEC_FILE" 2>/dev/null || echo 0)
+          echo "$LABEL result: is_error=$is_error total_cost_usd=$cost num_turns=$turns"
+          if [ "$is_error" != "false" ]; then
+            echo "::error::$LABEL errored (is_error=$is_error, num_turns=$turns, total_cost_usd=$cost). The run did NOT do its work. Usually an invalid/expired/malformed CLAUDE_CODE_OAUTH_TOKEN (stray whitespace/newline) or a usage limit. Re-mint with 'claude setup-token' and: gh secret set CLAUDE_CODE_OAUTH_TOKEN --body \"\$(pbpaste | tr -d '[:space:]')\""
+            exit 1
+          fi
 
 # When track_progress is enabled:
 # - Creates a tracking comment with progress checkboxes

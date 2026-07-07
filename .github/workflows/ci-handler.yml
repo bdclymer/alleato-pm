@@ -59,6 +59,32 @@ jobs:
             --allowedTools "Bash(gh run view:*),Bash(gh run list:*),Bash(git log:*),Bash(git diff:*)"
             --json-schema '{"type":"object","properties":{"is_flaky":{"type":"boolean"},"confidence":{"type":"number","minimum":0,"maximum":1},"summary":{"type":"string"}},"required":["is_flaky","confidence","summary"]}'
 
+      # If detection errored (bad/expired/malformed token, usage limit) it emits
+      # no structured_output, both branches below evaluate false, and the handler
+      # silently no-ops. The action still exits 0; the truth is the final
+      # "result" entry in its execution_file. Fail loudly instead.
+      - name: Assert detection ran
+        if: ${{ always() }}
+        shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.detect.outcome }}
+          EXEC_FILE: ${{ steps.detect.outputs.execution_file }}
+          LABEL: "CI failure detection"
+        run: |
+          if [ "$STEP_OUTCOME" = "skipped" ]; then echo "$LABEL skipped — nothing to assert."; exit 0; fi
+          if [ -z "$EXEC_FILE" ] || [ ! -f "$EXEC_FILE" ]; then
+            echo "::error::$LABEL produced no execution_file — the action did not run to completion (likely a credential/setup failure)."
+            exit 1
+          fi
+          is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error | if . == null then true else . end' "$EXEC_FILE" 2>/dev/null || echo true)
+          cost=$(jq -r '[.[] | select(.type == "result")] | last | .total_cost_usd // 0' "$EXEC_FILE" 2>/dev/null || echo 0)
+          turns=$(jq -r '[.[] | select(.type == "result")] | last | .num_turns // 0' "$EXEC_FILE" 2>/dev/null || echo 0)
+          echo "$LABEL result: is_error=$is_error total_cost_usd=$cost num_turns=$turns"
+          if [ "$is_error" != "false" ]; then
+            echo "::error::$LABEL errored (is_error=$is_error, num_turns=$turns, total_cost_usd=$cost). The run did NOT do its work. Usually an invalid/expired/malformed CLAUDE_CODE_OAUTH_TOKEN (stray whitespace/newline) or a usage limit. Re-mint with 'claude setup-token' and: gh secret set CLAUDE_CODE_OAUTH_TOKEN --body \"\$(pbpaste | tr -d '[:space:]')\""
+            exit 1
+          fi
+
       # Step 2a: If flaky and high confidence → retry
       - name: Retry flaky run
         if: |

@@ -441,7 +441,7 @@ jobs:
         run: |
           ok=false
           if [ "$STEP_OUTCOME" = "success" ] && [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
-            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error // true' "$EXEC_FILE" 2>/dev/null || echo "true")
+            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error | if . == null then true else . end' "$EXEC_FILE" 2>/dev/null || echo "true")
             [ "$is_error" = "false" ] && ok=true
           fi
           echo "ok=$ok" >> "$GITHUB_OUTPUT"
@@ -472,7 +472,7 @@ jobs:
         run: |
           ok=false
           if [ "$STEP_OUTCOME" = "success" ] && [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
-            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error // true' "$EXEC_FILE" 2>/dev/null || echo "true")
+            is_error=$(jq -r '[.[] | select(.type == "result")] | last | .is_error | if . == null then true else . end' "$EXEC_FILE" 2>/dev/null || echo "true")
             [ "$is_error" = "false" ] && ok=true
           fi
           echo "ok=$ok" >> "$GITHUB_OUTPUT"
