@@ -146,15 +146,48 @@ type CommitmentSovSummary = {
   billedToDate: number;
   amountRemaining: number;
   currentRetainage: number;
+  retainagePercent: number;
 };
 
-function getCurrentRetainageWithheld(commitment: Pick<CommitmentDetail, "billed_to_date" | "retention_percentage">) {
+function getCurrentRetainageWithheld(
+  commitment: Pick<CommitmentDetail, "billed_to_date" | "retention_percentage">,
+) {
   const billedToDate = commitment.billed_to_date ?? 0;
   const retainagePercent = Number(commitment.retention_percentage ?? 0);
 
   return retainagePercent > 0 && retainagePercent < 100
     ? (billedToDate * retainagePercent) / (100 - retainagePercent)
     : 0;
+}
+
+function getFallbackRetainageTotal(
+  contractTotal: number,
+  retainagePercent: number,
+) {
+  return retainagePercent > 0 && retainagePercent < 100
+    ? (contractTotal * retainagePercent) / 100
+    : 0;
+}
+
+function getDisplayedRetainageWithheld(
+  commitment: Pick<
+    CommitmentDetail,
+    "billed_to_date" | "retention_percentage" | "original_amount" | "approved_change_orders" | "change_order_totals"
+  >,
+  contractTotal?: number,
+) {
+  const retainagePercent = Number(commitment.retention_percentage ?? 0);
+  const billedToDate = commitment.billed_to_date ?? 0;
+  const resolvedContractTotal =
+    contractTotal ??
+    (commitment.original_amount ?? 0) +
+      (commitment.change_order_totals?.approved ??
+        commitment.approved_change_orders ??
+        0);
+
+  return billedToDate > 0
+    ? getCurrentRetainageWithheld(commitment)
+    : getFallbackRetainageTotal(resolvedContractTotal, retainagePercent);
 }
 
 // ---------------------------------------------------------------------------
@@ -439,9 +472,13 @@ function getCommitmentSovSummary(commitment: CommitmentDetail): CommitmentSovSum
     0;
   const originalContract = commitment.original_amount || subtotal;
   const contractTotal = originalContract + approvedChanges;
+  const retainagePercent = Number(commitment.retention_percentage ?? 0);
   const billedToDate = commitment.billed_to_date ?? 0;
   const amountRemaining = Math.max(contractTotal - billedToDate, 0);
-  const currentRetainage = getCurrentRetainageWithheld(commitment);
+  const currentRetainage = getDisplayedRetainageWithheld(
+    commitment,
+    contractTotal,
+  );
 
   return {
     subtotal,
@@ -451,6 +488,7 @@ function getCommitmentSovSummary(commitment: CommitmentDetail): CommitmentSovSum
     billedToDate,
     amountRemaining,
     currentRetainage,
+    retainagePercent,
   };
 }
 
@@ -466,7 +504,10 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
   const pendingRevised = revisedContract + pendingCOs;
   const invoiced = commitment.billed_to_date ?? 0;
   const paymentsIssued = commitment.payments_issued ?? 0;
-  const retainageWithheld = getCurrentRetainageWithheld(commitment);
+  const retainageWithheld = getDisplayedRetainageWithheld(
+    commitment,
+    revisedContract,
+  );
   const remainingBalance = commitment.remaining_balance !== undefined
     ? commitment.remaining_balance
     : revisedContract - paymentsIssued;
@@ -609,18 +650,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           ? "Percent"
                           : "Amount Based"}
                     </DetailField>
-                    <DetailField label="Created By">
-                      {commitment.created_by_name || "—"}
-                    </DetailField>
-                    <DetailField label="Executed">
-                      <InlineEditField
-                        label="Executed"
-                        type="boolean"
-                        value={commitment.executed ? "true" : "false"}
-                        display={commitment.executed ? "Yes" : "No"}
-                        onSave={(v) => onSaveField("executed", v === "true")}
-                      />
-                    </DetailField>
                     <DetailField label="Private Commitment">
                       {commitment.private ? "Yes" : "No"}
                     </DetailField>
@@ -691,6 +720,18 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         display={renderDateOrDash(commitment.issued_on_date)}
                         onSave={(v) => onSaveField("issued_on_date", v || null)}
                       />
+                    </DetailField>
+                    <DetailField label="Executed">
+                      <InlineEditField
+                        label="Executed"
+                        type="boolean"
+                        value={commitment.executed ? "true" : "false"}
+                        display={commitment.executed ? "Yes" : "No"}
+                        onSave={(v) => onSaveField("executed", v === "true")}
+                      />
+                    </DetailField>
+                    <DetailField label="Created By">
+                      {commitment.created_by_name || "—"}
                     </DetailField>
                     {commitment.invoice_contacts !== undefined && (
                       <DetailField label="Invoice Contact">
