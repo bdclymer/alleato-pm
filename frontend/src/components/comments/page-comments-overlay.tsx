@@ -16,11 +16,13 @@ import {
 import type { ThreadData } from "@liveblocks/client";
 import { Composer, Thread } from "@liveblocks/react-ui";
 
+import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { usePageCommentsStore } from "@/lib/stores/page-comments-store";
 
-// This overlay mounts on EVERY page. A comments/connection failure must never
-// take the app down with it — swallow errors and render nothing.
+// This overlay mounts on top of the app. A comments/connection failure must
+// never take the app down with it — swallow errors and render nothing.
 class SilentBoundary extends React.Component<
   { children: React.ReactNode },
   { failed: boolean }
@@ -73,18 +75,19 @@ function Pin({
 
   return (
     <div style={{ position: "absolute", left: x, top: y, zIndex: Z }}>
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onToggle}
         aria-label="Open comment"
         className={cn(
-          "flex h-7 w-7 -translate-x-1 -translate-y-7 items-center justify-center rounded-full rounded-bl-sm",
-          "bg-primary text-primary-foreground shadow-sm ring-2 ring-background",
+          "flex h-7 w-7 -translate-x-1 -translate-y-7 items-center justify-center rounded-full rounded-bl-sm p-0",
+          "bg-primary text-primary-foreground shadow-sm ring-2 ring-background hover:bg-primary/90",
           "transition-transform hover:scale-110",
         )}
       >
         <MessageSquarePlus className="h-3.5 w-3.5" />
-      </button>
+      </Button>
       {open ? (
         <div
           className="w-80 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
@@ -98,9 +101,11 @@ function Pin({
   );
 }
 
+// Rendered only while comment mode is active. The whole page becomes clickable
+// to drop a pin; existing pins are shown; Esc or the banner's × exits.
 function OverlayInner() {
+  const setActive = usePageCommentsStore((state) => state.setActive);
   const { threads } = useThreads();
-  const [placing, setPlacing] = React.useState(false);
   const [draft, setDraft] = React.useState<{ x: number; y: number } | null>(
     null,
   );
@@ -112,24 +117,58 @@ function OverlayInner() {
       typeof thread.metadata.y === "number",
   );
 
-  // While in comment mode, the next click anywhere drops a pin at that spot.
-  const onPlaceClick = React.useCallback((event: React.MouseEvent) => {
+  React.useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDraft(null);
+        setActive(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [setActive]);
+
+  const onPlaceClick = (event: React.MouseEvent) => {
     setDraft({
       x: event.clientX + window.scrollX,
       y: event.clientY + window.scrollY,
     });
-    setPlacing(false);
-  }, []);
+  };
 
   const overlay = (
     <>
+      {/* Mode hint + exit */}
+      <div
+        className="fixed left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-lg"
+        style={{ zIndex: Z + 2 }}
+      >
+        <MessageSquarePlus className="h-3.5 w-3.5" />
+        Click anywhere to comment
+        <span className="opacity-60">· Esc to exit</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Exit comment mode"
+          onClick={() => {
+            setDraft(null);
+            setActive(false);
+          }}
+          className="ml-1 h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-background"
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
       {/* Existing pins */}
       {pins.map((thread) => (
         <Pin
           key={thread.id}
           thread={thread}
           open={openId === thread.id}
-          onToggle={() => setOpenId((id) => (id === thread.id ? null : thread.id))}
+          onToggle={() =>
+            setOpenId((id) => (id === thread.id ? null : thread.id))
+          }
         />
       ))}
 
@@ -144,14 +183,16 @@ function OverlayInner() {
           >
             <div className="flex items-center justify-between px-3 pt-2 text-xs font-medium text-muted-foreground">
               <span>New comment</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 aria-label="Cancel"
                 onClick={() => setDraft(null)}
-                className="rounded p-0.5 hover:bg-muted"
+                className="h-5 w-5"
               >
                 <X className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </div>
             <Composer
               autoFocus
@@ -162,44 +203,19 @@ function OverlayInner() {
         </div>
       ) : null}
 
-      {/* Click-catcher while placing */}
-      {placing ? (
+      {/* Click-catcher (only when not already placing a draft) */}
+      {!draft ? (
         <div
           onClick={onPlaceClick}
+          className="bg-foreground/5"
           style={{
             position: "fixed",
             inset: 0,
             zIndex: Z - 1,
             cursor: "crosshair",
-            background: "hsl(var(--foreground) / 0.02)",
           }}
         />
       ) : null}
-
-      {/* Floating toggle */}
-      <button
-        type="button"
-        onClick={() => {
-          setPlacing((value) => !value);
-          setDraft(null);
-        }}
-        className={cn(
-          "fixed bottom-5 right-5 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg",
-          "transition-colors",
-          placing
-            ? "bg-foreground text-background"
-            : "bg-primary text-primary-foreground hover:bg-primary/90",
-        )}
-        style={{ zIndex: Z + 2 }}
-      >
-        <MessageSquarePlus className="h-4 w-4" />
-        {placing ? "Click anywhere to comment" : "Comment"}
-        {!placing && pins.length > 0 ? (
-          <span className="rounded-full bg-primary-foreground/20 px-1.5 text-xs">
-            {pins.length}
-          </span>
-        ) : null}
-      </button>
     </>
   );
 
@@ -207,12 +223,16 @@ function OverlayInner() {
   return createPortal(overlay, document.body);
 }
 
-// Global "click anywhere to comment" pin overlay, backed by Liveblocks and
-// scoped to the current page URL. Gated behind NEXT_PUBLIC_PAGE_COMMENTS=on.
+// Global click-anywhere pin overlay, backed by Liveblocks, scoped to the current
+// page URL. Toggled from the header comment icon (usePageCommentsStore). Mounts
+// the Liveblocks connection ONLY while active, so nothing — badge included —
+// sits on the page when comment mode is off. Gated by NEXT_PUBLIC_PAGE_COMMENTS.
 export function PageCommentsOverlay() {
   const pathname = usePathname();
+  const active = usePageCommentsStore((state) => state.active);
 
   if (process.env.NEXT_PUBLIC_PAGE_COMMENTS !== "on") return null;
+  if (!active) return null;
 
   return (
     <SilentBoundary>

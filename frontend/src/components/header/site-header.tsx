@@ -39,6 +39,7 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebarButton } from "./comments-sidebar-button";
+import { PageCommentsButton } from "./page-comments-button";
 import { FeedbackButton } from "./feedback-button";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
@@ -285,7 +286,11 @@ export function SiteHeader() {
           />
           <AiChatButton />
           <FeedbackButton />
-          <CommentsSidebarButton />
+          {process.env.NEXT_PUBLIC_PAGE_COMMENTS === "on" ? (
+            <PageCommentsButton />
+          ) : (
+            <CommentsSidebarButton />
+          )}
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
