@@ -17,6 +17,11 @@
       "description": "Create and manage invoice billing periods with manual or automatic frequency setup"
     },
     {
+      "url": "/[projectId]/billing-periods/[periodId]",
+      "title": "Billing Period",
+      "description": "Loading billing period…"
+    },
+    {
       "url": "/[projectId]/budget",
       "title": "Budget",
       "description": "View and manage project budget with line items, modifications, forecasting, and cost tracking"
@@ -1339,7 +1344,7 @@
     {
       "url": "/notifications",
       "title": "Notifications",
-      "description": "You'll be notified about comments, mentions, and project activity."
+      "description": "The notification service is temporarily unreachable."
     },
     {
       "url": "/operations-readiness",

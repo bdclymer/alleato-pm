@@ -7,13 +7,11 @@ import * as React from "react";
 import { AlertCircle, MessageSquarePlus } from "lucide-react";
 import {
   ClientSideSuspense,
-  LiveblocksProvider,
   RoomProvider,
   useThreads,
 } from "@liveblocks/react/suspense";
 import { Composer, Thread } from "@liveblocks/react-ui";
 
-import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { getRoomId } from "@/lib/collaboration/rooms";
 import { useCollaborationEntityContext } from "./entity-context";
@@ -23,14 +21,6 @@ interface LiveblocksEntityCommentsProps {
   className?: string;
   /** Keep the composer visible at the bottom while scrolling thread history. */
   stickyComposer?: boolean;
-}
-
-async function resolveUsers(userIds: readonly string[]) {
-  if (userIds.length === 0) return [];
-  const data = await apiFetch<{ users: ({ name: string } | null)[] }>(
-    `/api/liveblocks/users?ids=${encodeURIComponent(userIds.join(","))}`,
-  );
-  return data.users.map((user) => user ?? undefined);
 }
 
 function ThreadList() {
@@ -81,9 +71,8 @@ export function LiveblocksEntityComments({
   const roomId = getRoomId(entity.entityType, entity.entityId);
 
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks/auth" resolveUsers={({ userIds }) => resolveUsers(userIds)}>
-      <RoomProvider id={roomId}>
-        <section
+    <RoomProvider id={roomId}>
+      <section
           className={cn(
             "alleato-lb-comments w-full",
             stickyComposer && "flex h-full min-h-0 flex-col",
@@ -114,8 +103,7 @@ export function LiveblocksEntityComments({
               <Composer className="alleato-lb-composer" />
             </div>
           </ClientSideSuspense>
-        </section>
-      </RoomProvider>
-    </LiveblocksProvider>
+      </section>
+    </RoomProvider>
   );
 }

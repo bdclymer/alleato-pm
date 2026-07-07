@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 
 import { sendProactiveTeamsDM } from "@/lib/bot/teams-proactive";
+import { mirrorToLiveblocksInbox } from "@/lib/collaboration/liveblocks-inbox";
 import { createServiceClient } from "@/lib/supabase/service";
 import type {
   AiWidgetNotificationKind,
@@ -227,6 +228,18 @@ export async function notifyAiWidgetNotification(
     }
 
     created += 1;
+
+    // Mirror into the Liveblocks inbox (render surface). Fire-and-forget.
+    void mirrorToLiveblocksInbox(uid, {
+      title,
+      body: cleanOptionalText(data.body),
+      notificationKind: data.kind,
+      source: metadata.source,
+      projectId: data.projectId,
+      entityType: data.entityType,
+      entityId: data.entityId,
+      subjectId: metadata.eventKey,
+    });
   }
 
   return { created, skipped };
@@ -278,7 +291,18 @@ async function notifyUsers(
     throw new Error(`Failed to create notifications (${kind}): ${error.message}`);
   }
 
-  // 2. Teams DM fan-out (fire-and-forget — never blocks the main notification path)
+  // 2. Liveblocks inbox mirror (render surface — header bell + /notifications).
+  //    Fire-and-forget; never blocks the main notification path.
+  void mirrorToLiveblocksInbox(users, {
+    title: descriptor.title,
+    body: descriptor.body,
+    notificationKind: kind,
+    projectId: data.projectId,
+    entityType: data.entityType,
+    entityId: data.entityId,
+  });
+
+  // 3. Teams DM fan-out (fire-and-forget — never blocks the main notification path)
   for (const uid of users) {
     sendProactiveTeamsDM(uid, `**${descriptor.title}**\n${descriptor.body}`)
       .catch((err: unknown) => {

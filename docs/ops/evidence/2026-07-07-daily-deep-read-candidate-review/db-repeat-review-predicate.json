@@ -1,0 +1,36 @@
+{
+  "packet": {
+    "id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+    "packet_type": "current",
+    "covered_start_at": "2026-07-06T04:00:00+00:00",
+    "covered_end_at": "2026-07-07T04:00:00+00:00",
+    "generated_at": "2026-07-07T11:32:33.213433+00:00"
+  },
+  "reviewed": {
+    "id": "b24e1d69-389d-4103-9bec-752c20a1f194",
+    "project_id": 1009,
+    "status": "candidate",
+    "current_status": "open",
+    "compiler_version": "daily_deep_read_consumers_v1",
+    "extraction_json": {
+      "review": {
+        "action": "accept",
+        "source": "project_intelligence_daily_deep_read_review",
+        "reviewed_at": "2026-07-07T18:25:50.295Z",
+        "reviewed_by": "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+        "review_notes": null,
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+      },
+      "section": "Task Candidates",
+      "source_ids": [],
+      "business_date": "2026-07-06",
+      "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+      "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "candidate_policy": "review_gated_not_auto_promoted",
+      "consumer_compiler_version": "daily_deep_read_consumers_v1",
+      "daily_packet_generated_at": "2026-07-07T11:32:33.213Z",
+      "project_assignment_method": "project_name_or_number_match"
+    }
+  },
+  "repeatReviewRoutePredicateMatchesRow": false
+}

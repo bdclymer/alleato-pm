@@ -11,15 +11,16 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (332)
+## UI Routes (333)
 
-_298/332 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_299/333 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
 | `/` | List all projects across the organization with filtering, search, and client/estimating/internal scope tabs | frontend/src/app/(main)/page.tsx |
 | `/[projectId]/admin` | Manage member permissions for this project. | frontend/src/app/(main)/[projectId]/admin/page.tsx |
 | `/[projectId]/billing-periods` | Create and manage invoice billing periods with manual or automatic frequency setup | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
+| `/[projectId]/billing-periods/[periodId]` | Loading billing period… | frontend/src/app/(main)/[projectId]/billing-periods/[periodId]/page.tsx |
 | `/[projectId]/budget` | View and manage project budget with line items, modifications, forecasting, and cost tracking | frontend/src/app/(main)/[projectId]/budget/page.tsx |
 | `/[projectId]/budget/line-item/new` | Add one or more line items to the project budget. | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
 | `/[projectId]/budget/setup` | Create initial budget line items by selecting cost codes and entering amounts | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
@@ -284,7 +285,7 @@ _298/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/meetings/[meetingId]` | Meeting detail page with transcript, segments, extracted items, and related meetings | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
 | `/megans-dashboard` | Megan's Dashboard | frontend/src/app/(admin)/megans-dashboard/page.tsx |
 | `/my-feedback` | Thumbs-up/down, ratings, and corrections you give the AI anywhere in the app show up here so you can review or fix them. | frontend/src/app/(admin)/my-feedback/page.tsx |
-| `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
+| `/notifications` | The notification service is temporarily unreachable. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
 | `/outlook-draft-feedback` | — | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
 | `/outlook-intake` | Outlook email intake queue for processing new incoming messages | frontend/src/app/(tables)/outlook-intake/page.tsx |
@@ -350,7 +351,7 @@ _298/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (746)
+## API Endpoints (747)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -878,6 +879,7 @@ _298/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/use-bid` | POST | frontend/src/app/api/projects/[projectId]/estimates/[estimateId]/sublist/[subId]/use-bid/route.ts |
 | `/api/projects/[projectId]/home/tab-data` | GET | frontend/src/app/api/projects/[projectId]/home/tab-data/route.ts |
 | `/api/projects/[projectId]/ingestion-feed` | GET | frontend/src/app/api/projects/[projectId]/ingestion-feed/route.ts |
+| `/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]` | PATCH | frontend/src/app/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]/route.ts |
 | `/api/projects/[projectId]/invoicing/billing-periods` | GET, POST | frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/route.ts |
 | `/api/projects/[projectId]/invoicing/billing-periods/[periodId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/[periodId]/route.ts |
 | `/api/projects/[projectId]/invoicing/owner` | GET, POST | frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts |

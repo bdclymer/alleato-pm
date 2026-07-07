@@ -9,7 +9,6 @@ import { usePathname } from "next/navigation";
 import { MessageSquarePlus, X } from "lucide-react";
 import {
   ClientSideSuspense,
-  LiveblocksProvider,
   RoomProvider,
   useThreads,
 } from "@liveblocks/react/suspense";
@@ -17,7 +16,6 @@ import type { ThreadData } from "@liveblocks/client";
 import { Composer, Thread } from "@liveblocks/react-ui";
 
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { usePageCommentsStore } from "@/lib/stores/page-comments-store";
 
@@ -47,14 +45,6 @@ function pageRoomId(pathname: string): string {
     .replace(/^\/+|\/+$/g, "")
     .replace(/\//g, ":");
   return `alleato:page:${clean || "root"}`;
-}
-
-async function resolveUsers(userIds: readonly string[]) {
-  if (userIds.length === 0) return [];
-  const data = await apiFetch<{ users: ({ name: string } | null)[] }>(
-    `/api/liveblocks/users?ids=${encodeURIComponent(userIds.join(","))}`,
-  );
-  return data.users.map((user) => user ?? undefined);
 }
 
 const Z = 2147483000; // above app chrome; Liveblocks portals sit on top of this
@@ -224,9 +214,10 @@ function OverlayInner() {
 }
 
 // Global click-anywhere pin overlay, backed by Liveblocks, scoped to the current
-// page URL. Toggled from the header comment icon (usePageCommentsStore). Mounts
-// the Liveblocks connection ONLY while active, so nothing — badge included —
-// sits on the page when comment mode is off. Gated by NEXT_PUBLIC_PAGE_COMMENTS.
+// page URL. Toggled from the header comment icon (usePageCommentsStore). Consumes
+// the app-level CollaborationProvider (mounted in the (main) layout) and adds only
+// a RoomProvider for the current page's room while comment mode is active. Gated
+// by NEXT_PUBLIC_PAGE_COMMENTS.
 export function PageCommentsOverlay() {
   const pathname = usePathname();
   const active = usePageCommentsStore((state) => state.active);
@@ -236,16 +227,11 @@ export function PageCommentsOverlay() {
 
   return (
     <SilentBoundary>
-      <LiveblocksProvider
-        authEndpoint="/api/liveblocks/auth"
-        resolveUsers={({ userIds }) => resolveUsers(userIds)}
-      >
-        <RoomProvider id={pageRoomId(pathname)}>
-          <ClientSideSuspense fallback={null}>
-            <OverlayInner />
-          </ClientSideSuspense>
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id={pageRoomId(pathname)}>
+        <ClientSideSuspense fallback={null}>
+          <OverlayInner />
+        </ClientSideSuspense>
+      </RoomProvider>
     </SilentBoundary>
   );
 }

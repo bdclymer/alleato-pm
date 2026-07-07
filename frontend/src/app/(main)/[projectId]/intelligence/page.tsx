@@ -12,6 +12,10 @@ import {
 } from "@/components/ai-intelligence/source-reference-button";
 import { DetailLayout, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
+import {
+  DailyDeepReadCandidateReview,
+  type DailyDeepReadReviewCandidate,
+} from "@/features/intelligence/daily-deep-read-candidate-review";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
@@ -1113,50 +1117,39 @@ function DailyDeepReadCandidateSection({
 }) {
   if (candidates.length === 0 && !error) return null;
 
+  const reviewCandidates: DailyDeepReadReviewCandidate[] = candidates.map((candidate) => {
+    const sources = candidateSourceIds(candidate)
+      .map((sourceId) => sourceDocumentMap.get(sourceId))
+      .filter((source): source is SourceDocumentRow => Boolean(source))
+      .slice(0, 3);
+    const title = candidateDisplayText(candidate.title, 220) || formatLabel(candidate.signal_type);
+    const summary =
+      candidateDisplayText(candidate.summary, 360) ||
+      candidateDisplayText(candidate.why_it_matters, 360) ||
+      candidateDisplayText(candidate.excerpt, 360) ||
+      null;
+    const nextAction = candidateDisplayText(candidate.next_action, 220) || null;
+
+    return {
+      id: candidate.id,
+      signalType: candidate.signal_type,
+      title,
+      summary,
+      nextAction,
+      confidence: candidate.confidence,
+      sources: sources.map((source) => ({
+        label: sourceButtonLabel(source),
+        record: sourceReferenceRecord(source, projectId),
+      })),
+    };
+  });
+
   return (
-    <section className="space-y-3">
-      <SectionHeader title="Daily Deep Read candidates" />
-      <p className="max-w-4xl text-sm leading-6 text-muted-foreground">
-        Review-gated updates from the full-source Daily Deep Read. These have not been promoted into project
-        intelligence, tasks, risks, or decisions yet.
-      </p>
-      {error ? (
-        <ErrorState
-          title="Daily Deep Read candidate queue could not load"
-          error={error}
-          className="items-start justify-start gap-2 py-2 text-left"
-        />
-      ) : null}
-      {candidates.length > 0 ? (
-        <div className="divide-y divide-border/60">
-          {candidates.map((candidate) => {
-            const sources = candidateSourceIds(candidate)
-              .map((sourceId) => sourceDocumentMap.get(sourceId))
-              .filter((source): source is SourceDocumentRow => Boolean(source))
-              .slice(0, 3);
-            const title = candidateDisplayText(candidate.title, 220) || formatLabel(candidate.signal_type);
-            const summary =
-              candidateDisplayText(candidate.summary, 360) ||
-              candidateDisplayText(candidate.why_it_matters, 360) ||
-              candidateDisplayText(candidate.excerpt, 360);
-            const nextAction = candidateDisplayText(candidate.next_action, 220);
-            return (
-              <article key={candidate.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="text-sm font-medium text-foreground">{title}</p>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {formatLabel(candidate.signal_type)} · {formatLabel(candidate.confidence)}
-                  </span>
-                </div>
-                {summary ? <p className="text-sm leading-6 text-muted-foreground">{summary}</p> : null}
-                {nextAction ? <p className="text-xs leading-5 text-muted-foreground">Next: {nextAction}</p> : null}
-                <SourceLinkRow projectId={projectId} sources={sources} />
-              </article>
-            );
-          })}
-        </div>
-      ) : null}
-    </section>
+    <DailyDeepReadCandidateReview
+      candidates={reviewCandidates}
+      error={error}
+      projectId={projectId}
+    />
   );
 }
 

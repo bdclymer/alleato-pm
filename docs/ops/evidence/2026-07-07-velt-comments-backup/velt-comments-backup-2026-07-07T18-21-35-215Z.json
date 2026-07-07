@@ -1,0 +1,1849 @@
+{
+  "summary": {
+    "exportedAt": "2026-07-07T18:21:35.216Z",
+    "totalThreads": 99,
+    "unresolvedThreads": 81,
+    "resolvedThreads": 18,
+    "totalMessages": 108,
+    "routeBackedThreads": 98,
+    "nonRouteDocumentIds": 1
+  },
+  "comments": [
+    {
+      "documentId": "/876/invoicing/subcontractor/8094",
+      "annotationId": "jcSlW9f2agdVdU1fBESQ",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} where is this invocie coming from?  I don't see a commitment that it is tied to.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1783432793967,
+      "messages": [
+        {
+          "commentId": 327887,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} where is this invocie coming from?  I don't see a commitment that it is tied to.",
+          "createdAt": 1783432792837
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoices",
+      "annotationId": "2xJds94DkNTUXNLCCf3J",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "You shouldn't be able to have multiple billing periods open at one time, also where did these bililng periods even come from.  There should also always be a due date in a biling period. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1783432540052,
+      "messages": [
+        {
+          "commentId": 565692,
+          "authorName": "Brandon Clymer",
+          "text": "You shouldn't be able to have multiple billing periods open at one time, also where did these bililng periods even come from.  There should also always be a due date in a biling period. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1783432538922
+        }
+      ]
+    },
+    {
+      "documentId": "/",
+      "annotationId": "YWr5qLC32hiadN2MRrRo",
+      "annotationNumber": 1,
+      "authorName": "Test1 Account",
+      "preview": "Codex QA comment for annotation verification",
+      "statusName": "Open",
+      "replyCount": 1,
+      "lastUpdated": 1783431392550,
+      "messages": [
+        {
+          "commentId": 643732,
+          "authorName": "Test1 Account",
+          "text": "Codex QA comment for annotation verification",
+          "createdAt": 1783005787771
+        },
+        {
+          "commentId": 894083,
+          "authorName": "Test1 Account",
+          "text": "codex-local-collapse-check-1783008898909",
+          "createdAt": 1783008899248
+        }
+      ]
+    },
+    {
+      "documentId": "/876/rfis/new",
+      "annotationId": "HwqyOnAhhxOpWoCc9UoH",
+      "annotationNumber": 3,
+      "authorName": "Megan Harrison",
+      "preview": "RFI manager and assigness should only show people who have been added to the project directory.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1783365221386,
+      "messages": [
+        {
+          "commentId": 544940,
+          "authorName": "Megan Harrison",
+          "text": "RFI manager and assigness should only show people who have been added to the project directory.",
+          "createdAt": 1783365221416
+        }
+      ]
+    },
+    {
+      "documentId": "/876/drawings/viewer/297af29a-f327-464c-91d2-2ea9d335a99b",
+      "annotationId": "mzeIXJIbUXkCvPm6HV7u",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "testing",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1783359021922,
+      "messages": [
+        {
+          "commentId": 956335,
+          "authorName": "Megan Harrison",
+          "text": "testing",
+          "createdAt": 1783359021946
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events/927f077e-3883-441c-b275-58b55a4f9db9",
+      "annotationId": "U6fxfbb77xRR2TrgzHRX",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Financial markup's are showing up.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783173094265,
+      "messages": [
+        {
+          "commentId": 375301,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Financial markup's are showing up.",
+          "createdAt": 1782875867275
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events/927f077e-3883-441c-b275-58b55a4f9db9",
+      "annotationId": "eCpddj6XaVDdsf6dTI5j",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "Columns aren't lining up, look at qty and unit cost, the values below are not under it. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783173043209,
+      "messages": [
+        {
+          "commentId": 794257,
+          "authorName": "Brandon Clymer",
+          "text": "Columns aren't lining up, look at qty and unit cost, the values below are not under it. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782875918794
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "HLhOudnXEOEgzPYS8sH7",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Should be able to export as PDF as well.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783134559357,
+      "messages": [
+        {
+          "commentId": 980511,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Should be able to export as PDF as well.",
+          "createdAt": 1782874762701
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "5ArAw9wJFEUfOFo4hVfl",
+      "annotationNumber": 9,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} when I click this committed costs nothing shows up.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783134331075,
+      "messages": [
+        {
+          "commentId": 615045,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} when I click this committed costs nothing shows up.",
+          "createdAt": 1782881304857
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "iACw885errh4cBfTis79",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} This isn't even right if we were doing mark up, the calculations aren't there.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783133867588,
+      "messages": [
+        {
+          "commentId": 164408,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} This isn't even right if we were doing mark up, the calculations aren't there.",
+          "createdAt": 1782876880229
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "VI5i1AYibilbjFB1GUgS",
+      "annotationNumber": 6,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} where is this populating from?  CO CCO, Change Order Commitment Change Order?",
+      "statusName": "Resolved",
+      "replyCount": 1,
+      "lastUpdated": 1783131783342,
+      "messages": [
+        {
+          "commentId": 279772,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} where is this populating from?  CO CCO, Change Order Commitment Change Order?",
+          "createdAt": 1782877020060
+        },
+        {
+          "commentId": 571133,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} its pulling from the title",
+          "createdAt": 1783131781663
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "YSUXb7ciZeVdw4OnN9su",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} date is wrong, I approved it today, June 30th, 2026, requested can't come after created.",
+      "statusName": "Open",
+      "replyCount": 1,
+      "lastUpdated": 1783131282405,
+      "messages": [
+        {
+          "commentId": 754992,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} date is wrong, I approved it today, June 30th, 2026, requested can't come after created.",
+          "createdAt": 1782876973818
+        },
+        {
+          "commentId": 140779,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} I can change this but I just want to think through like real-world scenarios that created date is being auto populated based on the date that is actually entered into the system and I feel like there's a lot of times where people need to create things retroactively so I don't necessarily want to add a rule where it prevents you from being able to enter the actual requested and approved dates that they should have been if you're creating something retroactively I think a better option would be to just not show that created date there but I'll let you decide",
+          "createdAt": 1783026761680
+        }
+      ]
+    },
+    {
+      "documentId": "/meetings/01KVTCKJXEWVBTFFVAK956WS9B",
+      "annotationId": "zGRdb0EQJiiqZX73lOuk",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "@Megan Harrison you have tasks and action items.  What is the difference?",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783028414064,
+      "messages": [
+        {
+          "commentId": 501091,
+          "authorName": "Brandon Clymer",
+          "text": "@Megan Harrison you have tasks and action items.  What is the difference?",
+          "createdAt": 1782870711993
+        }
+      ]
+    },
+    {
+      "documentId": "/meetings/01KVTCKJXEWVBTFFVAK956WS9B",
+      "annotationId": "HaeW4uWMDxbvdxyh8ht1",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} what is this view file, this is just a bunch of text.  not needed.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1783027889836,
+      "messages": [
+        {
+          "commentId": 835445,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} what is this view file, this is just a bunch of text.  not needed.",
+          "createdAt": 1782870615610
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments",
+      "annotationId": "7WjyELRwZZClAMSjZcL4",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} delete subcontracts, they are the same as commitments.",
+      "statusName": "Resolved",
+      "replyCount": 1,
+      "lastUpdated": 1783027782675,
+      "messages": [
+        {
+          "commentId": 671570,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} delete subcontracts, they are the same as commitments.",
+          "createdAt": 1782876074670
+        },
+        {
+          "commentId": 994309,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} done",
+          "createdAt": 1783027781416
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "j6HqRSKobFDhjexI8XDo",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} commitment change order shouldn't have the mark up on there that we are putting from the prime contract.",
+      "statusName": "Resolved",
+      "replyCount": 1,
+      "lastUpdated": 1783026633317,
+      "messages": [
+        {
+          "commentId": 176925,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} commitment change order shouldn't have the mark up on there that we are putting from the prime contract.",
+          "createdAt": 1782876732237
+        },
+        {
+          "commentId": 789465,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} updated",
+          "createdAt": 1783026631719
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "w33evEzq5iaCVM5ub0AH",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "I shouldn't be able to go in and add a line item to a CO that is in the approved status. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Resolved",
+      "replyCount": 1,
+      "lastUpdated": 1783026539108,
+      "messages": [
+        {
+          "commentId": 674710,
+          "authorName": "Brandon Clymer",
+          "text": "I shouldn't be able to go in and add a line item to a CO that is in the approved status. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782876926586
+        },
+        {
+          "commentId": 739380,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} fixed",
+          "createdAt": 1783026537206
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "3J6DQ553W2DCRh1qDrk2",
+      "annotationNumber": 10,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} The actual title of the cost code should appear.  {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Get your mother fucking nutrition bull shit email off my fucking software.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782881567326,
+      "messages": [
+        {
+          "commentId": 444258,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} The actual title of the cost code should appear.  {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Get your mother fucking nutrition bull shit email off my fucking software.",
+          "createdAt": 1782881567271
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "pE1dpiYQKJ8wj7gWP7oG",
+      "annotationNumber": 8,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} Amount is wrong. Also when you click on the acttual number 700 to pull up the CO, nothing comes up.  So the tables don't actually have a linked relationship.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782881117311,
+      "messages": [
+        {
+          "commentId": 352624,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} Amount is wrong. Also when you click on the acttual number 700 to pull up the CO, nothing comes up.  So the tables don't actually have a linked relationship.",
+          "createdAt": 1782881117257
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "KkglsL6FcLcY2EZ698YK",
+      "annotationNumber": 6,
+      "authorName": "Brandon Clymer",
+      "preview": "Page should look like this from procore. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} BDRH7bsaj7BTl6BL6Agd.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880761640,
+      "messages": [
+        {
+          "commentId": 335865,
+          "authorName": "Brandon Clymer",
+          "text": "Page should look like this from procore. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} BDRH7bsaj7BTl6BL6Agd.png",
+          "createdAt": 1782880761711
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "BemQJ6Z92RLfNIJyU06R",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to create a PCCO and then when I go into that page I can add different PCO's.  So you may have one PCCO that will have PCO 2 PCO 7 PCO 8 or whatever, or you may just have one PCO.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880669416,
+      "messages": [
+        {
+          "commentId": 184671,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to create a PCCO and then when I go into that page I can add different PCO's.  So you may have one PCCO that will have PCO 2 PCO 7 PCO 8 or whatever, or you may just have one PCO.",
+          "createdAt": 1782880669487
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "7dROBiqu5jCrIPxiPv7J",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I pressed the promote PCO button and nothing happened.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880597323,
+      "messages": [
+        {
+          "commentId": 603707,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I pressed the promote PCO button and nothing happened.",
+          "createdAt": 1782880597393
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events",
+      "annotationId": "RTVGF9pwhuTuQ88KrWcx",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} What is all this? Doesn't make any sense.",
+      "statusName": "Open",
+      "replyCount": 1,
+      "lastUpdated": 1782880443853,
+      "messages": [
+        {
+          "commentId": 684370,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} What is all this? Doesn't make any sense.",
+          "createdAt": 1782876214050
+        },
+        {
+          "commentId": 821412,
+          "authorName": "Megan Harrison",
+          "text": "{{2af4889b-f1a0-489e-a165-f5de5805e03a}} thats the commitment title. I updated it to mandate the PO- and SC- prefixes going forward.",
+          "createdAt": 1782880443882
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f/change-orders/pcos/04e484af-457e-4e39-ad59-8515da5e3dde",
+      "annotationId": "moYOT1sbVjHZMxZWoV2c",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} It won't let me change the status, there should be a edit button up there I can click then I can change the status and other information.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880430119,
+      "messages": [
+        {
+          "commentId": 127270,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} It won't let me change the status, there should be a edit button up there I can click then I can change the status and other information.",
+          "createdAt": 1782880430190
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "Bp4DtKb01j2veWdfrKu5",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this should just say PCO",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880375779,
+      "messages": [
+        {
+          "commentId": 658679,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this should just say PCO",
+          "createdAt": 1782880375854
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f/change-orders/pcos/04e484af-457e-4e39-ad59-8515da5e3dde",
+      "annotationId": "814rJXXme9xPSEcFgZUr",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this as a PDF. Kty0umqekgDaZhPHggwI.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880305038,
+      "messages": [
+        {
+          "commentId": 690515,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this as a PDF. Kty0umqekgDaZhPHggwI.png",
+          "createdAt": 1782880305112
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "q51Vrmnvd38gUwEpuYwu",
+      "annotationNumber": 7,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} approved CO's not showing up.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880141335,
+      "messages": [
+        {
+          "commentId": 772612,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} approved CO's not showing up.",
+          "createdAt": 1782880141409
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "LLPyppG9K1ZeJDPDoJqE",
+      "annotationNumber": 6,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} title not showing.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782880013977,
+      "messages": [
+        {
+          "commentId": 870030,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} title not showing.",
+          "createdAt": 1782880014051
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "z3yRIdAmfy9kFkHFRsQO",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should not be able to edit this when the prime is approved and has invoices alreayd in it processed.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879959553,
+      "messages": [
+        {
+          "commentId": 459399,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should not be able to edit this when the prime is approved and has invoices alreayd in it processed.",
+          "createdAt": 1782879959628
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts/6d90f64a-d9e2-4cb7-9aee-389dda0c9f4f",
+      "annotationId": "d6WukFFgmKhoGO3yXWsc",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this is showing zero invoices and zero payments made.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879856124,
+      "messages": [
+        {
+          "commentId": 278421,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this is showing zero invoices and zero payments made.",
+          "createdAt": 1782879856199
+        }
+      ]
+    },
+    {
+      "documentId": "/876/prime-contracts",
+      "annotationId": "WTj8sA74W9KGBlNrBGT4",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this says invoiced to date is zero, which isn't correct.  Along with paymets recieved.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879787823,
+      "messages": [
+        {
+          "commentId": 319062,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this says invoiced to date is zero, which isn't correct.  Along with paymets recieved.",
+          "createdAt": 1782879787898
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/212",
+      "annotationId": "zlyynwXGmOq5WwOH2gRh",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} why is this showing submitted, and it wont let me change the status to approved.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879704773,
+      "messages": [
+        {
+          "commentId": 132292,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} why is this showing submitted, and it wont let me change the status to approved.",
+          "createdAt": 1782879704849
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/218",
+      "annotationId": "mPfcWQmWABZoYqGAu1u9",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} This balance to finish isn't right.  The contract was for 200k, how is this saying it is billed in full?",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879607500,
+      "messages": [
+        {
+          "commentId": 886108,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} This balance to finish isn't right.  The contract was for 200k, how is this saying it is billed in full?",
+          "createdAt": 1782879607574
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoices",
+      "annotationId": "1xjWAFEtFkPE3lmgaiNf",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} a billing period has to have a due date, it can't be left blank like below.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879153339,
+      "messages": [
+        {
+          "commentId": 641704,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} a billing period has to have a due date, it can't be left blank like below.",
+          "createdAt": 1782879153414
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoices",
+      "annotationId": "5IZivi82yPT17an8M5xv",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me click and open this.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879126601,
+      "messages": [
+        {
+          "commentId": 266110,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me click and open this.",
+          "createdAt": 1782879126676
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoices",
+      "annotationId": "SPF0wblvu312hXL7Nr7A",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} you should not be able to have multiple billing periods open at once, when  new one is opened the prvious one must be closed.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782879070428,
+      "messages": [
+        {
+          "commentId": 201397,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} you should not be able to have multiple billing periods open at once, when  new one is opened the prvious one must be closed.",
+          "createdAt": 1782879070502
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoices",
+      "annotationId": "CUor64ioaJ7JIO8tugR7",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to click here and change the status.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878955175,
+      "messages": [
+        {
+          "commentId": 353328,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to click here and change the status.",
+          "createdAt": 1782878955249
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/subcontractor/8093",
+      "annotationId": "GE4j1cpKDZON5NrYzn9A",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me change the status.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878819901,
+      "messages": [
+        {
+          "commentId": 833016,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me change the status.",
+          "createdAt": 1782878819982
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/subcontractor/8093",
+      "annotationId": "VlezkIHaCbT55otDqQPI",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} What is this, where is this pulling from?",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878573711,
+      "messages": [
+        {
+          "commentId": 968978,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} What is this, where is this pulling from?",
+          "createdAt": 1782878573792
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/61632e46-5154-4e7e-8a21-df4945c1ea38",
+      "annotationId": "PMsnFoOlp44LT577pi73",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} change history not working.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878441402,
+      "messages": [
+        {
+          "commentId": 792686,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} change history not working.",
+          "createdAt": 1782878441483
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/61632e46-5154-4e7e-8a21-df4945c1ea38",
+      "annotationId": "ec74AFyYCbhxf8Ipozk6",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me change the status back to draft status and then edit the Subcontractor SOV, it should only lock after the first invoice has been submitted/processed.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878413487,
+      "messages": [
+        {
+          "commentId": 707217,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me change the status back to draft status and then edit the Subcontractor SOV, it should only lock after the first invoice has been submitted/processed.",
+          "createdAt": 1782878413568
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/61632e46-5154-4e7e-8a21-df4945c1ea38",
+      "annotationId": "ugdPOST7uz6RAt7HFSK1",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} export doens't work. TBxARl1b6KE40SCXLnup.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782878165520,
+      "messages": [
+        {
+          "commentId": 107608,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} export doens't work. TBxARl1b6KE40SCXLnup.png",
+          "createdAt": 1782878165601
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b",
+      "annotationId": "MvRXPW7jStm5huK7JKd2",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} should not be able to submit a invoice without submitting subcontractor schedule of values.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877924811,
+      "messages": [
+        {
+          "commentId": 757644,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} should not be able to submit a invoice without submitting subcontractor schedule of values.",
+          "createdAt": 1782877924892
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments",
+      "annotationId": "Z4LyQv4yIH7amdAAjO0X",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} these should either be a PO or a SC, right now I can't tell if these are subcontracts or POs.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877852983,
+      "messages": [
+        {
+          "commentId": 110686,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} these should either be a PO or a SC, right now I can't tell if these are subcontracts or POs.",
+          "createdAt": 1782877853064
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b",
+      "annotationId": "mbzaRp3vbgos2btf5mRU",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "Commitment page should look like this screen shot. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} 5eaOWLNaSuDvJyRfCyzr.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877769154,
+      "messages": [
+        {
+          "commentId": 741113,
+          "authorName": "Brandon Clymer",
+          "text": "Commitment page should look like this screen shot. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} 5eaOWLNaSuDvJyRfCyzr.png",
+          "createdAt": 1782877769235
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/subcontractor/8092",
+      "annotationId": "p2StcVU4PG1f8wBYIwkJ",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} when I exported the invoice it isn't showing correctly, it should match the export shown in Procore/Job Planner.  Invoice page should look like procore screen shot.  24-102-Wesleyan_Office-2-Invoice_2-2026-07-01.pdf Exported PDF should look like the attachment.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877673107,
+      "messages": [
+        {
+          "commentId": 499692,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} when I exported the invoice it isn't showing correctly, it should match the export shown in Procore/Job Planner.  Invoice page should look like procore screen shot.  24-102-Wesleyan_Office-2-Invoice_2-2026-07-01.pdf Exported PDF should look like the attachment.",
+          "createdAt": 1782877673184
+        }
+      ]
+    },
+    {
+      "documentId": "/876/invoicing/subcontractor/new",
+      "annotationId": "TQseq0FP4IUz9bMgCMU3",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} you should be able to put in a % and it populate.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877389294,
+      "messages": [
+        {
+          "commentId": 422222,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} you should be able to put in a % and it populate.",
+          "createdAt": 1782877389372
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b",
+      "annotationId": "CPDPG31INKeEnf9BPXAx",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} make sure subs can't create change events. rPpk19x6RwjxothWvwuz.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877293638,
+      "messages": [
+        {
+          "commentId": 748851,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} make sure subs can't create change events. rPpk19x6RwjxothWvwuz.png",
+          "createdAt": 1782877293716
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b",
+      "annotationId": "pHmhXljguxflY8U5z6IO",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "Why does this say create retainage invoice? {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877191398,
+      "messages": [
+        {
+          "commentId": 840409,
+          "authorName": "Brandon Clymer",
+          "text": "Why does this say create retainage invoice? {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782877191476
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/a0d9d40d-37c5-4739-872e-e5412cbc785b",
+      "annotationId": "0yOmbzX9NvwcgbWIvq03",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} status is approved, I shouldn't be able to come in here and edit items, I would need to put it in draft status and then edit.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782877107247,
+      "messages": [
+        {
+          "commentId": 395763,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} status is approved, I shouldn't be able to come in here and edit items, I would need to put it in draft status and then edit.",
+          "createdAt": 1782877107325
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-orders/commitment/aa35f3c3-5ec0-4568-b126-f8671b4791cc",
+      "annotationId": "mi3N7qoNnYiAxVjPlOwG",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this to PDF so I can send it to the sub for signature.  I should also be able to email it to them from this screen as well.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876842032,
+      "messages": [
+        {
+          "commentId": 144853,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this to PDF so I can send it to the sub for signature.  I should also be able to email it to them from this screen as well.",
+          "createdAt": 1782876842113
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/370ccdd2-4f9e-404a-84ec-21c4f2403658",
+      "annotationId": "gxCwrX82Ms38iZtEz3U6",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} PDF export doesn't work. 0NYPXmxSC91iOZt6PF09.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876664024,
+      "messages": [
+        {
+          "commentId": 439537,
+          "authorName": "Brandon Clymer",
+          "text": "{{8e0a5ed8-750b-49f1-9aa6-bbc01f634074}} PDF export doesn't work. 0NYPXmxSC91iOZt6PF09.png",
+          "createdAt": 1782876664100
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events",
+      "annotationId": "R9t6VPMnnWVMV2yGKD0M",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} no bar to scroll right to left. F56DNXX8iztmZGvdABOR.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876398920,
+      "messages": [
+        {
+          "commentId": 321010,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} no bar to scroll right to left. F56DNXX8iztmZGvdABOR.png",
+          "createdAt": 1782876399001
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events",
+      "annotationId": "1qHwrYy1OClU95ha2xHi",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} should be a settings function here I can make changes, refer to procore. FHEtqrS47gWWtmd93xLH.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876324467,
+      "messages": [
+        {
+          "commentId": 569405,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} should be a settings function here I can make changes, refer to procore. FHEtqrS47gWWtmd93xLH.png",
+          "createdAt": 1782876324548
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events",
+      "annotationId": "7jKXugrPa4pgwJzKxCwK",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this amount is wrong, this commitment is 28k, not sure where it is pulling from.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876145702,
+      "messages": [
+        {
+          "commentId": 548961,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this amount is wrong, this commitment is 28k, not sure where it is pulling from.",
+          "createdAt": 1782876145783
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events",
+      "annotationId": "0rrt7ZfW4uKWqiDuqjY9",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "Mark up is showing on the cost side and not the revenue side. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782876009905,
+      "messages": [
+        {
+          "commentId": 414264,
+          "authorName": "Brandon Clymer",
+          "text": "Mark up is showing on the cost side and not the revenue side. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782876009986
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events/927f077e-3883-441c-b275-58b55a4f9db9",
+      "annotationId": "aozkIj82bWj4Rgsv5ynZ",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} export function failed. vCstcP0NE4zorTesTHaV.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782875765089,
+      "messages": [
+        {
+          "commentId": 576024,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} export function failed. vCstcP0NE4zorTesTHaV.png",
+          "createdAt": 1782875765170
+        }
+      ]
+    },
+    {
+      "documentId": "/876/change-events/new",
+      "annotationId": "wJPwUZLCsUznN3TyUHYa",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should not be able to add a company here.  Also when I selected R.J Skeldon, then I tried to unslect them and it wouldn't let me. D1bUGHAdnQ87faV5lXZa.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782875654451,
+      "messages": [
+        {
+          "commentId": 591846,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should not be able to add a company here.  Also when I selected R.J Skeldon, then I tried to unslect them and it wouldn't let me. D1bUGHAdnQ87faV5lXZa.png",
+          "createdAt": 1782875654530
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "loCcMIjYanl6bcm5Lowt",
+      "annotationNumber": 5,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me edit forcast to complete, please refrence Procore budget.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782875380386,
+      "messages": [
+        {
+          "commentId": 514846,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} it wont let me edit forcast to complete, please refrence Procore budget.",
+          "createdAt": 1782875380467
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "7X236rN6O2NyxB6qRGNX",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} budget modifications aren't showing up.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782875307473,
+      "messages": [
+        {
+          "commentId": 838293,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} budget modifications aren't showing up.",
+          "createdAt": 1782875307554
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "sRNDb8pBYY5QrUSAD6v4",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} The division shouldn't have focasting, refrence the screen shot.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782875231398,
+      "messages": [
+        {
+          "commentId": 509850,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} The division shouldn't have focasting, refrence the screen shot.",
+          "createdAt": 1782875231485
+        }
+      ]
+    },
+    {
+      "documentId": "/876/budget",
+      "annotationId": "gtWLdw2dCHban9JvmXbT",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Why are all these pencils and trash cans showing when the budget is locked and you can't change anything?",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874944795,
+      "messages": [
+        {
+          "commentId": 501305,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Why are all these pencils and trash cans showing when the budget is locked and you can't change anything?",
+          "createdAt": 1782874944883
+        }
+      ]
+    },
+    {
+      "documentId": "/876/transmittals",
+      "annotationId": "KkWn15lhoGZMO0AtLMvE",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "This is howa transmittal page should look, please refrence procore. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} lLjrbDaOxVqJdBlMgS9t.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874609709,
+      "messages": [
+        {
+          "commentId": 227923,
+          "authorName": "Brandon Clymer",
+          "text": "This is howa transmittal page should look, please refrence procore. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} lLjrbDaOxVqJdBlMgS9t.png",
+          "createdAt": 1782874609797
+        }
+      ]
+    },
+    {
+      "documentId": "/876/submittals",
+      "annotationId": "tqqCeaoXQSmWV47QBn93",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} there should be a gear cog here that I can click and it takes me to submittal settings.  See how procore shows there's. zb2lxhDloq6BX2oYZiq0.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874511383,
+      "messages": [
+        {
+          "commentId": 390141,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} there should be a gear cog here that I can click and it takes me to submittal settings.  See how procore shows there's. zb2lxhDloq6BX2oYZiq0.png",
+          "createdAt": 1782874511470
+        }
+      ]
+    },
+    {
+      "documentId": "/876/submittals/e2b8898d-d3f8-4e63-b16a-61fa9f1e12c4",
+      "annotationId": "XBkjOA4mBR5tEU2iggGr",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this to PDF so I can send it out.  It should have these options as well, cover sheet is important.  All should have alleato branding. JTHl0xbPRUESkBnZLMhK.png",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874380543,
+      "messages": [
+        {
+          "commentId": 303051,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export this to PDF so I can send it out.  It should have these options as well, cover sheet is important.  All should have alleato branding. JTHl0xbPRUESkBnZLMhK.png",
+          "createdAt": 1782874380631
+        }
+      ]
+    },
+    {
+      "documentId": "/876/submittals/e2b8898d-d3f8-4e63-b16a-61fa9f1e12c4",
+      "annotationId": "UhKHMBbr6NGfB87iQCuM",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} you should be able to click view or edit, right now you just click into it and then it is all editable, that invites mistakes.  Also in the workflow section the first person in the workflow should be the submitter, the approver should be greyed out unless there is a step before them.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874281440,
+      "messages": [
+        {
+          "commentId": 976871,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} you should be able to click view or edit, right now you just click into it and then it is all editable, that invites mistakes.  Also in the workflow section the first person in the workflow should be the submitter, the approver should be greyed out unless there is a step before them.",
+          "createdAt": 1782874281527
+        }
+      ]
+    },
+    {
+      "documentId": "/876/submittals",
+      "annotationId": "3legbMXWYGZyctpBZiHP",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "Export should be a button I click and then I can pick PDF or CSV, both should be formatted correctly and the PDF should have all the alleato branding. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782874092143,
+      "messages": [
+        {
+          "commentId": 105911,
+          "authorName": "Brandon Clymer",
+          "text": "Export should be a button I click and then I can pick PDF or CSV, both should be formatted correctly and the PDF should have all the alleato branding. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782874092231
+        }
+      ]
+    },
+    {
+      "documentId": "/876/rfis",
+      "annotationId": "mR2W61n6FjZ7E6k7Hn6L",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export PDF that is formated as a RFI log, I should be able to click and export just this single RFI as well. RFI page should be able to be configured like the Procore one shown in the screen shot.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782873940101,
+      "messages": [
+        {
+          "commentId": 901115,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to export PDF that is formated as a RFI log, I should be able to click and export just this single RFI as well. RFI page should be able to be configured like the Procore one shown in the screen shot.",
+          "createdAt": 1782873940189
+        }
+      ]
+    },
+    {
+      "documentId": "/876/rfis/new",
+      "annotationId": "6m0X9lBBQLWasC93o3S4",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "Should only pull from people who are in the project. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782873197812,
+      "messages": [
+        {
+          "commentId": 281123,
+          "authorName": "Brandon Clymer",
+          "text": "Should only pull from people who are in the project. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782873197900
+        }
+      ]
+    },
+    {
+      "documentId": "/876/rfis/new",
+      "annotationId": "ttO87MfQsn9bRCYbiG4S",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "RFI manager should only be from people who are in the job, not everyone.",
+      "statusName": "Open",
+      "replyCount": 1,
+      "lastUpdated": 1782873123158,
+      "messages": [
+        {
+          "commentId": 846343,
+          "authorName": "Brandon Clymer",
+          "text": "RFI manager should only be from people who are in the job, not everyone.",
+          "createdAt": 1782873109255
+        },
+        {
+          "commentId": 329419,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782873123245
+        }
+      ]
+    },
+    {
+      "documentId": "/876/progress-reports/e3e0d19c-4739-44f0-bee9-91ddebeaca0b",
+      "annotationId": "5oOasLbDcxKcbg1zw3TC",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Generate PDF isn't working, it should have something coming out formated correctly.  Also there should be an ability for someon to manually edit this report as needed, it should also show the current sustancial completion date.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782873031536,
+      "messages": [
+        {
+          "commentId": 840942,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Generate PDF isn't working, it should have something coming out formated correctly.  Also there should be an ability for someon to manually edit this report as needed, it should also show the current sustancial completion date.",
+          "createdAt": 1782873031624
+        }
+      ]
+    },
+    {
+      "documentId": "/876/documents",
+      "annotationId": "PDSSC1LJDLkSKRHRAZyT",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Where are these documents coming from, who is uploading them? Is this something AI is doing?",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782872841812,
+      "messages": [
+        {
+          "commentId": 438335,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Where are these documents coming from, who is uploading them? Is this something AI is doing?",
+          "createdAt": 1782872841901
+        }
+      ]
+    },
+    {
+      "documentId": "/876/drawings",
+      "annotationId": "1a0DUtk1euScGVnz5MuC",
+      "annotationNumber": 4,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} the export should have a PDF and CSV option, it should also be formated correctly.  See screen shot for refrence.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782872747785,
+      "messages": [
+        {
+          "commentId": 854469,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} the export should have a PDF and CSV option, it should also be formated correctly.  See screen shot for refrence.",
+          "createdAt": 1782872747873
+        }
+      ]
+    },
+    {
+      "documentId": "/876/drawings",
+      "annotationId": "LG62Ha62EFyDMxB3FMsA",
+      "annotationNumber": 3,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} when I click QR code it pulls one up and then when I scan it with my phone it just takes me to this login page, it should take me right to that drawing I would think.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782872576745,
+      "messages": [
+        {
+          "commentId": 835288,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} when I click QR code it pulls one up and then when I scan it with my phone it just takes me to this login page, it should take me right to that drawing I would think.",
+          "createdAt": 1782872576834
+        }
+      ]
+    },
+    {
+      "documentId": "/876/drawings",
+      "annotationId": "LmLM6phOhzEqVl8tU3Ne",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to cloud something and the option to link and other function shows up, just like how procore drawing function does.  See screen shot.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782872339170,
+      "messages": [
+        {
+          "commentId": 848602,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} I should be able to cloud something and the option to link and other function shows up, just like how procore drawing function does.  See screen shot.",
+          "createdAt": 1782872339259
+        }
+      ]
+    },
+    {
+      "documentId": "/876/drawings",
+      "annotationId": "aPzIAcEIGaqrPb9mmcmK",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} When I open a drawing I should be able to zoom in and out by using the roller thing on the mouse.  Take a look at how procore does there drawing function, should match that.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782872187972,
+      "messages": [
+        {
+          "commentId": 188609,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} When I open a drawing I should be able to zoom in and out by using the roller thing on the mouse.  Take a look at how procore does there drawing function, should match that.",
+          "createdAt": 1782872188060
+        }
+      ]
+    },
+    {
+      "documentId": "/876/directory",
+      "annotationId": "iJoMz4IXUXVRJzMocwU3",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this should be add a person, not add a contact.  you should be able to click a button that says add from company directory.  Refrence Procore how they have there's set up.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782871282633,
+      "messages": [
+        {
+          "commentId": 612045,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} this should be add a person, not add a contact.  you should be able to click a button that says add from company directory.  Refrence Procore how they have there's set up.",
+          "createdAt": 1782871282734
+        }
+      ]
+    },
+    {
+      "documentId": "/876/meetings",
+      "annotationId": "JfQUY0T3HEps5ODvPkek",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} when I click into a meeting it just routes me to company meetings, so its the same list of meetings.  But we need them to be in the specifc job.  See my other meetings comment.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782871097659,
+      "messages": [
+        {
+          "commentId": 276771,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} when I click into a meeting it just routes me to company meetings, so its the same list of meetings.  But we need them to be in the specifc job.  See my other meetings comment.",
+          "createdAt": 1782871097761
+        }
+      ]
+    },
+    {
+      "documentId": "/meetings",
+      "annotationId": "aK6DWzznWIon2QPpj4ND",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "Where is the create meeting?  The entire point of this is to be able to create meetings and agendas/notes for those meetings.  Like a weekly OAC meeting, you can see how Procore has there meetings thing set up.  This is just copying everything from fireflies which isn't the point. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782870999616,
+      "messages": [
+        {
+          "commentId": 224506,
+          "authorName": "Brandon Clymer",
+          "text": "Where is the create meeting?  The entire point of this is to be able to create meetings and agendas/notes for those meetings.  Like a weekly OAC meeting, you can see how Procore has there meetings thing set up.  This is just copying everything from fireflies which isn't the point. {{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}}",
+          "createdAt": 1782870999719
+        }
+      ]
+    },
+    {
+      "documentId": "/tasks",
+      "annotationId": "41wpmVm29fiFluo8za3o",
+      "annotationNumber": 2,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Should be able to filter by job and person so if I wanted to look at what was in someone's court I could, or look at what is overdue etc.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782870416645,
+      "messages": [
+        {
+          "commentId": 732829,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} Should be able to filter by job and person so if I wanted to look at what was in someone's court I could, or look at what is overdue etc.",
+          "createdAt": 1782870416747
+        }
+      ]
+    },
+    {
+      "documentId": "/tasks",
+      "annotationId": "XMMk2Xv90rRRGs35vBhT",
+      "annotationNumber": 1,
+      "authorName": "Brandon Clymer",
+      "preview": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} For the up arrow you should have the ability to say why it is good so you can provide context for the AI.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782870157209,
+      "messages": [
+        {
+          "commentId": 222239,
+          "authorName": "Brandon Clymer",
+          "text": "{{1854b4b0-3e8e-4d69-86df-32cdb3c80ee0}} For the up arrow you should have the ability to say why it is good so you can provide context for the AI.",
+          "createdAt": 1782870157311
+        }
+      ]
+    },
+    {
+      "documentId": "/754/schedule",
+      "annotationId": "LkkGgOQwXpF4W2DbJ4Y6",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "Ability to make changes in the field directly to the schedule",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782754816008,
+      "messages": [
+        {
+          "commentId": 874715,
+          "authorName": "Megan Harrison",
+          "text": "Ability to make changes in the field directly to the schedule",
+          "createdAt": 1782754816042
+        }
+      ]
+    },
+    {
+      "documentId": "/60/progress-reports/a9ffa4fc-25a3-4124-82a3-32d652e0c765",
+      "annotationId": "OMDfwN7MEzjvfJgCtfY9",
+      "annotationNumber": 2,
+      "authorName": "Megan Harrison",
+      "preview": "This completely violates the design system. Move draft to below the date in the project heading. Change this to a more icon, the vertical three dots, and then have a drop down for edit, download PDF, regenerate.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782552187771,
+      "messages": [
+        {
+          "commentId": 564222,
+          "authorName": "Megan Harrison",
+          "text": "This completely violates the design system. Move draft to below the date in the project heading. Change this to a more icon, the vertical three dots, and then have a drop down for edit, download PDF, regenerate.",
+          "createdAt": 1782552187834
+        }
+      ]
+    },
+    {
+      "documentId": "/60/progress-reports/a9ffa4fc-25a3-4124-82a3-32d652e0c765",
+      "annotationId": "SI2dJVOeRz6dnS18Hlgf",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "Title should be Alito Finance Weekly Progress Report, not just Progress Report, and then remove the heading below and make the date a little bigger.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782552040267,
+      "messages": [
+        {
+          "commentId": 721865,
+          "authorName": "Megan Harrison",
+          "text": "Title should be Alito Finance Weekly Progress Report, not just Progress Report, and then remove the heading below and make the date a little bigger.",
+          "createdAt": 1782552040329
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "i2zKqVMQQOB91K4AVpvK",
+      "annotationNumber": 2,
+      "authorName": "Megan Harrison",
+      "preview": "Email list rows bury the hierarchy: sender, timestamp, subject and preview all read at similar weight, so nothing anchors the scan. Make the subject the dominant line (15-16px medium), demote sender and preview to secondary gray, and use a bolder weight or unread dot for unread rows. The thin orange selection bar is good - lean into that pattern.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782532526167,
+      "messages": [
+        {
+          "commentId": 530905,
+          "authorName": "Megan Harrison",
+          "text": "Email list rows bury the hierarchy: sender, timestamp, subject and preview all read at similar weight, so nothing anchors the scan. Make the subject the dominant line (15-16px medium), demote sender and preview to secondary gray, and use a bolder weight or unread dot for unread rows. The thin orange selection bar is good - lean into that pattern.",
+          "createdAt": 1782530652910
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "VXEAag2RZfnRXBTRMNeg",
+      "annotationNumber": 3,
+      "authorName": "Megan Harrison",
+      "preview": "The email header metadata is flat: From, To and Project labels sit at the same weight as their values, and the long To recipient list crowds the row. Right-align or fix label column width, lighten the labels to a muted caption, and truncate To with a +N more chip. Group the date with the subject up top rather than floating it far right.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782532502738,
+      "messages": [
+        {
+          "commentId": 393047,
+          "authorName": "Megan Harrison",
+          "text": "The email header metadata is flat: From, To and Project labels sit at the same weight as their values, and the long To recipient list crowds the row. Right-align or fix label column width, lighten the labels to a muted caption, and truncate To with a +N more chip. Group the date with the subject up top rather than floating it far right.",
+          "createdAt": 1782530718553
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "jdS4PWB8ZfuXIckJrMob",
+      "annotationNumber": 5,
+      "authorName": "Megan Harrison",
+      "preview": "The floating AI assistant orb is visually disconnected from the product: a saturated orange gradient circle with a red notification dot, hovering with no label. It reads like a third-party chat widget rather than a native feature. Consider a labeled pill (sparkle + Ask Alleato), align it to the brand palette, and reserve the red dot for genuine unread state so it does not cry wolf.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782531893383,
+      "messages": [
+        {
+          "commentId": 996416,
+          "authorName": "Megan Harrison",
+          "text": "The floating AI assistant orb is visually disconnected from the product: a saturated orange gradient circle with a red notification dot, hovering with no label. It reads like a third-party chat widget rather than a native feature. Consider a labeled pill (sparkle + Ask Alleato), align it to the brand palette, and reserve the red dot for genuine unread state so it does not cry wolf.",
+          "createdAt": 1782530840428
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "X4L17eptZ6SLiSliH7MD",
+      "annotationNumber": 6,
+      "authorName": "Megan Harrison",
+      "preview": "The subject line and the date are split to opposite edges of a very wide band, so the eye has to travel the full width to connect them. The subject also competes with the From block right below it at similar size. Make the subject the clear page title (18-20px semibold), tuck the timestamp directly beneath or beside it, and add more padding above the From row to separate header from metadata.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782531872595,
+      "messages": [
+        {
+          "commentId": 110999,
+          "authorName": "Megan Harrison",
+          "text": "The subject line and the date are split to opposite edges of a very wide band, so the eye has to travel the full width to connect them. The subject also competes with the From block right below it at similar size. Make the subject the clear page title (18-20px semibold), tuck the timestamp directly beneath or beside it, and add more padding above the From row to separate header from metadata.",
+          "createdAt": 1782530905442
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "AjL1WVqqlhUR0dGEGzte",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "Header toolbar feels cramped: the Emails title sits flush against four unlabeled icons with no spacing. Add 16-24px gap between title and actions and give each icon a tooltip. Mirror Linear or Superhuman: title-left, actions-right.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782531812759,
+      "messages": [
+        {
+          "commentId": 104790,
+          "authorName": "Megan Harrison",
+          "text": "Header toolbar feels cramped: the Emails title sits flush against four unlabeled icons with no spacing. Add 16-24px gap between title and actions and give each icon a tooltip. Mirror Linear or Superhuman: title-left, actions-right.",
+          "createdAt": 1782530573391
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "1sqfiC0htFcJaxq2qbMa",
+      "annotationNumber": 7,
+      "authorName": "Megan Harrison",
+      "preview": "Raw mail-server warnings (You dont often get email from... Learn why this is important) are rendering inline as plain body text. These are provider artifacts, not message content - they make the app look like a passthrough inbox. Either strip them on ingest or render them as a styled caution banner above the body (amber strip, shield icon) so they read as a system signal, not the senders words.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782531701782,
+      "messages": [
+        {
+          "commentId": 844524,
+          "authorName": "Megan Harrison",
+          "text": "Raw mail-server warnings (You dont often get email from... Learn why this is important) are rendering inline as plain body text. These are provider artifacts, not message content - they make the app look like a passthrough inbox. Either strip them on ingest or render them as a styled caution banner above the body (amber strip, shield icon) so they read as a system signal, not the senders words.",
+          "createdAt": 1782530933191
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "WLkFwDxXkBW4jQXrLCUJ",
+      "annotationNumber": 4,
+      "authorName": "Megan Harrison",
+      "preview": "The email body is an unstyled wall of text: full-width lines run ~120 characters, the forwarded quote and signature blend into the reply, and emoji/phone artifacts sit inline with no structure. Cap the reading column at 65-75ch, add paragraph spacing, and visually demote quoted history (left border, muted color) like Gmail/Superhuman collapse trimmed content.",
+      "statusName": "Resolved",
+      "replyCount": 0,
+      "lastUpdated": 1782531604528,
+      "messages": [
+        {
+          "commentId": 267986,
+          "authorName": "Megan Harrison",
+          "text": "The email body is an unstyled wall of text: full-width lines run ~120 characters, the forwarded quote and signature blend into the reply, and emoji/phone artifacts sit inline with no structure. Cap the reading column at 65-75ch, add paragraph spacing, and visually demote quoted history (left border, muted color) like Gmail/Superhuman collapse trimmed content.",
+          "createdAt": 1782530804835
+        }
+      ]
+    },
+    {
+      "documentId": "/emails",
+      "annotationId": "FOomuNLh3KU7rP0kWFk8",
+      "annotationNumber": 8,
+      "authorName": "Megan Harrison",
+      "preview": "Increase the width of this column",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782531192441,
+      "messages": [
+        {
+          "commentId": 661193,
+          "authorName": "Megan Harrison",
+          "text": "Increase the width of this column",
+          "createdAt": 1782531192473
+        }
+      ]
+    },
+    {
+      "documentId": "/67/submittals/ee08854e-1b05-4208-be30-7f1c26edd894",
+      "annotationId": "iDHVlMYvh44pNyLXPJWe",
+      "annotationNumber": 1,
+      "authorName": "Test1 Account",
+      "preview": "Inspection thread comment for styling",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782304971295,
+      "messages": [
+        {
+          "commentId": 415754,
+          "authorName": "Test1 Account",
+          "text": "Inspection thread comment for styling",
+          "createdAt": 1782304971320
+        }
+      ]
+    },
+    {
+      "documentId": "/876/commitments/da491fa8-e494-47ee-be7c-306191e40b70",
+      "annotationId": "DmgG7O4sYsSmgyxMkBlG",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "1. Replace Free-Text Billing & Shipping Addresses with Structured Company-Based Selection\nCurrent Issue\nThe Bill To and Ship To sections currently use free-text address fields. This creates unnecessary risk because users can:\nMistype addresses\nEnter incorrect addresses\nUse inconsistent formatting\nCreate duplicate address recordsRequired Changes\nBill To Section\nReplace the free-text Bill To field with:\nFields\nBill To Company (dropdown)\nBill To Contact (dropdown)Behavior\nUser selects a company.\nSystem automatically populates:Address Line 1\nAddress Line 2\nCity\nState\nZip Code\nCountry (if applicable)\nUser selects a contact associated with the selected company.\nContact dropdown should only display contacts belonging to the selected company.\nAuto-populated address fields remain editable so users can override them when necessary.Ship To Section\nReplace the free-text Ship To field with:\nFields\nShip To Company (dropdown)\nShip To Contact (dropdown)Behavior\nUser selects a company.\nSystem automatically populates:Address Line 1\nAddress Line 2\nCity\nState\nZip Code\nCountry (if applicable)\nUser selects a contact associated with the selected company.\nContact dropdown should only display employees/contacts belonging to the selected company.\nAuto-populated address fields remain editable so users can override them when necessary.Acceptance Criteria\nNo free-text billing address field exists.\nNo free-text shipping address field exists.\nAddresses are automatically populated from the selected company record.\nContacts are filtered by the selected company.\nUsers can manually edit populated address values if needed.\nAddress data uses the standard address component used elsewhere in the application.2. Standardize Budget Code Selection Across All Purchase Order Line Item Interfaces\nCurrent Issue\nBudget code creation and selection behavior is inconsistent across the application.\nExamples:\nNew Purchase Order form allows creation of a new budget code.\nPurchase Order detail page line item entry does not allow creation of a new budget code.\nSOV tab does not allow creation of a new budget code.\nEdit Purchase Order page does allow creation of a new budget code.This indicates that different implementations or components are being used for the same workflow.\nRequired Changes\nPerform a full audit of every interface that allows:\nAdding line items\nEditing line items\nManaging Schedule of Values (SOV)\nCreating commitments\nCreating purchase ordersStandardization Requirements\nAll line-item-related interfaces must use the same reusable component and configuration.\nThe following functionality must be identical everywhere:\nBudget code search\nBudget code selection\nBudget code creation\nCost code selection\nCategory selection\nValidation rules\nDefault values\nPermissionsAcceptance Criteria\nBudget code creation is available everywhere line items can be added.\nBudget code creation behavior is identical across all pages.\nBudget code search behavior is identical across all pages.\nNo page contains a custom or hand-built implementation that differs from the standard component.\nAll line-item workflows use the same shared component.3. Schedule of Values (SOV) Editing Rules\nBusiness Rule\nUsers should be able to add, edit, and manage Schedule of Values (SOV) line items at any time while the Purchase Order remains unapproved.\nRequired Behavior\nAllow SOV modifications when Purchase Order status is:\nDraft\nPending\nUnder Review\nReturned\nAny other non-approved statusRestrict SOV modifications when Purchase Order status is:\nApproved\nClosed\nVoided (if applicable)Acceptance Criteria\nUsers can add line items to the SOV after the Purchase Order has been created.\nUsers can create new budget codes during SOV editing.\nUsers can edit existing SOV line items.\nUsers can delete SOV line items (subject to permission rules).\nSOV editing remains available until the Purchase Order reaches Approved status.\nOnce Approved, SOV becomes read-only unless the Purchase Order is formally reopened or revised.",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782303977927,
+      "messages": [
+        {
+          "commentId": 859480,
+          "authorName": "Megan Harrison",
+          "text": "1. Replace Free-Text Billing & Shipping Addresses with Structured Company-Based Selection\nCurrent Issue\nThe Bill To and Ship To sections currently use free-text address fields. This creates unnecessary risk because users can:\nMistype addresses\nEnter incorrect addresses\nUse inconsistent formatting\nCreate duplicate address recordsRequired Changes\nBill To Section\nReplace the free-text Bill To field with:\nFields\nBill To Company (dropdown)\nBill To Contact (dropdown)Behavior\nUser selects a company.\nSystem automatically populates:Address Line 1\nAddress Line 2\nCity\nState\nZip Code\nCountry (if applicable)\nUser selects a contact associated with the selected company.\nContact dropdown should only display contacts belonging to the selected company.\nAuto-populated address fields remain editable so users can override them when necessary.Ship To Section\nReplace the free-text Ship To field with:\nFields\nShip To Company (dropdown)\nShip To Contact (dropdown)Behavior\nUser selects a company.\nSystem automatically populates:Address Line 1\nAddress Line 2\nCity\nState\nZip Code\nCountry (if applicable)\nUser selects a contact associated with the selected company.\nContact dropdown should only display employees/contacts belonging to the selected company.\nAuto-populated address fields remain editable so users can override them when necessary.Acceptance Criteria\nNo free-text billing address field exists.\nNo free-text shipping address field exists.\nAddresses are automatically populated from the selected company record.\nContacts are filtered by the selected company.\nUsers can manually edit populated address values if needed.\nAddress data uses the standard address component used elsewhere in the application.2. Standardize Budget Code Selection Across All Purchase Order Line Item Interfaces\nCurrent Issue\nBudget code creation and selection behavior is inconsistent across the application.\nExamples:\nNew Purchase Order form allows creation of a new budget code.\nPurchase Order detail page line item entry does not allow creation of a new budget code.\nSOV tab does not allow creation of a new budget code.\nEdit Purchase Order page does allow creation of a new budget code.This indicates that different implementations or components are being used for the same workflow.\nRequired Changes\nPerform a full audit of every interface that allows:\nAdding line items\nEditing line items\nManaging Schedule of Values (SOV)\nCreating commitments\nCreating purchase ordersStandardization Requirements\nAll line-item-related interfaces must use the same reusable component and configuration.\nThe following functionality must be identical everywhere:\nBudget code search\nBudget code selection\nBudget code creation\nCost code selection\nCategory selection\nValidation rules\nDefault values\nPermissionsAcceptance Criteria\nBudget code creation is available everywhere line items can be added.\nBudget code creation behavior is identical across all pages.\nBudget code search behavior is identical across all pages.\nNo page contains a custom or hand-built implementation that differs from the standard component.\nAll line-item workflows use the same shared component.3. Schedule of Values (SOV) Editing Rules\nBusiness Rule\nUsers should be able to add, edit, and manage Schedule of Values (SOV) line items at any time while the Purchase Order remains unapproved.\nRequired Behavior\nAllow SOV modifications when Purchase Order status is:\nDraft\nPending\nUnder Review\nReturned\nAny other non-approved statusRestrict SOV modifications when Purchase Order status is:\nApproved\nClosed\nVoided (if applicable)Acceptance Criteria\nUsers can add line items to the SOV after the Purchase Order has been created.\nUsers can create new budget codes during SOV editing.\nUsers can edit existing SOV line items.\nUsers can delete SOV line items (subject to permission rules).\nSOV editing remains available until the Purchase Order reaches Approved status.\nOnce Approved, SOV becomes read-only unless the Purchase Order is formally reopened or revised.",
+          "createdAt": 1782303977972
+        }
+      ]
+    },
+    {
+      "documentId": "/1067/submittals/new",
+      "annotationId": "iES0vRBTkn3JqbvVTrvA",
+      "annotationNumber": 2,
+      "authorName": "Megan Harrison",
+      "preview": "Dropdown contacts assigned to company",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782170650158,
+      "messages": [
+        {
+          "commentId": 805035,
+          "authorName": "Megan Harrison",
+          "text": "Dropdown contacts assigned to company",
+          "createdAt": 1782170650184
+        }
+      ]
+    },
+    {
+      "documentId": "/1067/submittals/new",
+      "annotationId": "8Ct4gw3pa73easYlulgX",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "Alleato PM",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1782170605371,
+      "messages": [
+        {
+          "commentId": 206705,
+          "authorName": "Megan Harrison",
+          "text": "Alleato PM",
+          "createdAt": 1782170605398
+        }
+      ]
+    },
+    {
+      "documentId": "/25125/drawings/viewer/d394e683-d7b3-42ae-9495-77925499adc5",
+      "annotationId": "aV7vd1nknIps56s9XwrG",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "hello {{6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6}} Cabinet Deduct Markup.pdf",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1781660324854,
+      "messages": [
+        {
+          "commentId": 572229,
+          "authorName": "Megan Harrison",
+          "text": "hello {{6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6}} Cabinet Deduct Markup.pdf",
+          "createdAt": 1781660324853
+        }
+      ]
+    },
+    {
+      "documentId": "/760/home",
+      "annotationId": "5aQQLWir07ZEM1TB1mPO",
+      "annotationNumber": 1,
+      "authorName": "Test1 Account",
+      "preview": "codex-prod-comment-1780999392922",
+      "statusName": "Open",
+      "replyCount": 0,
+      "lastUpdated": 1780999424904,
+      "messages": [
+        {
+          "commentId": 248495,
+          "authorName": "Test1 Account",
+          "text": "codex-prod-comment-1780999392922",
+          "createdAt": 1780999424908
+        }
+      ]
+    },
+    {
+      "documentId": "feedback-inbox",
+      "annotationId": "oOOcBtQMxCLnIg6phVe1",
+      "annotationNumber": 1,
+      "authorName": "Megan Harrison",
+      "preview": "{{6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6}} review",
+      "statusName": "Open",
+      "replyCount": 1,
+      "lastUpdated": 1780926341065,
+      "messages": [
+        {
+          "commentId": 369029,
+          "authorName": "Megan Harrison",
+          "text": "{{6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6}} review",
+          "createdAt": 1780926312642
+        },
+        {
+          "commentId": 848694,
+          "authorName": "Megan Harrison",
+          "text": "test 2",
+          "createdAt": 1780926341144
+        }
+      ]
+    }
+  ]
+}

@@ -48,13 +48,7 @@ const AppErrorTelemetryProvider = dynamic(
   { ssr: false },
 );
 
-const PageCommentsOverlay = dynamic(
-  () => import("@/components/comments/page-comments-overlay").then((mod) => mod.PageCommentsOverlay),
-  { ssr: false },
-);
-
 const ENABLE_DEV_BRIDGE = process.env.NEXT_PUBLIC_ENABLE_DEV_BRIDGE === "true";
-const ENABLE_PAGE_COMMENTS = process.env.NEXT_PUBLIC_PAGE_COMMENTS === "on";
 
 export function RootClientWidgets() {
   const pathname = usePathname();
@@ -73,7 +67,6 @@ export function RootClientWidgets() {
       {shouldMountDeferredWidgets && <GlobalAiWidget />}
       {shouldMountDeferredWidgets && <AdminFeedbackWidget />}
       {shouldMountCollaborationWidgets && <VeltGlobalLayer />}
-      {shouldMountDeferredWidgets && ENABLE_PAGE_COMMENTS && <PageCommentsOverlay />}
       {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
         <>
           <AgentationThemeSync />
