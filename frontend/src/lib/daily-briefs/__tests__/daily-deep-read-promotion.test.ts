@@ -10,6 +10,7 @@ type Row = Record<string, unknown>;
 
 class FakeQuery {
   private filters: Array<{ key: string; value: unknown }> = [];
+  private inFilters: Array<{ key: string; values: unknown[] }> = [];
   private limitCount: number | null = null;
   private mode: "select" | "insert" | "update" = "select";
   private payload: Row | null = null;
@@ -25,6 +26,11 @@ class FakeQuery {
 
   eq(key: string, value: unknown) {
     this.filters.push({ key, value });
+    return this;
+  }
+
+  in(key: string, values: unknown[]) {
+    this.inFilters.push({ key, values });
     return this;
   }
 
@@ -94,9 +100,15 @@ class FakeQuery {
   }
 
   private matchingRows() {
-    return this.client.rows(this.tableName).filter((row) =>
-      this.filters.every((filter) => valueAt(row, filter.key) === filter.value),
-    );
+    return this.client.rows(this.tableName).filter((row) => {
+      const matchesEquals = this.filters.every(
+        (filter) => valueAt(row, filter.key) === filter.value,
+      );
+      const matchesIn = this.inFilters.every((filter) =>
+        filter.values.includes(valueAt(row, filter.key)),
+      );
+      return matchesEquals && matchesIn;
+    });
   }
 }
 
@@ -207,6 +219,7 @@ describe("promoteDailyDeepReadCandidate", () => {
     });
     const ragClient = new FakeSupabaseClient({
       source_signal_candidates: [candidate()],
+      packet_refresh_jobs: [],
     });
 
     const result = await promoteDailyDeepReadCandidate(
@@ -243,6 +256,14 @@ describe("promoteDailyDeepReadCandidate", () => {
       current_status: "resolved",
       promoted_insight_card_id: "tasks-1",
     });
+    expect(ragClient.rows("packet_refresh_jobs")[0]).toMatchObject({
+      target_id: "target-1009",
+      reason: "Daily Deep Read candidate promoted",
+      trigger_source_document_id: packet.id,
+      status: "queued",
+      priority: 10,
+      compiler_version: "ai_intelligence_compiler_v0_1",
+    });
   });
 
   it("blocks duplicate promotion when an app record already exists", async () => {
@@ -270,6 +291,7 @@ describe("promoteDailyDeepReadCandidate", () => {
     });
     const ragClient = new FakeSupabaseClient({
       source_signal_candidates: [candidate()],
+      packet_refresh_jobs: [],
     });
 
     await expect(
@@ -317,6 +339,7 @@ describe("promoteDailyDeepReadCandidate", () => {
           status: "needs_review",
         }),
       ],
+      packet_refresh_jobs: [],
     });
 
     const result = await promoteAcceptedDailyDeepReadCandidates(
@@ -328,6 +351,7 @@ describe("promoteDailyDeepReadCandidate", () => {
     expect(result.failed).toHaveLength(0);
     expect(appClient.rows("tasks")).toHaveLength(1);
     expect(appClient.rows("insight_cards")).toHaveLength(1);
+    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(1);
     expect(appClient.rows("insight_cards")[0]).toMatchObject({
       card_type: "decision",
       title: "Decide bid leveling approach",
@@ -377,6 +401,7 @@ describe("promoteDailyDeepReadCandidate", () => {
           signal_type: "decision",
         }),
       ],
+      packet_refresh_jobs: [],
     });
 
     const result = await promoteAcceptedDailyDeepReadCandidates(
@@ -435,6 +460,7 @@ describe("promoteDailyDeepReadCandidate", () => {
           status: "needs_review",
         }),
       ],
+      packet_refresh_jobs: [],
     });
 
     const result = await drainAcceptedDailyDeepReadPromotions(
@@ -460,5 +486,51 @@ describe("promoteDailyDeepReadCandidate", () => {
       { id: "candidate-1010", status: "promoted" },
       { id: "candidate-ignored", status: "needs_review" },
     ]);
+    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(2);
+  });
+
+  it("updates an active packet refresh job instead of inserting a duplicate", async () => {
+    const appClient = new FakeSupabaseClient({
+      intelligence_targets: [
+        {
+          id: "target-1009",
+          target_type: "client_project",
+          project_id: 1009,
+          name: "Union Collective",
+          slug: "union-collective",
+          status: "active",
+        },
+      ],
+      document_metadata: [],
+      tasks: [],
+      insight_cards: [],
+    });
+    const ragClient = new FakeSupabaseClient({
+      source_signal_candidates: [candidate()],
+      packet_refresh_jobs: [
+        {
+          id: "refresh-existing",
+          target_id: "target-1009",
+          status: "queued",
+          priority: 3,
+          compiler_version: "ai_intelligence_compiler_v0_1",
+          trigger_source_document_id: null,
+          trigger_insight_card_id: null,
+        },
+      ],
+    });
+
+    await promoteDailyDeepReadCandidate(
+      { candidateId: "candidate-1", projectId: 1009 },
+      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+    );
+
+    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(1);
+    expect(ragClient.rows("packet_refresh_jobs")[0]).toMatchObject({
+      id: "refresh-existing",
+      reason: "Daily Deep Read candidate promoted",
+      trigger_source_document_id: packet.id,
+      priority: 10,
+    });
   });
 });
