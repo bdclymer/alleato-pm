@@ -1,6 +1,6 @@
 # Autofix Pipeline — Feedback → Issue → Fix → Review → Merge
 
-Last verified: 2026-07-01
+Last verified: 2026-07-07
 
 End-to-end automation that takes client feedback from the frontend all the way to a
 merged fix with zero required human touchpoints (humans can intervene at any stage).
@@ -12,9 +12,13 @@ Client feedback (feedback form / Velt comment / Agentation annotation)
   │  POST /api/admin/feedback  (auto-creates GitHub issue when GITHUB_FEEDBACK_* env set)
   ▼
 GitHub issue  · labels: admin-feedback + feedback:<type>
-  │  Eve triage agent (agents/github-issue-triage) classifies risk and posts
-  │  "## Eve GitHub Triage" comment → Path: direct-to-main | pr-required,
-  │  then applies the `codex:fix` label
+  │  Issue Handler triage (.github/workflows/issue-handler.yml → /label-issue)
+  │  runs an LLM on every new issue: applies type/priority/area labels AND, for
+  │  actionable self-contained frontend feedback, applies the `codex:fix` label
+  │  + posts a friendly acknowledgement so the reporter sees it's picked up.
+  │  (This replaced the Eve triage agent, which gated on HITL approval and was a
+  │  single point of failure — a disabled/stalled Eve silently stopped dispatch.)
+  │  The label is applied with AUTOFIX_GITHUB_TOKEN so it triggers the fix lane.
   ▼
 Autofix Issue workflow (.github/workflows/autofix-issue.yml)
   │  · label `autofix`     → engine = AUTOFIX_ENGINE repo variable (codex | claude | off)
@@ -118,6 +122,7 @@ surfaced in the issue comment.
 | CI failure auto-fix | `.github/workflows/ci-handler.yml` |
 | Ad-hoc @claude | `.github/workflows/claude.yml` |
 | Feedback → issue | `frontend/src/app/api/admin/feedback/route.ts`, `frontend/src/lib/admin-feedback/github.ts` |
-| Inbox dispatch | `frontend/src/app/api/admin/feedback/dispatch/route.ts` |
-| Eve triage agent | `agents/github-issue-triage/` |
+| Inbox dispatch (manual) | `frontend/src/app/api/admin/feedback/dispatch/route.ts` |
+| Auto-dispatch + triage | `.github/workflows/issue-handler.yml` + `.claude/commands/label-issue.md` |
+| Eve triage agent (retired from critical path) | `agents/github-issue-triage/` — kept for optional risk routing; no longer required for dispatch. While no `direct-to-main` triage comment is posted, every fix takes the review-gated PR lane (safe default) and the Autofix PR Manager still auto-approves + auto-merges. |
 | PR-status sync cron | `frontend/src/app/api/cron/sync-feedback-pr-status/route.ts` |

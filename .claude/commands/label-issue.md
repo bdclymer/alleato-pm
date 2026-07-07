@@ -13,19 +13,33 @@ pipeline can route it. Arguments provide `REPO` and `ISSUE_NUMBER`.
    - **Priority** (pick one): `priority:high` for broken core workflows, data loss, money
      math, auth; `priority:medium` for everything else. Skip for questions.
    - **Area**: add `area:frontend` when the issue is clearly about the Next.js app UI.
-3. Decide whether the issue is safely automatable, and only then add the `autofix` label:
-   - Add `autofix` ONLY when ALL of these hold:
-     - The issue body uses the Codex issue form (has `### Automation scope`, `### Problem statement`,
-       `### Expected behavior`, `### Reproduction`, `### Acceptance criteria`,
-       `### Allowed edit paths`, `### Required guardrail` — all non-empty).
-     - Automation scope is `Frontend` and every allowed edit path is under `frontend/src/`
-       or `frontend/tests/`.
-   - Do NOT add `autofix` to issues labeled `admin-feedback` — the Eve triage agent owns
-     routing for those and applies `codex:fix` itself after risk classification.
-   - Do NOT add `autofix` for issues touching migrations, auth, RLS, payments/money math,
-     provider or deployment configuration, or anything ambiguous.
+3. Dispatch to the autofix pipeline — but only when the issue is a safe, self-contained
+   frontend job. Apply the trigger label with `gh issue edit $ISSUE_NUMBER --repo $REPO
+   --add-label "<label>"`:
+   - **Client feedback** (labeled `admin-feedback`): add `codex:fix` when the item is an
+     actionable, self-contained request to change frontend UI or behavior — i.e. it names
+     a surface and a concrete expected outcome. This is the primary path and replaces the
+     retired Eve triage routing; the fix workflow's admin-feedback branch builds its own
+     task context from the issue's `## Feedback` / `## Location` sections.
+   - **Developer-authored issues on the Codex form**: add `autofix` ONLY when ALL hold —
+     the body has non-empty `### Automation scope` (= `Frontend`), `### Problem statement`,
+     `### Expected behavior`, `### Reproduction`, `### Acceptance criteria`,
+     `### Allowed edit paths` (every path under `frontend/src/` or `frontend/tests/`),
+     `### Required guardrail`.
+   - **Never dispatch** (add no `codex:fix`/`autofix`) when the issue: is a
+     `feedback:question`; is a discussion reply or acknowledgement rather than a fresh
+     request (body is essentially "done", "updated", "thanks", or only an @mention with no
+     described change); lacks a clear surface or expected behavior; or touches migrations,
+     auth, RLS, payments/money math, provider/deployment config, or anything backend or
+     ambiguous. When unsure, do NOT dispatch — leave it for a human. The downstream
+     diff-risk gate and PR review are backstops, not a license to over-dispatch.
 4. If the issue is a question with no code change implied, comment asking for the missing
    detail (what surface, what expected behavior) and add `feedback:question`.
+5. **Acknowledge dispatched work so the reporter sees it's being handled.** When — and only
+   when — you added `codex:fix` or `autofix` in step 3, post one short, friendly,
+   non-technical comment, e.g.: "Thanks for flagging this — it's been picked up and an
+   automated fix is in progress. You'll get an update here when it ships." Do not promise a
+   timeline, and do not post this comment when you did not dispatch.
 
 ## Rules
 

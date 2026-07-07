@@ -22,5 +22,11 @@ jobs:
           prompt: "/label-issue REPO: ${{ github.repository }} ISSUE_NUMBER: ${{ github.event.issue.number }}"
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_non_write_users: "*"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Use the AUTOFIX PAT, NOT the default GITHUB_TOKEN. Triage now dispatches
+          # actionable client feedback by applying the `codex:fix` label itself
+          # (replacing the retired Eve triage routing). A label applied with the
+          # default GITHUB_TOKEN does NOT trigger `autofix-issue.yml` (GitHub blocks
+          # workflow-triggering-workflow recursion), so the fix would never start.
+          # The PAT (a real user) makes the `labeled` event trigger the fix lane.
+          github_token: ${{ secrets.AUTOFIX_GITHUB_TOKEN }}
 
