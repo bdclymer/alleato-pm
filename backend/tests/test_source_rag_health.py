@@ -4,6 +4,7 @@ from src.services.health.source_rag_health import (
     _graph_conversation_chunk_alerts,
     _has_project_intelligence_outcome,
     _has_task_extraction_outcome,
+    _is_project_required_row,
     _latest_job_metadata_by_document_id,
 )
 
@@ -131,3 +132,63 @@ def test_project_intelligence_outcome_counts_source_synthesis_metadata():
     assert _has_project_intelligence_outcome("doc-email", set(), metadata_by_id)
     assert _has_project_intelligence_outcome("doc-with-evidence", {"doc-with-evidence"}, {})
     assert not _has_project_intelligence_outcome("doc-missing", set(), {})
+
+
+def test_project_required_fallback_excludes_empty_anonymized_teams_dm():
+    row = {
+        "id": "teamsdm_empty_2026-07-06",
+        "title": "Teams DM Conversation: 19:d5788d4ad",
+        "family": "teams",
+        "category": "teams_message",
+        "type": "teams_dm_conversation",
+        "status": "embedded",
+        "project_id": None,
+        "content": "",
+    }
+
+    assert not _is_project_required_row(row, {})
+
+
+def test_project_required_fallback_excludes_internal_teams_conversation():
+    row = {
+        "id": "teamsdm_internal_2026-07-06",
+        "title": "Teams DM Conversation: Indiana Office",
+        "family": "teams",
+        "category": "teams_message",
+        "type": "teams_dm_conversation",
+        "status": "embedded",
+        "project_id": None,
+        "content": "",
+    }
+
+    assert not _is_project_required_row(row, {})
+
+
+def test_project_required_fallback_keeps_project_signal_teams_content_required():
+    row = {
+        "id": "teamsdm_project_2026-07-06",
+        "title": "Teams DM Conversation: Champaign",
+        "family": "teams",
+        "category": "teams_message",
+        "type": "teams_dm_conversation",
+        "status": "embedded",
+        "project_id": None,
+        "content": "Sarah: Need RFI pricing and permit drawings for the sprinkler penetration work.",
+    }
+
+    assert _is_project_required_row(row, {})
+
+
+def test_project_required_metadata_overrides_fallback_classifier():
+    row = {
+        "id": "teamsdm_empty_2026-07-06",
+        "title": "Teams DM Conversation: 19:d5788d4ad",
+        "family": "teams",
+        "category": "teams_message",
+        "type": "teams_dm_conversation",
+        "status": "embedded",
+        "project_id": None,
+        "content": "",
+    }
+
+    assert _is_project_required_row(row, {"teamsdm_empty_2026-07-06": {"project_required": True}})

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
@@ -57,6 +58,96 @@ GRAPH_CONVERSATION_ALLOWED_SOURCE_TYPES = {
     "teams_dm": {"teams_dm"},
     "teams_channel": {"teams_channel", "teams_message"},
 }
+NON_PROJECT_APPLICABLE_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"\bread\.ai\b",
+        r"\bnotetaker\b",
+        r"\bmeeting recorder\b",
+        r"\bmeeting recording\b",
+        r"\btranscript is ready\b",
+        r"\bjoined your meeting\b",
+        r"\bundeliverable\b",
+        r"\becoshield pest solutions?\b",
+        r"\bpest solutions?\b",
+        r"\bfishing trip\b",
+        r"\bamazon\.com/checkout\b",
+        r"\binsulation4less\.com\b",
+        r"\bhandcrafted hose co\b",
+        r"\bprotection for automatic storage and retrieval systems\b",
+        r"\bi was so shocked\b",
+        r"\bdrone broken\b",
+        r"\bpractice hours\b",
+        r"\bcanceled:\s*",
+        r"\bcancelled:\s*",
+    ]
+]
+MULTI_PROJECT_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"\bweekly huddle\b",
+        r"\boac meeting\b",
+        r"\bhuddle agenda\b",
+        r"\bdaily agenda\b",
+        r"\bsprinkler division\s+[\u2013-]\s+daily huddle\b",
+        r"\bweekly touch base\b",
+    ]
+]
+INTERNAL_PROJECT_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"\btimesheets?\b",
+        r"\btimecards?\b",
+        r"\bsalary\b",
+        r"\bpto\b",
+        r"\bpayroll\b",
+        r"\be-payroll\b",
+        r"\bhealth insurance\b",
+        r"\boperating agreement\b",
+        r"\bteam strategy\b",
+        r"\bcompany announcements?\b",
+        r"\bindiana office\b",
+        r"\blunch\b",
+        r"\bcredit card\b",
+        r"\bbill\.com\b",
+        r"\bvendor\b",
+        r"\blaptop\b",
+        r"\binterview\b",
+        r"\bpaternity leave\b",
+        r"\byearly review\b",
+        r"\bcancellations\b",
+        r"\bpolicy #\d",
+        r"\bgathering content for marketing\b",
+        r"\bpending invoices in notion\b",
+        r"\btransaction coding\b",
+        r"\bbusiness trust\b",
+        r"\btrust funding\b",
+        r"\btrust governance\b",
+        r"\btrust income\b",
+        r"\bextraordinary dividends?\b",
+        r"\bholding company\b",
+        r"\bmanagement service agreements?\b",
+        r"\btax compliance\b",
+    ]
+]
+PROJECT_SIGNAL_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"\brfi\b",
+        r"\bsubmittal\b",
+        r"\bchange order\b",
+        r"\bchange event\b",
+        r"\bpay app\b",
+        r"\binvoice\b",
+        r"\bdrawings?\b",
+        r"\bpermit\b",
+        r"\bbid set\b",
+        r"\bpricing\b",
+        r"\bcompleted service\b",
+        r"\bsprinkler\b",
+        r"\bpenetration\b",
+    ]
+]
 
 
 def _iso(value: datetime) -> str:
@@ -212,7 +303,78 @@ def _is_project_required_row(row: Dict[str, Any], job_metadata_by_id: Dict[str, 
         return False
     if applicability in {"single_project", "project_assignment_review"}:
         return True
-    return True
+    fallback = _classify_project_applicability(row)
+    return bool(fallback.get("project_required"))
+
+
+def _matches_any(text: str, patterns: List[re.Pattern[str]]) -> bool:
+    return any(pattern.search(text) for pattern in patterns)
+
+
+def _classify_project_applicability(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Fallback classifier for scheduled health when no stored lifecycle metadata exists."""
+    if row.get("project_id") is not None:
+        return {
+            "project_applicability": "single_project",
+            "project_required": True,
+            "project_applicability_reason": "source_has_project_id",
+        }
+
+    title = str(row.get("title") or row.get("source_title") or "")
+    category = str(row.get("category") or "")
+    doc_type = str(row.get("type") or "")
+    family = str(row.get("family") or "")
+    status = str(row.get("status") or "")
+    text_sample = str(row.get("content") or row.get("text_sample") or row.get("textSample") or "")
+    haystack = "\n".join([title, category, doc_type, family, text_sample])
+
+    if (
+        family == "teams"
+        and re.match(r"^teams dm conversation:\s*19:", title, re.IGNORECASE)
+        and not text_sample.strip()
+    ):
+        return {
+            "project_applicability": "not_project_applicable",
+            "project_required": False,
+            "project_applicability_reason": "teams_anonymized_thread_has_no_extractable_text",
+        }
+
+    if status == "skipped_low_content":
+        return {
+            "project_applicability": "not_project_applicable",
+            "project_required": False,
+            "project_applicability_reason": "terminal_status_skipped_low_content",
+        }
+
+    if _matches_any(haystack, NON_PROJECT_APPLICABLE_PATTERNS):
+        return {
+            "project_applicability": "not_project_applicable",
+            "project_required": False,
+            "project_applicability_reason": "matched_non_project_pattern",
+        }
+    if _matches_any(haystack, MULTI_PROJECT_PATTERNS):
+        return {
+            "project_applicability": "multi_project_review",
+            "project_required": False,
+            "project_applicability_reason": "matched_multi_project_pattern",
+        }
+    if _matches_any(haystack, INTERNAL_PROJECT_PATTERNS):
+        return {
+            "project_applicability": "internal_project",
+            "project_required": False,
+            "project_applicability_reason": "matched_internal_pattern",
+        }
+    if _matches_any(haystack, PROJECT_SIGNAL_PATTERNS):
+        return {
+            "project_applicability": "project_assignment_review",
+            "project_required": True,
+            "project_applicability_reason": "matched_project_signal_pattern",
+        }
+    return {
+        "project_applicability": "project_assignment_review",
+        "project_required": True,
+        "project_applicability_reason": "no_project_id_and_no_exclusion_pattern",
+    }
 
 
 def _has_task_extraction_outcome(document_id: str, task_ids: set[str], job_metadata_by_id: Dict[str, Dict[str, Any]]) -> bool:
@@ -467,7 +629,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
 
     app_source_rows = (
         app_client.table("document_metadata")
-        .select("id,title,source,category,type,status,project_id,source_item_id,fireflies_id,created_at,date,source_last_modified_at,deleted_at")
+        .select("id,title,source,category,type,status,project_id,source_item_id,fireflies_id,created_at,date,source_last_modified_at,deleted_at,content")
         .is_("deleted_at", "null")
         .gte("created_at", cutoff)
         .in_("source", ["fireflies", "microsoft_graph"])
@@ -502,6 +664,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             "date": row.get("created_at"),
             "source_last_modified_at": row.get("updated_at"),
             "deleted_at": None,
+            "content": None,
         }
         for row in rag_email_source_rows
         if row.get("id") and str(row.get("id")) not in app_source_ids
