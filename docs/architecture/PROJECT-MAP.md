@@ -351,7 +351,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (749)
+## API Endpoints (750)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -517,6 +517,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/cron/attribution-rules` | POST | frontend/src/app/api/cron/attribution-rules/route.ts |
 | `/api/cron/autonomous-triage` | POST | frontend/src/app/api/cron/autonomous-triage/route.ts |
 | `/api/cron/check-feedback-github-health` | POST | frontend/src/app/api/cron/check-feedback-github-health/route.ts |
+| `/api/cron/daily-deep-read-promote-accepted` | GET, POST | frontend/src/app/api/cron/daily-deep-read-promote-accepted/route.ts |
 | `/api/cron/daily-flags` | POST | frontend/src/app/api/cron/daily-flags/route.ts |
 | `/api/cron/decay-memories` | POST | frontend/src/app/api/cron/decay-memories/route.ts |
 | `/api/cron/executive-daily-brief` | GET, POST | frontend/src/app/api/cron/executive-daily-brief/route.ts |

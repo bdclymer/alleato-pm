@@ -50,6 +50,15 @@ export type DailyDeepReadBatchPromotionResult = {
   failed: DailyDeepReadBatchPromotionFailure[];
 };
 
+export type DailyDeepReadPromotionDrainResult = {
+  ok: true;
+  packetId: string;
+  projectsChecked: number;
+  promotedCount: number;
+  failedCount: number;
+  projects: DailyDeepReadBatchPromotionResult[];
+};
+
 type PromoteInput = {
   candidateId: string;
   projectId: number;
@@ -66,6 +75,12 @@ type PromoteBatchInput = {
   projectId: number;
   reviewedBy?: string | null;
   maxCandidates?: number;
+};
+
+type PromoteDrainInput = {
+  reviewedBy?: string | null;
+  maxProjects?: number;
+  maxCandidatesPerProject?: number;
 };
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -364,6 +379,37 @@ async function loadAcceptedCandidateIds(params: {
   return ((data ?? []) as Array<{ id: string }>).map((row) => row.id).filter(Boolean);
 }
 
+async function loadAcceptedCandidateProjectIds(params: {
+  ragClient: RagClient;
+  packetId: string;
+  maxProjects: number;
+}): Promise<number[]> {
+  const { data, error } = await params.ragClient
+    .from("source_signal_candidates")
+    .select("project_id")
+    .eq("compiler_version", DAILY_DEEP_READ_CONSUMER_COMPILER_VERSION)
+    .eq("status", "candidate")
+    .eq("extraction_json->>daily_packet_id", params.packetId)
+    .limit(params.maxProjects * 25);
+
+  if (error) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: WHERE,
+      message: "Failed to load projects with accepted Daily Deep Read candidates.",
+      details: error.message,
+    });
+  }
+
+  const projectIds = new Set<number>();
+  for (const row of (data ?? []) as Array<{ project_id: number | null }>) {
+    if (typeof row.project_id !== "number" || !Number.isInteger(row.project_id)) continue;
+    projectIds.add(row.project_id);
+    if (projectIds.size >= params.maxProjects) break;
+  }
+  return Array.from(projectIds);
+}
+
 async function assertNoExistingPromotion(params: {
   appClient: AppClient;
   candidate: SourceSignalCandidate;
@@ -656,5 +702,51 @@ export async function promoteAcceptedDailyDeepReadCandidates(
     packetId: packet.id,
     promoted,
     failed,
+  };
+}
+
+export async function drainAcceptedDailyDeepReadPromotions(
+  input: PromoteDrainInput = {},
+  deps: PromoteDeps = {},
+): Promise<DailyDeepReadPromotionDrainResult> {
+  const appClient = deps.appClient ?? createServiceClient();
+  const ragClient = deps.ragClient ?? createRagServiceClient();
+  const packet = deps.currentPacket ?? await loadCurrentDailyExecutiveBriefPacket();
+  const maxProjects = Math.max(1, Math.min(input.maxProjects ?? 50, 200));
+  const maxCandidatesPerProject = Math.max(
+    1,
+    Math.min(input.maxCandidatesPerProject ?? 25, 100),
+  );
+  const projectIds = await loadAcceptedCandidateProjectIds({
+    ragClient,
+    packetId: packet.id,
+    maxProjects,
+  });
+  const projects: DailyDeepReadBatchPromotionResult[] = [];
+
+  for (const projectId of projectIds) {
+    projects.push(
+      await promoteAcceptedDailyDeepReadCandidates(
+        {
+          projectId,
+          reviewedBy: input.reviewedBy,
+          maxCandidates: maxCandidatesPerProject,
+        },
+        {
+          appClient,
+          ragClient,
+          currentPacket: packet,
+        },
+      ),
+    );
+  }
+
+  return {
+    ok: true,
+    packetId: packet.id,
+    projectsChecked: projects.length,
+    promotedCount: projects.reduce((sum, project) => sum + project.promoted.length, 0),
+    failedCount: projects.reduce((sum, project) => sum + project.failed.length, 0),
+    projects,
   };
 }

@@ -1,6 +1,7 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
 import type { CanonicalDailyBriefPacket } from "../canonical-packets";
 import {
+  drainAcceptedDailyDeepReadPromotions,
   promoteAcceptedDailyDeepReadCandidates,
   promoteDailyDeepReadCandidate,
 } from "../daily-deep-read-promotion";
@@ -393,5 +394,71 @@ describe("promoteDailyDeepReadCandidate", () => {
     ]);
     expect(ragClient.rows("source_signal_candidates")[0].status).toBe("candidate");
     expect(ragClient.rows("source_signal_candidates")[1].status).toBe("promoted");
+  });
+
+  it("drains accepted current-packet candidates across projects", async () => {
+    const appClient = new FakeSupabaseClient({
+      intelligence_targets: [
+        {
+          id: "target-1009",
+          target_type: "client_project",
+          project_id: 1009,
+          name: "Union Collective",
+          slug: "union-collective",
+          status: "active",
+        },
+        {
+          id: "target-1010",
+          target_type: "client_project",
+          project_id: 1010,
+          name: "Second Project",
+          slug: "second-project",
+          status: "active",
+        },
+      ],
+      document_metadata: [],
+      tasks: [],
+      insight_cards: [],
+    });
+    const ragClient = new FakeSupabaseClient({
+      source_signal_candidates: [
+        candidate({ id: "candidate-1009", normalized_signal_key: "candidate-1009" }),
+        candidate({
+          id: "candidate-1010",
+          normalized_signal_key: "candidate-1010",
+          project_id: 1010,
+        }),
+        candidate({
+          id: "candidate-ignored",
+          normalized_signal_key: "candidate-ignored",
+          project_id: 1011,
+          status: "needs_review",
+        }),
+      ],
+    });
+
+    const result = await drainAcceptedDailyDeepReadPromotions(
+      { reviewedBy: "cron:test" },
+      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      packetId: packet.id,
+      projectsChecked: 2,
+      promotedCount: 2,
+      failedCount: 0,
+    });
+    expect(result.projects.map((project) => project.projectId).sort()).toEqual([1009, 1010]);
+    expect(
+      ragClient.rows("source_signal_candidates").map((row) => ({
+        id: row.id,
+        status: row.status,
+      })),
+    ).toEqual([
+      { id: "candidate-1009", status: "promoted" },
+      { id: "candidate-1010", status: "promoted" },
+      { id: "candidate-ignored", status: "needs_review" },
+    ]);
   });
 });
