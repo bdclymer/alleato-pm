@@ -42,6 +42,7 @@ import { StatusBadge } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
 import {
   ContentSectionStack,
+  DetailLayout,
   DetailPanel,
   LabelValueRow,
   PageShell,
@@ -604,7 +605,34 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-8 pb-0" />
               <div className="space-y-8">
-                <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+                <DetailLayout
+                  sidebar={
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Description</p>
+                        <div
+                          className={`whitespace-pre-wrap text-sm leading-7 ${
+                            commitment.description
+                              ? "text-foreground"
+                              : "text-muted-foreground/50"
+                          }`}
+                        >
+                          {commitment.description || "—"}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground">Attachments</p>
+                        <EntityAttachments
+                          entityType="commitment"
+                          entityId={commitmentId}
+                          projectId={projectId}
+                          showLabel={false}
+                        />
+                      </div>
+                    </div>
+                  }
+                >
                   <DetailFieldGrid columns={1}>
                     <DetailField label="Contract Company">
                       {commitment.contract_company?.name ? (
@@ -639,9 +667,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                     <DetailField label="Non-Admin SOV">
                       {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
                     </DetailField>
-                  </DetailFieldGrid>
-
-                  <DetailFieldGrid columns={1}>
                     {!isPO ? (
                       <DetailField label="Start Date">
                         <InlineEditField
@@ -745,32 +770,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                       </DetailField>
                     )}
                   </DetailFieldGrid>
-                </div>
-
-                <div className="space-y-3 border-t border-border/50 pt-6">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Description</p>
-                    <div
-                      className={`max-w-3xl whitespace-pre-wrap text-sm leading-7 ${
-                        commitment.description
-                          ? "text-foreground"
-                          : "text-muted-foreground/50"
-                      }`}
-                    >
-                      {commitment.description || "—"}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs text-muted-foreground">Attachments</p>
-                    <EntityAttachments
-                      entityType="commitment"
-                      entityId={commitmentId}
-                      projectId={projectId}
-                      showLabel={false}
-                    />
-                  </div>
-                </div>
+                </DetailLayout>
               </div>
             </DetailPanel>
 
