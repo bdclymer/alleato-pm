@@ -37,6 +37,12 @@ type PromoteResponse = {
   createdRecordId: string;
 };
 
+type BatchPromoteResponse = {
+  ok: boolean;
+  promoted: Array<{ candidateId: string }>;
+  failed: Array<{ candidateId: string; message: string }>;
+};
+
 function formatLabel(value: string): string {
   return value
     .replace(/_/g, " ")
@@ -54,6 +60,9 @@ export function DailyDeepReadCandidateReview({
 }) {
   const [visibleCandidates, setVisibleCandidates] = React.useState(candidates);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const acceptedCount = visibleCandidates.filter(
+    (candidate) => candidate.status === "candidate",
+  ).length;
 
   React.useEffect(() => {
     setVisibleCandidates(candidates);
@@ -130,11 +139,64 @@ export function DailyDeepReadCandidateReview({
     [projectId],
   );
 
+  const promoteAcceptedCandidates = React.useCallback(async () => {
+    setBusyId("batch");
+    try {
+      const response = await apiFetch<BatchPromoteResponse>(
+        `/api/projects/${projectId}/intelligence/daily-deep-read-candidates/promote`,
+        { method: "POST" },
+      );
+      const promotedIds = new Set(
+        response.promoted.map((candidate) => candidate.candidateId),
+      );
+      setVisibleCandidates((current) =>
+        current.filter((candidate) => !promotedIds.has(candidate.id)),
+      );
+
+      if (response.failed.length > 0) {
+        toast.error("Some Daily Deep Read candidates did not promote", {
+          description: response.failed
+            .map((failure) => failure.message)
+            .filter(Boolean)
+            .slice(0, 2)
+            .join(" "),
+        });
+        return;
+      }
+
+      toast.success(
+        response.promoted.length === 1
+          ? "Promoted 1 accepted Daily Deep Read candidate"
+          : `Promoted ${response.promoted.length} accepted Daily Deep Read candidates`,
+      );
+    } catch (promotionError) {
+      toast.error("Batch promotion failed", {
+        description:
+          promotionError instanceof Error
+            ? promotionError.message
+            : "Unexpected error",
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }, [projectId]);
+
   if (visibleCandidates.length === 0 && !error) return null;
 
   return (
     <section className="space-y-3">
-      <SectionHeader title="Daily Deep Read candidates" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SectionHeader title="Daily Deep Read candidates" />
+        {acceptedCount > 0 ? (
+          <Button
+            size="sm"
+            disabled={busyId === "batch"}
+            onClick={() => void promoteAcceptedCandidates()}
+          >
+            Promote accepted
+          </Button>
+        ) : null}
+      </div>
       <p className="max-w-4xl text-sm leading-6 text-muted-foreground">
         Review-gated updates from the full-source Daily Deep Read. Accepting
         keeps the candidate ready for promotion; rejecting removes it from the

@@ -351,7 +351,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (748)
+## API Endpoints (749)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -881,6 +881,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/ingestion-feed` | GET | frontend/src/app/api/projects/[projectId]/ingestion-feed/route.ts |
 | `/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]` | PATCH | frontend/src/app/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]/route.ts |
 | `/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]/promote` | POST | frontend/src/app/api/projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]/promote/route.ts |
+| `/api/projects/[projectId]/intelligence/daily-deep-read-candidates/promote` | POST | frontend/src/app/api/projects/[projectId]/intelligence/daily-deep-read-candidates/promote/route.ts |
 | `/api/projects/[projectId]/invoicing/billing-periods` | GET, POST | frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/route.ts |
 | `/api/projects/[projectId]/invoicing/billing-periods/[periodId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/[periodId]/route.ts |
 | `/api/projects/[projectId]/invoicing/owner` | GET, POST | frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts |

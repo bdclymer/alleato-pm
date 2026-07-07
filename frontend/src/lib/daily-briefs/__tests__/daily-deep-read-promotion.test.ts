@@ -1,6 +1,9 @@
 import { GuardrailError } from "@/lib/guardrails/errors";
 import type { CanonicalDailyBriefPacket } from "../canonical-packets";
-import { promoteDailyDeepReadCandidate } from "../daily-deep-read-promotion";
+import {
+  promoteAcceptedDailyDeepReadCandidates,
+  promoteDailyDeepReadCandidate,
+} from "../daily-deep-read-promotion";
 
 type Row = Record<string, unknown>;
 
@@ -279,5 +282,116 @@ describe("promoteDailyDeepReadCandidate", () => {
 
     expect(appClient.rows("tasks")).toHaveLength(1);
     expect(ragClient.rows("source_signal_candidates")[0].status).toBe("candidate");
+  });
+
+  it("batch-promotes accepted current-packet candidates and leaves review rows untouched", async () => {
+    const appClient = new FakeSupabaseClient({
+      intelligence_targets: [
+        {
+          id: "target-1009",
+          target_type: "client_project",
+          project_id: 1009,
+          name: "Union Collective",
+          slug: "union-collective",
+          status: "active",
+        },
+      ],
+      document_metadata: [],
+      tasks: [],
+      insight_cards: [],
+    });
+    const ragClient = new FakeSupabaseClient({
+      source_signal_candidates: [
+        candidate({ id: "candidate-task", normalized_signal_key: "candidate-task" }),
+        candidate({
+          id: "candidate-decision",
+          normalized_signal_key: "candidate-decision",
+          signal_type: "decision",
+          title:
+            "Decide bid leveling approach [outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1YzExNTM3Y2Q2YQ]",
+        }),
+        candidate({
+          id: "candidate-review",
+          normalized_signal_key: "candidate-review",
+          status: "needs_review",
+        }),
+      ],
+    });
+
+    const result = await promoteAcceptedDailyDeepReadCandidates(
+      { projectId: 1009, reviewedBy: "user-1" },
+      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+    );
+
+    expect(result.promoted).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+    expect(appClient.rows("tasks")).toHaveLength(1);
+    expect(appClient.rows("insight_cards")).toHaveLength(1);
+    expect(appClient.rows("insight_cards")[0]).toMatchObject({
+      card_type: "decision",
+      title: "Decide bid leveling approach",
+      primary_target_id: "target-1009",
+    });
+    expect(
+      ragClient.rows("source_signal_candidates").map((row) => ({
+        id: row.id,
+        status: row.status,
+      })),
+    ).toEqual([
+      { id: "candidate-task", status: "promoted" },
+      { id: "candidate-decision", status: "promoted" },
+      { id: "candidate-review", status: "needs_review" },
+    ]);
+  });
+
+  it("batch promotion reports candidate failures and continues", async () => {
+    const appClient = new FakeSupabaseClient({
+      intelligence_targets: [
+        {
+          id: "target-1009",
+          target_type: "client_project",
+          project_id: 1009,
+          name: "Union Collective",
+          slug: "union-collective",
+          status: "active",
+        },
+      ],
+      document_metadata: [],
+      tasks: [
+        {
+          id: "existing-task",
+          extraction_metadata: {
+            daily_deep_read_candidate_id: "candidate-task",
+          },
+        },
+      ],
+      insight_cards: [],
+    });
+    const ragClient = new FakeSupabaseClient({
+      source_signal_candidates: [
+        candidate({ id: "candidate-task", normalized_signal_key: "candidate-task" }),
+        candidate({
+          id: "candidate-decision",
+          normalized_signal_key: "candidate-decision",
+          signal_type: "decision",
+        }),
+      ],
+    });
+
+    const result = await promoteAcceptedDailyDeepReadCandidates(
+      { projectId: 1009 },
+      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+    );
+
+    expect(result.promoted).toHaveLength(1);
+    expect(result.failed).toEqual([
+      {
+        candidateId: "candidate-task",
+        code: "PRECONDITION_FAILED",
+        message: "Daily Deep Read candidate already has a promoted app record.",
+      },
+    ]);
+    expect(ragClient.rows("source_signal_candidates")[0].status).toBe("candidate");
+    expect(ragClient.rows("source_signal_candidates")[1].status).toBe("promoted");
   });
 });

@@ -36,6 +36,20 @@ export type DailyDeepReadPromotionResult = {
   targetId: string;
 };
 
+export type DailyDeepReadBatchPromotionFailure = {
+  candidateId: string;
+  code: string;
+  message: string;
+};
+
+export type DailyDeepReadBatchPromotionResult = {
+  ok: true;
+  projectId: number;
+  packetId: string;
+  promoted: DailyDeepReadPromotionResult[];
+  failed: DailyDeepReadBatchPromotionFailure[];
+};
+
 type PromoteInput = {
   candidateId: string;
   projectId: number;
@@ -46,6 +60,12 @@ type PromoteDeps = {
   appClient?: AppClient;
   ragClient?: RagClient;
   currentPacket?: CanonicalDailyBriefPacket;
+};
+
+type PromoteBatchInput = {
+  projectId: number;
+  reviewedBy?: string | null;
+  maxCandidates?: number;
 };
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -59,6 +79,25 @@ function jsonRecord(value: Json | RagDatabase["public"]["Tables"]["source_signal
 function compactText(value: string | null | undefined, maxLength: number): string {
   const cleaned = (value ?? "").replace(/\s+/g, " ").trim();
   return cleaned.length > maxLength ? `${cleaned.slice(0, maxLength - 1)}…` : cleaned;
+}
+
+function cleanPromotedText(value: string | null | undefined): string {
+  return (value ?? "")
+    .replace(/\[[^\]]*(?:outlook|teams?|fireflies|email|transcript|AAAA|MTA)[^\]]*\]/gi, "")
+    .replace(/\b(?:outlook|teams?|fireflies|email|transcript)[A-Za-z0-9._:-]{16,}\b/gi, "")
+    .replace(/\b[A-Za-z0-9_-]{48,}\b/g, "")
+    .replace(/[\[\]]+/g, "")
+    .replace(/\s+[,:;.-]*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function promotedTitle(candidate: SourceSignalCandidate): string {
+  return (
+    compactText(cleanPromotedText(candidate.title), 500) ||
+    compactText(cleanPromotedText(candidate.summary), 500) ||
+    "Daily Deep Read candidate"
+  );
 }
 
 function slugify(value: string): string {
@@ -298,6 +337,33 @@ async function loadPromotableCandidate(params: {
   return data as SourceSignalCandidate;
 }
 
+async function loadAcceptedCandidateIds(params: {
+  ragClient: RagClient;
+  projectId: number;
+  packetId: string;
+  maxCandidates: number;
+}): Promise<string[]> {
+  const { data, error } = await params.ragClient
+    .from("source_signal_candidates")
+    .select("id")
+    .eq("project_id", params.projectId)
+    .eq("compiler_version", DAILY_DEEP_READ_CONSUMER_COMPILER_VERSION)
+    .eq("status", "candidate")
+    .eq("extraction_json->>daily_packet_id", params.packetId)
+    .limit(params.maxCandidates);
+
+  if (error) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: WHERE,
+      message: "Failed to load accepted Daily Deep Read candidates for batch promotion.",
+      details: error.message,
+    });
+  }
+
+  return ((data ?? []) as Array<{ id: string }>).map((row) => row.id).filter(Boolean);
+}
+
 async function assertNoExistingPromotion(params: {
   appClient: AppClient;
   candidate: SourceSignalCandidate;
@@ -347,7 +413,7 @@ async function createTaskFromCandidate(params: {
 }): Promise<string> {
   const metadata = buildLineageMetadata(params);
   const payload: TaskInsert = {
-    title: compactText(params.candidate.title, 500),
+    title: promotedTitle(params.candidate),
     description: candidateSummary(params.candidate),
     metadata_id: params.metadataId,
     project_id: params.candidate.project_id,
@@ -392,7 +458,7 @@ async function createInsightCardFromCandidate(params: {
   const payload: InsightCardInsert = {
     primary_target_id: params.targetId,
     card_type: mapCardType(params.candidate.signal_type),
-    title: compactText(params.candidate.title, 500),
+    title: promotedTitle(params.candidate),
     summary: candidateSummary(params.candidate),
     why_it_matters: params.candidate.why_it_matters,
     current_status: params.candidate.current_status === "rejected" ? "needs_review" : "open",
@@ -521,5 +587,74 @@ export async function promoteDailyDeepReadCandidate(
     packetId: packet.id,
     createdRecordId,
     targetId: target.id,
+  };
+}
+
+function promotionFailure(candidateId: string, error: unknown): DailyDeepReadBatchPromotionFailure {
+  if (error instanceof GuardrailError) {
+    return {
+      candidateId,
+      code: error.code,
+      message: error.message,
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      candidateId,
+      code: "UNKNOWN_ERROR",
+      message: error.message,
+    };
+  }
+  return {
+    candidateId,
+    code: "UNKNOWN_ERROR",
+    message: String(error),
+  };
+}
+
+export async function promoteAcceptedDailyDeepReadCandidates(
+  input: PromoteBatchInput,
+  deps: PromoteDeps = {},
+): Promise<DailyDeepReadBatchPromotionResult> {
+  const appClient = deps.appClient ?? createServiceClient();
+  const ragClient = deps.ragClient ?? createRagServiceClient();
+  const packet = deps.currentPacket ?? await loadCurrentDailyExecutiveBriefPacket();
+  const maxCandidates = Math.max(1, Math.min(input.maxCandidates ?? 25, 100));
+  const candidateIds = await loadAcceptedCandidateIds({
+    ragClient,
+    projectId: input.projectId,
+    packetId: packet.id,
+    maxCandidates,
+  });
+  const promoted: DailyDeepReadPromotionResult[] = [];
+  const failed: DailyDeepReadBatchPromotionFailure[] = [];
+
+  for (const candidateId of candidateIds) {
+    try {
+      promoted.push(
+        await promoteDailyDeepReadCandidate(
+          {
+            candidateId,
+            projectId: input.projectId,
+            reviewedBy: input.reviewedBy,
+          },
+          {
+            appClient,
+            ragClient,
+            currentPacket: packet,
+          },
+        ),
+      );
+    } catch (error) {
+      failed.push(promotionFailure(candidateId, error));
+    }
+  }
+
+  return {
+    ok: true,
+    projectId: input.projectId,
+    packetId: packet.id,
+    promoted,
+    failed,
   };
 }
