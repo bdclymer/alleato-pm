@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 
 from src.services.health.source_rag_health import (
+    _counts_project_intelligence_outcome,
     _graph_conversation_chunk_alerts,
     _has_project_intelligence_outcome,
     _has_task_extraction_outcome,
     _is_project_required_row,
     _latest_job_metadata_by_document_id,
+    _merge_source_synthesis_metadata,
 )
 
 
@@ -132,6 +134,64 @@ def test_project_intelligence_outcome_counts_source_synthesis_metadata():
     assert _has_project_intelligence_outcome("doc-email", set(), metadata_by_id)
     assert _has_project_intelligence_outcome("doc-with-evidence", {"doc-with-evidence"}, {})
     assert not _has_project_intelligence_outcome("doc-missing", set(), {})
+
+
+def test_source_synthesis_rows_backfill_project_intelligence_metadata():
+    metadata_by_id = {"sharepoint-doc": {"_updated_at": "2026-07-07T04:22:54+00:00"}}
+
+    _merge_source_synthesis_metadata(
+        metadata_by_id,
+        [
+            {
+                "id": "source-synthesis-1",
+                "source_document_id": "sharepoint-doc",
+                "project_id": 178,
+                "updated_at": "2026-07-07T11:40:00+00:00",
+            }
+        ],
+    )
+
+    assert metadata_by_id["sharepoint-doc"]["source_synthesis_id"] == "source-synthesis-1"
+    assert _has_project_intelligence_outcome("sharepoint-doc", set(), metadata_by_id)
+
+
+def test_meeting_project_intelligence_counts_existing_evidence_without_source_read_proof():
+    assert _counts_project_intelligence_outcome(
+        family="meetings",
+        document_id="meeting-1",
+        evidence_ids={"meeting-1"},
+        job_metadata_by_id={},
+    )
+
+
+def test_meeting_project_intelligence_requires_full_read_for_metadata_only_outcome():
+    metadata_by_id = {
+        "meeting-1": {
+            "source_synthesis_id": "source-synthesis-1",
+            "_updated_at": "2026-07-07T05:36:45+00:00",
+        },
+        "meeting-2": {
+            "source_synthesis_id": "source-synthesis-2",
+            "read_proof": {
+                "status": "full_source_read",
+                "scope": "full_transcript",
+            },
+            "_updated_at": "2026-07-07T05:36:45+00:00",
+        },
+    }
+
+    assert not _counts_project_intelligence_outcome(
+        family="meetings",
+        document_id="meeting-1",
+        evidence_ids=set(),
+        job_metadata_by_id=metadata_by_id,
+    )
+    assert _counts_project_intelligence_outcome(
+        family="meetings",
+        document_id="meeting-2",
+        evidence_ids=set(),
+        job_metadata_by_id=metadata_by_id,
+    )
 
 
 def test_project_required_fallback_excludes_empty_anonymized_teams_dm():

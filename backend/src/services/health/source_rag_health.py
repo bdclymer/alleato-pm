@@ -290,6 +290,22 @@ def _latest_job_metadata_by_document_id(job_rows: List[Dict[str, Any]]) -> Dict[
     return metadata_by_id
 
 
+def _merge_source_synthesis_metadata(
+    metadata_by_id: Dict[str, Dict[str, Any]],
+    source_synthesis_rows: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    for row in source_synthesis_rows:
+        document_id = str(row.get("source_document_id") or "")
+        synthesis_id = row.get("id")
+        if not document_id or not synthesis_id:
+            continue
+        metadata = metadata_by_id.setdefault(document_id, {})
+        metadata.setdefault("source_synthesis_id", synthesis_id)
+        metadata.setdefault("project_id", row.get("project_id"))
+        metadata["_updated_at"] = row.get("updated_at") or row.get("created_at") or metadata.get("_updated_at")
+    return metadata_by_id
+
+
 def _is_project_required_row(row: Dict[str, Any], job_metadata_by_id: Dict[str, Dict[str, Any]]) -> bool:
     if row.get("project_id") is not None:
         return True
@@ -410,6 +426,20 @@ def _has_full_transcript_read_proof(document_id: str, job_metadata_by_id: Dict[s
         read_proof.get("status") == "full_source_read"
         and read_proof.get("scope") == "full_transcript"
     )
+
+
+def _counts_project_intelligence_outcome(
+    *,
+    family: str,
+    document_id: str,
+    evidence_ids: set[str],
+    job_metadata_by_id: Dict[str, Dict[str, Any]],
+) -> bool:
+    if not _has_project_intelligence_outcome(document_id, evidence_ids, job_metadata_by_id):
+        return False
+    if family != "meetings":
+        return True
+    return document_id in evidence_ids or _has_full_transcript_read_proof(document_id, job_metadata_by_id)
 
 
 def _graph_conversation_kind(row: Dict[str, Any]) -> str | None:
@@ -687,6 +717,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     rag_metadata_rows: List[Dict[str, Any]] = []
     job_rows: List[Dict[str, Any]] = []
     source_intelligence_rows: List[Dict[str, Any]] = []
+    source_synthesis_rows: List[Dict[str, Any]] = []
     if source_ids:
         for batch in _batched(source_ids):
             rag_metadata_rows.extend((
@@ -709,6 +740,15 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 .select("source_document_id,output_summary,updated_at")
                 .in_("source_document_id", batch)
                 .eq("status", "succeeded")
+                .order("updated_at", desc=True)
+                .limit(1000)
+                .execute()
+            ).data or [])
+            source_synthesis_rows.extend((
+                rag_client.table("source_syntheses")
+                .select("id,source_document_id,synthesis_status,project_id,created_at,updated_at")
+                .in_("source_document_id", batch)
+                .eq("synthesis_status", "succeeded")
                 .order("updated_at", desc=True)
                 .limit(1000)
                 .execute()
@@ -770,6 +810,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             for row in source_intelligence_rows
         ],
     ])
+    _merge_source_synthesis_metadata(job_metadata_by_id, source_synthesis_rows)
     chunk_text_by_document_id: Dict[str, str] = {}
     for chunk in chunk_rows:
         document_id = str(chunk.get("document_id") or "")
@@ -902,10 +943,11 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 "count": sum(
                     1
                     for row_id in project_assigned_ids
-                    if _has_project_intelligence_outcome(row_id, evidence_ids, job_metadata_by_id)
-                    and (
-                        family != "meetings"
-                        or _has_full_transcript_read_proof(row_id, job_metadata_by_id)
+                    if _counts_project_intelligence_outcome(
+                        family=family,
+                        document_id=row_id,
+                        evidence_ids=evidence_ids,
+                        job_metadata_by_id=job_metadata_by_id,
                     )
                 ),
                 "total": len(project_assigned_ids),
