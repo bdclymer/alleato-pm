@@ -1283,10 +1283,8 @@ def write_document_attribution_candidate(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Write one compiler-owned attribution candidate for review/audit."""
-    if not candidate_project_id:
-        return {}
     bounded_score = max(0.0, min(1.0, float(confidence_score)))
-    status = "auto_assigned" if bounded_score >= 0.85 else "pending_review"
+    status = "auto_assigned" if candidate_project_id and bounded_score >= 0.85 else "pending_review"
 
     _rag_write().table("document_attribution_candidates").delete().eq(
         "source_document_id", source_document_id

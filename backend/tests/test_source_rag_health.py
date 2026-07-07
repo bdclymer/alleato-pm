@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 
 from src.services.health.source_rag_health import (
     _counts_project_intelligence_outcome,
+    _counts_task_extraction_outcome,
     _graph_conversation_chunk_alerts,
+    _has_project_attribution_review,
     _has_project_intelligence_outcome,
     _has_task_extraction_outcome,
     _is_project_required_row,
@@ -123,6 +125,23 @@ def test_latest_job_metadata_prefers_source_intelligence_task_outcome():
     assert _has_task_extraction_outcome("doc-email", set(), metadata_by_id)
 
 
+def test_meeting_task_extraction_counts_existing_evidence_as_processed():
+    assert _counts_task_extraction_outcome(
+        family="meetings",
+        document_id="meeting-doc",
+        task_ids=set(),
+        evidence_ids={"meeting-doc"},
+        job_metadata_by_id={},
+    )
+    assert not _counts_task_extraction_outcome(
+        family="emails",
+        document_id="email-doc",
+        task_ids=set(),
+        evidence_ids={"email-doc"},
+        job_metadata_by_id={},
+    )
+
+
 def test_project_intelligence_outcome_counts_source_synthesis_metadata():
     metadata_by_id = {
         "doc-email": {
@@ -136,6 +155,11 @@ def test_project_intelligence_outcome_counts_source_synthesis_metadata():
     assert not _has_project_intelligence_outcome("doc-missing", set(), {})
 
 
+def test_project_attribution_review_counts_pending_null_project_candidate():
+    assert _has_project_attribution_review("doc-review", {"doc-review"})
+    assert not _has_project_attribution_review("doc-missing", {"doc-review"})
+
+
 def test_source_synthesis_rows_backfill_project_intelligence_metadata():
     metadata_by_id = {"sharepoint-doc": {"_updated_at": "2026-07-07T04:22:54+00:00"}}
 
@@ -146,13 +170,38 @@ def test_source_synthesis_rows_backfill_project_intelligence_metadata():
                 "id": "source-synthesis-1",
                 "source_document_id": "sharepoint-doc",
                 "project_id": 178,
+                "tasks": [{"title": "Follow up"}],
+                "metadata": {"deterministic_signal_type": "task"},
                 "updated_at": "2026-07-07T11:40:00+00:00",
             }
         ],
     )
 
     assert metadata_by_id["sharepoint-doc"]["source_synthesis_id"] == "source-synthesis-1"
+    assert metadata_by_id["sharepoint-doc"]["task_extraction_status"] == "task_signal_staged"
     assert _has_project_intelligence_outcome("sharepoint-doc", set(), metadata_by_id)
+    assert _has_task_extraction_outcome("sharepoint-doc", set(), metadata_by_id)
+
+
+def test_source_synthesis_non_task_signal_counts_as_no_actionable_tasks():
+    metadata_by_id = {}
+
+    _merge_source_synthesis_metadata(
+        metadata_by_id,
+        [
+            {
+                "id": "source-synthesis-1",
+                "source_document_id": "email-doc",
+                "project_id": 754,
+                "tasks": [],
+                "metadata": {"deterministic_signal_type": "project_update"},
+                "updated_at": "2026-07-07T11:40:00+00:00",
+            }
+        ],
+    )
+
+    assert metadata_by_id["email-doc"]["task_extraction_status"] == "no_actionable_tasks"
+    assert _has_task_extraction_outcome("email-doc", set(), metadata_by_id)
 
 
 def test_meeting_project_intelligence_counts_existing_evidence_without_source_read_proof():

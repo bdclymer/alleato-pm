@@ -302,6 +302,14 @@ def _merge_source_synthesis_metadata(
         metadata = metadata_by_id.setdefault(document_id, {})
         metadata.setdefault("source_synthesis_id", synthesis_id)
         metadata.setdefault("project_id", row.get("project_id"))
+        synthesis_metadata = row.get("metadata")
+        synthesis_metadata = synthesis_metadata if isinstance(synthesis_metadata, dict) else {}
+        synthesis_type = str(synthesis_metadata.get("deterministic_signal_type") or "")
+        synthesis_tasks = row.get("tasks") if isinstance(row.get("tasks"), list) else []
+        if synthesis_type == "task" or synthesis_tasks:
+            metadata.setdefault("task_extraction_status", "task_signal_staged")
+        elif synthesis_type:
+            metadata.setdefault("task_extraction_status", "no_actionable_tasks")
         metadata["_updated_at"] = row.get("updated_at") or row.get("created_at") or metadata.get("_updated_at")
     return metadata_by_id
 
@@ -401,6 +409,19 @@ def _has_task_extraction_outcome(document_id: str, task_ids: set[str], job_metad
     return status in {"tasks_created", "no_actionable_tasks", "task_signal_staged"}
 
 
+def _counts_task_extraction_outcome(
+    *,
+    family: str,
+    document_id: str,
+    task_ids: set[str],
+    evidence_ids: set[str],
+    job_metadata_by_id: Dict[str, Dict[str, Any]],
+) -> bool:
+    if _has_task_extraction_outcome(document_id, task_ids, job_metadata_by_id):
+        return True
+    return family == "meetings" and document_id in evidence_ids
+
+
 def _has_project_intelligence_outcome(
     document_id: str,
     evidence_ids: set[str],
@@ -426,6 +447,13 @@ def _has_full_transcript_read_proof(document_id: str, job_metadata_by_id: Dict[s
         read_proof.get("status") == "full_source_read"
         and read_proof.get("scope") == "full_transcript"
     )
+
+
+def _has_project_attribution_review(
+    document_id: str,
+    attribution_review_ids: set[str],
+) -> bool:
+    return document_id in attribution_review_ids
 
 
 def _counts_project_intelligence_outcome(
@@ -695,6 +723,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             "source_last_modified_at": row.get("updated_at"),
             "deleted_at": None,
             "content": None,
+            "rag_only": True,
         }
         for row in rag_email_source_rows
         if row.get("id") and str(row.get("id")) not in app_source_ids
@@ -718,6 +747,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     job_rows: List[Dict[str, Any]] = []
     source_intelligence_rows: List[Dict[str, Any]] = []
     source_synthesis_rows: List[Dict[str, Any]] = []
+    attribution_candidate_rows: List[Dict[str, Any]] = []
     if source_ids:
         for batch in _batched(source_ids):
             rag_metadata_rows.extend((
@@ -746,9 +776,18 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             ).data or [])
             source_synthesis_rows.extend((
                 rag_client.table("source_syntheses")
-                .select("id,source_document_id,synthesis_status,project_id,created_at,updated_at")
+                .select("id,source_document_id,synthesis_status,project_id,tasks,metadata,created_at,updated_at")
                 .in_("source_document_id", batch)
                 .eq("synthesis_status", "succeeded")
+                .order("updated_at", desc=True)
+                .limit(1000)
+                .execute()
+            ).data or [])
+            attribution_candidate_rows.extend((
+                rag_client.table("document_attribution_candidates")
+                .select("source_document_id,status,candidate_project_id,updated_at,created_at")
+                .in_("source_document_id", batch)
+                .in_("status", ["pending_review", "approved", "auto_assigned"])
                 .order("updated_at", desc=True)
                 .limit(1000)
                 .execute()
@@ -827,6 +866,13 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
         for row in evidence_rows
         if row.get("source_document_id")
     }
+    attribution_review_ids = {
+        str(row.get("source_document_id"))
+        for row in attribution_candidate_rows
+        if row.get("source_document_id")
+        and row.get("status") == "pending_review"
+        and row.get("candidate_project_id") is None
+    }
     has_fresh_packets = bool(packet_rows)
     latest_packet_at = _newest([row.get("generated_at") for row in packet_rows])
     family_labels = {
@@ -874,6 +920,18 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             and str(row.get("id")) in project_required_ids
             and row.get("project_id") is not None
         }
+        project_attribution_handled_ids = {
+            row_id
+            for row_id in project_required_ids
+            if row_id in project_assigned_ids
+            or _has_project_attribution_review(row_id, attribution_review_ids)
+        }
+        task_required_ids = project_required_ids - attribution_review_ids
+        task_required_ids = {
+            row_id
+            for row_id in task_required_ids
+            if not any(str(row.get("id")) == row_id and row.get("rag_only") for row in rows)
+        }
         vectorized_ids = embedded_meeting_transcript_ids if family == "meetings" else embedded_ids
         vectorized_count = sum(1 for row_id in vectorization_required_ids if row_id in vectorized_ids)
         vectorized_message = (
@@ -909,32 +967,48 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 "stage": "project_assigned",
                 "count": sum(
                     1
-                    for row in rows
-                    if str(row.get("id")) in project_required_ids
-                    and row.get("project_id") is not None
+                    for row_id in project_required_ids
+                    if row_id in project_attribution_handled_ids
                 ),
                 "total": len(project_required_ids),
                 "excluded": total - len(project_required_ids),
                 "owner": "project attribution",
                 "latestAt": _newest([row.get("created_at") for row in rows]),
+                "reviewRequired": len(attribution_review_ids & project_required_ids),
+                "message": (
+                    f"{len(project_attribution_handled_ids)}/{len(project_required_ids)} sources are assigned "
+                    "or explicitly queued for attribution review."
+                ),
             },
             {
                 "stage": "tasks_extracted",
                 "count": sum(
                     1
-                    for row_id in project_required_ids
-                    if _has_task_extraction_outcome(row_id, task_ids, job_metadata_by_id)
+                    for row_id in task_required_ids
+                    if _counts_task_extraction_outcome(
+                        family=family,
+                        document_id=row_id,
+                        task_ids=task_ids,
+                        evidence_ids=evidence_ids,
+                        job_metadata_by_id=job_metadata_by_id,
+                    )
                 ),
-                "total": len(project_required_ids),
-                "excluded": total - len(project_required_ids),
+                "total": len(task_required_ids),
+                "excluded": total - len(task_required_ids),
                 "owner": "task extractor",
                 "latestAt": _newest(
-                    [row.get("created_at") for row in task_rows if str(row.get("metadata_id")) in project_required_ids]
+                    [row.get("created_at") for row in task_rows if str(row.get("metadata_id")) in task_required_ids]
                     + [
                         metadata.get("_updated_at")
                         for row_id, metadata in job_metadata_by_id.items()
-                        if row_id in project_required_ids
-                        and _has_task_extraction_outcome(row_id, task_ids, job_metadata_by_id)
+                        if row_id in task_required_ids
+                        and _counts_task_extraction_outcome(
+                            family=family,
+                            document_id=row_id,
+                            task_ids=task_ids,
+                            evidence_ids=evidence_ids,
+                            job_metadata_by_id=job_metadata_by_id,
+                        )
                     ]
                 ),
             },

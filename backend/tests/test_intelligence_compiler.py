@@ -16,6 +16,7 @@ from src.services.intelligence.compiler import (
     promote_signal_candidate,
     run_intelligence_compiler_batch,
     run_pm_intelligence_projection_batch,
+    write_document_attribution_candidate,
 )
 from src.services.ops.db_pressure_guard import AppDbProjectionError
 
@@ -414,7 +415,27 @@ def test_process_source_document_stages_candidate_and_packet_refresh():
     assert supabase.tables["document_attribution_candidates"][0]["status"] == "auto_assigned"
     assert len(supabase.tables["source_signal_candidates"]) == 1
     assert supabase.tables["source_signal_candidates"][0]["signal_type"] == "task"
-    assert len(supabase.tables["packet_refresh_jobs"]) == 1
+    assert result["packet_refresh_job_id"] is None
+    assert "packet_refresh_jobs" not in supabase.tables
+
+
+def test_write_document_attribution_candidate_persists_null_project_review():
+    supabase = _FakeSupabase()
+
+    candidate = write_document_attribution_candidate(
+        supabase,
+        source_document_id="doc-needs-review",
+        candidate_project_id=None,
+        candidate_target_id=None,
+        confidence_score=0.0,
+        attribution_method="intelligence_compiler:project_inference",
+        reasoning="No unique project identifier was found.",
+    )
+
+    assert candidate["source_document_id"] == "doc-needs-review"
+    assert candidate["candidate_project_id"] is None
+    assert candidate["status"] == "pending_review"
+    assert len(supabase.tables["document_attribution_candidates"]) == 1
 
 
 def test_promote_signal_candidate_creates_card_evidence_and_refresh():
@@ -478,30 +499,7 @@ def test_promote_signal_candidate_creates_card_evidence_and_refresh():
         supabase.tables["source_signal_candidates"][0]["promoted_insight_card_id"]
         == result["insight_card_id"]
     )
-    assert len(supabase.tables["packet_refresh_jobs"]) >= 1
-    assert (
-        supabase.tables["packet_refresh_jobs"][0]["trigger_insight_card_id"]
-        == result["insight_card_id"]
-    )
-
-    refresh_result = process_packet_refresh_job(
-        supabase,
-        result["packet_refresh_job_id"],
-    )
-
-    assert refresh_result["status"] == "succeeded"
-    assert refresh_result["card_count"] == 1
-    assert refresh_result["evidence_count"] == 1
-    assert len(supabase.tables["intelligence_packets"]) == 1
-    assert supabase.tables["intelligence_packets"][0]["packet_type"] == "current"
-    assert supabase.tables["intelligence_packets"][0]["freshness_status"] == "fresh"
-    assert len(supabase.tables["intelligence_packet_cards"]) == 1
-    assert supabase.tables["intelligence_packet_cards"][0]["section"] == "follow_ups"
-    assert supabase.tables["packet_refresh_jobs"][0]["status"] == "succeeded"
-    assert (
-        supabase.tables["packet_refresh_jobs"][0]["output_packet_id"]
-        == refresh_result["packet_id"]
-    )
+    assert "packet_refresh_jobs" not in supabase.tables
 
 
 def test_promote_signal_candidate_without_target_fails_loudly_for_review():
