@@ -2395,6 +2395,19 @@ def enqueue_packet_refresh(
     compiler_version: str = COMPILER_VERSION,
 ) -> Dict[str, Any]:
     """Enqueue a deduped packet refresh for a target."""
+    if compiler_version in {"ai_intelligence_compiler_v0_1", "meeting_extractor_compiler_v0_1"}:
+        logger.warning(
+            "[IntelligenceCompiler] packet_refresh_jobs is retired for compiler_version=%s; "
+            "skipping legacy queue insert and relying on refresh_project_intelligence()",
+            compiler_version,
+        )
+        return {
+            "id": None,
+            "status": "retired_not_queued",
+            "target_id": target_id,
+            "compiler_version": compiler_version,
+            "reason": reason,
+        }
     job_client = _rag_write()
     existing = _single_row(
         job_client.table("packet_refresh_jobs")

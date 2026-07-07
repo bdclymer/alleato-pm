@@ -298,7 +298,7 @@
     },
     {
       "url": "/[projectId]/intelligence",
-      "title": "Act now",
+      "title": "Daily executive brief",
       "description": "AI-powered project intelligence with insights, timeline, and source document references"
     },
     {
@@ -880,11 +880,6 @@
       "url": "/auth/login",
       "title": null,
       "description": "User login form for signing in to the Alleato PM application"
-    },
-    {
-      "url": "/auth/login-legacy",
-      "title": null,
-      "description": "Legacy login page variant with branded header and background imagery"
     },
     {
       "url": "/auth/login-v2",

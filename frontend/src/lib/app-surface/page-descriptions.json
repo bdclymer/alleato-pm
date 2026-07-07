@@ -101,7 +101,6 @@
     "/auth/error": "Authentication error page displaying error codes and messages",
     "/auth/forgot-password": "Password recovery form for users who have forgotten their login credentials",
     "/auth/login": "User login form for signing in to the Alleato PM application",
-    "/auth/login-legacy": "Legacy login page variant with branded header and background imagery",
     "/auth/login-v2": "Login page design version 2 with modern UI",
     "/auth/login-v3": "Login page design version 3 with enhanced user experience",
     "/auth/sign-up": "New user registration form for creating an account",

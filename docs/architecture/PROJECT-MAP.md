@@ -13,7 +13,7 @@
 
 ## UI Routes (332)
 
-_299/332 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_298/332 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -158,6 +158,7 @@ _299/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/acumatica-sync-logs` | Outbound app-to-Acumatica create/update/skip/error audit trail. | frontend/src/app/(admin)/acumatica-sync-logs/page.tsx |
 | `/admin` | Directory of admin, intelligence, database, testing, and internal documentation pages | frontend/src/app/(admin)/admin/page.tsx |
 | `/admin-check` | Verify the current user's authentication status and super admin privileges | frontend/src/app/(admin)/admin-check/page.tsx |
+| `/admin/commitment-sov-cleanup` | — | frontend/src/app/(admin)/admin/commitment-sov-cleanup/page.tsx |
 | `/admin/company-info` | Manage company profile and knowledge articles for the AI assistant | frontend/src/app/(admin)/admin/company-info/page.tsx |
 | `/admin/errors` | Redirect to /errors; grouped application errors and issue review | frontend/src/app/admin/errors/page.tsx |
 | `/ai` | AI chat interface for conversing with Alleato AI and running workflows | frontend/src/app/(main)/ai/page.tsx |
@@ -192,7 +193,6 @@ _299/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/auth/error` | Authentication error page displaying error codes and messages | frontend/src/app/auth/error/page.tsx |
 | `/auth/forgot-password` | Password recovery form for users who have forgotten their login credentials | frontend/src/app/auth/forgot-password/page.tsx |
 | `/auth/login` | User login form for signing in to the Alleato PM application | frontend/src/app/auth/login/page.tsx |
-| `/auth/login-legacy` | Legacy login page variant with branded header and background imagery | frontend/src/app/auth/login-legacy/page.tsx |
 | `/auth/login-v2` | Login page design version 2 with modern UI | frontend/src/app/auth/login-v2/page.tsx |
 | `/auth/login-v3` | Login page design version 3 with enhanced user experience | frontend/src/app/auth/login-v3/page.tsx |
 | `/auth/sign-up` | New user registration form for creating an account | frontend/src/app/auth/sign-up/page.tsx |
@@ -350,7 +350,7 @@ _299/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (742)
+## API Endpoints (744)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -387,6 +387,7 @@ _299/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/check-all-password-resets` | GET | frontend/src/app/api/admin/check-all-password-resets/route.ts |
 | `/api/admin/check-latest-password-reset` | GET | frontend/src/app/api/admin/check-latest-password-reset/route.ts |
 | `/api/admin/check-password-reset-breakdown` | GET | frontend/src/app/api/admin/check-password-reset-breakdown/route.ts |
+| `/api/admin/commitment-sov-cleanup` | GET | frontend/src/app/api/admin/commitment-sov-cleanup/route.ts |
 | `/api/admin/company-context` | GET, PUT | frontend/src/app/api/admin/company-context/route.ts |
 | `/api/admin/cron/daily-flags` | POST | frontend/src/app/api/admin/cron/daily-flags/route.ts |
 | `/api/admin/cron/progress-reports` | POST | frontend/src/app/api/admin/cron/progress-reports/route.ts |
@@ -534,6 +535,7 @@ _299/332 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
+| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |

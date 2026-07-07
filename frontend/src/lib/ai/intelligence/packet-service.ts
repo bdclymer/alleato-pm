@@ -556,6 +556,31 @@ export async function loadCurrentIntelligencePacket(input: {
   }
 }
 
+export async function loadCurrentIntelligencePacketBySlug(input: {
+  slug: string;
+  supabase: AlleatoSupabaseClient;
+  includeSourcePreview?: boolean;
+}): Promise<ClientProjectIntelligencePacket | null> {
+  const { data: target, error } = await input.supabase
+    .from("intelligence_targets")
+    .select("*")
+    .eq("slug", input.slug)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to resolve intelligence target ${input.slug}: ${error.message}`);
+  }
+  if (!target) return null;
+
+  return loadCurrentIntelligencePacket({
+    targetId: target.id,
+    supabase: input.supabase,
+    includeSourcePreview: input.includeSourcePreview,
+    projectId: target.project_id,
+  });
+}
+
 export async function loadPacketCards(input: {
   targetId: string;
   supabase: AlleatoSupabaseClient;

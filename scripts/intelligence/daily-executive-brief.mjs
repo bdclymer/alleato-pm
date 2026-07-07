@@ -1,0 +1,661 @@
+#!/usr/bin/env node
+
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+import dotenv from "dotenv";
+import pg from "pg";
+
+import {
+  buildAppDatabaseConnectionString,
+  getAppDatabaseUrl,
+  getRagDatabaseUrl,
+} from "../verify/app-db-connection.mjs";
+
+dotenv.config({ path: path.join(process.cwd(), ".env"), quiet: true });
+dotenv.config({ path: path.join(process.cwd(), "frontend/.env.local"), quiet: true });
+
+const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1";
+const COMPILER_VERSION = "manual_daily_executive_brief_v1";
+const TIME_ZONE = "America/New_York";
+const MAX_MODEL_CHARS_PER_ITEM = 12_000;
+
+const args = parseArgs(process.argv.slice(2));
+const businessDate = args.date ?? previousBusinessDateInNewYork();
+const shouldWrite = !args["no-write"] && !args["dry-run"];
+const model = args.model ?? "openai/gpt-5.4";
+
+const windowBounds = businessDayBoundsUtc(businessDate);
+const evidenceDir = path.join(
+  process.cwd(),
+  "docs/ops/evidence/2026-07-07-manual-daily-executive-brief",
+  businessDate,
+);
+
+function parseArgs(argv) {
+  const parsed = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (!value.startsWith("--")) continue;
+    const key = value.slice(2);
+    const next = argv[index + 1];
+    parsed[key] = next && !next.startsWith("--") ? next : true;
+    if (parsed[key] === next) index += 1;
+  }
+  return parsed;
+}
+
+function previousBusinessDateInNewYork(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const todayUtc = new Date(`${values.year}-${values.month}-${values.day}T12:00:00.000Z`);
+  todayUtc.setUTCDate(todayUtc.getUTCDate() - 1);
+  return todayUtc.toISOString().slice(0, 10);
+}
+
+function businessDayBoundsUtc(date) {
+  // The source day is the completed New York business day. EDT is fixed for July
+  // 2026; this runner is intentionally date-scoped for the current emergency path.
+  const start = new Date(`${date}T00:00:00.000-04:00`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end, startIso: start.toISOString(), endIso: end.toISOString() };
+}
+
+function sourceDateInNewYork(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function parseDateFromText(text) {
+  if (!text) return null;
+  const markdownDate = text.match(/\*\*Date:\*\*\s*([^\n]+)/i)?.[1]?.trim();
+  if (markdownDate) return new Date(markdownDate);
+  const emailDate = text.match(/^Date:\s*([^\n]+)/im)?.[1]?.trim();
+  if (emailDate) return new Date(emailDate);
+  const bracketDate = text.match(/\[(20\d{2}-\d{2}-\d{2})[^\]]*\]/)?.[1];
+  if (bracketDate) return new Date(`${bracketDate}T12:00:00.000-04:00`);
+  return null;
+}
+
+function cleanText(value) {
+  return String(value ?? "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\r\n/g, "\n")
+    .trim();
+}
+
+function truncate(value, maxLength) {
+  const text = cleanText(value);
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}\n\n[TRUNCATED after ${maxLength} chars for model context; full text is in source-corpus.md]`;
+}
+
+function classifyLane(row) {
+  const type = String(row.type ?? "").toLowerCase();
+  const source = String(row.source ?? "").toLowerCase();
+  if (source === "fireflies" || type === "meeting") return "meetings";
+  if (type.includes("team") || type.includes("teams")) return "teams";
+  if (type.includes("email") || row.source_system === "outlook_email") return "emails";
+  if (source === "ai_memory") return "ignored";
+  return "documents";
+}
+
+function isIncludedForBusinessDate(row, text) {
+  const parsed = parseDateFromText(text);
+  const parsedDay = sourceDateInNewYork(parsed);
+  if (parsedDay) return { include: parsedDay === businessDate, basis: "parsed-source-date", sourceAt: parsed.toISOString() };
+  const fallback = row.source_at ?? row.last_content_loaded_at ?? row.last_indexed_at ?? row.updated_at ?? row.created_at;
+  const fallbackDay = sourceDateInNewYork(fallback);
+  return {
+    include: fallbackDay === businessDate,
+    basis: "loaded-or-row-date",
+    sourceAt: fallback ? new Date(fallback).toISOString() : null,
+  };
+}
+
+async function withPg(rawUrl, options, callback) {
+  const pool = new pg.Pool({
+    connectionString: await buildAppDatabaseConnectionString(rawUrl, options),
+    ssl: { rejectUnauthorized: false },
+    max: 1,
+  });
+  const client = await pool.connect();
+  try {
+    await client.query("set statement_timeout = '45000ms'");
+    return await callback(client);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+async function fetchRows() {
+  return withPg(
+    getRagDatabaseUrl(),
+    { includeSslMode: false, rewriteSupabaseDirectHost: false },
+    async (client) => {
+      const { rows } = await client.query(
+        `
+          select
+            id,
+            app_document_id,
+            project_id,
+            source,
+            source_system,
+            source_item_id,
+            fireflies_id,
+            title,
+            type,
+            category,
+            source_web_url,
+            url,
+            storage_bucket,
+            storage_path,
+            file_name,
+            content,
+            raw_text,
+            summary,
+            overview,
+            parsing_status,
+            embedding_status,
+            last_synced_at,
+            last_content_loaded_at,
+            last_indexed_at,
+            created_at,
+            updated_at,
+            coalesce(last_content_loaded_at, last_indexed_at, last_synced_at, updated_at, created_at) as source_at
+          from public.rag_document_metadata
+          where coalesce(last_content_loaded_at, last_indexed_at, last_synced_at, updated_at, created_at)
+            >= ($1::timestamptz - interval '36 hours')
+            and coalesce(last_content_loaded_at, last_indexed_at, last_synced_at, updated_at, created_at)
+            < ($2::timestamptz + interval '12 hours')
+            and source is distinct from 'ai_memory'
+          order by coalesce(last_content_loaded_at, last_indexed_at, last_synced_at, updated_at, created_at) asc
+          limit 1500
+        `,
+        [windowBounds.startIso, windowBounds.endIso],
+      );
+      return rows;
+    },
+  );
+}
+
+function transcriptUrl(row) {
+  const url = row.url || row.source_web_url;
+  if (typeof url === "string" && url.includes("/storage/v1/object/public/transcripts/")) return url;
+  return null;
+}
+
+async function downloadTranscriptMarkdown(row) {
+  const url = transcriptUrl(row);
+  if (!url) return null;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Transcript download failed ${response.status} for ${row.id}`);
+  }
+  const text = await response.text();
+  return cleanText(text);
+}
+
+async function materializeSources(rows) {
+  const sources = [];
+  const skipped = [];
+  for (const row of rows) {
+    const lane = classifyLane(row);
+    if (lane === "ignored") continue;
+    let text = cleanText(row.content || row.raw_text || row.summary || row.overview);
+    let usedStorage = false;
+    if (lane === "meetings") {
+      const markdown = await downloadTranscriptMarkdown(row).catch((error) => {
+        skipped.push({ id: row.id, title: row.title, lane, reason: error.message });
+        return null;
+      });
+      if (markdown) {
+        text = markdown;
+        usedStorage = true;
+      }
+    }
+    const inclusion = isIncludedForBusinessDate(row, text);
+    if (!inclusion.include) {
+      skipped.push({
+        id: row.id,
+        title: row.title,
+        lane,
+        reason: `not in ${businessDate} by ${inclusion.basis}`,
+        sourceAt: inclusion.sourceAt,
+      });
+      continue;
+    }
+    const hasTranscriptMarker = lane !== "meetings" || /##\s*Transcript/i.test(text);
+    if (lane === "meetings" && !hasTranscriptMarker) {
+      skipped.push({ id: row.id, title: row.title, lane, reason: "meeting source lacks ## Transcript marker" });
+      continue;
+    }
+    sources.push({
+      id: row.id,
+      appDocumentId: row.app_document_id,
+      title: row.title || row.file_name || row.id,
+      lane,
+      projectId: row.project_id,
+      source: row.source,
+      sourceSystem: row.source_system,
+      type: row.type,
+      category: row.category,
+      storageBucket: row.storage_bucket,
+      storagePath: row.storage_path,
+      url: row.url || row.source_web_url,
+      sourceAt: inclusion.sourceAt,
+      inclusionBasis: inclusion.basis,
+      usedStorage,
+      hasTranscriptMarker,
+      charCount: text.length,
+      text,
+    });
+  }
+  return { sources, skipped };
+}
+
+function groupByLane(sources) {
+  const grouped = { meetings: [], emails: [], teams: [], documents: [] };
+  for (const source of sources) grouped[source.lane]?.push(source);
+  return grouped;
+}
+
+function renderCorpus(sources, skipped) {
+  const lines = [
+    `# Daily Executive Brief Source Corpus - ${businessDate}`,
+    "",
+    `Window: ${windowBounds.startIso} to ${windowBounds.endIso} (${TIME_ZONE} business day)`,
+    `Generated: ${new Date().toISOString()}`,
+    "",
+    "## Included Sources",
+    "",
+  ];
+  const grouped = groupByLane(sources);
+  for (const lane of ["meetings", "emails", "teams", "documents"]) {
+    lines.push(`### ${lane}`, "");
+    if (!grouped[lane].length) {
+      lines.push("_No included sources._", "");
+      continue;
+    }
+    for (const source of grouped[lane]) {
+      lines.push(
+        `- ${source.id} | ${source.title} | project=${source.projectId ?? "none"} | sourceAt=${source.sourceAt ?? "unknown"} | chars=${source.charCount} | basis=${source.inclusionBasis} | storage=${source.usedStorage ? "yes" : "no"}`,
+      );
+    }
+    lines.push("");
+  }
+  lines.push("## Full Source Text", "");
+  for (const source of sources) {
+    lines.push(
+      `### ${source.lane.toUpperCase()} | ${source.title}`,
+      "",
+      `Source ID: ${source.id}`,
+      `Project ID: ${source.projectId ?? "none"}`,
+      `Source at: ${source.sourceAt ?? "unknown"}`,
+      `URL: ${source.url ?? "none"}`,
+      "",
+      "```text",
+      cleanText(source.text),
+      "```",
+      "",
+    );
+  }
+  lines.push("## Skipped Candidates", "", "```json", JSON.stringify(skipped, null, 2), "```", "");
+  return lines.join("\n");
+}
+
+function sourceForModel(source) {
+  return {
+    id: source.id,
+    lane: source.lane,
+    title: source.title,
+    projectId: source.projectId,
+    sourceAt: source.sourceAt,
+    text: truncate(source.text, MAX_MODEL_CHARS_PER_ITEM),
+  };
+}
+
+function getProviderConfig() {
+  if (process.env.AI_GATEWAY_API_KEY?.trim()) {
+    return {
+      apiKey: process.env.AI_GATEWAY_API_KEY.trim(),
+      baseUrl: AI_GATEWAY_BASE_URL,
+      model: model.startsWith("openai/") ? model : `openai/${model}`,
+    };
+  }
+  if (process.env.OPENAI_API_KEY?.trim()) {
+    return {
+      apiKey: process.env.OPENAI_API_KEY.trim(),
+      baseUrl: "https://api.openai.com/v1",
+      model: model.replace(/^openai[/:]/, ""),
+    };
+  }
+  throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required to draft the brief.");
+}
+
+async function callModel(messages, maxCompletionTokens = 2200) {
+  const provider = getProviderConfig();
+  const response = await fetch(`${provider.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${provider.apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      messages,
+      max_completion_tokens: maxCompletionTokens,
+    }),
+  });
+  const text = await response.text();
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    payload = { raw: text };
+  }
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || payload.raw || `Model HTTP ${response.status}`);
+  }
+  return payload.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
+async function summarizeLane(lane, items) {
+  if (!items.length) return `No ${lane} sources were found for ${businessDate}.`;
+  const chunks = [];
+  const batchSize = lane === "emails" ? 20 : 8;
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize).map(sourceForModel);
+    const content = await callModel(
+      [
+        {
+          role: "system",
+          content:
+            "You are preparing source notes for an owner-grade construction executive brief. Extract only concrete decisions, risks, money, schedule movement, commitments, blockers, and owner-relevant context. Preserve source IDs. Do not write generic summaries.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({ businessDate, lane, sources: batch }, null, 2),
+        },
+      ],
+      1800,
+    );
+    chunks.push(content);
+  }
+  return chunks.join("\n\n");
+}
+
+async function draftExecutiveBrief(sources) {
+  const grouped = groupByLane(sources);
+  const laneNotes = {};
+  for (const lane of ["meetings", "emails", "teams", "documents"]) {
+    laneNotes[lane] = await summarizeLane(lane, grouped[lane]);
+  }
+
+  const brief = await callModel(
+    [
+      {
+        role: "system",
+        content:
+          "You write daily executive briefs for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Do not write a chronological recap. If evidence is thin, say exactly which lane is thin.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            businessDate,
+            instruction:
+              "Write the Daily Executive Brief from these source notes. Include: Executive read, critical decisions, financial/watch items, schedule/operations watch, project-by-project notes, follow-ups, and source coverage.",
+            sourceCounts: Object.fromEntries(Object.entries(grouped).map(([key, value]) => [key, value.length])),
+            laneNotes,
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    3500,
+  );
+
+  return { brief: brief.replace(/^#\s+Daily Executive Brief[^\n]*\n+/i, "").trim(), laneNotes };
+}
+
+function nextMovesFromBrief(brief) {
+  const lines = brief
+    .split("\n")
+    .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
+    .filter(Boolean);
+  return lines
+    .filter((line) => /\b(follow|decide|confirm|review|approve|call|send|collect|resolve|assign|escalate)\b/i.test(line))
+    .slice(0, 8);
+}
+
+async function writePacket({ sources, brief, laneNotes }) {
+  return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
+    await client.query("begin");
+    try {
+      const targetResult = await client.query(
+        `
+          insert into public.intelligence_targets (target_type, name, slug, description, status, priority, metadata, last_signal_at)
+          values (
+            'company_process',
+            'Daily Executive Brief',
+            'daily-executive-brief',
+            'Manual source-of-truth daily executive brief built from transcripts, emails, Teams messages, and documents.',
+            'active',
+            'high',
+            $1::jsonb,
+            $2::timestamptz
+          )
+          on conflict (slug) do update
+            set description = excluded.description,
+                status = 'active',
+                priority = 'high',
+                metadata = public.intelligence_targets.metadata || excluded.metadata,
+                last_signal_at = excluded.last_signal_at,
+                updated_at = now()
+          returning id
+        `,
+        [
+          JSON.stringify({ created_by: COMPILER_VERSION, source_of_truth: "manual_daily_source_bundle" }),
+          windowBounds.endIso,
+        ],
+      );
+      const targetId = targetResult.rows[0].id;
+      await client.query(
+        `
+          update public.intelligence_packets
+          set packet_type = 'snapshot'
+          where target_id = $1::uuid and packet_type = 'current'
+        `,
+        [targetId],
+      );
+      const sourceCoverage = {
+        businessDate,
+        window: windowBounds,
+        sourceCounts: Object.fromEntries(
+          Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length]),
+        ),
+        sourceIds: sources.map((source) => source.id),
+      };
+      const packetJson = {
+        kind: "daily_executive_brief",
+        businessDate,
+        generatedAt: new Date().toISOString(),
+        briefMarkdown: brief,
+        laneNotes,
+        sourceSet: {
+          sources: sources.map((source) => ({
+            id: source.id,
+            title: source.title,
+            lane: source.lane,
+            projectId: source.projectId,
+            sourceAt: source.sourceAt,
+            url: source.url,
+          })),
+        },
+      };
+      const packetResult = await client.query(
+        `
+          insert into public.intelligence_packets (
+            target_id,
+            packet_type,
+            packet_version,
+            generated_at,
+            covered_start_at,
+            covered_end_at,
+            freshness_status,
+            executive_summary,
+            current_status,
+            strategic_read,
+            why_it_matters,
+            recommended_next_moves,
+            confidence_summary,
+            source_coverage,
+            review_queue_count,
+            stale_item_count,
+            packet_json,
+            compiler_version
+          )
+          values (
+            $1::uuid,
+            'current',
+            'v1',
+            now(),
+            $2::timestamptz,
+            $3::timestamptz,
+            'fresh',
+            $4::text,
+            $5::text,
+            $6::text,
+            $7::text,
+            $8::text[],
+            $9::jsonb,
+            $10::jsonb,
+            0,
+            0,
+            $11::jsonb,
+            $12::text
+          )
+          returning id, generated_at
+        `,
+        [
+          targetId,
+          windowBounds.startIso,
+          windowBounds.endIso,
+          brief.slice(0, 4000),
+          `Daily executive brief for ${businessDate}`,
+          brief,
+          "Manual source-of-truth packet built from the raw daily source bundle.",
+          nextMovesFromBrief(brief),
+          JSON.stringify({
+            confidence: "medium",
+            basis: "Manual full-source bundle with source lane counts; model drafted from assembled source notes.",
+          }),
+          JSON.stringify(sourceCoverage),
+          JSON.stringify(packetJson),
+          COMPILER_VERSION,
+        ],
+      );
+      await client.query("commit");
+      return { targetId, packetId: packetResult.rows[0].id, generatedAt: packetResult.rows[0].generated_at };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    }
+  });
+}
+
+async function main() {
+  await fs.mkdir(evidenceDir, { recursive: true });
+  const rows = await fetchRows();
+  const { sources, skipped } = await materializeSources(rows);
+  const corpusMarkdown = renderCorpus(sources, skipped);
+  await fs.writeFile(path.join(evidenceDir, "source-corpus.md"), corpusMarkdown);
+
+  const { brief, laneNotes } = await draftExecutiveBrief(sources);
+  const briefMarkdown = [
+    `# Daily Executive Brief - ${businessDate}`,
+    "",
+    brief,
+    "",
+    "## Source Coverage",
+    "",
+    "```json",
+    JSON.stringify(
+      {
+        businessDate,
+        window: windowBounds,
+        included: Object.fromEntries(Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length])),
+        skipped: skipped.length,
+      },
+      null,
+      2,
+    ),
+    "```",
+    "",
+  ].join("\n");
+  await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
+  await fs.writeFile(
+    path.join(evidenceDir, "source-manifest.json"),
+    JSON.stringify(
+      {
+        businessDate,
+        generatedAt: new Date().toISOString(),
+        shouldWrite,
+        rowsConsidered: rows.length,
+        sources: sources.map(({ text, ...source }) => source),
+        skipped,
+      },
+      null,
+      2,
+    ),
+  );
+
+  let packet = null;
+  if (shouldWrite) {
+    packet = await writePacket({ sources, brief, laneNotes });
+    await fs.writeFile(path.join(evidenceDir, "packet-write.json"), JSON.stringify(packet, null, 2));
+  }
+
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        businessDate,
+        evidenceDir,
+        rowsConsidered: rows.length,
+        included: Object.fromEntries(Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length])),
+        skipped: skipped.length,
+        packet,
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+main().catch((error) => {
+  console.error(error.stack || error.message);
+  process.exit(1);
+});

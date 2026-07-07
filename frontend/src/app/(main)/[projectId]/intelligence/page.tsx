@@ -15,6 +15,7 @@ import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
+  loadCurrentIntelligencePacketBySlug,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
 import type {
@@ -266,6 +267,10 @@ function safeNarrative(value: string | null | undefined, maxLength = 260): strin
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 function moneyField(value: unknown): number | null {
@@ -712,6 +717,99 @@ function ProjectHealthHero({
           {summary || "A written project summary isn’t available yet — the synthesis pipeline has not produced a clean read."}
         </p>
       </div>
+    </section>
+  );
+}
+
+function markdownSection(markdown: string, heading: string): string[] {
+  const lines = markdown.split("\n");
+  const start = lines.findIndex((line) => line.trim().toLowerCase() === `## ${heading}`.toLowerCase());
+  if (start === -1) return [];
+  const sectionLines: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^##\s+/.test(line.trim())) break;
+    const cleaned = cleanText(line.replace(/^[-*]\s+/, "").replace(/^\d+\.\s+/, ""));
+    if (cleaned && cleaned !== "json") sectionLines.push(cleaned);
+  }
+  return sectionLines;
+}
+
+function dailyBriefMarkdown(packet: ClientProjectIntelligencePacket): string {
+  return (
+    asString(asRecord(packet.packetJson).briefMarkdown) ||
+    packet.strategicRead ||
+    packet.executiveSummary ||
+    ""
+  );
+}
+
+function sourceCountText(packet: ClientProjectIntelligencePacket): string {
+  const counts = asRecord(packet.sourceCoverage.sourceCounts);
+  const total = Object.values(counts).reduce<number>((sum, value) => {
+    return typeof value === "number" && Number.isFinite(value) ? sum + value : sum;
+  }, 0);
+  if (total > 0) return `${total} sources`;
+  const sourceIds = packet.sourceCoverage.sourceIds;
+  return Array.isArray(sourceIds) ? `${sourceIds.length} sources` : "source coverage recorded";
+}
+
+function DailyExecutiveBriefSection({ packet }: { packet: ClientProjectIntelligencePacket | null }) {
+  if (!packet) return null;
+
+  const markdown = dailyBriefMarkdown(packet);
+  const executiveRead = markdownSection(markdown, "Executive read").join(" ");
+  const decisions = markdownSection(markdown, "Critical decisions needed").slice(0, 5);
+  const watchItems = [
+    ...markdownSection(markdown, "Financial / watch items").slice(0, 3),
+    ...markdownSection(markdown, "Schedule / operations watch").slice(0, 3),
+  ].slice(0, 5);
+  const businessDate = asString(packet.sourceCoverage.businessDate) || formatDate(packet.coveredStartAt);
+
+  if (!executiveRead && decisions.length === 0 && watchItems.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <SectionHeader title="Daily executive brief" />
+        <p className="text-xs text-muted-foreground">
+          {businessDate} · {sourceCountText(packet)} · compiled {formatDateTime(packet.generatedAt)}
+        </p>
+      </div>
+      {executiveRead ? (
+        <p className="max-w-4xl text-sm leading-7 text-foreground">{safeNarrative(executiveRead, 900)}</p>
+      ) : null}
+      {decisions.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Decisions</p>
+          <ul className="space-y-2 text-sm leading-6 text-foreground">
+            {decisions.map((item) => (
+              <li key={item}>{safeNarrative(item, 360)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {watchItems.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Watch items</p>
+          <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+            {watchItems.map((item) => (
+              <li key={item}>{safeNarrative(item, 360)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function DailyExecutiveBriefUnavailable({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <section className="space-y-2">
+      <SectionHeader title="Daily executive brief" />
+      <p className="text-sm leading-6 text-destructive">
+        Daily executive brief could not load: {error}
+      </p>
     </section>
   );
 }
@@ -1559,9 +1657,19 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
     }
   }
 
-  const [operatingRecord, projectTasks] = await Promise.all([
+  const [operatingRecord, projectTasks, dailyBriefResult] = await Promise.all([
     loadOperatingRecordState(supabase, numericProjectId),
     loadProjectTasks(supabase, numericProjectId),
+    loadCurrentIntelligencePacketBySlug({
+      slug: "daily-executive-brief",
+      supabase,
+      includeSourcePreview: false,
+    })
+      .then((packet) => ({ packet, error: null }))
+      .catch((error) => ({
+        packet: null,
+        error: error instanceof Error ? error.message : "Unexpected daily executive brief load failure.",
+      })),
   ]);
   const pageState = packet ? buildIntelligencePageState(packet) : null;
 
@@ -1622,6 +1730,8 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       contentClassName="space-y-8"
     >
       <ProjectHealthHero currentState={operatingRecord.currentState} latestSnapshot={operatingRecord.latestSnapshot} />
+      <DailyExecutiveBriefSection packet={dailyBriefResult.packet} />
+      <DailyExecutiveBriefUnavailable error={dailyBriefResult.error} />
 
       <DetailLayout
         sidebar={
