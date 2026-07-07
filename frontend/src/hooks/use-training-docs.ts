@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import type { TrainingDocStatus } from "@/lib/training-docs/constants";
 import type { TrainingDocWithAssets } from "@/lib/training-docs/types";
 
 export const trainingDocKeys = {
@@ -35,7 +36,7 @@ export function useCreateTrainingDoc() {
       summary?: string | null;
       body_markdown?: string;
       audience?: "internal" | "client" | "subcontractor" | "admin";
-      status?: "draft" | "in_review" | "approved" | "published" | "archived";
+      status?: TrainingDocStatus;
       source_route?: string | null;
       app_tool_category?: string | null;
       review_notes?: string | null;
@@ -63,7 +64,7 @@ export function useUpdateTrainingDoc() {
       summary?: string | null;
       body_markdown?: string;
       audience?: "internal" | "client" | "subcontractor" | "admin";
-      status?: "draft" | "in_review" | "approved" | "published" | "archived";
+      status?: TrainingDocStatus;
       source_route?: string | null;
       app_tool_category?: string | null;
       review_notes?: string | null;

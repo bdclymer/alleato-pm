@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Json, SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
@@ -7,6 +7,7 @@ import {
   TRAINING_DOC_ASSET_TYPES,
   TRAINING_DOC_AUDIENCES,
   TRAINING_DOC_DEFAULT_COLLECTION,
+  TRAINING_DOC_QA_STATUSES,
   TRAINING_DOC_STATUSES,
   normalizeTrainingDocSlug,
 } from "./constants";
@@ -55,6 +56,11 @@ export function normalizeTrainingDocInput(input: {
   audience?: string;
   status?: string;
   source_route?: string | null;
+  tool_category?: string | null;
+  tool_module?: string | null;
+  task_key?: string | null;
+  qa_status?: string | null;
+  qa_notes?: string | null;
   app_tool_category?: string | null;
   review_notes?: string | null;
   target_collection?: string | null;
@@ -64,6 +70,12 @@ export function normalizeTrainingDocInput(input: {
   if (!slug) {
     throw new Error("A slug could not be generated. Add a title or slug.");
   }
+  const qaStatus = input.qa_status?.trim() ?? "";
+  const normalizedQaStatus = (TRAINING_DOC_QA_STATUSES as readonly string[]).includes(
+    qaStatus,
+  )
+    ? (qaStatus as (typeof TRAINING_DOC_QA_STATUSES)[number])
+    : null;
 
   return {
     title,
@@ -72,6 +84,11 @@ export function normalizeTrainingDocInput(input: {
     body_markdown: input.body_markdown ?? "",
     audience: input.audience ?? "internal",
     status: input.status ?? "draft",
+    tool_category: input.tool_category?.trim() || null,
+    tool_module: input.tool_module?.trim() || null,
+    task_key: input.task_key?.trim() || null,
+    qa_status: normalizedQaStatus,
+    qa_notes: input.qa_notes?.trim() || null,
     source_route: input.source_route?.trim() || null,
     review_notes: input.review_notes?.trim() || null,
     target_collection:
@@ -81,20 +98,65 @@ export function normalizeTrainingDocInput(input: {
 
 export function mergeTrainingDocMetadata(
   currentMetadata: Record<string, unknown> | null | undefined,
-  input: { app_tool_category?: string | null },
+  input: {
+    app_tool_category?: string | null;
+    tool_category?: string | null;
+    tool_module?: string | null;
+    task_key?: string | null;
+    audit_status?: string | null;
+    audit_notes?: string | null;
+    blocker_type?: string | null;
+    blocker_owner?: string | null;
+    product_gap_issue_id?: string | null;
+  },
 ) {
-  const metadata = { ...(currentMetadata ?? {}) };
+  const metadata: Record<string, Json> = {
+    ...(currentMetadata as Record<string, Json>),
+  };
 
-  if ("app_tool_category" in input) {
-    const appToolCategory = input.app_tool_category?.trim();
-    if (appToolCategory) {
-      metadata.appToolCategory = appToolCategory;
+  const assignText = (key: string, value?: string | null) => {
+    if (value === undefined) return;
+    if (value?.trim()) {
+      metadata[key] = value.trim();
     } else {
-      delete metadata.appToolCategory;
+      delete metadata[key];
     }
+  };
+
+  if ("app_tool_category" in input || "tool_category" in input) {
+    const appToolCategory = (input.app_tool_category || input.tool_category)?.trim();
+    assignText("appToolCategory", appToolCategory);
   }
 
-  return metadata;
+  if ("tool_module" in input) {
+    assignText("tutorialModule", input.tool_module);
+  }
+
+  if ("task_key" in input) {
+    assignText("tutorialId", input.task_key);
+  }
+
+  if ("audit_status" in input) {
+    assignText("lastParityStatus", input.audit_status);
+  }
+
+  if ("audit_notes" in input) {
+    assignText("auditNotes", input.audit_notes);
+  }
+
+  if ("blocker_type" in input) {
+    assignText("blockerType", input.blocker_type);
+  }
+
+  if ("blocker_owner" in input) {
+    assignText("blockerOwner", input.blocker_owner);
+  }
+
+  if ("product_gap_issue_id" in input) {
+    assignText("productGapIssueId", input.product_gap_issue_id);
+  }
+
+  return metadata as Json;
 }
 
 export async function listTrainingDocs(

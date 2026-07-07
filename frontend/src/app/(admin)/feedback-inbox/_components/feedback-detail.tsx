@@ -288,7 +288,7 @@ export function FeedbackDetail({
         </div>
 
         <section className="space-y-4">
-          <SectionRuleHeading>Details</SectionRuleHeading>
+          <SectionRuleHeading label="Details" />
 
           <div className="space-y-2">
             <span className="text-xs font-medium text-muted-foreground">Title</span>
@@ -343,7 +343,7 @@ export function FeedbackDetail({
         </section>
 
         <section className="space-y-4">
-          <SectionRuleHeading>Feedback</SectionRuleHeading>
+          <SectionRuleHeading label="Feedback" />
 
           <div className="space-y-1.5 text-sm">
             {item.target_text ? (

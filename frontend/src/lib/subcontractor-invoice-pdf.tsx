@@ -494,13 +494,13 @@ function SummaryRuleRow({
 }) {
   return (
     <View style={styles.ruleRow}>
-      <Text style={[styles.ruleCellNumber, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.ruleCellNumber, emphasize ? styles.emphasized : {}]}>
         {number}
       </Text>
-      <Text style={[styles.ruleCellLabel, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.ruleCellLabel, emphasize ? styles.emphasized : {}]}>
         {label}
       </Text>
-      <Text style={[styles.ruleCellValue, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.ruleCellValue, emphasize ? styles.emphasized : {}]}>
         {formatMoney(value)}
       </Text>
     </View>
@@ -552,43 +552,46 @@ function DetailTable({
 
   const renderRow = (row: ContinuationRow, key: string, emphasize = false) => (
     <View key={key} style={styles.detailRow} wrap={false}>
-      <Text style={[styles.detailItem, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailItem, emphasize ? styles.emphasized : {}]}>
         {row.itemNo}
       </Text>
-      <Text style={[styles.detailBudget, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailBudget, emphasize ? styles.emphasized : {}]}>
         {row.budgetCode}
       </Text>
       <Text
-        style={[styles.detailDescription, emphasize ? styles.emphasized : null]}
+        style={[styles.detailDescription, emphasize ? styles.emphasized : {}]}
       >
         {row.description}
       </Text>
-      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : {}]}>
         {formatMoney(row.scheduledValue)}
       </Text>
-      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailNumber, emphasize ? styles.emphasized : {}]}>
         {formatMoney(row.previousWork)}
       </Text>
       <Text
-        style={[styles.detailNarrowNumber, emphasize ? styles.emphasized : null]}
+        style={[
+          styles.detailNarrowNumber,
+          emphasize ? styles.emphasized : {},
+        ]}
       >
         {formatMoney(row.thisPeriodWork)}
       </Text>
       <Text
-        style={[styles.detailNarrowNumber, emphasize ? styles.emphasized : null]}
+        style={[styles.detailNarrowNumber, emphasize ? styles.emphasized : {}]}
       >
         {formatMoney(row.materialsStored)}
       </Text>
-      <Text style={[styles.detailTotal, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailTotal, emphasize ? styles.emphasized : {}]}>
         {formatMoney(row.totalCompletedStored)}
       </Text>
-      <Text style={[styles.detailPercent, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailPercent, emphasize ? styles.emphasized : {}]}>
         {formatPercent(row.percentComplete)}
       </Text>
-      <Text style={[styles.detailBalance, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailBalance, emphasize ? styles.emphasized : {}]}>
         {formatMoney(row.balanceToFinish)}
       </Text>
-      <Text style={[styles.detailRetainage, emphasize ? styles.emphasized : null]}>
+      <Text style={[styles.detailRetainage, emphasize ? styles.emphasized : {}]}>
         {formatMoney(row.retainage)}
       </Text>
     </View>

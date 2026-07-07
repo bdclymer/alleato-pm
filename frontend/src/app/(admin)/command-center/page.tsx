@@ -65,6 +65,7 @@ import {
   type KanbanTone,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import { cn } from "@/lib/utils";
 import {
   ActiveWorkWorkspace,
   OpsPanel,

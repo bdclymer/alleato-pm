@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   TRAINING_DOC_AUDIENCES,
   TRAINING_DOC_STATUSES,
+  type TrainingDocStatus,
   normalizeTrainingDocSlug,
 } from "@/lib/training-docs/constants";
 import type {
@@ -47,7 +48,7 @@ type DocFormState = {
   slug: string;
   summary: string;
   audience: "internal" | "client" | "subcontractor" | "admin";
-  status: "draft" | "in_review" | "approved" | "published" | "archived";
+  status: TrainingDocStatus;
   source_route: string;
   app_tool_category: string;
   review_notes: string;

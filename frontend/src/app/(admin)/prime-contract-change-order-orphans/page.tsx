@@ -190,6 +190,7 @@ export default function PrimeContractChangeOrderOrphansPage() {
 
   return (
     <PageShell
+      variant="table"
       title="Prime Change Order Orphans"
       description="Repair prime change orders that are missing both parent links."
     >

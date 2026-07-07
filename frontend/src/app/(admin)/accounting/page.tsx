@@ -131,7 +131,6 @@ interface DashboardResponse {
   arByProject: ProjectRevenue[];
   apByProject: ProjectBalance[];
   netMarginByProject: ProjectNetMargin[];
-  projectCostSeries: ProjectCostSeries[];
   costBreakdownSeries: {
     byDivision: CostBreakdownSeries[];
     byAccount: CostBreakdownSeries[];
