@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from src.services.health.source_rag_health import (
+    SEARCHABLE_MEETING_CHUNK_SOURCE_TYPES,
     _counts_project_intelligence_outcome,
     _counts_task_extraction_outcome,
     _graph_conversation_chunk_alerts,
@@ -12,6 +13,16 @@ from src.services.health.source_rag_health import (
     _latest_job_metadata_by_document_id,
     _merge_source_synthesis_metadata,
 )
+
+
+def test_searchable_meeting_chunk_source_types_include_summary_repairs():
+    assert {
+        "meeting_transcript",
+        "meeting_summary",
+        "meeting_segment_summary",
+        "meeting_notes",
+        "meeting_section",
+    }.issubset(SEARCHABLE_MEETING_CHUNK_SOURCE_TYPES)
 
 
 def test_graph_conversation_chunk_alerts_pass_for_source_owned_chunks_and_skips():
@@ -240,6 +251,24 @@ def test_meeting_project_intelligence_requires_full_read_for_metadata_only_outco
     assert _counts_project_intelligence_outcome(
         family="meetings",
         document_id="meeting-2",
+        evidence_ids=set(),
+        job_metadata_by_id=metadata_by_id,
+    )
+
+
+def test_meeting_project_intelligence_counts_packet_refresh_job():
+    metadata_by_id = {
+        "meeting-1": {
+            "path": "project_intelligence.refresh_project_intelligence",
+            "packet_id": "packet-1",
+            "compiler_version": "project_intelligence_synthesis_v1",
+            "_updated_at": "2026-07-07T18:25:28+00:00",
+        }
+    }
+
+    assert _counts_project_intelligence_outcome(
+        family="meetings",
+        document_id="meeting-1",
         evidence_ids=set(),
         job_metadata_by_id=metadata_by_id,
     )

@@ -60,6 +60,13 @@ GRAPH_CONVERSATION_ALLOWED_SOURCE_TYPES = {
     "teams_dm": {"teams_dm"},
     "teams_channel": {"teams_channel", "teams_message"},
 }
+SEARCHABLE_MEETING_CHUNK_SOURCE_TYPES = {
+    "meeting_transcript",
+    "meeting_summary",
+    "meeting_segment_summary",
+    "meeting_notes",
+    "meeting_section",
+}
 NON_PROJECT_APPLICABLE_PATTERNS = [
     re.compile(pattern, re.IGNORECASE)
     for pattern in [
@@ -483,6 +490,10 @@ def _counts_project_intelligence_outcome(
         document_id in evidence_ids
         or _has_full_transcript_read_proof(document_id, job_metadata_by_id)
         or bool(metadata.get("source_synthesis_signal_type"))
+        or (
+            bool(metadata.get("packet_id"))
+            and metadata.get("path") == "project_intelligence.refresh_project_intelligence"
+        )
     )
 
 
@@ -844,10 +855,10 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     ).data or []
 
     embedded_ids = {str(row.get("document_id")) for row in chunk_rows if row.get("document_id")}
-    embedded_meeting_transcript_ids = {
+    embedded_meeting_ids = {
         str(row.get("document_id"))
         for row in chunk_rows
-        if row.get("document_id") and row.get("source_type") == "meeting_transcript"
+        if row.get("document_id") and row.get("source_type") in SEARCHABLE_MEETING_CHUNK_SOURCE_TYPES
     }
     rag_metadata_by_id = {
         str(row.get("id")): row
@@ -954,11 +965,11 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             for row_id in task_required_ids
             if not any(str(row.get("id")) == row_id and row.get("rag_only") for row in rows)
         }
-        vectorized_ids = embedded_meeting_transcript_ids if family == "meetings" else embedded_ids
+        vectorized_ids = embedded_meeting_ids if family == "meetings" else embedded_ids
         vectorized_count = sum(1 for row_id in vectorization_required_ids if row_id in vectorized_ids)
         vectorized_message = (
             f"{vectorized_count}/{len(vectorization_required_ids)} Fireflies metadata rows have "
-            "embedded meeting_transcript chunks and are searchable by the AI assistant."
+            "embedded searchable meeting chunks and are searchable by the AI assistant."
             if family == "meetings"
             else f"{vectorized_count}/{len(vectorization_required_ids)} have embedded chunks and are searchable by the AI assistant."
         )
@@ -982,7 +993,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                     row.get("updated_at")
                     for row in chunk_rows
                     if str(row.get("document_id")) in vectorization_required_ids
-                    and (family != "meetings" or row.get("source_type") == "meeting_transcript")
+                    and (family != "meetings" or row.get("source_type") in SEARCHABLE_MEETING_CHUNK_SOURCE_TYPES)
                 ]),
                 "message": vectorized_message,
             },

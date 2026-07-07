@@ -62,6 +62,13 @@ const EMBEDDING_MODEL = "text-embedding-3-large";
 const EMBEDDING_DIMS = 3072;
 const CHUNK_TARGET_CHARS = 3000;
 const CHUNK_OVERLAP_CHARS = 500;
+const EXCLUDED_DOCUMENT_STATUSES = new Set([
+  "intentionally_excluded",
+  "deleted_no_transcript",
+  "metadata_only",
+  "not_vectorizable",
+  "skipped_low_content",
+]);
 
 function hashContent(text) {
   return createHash("sha256").update(text).digest("hex").slice(0, 24);
@@ -84,6 +91,14 @@ function chunkText(text) {
     start = Math.max(0, end - CHUNK_OVERLAP_CHARS);
   }
   return chunks.filter((chunk) => chunk.length >= 100);
+}
+
+function isExcludedMeeting(row) {
+  const status = String(row.status ?? "").trim();
+  if (EXCLUDED_DOCUMENT_STATUSES.has(status)) return true;
+
+  const titleSignal = `${row.title ?? ""} ${row.category ?? ""} ${row.type ?? ""}`.toLowerCase();
+  return titleSignal.includes("interview") || titleSignal.includes("inteview");
 }
 
 async function embed(texts) {
@@ -213,8 +228,8 @@ async function fetchRestCandidates() {
   const rows = await restSelect(
     appRestUrl,
     appRestKey,
-    "document_metadata?" +
-      "select=id,title,date,project_id,participants_array,content,summary,overview,source,type,category,fireflies_id,captured_at,created_at" +
+      "document_metadata?" +
+      "select=id,title,date,project_id,participants_array,content,summary,overview,source,type,category,status,fireflies_id,captured_at,created_at" +
       `&or=${encodeURIComponent("(source.eq.fireflies,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting,fireflies_id.not.is.null)")}` +
       `&or=${encodeURIComponent("(deleted_at.is.null,deleted_at.is.null)")}` +
       `&created_at=gte.${encodeURIComponent(since)}` +
@@ -225,7 +240,12 @@ async function fetchRestCandidates() {
     .filter((row) => {
       const effectiveAt = row.captured_at || row.date || row.created_at;
       const contentLength = String(row.content || row.summary || row.overview || "").trim().length;
-      return Boolean(effectiveAt) && new Date(effectiveAt).getTime() >= Date.now() - days * 24 * 60 * 60 * 1000 && contentLength >= 100;
+      return (
+        !isExcludedMeeting(row) &&
+        Boolean(effectiveAt) &&
+        new Date(effectiveAt).getTime() >= Date.now() - days * 24 * 60 * 60 * 1000 &&
+        contentLength >= 100
+      );
     })
     .sort((a, b) => {
       const aTime = new Date(a.captured_at || a.date || a.created_at || 0).getTime();
@@ -326,7 +346,8 @@ async function runRestFallback(originalError) {
 
 try {
   const candidates = await sql`
-    select dm.id, dm.title, dm.date, dm.project_id, dm.participants_array, dm.content, dm.summary, dm.overview
+    select dm.id, dm.title, dm.date, dm.project_id, dm.participants_array, dm.content, dm.summary, dm.overview,
+           dm.status, dm.type, dm.category, dm.fireflies_id
     from public.document_metadata dm
     where (dm.source = 'fireflies'
        or dm.type in ('meeting', 'meeting_transcript')
@@ -334,6 +355,9 @@ try {
        or dm.fireflies_id is not null)
       and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - (${days} || ' days')::interval
       and length(coalesce(dm.content, dm.summary, dm.overview, '')) >= 100
+      and coalesce(dm.status, '') not in ('intentionally_excluded', 'deleted_no_transcript', 'metadata_only', 'not_vectorizable', 'skipped_low_content')
+      and lower(coalesce(dm.title, '') || ' ' || coalesce(dm.category, '') || ' ' || coalesce(dm.type, '')) not like '%interview%'
+      and lower(coalesce(dm.title, '') || ' ' || coalesce(dm.category, '') || ' ' || coalesce(dm.type, '')) not like '%inteview%'
     order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last
     limit ${limit}
   `;
