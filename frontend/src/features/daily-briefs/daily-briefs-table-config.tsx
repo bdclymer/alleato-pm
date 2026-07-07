@@ -35,8 +35,8 @@ export const dailyBriefFilters: FilterConfig[] = [
     label: "Status",
     type: "select",
     options: [
-      { value: "approved", label: "Approved" },
-      { value: "draft", label: "Draft" },
+      { value: "current", label: "Current" },
+      { value: "snapshot", label: "Snapshot" },
     ],
   },
   {
@@ -77,10 +77,7 @@ function DeliveryCell({ item }: { item: DailyBriefHistoryItem }) {
   if (item.sentTeams) {
     return <Badge variant="outline">Teams sent</Badge>;
   }
-  if (item.workflowStatus === "approved") {
-    return <span className="text-sm text-muted-foreground">Approved, not sent</span>;
-  }
-  return <span className="text-sm text-muted-foreground">Not ready</span>;
+  return <span className="text-sm text-muted-foreground">Packet only</span>;
 }
 
 function SourceCoverageCell({ item }: { item: DailyBriefHistoryItem }) {
@@ -140,9 +137,7 @@ export function buildDailyBriefTableColumns(): TableColumn<DailyBriefHistoryItem
       csvValue: (item) =>
         item.sentTeams
           ? "Teams sent"
-          : item.workflowStatus === "approved"
-            ? "Approved, not sent"
-            : "Not ready",
+          : "Packet only",
       width: 170,
     },
     {

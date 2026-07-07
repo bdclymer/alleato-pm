@@ -1,109 +1,63 @@
 const mockRequireCurrentUserAppCapability = jest.fn();
-const mockGetExecutiveBriefingDashboard = jest.fn();
-const mockRegenerateDailyBriefDraftWithLedger = jest.fn();
+const mockLoadCurrentDailyExecutiveBriefPacket = jest.fn();
 
 jest.mock("@/lib/app-capabilities", () => ({
   requireCurrentUserAppCapability: (...args: unknown[]) =>
     mockRequireCurrentUserAppCapability(...args),
 }));
 
-jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
-  getExecutiveBriefingDashboard: (...args: unknown[]) =>
-    mockGetExecutiveBriefingDashboard(...args),
-}));
-
-jest.mock("@/lib/ai-ops/executive-daily-brief-ledger", () => ({
-  regenerateDailyBriefDraftWithLedger: (...args: unknown[]) =>
-    mockRegenerateDailyBriefDraftWithLedger(...args),
-}));
-
-jest.mock("@/lib/executive/daily-brief", () => ({
-  DEFAULT_EXECUTIVE_WINDOW_DAYS: 3,
-  clampDailyBriefWindowDays: (value: number) =>
-    Number.isFinite(value) ? Math.min(Math.max(Math.trunc(value), 1), 14) : 3,
+jest.mock("@/lib/daily-briefs/canonical-packets", () => ({
+  loadCurrentDailyExecutiveBriefPacket: (...args: unknown[]) =>
+    mockLoadCurrentDailyExecutiveBriefPacket(...args),
+  toCanonicalDailyBriefApiResponse: (packet: unknown) => ({
+    sourceOfTruth: "intelligence_packets",
+    targetSlug: "daily-executive-brief",
+    packet,
+  }),
 }));
 
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 
-const persistedPacket = {
-  generatedAt: "2026-05-06T12:00:00.000Z",
-  windowDays: 3,
-  retrievalOrder: [],
-  sections: {
-    needsBrandon: [],
-    waitingOnOthers: [],
-    importantUpdates: [],
-  },
-  sourceCoverage: [],
-  retrievalNotes: [],
-};
-
-const freshPacket = {
-  ...persistedPacket,
-  generatedAt: "2026-05-06T13:00:00.000Z",
+const canonicalPacket = {
+  id: "packet-1",
+  businessDate: "2026-07-06",
+  sourceCount: 212,
 };
 
 describe("/api/executive/daily-brief", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireCurrentUserAppCapability.mockResolvedValue(undefined);
-    mockGetExecutiveBriefingDashboard.mockResolvedValue({
-      draft: { packet: persistedPacket },
-    });
-    mockRegenerateDailyBriefDraftWithLedger.mockResolvedValue({
-      draft: { packet: freshPacket },
-      runId: "run-1",
-    });
+    mockLoadCurrentDailyExecutiveBriefPacket.mockResolvedValue(canonicalPacket);
   });
 
-  it("returns the current canonical Daily Brief packet by default", async () => {
+  it("returns the current canonical intelligence packet by default", async () => {
     const response = await GET(
       new NextRequest("http://localhost/api/executive/daily-brief"),
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(persistedPacket);
-    expect(mockGetExecutiveBriefingDashboard).toHaveBeenCalledWith({
-      windowDays: 3,
+    await expect(response.json()).resolves.toEqual({
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+      packet: canonicalPacket,
     });
-    expect(mockRegenerateDailyBriefDraftWithLedger).not.toHaveBeenCalled();
+    expect(mockLoadCurrentDailyExecutiveBriefPacket).toHaveBeenCalledTimes(1);
   });
 
-  it("refreshes the canonical packet only when fresh=true is requested", async () => {
+  it("fails loudly instead of regenerating the retired legacy packet", async () => {
     const response = await GET(
       new NextRequest(
         "http://localhost/api/executive/daily-brief?fresh=true&days=5",
       ),
     );
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(freshPacket);
-    expect(mockRegenerateDailyBriefDraftWithLedger).toHaveBeenCalledWith(
-      expect.objectContaining({
-        windowDays: 5,
-        sourceBackedOnly: false,
-        surface: "/api/executive/daily-brief#GET",
-      }),
-    );
-    expect(mockGetExecutiveBriefingDashboard).not.toHaveBeenCalled();
-  });
-
-  it("supports a source-backed refresh mode for foreground manual actions", async () => {
-    const response = await GET(
-      new NextRequest(
-        "http://localhost/api/executive/daily-brief?fresh=true&mode=source-backed&days=3",
-      ),
-    );
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual(freshPacket);
-    expect(mockRegenerateDailyBriefDraftWithLedger).toHaveBeenCalledWith(
-      expect.objectContaining({
-        windowDays: 3,
-        sourceBackedOnly: true,
-        surface: "/api/executive/daily-brief#GET",
-      }),
-    );
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "legacy_generation_retired",
+      sourceOfTruth: "intelligence_packets",
+    });
+    expect(mockLoadCurrentDailyExecutiveBriefPacket).not.toHaveBeenCalled();
   });
 });

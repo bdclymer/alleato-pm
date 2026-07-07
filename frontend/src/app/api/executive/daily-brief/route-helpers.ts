@@ -1,11 +1,5 @@
 import { after, NextResponse } from "next/server";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
-import {
-  DEFAULT_EXECUTIVE_WINDOW_DAYS,
-  clampDailyBriefWindowDays,
-} from "@/lib/executive/daily-brief";
-import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
-import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
 import { flushLangfuse } from "@/instrumentation";
 import {
   currentExecutiveDailyBriefTraceId,
@@ -13,6 +7,10 @@ import {
   withExecutiveDailyBriefObservation,
   withExecutiveDailyBriefTrace,
 } from "@/lib/ai/executive-daily-brief-langfuse";
+import {
+  loadCurrentDailyExecutiveBriefPacket,
+  toCanonicalDailyBriefApiResponse,
+} from "@/lib/daily-briefs/canonical-packets";
 
 function scheduleLangfuseFlush() {
   try {
@@ -53,98 +51,59 @@ export async function getDailyBriefPacketResponse(
       );
 
       const { searchParams } = new URL(request.url);
-      const windowDays = clampDailyBriefWindowDays(
-        Number(
-          searchParams.get("days") ?? String(DEFAULT_EXECUTIVE_WINDOW_DAYS),
-        ),
-      );
       const fresh = searchParams.get("fresh") === "true";
-      const sourceBackedOnly = searchParams.get("mode") === "source-backed";
 
-      const result = fresh
-        ? await withExecutiveDailyBriefObservation(
-            "daily-brief.generate-packet",
-            {
-              type: "chain",
-              metadata: {
-                route: guardrailKey,
-                windowDays,
-                sourceBackedOnly,
-              },
-              input: { windowDays, sourceBackedOnly },
-            },
-            async () => {
-              const refreshed = await regenerateDailyBriefDraftWithLedger({
-                windowDays,
-                sourceBackedOnly,
-                triggerType: "manual_packet_refresh",
-                surface: guardrailKey,
-                title: "Executive Daily Brief packet refresh",
-                userGoal: "Regenerate the Executive Daily Brief API packet.",
-                normalizedGoal:
-                  "Generate the Executive Daily Brief packet and record the canonical AI Ops run.",
-                metadata: {
-                  langfuseTraceId: currentExecutiveDailyBriefTraceId(),
-                },
-              });
-              updateExecutiveDailyBriefObservation({
-                output: {
-                  ok: true,
-                  runId: refreshed.runId,
-                  dailyRecapId: refreshed.draft.id,
-                },
-              });
-              return refreshed;
-            },
-          )
-        : await withExecutiveDailyBriefObservation(
-            "daily-brief.read-current-packet",
-            {
-              type: "retriever",
-              metadata: {
-                route: guardrailKey,
-                windowDays,
-              },
-              input: { windowDays },
-            },
-            async () => {
-              const current = await getExecutiveBriefingDashboard({
-                windowDays,
-              });
-              updateExecutiveDailyBriefObservation({
-                output: {
-                  ok: true,
-                  dailyRecapId: current.draft.id,
-                },
-              });
-              return current;
-            },
-          );
+      if (fresh) {
+        return NextResponse.json(
+          {
+            error: "legacy_generation_retired",
+            message:
+              "Daily Brief fresh generation from this endpoint is retired. Run the canonical manual source-bundle compiler so the output writes to intelligence_packets/daily-executive-brief.",
+            sourceOfTruth: "intelligence_packets",
+          },
+          { status: 409 },
+        );
+      }
 
-      const draft = result.draft;
-      const itemCount =
-        draft.packet.sections.needsBrandon.length +
-        draft.packet.sections.waitingOnOthers.length +
-        draft.packet.sections.importantUpdates.length;
+      const packet = await withExecutiveDailyBriefObservation(
+        "daily-brief.read-current-canonical-packet",
+        {
+          type: "retriever",
+          metadata: {
+            route: guardrailKey,
+            sourceOfTruth: "intelligence_packets",
+          },
+          input: { targetSlug: "daily-executive-brief" },
+        },
+        async () => {
+          const current = await loadCurrentDailyExecutiveBriefPacket();
+          updateExecutiveDailyBriefObservation({
+            output: {
+              ok: true,
+              packetId: current.id,
+              sourceCount: current.sourceCount,
+            },
+          });
+          return current;
+        },
+      );
 
       updateExecutiveDailyBriefObservation({
         metadata: {
           route: guardrailKey,
-          windowDays,
           fresh,
-          sourceBackedOnly,
-          itemCount,
-          dailyRecapId: draft.id,
-          runId: "runId" in result ? result.runId : undefined,
+          sourceOfTruth: "intelligence_packets",
+          packetId: packet.id,
+          sourceCount: packet.sourceCount,
           traceId: currentExecutiveDailyBriefTraceId(),
         },
         output: {
           ok: true,
-          itemCount,
+          packetId: packet.id,
         },
       });
 
-      return NextResponse.json(draft.packet);
+      return NextResponse.json(toCanonicalDailyBriefApiResponse(packet));
     },
   );
 }
