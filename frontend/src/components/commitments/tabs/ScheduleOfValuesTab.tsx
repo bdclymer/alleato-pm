@@ -40,6 +40,7 @@ interface LineItem {
   id: string;
   line_number?: number | null;
   budget_code?: string | null;
+  project_budget_code_id?: string | null;
   description?: string | null;
   amount?: number | null;
   billed_to_date?: number | null;
@@ -229,7 +230,12 @@ export function ScheduleOfValuesTab({
         setItems((prev) =>
           prev.map((item) =>
             item.id === targetId
-              ? { ...item, budget_code: budgetCodeTextValue(normalized), isDirty: true }
+              ? {
+                  ...item,
+                  budget_code: budgetCodeTextValue(normalized),
+                  project_budget_code_id: normalized.id,
+                  isDirty: true,
+                }
               : item,
           ),
         );
@@ -250,6 +256,7 @@ export function ScheduleOfValuesTab({
         line_number: nextLineNumber,
         description: "",
         budget_code: "",
+        project_budget_code_id: null,
         amount: 0,
         billed_to_date: 0,
         isNew: true,
@@ -263,7 +270,14 @@ export function ScheduleOfValuesTab({
 
   const updateItem = (
     id: string,
-    field: "budget_code" | "description" | "amount" | "quantity" | "uom" | "unit_cost",
+    field:
+      | "budget_code"
+      | "project_budget_code_id"
+      | "description"
+      | "amount"
+      | "quantity"
+      | "uom"
+      | "unit_cost",
     value: string | number | undefined,
   ) => {
     if (!canEdit) return;
@@ -330,6 +344,7 @@ export function ScheduleOfValuesTab({
               id: item.id.startsWith("temp-") ? undefined : item.id,
               line_number: item.line_number,
               budget_code: item.budget_code,
+              project_budget_code_id: item.project_budget_code_id ?? null,
               description: item.description,
               amount: item.amount,
               billed_to_date: item.billed_to_date,
@@ -510,9 +525,12 @@ export function ScheduleOfValuesTab({
             const remaining = Math.max(amount - billed, 0);
             const locked = isLocked(item);
             const budgetCodeResolution = resolvePrimeCoBudgetCode(
-              item.budget_code,
+              item.project_budget_code_id ?? item.budget_code,
               budgetCodes,
             );
+            const budgetCodeDisplay = budgetCodeResolution.isMapped
+              ? budgetCodeResolution.displayCode
+              : `Unmapped: ${budgetCodeResolution.displayCode}`;
 
             return (
               <InlineTableRow key={item.id}>
@@ -531,9 +549,10 @@ export function ScheduleOfValuesTab({
                   {canEdit ? (
                     <BudgetCodeSelector
                       value={budgetCodeResolution.selectorValue}
-                      onValueChange={(_value, code) =>
-                        updateItem(item.id, "budget_code", budgetCodeTextValue(code))
-                      }
+                      onValueChange={(value, code) => {
+                        updateItem(item.id, "project_budget_code_id", value);
+                        updateItem(item.id, "budget_code", budgetCodeTextValue(code));
+                      }}
                       onCreateNew={
                         !locked
                           ? () => {
@@ -554,8 +573,15 @@ export function ScheduleOfValuesTab({
                       className="min-w-56"
                     />
                   ) : (
-                    <div className="text-sm text-foreground">
-                      {budgetCodeResolution.displayCode || "—"}
+                    <div
+                      className={
+                        budgetCodeResolution.isMapped
+                          ? "text-sm text-foreground"
+                          : "text-sm font-medium text-destructive"
+                      }
+                      title={budgetCodeResolution.displayLabel}
+                    >
+                      {budgetCodeDisplay || "—"}
                     </div>
                   )}
                 </InlineTableCell>

@@ -64,7 +64,9 @@ export async function fetchCommitmentSovProjectBudgetCodes(
     });
   }
 
-  return (data ?? []) as ProjectBudgetCodeLookupRow[];
+  return ((data ?? []) as ProjectBudgetCodeLookupRow[]).filter(
+    (row) => Boolean(row.cost_type_id),
+  );
 }
 
 export async function resolveCommitmentSovBudgetCode(

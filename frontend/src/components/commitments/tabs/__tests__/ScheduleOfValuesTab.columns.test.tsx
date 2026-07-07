@@ -213,7 +213,7 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(screen.queryByRole("textbox", { name: /Description 1/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Move line 1 up/i })).not.toBeInTheDocument();
     expect(screen.getByText("Demolition")).toBeInTheDocument();
-    expect(screen.getByText("024113")).toBeInTheDocument();
+    expect(screen.getByText("Unmapped: 024113")).toBeInTheDocument();
   });
 
   it("forces approved commitments into read-only mode even if lockState says unlocked", async () => {

@@ -128,6 +128,7 @@ type CommitmentDetail = Commitment & {
     id: string;
     line_number?: number | null;
     budget_code?: string | null;
+    project_budget_code_id?: string | null;
     description?: string | null;
     amount?: number | null;
     quantity?: number | null;
@@ -250,6 +251,10 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
         : typeof item.cost_code === "string"
           ? item.cost_code
           : null,
+    project_budget_code_id:
+      typeof item.project_budget_code_id === "string"
+        ? item.project_budget_code_id
+        : null,
     description:
       typeof item.description === "string"
         ? item.description

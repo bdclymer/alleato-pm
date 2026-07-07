@@ -9,6 +9,10 @@ import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
 import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
@@ -182,7 +186,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("subcontract_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, quantity, unit_of_measure, unit_cost, billed_to_date, sort_order",
+              "id, line_number, budget_code, project_budget_code_id, description, amount, quantity, unit_of_measure, unit_cost, billed_to_date, sort_order",
             )
             .eq("subcontract_id", commitmentId)
             .order("line_number", { ascending: true }),
@@ -214,7 +218,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("purchase_order_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, quantity, uom, unit_cost, billed_to_date, sort_order",
+              "id, line_number, budget_code, project_budget_code_id, description, amount, quantity, uom, unit_cost, billed_to_date, sort_order",
             )
             .eq("purchase_order_id", commitmentId)
             .order("line_number", { ascending: true }),
@@ -589,11 +593,13 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     // Update SOV line items (budget_code, description, amount) if provided.
     // The edit form sends sov_lines when the user modifies SOV fields — budget_code
     // lives on the SOV item, not on the subcontract/PO record itself.
-    const rawBody = validatedData as Record<string, unknown>;
+    const rawBody = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
     const sovLines = Array.isArray(rawBody.sov_lines)
       ? (rawBody.sov_lines as Array<{
           line_number: number;
           budget_code: string | null;
+          project_budget_code_id?: string | null;
+          projectBudgetCodeId?: string | null;
           description: string | null;
           amount: number;
         }>)
@@ -623,8 +629,35 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
         unifiedData.commitment_type === "subcontract"
           ? "subcontract_id"
           : "purchase_order_id";
+      const sovProjectId =
+        data && typeof data === "object" && "project_id" in data
+          ? Number((data as { project_id?: number | string }).project_id)
+          : NaN;
+
+      if (Number.isNaN(sovProjectId)) {
+        throw new GuardrailError({
+          code: "SCHEMA_MISMATCH",
+          where: "commitments/[commitmentId]#PUT#sov-project-id",
+          message: "Cannot update commitment SOV lines because the parent project_id could not be resolved.",
+        });
+      }
+
+      const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+        supabase,
+        sovProjectId,
+        "commitments/[commitmentId]#PUT",
+      );
 
       for (const line of sovLines) {
+        const resolvedBudgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+          budgetCodes: projectBudgetCodes,
+          lineNumber: line.line_number,
+          where: "commitments/[commitmentId]#PUT",
+          submittedBudgetCode: line.budget_code,
+          submittedProjectBudgetCodeId:
+            line.project_budget_code_id ?? line.projectBudgetCodeId ?? null,
+        });
+
         const { data: existing } = await supabase
           .from(sovTable as "subcontract_sov_items")
           .select("id")
@@ -636,7 +669,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
           await supabase
             .from(sovTable as "subcontract_sov_items")
             .update({
-              budget_code: line.budget_code,
+              budget_code: resolvedBudgetCode.displayBudgetCode,
+              project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
               description: line.description,
               amount: line.amount,
             })
@@ -648,7 +682,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
               .insert({
                 subcontract_id: commitmentId,
                 line_number: line.line_number,
-                budget_code: line.budget_code,
+                budget_code: resolvedBudgetCode.displayBudgetCode,
+                project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
                 description: line.description,
                 amount: line.amount,
               });
@@ -658,7 +693,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
               .insert({
                 purchase_order_id: commitmentId,
                 line_number: line.line_number,
-                budget_code: line.budget_code,
+                budget_code: resolvedBudgetCode.displayBudgetCode,
+                project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
                 description: line.description,
                 amount: line.amount,
               });
