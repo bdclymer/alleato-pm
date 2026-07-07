@@ -200,6 +200,41 @@ def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypa
     ]
 
 
+def test_downstream_outlook_conversation_compile_errors_are_downstream_errors(monkeypatch):
+    monkeypatch.setenv("GRAPH_COMPILE_OUTLOOK_CONVERSATIONS", "true")
+    monkeypatch.setattr(
+        sync,
+        "compile_outlook_conversations",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("compiler blew up")),
+    )
+    monkeypatch.setattr(sync, "embed_pending_graph_documents", lambda *_args, **_kwargs: {"embedded": 0, "errors": 0})
+    monkeypatch.setattr(sync, "refresh_outlook_intake_vectorization_statuses", lambda **_kwargs: {"updated": 0})
+
+    result = sync._run_graph_downstream_processing(
+        _FakeSupabase(),
+        sync_started_at=sync.datetime.now(sync.timezone.utc),
+        source_summary={
+            "status": "complete",
+            "sync_emails_enabled": True,
+            "outlook_users_selected": ["megan@example.com"],
+            "communications_synced": 0,
+        },
+        run_embedding=True,
+        run_ocr=False,
+        run_attachment_promotion=False,
+        embed_limit=5,
+        ocr_batch_size=1,
+        attachment_promotion_limit=1,
+    )
+
+    assert result["status"] == "complete_with_errors"
+    assert result["phases"]["outlook_conversations"] == "enabled"
+    assert result["outlook_conversations"]["megan@example.com"]["status"] == "failed"
+    assert result["errors"] == [
+        "Outlook conversation compile failed for megan@example.com: compiler blew up"
+    ]
+
+
 def test_ocr_no_text_fetch_times_out_loudly(monkeypatch):
     monkeypatch.setenv("GRAPH_OCR_FETCH_TIMEOUT_SECONDS", "1")
 
