@@ -496,6 +496,66 @@ export function buildBrandedDocumentHtml({
     .document-content .contract-template .contract-project-facts__value {
       width: auto;
     }
+    .document-content .contract-template .legal-paragraph {
+      margin: 0 0 0.083in !important;
+    }
+    .document-content .contract-template .legal-spacer {
+      margin: 0 !important;
+      line-height: 100% !important;
+    }
+    .document-content .contract-template .legal-bullet-list {
+      margin-left: 0.18in !important;
+    }
+    .document-content .contract-template .legal-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .document-content .contract-template .legal-table th,
+    .document-content .contract-template .legal-table td {
+      vertical-align: top;
+    }
+    .document-content .contract-template .legal-signature-block {
+      page-break-inside: avoid;
+    }
+    .document-content .contract-template .legal-signature-grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-side {
+      width: 100%;
+    }
+    .document-content .contract-template .legal-signature-title {
+      font-size: 12pt;
+      line-height: 1.15;
+      margin-bottom: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-company {
+      font-size: 12pt;
+      line-height: 1.15;
+      margin-bottom: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-field {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.12in;
+      margin: 0 0 0.08in 0;
+    }
+    .document-content .contract-template .legal-signature-label {
+      min-width: 1in;
+      white-space: nowrap;
+    }
+    .document-content .contract-template .legal-signature-line {
+      flex: 1;
+      min-height: 1em;
+      border-bottom: 1px solid #000;
+      white-space: nowrap;
+    }
+    .document-content .contract-template .legal-page-break {
+      page-break-before: always !important;
+    }
   </style>
 </head>
 <body>

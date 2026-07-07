@@ -10,6 +10,15 @@ import {
   buildBrandedDocumentHtml,
   buildBrandedFooterTemplate,
 } from "@/lib/documents/branded-letterhead";
+import {
+  renderLegalBulletList,
+  renderLegalClause,
+  renderLegalInlineValueOrBlank,
+  renderLegalParagraph,
+  renderLegalSpacer,
+  renderLegalSignatureBlock,
+  renderLegalTable,
+} from "@/lib/documents/legal-template-primitives";
 
 export type DocumentRecordType =
   | "prime-contract"
@@ -553,17 +562,6 @@ function isMeaningfulValue(value: string | null | undefined): value is string {
   return Boolean(value && value.trim() && value.trim() !== "Not set");
 }
 
-function renderInlineValueOrBlank(
-  value: string | null | undefined,
-  width = "220px",
-): string {
-  if (!isMeaningfulValue(value)) {
-    return `<span style="display:inline-block;min-width:${width};border-bottom:1px solid #111;height:1em;vertical-align:baseline;"></span>`;
-  }
-
-  return `<span style="font-weight:600;">${renderHtmlValue(value.trim())}</span>`;
-}
-
 function replaceHtmlRangeByMarkers(
   html: string,
   startMarker: string,
@@ -596,8 +594,9 @@ function removeEmptyParagraphs(html: string): string {
 
     const hasMeaningfulText = text.length > 0;
     const hasNonBreakContent = paragraph.querySelector("table, img, svg, ul, ol") !== null;
+    const isLegacyArtifact = text === "," || text === "Cell:";
 
-    if (!hasMeaningfulText && !hasNonBreakContent) {
+    if ((!hasMeaningfulText || isLegacyArtifact) && !hasNonBreakContent) {
       paragraph.remove();
     }
   }
@@ -620,47 +619,30 @@ function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
       notice?.phone ? `Phone: ${notice.phone}` : null,
     ]
       .filter(isMeaningfulValue)
-      .map(
-        (line) => `
-          <p align="justify" style="margin:0 0 8px;">
-            <font color="#000000">
-              <span style="text-decoration:none">
-                <font face="Times New Roman, serif">
-                  <font size="3" style="font-size:12pt">
-                    <span style="font-style:normal">
-                      <span style="font-weight:normal">${renderHtmlValue(line)}</span>
-                    </span>
-                  </font>
-                </font>
-              </span>
-            </font>
-          </p>
-        `,
-      )
+      .map((line) => renderLegalParagraph(renderHtmlValue(line), { marginBottom: "0.08in" }))
       .join("");
 
-  const renderNoticeBlock = (label: string, notice: CommitmentContractTemplateData["contractorNotice"]) => `
-    <p align="justify" style="line-height:100%;margin:0 0 8px;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>${label}</b></span></font></font></span></font>
-    </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;">
-      <col style="width:21%" />
-      <col style="width:79%" />
-      <tr valign="top">
-        <td style="border:none;padding:0in"></td>
-        <td style="border:none;padding:0in">
-          ${renderNoticeLines(notice)}
-        </td>
-      </tr>
-    </table>
-  `;
+  const renderNoticeBlock = (label: string, notice: CommitmentContractTemplateData["contractorNotice"]) =>
+    `
+      ${renderLegalParagraph(renderHtmlValue(label), { bold: true, marginBottom: "0.08in" })}
+      <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">
+        <col style="width:21%;" />
+        <col style="width:79%;" />
+        <tr valign="top">
+          <td style="border:none;padding:0;"></td>
+          <td style="border:none;padding:0;">
+            ${renderNoticeLines(notice)}
+          </td>
+        </tr>
+      </table>
+    `;
 
   return `
-    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+    ${renderLegalSpacer({ marginBottom: "0in" })}
     ${renderNoticeBlock("If to Subcontractor:", counterpartyNotice)}
-    <p align="justify" style="line-height:100%;margin-bottom:0.14in"><br /></p>
+    ${renderLegalSpacer({ marginBottom: "0.14in" })}
     ${renderNoticeBlock("If to Contractor:", contractorNotice)}
-    <p align="justify" style="line-height:100%;margin-bottom:0in"><br /></p>
+    ${renderLegalSpacer({ marginBottom: "0in" })}
   `;
 }
 
@@ -673,98 +655,273 @@ function buildCommitmentExhibitAHtml(bundle: DocumentBundle): string {
   const inclusions = bundle.listSections.find((section) => section.title === "Inclusions")?.items ?? [];
   const exclusions = bundle.listSections.find((section) => section.title === "Exclusions")?.items ?? [];
 
-  const lineItemsRows = bundle.lineItems
-    .map(
-      (item) => `
-        <tr>
-          <td style="border:1px solid #000;padding:6px 8px;">${renderHtmlValue(item.lineNumber)}</td>
-          <td style="border:1px solid #000;padding:6px 8px;">${renderHtmlValue(item.description)}</td>
-          <td style="border:1px solid #000;padding:6px 8px;text-align:center;">${renderHtmlValue(item.quantity)}</td>
-          <td style="border:1px solid #000;padding:6px 8px;text-align:center;">${renderHtmlValue(item.unit)}</td>
-          <td style="border:1px solid #000;padding:6px 8px;text-align:right;">${renderHtmlValue(item.total)}</td>
-        </tr>
-      `,
-    )
-    .join("");
-
-  const renderBulletList = (items: string[]) =>
-    items.length === 0
-      ? `<p style="margin:0 0 12px 0;"><font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">None specified in the commitment record.</span></span></font></font></span></font></p>`
-      : `
-          <ul style="margin:0 0 14px 18px;padding:0;">
-            ${items
-              .map(
-                (item) => `
-                  <li style="margin:0 0 8px 0;">
-                    <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">${renderHtmlValue(item)}</span></span></font></font></span></font>
-                  </li>
-                `,
-              )
-              .join("")}
-          </ul>
-        `;
+  const lineItemsRows = bundle.lineItems.map((item) => [
+    item.lineNumber ?? "",
+    item.description ?? "",
+    item.quantity ?? "",
+    item.unit ?? "",
+    item.total ?? "",
+  ]);
 
   return `
-    <p align="center" style="line-height:100%;margin-bottom:0in;page-break-before:always">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>EXHIBIT &quot;A&quot;</b></span></font></font></span></font>
-    </p>
-    <p align="center" style="line-height:100%;margin-bottom:0in">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>SUBCONTRACTOR SCOPE OF WORK</b></span></font></font></span></font>
-    </p>
-    <p style="line-height:100%;margin-bottom:0in"><br /></p>
-    <p style="margin:0 0 12px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Subcontractor shall furnish all necessary equipment, material, and labor required for commitment ${renderHtmlValue(bundle.number)} on ${renderHtmlValue(bundle.project?.name || "the project")}.</span></span></font></font></span></font>
-    </p>
-    <p style="margin:0 0 12px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Project address: ${renderHtmlValue(bundle.project?.addressLine1 || bundle.project?.address || "Not set")}${bundle.project?.addressLine2 ? `, ${renderHtmlValue(bundle.project.addressLine2)}` : ""}</span></span></font></font></span></font>
-    </p>
-    <p style="margin:0 0 12px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Contract amount: ${renderHtmlValue(originalAmount)}${isMeaningfulValue(paymentTerms) ? ` • Payment terms: ${renderHtmlValue(paymentTerms)}` : ""}</span></span></font></font></span></font>
-    </p>
+    ${renderLegalParagraph('EXHIBIT "A"', { align: "center", marginTop: "0in", marginBottom: "0in", bold: true, className: "legal-page-break" })}
+    ${renderLegalParagraph("SUBCONTRACTOR SCOPE OF WORK", { align: "center", marginTop: "0in", marginBottom: "0in", bold: true })}
+    ${renderLegalSpacer({ marginBottom: "0in" })}
+    ${renderLegalParagraph(
+      `Subcontractor shall furnish all necessary equipment, material, and labor required for commitment ${renderHtmlValue(bundle.number)} on ${renderHtmlValue(bundle.project?.name || "the project")}.`,
+      { marginBottom: "0.1in" },
+    )}
+    ${renderLegalParagraph(
+      `Project address: ${renderHtmlValue(bundle.project?.addressLine1 || bundle.project?.address || "Not set")}${bundle.project?.addressLine2 ? `, ${renderHtmlValue(bundle.project.addressLine2)}` : ""}`,
+      { marginBottom: "0.1in" },
+    )}
+    ${renderLegalParagraph(
+      `Contract amount: ${renderHtmlValue(originalAmount)}${isMeaningfulValue(paymentTerms) ? ` • Payment terms: ${renderHtmlValue(paymentTerms)}` : ""}`,
+      { marginBottom: "0.1in" },
+    )}
     ${
       isMeaningfulValue(description)
-        ? `
-          <p style="margin:0 0 12px 0;">
-            <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">Commitment description: ${renderHtmlValue(description)}</span></span></font></font></span></font>
-          </p>
-        `
+        ? renderLegalParagraph(`Commitment description: ${renderHtmlValue(description)}`, { marginBottom: "0.1in" })
         : ""
     }
-    <p style="margin:18px 0 8px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Scope line items</b></span></font></font></span></font>
-    </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px 0;table-layout:fixed;">
-      <col style="width:10%" />
-      <col style="width:54%" />
-      <col style="width:12%" />
-      <col style="width:10%" />
-      <col style="width:14%" />
-      <tr>
-        <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Line</th>
-        <th style="border:1px solid #000;padding:6px 8px;text-align:left;font-weight:700;">Description</th>
-        <th style="border:1px solid #000;padding:6px 8px;text-align:center;font-weight:700;">Qty</th>
-        <th style="border:1px solid #000;padding:6px 8px;text-align:center;font-weight:700;">Unit</th>
-        <th style="border:1px solid #000;padding:6px 8px;text-align:right;font-weight:700;">Amount</th>
-      </tr>
-      ${lineItemsRows}
-    </table>
-    <p style="margin:0 0 8px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Inclusions</b></span></font></font></span></font>
-    </p>
-    ${renderBulletList(inclusions)}
-    <p style="margin:0 0 8px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><b>Exclusions</b></span></font></font></span></font>
-    </p>
-    ${renderBulletList(exclusions)}
-    <p style="margin:18px 0 10px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><u><span style="font-weight:normal">Date of commencement of Subcontractor’s Work:</span></u></span></font></font></span></font>
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal"> ${renderInlineValueOrBlank(startDate, "200px")}</span></span></font></font></span></font>
-    </p>
-    <p style="margin:0 0 10px 0;">
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><u><span style="font-weight:normal">The Work of this Subcontract shall be substantially completed not later than:</span></u></span></font></font></span></font>
-      <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal"> ${renderInlineValueOrBlank(estimatedCompletion, "200px")}</span></span></font></font></span></font>
-    </p>
+    ${renderLegalParagraph("Scope line items", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalTable({
+      headers: ["Line", "Description", "Qty", "Unit", "Amount"],
+      rows: lineItemsRows,
+      widths: ["10%", "54%", "12%", "10%", "14%"],
+      headerAlign: ["left", "left", "center", "center", "right"],
+      rowAlign: ["left", "left", "center", "center", "right"],
+      className: "contract-scope-table",
+      emptyMessage: "No line items found.",
+    })}
+    ${renderLegalParagraph("Inclusions", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalBulletList(inclusions, { className: "contract-bullet-list" })}
+    ${renderLegalParagraph("Exclusions", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalBulletList(exclusions, { className: "contract-bullet-list" })}
+    ${renderLegalParagraph(
+      `<span style="text-decoration:underline;">Date of commencement of Subcontractor’s Work:</span> ${renderLegalInlineValueOrBlank(startDate, "200px")}`,
+      { marginTop: "0.14in", marginBottom: "0.08in" },
+    )}
+    ${renderLegalParagraph(
+      `<span style="text-decoration:underline;">The Work of this Subcontract shall be substantially completed not later than:</span> ${renderLegalInlineValueOrBlank(estimatedCompletion, "200px")}`,
+      { marginBottom: "0.08in" },
+    )}
   `;
+}
+
+function buildCommitmentLegalClausesHtml(bundle: DocumentBundle): string {
+  const contractorNotice = bundle.commitmentContractTemplate?.contractorNotice;
+  const counterpartyNotice = bundle.commitmentContractTemplate?.counterpartyNotice;
+
+  const renderNoticeBlock = (
+    label: string,
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) => {
+    const lines = [
+      notice?.name,
+      notice?.companyName,
+      notice?.email,
+      notice?.addressLine1,
+      notice?.addressLine2,
+      notice?.phone ? `Cell: ${notice.phone}` : null,
+    ]
+      .filter(isMeaningfulValue)
+      .map((line) => renderLegalParagraph(renderHtmlValue(line), { marginBottom: "0in" }));
+
+    return [
+      renderLegalParagraph(label, { bold: true, marginBottom: "0.08in" }),
+      ...lines,
+    ].join("");
+  };
+
+  return [
+    renderLegalClause({
+      letter: "c",
+      title: "Attorneys Fees.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "If any litigation is brought under this Agreement or which relates to this Agreement, in addition to any other relief to which the prevailing party is entitled to recover, the Prevailing Party is entitled to recover and the Non-Prevailing Party shall pay, all expenses, court costs and attorneys’ fees of the Prevailing Party. For the purposes of this paragraph “Prevailing Party” shall mean the party that receives all, or substantially all of the relief requested in the litigation.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "d",
+      title: "Receipts and Release of Liens.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Before payment will be made, Subcontractor shall furnish evidence of payment for work done, and for labor, materials, equipment, and fixtures furnished through the date covered by each payment. Prior to any payment hereunder, Subcontractor shall execute a sworn waiver or release of lien for all Work performed and materials furnished for which payment will be (in form provided by Contractor).",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "e",
+      title: "No Diversion.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Subcontractor agrees that monies received for its performance hereunder shall be held in trust for the payment of labor and material purchased or contracted by Subcontractor and said monies shall not be diverted to satisfy obligations of Subcontractor on other contracts.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "f",
+      title: "Other Contracts of the Parties.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Should one or more other contracts now or hereafter exist between the parties hereto or with any firm, partnership or corporation having common ownership with such parties concerning this or any other construction projects, and a breach by Subcontractor of this or any other such contracts occurs, then Contractor may, at its option, consider such breach a breach of all such contracts. In such event, Contractor may terminate any or all of the contracts so breached and/or withhold monies due or to become due on any such contract(s), and apply the same toward amounts owed Contractor or any damages suffered by Contractor on such contracts.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "g",
+      title: "Non-Assignment or Transfer.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Neither this Agreement nor any payment to become due hereunder shall be assigned by Subcontractor without the prior written consent of Contractor, and any assignment without such consent shall vest no rights in the assignee against Contractor.",
+          { marginBottom: "0.06in" },
+        ),
+        renderLegalParagraph(
+          "Subcontractor shall not sublet the whole or any part of this Subcontract without the prior written consent of Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "h",
+      title: "Notice.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "All notices or other communications hereunder shall not be binding on any party hereto unless in writing and delivered to the party at the address set forth below. Notices shall be deemed duly delivered upon hand delivery, receipt of email transmission thereof, or receipt of express or overnight delivery thereof at the addresses specified below or two (2) days after deposit thereof in the United States mails, postage prepaid, certified, or registered mail.",
+          { marginBottom: "0.08in" },
+        ),
+        renderLegalSpacer({ marginBottom: "0.05in" }),
+        renderNoticeBlock("If to Subcontractor:", counterpartyNotice),
+        renderLegalSpacer({ marginBottom: "0.1in" }),
+        renderNoticeBlock("If to Contractor:", contractorNotice),
+      ],
+    }),
+    renderLegalClause({
+      letter: "i",
+      title: "Merger.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement and the Documents contain the entire understanding of the parties and incorporates all previous written and oral representations, agreements, and understandings. Contractor and Subcontractor have participated in the negotiation of this Agreement and neither Contractor nor Subcontractor shall be deemed the drafter of this Agreement.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "j",
+      title: "Unenforceable Provisions.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "If any term, covenant or warranty, paragraph, clause, condition, or provision of this Agreement is held by a court of competent jurisdiction to be invalid, void, or unenforceable, the remainder of the provisions of this Agreement shall remain in full force and effect and shall in no way be affected, impaired, or invalidated thereby, and these unenforceable provisions were omitted.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "k",
+      title: "Applicable Law Forum and Dispute Resolution.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement shall be construed under the laws of the State of Indiana.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "l",
+      title: "Waiver.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Contractor’s failure to exercise any or all of its remedies hereunder upon default of the Subcontractor shall not act as a waiver of any other remedy available to Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "m",
+      title: "Remedies Not Exclusive.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "All of the rights, benefits and remedies provided to Owner and Contractor by this Agreement, or by any instrument or document executed pursuant to this Agreement, shall be cumulative and shall not be exclusive of any rights, remedies and benefits allowed by law or equity to Owner and Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "n",
+      title: "Changes in Writing.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "No changes or modifications of this Agreement shall be valid unless in writing and signed by all of the parties to this Agreement. No waiver of any provision of this Agreement shall be valid unless in writing and signed by the person or party against whom charged.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "o",
+      title: "Authorized Signatures.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "The execution and delivery of this Agreement have been duly authorized by all necessary action of Subcontractor. Subcontractor has full power and capacity to execute, deliver, and perform this Agreement and each of the Subcontract Documents to be delivered by Subcontractor or its representatives in connection herewith.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "p",
+      title: "Additional Subcontract Documents.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Additional documents and attachments made part of this Subcontract are as follows:",
+          { marginBottom: "0.08in" },
+        ),
+        renderLegalBulletList(
+          [
+            "Exhibit A Subcontractor Scope of Work",
+            "Exhibit B Insurance Requirements",
+            "Exhibit C Billing Processing and Payment Schedule",
+            "Exhibit D Schedule of Work",
+          ],
+          { className: "contract-bullet-list" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "q",
+      title: "Counterparts.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement may be executed in any number of counterparts, each of which shall be deemed an original, but all of which together shall constitute one and the same instrument.",
+          { marginBottom: "0in" },
+        ),
+      ],
+    }),
+  ].join("");
+}
+
+function buildCommitmentSignatureHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
+
+  return renderLegalSignatureBlock({
+    leftTitle: `"Subcontractor"`,
+    leftCompany: counterpartyNotice?.companyName || bundle.parties?.counterparty || "Not set",
+    leftSignerName: counterpartyNotice?.name,
+    leftSignerTitle: counterpartyNotice?.title,
+    leftSignedDate: "",
+    rightTitle: `"Contractor"`,
+    rightCompany: contractorNotice?.companyName || bundle.parties?.contractor || "Alleato Group",
+    rightSignerName: templateData?.contractorSignerName || contractorNotice?.name || "",
+    rightSignerTitle: templateData?.contractorSignerTitle || contractorNotice?.title || "",
+    rightSignedDate: "",
+  });
 }
 
 function buildCommitmentProjectFactsHtml(bundle: DocumentBundle): string {
@@ -882,15 +1039,22 @@ function renderCommitmentContractHtml(bundle: DocumentBundle): string {
     buildCommitmentProjectRecitalsHtml(bundle),
   );
 
-  const noticeNormalizedBody = replaceHtmlRangeByMarkers(
+  const clausesNormalizedBody = replaceHtmlRangeByMarkers(
     recitalsNormalizedBody,
-    "If\nto Subcontractor:",
-    "i.\n\tMerger.",
-    buildCommitmentNoticeHtml(bundle),
+    "c.\n\tAttorneys Fees.",
+    "IN TENDING TO BE LEGALLY BOUND",
+    buildCommitmentLegalClausesHtml(bundle),
+  );
+
+  const signatureNormalizedBody = replaceHtmlRangeByMarkers(
+    clausesNormalizedBody,
+    "TENDING TO BE LEGALLY BOUND",
+    "EXHIBIT\n&quot;A&quot;",
+    buildCommitmentSignatureHtml(bundle),
   );
 
   const exhibitNormalizedBody = replaceHtmlRangeByMarkers(
-    noticeNormalizedBody,
+    signatureNormalizedBody,
     "EXHIBIT\n&quot;A&quot;",
     "EXHIBIT\n&quot;B&quot;",
     buildCommitmentExhibitAHtml(bundle),

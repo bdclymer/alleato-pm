@@ -74,6 +74,8 @@ describe("commitment contract rendering", () => {
     expect(html).toContain("26-116");
     expect(html).toContain("840 N. Dauphin Street");
     expect(html).toContain("Allentown, PA");
+    expect(html).toContain("legal-signature-block");
+    expect(html).toContain("legal-table contract-scope-table");
     expect(html).not.toContain("Deem, LLC");
     expect(html).not.toContain("Goodwill Bart");
     expect(html).not.toContain("Goodwill - Bart");
