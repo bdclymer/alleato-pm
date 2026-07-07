@@ -205,7 +205,7 @@ def compile_conversation_payload(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "title": f"Outlook conversation: {subject}",
         "type": "email",
         "category": "email",
-        "document_type": "email_conversation",
+        "document_type": "email_message",
         "source": "microsoft_graph",
         "source_system": "outlook",
         "source_item_id": group_key,

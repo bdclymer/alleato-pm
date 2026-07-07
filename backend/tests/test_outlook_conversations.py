@@ -42,7 +42,7 @@ def test_compile_conversation_payload_builds_stable_email_document():
     assert payload["id"].startswith("outlook_conversation_")
     assert payload["type"] == "email"
     assert payload["category"] == "email"
-    assert payload["document_type"] == "email_conversation"
+    assert payload["document_type"] == "email_message"
     assert payload["source"] == "microsoft_graph"
     assert payload["source_system"] == "outlook"
     assert payload["source_item_id"] == "conversation:conversation-1"
@@ -50,6 +50,7 @@ def test_compile_conversation_payload_builds_stable_email_document():
     assert payload["project_id"] == 876
     assert payload["source_web_url"] == "https://outlook.office.com/message-2"
     assert payload["source_metadata"]["message_count"] == 2
+    assert payload["source_metadata"]["document_kind"] == "outlook_conversation"
     assert payload["source_metadata"]["source_message_ids"] == ["message-1", "message-2"]
     assert payload["source_metadata"]["content_hash"] == payload["content_hash"]
     assert payload["content"].index("2026-07-06T13:00:00Z") < payload["content"].index(

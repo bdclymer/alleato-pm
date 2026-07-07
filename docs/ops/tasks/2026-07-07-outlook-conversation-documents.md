@@ -52,7 +52,7 @@ Behavior changes captured:
   `outlook_email_intake` rows, groups by `mailbox_user_id + conversation_id`,
   and uses a deterministic subject fallback when `conversation_id` is missing.
 - Compiled documents use stable IDs, `content_hash`, `type='email'`,
-  `category='email'`, `document_type='email_conversation'`, and
+  `category='email'`, taxonomy-safe `document_type='email_message'`, and
   `source_metadata.document_kind='outlook_conversation'`.
 - Compiled documents persist through `SupabaseRagStore.upsert_document_metadata`
   so the existing app catalog / RAG metadata split remains the write path.
