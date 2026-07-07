@@ -88,6 +88,46 @@ export function isExecutiveBriefingMetadataQuestion(message: string): boolean {
   return mentionsBrief;
 }
 
+export function isDailyDeepReadPacketQuestion(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const directDailyDeepRead = [
+    "daily deep read",
+    "deep read packet",
+    "source of truth for the daily brief",
+    "daily executive brief source of truth",
+    "latest daily deep read setup",
+    "current executive brief candidates",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (directDailyDeepRead) return true;
+
+  const mentionsPacketOrBrief = [
+    "daily brief",
+    "daily briefing",
+    "executive brief",
+    "executive briefing",
+    "project intelligence",
+    "intelligence packet",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (!mentionsPacketOrBrief) return false;
+
+  return [
+    "full-source",
+    "full source",
+    "entire transcript",
+    "entire transcripts",
+    "raw rag chunks",
+    "rag chunks",
+    "review-gated",
+    "review gated",
+    "candidate tasks",
+    "task candidates",
+    "risk candidates",
+    "decision candidates",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
 export function isPersonalTaskRegisterRequest(message: string): boolean {
   const normalized = message.toLowerCase();
   if (isPersonalDailyBriefRequest(message)) return false;

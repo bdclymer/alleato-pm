@@ -18,6 +18,7 @@ import {
   loadCurrentIntelligencePacketBySlug,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
+import { loadCurrentDailyExecutiveBriefPacket } from "@/lib/daily-briefs/canonical-packets";
 import type {
   ClientProjectIntelligencePacket,
   InsightCard,
@@ -495,6 +496,16 @@ async function loadDailyDeepReadCandidates(projectId: number): Promise<{
 }> {
   if (!isRagDatabaseReadsEnabled()) return { candidates: [], error: null };
 
+  let currentPacketId: string;
+  try {
+    currentPacketId = (await loadCurrentDailyExecutiveBriefPacket()).id;
+  } catch (error) {
+    return {
+      candidates: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
   const ragSupabase = createRagServiceClient();
   const result = await ragSupabase
     .from("source_signal_candidates")
@@ -503,6 +514,7 @@ async function loadDailyDeepReadCandidates(projectId: number): Promise<{
     )
     .eq("project_id", projectId)
     .eq("compiler_version", "daily_deep_read_consumers_v1")
+    .eq("extraction_json->>daily_packet_id", currentPacketId)
     .eq("status", "needs_review")
     .order("created_at", { ascending: false })
     .limit(12);
@@ -908,9 +920,7 @@ function DailyExecutiveBriefUnavailable({ error }: { error: string | null }) {
   return (
     <section className="space-y-2">
       <SectionHeader title="Daily executive brief" />
-      <p className="text-sm leading-6 text-destructive">
-        Daily executive brief could not load: {error}
-      </p>
+      <ErrorState error={`Daily executive brief could not load: ${error}`} />
     </section>
   );
 }
@@ -1903,6 +1913,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       <DailyExecutiveBriefUnavailable error={dailyBriefResult.error} />
 
       <DetailLayout
+        sidebarAt="lg"
         sidebar={
           <>
             <ImmediateAttentionSection

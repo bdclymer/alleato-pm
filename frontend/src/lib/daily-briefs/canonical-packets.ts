@@ -197,12 +197,24 @@ export async function listDailyExecutiveBriefPackets(
 }
 
 export async function loadCurrentDailyExecutiveBriefPacket(): Promise<CanonicalDailyBriefPacket> {
-  const packets = await listDailyExecutiveBriefPackets(1);
-  const packet = packets[0];
-  if (!packet) {
+  const target = await loadDailyExecutiveBriefTarget();
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("intelligence_packets")
+    .select("*")
+    .eq("target_id", target.id)
+    .eq("packet_type", "current")
+    .order("generated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load current canonical Daily Brief packet: ${error.message}`);
+  }
+  if (!data) {
     throw new Error("No canonical Daily Executive Brief packet exists.");
   }
-  return packet;
+  return mapPacket(data as IntelligencePacketRow);
 }
 
 export async function loadDailyExecutiveBriefPacketById(

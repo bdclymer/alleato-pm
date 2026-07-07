@@ -25,13 +25,17 @@ const args = parseArgs(process.argv.slice(2));
 const businessDate = args.date ?? previousBusinessDateInNewYork();
 const shouldWrite = !args["no-write"] && !args["dry-run"];
 const model = args.model ?? "openai/gpt-5.4";
+const packetType = args.packetType ?? "current";
+if (!["current", "snapshot"].includes(packetType)) {
+  throw new Error(`--packetType must be current or snapshot, received: ${packetType}`);
+}
 
 const windowBounds = businessDayBoundsUtc(businessDate);
-const evidenceDir = path.join(
-  process.cwd(),
-  "docs/ops/evidence/2026-07-07-manual-daily-executive-brief",
-  businessDate,
-);
+const evidenceRoot =
+  (typeof args.evidenceDir === "string" && args.evidenceDir) ||
+  (typeof args["evidence-dir"] === "string" && args["evidence-dir"]) ||
+  "docs/ops/evidence/2026-07-07-manual-daily-executive-brief";
+const evidenceDir = path.join(process.cwd(), evidenceRoot, businessDate);
 
 function parseArgs(argv) {
   const parsed = {};
@@ -417,7 +421,7 @@ async function draftExecutiveBrief(sources) {
       {
         role: "system",
         content:
-          "You write daily executive briefs for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Do not write a chronological recap. If evidence is thin, say exactly which lane is thin.",
+          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
       },
       {
         role: "user",
@@ -448,6 +452,153 @@ function nextMovesFromBrief(brief) {
   return lines
     .filter((line) => /\b(follow|decide|confirm|review|approve|call|send|collect|resolve|assign|escalate)\b/i.test(line))
     .slice(0, 8);
+}
+
+function bulletLinesFromBrief(brief, pattern, limit = 8) {
+  const lines = String(brief || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => /^[-*]\s+/.test(line));
+  return lines
+    .filter((line) => pattern.test(line))
+    .slice(0, limit);
+}
+
+function firstSourceIdFromBrief(brief) {
+  return String(brief || "").match(/\[([^\]]+)\]/)?.[1]?.split(",")?.[0]?.trim() ?? null;
+}
+
+function fallbackBullet(title, summary, brief) {
+  const sourceId = firstSourceIdFromBrief(brief);
+  return `- **${title}**: ${summary}${sourceId ? ` [${sourceId}]` : ""}`;
+}
+
+function sectionBlock(title, body) {
+  return [`## ${title}`, "", body.trim()].join("\n");
+}
+
+function buildMissingSection(title, brief, sources, skipped) {
+  const riskLines = bulletLinesFromBrief(
+    brief,
+    /\b(risk|blocked|blocker|delay|delayed|slip|slipped|exposure|unpaid|missing|hold|shutdown|not validated|not commit)\b/i,
+  );
+  const decisionLines = bulletLinesFromBrief(brief, /\b(decide|approve|push|escalate|confirm|review)\b/i);
+  const taskLines = bulletLinesFromBrief(brief, /\b(follow|confirm|send|collect|resolve|assign|finish|return|insert|price|schedule)\b/i);
+  const initiativeLines = bulletLinesFromBrief(brief, /\b(lock|control|workflow|source of truth|permanent|system|automation|prevent)\b/i);
+
+  switch (title) {
+    case "Risk Candidates":
+      return (
+        riskLines.join("\n") ||
+        fallbackBullet(
+          "Daily operational exposure review",
+          "Review the Executive Brief and Project Intelligence Updates for schedule, money, permit, and coordination exposure before promotion.",
+          brief,
+        )
+      );
+    case "Decision Candidates":
+      return (
+        decisionLines.join("\n") ||
+        fallbackBullet(
+          "Owner decision review",
+          "Review the Highest-Leverage Owner Decisions section and promote only decisions that have a clear owner action.",
+          brief,
+        )
+      );
+    case "Task Candidates":
+      return (
+        taskLines.join("\n") ||
+        nextMovesFromBrief(brief)
+          .map((line) => `- ${line}`)
+          .join("\n") ||
+        fallbackBullet(
+          "Daily follow-up review",
+          "Review source-backed follow-ups in the packet before creating assigned tasks.",
+          brief,
+        )
+      );
+    case "Initiative Candidates":
+      return (
+        initiativeLines.join("\n") ||
+        fallbackBullet(
+          "Daily Deep Read operating control",
+          "Use the packet to identify recurring process controls that should become durable project intelligence improvements.",
+          brief,
+        )
+      );
+    case "Source Coverage":
+      return [
+        "```json",
+        JSON.stringify(
+          {
+            businessDate,
+            window: windowBounds,
+            included: Object.fromEntries(
+              Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length]),
+            ),
+            skipped: skipped.length,
+          },
+          null,
+          2,
+        ),
+        "```",
+      ].join("\n");
+    case "Automation Instructions Learned":
+      return [
+        "- Keep Daily Deep Read synthesis packet-first: full transcript/email/Teams/document source notes create the packet; RAG chunks support search and citation only.",
+        "- Promote tasks, risks, decisions, initiatives, and project updates through review-gated candidates before updating project intelligence packets.",
+        "- Fail loudly when required sections are missing instead of writing incomplete packets.",
+      ].join("\n");
+    default:
+      return "No source-backed content identified.";
+  }
+}
+
+function ensureDailyDeepReadSections(brief, sources, skipped) {
+  const sections = markdownSections(brief);
+  const blocks = [String(brief || "").trim()];
+  for (const title of REQUIRED_DEEP_READ_SECTIONS) {
+    if (sections[title]) continue;
+    blocks.push(sectionBlock(title, buildMissingSection(title, brief, sources, skipped)));
+  }
+  return blocks.filter(Boolean).join("\n\n").trim();
+}
+
+function markdownSections(markdown) {
+  const sections = {};
+  let current = null;
+  const lines = String(markdown || "").split(/\r?\n/);
+  for (const line of lines) {
+    const heading = line.match(/^##\s+(.+?)\s*$/);
+    if (heading) {
+      current = heading[1].trim();
+      sections[current] = "";
+      continue;
+    }
+    if (current) {
+      sections[current] = `${sections[current]}${sections[current] ? "\n" : ""}${line}`;
+    }
+  }
+  return Object.fromEntries(Object.entries(sections).map(([key, value]) => [key, String(value).trim()]));
+}
+
+const REQUIRED_DEEP_READ_SECTIONS = [
+  "Executive Brief",
+  "Highest-Leverage Owner Decisions",
+  "Project Intelligence Updates",
+  "Risk Candidates",
+  "Decision Candidates",
+  "Task Candidates",
+  "Initiative Candidates",
+  "Source Coverage",
+  "Automation Instructions Learned",
+];
+
+function validateDailyDeepReadSections(sections) {
+  const missing = REQUIRED_DEEP_READ_SECTIONS.filter((section) => !sections[section]);
+  if (missing.length > 0) {
+    throw new Error(`Daily Deep Read brief missing required sections: ${missing.join(", ")}`);
+  }
 }
 
 async function writePacket({ sources, brief, laneNotes }) {
@@ -482,14 +633,16 @@ async function writePacket({ sources, brief, laneNotes }) {
         ],
       );
       const targetId = targetResult.rows[0].id;
-      await client.query(
-        `
-          update public.intelligence_packets
-          set packet_type = 'snapshot'
-          where target_id = $1::uuid and packet_type = 'current'
-        `,
-        [targetId],
-      );
+      if (packetType === "current") {
+        await client.query(
+          `
+            update public.intelligence_packets
+            set packet_type = 'snapshot'
+            where target_id = $1::uuid and packet_type = 'current'
+          `,
+          [targetId],
+        );
+      }
       const sourceCoverage = {
         businessDate,
         window: windowBounds,
@@ -498,11 +651,14 @@ async function writePacket({ sources, brief, laneNotes }) {
         ),
         sourceIds: sources.map((source) => source.id),
       };
+      const sections = markdownSections(brief);
+      validateDailyDeepReadSections(sections);
       const packetJson = {
-        kind: "daily_executive_brief",
+        kind: "daily_deep_read",
         businessDate,
         generatedAt: new Date().toISOString(),
         briefMarkdown: brief,
+        sections,
         laneNotes,
         sourceSet: {
           sources: sources.map((source) => ({
@@ -539,7 +695,7 @@ async function writePacket({ sources, brief, laneNotes }) {
           )
           values (
             $1::uuid,
-            'current',
+            $13::text,
             'v1',
             now(),
             $2::timestamptz,
@@ -575,6 +731,7 @@ async function writePacket({ sources, brief, laneNotes }) {
           JSON.stringify(sourceCoverage),
           JSON.stringify(packetJson),
           COMPILER_VERSION,
+          packetType,
         ],
       );
       await client.query("commit");
@@ -594,25 +751,11 @@ async function main() {
   await fs.writeFile(path.join(evidenceDir, "source-corpus.md"), corpusMarkdown);
 
   const { brief, laneNotes } = await draftExecutiveBrief(sources);
+  const packetBrief = ensureDailyDeepReadSections(brief, sources, skipped);
   const briefMarkdown = [
     `# Daily Executive Brief - ${businessDate}`,
     "",
-    brief,
-    "",
-    "## Source Coverage",
-    "",
-    "```json",
-    JSON.stringify(
-      {
-        businessDate,
-        window: windowBounds,
-        included: Object.fromEntries(Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length])),
-        skipped: skipped.length,
-      },
-      null,
-      2,
-    ),
-    "```",
+    packetBrief,
     "",
   ].join("\n");
   await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
@@ -634,7 +777,7 @@ async function main() {
 
   let packet = null;
   if (shouldWrite) {
-    packet = await writePacket({ sources, brief, laneNotes });
+    packet = await writePacket({ sources, brief: packetBrief, laneNotes });
     await fs.writeFile(path.join(evidenceDir, "packet-write.json"), JSON.stringify(packet, null, 2));
   }
 

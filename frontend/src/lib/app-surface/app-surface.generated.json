@@ -17,11 +17,6 @@
       "description": "Create and manage invoice billing periods with manual or automatic frequency setup"
     },
     {
-      "url": "/[projectId]/billing-periods/[periodId]",
-      "title": "Billing Period",
-      "description": "Loading billing period…"
-    },
-    {
       "url": "/[projectId]/budget",
       "title": "Budget",
       "description": "View and manage project budget with line items, modifications, forecasting, and cost tracking"
@@ -1160,11 +1155,6 @@
       "url": "/executive/capabilities",
       "title": "Brandon Dashboard",
       "description": "Authentication required."
-    },
-    {
-      "url": "/executive/editorial-brief",
-      "title": "Executive editorial brief",
-      "description": "This editorial executive brief is limited to users with executive briefing access."
     },
     {
       "url": "/executive/intelligence-brief",

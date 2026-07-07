@@ -163,6 +163,7 @@
     "rag:verify:executive-daily-brief-ledger-integration": "cd frontend && npx tsx scripts/verify-executive-daily-brief-ledger-integration.ts",
     "intelligence:daily-brief": "node scripts/intelligence/daily-executive-brief.mjs",
     "intelligence:daily-consumers": "node scripts/intelligence/daily-deep-read-consumers.mjs",
+    "intelligence:daily-backfill": "node scripts/intelligence/daily-deep-read-backfill.mjs",
     "rag:verify:admin-comms": "node scripts/verify/verify_ai_admin_comms_guardrails.mjs",
     "rag:verify:risk-routing": "python3 scripts/verify/verify_ai_assistant_risk_routing.py",
     "rag:verify:risk-quality": "python3 scripts/verify/verify_ai_assistant_risk_quality.py",

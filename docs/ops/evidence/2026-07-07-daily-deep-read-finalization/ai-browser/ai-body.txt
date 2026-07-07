@@ -1,0 +1,56 @@
+PROJECT
+Alleato AI
+Company Directory
+COMPANY-WIDE TOOLS
+Alleato AI
+Company
+Company Directory
+User Management
+Meetings
+Tasks
+Documentation
+Estimates
+Prime Contracts
+Change Events
+Potential Change Orders
+Admin Dashboard
+Company
+Alleato AI
+Select Project
+Alleato AI
+Chat history
+
+Check the latest Daily Deep Read setup. Tell me the latest business date you can see, whether project intelligence should use the full-source Daily Deep Read packet or raw RAG chunks, and whether candidate tasks/risks/decisions should be review-gated before promotion.
+
+Latest Daily Deep Read packet: 2026-06-23.
+
+Packet source of truth:
+
+Table: intelligence_packets
+Target: daily-executive-brief
+Packet ID: abeab4bc-5687-4857-be9d-f07a1b55b177
+Packet type: snapshot
+Generated at: 2026-07-07T17:38:22.778Z
+Compiler version: manual_daily_executive_brief_v1
+Source count: 98
+Source counts: teams: 12, emails: 76, meetings: 4, documents: 6
+Sections available: Executive Brief, Highest-Leverage Owner Decisions, Project Intelligence Updates, Risk Candidates, Decision Candidates, Task Candidates, Initiative Candidates, Source Coverage, Automation Instructions Learned
+
+Project intelligence policy:
+
+Project intelligence should consume the full-source Daily Deep Read packet sections and source notes first.
+Raw RAG chunks are for search, retrieval, and citation support only; they should not be the primary synthesis source for owner-level insights.
+Tasks, risks, decisions, initiatives, and project updates should be extracted as review-gated candidates before promotion into project intelligence packets.
+
+Current packet-linked candidates:
+
+decision / needs_review: 1
+process_issue / needs_review: 1
+project_update / needs_review: 7
+risk / needs_review: 5
+task / needs_review: 5
+
+Routing proof: this answer used the deterministic Daily Deep Read packet lookup, not generic Deep Agents or raw document_chunks synthesis.
+
+Read aloud
+Copy

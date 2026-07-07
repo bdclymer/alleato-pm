@@ -44,6 +44,7 @@ import {
   recordSelectedSkillUsage,
 } from "@/lib/ai/services/skill-injection-service";
 import {
+  isDailyDeepReadPacketQuestion,
   isExecutiveBriefingMetadataQuestion,
   isPersonalTaskRegisterRequest,
 } from "@/lib/ai/personal-daily-brief";
@@ -94,7 +95,11 @@ import {
   type CmoWeeklyContentWorkflowResult,
 } from "@/lib/ai/services/marketing-service";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import { createChatHistoryWriter } from "./chat-history-writer";
 import {
   loadCurrentDailyExecutiveBriefPacket,
@@ -2029,6 +2034,152 @@ function buildExecutiveBriefingMetadataContent(params: {
     .join("\n");
 }
 
+type DailyDeepReadCandidateCount = {
+  signalType: string;
+  status: string;
+  count: number;
+};
+
+async function loadDailyDeepReadPacketStatus(): Promise<{
+  packet: CanonicalDailyBriefPacket | null;
+  candidateCounts: DailyDeepReadCandidateCount[];
+  candidateErrorMessage: string | null;
+  errorMessage: string | null;
+}> {
+  try {
+    const packet = await loadCurrentDailyExecutiveBriefPacket();
+    if (!isRagDatabaseReadsEnabled()) {
+      return {
+        packet,
+        candidateCounts: [],
+        candidateErrorMessage: "RAG database reads are disabled for this runtime.",
+        errorMessage: null,
+      };
+    }
+
+    const rag = createRagServiceClient();
+    const { data, error } = await rag
+      .from("source_signal_candidates")
+      .select("signal_type,status,extraction_json")
+      .eq("compiler_version", "daily_deep_read_consumers_v1")
+      .limit(2000);
+
+    if (error) {
+      return {
+        packet,
+        candidateCounts: [],
+        candidateErrorMessage: error.message,
+        errorMessage: null,
+      };
+    }
+
+    const counts = new Map<string, DailyDeepReadCandidateCount>();
+    for (const row of data ?? []) {
+      const extraction = asRecord(row.extraction_json);
+      if (extraction.daily_packet_id !== packet.id) continue;
+      const signalType = row.signal_type || "unknown";
+      const status = row.status || "unknown";
+      const key = `${signalType}:${status}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, { signalType, status, count: 1 });
+      }
+    }
+
+    return {
+      packet,
+      candidateCounts: [...counts.values()].sort((a, b) =>
+        a.signalType === b.signalType
+          ? a.status.localeCompare(b.status)
+          : a.signalType.localeCompare(b.signalType),
+      ),
+      candidateErrorMessage: null,
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      packet: null,
+      candidateCounts: [],
+      candidateErrorMessage: null,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function formatCandidateCounts(counts: DailyDeepReadCandidateCount[]): string {
+  if (counts.length === 0) return "No packet-linked candidates found yet.";
+  return counts
+    .map((item) => `- ${item.signalType} / ${item.status}: ${item.count}`)
+    .join("\n");
+}
+
+function buildDailyDeepReadPacketStatusContent(params: {
+  packet: CanonicalDailyBriefPacket | null;
+  candidateCounts: DailyDeepReadCandidateCount[];
+  candidateErrorMessage: string | null;
+  errorMessage: string | null;
+}): string {
+  if (params.errorMessage) {
+    return [
+      "I checked the Daily Deep Read packet path, but the packet lookup failed.",
+      "",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      `Failure: ${params.errorMessage}`,
+      "",
+      "I did not use generic RAG chunk synthesis or the backend Deep Agents path for this answer.",
+    ].join("\n");
+  }
+
+  if (!params.packet) {
+    return [
+      "I checked the Daily Deep Read packet path and did not find a current packet.",
+      "",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      "Required next step: run the Daily Deep Read compiler so it writes the current daily-executive-brief packet.",
+      "",
+      "I did not use generic RAG chunk synthesis or the backend Deep Agents path for this answer.",
+    ].join("\n");
+  }
+
+  const sourceCounts =
+    Object.entries(params.packet.sourceCounts)
+      .map(([lane, count]) => `${lane}: ${count}`)
+      .join(", ") || "not recorded";
+  const sectionTitles =
+    params.packet.sections.map((section) => section.title).join(", ") ||
+    "not recorded";
+  const candidateStatus = params.candidateErrorMessage
+    ? `Candidate lookup warning: ${params.candidateErrorMessage}`
+    : formatCandidateCounts(params.candidateCounts);
+
+  return [
+    `Latest Daily Deep Read packet: ${params.packet.businessDate}.`,
+    "",
+    "Packet source of truth:",
+    `- Table: intelligence_packets`,
+    `- Target: daily-executive-brief`,
+    `- Packet ID: ${params.packet.id}`,
+    `- Packet type: ${params.packet.packetType}`,
+    `- Generated at: ${formatBriefingTimestamp(params.packet.generatedAt)}`,
+    `- Compiler version: ${params.packet.compilerVersion ?? "not recorded"}`,
+    `- Source count: ${params.packet.sourceCount}`,
+    `- Source counts: ${sourceCounts}`,
+    `- Sections available: ${sectionTitles}`,
+    "",
+    "Project intelligence policy:",
+    "- Project intelligence should consume the full-source Daily Deep Read packet sections and source notes first.",
+    "- Raw RAG chunks are for search, retrieval, and citation support only; they should not be the primary synthesis source for owner-level insights.",
+    "- Tasks, risks, decisions, initiatives, and project updates should be extracted as review-gated candidates before promotion into project intelligence packets.",
+    "",
+    "Current packet-linked candidates:",
+    candidateStatus,
+    "",
+    "Routing proof: this answer used the deterministic Daily Deep Read packet lookup, not generic Deep Agents or raw document_chunks synthesis.",
+  ].join("\n");
+}
+
 // Why: deep-agent and Microsoft-specialist fetches can take 40–60s. Without
 // any bytes on the wire during that window, browsers / HTTP/2 / dev middleware
 // silently kill the stream and the client renders "Failed to fetch" even though
@@ -2649,6 +2800,172 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         }
 
         responseAlreadyPersisted = true;
+        return;
+      }
+
+      if (isDailyDeepReadPacketQuestion(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "daily-deep-read-packet",
+            message: "Checking Daily Deep Read packet and review-gated candidates",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the Daily Deep Read packet user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const packetStatus = await loadDailyDeepReadPacketStatus();
+        const content = buildDailyDeepReadPacketStatusContent(packetStatus);
+        const toolTrace = [
+          {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "daily_deep_read_packet_status",
+              responseMode: "packet_lookup",
+              rationale:
+                "The user asked about Daily Deep Read source-of-truth, raw RAG chunks, or review-gated packet consumers.",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "dailyDeepReadPacketLookup",
+            toolName: "dailyDeepReadPacketLookup",
+            agent: "retrieval-planner-v2",
+            status: packetStatus.errorMessage ? "failed" : "success",
+            input: {
+              table: "intelligence_packets",
+              targetSlug: "daily-executive-brief",
+              packetType: "current",
+            },
+            output: {
+              found: Boolean(packetStatus.packet),
+              packetId: packetStatus.packet?.id ?? null,
+              businessDate: packetStatus.packet?.businessDate ?? null,
+              sourceCount: packetStatus.packet?.sourceCount ?? null,
+              error: packetStatus.errorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "dailyDeepReadCandidateLookup",
+            toolName: "dailyDeepReadCandidateLookup",
+            agent: "retrieval-planner-v2",
+            status: packetStatus.candidateErrorMessage ? "warning" : "success",
+            input: {
+              table: "source_signal_candidates",
+              compilerVersion: "daily_deep_read_consumers_v1",
+              packetId: packetStatus.packet?.id ?? null,
+            },
+            output: {
+              counts: packetStatus.candidateCounts,
+              error: packetStatus.candidateErrorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-daily-deep-read-packet",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "intelligence_packets",
+              status: packetStatus.packet ? "loaded" : "missing",
+              notes:
+                packetStatus.errorMessage ??
+                "target_slug=daily-executive-brief packet_type=current",
+            },
+            {
+              sourceType: "source_signal_candidates",
+              status: packetStatus.candidateErrorMessage ? "warning" : "loaded",
+              notes:
+                packetStatus.candidateErrorMessage ??
+                "compiler_version=daily_deep_read_consumers_v1 filtered by daily_packet_id",
+            },
+          ],
+          evidenceCount:
+            (packetStatus.packet ? 1 : 0) +
+            packetStatus.candidateCounts.reduce((sum, item) => sum + item.count, 0),
+          outputPolicy: {
+            synthesisSource: "daily_deep_read_packet",
+            rawRagChunks: "search_and_citation_only",
+            promotion: "review_gated_candidates_required",
+          },
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "daily-deep-read-packet",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: "daily_deep_read_packet_status",
+            modelId: "retrieval-planner-v2-daily-deep-read-packet",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-daily-deep-read-packet",
+              model: null,
+            },
+            provider_path: "deterministic-daily-deep-read-packet",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: "daily_deep_read_packet_status",
+              reason: plan.reason,
+              responseFormat: "packet_lookup",
+              sources: ["intelligence_packets", "source_signal_candidates"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-daily-deep-read-packet", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Daily Deep Read packet status returned",
+            status:
+              packetStatus.errorMessage || packetStatus.candidateErrorMessage
+                ? "warning"
+                : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
         return;
       }
 

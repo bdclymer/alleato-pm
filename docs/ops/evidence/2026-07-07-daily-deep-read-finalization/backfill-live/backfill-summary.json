@@ -1,0 +1,40 @@
+{
+  "ok": false,
+  "startedAt": "2026-07-07T17:33:10.470Z",
+  "completedAt": "2026-07-07T17:35:18.347Z",
+  "start": "2026-06-23",
+  "end": "2026-07-06",
+  "dryRun": false,
+  "shouldWrite": true,
+  "maxDocumentsPerDay": 125,
+  "forceAbnormalDays": false,
+  "evidenceRoot": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live",
+  "days": [
+    {
+      "date": "2026-06-23",
+      "status": "brief_failed",
+      "reason": "Daily Deep Read packet generation failed.",
+      "preflight": {
+        "date": "2026-06-23",
+        "bounds": {
+          "startIso": "2026-06-23T04:00:00.000Z",
+          "endIso": "2026-06-24T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 10,
+          "emails": 57,
+          "teams": 155,
+          "documents": 6
+        },
+        "total": 228,
+        "threshold": {
+          "maxDocumentsPerDay": 125
+        }
+      },
+      "briefRun": {
+        "exitCode": 1,
+        "stderr": "Error: Daily Deep Read brief missing required sections: Risk Candidates, Decision Candidates, Task Candidates, Initiative Candidates, Source Coverage, Automation Instructions Learned\n    at validateDailyDeepReadSections (file:///Users/meganharrison/Documents/alleato-pm/scripts/intelligence/daily-executive-brief.mjs:490:11)\n    at file:///Users/meganharrison/Documents/alleato-pm/scripts/intelligence/daily-executive-brief.mjs:545:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async withPg (file:///Users/meganharrison/Documents/alleato-pm/scripts/intelligence/daily-executive-brief.mjs:148:12)\n    at async main (file:///Users/meganharrison/Documents/alleato-pm/scripts/intelligence/daily-executive-brief.mjs:684:14)\n"
+      }
+    }
+  ]
+}

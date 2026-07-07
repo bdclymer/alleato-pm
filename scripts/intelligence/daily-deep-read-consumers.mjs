@@ -54,7 +54,7 @@ async function withPg(rawUrl, options, callback) {
 async function loadDailyDeepReadPacket() {
   return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
     const params = [];
-    const packetFilter = packetIdArg ? "and p.id = $1::uuid" : "";
+    const packetFilter = packetIdArg ? "and p.id = $1::uuid" : "and p.packet_type = 'current'";
     if (packetIdArg) params.push(packetIdArg);
     const { rows } = await client.query(
       `
@@ -70,7 +70,6 @@ async function loadDailyDeepReadPacket() {
         from public.intelligence_packets p
         join public.intelligence_targets t on t.id = p.target_id
         where t.slug = '${DAILY_TARGET_SLUG}'
-          and p.packet_type = 'current'
           ${packetFilter}
         order by p.generated_at desc
         limit 1
@@ -81,7 +80,7 @@ async function loadDailyDeepReadPacket() {
     if (!packet) {
       throw new Error(
         packetIdArg
-          ? `Daily Deep Read packet not found or not current: ${packetIdArg}`
+          ? `Daily Deep Read packet not found: ${packetIdArg}`
           : "No current Daily Deep Read packet found.",
       );
     }

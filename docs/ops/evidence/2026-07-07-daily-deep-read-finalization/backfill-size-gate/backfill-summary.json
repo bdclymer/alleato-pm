@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "startedAt": "2026-07-07T17:51:56.957Z",
+  "completedAt": "2026-07-07T17:51:58.281Z",
+  "start": "2026-06-25",
+  "end": "2026-06-25",
+  "dryRun": true,
+  "shouldWrite": false,
+  "maxDocumentsPerDay": 125,
+  "maxSourceCharsPerDay": 900000,
+  "forceAbnormalDays": false,
+  "evidenceRoot": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-size-gate",
+  "days": [
+    {
+      "date": "2026-06-25",
+      "status": "skipped_abnormal_volume",
+      "reason": "sourceChars=2200270 exceeds maxSourceCharsPerDay=900000",
+      "preflight": {
+        "date": "2026-06-25",
+        "bounds": {
+          "startIso": "2026-06-25T04:00:00.000Z",
+          "endIso": "2026-06-26T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 8,
+          "emails": 169,
+          "teams": 30,
+          "documents": 117
+        },
+        "sourceChars": {
+          "meetings": 924393,
+          "emails": 284142,
+          "teams": 24834,
+          "documents": 966901
+        },
+        "total": 324,
+        "totalSourceChars": 2200270,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packet": {
+        "id": "666149cc-54ce-40fe-8ecb-fae1cc8eb57f",
+        "packet_type": "snapshot",
+        "generated_at": "2026-07-07T17:49:46.214Z",
+        "kind": "daily_deep_read"
+      }
+    }
+  ]
+}

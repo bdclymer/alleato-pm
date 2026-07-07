@@ -25,6 +25,7 @@ const activeDailyBriefFiles = [
   "frontend/src/lib/ai-ops/tool-registry.ts",
   "scripts/intelligence/daily-executive-brief.mjs",
   "scripts/intelligence/daily-deep-read-consumers.mjs",
+  "scripts/intelligence/daily-deep-read-backfill.mjs",
 ];
 
 const forbiddenRules = [
