@@ -1,0 +1,107 @@
+APPLICATION AND CERTIFICATE FOR PAYMENT                                                                                                                                         DOCUMENT SUMMARY SHEET
+                                                                                                                                                                                Page 1 of 2
+
+TO CONTRACTOR:                                                   PROJECT:
+                                                                                                                                APPLICATION NO:                        1
+Alleato Group                                                    Exol Morrisville
+8383 Craig Street, Suite 150                                     2300 South Pennsylvania Ave                                    INVOICE NO:                            APP-01
+Indianapolis, IN 46250                                                                                                          PERIOD:                                05/31/26 - 06/29/26
+                                                                                                                                PROJECT NO:                            26-116
+FROM SUBCONTRACTOR:
+                                                                                                                                CONTRACT NO:                           PO-000125
+R.J. Skelding Co, Inc
+840 N. Dauphin Street                                                                                                           CONTRACT DATE:                         5/26/2026
+Allentown, PA 18109                                                                                                             CERTIFICATE DATE:                      6/29/2026
+                                                                                                                                SUBMITTED DATE:                        6/30/2026
+SUBCONTRACT FOR:
+PO-000125
+
+                                                                                                                                The undersigned certifies that to the best of the Subcontractor's knowledge, informa-
+SUBCONTRACTOR'S APPLICATION FOR PAYMENT                                                                                         tion and belief, the Work covered by this Application for Payment has been completed
+                                                                                                                                in accordance with the Subcontract Documents, that all amounts have been paid by
+Application is made for payment, as shown below, in connection with the Subcontract. Continuation Sheet is attached.
+                                                                                                                                the Subcontractor for Work which previous Certificates for payment were issued and
+                                                                                                                                payments received from the Owner/Client, and that current payments shown herein
+ 1.        Original Contract Sum                                                                              $28,000.00        is now due.
+ 2.        Net change by change orders                                                                           $500.00        SUBCONTRACTOR: R.J. Skelding Co, Inc
+
+ 3.        Contract Sum to date (Line 1 ± 2)                                                                  $28,500.00
+                                                                                                                                By:                                                           Date:
+ 4.        Total completed and stored to date (Column G on detail sheet)                                       $2,000.00
+                                                                                                                                State of:
+ 5a.       0.00% of completed work                                                                                  $0.00
+
+ 5b.       0.00% of stored material                                                                                 $0.00
+
+ 5.        Total retainage                                                                                          $0.00       County of:
+
+ 6.        Total earned less retainage (Line 4 less Line 5)                                                    $2,000.00
+
+ 7.        Less previous certificates for payment                                                                   $0.00
+                                                                                                                                Subscribed and sworn to before me this day of
+ 8.        Current payment due                                                                                 $2,000.00
+
+ 9.        Balance to finish, including retainage (Line 3 less Line 6)                                        $26,500.00
+                                                                                                                                Notary Public:
+
+ CHANGE ORDER SUMMARY                                                           ADDITIONS                DEDUCTIONS
+
+ Total changes approved in previous months by Owner/Client:                         $500.00                         $0.00
+                                                                                                                                My commission expires:
+ Total approved this month:                                                            $0.00                        $0.00
+
+ Totals:                                                                            $500.00                         $0.00
+
+ Net change by change orders:                                                        $500.00
+
+
+
+
+                                                                                          Alleato group subcontractor invoice
+CONTINUATION SHEET                                                                                                                                                                                        DOCUMENT DETAIL SHEET
+                                                                                                                                                                                                          Page 2 of 2
+
+Document SUMMARY SHEET, APPLICATION AND CERTIFICATE FOR PAYMENT, containing Contractor's signed Certification is attached.
+Use Column I on Contracts where variable retainage for line items apply.
+APPLICATION NUMBER:                                                                  APPLICATION DATE:                                                                 PERIOD:
+1                                                                                    6/29/2026                                                                         05/31/26 - 06/29/26
+
+
+Contract Lines
+       A                     B                                                                    C                     D                   E                   F                    G                              H                I
+
+    ITEM NO.   BUDGET CODE            DESCRIPTION OF WORK                                         SCHEDULED        FROM PREVIOUS                    THIS       MATERIALS        TOTAL COMPLETED            %       BALANCE TO      RETAINAGE
+                                                                                                         VALUE        APPLICATION                PERIOD PRESENTLY STORED      AND STORED TO DATE       (G / C)           FINISH
+                                                                                                                            (D + E)                         (NOT IN D OR E)              (D + E + F)                     (C - G)
+
+       1       506500                 Cost of Contracts- Subco                                     $28,000.00                $0.00              $2,000.00            $0.00               $2,000.00     7.14%        $26,000.00           $0.00
+
+                                      TOTALS:                                                      $28,000.00                $0.00              $2,000.00            $0.00               $2,000.00     7.14%        $26,000.00           $0.00
+
+
+Change Orders
+       A                     B                                                                    C                     D                   E                   F                    G                              H                I
+
+    ITEM NO.   BUDGET CODE            DESCRIPTION OF WORK                                         SCHEDULED        FROM PREVIOUS                    THIS       MATERIALS        TOTAL COMPLETED            %       BALANCE TO      RETAINAGE
+                                                                                                         VALUE        APPLICATION                PERIOD PRESENTLY STORED      AND STORED TO DATE       (G / C)           FINISH
+                                                                                                                            (D + E)                         (NOT IN D OR E)              (D + E + F)                     (C - G)
+
+       2       CE-001                 Change Event 000125 - This is a Change Event                     $500.00               $0.00                 $0.00             $0.00                    $0.00    0.00%            $500.00          $0.00
+
+                                      TOTALS:                                                          $500.00               $0.00                 $0.00             $0.00                    $0.00    0.00%            $500.00          $0.00
+
+
+Grand Totals
+       A                     B                                                                    C                     D                   E                   F                    G                              H                I
+
+    ITEM NO.   BUDGET CODE            DESCRIPTION OF WORK                                         SCHEDULED        FROM PREVIOUS                    THIS       MATERIALS        TOTAL COMPLETED            %       BALANCE TO      RETAINAGE
+                                                                                                         VALUE        APPLICATION                PERIOD PRESENTLY STORED      AND STORED TO DATE       (G / C)           FINISH
+                                                                                                                            (D + E)                         (NOT IN D OR E)              (D + E + F)                     (C - G)
+
+                                      GRAND TOTALS:                                                $28,500.00                $0.00              $2,000.00            $0.00               $2,000.00     7.02%        $26,500.00           $0.00
+
+
+
+
+                                                                                                      Alleato group subcontractor invoice
+

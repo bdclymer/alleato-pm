@@ -123,6 +123,21 @@ function collectRenderedText(node: React.ReactNode): string {
   );
 }
 
+function collectElements(
+  node: React.ReactNode,
+  predicate: (element: React.ReactElement) => boolean,
+): React.ReactElement[] {
+  if (node == null || typeof node === "boolean") return [];
+  if (Array.isArray(node)) {
+    return node.flatMap((child) => collectElements(child, predicate));
+  }
+  if (!React.isValidElement(node)) return [];
+
+  const matches = predicate(node) ? [node] : [];
+  const children = (node.props as { children?: React.ReactNode }).children;
+  return matches.concat(collectElements(children, predicate));
+}
+
 describe("subcontractor invoice pdf helpers", () => {
   it("builds a Procore-style filename from project metadata", () => {
     const filename = buildSubcontractorInvoicePdfFilename(
@@ -220,6 +235,37 @@ describe("subcontractor invoice pdf helpers", () => {
 
     for (const column of ["A", "B", "C", "D", "E", "F", "G", "H", "I"]) {
       expect(continuationText).toContain(column);
+    }
+  });
+
+  it("narrows the continuation table container to fit the landscape page", () => {
+    const document = SubcontractorInvoicePdfDocument({ data: makeBaseData() });
+    const pages = React.Children.toArray(document.props.children).filter(
+      (child): child is React.ReactElement<{ children?: React.ReactNode }> =>
+        React.isValidElement(child) && child.type === Page,
+    );
+
+    const detailTableComponents = collectElements(
+      pages[1],
+      (element) => typeof element.type === "function" && element.type.name === "DetailTable",
+    );
+
+    expect(detailTableComponents).toHaveLength(3);
+    for (const component of detailTableComponents) {
+      const rendered = component.type(component.props) as React.ReactElement<{
+        style?: Record<string, unknown> | Array<Record<string, unknown>>;
+      }>;
+      const style = Array.isArray(rendered.props.style)
+        ? Object.assign({}, ...rendered.props.style)
+        : rendered.props.style ?? {};
+
+      expect(style).toEqual(
+        expect.objectContaining({
+          width: "98.5%",
+          alignSelf: "flex-start",
+          borderTopWidth: 1,
+        }),
+      );
     }
   });
 });

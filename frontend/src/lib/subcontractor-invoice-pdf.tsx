@@ -155,7 +155,7 @@ export { buildContinuationSections, buildSubcontractorInvoicePdfFilename };
 const styles = StyleSheet.create({
   page: {
     paddingTop: 18,
-    paddingHorizontal: 22,
+    paddingHorizontal: 20,
     paddingBottom: 28,
     fontFamily: "Helvetica",
     fontSize: 8,
@@ -362,7 +362,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderColor: "#111111",
     marginTop: 4,
-    width: "100%",
+    width: "98.5%",
+    alignSelf: "flex-start",
   },
   detailHeaderRow: {
     flexDirection: "row",
