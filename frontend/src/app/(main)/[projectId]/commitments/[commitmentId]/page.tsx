@@ -26,7 +26,6 @@ import {
   EntityAttachments,
   InlineEditField,
 } from "@/components/ds";
-import { COMMITMENT_STATUS_OPTIONS } from "@/features/commitments/commitments-table-config";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
 import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
@@ -587,9 +586,6 @@ interface GeneralTabProps {
 
 function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onSaveField }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
-  const displayStatus = commitment.status
-    ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : "Draft";
   const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
@@ -610,27 +606,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
               <div className="space-y-8">
                 <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
                   <DetailFieldGrid columns={1}>
-                    <DetailField label={isPO ? "PO #" : "Subcontract #"}>
-                      {safeNumber(commitment.number) || "—"}
-                    </DetailField>
-                    <DetailField label="Title">
-                      <InlineEditField
-                        label="Title"
-                        value={commitment.title ?? ""}
-                        display={commitment.title || undefined}
-                        onSave={(v) => onSaveField("title", v)}
-                      />
-                    </DetailField>
-                    <DetailField label="Status">
-                      <InlineEditField
-                        label="Status"
-                        type="select"
-                        options={COMMITMENT_STATUS_OPTIONS}
-                        value={displayStatus}
-                        display={<StatusBadge status={displayStatus} />}
-                        onSave={(v) => onSaveField("status", v)}
-                      />
-                    </DetailField>
                     <DetailField label="Contract Company">
                       {commitment.contract_company?.name ? (
                         commitment.contract_company_id ? (
@@ -657,13 +632,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                           onSaveField("default_retainage_percent", v === "" ? null : Number(v))
                         }
                       />
-                    </DetailField>
-                    <DetailField label="Accounting Method">
-                      {commitment.accounting_method === "unit"
-                        ? "Unit/Quantity"
-                        : commitment.accounting_method === "percent"
-                          ? "Percent"
-                          : "Amount Based"}
                     </DetailField>
                     <DetailField label="Private Commitment">
                       {commitment.private ? "Yes" : "No"}
