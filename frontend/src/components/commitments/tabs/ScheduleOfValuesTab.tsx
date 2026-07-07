@@ -456,7 +456,7 @@ export function ScheduleOfValuesTab({
     <div className="space-y-6">
       {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
       {!canEdit ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm italic text-muted-foreground">
           {lockMessage}
         </p>
       ) : null}
