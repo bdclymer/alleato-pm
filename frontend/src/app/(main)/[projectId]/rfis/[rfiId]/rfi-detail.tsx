@@ -153,7 +153,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
     Boolean(rfi.response_project_document_id);
 
   const inspectorContent = (
-    <InspectorRail className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+    <InspectorRail className="space-y-4 lg:sticky lg:top-24 lg:self-start">
       <InspectorSection title="Assignment">
         <PropertyList>
           <PropertyRow label="RFI Manager" icon={<UserRound className="h-3.5 w-3.5" />}>
@@ -382,8 +382,9 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
   return (
     <ContentSectionStack className="pb-20">
       <DetailLayout
-        sidebar={<div className="xl:block">{inspectorContent}</div>}
+        sidebar={<div className="lg:block">{inspectorContent}</div>}
         sidebarDesktopOnly
+        sidebarAt="lg"
       >
           <section className="space-y-8">
             <div className="space-y-2">
@@ -432,7 +433,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             />
           </section>
 
-          <section className="xl:hidden">
+          <section className="lg:hidden">
             {inspectorContent}
           </section>
 
