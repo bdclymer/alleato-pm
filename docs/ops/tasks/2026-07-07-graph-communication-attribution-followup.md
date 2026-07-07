@@ -1,6 +1,6 @@
 # Graph Communication Attribution Follow-Up
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Linear: AAI-1010
 Linear URL: https://linear.app/megankharrison/issue/AAI-1010/run-communication-attribution-follow-up-after-graph-sync
@@ -33,7 +33,7 @@ Run the shared communication project attribution backfill automatically after Mi
 - [x] Follow-up failure is fail-loud in Graph downstream output.
 - [x] Targeted tests pass.
 - [x] Evidence section filled.
-- [ ] Task-owned files pushed to `origin/main`.
+- [x] Task-owned files pushed to `origin/main`.
 
 ## Evidence
 
@@ -69,3 +69,6 @@ Run the shared communication project attribution backfill automatically after Mi
 - Live health readback:
   - `run_source_rag_health_check(trigger_remediation=False)`.
   - Result: `degraded=None`, warnings `0`, critical `0`.
+- Publish evidence:
+  - `npm run codex:finish -- --allow-staged --message "Run Graph communication attribution follow-up" --files backend/src/services/integrations/microsoft_graph/sync.py backend/tests/test_graph_sync_options.py docs/ops/tasks/2026-07-07-graph-communication-attribution-followup.md docs/architecture/AI-RAG-ARCHITECTURE.md`
+  - Result: published task-owned files to `origin/main` at `b1bd6dae3`.
