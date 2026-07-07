@@ -1,6 +1,6 @@
 # Bounded Post-Sync Attribution Backfill
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Linear: AAI-1012
 Linear URL: https://linear.app/megankharrison/issue/AAI-1012/bound-post-sync-communication-attribution-backfill-to-sync-window
@@ -36,7 +36,7 @@ Keep the automatic communication attribution follow-up reliable without repeated
 - [x] Focused tests pass.
 - [x] Strict/live verifier proof recorded.
 - [x] Evidence section filled.
-- [ ] Task-owned files pushed to `origin/main`.
+- [x] Task-owned files pushed to `origin/main`.
 
 ## Evidence
 
@@ -77,3 +77,6 @@ Keep the automatic communication attribution follow-up reliable without repeated
   - Exact downstream start window `2026-07-07T17:40:54+00:00`: `scanned=0`, `failed=0`.
   - Graph buffered sync watermark `2026-07-07T17:35:54+00:00`: `scanned=2`, `review_staged=2`, `failed=0`.
   - This proves the bounded path no longer scans the historical default `250` rows for the same cron cycle.
+- Publish evidence:
+  - `npm run codex:finish -- --message "Bound post-sync attribution backfill" --files backend/scripts/run_fireflies_sync.py backend/src/services/ingestion/communication_project_backfill.py backend/src/services/ingestion/sync_followups.py backend/src/services/integrations/microsoft_graph/sync.py backend/tests/test_communication_project_backfill.py backend/tests/test_graph_sync_options.py scripts/verify/verify_graph_post_sync_attribution_followup.mjs docs/architecture/AI-RAG-ARCHITECTURE.md docs/ops/tasks/2026-07-07-bounded-post-sync-attribution-backfill.md`
+  - Result: published task-owned files to `origin/main` at `bcfdb4f8f`.
