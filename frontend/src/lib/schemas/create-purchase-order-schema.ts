@@ -12,6 +12,9 @@ export const PurchaseOrderSovLineItemSchema = z.object({
   lineNumber: requiredNumber,
   changeEventLineItem: z.string().optional(),
   budgetCode: z.string().optional(),
+  budgetCodeId: z.string().optional(),
+  projectBudgetCodeId: z.string().optional(),
+  budgetCodeLabel: z.string().optional(),
   description: z.string().optional(),
   quantity: optionalNumber,
   uom: z.string().optional(), // Unit of Measure: EA, LF, SF, etc.

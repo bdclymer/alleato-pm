@@ -46,7 +46,8 @@ export const SovLineItemSchema = z.object({
   lineNumber: optionalNumber, // maps to '#'
   changeEventLineItem: z.string().trim().optional(),
   budgetCode: z.string().trim().optional(),
-  budgetCodeId: z.string().trim().optional(), // FK to budget_codes
+  budgetCodeId: z.string().trim().optional(), // FK to project_budget_codes
+  projectBudgetCodeId: z.string().trim().optional(),
   budgetCodeLabel: z.string().trim().optional(), // display label
   description: z.string().trim().optional(),
   amount: optionalPositiveNumber,

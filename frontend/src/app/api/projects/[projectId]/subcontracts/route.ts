@@ -6,6 +6,10 @@ import { CreateSubcontractSchema } from "@/lib/schemas/create-subcontract-schema
 import { mapFormToInsert } from "@/lib/db/subcontracts";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 
 /**
  * GET /api/projects/[id]/subcontracts
@@ -142,16 +146,36 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         }
         return 0;
       };
-      const sovItems = data.sov.map((item, index) => ({
-        subcontract_id: subcontract.id,
-        line_number: item.lineNumber || index + 1,
-        change_event_line_item: item.changeEventLineItem || null,
-        budget_code: item.budgetCode || null,
-        description: item.description || null,
-        amount: toNumber(item.amount),
-        billed_to_date: toNumber(item.billedToDate),
-        sort_order: index,
-      }));
+      const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+        supabase,
+        parseInt(projectId, 10),
+        "projects/[projectId]/subcontracts#POST",
+      );
+      const sovItems = await Promise.all(
+        data.sov.map((item, index) => {
+          const lineNumber = item.lineNumber || index + 1;
+          const budgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+            budgetCodes: projectBudgetCodes,
+            lineNumber,
+            where: "projects/[projectId]/subcontracts#POST",
+            submittedBudgetCode: item.budgetCode,
+            submittedProjectBudgetCodeId:
+              item.projectBudgetCodeId ?? item.budgetCodeId ?? null,
+          });
+
+          return {
+            subcontract_id: subcontract.id,
+            line_number: lineNumber,
+            change_event_line_item: item.changeEventLineItem || null,
+            budget_code: budgetCode.displayBudgetCode,
+            project_budget_code_id: budgetCode.projectBudgetCodeId,
+            description: item.description || null,
+            amount: toNumber(item.amount),
+            billed_to_date: toNumber(item.billedToDate),
+            sort_order: index,
+          };
+        }),
+      );
 
       const { error: sovError } = await supabase
         .from("subcontract_sov_items")
@@ -198,6 +222,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       message: "Subcontract created successfully",
     });
   } catch (error) {
+    if (error instanceof GuardrailError) {
+      throw error;
+    }
     return apiErrorResponse(error);
   }
   },

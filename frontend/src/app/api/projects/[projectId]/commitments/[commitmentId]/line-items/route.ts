@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
 import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+  type ResolvedCommitmentSovBudgetCode,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -39,19 +44,6 @@ type PurchaseOrderSovInsert = Tables["purchase_order_sov_items"]["Insert"];
 type PurchaseOrderSovUpdate = Tables["purchase_order_sov_items"]["Update"];
 type SovRow = SubcontractSovRow | PurchaseOrderSovRow;
 type ExistingSovItem = Pick<SovRow, "id" | "billed_to_date" | "amount">;
-type ProjectBudgetCodeLookupRow = {
-  id: string;
-  cost_code_id: string;
-  cost_type_id: string | null;
-  cost_code_types:
-    | { code: string | null; description: string | null }
-    | { code: string | null; description: string | null }[]
-    | null;
-};
-type ResolvedBudgetCode = {
-  projectBudgetCodeId: string | null;
-  displayBudgetCode: string | null;
-};
 
 const ROUTE_WHERE = "projects/[projectId]/commitments/[commitmentId]/line-items";
 
@@ -75,104 +67,6 @@ function normalizeCommitmentType(
     where: ROUTE_WHERE,
     message: `Unsupported commitment type: ${value ?? "missing"}`,
   });
-}
-
-function relationOne<T>(value: T | T[] | null | undefined): T | null {
-  if (!value) return null;
-  return Array.isArray(value) ? value[0] ?? null : value;
-}
-
-function normalizeBudgetCode(value: string): string {
-  return value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-}
-
-function projectBudgetCodeDisplay(row: ProjectBudgetCodeLookupRow): string {
-  const costType = relationOne(row.cost_code_types);
-  return costType?.code ? `${row.cost_code_id}.${costType.code}` : row.cost_code_id;
-}
-
-async function fetchProjectBudgetCodeLookup(
-  supabase: DbClient,
-  projectId: number,
-): Promise<ProjectBudgetCodeLookupRow[]> {
-  const { data, error } = await supabase
-    .from("project_budget_codes")
-    .select("id, cost_code_id, cost_type_id, cost_code_types ( code, description )")
-    .eq("project_id", projectId)
-    .eq("is_active", true);
-
-  if (error) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: `${ROUTE_WHERE}#fetch-project-budget-codes`,
-      message: `Failed to fetch project budget codes: ${error.message}`,
-      cause: error,
-    });
-  }
-
-  return (data ?? []) as ProjectBudgetCodeLookupRow[];
-}
-
-function resolveLineItemBudgetCode(
-  item: LineItemInput,
-  budgetCodes: ProjectBudgetCodeLookupRow[],
-  lineNumber: number,
-): ResolvedBudgetCode {
-  const submittedProjectBudgetCodeId =
-    item.project_budget_code_id ?? item.projectBudgetCodeId ?? null;
-  const submittedBudgetCode = item.budget_code?.trim() || null;
-
-  if (submittedProjectBudgetCodeId) {
-    const match = budgetCodes.find((code) => code.id === submittedProjectBudgetCodeId);
-    if (!match) {
-      invalidPayload(
-        `Line ${lineNumber}: selected budget code is not active for this project.`,
-      );
-    }
-
-    return {
-      projectBudgetCodeId: match.id,
-      displayBudgetCode: submittedBudgetCode || projectBudgetCodeDisplay(match),
-    };
-  }
-
-  if (!submittedBudgetCode) {
-    return { projectBudgetCodeId: null, displayBudgetCode: null };
-  }
-
-  const normalizedSubmitted = normalizeBudgetCode(submittedBudgetCode);
-  const matchGroups = [
-    budgetCodes.filter((code) => code.id === submittedBudgetCode),
-    budgetCodes.filter((code) => {
-      const costType = relationOne(code.cost_code_types);
-      return (
-        costType?.code &&
-        normalizeBudgetCode(`${code.cost_code_id}${costType.code}`) ===
-          normalizedSubmitted
-      );
-    }),
-    budgetCodes.filter(
-      (code) => normalizeBudgetCode(code.cost_code_id) === normalizedSubmitted,
-    ),
-  ];
-
-  const matches = matchGroups.find((group) => group.length > 0) ?? [];
-  if (matches.length === 1) {
-    return {
-      projectBudgetCodeId: matches[0].id,
-      displayBudgetCode: projectBudgetCodeDisplay(matches[0]),
-    };
-  }
-
-  if (matches.length > 1) {
-    invalidPayload(
-      `Line ${lineNumber}: budget code "${submittedBudgetCode}" is ambiguous for this project. Select the specific budget code before saving.`,
-    );
-  }
-
-  invalidPayload(
-    `Line ${lineNumber}: budget code "${submittedBudgetCode}" is not active for this project.`,
-  );
 }
 
 async function fetchCommitmentType(
@@ -336,7 +230,7 @@ function buildSubcontractSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
-  budgetCode: ResolvedBudgetCode,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): SubcontractSovUpdate & SubcontractSovInsert {
   return {
     subcontract_id: commitmentId,
@@ -358,7 +252,7 @@ function buildPurchaseOrderSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
-  budgetCode: ResolvedBudgetCode,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): PurchaseOrderSovUpdate & PurchaseOrderSovInsert {
   return {
     purchase_order_id: commitmentId,
@@ -382,7 +276,7 @@ async function upsertSovItem(
   item: LineItemInput,
   lineNumber: number,
   isExisting: boolean,
-  budgetCode: ResolvedBudgetCode,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): Promise<SovRow> {
   if (commitmentType === "subcontract") {
     const itemData = buildSubcontractSovData(commitmentId, lineNumber, item, budgetCode);
@@ -614,9 +508,10 @@ export const PUT = withApiGuardrails(
       });
     }
 
-    const projectBudgetCodes = await fetchProjectBudgetCodeLookup(
+    const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
       supabase,
       numericProjectId,
+      ROUTE_WHERE,
     );
 
     await deleteSovItems(supabase, commitmentType, idsToDelete);
@@ -628,11 +523,14 @@ export const PUT = withApiGuardrails(
     for (let i = 0; i < lineItems.length; i++) {
       const item = lineItems[i];
       const lineNumber = item.line_number ?? i + 1;
-      const budgetCode = resolveLineItemBudgetCode(
-        item,
-        projectBudgetCodes,
+      const budgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+        budgetCodes: projectBudgetCodes,
         lineNumber,
-      );
+        where: ROUTE_WHERE,
+        submittedBudgetCode: item.budget_code,
+        submittedProjectBudgetCodeId:
+          item.project_budget_code_id ?? item.projectBudgetCodeId ?? null,
+      });
 
       try {
         const upsertedItem = await upsertSovItem(
