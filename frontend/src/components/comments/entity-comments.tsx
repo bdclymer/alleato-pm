@@ -6,6 +6,11 @@ import { VeltInlineCommentsSection } from "@veltdev/react";
 
 import { cn } from "@/lib/utils";
 import { useCollaborationEntityContext } from "./entity-context";
+import { LiveblocksEntityComments } from "./liveblocks-entity-comments";
+
+// Spike flag: point the shared comments section at the Liveblocks engine without
+// removing Velt. Build-time constant, so the branch is stable across renders.
+const COMMENTS_ENGINE = process.env.NEXT_PUBLIC_COMMENTS_ENGINE;
 
 interface EntityCommentsProps {
   title?: string;
@@ -18,8 +23,16 @@ function toDomId(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
-// Render a Velt inline comment section for the current entity context.
-export function EntityComments({
+// Render an inline comment section for the current entity context. Delegates to
+// the Liveblocks engine when NEXT_PUBLIC_COMMENTS_ENGINE=liveblocks, else Velt.
+export function EntityComments(props: EntityCommentsProps) {
+  if (COMMENTS_ENGINE === "liveblocks") {
+    return <LiveblocksEntityComments {...props} />;
+  }
+  return <VeltEntityComments {...props} />;
+}
+
+function VeltEntityComments({
   title = "Comments",
   className,
   stickyComposer = false,

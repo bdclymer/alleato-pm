@@ -11,15 +11,16 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (333)
+## UI Routes (334)
 
-_299/333 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_300/334 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
 | `/` | List all projects across the organization with filtering, search, and client/estimating/internal scope tabs | frontend/src/app/(main)/page.tsx |
 | `/[projectId]/admin` | Manage member permissions for this project. | frontend/src/app/(main)/[projectId]/admin/page.tsx |
 | `/[projectId]/billing-periods` | Create and manage invoice billing periods with manual or automatic frequency setup | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
+| `/[projectId]/billing-periods/[periodId]` | Loading billing period… | frontend/src/app/(main)/[projectId]/billing-periods/[periodId]/page.tsx |
 | `/[projectId]/budget` | View and manage project budget with line items, modifications, forecasting, and cost tracking | frontend/src/app/(main)/[projectId]/budget/page.tsx |
 | `/[projectId]/budget/line-item/new` | Add one or more line items to the project budget. | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
 | `/[projectId]/budget/setup` | Create initial budget line items by selecting cost codes and entering amounts | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
@@ -351,7 +352,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (744)
+## API Endpoints (748)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -495,6 +496,8 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/collaboration/notifications` | GET, PATCH | frontend/src/app/api/collaboration/notifications/route.ts |
 | `/api/command-center/ops` | GET | frontend/src/app/api/command-center/ops/route.ts |
 | `/api/comments/all` | GET | frontend/src/app/api/comments/all/route.ts |
+| `/api/comments/delete` | POST | frontend/src/app/api/comments/delete/route.ts |
+| `/api/comments/resolve` | POST | frontend/src/app/api/comments/resolve/route.ts |
 | `/api/commitments` | GET, POST | frontend/src/app/api/commitments/route.ts |
 | `/api/commitments/[commitmentId]` | GET, PUT, PATCH, DELETE | frontend/src/app/api/commitments/[commitmentId]/route.ts |
 | `/api/commitments/[commitmentId]/advanced-settings` | GET, PUT | frontend/src/app/api/commitments/[commitmentId]/advanced-settings/route.ts |
@@ -626,6 +629,8 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/knowledge/signed-url` | GET | frontend/src/app/api/knowledge/signed-url/route.ts |
 | `/api/knowledge/sync-sharepoint` | POST | frontend/src/app/api/knowledge/sync-sharepoint/route.ts |
 | `/api/knowledge/upload` | POST | frontend/src/app/api/knowledge/upload/route.ts |
+| `/api/liveblocks/auth` | POST | frontend/src/app/api/liveblocks/auth/route.ts |
+| `/api/liveblocks/users` | GET | frontend/src/app/api/liveblocks/users/route.ts |
 | `/api/manpower` | GET | frontend/src/app/api/manpower/route.ts |
 | `/api/manpower/assignments/[assignmentId]` | PATCH | frontend/src/app/api/manpower/assignments/[assignmentId]/route.ts |
 | `/api/manpower/import` | POST | frontend/src/app/api/manpower/import/route.ts |
