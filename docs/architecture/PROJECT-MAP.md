@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (331)
+## UI Routes (330)
 
-_300/331 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_299/330 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -174,7 +174,6 @@ _300/331 have a description (from the page's `PageShell` or the curated `fronten
 | `/ai-skills` | Redirect to /ai/admin/skills; admin review surface for Skill Library records | frontend/src/app/(admin)/ai-skills/page.tsx |
 | `/ai-system-health` | Conversations, tokens, spend, satisfaction, model mix, the self-learning loop, and ingestion-pipeline status — one screen for stakeholder visibility into the AI. | frontend/src/app/(admin)/ai-system-health/page.tsx |
 | `/ai-vision` | One screen for the whole AI build — the vision, the agent team, the tools in priority order, and what's already live. | frontend/src/app/(admin)/ai-vision/page.tsx |
-| `/ai-work-runs` | Recent Executive Daily Brief runs, delivery state, source policy, and evidence rows from the AI operations ledger. | frontend/src/app/(admin)/ai-work-runs/page.tsx |
 | `/ai/admin/agents` | AI agent registry with table and dependency graph views, status and impact filters | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
 | `/ai/admin/skills` | Review Skill Library records by status, scope, owner, reviewer, and usage. | frontend/src/app/(admin)/ai/admin/skills/page.tsx |
 | `/ai/approvals` | AI approvals | frontend/src/app/(main)/ai/approvals/page.tsx |
@@ -381,7 +380,6 @@ _300/331 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/ai-learning-promotions/stats` | GET | frontend/src/app/api/admin/ai-learning-promotions/stats/route.ts |
 | `/api/admin/ai-skills` | GET, PATCH | frontend/src/app/api/admin/ai-skills/route.ts |
 | `/api/admin/ai-system-health` | GET | frontend/src/app/api/admin/ai-system-health/route.ts |
-| `/api/admin/ai-work-runs` | GET | frontend/src/app/api/admin/ai-work-runs/route.ts |
 | `/api/admin/analytics` | GET | frontend/src/app/api/admin/analytics/route.ts |
 | `/api/admin/app-errors/[groupId]` | GET, POST, PATCH | frontend/src/app/api/admin/app-errors/[groupId]/route.ts |
 | `/api/admin/check-all-password-resets` | GET | frontend/src/app/api/admin/check-all-password-resets/route.ts |
@@ -416,6 +414,7 @@ _300/331 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/meeting-templates/[templateId]` | GET, PATCH, DELETE | frontend/src/app/api/admin/meeting-templates/[templateId]/route.ts |
 | `/api/admin/operations-readiness/status` | GET | frontend/src/app/api/admin/operations-readiness/status/route.ts |
 | `/api/admin/owner-briefing/send-test` | POST | frontend/src/app/api/admin/owner-briefing/send-test/route.ts |
+| `/api/admin/page-tags` | GET, POST, PUT | frontend/src/app/api/admin/page-tags/route.ts |
 | `/api/admin/portfolio-brief/preview` | POST | frontend/src/app/api/admin/portfolio-brief/preview/route.ts |
 | `/api/admin/prime-contract-change-order-orphans` | GET, PATCH | frontend/src/app/api/admin/prime-contract-change-order-orphans/route.ts |
 | `/api/admin/project-attribution-candidates` | GET, POST | frontend/src/app/api/admin/project-attribution-candidates/route.ts |

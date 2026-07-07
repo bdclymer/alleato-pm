@@ -52090,12 +52090,6 @@
             "snippet": ".from(\"source_sync_runs\")"
           },
           {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 413,
-            "kind": "read",
-            "snippet": ".from(\"source_sync_runs\")"
-          },
-          {
             "filePath": "frontend/src/app/api/admin/operations-readiness/status/route.ts",
             "lineNumber": 260,
             "kind": "read",
@@ -55454,14 +55448,7 @@
             "snippet": ".from(\"ai_work_run_steps\")"
           }
         ],
-        "reads": [
-          {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 426,
-            "kind": "read",
-            "snippet": ".from(\"ai_work_run_steps\")"
-          }
-        ],
+        "reads": [],
         "migrations": [
           {
             "filePath": "supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql",
@@ -55582,14 +55569,7 @@
             "snippet": ".from(\"ai_work_run_artifacts\")"
           }
         ],
-        "reads": [
-          {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 433,
-            "kind": "read",
-            "snippet": ".from(\"ai_work_run_artifacts\")"
-          }
-        ],
+        "reads": [],
         "migrations": [
           {
             "filePath": "supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql",
@@ -55726,12 +55706,6 @@
           }
         ],
         "reads": [
-          {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 440,
-            "kind": "read",
-            "snippet": ".from(\"ai_work_run_delivery_attempts\")"
-          },
           {
             "filePath": "frontend/src/app/api/admin/operations-readiness/status/route.ts",
             "lineNumber": 593,
@@ -79090,12 +79064,6 @@
             "snippet": ".from(\"source_sync_runs\")"
           },
           {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 413,
-            "kind": "read",
-            "snippet": ".from(\"source_sync_runs\")"
-          },
-          {
             "filePath": "frontend/src/app/api/admin/operations-readiness/status/route.ts",
             "lineNumber": 260,
             "kind": "read",
@@ -84658,14 +84626,7 @@
             "snippet": ".from(\"ai_operation_events\")"
           }
         ],
-        "reads": [
-          {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 407,
-            "kind": "read",
-            "snippet": ".from(\"ai_operation_events\")"
-          }
-        ],
+        "reads": [],
         "migrations": [
           {
             "filePath": "supabase/migrations/20260619090000_create_ai_operations_gateway_ledger.sql",
@@ -85330,12 +85291,6 @@
         ],
         "reads": [
           {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 380,
-            "kind": "read",
-            "snippet": ".from(\"ai_work_runs\")"
-          },
-          {
             "filePath": "frontend/src/app/api/admin/operations-readiness/status/route.ts",
             "lineNumber": 571,
             "kind": "read",
@@ -85474,14 +85429,7 @@
             "snippet": "const { error } = await supabase.from(\"ai_work_run_sources\").insert(rows);"
           }
         ],
-        "reads": [
-          {
-            "filePath": "frontend/src/app/api/admin/ai-work-runs/route.ts",
-            "lineNumber": 419,
-            "kind": "read",
-            "snippet": ".from(\"ai_work_run_sources\")"
-          }
-        ],
+        "reads": [],
         "migrations": [
           {
             "filePath": "supabase/migrations/20260619090000_create_ai_operations_gateway_ledger.sql",

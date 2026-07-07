@@ -787,11 +787,6 @@
       "description": "One screen for the whole AI build — the vision, the agent team, the tools in priority order, and what's already live."
     },
     {
-      "url": "/ai-work-runs",
-      "title": "AI Work Runs",
-      "description": "Recent Executive Daily Brief runs, delivery state, source policy, and evidence rows from the AI operations ledger."
-    },
-    {
       "url": "/ai/admin/agents",
       "title": null,
       "description": "AI agent registry with table and dependency graph views, status and impact filters"

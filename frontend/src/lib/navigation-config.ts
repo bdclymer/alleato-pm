@@ -227,14 +227,6 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     developerOnly: true,
   },
   {
-    name: "AI Work Runs",
-    path: "ai-work-runs",
-    requiresProject: false,
-    icon: Clock,
-    description: "Executive Daily Brief run ledger and evidence rows",
-    developerOnly: true,
-  },
-  {
     name: "AI Chat History",
     path: "ai-chat-history",
     requiresProject: false,
@@ -377,14 +369,6 @@ export const developmentTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Source sync, tasks, packets, and daily brief readiness",
-    ownerOnly: true,
-  },
-  {
-    name: "AI Work Runs",
-    path: "ai-work-runs",
-    requiresProject: false,
-    icon: Clock,
-    description: "Executive Daily Brief run ledger and evidence rows",
     ownerOnly: true,
   },
   {
@@ -1359,14 +1343,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Source sync, task, packet, and daily brief readiness",
-    adminOnly: true,
-  },
-  {
-    name: "AI Work Runs",
-    path: "/ai-work-runs",
-    requiresProject: false,
-    icon: Clock,
-    description: "Executive Daily Brief run ledger and evidence rows",
     adminOnly: true,
   },
   {
