@@ -968,6 +968,22 @@ def _run_graph_downstream_processing(
     communications_synced = int(source_summary.get("communications_synced") or 0)
     if communications_synced > 0:
         try:
+            from src.services.ingestion.sync_followups import maybe_run_comm_project_backfill
+
+            project_backfill_result = maybe_run_comm_project_backfill(supabase)
+            summary["project_backfill"] = project_backfill_result
+            if project_backfill_result.get("failed"):
+                summary["errors"].append(
+                    "Communication project backfill failed for "
+                    f"{project_backfill_result.get('failed')} row(s)"
+                )
+            logger.info("[GraphSync] Communication project backfill complete: %s", project_backfill_result)
+        except Exception as exc:
+            logger.error("[GraphSync] Communication project backfill failed (non-fatal): %s", exc)
+            summary["errors"].append(f"Communication project backfill failed: {exc}")
+            summary["project_backfill"] = {"error": str(exc)}
+
+        try:
             from src.services.intelligence.project_synthesizer import synthesize_new_comms_since
 
             extract_result = synthesize_new_comms_since(sync_started_at.isoformat())
@@ -984,6 +1000,10 @@ def _run_graph_downstream_processing(
             summary["errors"].append(f"Intelligence extraction failed: {exc}")
             summary["intelligence_extraction"] = {"error": str(exc)}
     else:
+        summary["project_backfill"] = {
+            "status": "skipped",
+            "reason": "no_new_outlook_or_teams_communications",
+        }
         summary["intelligence_extraction"] = {
             "status": "skipped",
             "reason": "no_new_outlook_or_teams_communications",
