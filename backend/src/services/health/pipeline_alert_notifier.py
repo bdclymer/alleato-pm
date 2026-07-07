@@ -43,6 +43,8 @@ _DEFAULT_ALERT_TEAMS_USER_ID = "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0"  # owner (
 # Source identifiers in source_sync_runs we treat as user-facing pipeline lanes.
 SOURCE_LABELS = {
     "microsoft_graph": "Outlook / SharePoint vectorization",
+    "microsoft_graph_source_sync": "Microsoft Graph source sync",
+    "microsoft_graph_downstream": "Microsoft Graph downstream enrichment",
     "document_pipeline": "Document vectorization",
     "fireflies": "Meeting transcripts (Fireflies)",
     "teams_message": "Teams channel messages",

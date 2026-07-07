@@ -73,6 +73,48 @@ def _record_sync_run_safe(
         )
 
 
+def _record_graph_phase_run_safe(
+    supabase: Client,
+    *,
+    source: str,
+    resource_name: str,
+    stage: str,
+    started_at: datetime,
+    status: str,
+    items_seen: int = 0,
+    items_synced: int = 0,
+    items_failed: int = 0,
+    error_message: Optional[str] = None,
+    metadata: Optional[dict[str, Any]] = None,
+) -> None:
+    """Record coarse Graph phase outcomes so alerting can isolate source vs AI failures."""
+    try:
+        from src.services.health.source_sync_health import record_sync_run
+
+        record_sync_run(
+            supabase,
+            source=source,
+            resource_id=stage,
+            resource_name=resource_name,
+            stage=stage,
+            status=status,
+            started_at=started_at,
+            finished_at=datetime.now(timezone.utc),
+            items_seen=items_seen,
+            items_synced=items_synced,
+            items_failed=items_failed,
+            error_message=error_message,
+            metadata=metadata or {},
+        )
+    except Exception as exc:
+        logger.warning(
+            "[GraphSync] Could not record phase source_sync_runs row for %s/%s: %s",
+            source,
+            stage,
+            exc,
+        )
+
+
 def _count_outlook_docs_for_mailbox(supabase: Client, user_email: str) -> int:
     """Count persisted raw Outlook intake rows for a mailbox."""
     result = (
@@ -400,61 +442,33 @@ def sync_outlook_mailbox_delta(
     }
 
 
-def run_graph_sync(
+def _run_graph_source_reconciliation(
     supabase: Client,
     *,
-    run_outlook: bool = True,
-    run_teams: bool = True,
-    run_onedrive: bool = False,
-    run_sharepoint: bool = True,
-    run_embedding: bool = True,
-    run_ocr: bool = True,
-    run_attachment_promotion: bool = True,
-    embed_limit: int = 25,
-    ocr_batch_size: int = 20,
-    attachment_promotion_limit: int = 50,
-    outlook_users: Optional[list[str]] = None,
-    verify_outlook_persisted_count: bool = True,
-) -> dict:
-    """
-    Run a full Microsoft Graph sync for all configured sources.
-    Called by the scheduler or the /api/graph/sync endpoint.
-
-    Returns a summary dict with counts per source.
-    """
-    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
-
-    enforce_app_db_pressure_guard("graph_sync")
-
-    # Watermark for the event-driven extraction phase below: anything ingested
-    # after this instant is "new this sync" and gets turned into intelligence
-    # inline, instead of waiting for a blind re-scan. Small buffer so a doc whose
-    # row lands a moment before this line is still caught (the candidate-based skip
-    # makes any overlap free).
-    sync_started_at = datetime.now(timezone.utc) - timedelta(minutes=5)
-
-    graph = get_graph_client()
-    if not graph.is_configured():
-        logger.info("[GraphSync] Microsoft Graph credentials not set — skipping")
-        return {"status": "skipped", "reason": "not_configured"}
-
-    summary: dict = {
+    run_outlook: bool,
+    run_teams: bool,
+    run_onedrive: bool,
+    run_sharepoint: bool,
+    outlook_users: Optional[list[str]],
+    verify_outlook_persisted_count: bool,
+) -> dict[str, Any]:
+    """Run only Graph source acquisition/reconciliation work."""
+    summary: dict[str, Any] = {
         "outlook": 0,
         "teams": 0,
         "teams_dm": 0,
         "onedrive": 0,
         "sharepoint": 0,
         "errors": [],
-        "phases": {
-            "source_sync": "enabled",
-            "embedding": "enabled" if run_embedding else "skipped",
-            "ocr": "enabled" if run_ocr else "skipped",
-            "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
-        },
+        "sync_emails_enabled": False,
+        "sync_teams_enabled": False,
+        "sync_teams_dm_enabled": False,
+        "sync_onedrive_enabled": False,
+        "sync_sharepoint_enabled": False,
     }
 
-    # ── Outlook ──────────────────────────────────────────────────────────────
     sync_emails = run_outlook and os.environ.get("GRAPH_SYNC_OUTLOOK", "true").lower() == "true"
+    summary["sync_emails_enabled"] = sync_emails
     if sync_emails:
         if outlook_users is None:
             user_emails = [
@@ -486,11 +500,20 @@ def run_graph_sync(
                 if result.get("error"):
                     summary["errors"].append(result["error"])
                 summary["outlook"] += int(result.get("items_synced") or 0)
-            except Exception as e:
-                err = f"Outlook sync failed for {user_email}: {e}"
-                logger.error(f"[GraphSync] {err}")
+            except Exception as exc:
+                err = f"Outlook sync failed for {user_email}: {exc}"
+                logger.error("[GraphSync] %s", err)
                 summary["errors"].append(err)
-                _save_sync_state(supabase, "outlook_email", user_email, f"Outlook: {user_email}", "", 0, "error", str(e))
+                _save_sync_state(
+                    supabase,
+                    "outlook_email",
+                    user_email,
+                    f"Outlook: {user_email}",
+                    "",
+                    0,
+                    "error",
+                    str(exc),
+                )
                 _record_sync_run_safe(
                     supabase,
                     source="outlook_email",
@@ -499,11 +522,11 @@ def run_graph_sync(
                     started_at=started_at,
                     status="failed",
                     items_failed=1,
-                    error_message=str(e),
+                    error_message=str(exc),
                 )
 
-    # ── Teams ─────────────────────────────────────────────────────────────────
     sync_teams = run_teams and os.environ.get("GRAPH_SYNC_TEAMS", "true").lower() == "true"
+    summary["sync_teams_enabled"] = sync_teams
     if sync_teams:
         try:
             channels = get_all_teams_and_channels(supabase)
@@ -538,9 +561,9 @@ def run_graph_sync(
                         items_synced=count,
                     )
                     summary["teams"] += count
-                except Exception as e:
-                    err = f"Teams sync failed for {resource_name}: {e}"
-                    logger.error(f"[GraphSync] {err}", exc_info=True)
+                except Exception as exc:
+                    err = f"Teams sync failed for {resource_name}: {exc}"
+                    logger.error("[GraphSync] %s", err, exc_info=True)
                     summary["errors"].append(err)
                     _record_sync_run_safe(
                         supabase,
@@ -550,18 +573,15 @@ def run_graph_sync(
                         started_at=started_at,
                         status="failed",
                         items_failed=1,
-                        error_message=str(e),
+                        error_message=str(exc),
                     )
-        except Exception as e:
-            err = f"Teams enumeration failed: {e}"
-            logger.error(f"[GraphSync] {err}")
+        except Exception as exc:
+            err = f"Teams enumeration failed: {exc}"
+            logger.error("[GraphSync] %s", err)
             summary["errors"].append(err)
 
-    # ── Teams Direct Messages ─────────────────────────────────────────────────
-    # NOTE: Graph API does NOT support delta queries on chat messages with app-only
-    # (client credentials) auth. We use timestamp-based incremental sync instead:
-    # store last_sync_at in graph_sync_state and fetch messages newer than that.
     sync_teams_dm = run_teams and os.environ.get("GRAPH_SYNC_TEAMS_DM", "true").lower() == "true"
+    summary["sync_teams_dm_enabled"] = sync_teams_dm
     if sync_teams_dm:
         dm_users = [
             e.strip()
@@ -602,9 +622,9 @@ def run_graph_sync(
                     items_synced=count,
                 )
                 summary["teams_dm"] += count
-            except ChatReadPermissionError as e:
-                err = f"Teams DM sync skipped — Chat.Read.All admin consent required in Azure AD: {e}"
-                logger.error(f"[GraphSync] {err}")
+            except ChatReadPermissionError as exc:
+                err = f"Teams DM sync skipped — Chat.Read.All admin consent required in Azure AD: {exc}"
+                logger.error("[GraphSync] %s", err)
                 summary["errors"].append(err)
                 _record_sync_run_safe(
                     supabase,
@@ -613,13 +633,13 @@ def run_graph_sync(
                     resource_name=f"Teams DM export: {user_email}",
                     started_at=started_at,
                     status="skipped",
-                    error_message=str(e),
+                    error_message=str(exc),
                     metadata={"required_permission": "Chat.Read.All"},
                 )
-                break  # All users share the same tenant; no point retrying others
-            except Exception as e:
-                err = f"Teams DM export failed for {user_email}: {e}"
-                logger.error(f"[GraphSync] {err}", exc_info=True)
+                break
+            except Exception as exc:
+                err = f"Teams DM export failed for {user_email}: {exc}"
+                logger.error("[GraphSync] %s", err, exc_info=True)
                 summary["errors"].append(err)
                 _save_sync_state(
                     supabase,
@@ -629,7 +649,7 @@ def run_graph_sync(
                     "",
                     0,
                     "error",
-                    str(e),
+                    str(exc),
                 )
                 _record_sync_run_safe(
                     supabase,
@@ -639,15 +659,11 @@ def run_graph_sync(
                     started_at=started_at,
                     status="failed",
                     items_failed=1,
-                    error_message=str(e),
+                    error_message=str(exc),
                 )
 
-    # ── OneDrive ─────────────────────────────────────────────────────────────
-    # Personal OneDrive sync is disabled by default. Alleato project/company
-    # files live in SharePoint-backed libraries, and syncing a shared library
-    # through an individual user's OneDrive path creates duplicate/stale health
-    # signals.
     sync_onedrive = run_onedrive and os.environ.get("GRAPH_SYNC_ONEDRIVE", "false").lower() == "true"
+    summary["sync_onedrive_enabled"] = sync_onedrive
     if sync_onedrive:
         user_emails = [
             e.strip()
@@ -661,8 +677,6 @@ def run_graph_sync(
             env_key="ONEDRIVE_SYNC_MAX_USERS",
             default_limit=1,
         )
-        # Support multiple folders via ONEDRIVE_SYNC_FOLDERS (comma-separated)
-        # Falls back to ONEDRIVE_SYNC_FOLDER (singular) for backwards compat
         folders_raw = os.environ.get("ONEDRIVE_SYNC_FOLDERS") or os.environ.get("ONEDRIVE_SYNC_FOLDER", "/Projects")
         onedrive_folders = [f.strip() for f in folders_raw.split(",") if f.strip()]
         onedrive_folders = _limit_sync_items(
@@ -694,11 +708,11 @@ def run_graph_sync(
                         items_synced=count,
                     )
                     summary["onedrive"] += count
-                except Exception as e:
-                    err = f"OneDrive sync failed for {user_email}{folder_path}: {e}"
-                    logger.error(f"[GraphSync] {err}")
+                except Exception as exc:
+                    err = f"OneDrive sync failed for {user_email}{folder_path}: {exc}"
+                    logger.error("[GraphSync] %s", err)
                     summary["errors"].append(err)
-                    _save_sync_state(supabase, "onedrive_file", resource_id, resource_name, "", 0, "error", str(e))
+                    _save_sync_state(supabase, "onedrive_file", resource_id, resource_name, "", 0, "error", str(exc))
                     _record_sync_run_safe(
                         supabase,
                         source="onedrive_file",
@@ -707,12 +721,11 @@ def run_graph_sync(
                         started_at=started_at,
                         status="failed",
                         items_failed=1,
-                        error_message=str(e),
+                        error_message=str(exc),
                     )
 
-    # ── SharePoint Sites ──────────────────────────────────────────────────────
-    # Format: "hostname/site_name:folder_path" e.g. "alleato.sharepoint.com/AlleatoGroup:/SOP"
     sync_sharepoint = run_sharepoint and os.environ.get("GRAPH_SYNC_SHAREPOINT", "true").lower() == "true"
+    summary["sync_sharepoint_enabled"] = sync_sharepoint
     sp_raw = os.environ.get("SHAREPOINT_SYNC_FOLDERS", "") if sync_sharepoint else ""
     sp_entries = [e.strip() for e in sp_raw.split(",") if e.strip()]
     sp_entries = _limit_sync_items(
@@ -721,6 +734,8 @@ def run_graph_sync(
         default_limit=2,
         label="SharePoint folders",
     )
+    if sp_entries:
+        summary["sharepoint_entries_selected"] = sp_entries
     for entry in sp_entries:
         try:
             site_part, folder_path = entry.split(":", 1) if ":" in entry else (entry, "/")
@@ -743,11 +758,11 @@ def run_graph_sync(
                     items_synced=count,
                 )
                 summary["sharepoint"] += count
-            except Exception as e:
-                err = f"SharePoint sync failed for {resource_name}: {e}"
-                logger.error(f"[GraphSync] {err}")
+            except Exception as exc:
+                err = f"SharePoint sync failed for {resource_name}: {exc}"
+                logger.error("[GraphSync] %s", err)
                 summary["errors"].append(err)
-                _save_sync_state(supabase, "sharepoint_file", resource_id, resource_name, "", 0, "error", str(e))
+                _save_sync_state(supabase, "sharepoint_file", resource_id, resource_name, "", 0, "error", str(exc))
                 _record_sync_run_safe(
                     supabase,
                     source="sharepoint_file",
@@ -756,43 +771,66 @@ def run_graph_sync(
                     started_at=started_at,
                     status="failed",
                     items_failed=1,
-                    error_message=str(e),
+                    error_message=str(exc),
                 )
-        except Exception as e:
-            logger.error(f"[GraphSync] Bad SHAREPOINT_SYNC_FOLDERS entry '{entry}': {e}")
+        except Exception as exc:
+            err = f"Bad SHAREPOINT_SYNC_FOLDERS entry '{entry}': {exc}"
+            logger.error("[GraphSync] %s", err)
+            summary["errors"].append(err)
 
-    total = (
+    summary["communications_synced"] = (
+        summary["outlook"] + summary["teams"] + summary["teams_dm"]
+    )
+    summary["total_synced"] = (
         summary["outlook"]
         + summary["teams"]
         + summary["teams_dm"]
         + summary["onedrive"]
         + summary["sharepoint"]
     )
-    logger.info(
-        "[GraphSync] Complete — Outlook: %d, Teams channels: %d, Teams DMs: %d, OneDrive: %d, SharePoint: %d",
-        summary["outlook"],
-        summary["teams"],
-        summary["teams_dm"],
-        summary["onedrive"],
-        summary["sharepoint"],
-    )
+    summary["status"] = "complete" if not summary["errors"] else "complete_with_errors"
+    return summary
 
-    # ── Embed any newly ingested documents ───────────────────────────────────
+
+def _run_graph_downstream_processing(
+    supabase: Client,
+    *,
+    sync_started_at: datetime,
+    source_summary: dict[str, Any],
+    run_embedding: bool,
+    run_ocr: bool,
+    run_attachment_promotion: bool,
+    embed_limit: int,
+    ocr_batch_size: int,
+    attachment_promotion_limit: int,
+) -> dict[str, Any]:
+    """Run post-sync enrichment after source reconciliation succeeds or partially succeeds."""
+    summary: dict[str, Any] = {
+        "errors": [],
+        "phases": {
+            "source_sync": source_summary.get("status", "complete"),
+            "embedding": "enabled" if run_embedding else "skipped",
+            "ocr": "enabled" if run_ocr else "skipped",
+            "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
+        },
+    }
+    ocr_result: dict[str, Any] = {"ocr_full": 0, "ocr_partial": 0}
+
     if run_embedding:
         try:
             embed_result = embed_pending_graph_documents(supabase, limit=embed_limit)
             summary["embed"] = embed_result
             logger.info("[GraphSync] Embedding complete: %s", embed_result)
-        except Exception as e:
-            logger.error("[GraphSync] Embedding step failed: %s", e)
-            summary["errors"].append(f"Embedding failed: {e}")
-            summary["embed"] = {"error": str(e)}
+        except Exception as exc:
+            logger.error("[GraphSync] Embedding step failed: %s", exc)
+            summary["errors"].append(f"Embedding failed: {exc}")
+            summary["embed"] = {"error": str(exc)}
     else:
         summary["embed"] = {"status": "skipped", "reason": "run_embedding=false"}
 
-    if sync_emails and run_embedding:
+    if source_summary.get("sync_emails_enabled") and run_embedding:
         vectorization_results: dict[str, Any] = {}
-        for user_email in summary.get("outlook_users_selected") or []:
+        for user_email in source_summary.get("outlook_users_selected") or []:
             try:
                 vectorization_results[user_email] = refresh_outlook_intake_vectorization_statuses(
                     mailbox_user_id=user_email,
@@ -809,13 +847,10 @@ def run_graph_sync(
                 vectorization_results[user_email] = {"error": str(exc)}
         summary["outlook_vectorization_status"] = vectorization_results
 
-    # ── OCR fallback for scanned PDFs (no_text → raw_ingested or ocr_partial) ─
-    # Runs after the first embed pass so newly-OCR'd docs can be embedded
-    # in the same sync run (they'll be picked up if embed runs again later,
-    # or on the next 30-minute cron pass).
     if run_ocr:
         try:
             from .ocr_worker import run_ocr_pass
+
             ocr_result = run_ocr_pass(supabase, limit=ocr_batch_size)
             summary["ocr"] = ocr_result
             if ocr_result.get("ocr_partial", 0):
@@ -825,56 +860,43 @@ def run_graph_sync(
                     ocr_result["ocr_partial"],
                 )
             logger.info("[GraphSync] OCR pass complete: %s", ocr_result)
-        except Exception as e:
-            logger.error("[GraphSync] OCR pass failed: %s", e)
-            summary["errors"].append(f"OCR pass failed: {e}")
-            summary["ocr"] = {"error": str(e)}
+        except Exception as exc:
+            logger.error("[GraphSync] OCR pass failed: %s", exc)
+            summary["errors"].append(f"OCR pass failed: {exc}")
+            summary["ocr"] = {"error": str(exc)}
     else:
         summary["ocr"] = {"status": "skipped", "reason": "run_ocr=false"}
 
-    # ── Second embed pass — picks up docs that OCR just converted from no_text ─
-    # OCR runs after the first embed pass (above). Docs it promotes to
-    # raw_ingested or ocr_partial weren't eligible when embed first ran.
-    # A second bounded pass closes that gap in the same sync cycle.
     if run_embedding and run_ocr and ocr_result.get("ocr_full", 0) + ocr_result.get("ocr_partial", 0) > 0:
         try:
-            post_ocr_embed_result = embed_pending_graph_documents(supabase, limit=min(embed_limit, ocr_result.get("ocr_full", 0) + ocr_result.get("ocr_partial", 0)))
+            post_ocr_embed_result = embed_pending_graph_documents(
+                supabase,
+                limit=min(embed_limit, ocr_result.get("ocr_full", 0) + ocr_result.get("ocr_partial", 0)),
+            )
             summary["embed_post_ocr"] = post_ocr_embed_result
             logger.info("[GraphSync] Post-OCR embedding complete: %s", post_ocr_embed_result)
-        except Exception as e:
-            logger.warning("[GraphSync] Post-OCR embedding step failed (non-fatal): %s", e)
-            summary["embed_post_ocr"] = {"error": str(e)}
+        except Exception as exc:
+            logger.warning("[GraphSync] Post-OCR embedding step failed (non-fatal): %s", exc)
+            summary["embed_post_ocr"] = {"error": str(exc)}
 
-    # ── Embed email attachment documents (Pattern C backfill) ────────────────
-    # Picks up email_attachment_legacy rows with raw_text that the Graph embed
-    # sweep misses (they have source=NULL, not source='microsoft_graph').
-    # Capped at 20 per run to avoid delaying the Teams compiler.
     if run_embedding:
         try:
             attach_embed_result = embed_pending_attachment_documents(supabase, limit=20)
             summary["embed_attachments"] = attach_embed_result
             logger.info("[GraphSync] Attachment embedding complete: %s", attach_embed_result)
-        except Exception as e:
-            logger.warning("[GraphSync] Attachment embedding step failed (non-fatal): %s", e)
-            summary["embed_attachments"] = {"error": str(e)}
+        except Exception as exc:
+            logger.warning("[GraphSync] Attachment embedding step failed (non-fatal): %s", exc)
+            summary["embed_attachments"] = {"error": str(exc)}
 
-    # ── Embed Fireflies meetings missed by the Graph embed sweep ─────────────
-    # Fireflies meetings have source='fireflies' and status='processed' so
-    # embed_pending_graph_documents never picks them up. Capped at 25 per run.
     if run_embedding:
         try:
             ff_embed_result = embed_pending_fireflies_meetings(limit=25)
             summary["embed_fireflies"] = ff_embed_result
             logger.info("[GraphSync] Fireflies meeting embedding complete: %s", ff_embed_result)
-        except Exception as e:
-            logger.warning("[GraphSync] Fireflies meeting embedding failed (non-fatal): %s", e)
-            summary["embed_fireflies"] = {"error": str(e)}
+        except Exception as exc:
+            logger.warning("[GraphSync] Fireflies meeting embedding failed (non-fatal): %s", exc)
+            summary["embed_fireflies"] = {"error": str(exc)}
 
-    # ── Promote pending Outlook intake attachments ────────────────────────────
-    # Runs after embedding so newly-promoted docs are picked up by the NEXT
-    # embedding pass (or immediately if run_embedding runs again below).
-    # This sync orchestration is now the primary automated owner for attachment
-    # promotion; dedicated scheduler-owned promotion jobs were retired.
     if run_attachment_promotion:
         try:
             promotion_result = promote_outlook_intake_attachments(
@@ -896,23 +918,14 @@ def run_graph_sync(
                     promotion_result["failed"],
                     promotion_result.get("failures"),
                 )
-        except Exception as e:
-            logger.error("[GraphSync] Attachment promotion step failed: %s", e)
-            summary["errors"].append(f"Attachment promotion failed: {e}")
-            summary["attachment_promotion"] = {"error": str(e)}
+        except Exception as exc:
+            logger.error("[GraphSync] Attachment promotion step failed: %s", exc)
+            summary["errors"].append(f"Attachment promotion failed: {exc}")
+            summary["attachment_promotion"] = {"error": str(exc)}
     else:
         summary["attachment_promotion"] = {"status": "skipped", "reason": "run_attachment_promotion=false"}
 
-    # ── Event-driven intelligence extraction ─────────────────────────────────
-    # Turn the email/Teams docs this sync just ingested into intelligence NOW,
-    # in the same cycle — replacing the old blind 2-hourly re-scan. Processes only
-    # the newly-ingested docs (candidate-based skip dedupes), per affected project,
-    # then refreshes each project's L2 synthesis (empty-delta guard keeps quiet
-    # projects free). Bounded + non-fatal; the daily backstop sweep catches any
-    # overflow. This must not be gated only on inline embedding: Teams-only
-    # scheduled phases intentionally skip embedding, while the daily sweep is a
-    # safety net, not the primary trigger.
-    communications_synced = summary["outlook"] + summary["teams"] + summary["teams_dm"]
+    communications_synced = int(source_summary.get("communications_synced") or 0)
     if communications_synced > 0:
         try:
             from src.services.intelligence.project_synthesizer import synthesize_new_comms_since
@@ -926,16 +939,165 @@ def run_graph_sync(
                 extract_result.get("synthesis_packets_written", 0),
                 len(extract_result.get("errors", [])),
             )
-        except Exception as e:
-            logger.error("[GraphSync] Event-driven extraction failed (non-fatal): %s", e)
-            summary["errors"].append(f"Intelligence extraction failed: {e}")
-            summary["intelligence_extraction"] = {"error": str(e)}
+        except Exception as exc:
+            logger.error("[GraphSync] Event-driven extraction failed (non-fatal): %s", exc)
+            summary["errors"].append(f"Intelligence extraction failed: {exc}")
+            summary["intelligence_extraction"] = {"error": str(exc)}
     else:
         summary["intelligence_extraction"] = {
             "status": "skipped",
             "reason": "no_new_outlook_or_teams_communications",
         }
 
-    # Report status accurately — "complete" only if no errors
-    status = "complete" if not summary["errors"] else "complete_with_errors"
-    return {"status": status, "total_synced": total, **summary}
+    summary["status"] = "complete" if not summary["errors"] else "complete_with_errors"
+    return summary
+
+
+def run_graph_sync(
+    supabase: Client,
+    *,
+    run_outlook: bool = True,
+    run_teams: bool = True,
+    run_onedrive: bool = False,
+    run_sharepoint: bool = True,
+    run_embedding: bool = True,
+    run_ocr: bool = True,
+    run_attachment_promotion: bool = True,
+    embed_limit: int = 25,
+    ocr_batch_size: int = 20,
+    attachment_promotion_limit: int = 50,
+    outlook_users: Optional[list[str]] = None,
+    verify_outlook_persisted_count: bool = True,
+) -> dict:
+    """
+    Run a full Microsoft Graph sync for all configured sources.
+    Called by the scheduler or the /api/graph/sync endpoint.
+
+    Returns a summary dict with counts per source.
+    """
+    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
+
+    enforce_app_db_pressure_guard("graph_sync")
+
+    # Watermark for the event-driven extraction phase below: anything ingested
+    # after this instant is "new this sync" and gets turned into intelligence
+    # inline, instead of waiting for a blind re-scan. Small buffer so a doc whose
+    # row lands a moment before this line is still caught (the candidate-based skip
+    # makes any overlap free).
+    sync_started_at = datetime.now(timezone.utc) - timedelta(minutes=5)
+    source_phase_started_at = datetime.now(timezone.utc)
+
+    graph = get_graph_client()
+    if not graph.is_configured():
+        logger.info("[GraphSync] Microsoft Graph credentials not set — skipping")
+        return {"status": "skipped", "reason": "not_configured"}
+    source_summary = _run_graph_source_reconciliation(
+        supabase,
+        run_outlook=run_outlook,
+        run_teams=run_teams,
+        run_onedrive=run_onedrive,
+        run_sharepoint=run_sharepoint,
+        outlook_users=outlook_users,
+        verify_outlook_persisted_count=verify_outlook_persisted_count,
+    )
+    source_errors = list(source_summary.get("errors") or [])
+    _record_graph_phase_run_safe(
+        supabase,
+        source="microsoft_graph_source_sync",
+        resource_name="Microsoft Graph source reconciliation",
+        stage="source_reconciliation",
+        started_at=source_phase_started_at,
+        status="failed" if source_errors else "succeeded",
+        items_seen=int(source_summary.get("total_synced") or 0),
+        items_synced=int(source_summary.get("total_synced") or 0),
+        items_failed=len(source_errors),
+        error_message="; ".join(str(error) for error in source_errors[:3]) if source_errors else None,
+        metadata={
+            "outlook": source_summary.get("outlook"),
+            "teams": source_summary.get("teams"),
+            "teams_dm": source_summary.get("teams_dm"),
+            "onedrive": source_summary.get("onedrive"),
+            "sharepoint": source_summary.get("sharepoint"),
+            "communications_synced": source_summary.get("communications_synced"),
+        },
+    )
+    logger.info(
+        "[GraphSync] Source reconciliation complete — Outlook: %d, Teams channels: %d, "
+        "Teams DMs: %d, OneDrive: %d, SharePoint: %d",
+        source_summary["outlook"],
+        source_summary["teams"],
+        source_summary["teams_dm"],
+        source_summary["onedrive"],
+        source_summary["sharepoint"],
+    )
+
+    downstream_phase_started_at = datetime.now(timezone.utc)
+    downstream_summary = _run_graph_downstream_processing(
+        supabase,
+        sync_started_at=sync_started_at,
+        source_summary=source_summary,
+        run_embedding=run_embedding,
+        run_ocr=run_ocr,
+        run_attachment_promotion=run_attachment_promotion,
+        embed_limit=embed_limit,
+        ocr_batch_size=ocr_batch_size,
+        attachment_promotion_limit=attachment_promotion_limit,
+    )
+
+    downstream_errors = list(downstream_summary.get("errors") or [])
+    _record_graph_phase_run_safe(
+        supabase,
+        source="microsoft_graph_downstream",
+        resource_name="Microsoft Graph downstream enrichment",
+        stage="downstream_enrichment",
+        started_at=downstream_phase_started_at,
+        status="failed" if downstream_errors else "succeeded",
+        items_seen=int(source_summary.get("total_synced") or 0),
+        items_synced=int(source_summary.get("total_synced") or 0) if not downstream_errors else 0,
+        items_failed=len(downstream_errors),
+        error_message="; ".join(str(error) for error in downstream_errors[:3]) if downstream_errors else None,
+        metadata={
+            "embedding": downstream_summary.get("embed"),
+            "ocr": downstream_summary.get("ocr"),
+            "attachment_promotion": downstream_summary.get("attachment_promotion"),
+            "intelligence_extraction": downstream_summary.get("intelligence_extraction"),
+        },
+    )
+    errors = source_errors + downstream_errors
+    status = "complete" if not errors else "complete_with_errors"
+
+    return {
+        "status": status,
+        "total_synced": source_summary["total_synced"],
+        "outlook": source_summary["outlook"],
+        "teams": source_summary["teams"],
+        "teams_dm": source_summary["teams_dm"],
+        "onedrive": source_summary["onedrive"],
+        "sharepoint": source_summary["sharepoint"],
+        "errors": errors,
+        "source_sync_errors": source_errors,
+        "downstream_errors": downstream_errors,
+        "phases": downstream_summary["phases"],
+        "source_sync": source_summary,
+        "downstream": downstream_summary,
+        **{
+            key: value
+            for key, value in source_summary.items()
+            if key
+            not in {
+                "outlook",
+                "teams",
+                "teams_dm",
+                "onedrive",
+                "sharepoint",
+                "errors",
+                "status",
+                "total_synced",
+            }
+        },
+        **{
+            key: value
+            for key, value in downstream_summary.items()
+            if key not in {"errors", "status", "phases"}
+        },
+    }

@@ -67,6 +67,23 @@ def test_pages_on_total_failure(monkeypatch):
     assert alerts[0]["failed"] == 4
 
 
+def test_pages_graph_downstream_failures_as_their_own_lane(monkeypatch):
+    now = datetime(2026, 7, 7, 4, 10, tzinfo=timezone.utc)
+    rows = _runs(now, [
+        ("microsoft_graph_source_sync", "succeeded", 30),
+        ("microsoft_graph_source_sync", "succeeded", 20),
+        ("microsoft_graph_downstream", "failed", 30),
+        ("microsoft_graph_downstream", "failed", 20),
+    ])
+    monkeypatch.setattr(notifier, "get_rag_read_client", lambda: _Client(rows))
+
+    alerts = notifier.evaluate_pipeline_outcomes(now)
+    assert len(alerts) == 1
+    assert alerts[0]["source"] == "microsoft_graph_downstream"
+    assert alerts[0]["label"] == "Microsoft Graph downstream enrichment"
+    assert alerts[0]["failed"] == 2
+
+
 def test_no_page_when_partial_success_present(monkeypatch):
     now = datetime(2026, 6, 23, 22, 40, tzinfo=timezone.utc)
     # Fireflies: some failed runs but every run still synced something (warning).
