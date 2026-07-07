@@ -813,7 +813,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                       </DetailField>
                     )}
                   </DetailFieldGrid>
-                  <div className="flex flex-col gap-4 border-t border-border/50 pt-4 sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center">
                     <CommitmentToggleRow
                       id="commitment-private-toggle"
                       label="Private Commitment"
