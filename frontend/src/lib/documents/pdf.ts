@@ -247,18 +247,12 @@ function formatBudgetCodeCell(item: LineItemForPdf): string {
   return stackedCell(top, sub);
 }
 
-export function buildChangeEventHtml(
-  changeEvent: ChangeEventForPdf,
-  lineItems: LineItemForPdf[],
-  project: ProjectForPdf | null,
-): string {
-  const companyName = "Alleato Group";
-  const companyAddressLine1 = "8383 Craig St, Suite 150";
-  const companyAddressLine2 = "Indianapolis, Indiana 46250";
-  const companyPhone = "P: +13177600088";
-  const logoSrc = getPublicAssetDataUri("Alleato-Group-Logo_Dark.png");
+const CHANGE_EVENT_COMPANY_NAME = "Alleato Group";
 
-  const now = new Date();
+/**
+ * Builds the shared "Printed <date> at <time tz>" label used in the footer.
+ */
+function formatPrintedLabel(now: Date = new Date()): string {
   const printedOn = now.toLocaleDateString("en-US");
   const timeParts = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
@@ -271,6 +265,40 @@ export function buildChangeEventHtml(
   }${timeParts.find((p) => p.type === "dayPeriod")?.value ?? ""} ${
     timeParts.find((p) => p.type === "timeZoneName")?.value ?? ""
   }`;
+  return `Printed ${printedOn} at ${printedAt}`;
+}
+
+/**
+ * Footer-overlay plan for the Change Event PDF. Using the shared overlay
+ * (instead of an inline <div>) pins the footer to the bottom margin of EVERY
+ * page and renders a correct "Page X of Y" — the inline div only floated after
+ * the table content and always said "Page 1 of 1".
+ */
+export function buildChangeEventFooterPlan(
+  changeEvent: ChangeEventForPdf,
+): PdfFooterOverlayPlan {
+  const ceNumber = changeEvent.number || changeEvent.id;
+  return {
+    marginBottom: "0.6in",
+    defaultVariant: {
+      kind: "simple",
+      companyName: CHANGE_EVENT_COMPANY_NAME,
+      documentTitle: `Change Event #${ceNumber}`,
+      generatedAtLabel: formatPrintedLabel(),
+    },
+  };
+}
+
+export function buildChangeEventHtml(
+  changeEvent: ChangeEventForPdf,
+  lineItems: LineItemForPdf[],
+  project: ProjectForPdf | null,
+): string {
+  const companyName = CHANGE_EVENT_COMPANY_NAME;
+  const companyAddressLine1 = "8383 Craig St, Suite 150";
+  const companyAddressLine2 = "Indianapolis, Indiana 46250";
+  const companyPhone = "P: +13177600088";
+  const logoSrc = getPublicAssetDataUri("Alleato-Group-Logo_Dark.png");
 
   const projectAddress = [project?.address, project?.city, project?.state]
     .filter(Boolean)
@@ -352,8 +380,10 @@ export function buildChangeEventHtml(
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; }
-    .page { padding: 20mm 15mm; min-height: 100vh; position: relative; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    /* Page margins are supplied by the PDF renderer (0.5in all sides); the body
+       adds none of its own so content spans the full printable width. */
+    .page { padding: 0; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .header-left { display: flex; align-items: flex-start; gap: 12px; }
     .header-logo { height: 36px; width: auto; object-fit: contain; margin-top: 1px; }
     .header-logo-mark { font-size: 13px; font-weight: 700; line-height: 1.1; color: #1a1a1a; }
@@ -362,28 +392,31 @@ export function buildChangeEventHtml(
     .header-company .company-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
     .header-right { text-align: right; font-size: 10px; line-height: 1.5; }
     .header-right .project-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    hr.divider { border: none; border-top: 2px solid #1a1a1a; margin-bottom: 16px; }
-    .ce-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .meta-table { border-top: 1px solid #ccc; margin-bottom: 20px; }
-    .meta-row { display: flex; gap: 24px; border-bottom: 1px solid #e2ddd7; padding: 5px 4px; }
+    /* The one rule we keep: a single divider under the header. */
+    hr.divider { border: none; border-top: 2px solid #1a1a1a; margin-bottom: 14px; }
+    .ce-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .meta-table { margin-bottom: 18px; }
+    .meta-row { display: flex; gap: 24px; padding: 3px 0; }
     .meta-field { flex: 1; display: flex; gap: 6px; min-width: 0; }
     .meta-label { font-weight: 700; white-space: nowrap; min-width: 100px; }
     .meta-value { color: #333; }
-    .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
     table { width: 100%; border-collapse: collapse; font-size: 8px; }
-    th { background: #2d2d2d; color: #fff; padding: 4px 3px; text-align: center; font-weight: 600; border: 1px solid #444; white-space: nowrap; }
+    /* Header cells carry the column structure via their fill; no cell grid. */
+    th { background: #2d2d2d; color: #fff; padding: 5px 6px; text-align: center; font-weight: 600; white-space: nowrap; }
     th.group-revenue { background: #1a4d7a; }
     th.group-cost { background: #2d6b3d; }
-    td { padding: 3px; border: 1px solid #ddd; text-align: center; vertical-align: top; }
+    td { padding: 5px 6px; text-align: center; vertical-align: top; }
     td:first-child { text-align: left; }
     td:nth-child(2) { text-align: left; }
     .cell-primary { font-weight: 700; }
     .cell-secondary { color: #666; }
-    tr:nth-child(even) { background: #f8f8f8; }
-    .description-row td { text-align: left; font-style: italic; color: #444; background: #fff; border-top: none; }
+    /* Zebra striping — not borders — separates rows. */
+    tbody tr:nth-child(even) { background: #f6f6f5; }
+    .description-row td { text-align: left; font-style: italic; color: #444; background: #fff; padding-top: 0; }
     .description-label { font-style: normal; font-weight: 600; color: #1a1a1a; }
-    .totals-row td { font-weight: 700; background: #f0f0f0 !important; border-top: 2px solid #333; }
-    .footer { display: flex; justify-content: space-between; font-size: 8px; color: #666; border-top: 1px solid #ccc; padding-top: 4px; margin-top: 16px; }
+    /* One subtle rule above the grand total is the only line inside the table. */
+    .totals-row td { font-weight: 700; background: #f0efed !important; border-top: 1.5px solid #999; }
   </style>
 </head>
 <body>
@@ -480,11 +513,6 @@ export function buildChangeEventHtml(
       </tr>
     </tbody>
   </table>
-  <div class="footer">
-    <span>${esc(companyName)}</span>
-    <span>Page 1 of 1</span>
-    <span>Printed on: ${printedOn} at ${printedAt}</span>
-  </div>
 </div>
 </body>
 </html>`;

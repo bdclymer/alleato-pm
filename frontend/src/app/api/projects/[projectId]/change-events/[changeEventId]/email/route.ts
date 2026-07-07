@@ -3,7 +3,11 @@ import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
-import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
+import {
+  renderPdfFromHtml,
+  buildChangeEventHtml,
+  buildChangeEventFooterPlan,
+} from "@/lib/documents/pdf";
 import { resolveLineItemCommitmentNumbers } from "@/lib/change-events/resolve-line-item-commitment-numbers";
 import { logger } from "@/lib/logger";
 import { EMAIL_FROM } from "@/lib/email/client";
@@ -161,7 +165,9 @@ export const POST = withApiGuardrails(
 
     let attachments: Array<{ filename: string; content: string }> = [];
     try {
-      const pdfBuffer = await renderPdfFromHtml(htmlContent);
+      const pdfBuffer = await renderPdfFromHtml(htmlContent, {
+        footerOverlayPlan: buildChangeEventFooterPlan(changeEvent),
+      });
       attachments = [
         {
           filename: `change-event-${ceNumber}.pdf`,

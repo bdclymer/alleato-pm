@@ -2,7 +2,11 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
-import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
+import {
+  renderPdfFromHtml,
+  buildChangeEventHtml,
+  buildChangeEventFooterPlan,
+} from "@/lib/documents/pdf";
 import { resolveLineItemCommitmentNumbers } from "@/lib/change-events/resolve-line-item-commitment-numbers";
 
 // Puppeteer requires the Node.js runtime — Edge runtime does not support it.
@@ -119,7 +123,9 @@ export const GET = withApiGuardrails(
       lineItemsWithCommitment,
       mappedProject,
     );
-    const pdfBuffer = await renderPdfFromHtml(htmlContent);
+    const pdfBuffer = await renderPdfFromHtml(htmlContent, {
+      footerOverlayPlan: buildChangeEventFooterPlan(changeEvent),
+    });
 
     const ceNumber = changeEvent.number || changeEvent.id;
     return new NextResponse(Buffer.from(pdfBuffer), {
