@@ -97,12 +97,21 @@ class _FakeClient:
 
 
 class _FakeRagClient:
-    def __init__(self):
+    def __init__(self, tables=None):
+        self.tables = tables or {}
         self.writes = []
 
     def table(self, table_name):
-        assert table_name == "document_attribution_candidates"
-        return _TableQuery([], table_name=table_name, writes=self.writes)
+        assert table_name in {
+            "document_attribution_candidates",
+            "rag_document_metadata",
+            "document_chunks",
+        }
+        return _TableQuery(
+            self.tables.setdefault(table_name, []),
+            table_name=table_name,
+            writes=self.writes,
+        )
 
 
 class _FakeAssigner:
@@ -167,7 +176,18 @@ def test_low_confidence_backfill_writes_pending_review_candidate(monkeypatch):
             }
         ]
     )
-    rag_client = _FakeRagClient()
+    rag_client = _FakeRagClient(
+        {
+            "rag_document_metadata": [{"id": "teams-1", "project_id": None}],
+            "document_chunks": [
+                {
+                    "chunk_id": "teams-1-0",
+                    "document_id": "teams-1",
+                    "metadata": {"title": "Union Collective EIFS samples"},
+                }
+            ],
+        }
+    )
 
     monkeypatch.setattr(
         backfill,
@@ -210,7 +230,18 @@ def test_high_confidence_backfill_still_auto_assigns(monkeypatch):
         ],
         projects=[{"id": 1009, "name": "Union Collective"}],
     )
-    rag_client = _FakeRagClient()
+    rag_client = _FakeRagClient(
+        {
+            "rag_document_metadata": [{"id": "teams-1", "project_id": None}],
+            "document_chunks": [
+                {
+                    "chunk_id": "teams-1-0",
+                    "document_id": "teams-1",
+                    "metadata": {"title": "Union Collective EIFS samples"},
+                }
+            ],
+        }
+    )
 
     monkeypatch.setattr(
         backfill,
@@ -232,6 +263,19 @@ def test_high_confidence_backfill_still_auto_assigns(monkeypatch):
         if write["table"] == "document_metadata" and write["op"] == "update"
     ]
     assert document_updates[0]["payload"]["project_id"] == 1009
+    rag_metadata_updates = [
+        write for write in rag_client.writes
+        if write["table"] == "rag_document_metadata" and write["op"] == "update"
+    ]
+    assert rag_metadata_updates[0]["payload"]["project_id"] == 1009
+    chunk_updates = [
+        write for write in rag_client.writes
+        if write["table"] == "document_chunks" and write["op"] == "update"
+    ]
+    assert chunk_updates[0]["payload"]["metadata"] == {
+        "title": "Union Collective EIFS samples",
+        "project_id": 1009,
+    }
     review_inserts = [
         write for write in rag_client.writes
         if write["op"] == "insert" and write["payload"]["status"] == "pending_review"

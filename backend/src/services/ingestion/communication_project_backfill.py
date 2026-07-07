@@ -119,6 +119,31 @@ def _write_pending_review_candidate(
     ).execute()
 
 
+def _sync_project_assignment_to_rag(document_id: str, project_id: int) -> None:
+    """Keep RAG metadata and chunks aligned with app-side project assignment."""
+    rag_client = get_rag_write_client()
+    rag_client.table("rag_document_metadata").update(
+        {"project_id": int(project_id)}
+    ).eq("id", str(document_id)).execute()
+    chunk_rows = (
+        rag_client.table("document_chunks")
+        .select("chunk_id,metadata")
+        .eq("document_id", str(document_id))
+        .limit(1000)
+        .execute()
+        .data
+        or []
+    )
+    for chunk in chunk_rows:
+        chunk_id = chunk.get("chunk_id")
+        if not chunk_id:
+            continue
+        metadata = chunk.get("metadata") if isinstance(chunk.get("metadata"), dict) else {}
+        rag_client.table("document_chunks").update(
+            {"metadata": {**metadata, "project_id": int(project_id)}}
+        ).eq("chunk_id", str(chunk_id)).execute()
+
+
 def run_incremental_project_backfill(
     client: Client,
     *,
@@ -194,6 +219,7 @@ def run_incremental_project_backfill(
                     "tags": _append_tag(document.get("tags"), BACKFILL_TAG),
                 }
             ).eq("id", document["id"]).execute()
+            _sync_project_assignment_to_rag(document["id"], int(project_id))
 
             get_rag_write_client().table("document_attribution_candidates").insert(
                 {
