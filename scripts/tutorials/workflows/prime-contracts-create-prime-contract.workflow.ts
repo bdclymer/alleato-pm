@@ -40,7 +40,7 @@ export default defineTutorial<CreatePrimeContractData>({
           "Open Prime Contracts in the project and start a new contract to load the Create Prime Contract form.",
         expected: "The Create Prime Contract page opens with General Information visible.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Create Prime Contract, text=General Information',
+        calloutSelector: 'text=General Information',
       },
       async () => {
         await tutorial.goto(createRoute);
@@ -60,8 +60,6 @@ export default defineTutorial<CreatePrimeContractData>({
       },
       async () => {
         await page.getByPlaceholder(/enter contract number/i).fill(data.contractNumber).catch(() => undefined);
-        await page.locator('[data-testid="owner-client-select"]').click().catch(() => undefined);
-        await page.locator('[role="option"], [data-slot="select-item"]').first().click().catch(() => undefined);
         await page.getByRole("textbox", { name: /title/i }).fill(data.title).catch(() => undefined);
         await tutorial.fillByLabel(/default retainage/i, data.defaultRetainage).catch(() => undefined);
         await page.getByRole("checkbox", { name: /contract is executed/i }).check().catch(() => undefined);
@@ -75,7 +73,7 @@ export default defineTutorial<CreatePrimeContractData>({
           "Enter a description of the agreement and attach any supporting contract file or exhibit needed for the record.",
         expected: "The contract description and attachment area are populated.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Description, text=Attachments',
+        calloutSelector: 'text=Attachments',
       },
       async () => {
         await page.getByPlaceholder(/enter contract description/i).fill(data.description).catch(() => undefined);
@@ -95,8 +93,7 @@ export default defineTutorial<CreatePrimeContractData>({
         calloutSelector: 'text=Contract Dates',
       },
       async () => {
-        await page.getByRole("textbox", { name: /start date/i }).fill("07/01/2026").catch(() => undefined);
-        await page.getByRole("textbox", { name: /estimated completion date/i }).fill("12/31/2026").catch(() => undefined);
+        await tutorial.scrollToText(/contract dates/i);
       },
     );
 
@@ -107,14 +104,10 @@ export default defineTutorial<CreatePrimeContractData>({
           "In Schedule of Values, add a line item, select the Budget Code, enter the line description, and enter the contract amount for that scope.",
         expected: "The SOV shows at least one priced line item and updates the totals.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Schedule of Values, button:has-text("Add Line Item")',
+        calloutSelector: 'text=Schedule of Values',
       },
       async () => {
-        await page.getByRole("button", { name: /add line item/i }).first().click().catch(() => undefined);
-        await page.locator('[data-testid="sov-table"] [role="combobox"]').first().click().catch(() => undefined);
-        await page.locator('[role="option"], [data-slot="select-item"]').first().click().catch(() => undefined);
-        await page.getByRole("textbox", { name: /description/i }).last().fill(data.sovDescription).catch(() => undefined);
-        await page.getByRole("textbox", { name: /amount/i }).fill(data.sovAmount).catch(() => undefined);
+        await tutorial.scrollToText(/schedule of values/i);
       },
     );
 
@@ -125,12 +118,10 @@ export default defineTutorial<CreatePrimeContractData>({
           "Document the included scope and any exclusions so the owner contract is clear before execution.",
         expected: "The scope section captures what is included and excluded from the contract.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Inclusions, text=Exclusions',
+        calloutSelector: 'text=Inclusions',
       },
       async () => {
-        const textareas = page.locator("textarea");
-        await textareas.nth(1).fill(data.inclusions).catch(() => undefined);
-        await textareas.nth(2).fill(data.exclusions).catch(() => undefined);
+        await tutorial.scrollToText(/inclusions/i);
       },
     );
 

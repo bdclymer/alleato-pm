@@ -106,7 +106,7 @@ export default defineTutorial<CreateOwnerInvoiceData>({
         calloutSelector: 'text=Invoice Summary',
       },
       async () => {
-        await page.getByText(/invoice summary/i).first().scrollIntoViewIfNeeded().catch(() => undefined);
+        await tutorial.scrollToText(/invoice summary/i);
       },
     );
 
@@ -122,6 +122,12 @@ export default defineTutorial<CreateOwnerInvoiceData>({
         calloutSelector: 'button:has-text("Create Invoice")',
       },
       async () => {
+        const button = page.getByRole("button", { name: /create invoice/i }).first();
+        await button
+          .evaluate((element) => {
+            element.scrollIntoView({ block: "center", inline: "nearest" });
+          })
+          .catch(() => undefined);
         if (data.submitWorkflow) {
           await page.getByRole("button", { name: /create invoice/i }).click().catch(() => undefined);
         }

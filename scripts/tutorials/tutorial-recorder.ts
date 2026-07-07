@@ -114,15 +114,14 @@ export class TutorialRecorder {
     const url = route.startsWith("http")
       ? route
       : new URL(route, this.page.url() === "about:blank" ? this.baseUrl : this.page.url()).toString();
-    await this.page.goto(url, { waitUntil: "domcontentloaded" });
+    await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 });
     await this.waitForStability();
   }
 
   async fillByLabel(label: string | RegExp, value: string) {
     const field = this.page.getByLabel(label).first();
     if (!(await field.count())) return false;
-    await field.fill(value);
-    return true;
+    return field.fill(value, { timeout: 5_000 }).then(() => true).catch(() => false);
   }
 
   async requireFillByLabel(label: string | RegExp, value: string) {
@@ -133,8 +132,18 @@ export class TutorialRecorder {
   async clickByRole(name: string | RegExp) {
     const button = this.page.getByRole("button", { name }).first();
     if (!(await button.count())) return false;
-    await button.click();
-    return true;
+    return button.click({ timeout: 5_000 }).then(() => true).catch(() => false);
+  }
+
+  async scrollToText(text: string | RegExp) {
+    const locator = this.page.getByText(text).first();
+    if (!(await locator.count())) return false;
+    return locator
+      .evaluate((element) => {
+        element.scrollIntoView({ block: "center", inline: "nearest" });
+      })
+      .then(() => true)
+      .catch(() => false);
   }
 
   async requireUrl(pattern: string | RegExp, stepTitle: string) {
@@ -163,28 +172,30 @@ export class TutorialRecorder {
       ? this.page.getByLabel(label).first()
       : this.page.locator('[role="combobox"], [data-slot="select-trigger"]').first();
     if (!(await trigger.count())) return false;
-    await trigger.click();
+    const opened = await trigger.click({ timeout: 5_000 }).then(() => true).catch(() => false);
+    if (!opened) return false;
     await this.page.waitForTimeout(300);
     const option = this.page.locator('[role="option"], [data-slot="select-item"]').first();
     if (!(await option.count())) {
       await this.page.keyboard.press("Escape").catch(() => undefined);
       return false;
     }
-    await option.click();
+    const selected = await option.click({ timeout: 5_000 }).then(() => true).catch(() => false);
+    if (!selected) return false;
     return true;
   }
 
   async uploadFirstFile(filePath: string) {
     const input = this.page.locator('input[type="file"]').first();
     if (!(await input.count())) return false;
-    await input.setInputFiles(filePath);
-    return true;
+    return input.setInputFiles(filePath, { timeout: 5_000 }).then(() => true).catch(() => false);
   }
 
   async step(options: TutorialStepOptions, action: () => Promise<void>) {
     await action();
     await this.waitForStability();
     this.assertValidWorkflowPage(options.title);
+    await this.prepareScreenshotTarget(options);
     const screenshotMode = options.screenshot?.mode ?? "viewport";
     const fileName = `${String(this.steps.length + 1).padStart(2, "0")}-${slugify(options.title)}.png`;
     const screenshotPath = path.join(this.screenshotsDir, fileName);
@@ -292,6 +303,22 @@ export class TutorialRecorder {
     return selectors.map((selector) => this.page.locator(selector));
   }
 
+  private async prepareScreenshotTarget(options: TutorialStepOptions) {
+    const selector = options.screenshot?.selector ?? options.calloutSelector;
+    if (!selector) return;
+
+    const locator = this.page.locator(selector).first();
+    const count = await locator.count().catch(() => 0);
+    if (!count) return;
+
+    await locator
+      .evaluate((element) => {
+        element.scrollIntoView({ block: "center", inline: "nearest" });
+      })
+      .catch(() => undefined);
+    await this.page.waitForTimeout(350);
+  }
+
   private async getDocsScreenshotClip(screenshotMode: ScreenshotMode) {
     return this.page.evaluate((mode) => {
       const viewportWidth = window.innerWidth;
@@ -318,18 +345,22 @@ export class TutorialRecorder {
       const style = document.createElement("style");
       style.setAttribute("data-tutorial-docs-screenshot-style", "true");
       style.textContent = `
-        [data-slot="sidebar"],
+        [data-slot="sidebar-container"],
+        [data-slot="sidebar-inner"],
+        [data-slot="sidebar-gap"],
+        [data-slot="sidebar-rail"],
         [data-slot="sidebar-content"],
         [data-slot="sidebar-header"],
         [data-slot="sidebar-footer"],
-        [data-slot="sidebar-rail"],
-        [data-sidebar="sidebar"],
-        [data-sidebar="rail"],
-        aside {
+        [data-sidebar="rail"] {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
           pointer-events: none !important;
+        }
+        [data-slot="sidebar-inset"] {
+          margin-left: 0 !important;
+          transform: none !important;
         }
       `;
       document.head.appendChild(style);

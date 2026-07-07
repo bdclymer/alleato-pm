@@ -42,7 +42,7 @@ export default defineTutorial<ChangeCreateEventData>({
           "Select the project, open Change Events from the sidebar, and start a new change event to open the Create Change Event form.",
         expected: "The Create Change Event form opens.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'form, h1, [name="title"]',
+        calloutSelector: 'text=General Information',
       },
       async () => {
         await tutorial.goto(createRoute);
@@ -106,13 +106,13 @@ export default defineTutorial<ChangeCreateEventData>({
         expected:
           "Each line item has a budget code and pricing, and the total estimated value rolls up to the change event header.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Line Items, button:has-text("Add Line Item")',
+        calloutSelector: 'text=Line Items',
       },
       async () => {
         await page
           .getByRole("button", { name: /add line item|add row|add/i })
           .first()
-          .click()
+          .click({ timeout: 5_000 })
           .catch(() => undefined);
         await tutorial.selectFirstComboboxOption(/budget code|cost code/i).catch(() => undefined);
         await page
@@ -135,7 +135,7 @@ export default defineTutorial<ChangeCreateEventData>({
           "In the Attachments section, upload supporting files such as drawings, RFIs, or photos.",
         expected: "Supporting documents are attached to the change event.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'input[type="file"], text=Attachments',
+        calloutSelector: 'text=Attachments',
       },
       async () => {
         const fixturePath = path.join(os.tmpdir(), "alleato-tutorial-change-event-backup.txt");

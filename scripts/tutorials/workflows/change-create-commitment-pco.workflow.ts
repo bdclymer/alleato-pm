@@ -1,7 +1,9 @@
 import { defineTutorial, type TutorialSeedData } from "../tutorial-recorder";
 
 interface ChangeCreateCommitmentPcoData extends TutorialSeedData {
+  changeEventId: string;
   changeReason: string;
+  commitmentId: string;
   description: string;
   projectId: number;
   scheduleImpactDays: string;
@@ -23,7 +25,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
     '[name*="phone" i]',
   ],
   async workflow({ data, page, tutorial }) {
-    const createRoute = `/${data.projectId}/commitment-pcos/new`;
+    const createRoute = `/${data.projectId}/commitment-pcos/new?changeEventIds=${encodeURIComponent(data.changeEventId)}&commitmentId=${encodeURIComponent(data.commitmentId)}`;
 
     await tutorial.step(
       {
@@ -32,7 +34,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
           "Open Change Events from the sidebar and open the change event that covers this change. Commitment PCOs cannot be created directly — they must begin from a change event. If no change event exists yet, create one first.",
         expected: "The source change event is open.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'form, h1',
+        calloutSelector: 'text=Source Change Event',
       },
       async () => {
         await tutorial.goto(createRoute);
@@ -48,7 +50,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
         expected:
           "The Create Commitment PCO form opens, showing the Source Change Event(s).",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Source Change Event, form',
+        calloutSelector: 'text=Source Change Event',
       },
       async () => {
         await tutorial.requireUrl("/commitment-pcos/new", "Add the event to a Commitment PCO");
@@ -62,7 +64,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
           "Under General Information, choose the Commitment the change is priced against. The Contract Company is determined by the selected commitment and fills in automatically.",
         expected: "The commitment is selected and the contract company is populated.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Commitment, [name="commitment"]',
+        calloutSelector: 'button[role="combobox"][aria-label="Commitment"]',
       },
       async () => {
         await tutorial.selectFirstComboboxOption(/commitment/i).catch(() => undefined);
@@ -76,7 +78,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
           "Enter a Title for the potential change order. Optionally set the Change Reason and the Schedule Impact (days) if the change affects the schedule.",
         expected: "The PCO has a title and any reason or schedule impact recorded.",
         screenshot: { mode: "viewport" },
-        calloutSelector: '[name="title"], text=Schedule Impact',
+        calloutSelector: 'input[name="title"]',
       },
       async () => {
         await tutorial.fillByLabel(/^title/i, data.title).catch(() => undefined);
@@ -94,7 +96,7 @@ export default defineTutorial<ChangeCreateCommitmentPcoData>({
           "In the Description field, describe the potential change so the pricing has clear context.",
         expected: "The change is described in full.",
         screenshot: { mode: "viewport" },
-        calloutSelector: '[name="description"], text=Description',
+        calloutSelector: 'textarea[name="description"]',
       },
       async () => {
         await tutorial.fillByLabel(/description/i, data.description).catch(() => undefined);

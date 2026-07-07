@@ -40,7 +40,7 @@ export default defineTutorial<CreateSubcontractData>({
         instruction: "From the project's Commitments tool, start a new subcontract.",
         expected: "The New Subcontract form opens.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'form, [name="title"]',
+        calloutSelector: 'text=General Information',
       },
       async () => {
         await tutorial.goto(createRoute);
@@ -58,11 +58,7 @@ export default defineTutorial<CreateSubcontractData>({
         calloutSelector: '[name="title"], [name="contract_number"]',
       },
       async () => {
-        await tutorial.fillByLabel(/^title/i, data.title);
-        await tutorial.fillByLabel(/contract #|contract number|number/i, data.contractNumber);
-        await tutorial.selectFirstComboboxOption(/contract company|company|vendor/i);
-        await tutorial.fillByLabel(/retainage|retention/i, data.retainage);
-        await tutorial.fillByLabel(/description/i, data.description);
+        await tutorial.scrollToText(/general information/i);
       },
     );
 
@@ -73,11 +69,10 @@ export default defineTutorial<CreateSubcontractData>({
           "In Inclusions + Exclusions, capture what the subcontract scope does and does not cover.",
         expected: "Scope inclusions and exclusions are recorded.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Inclusions, text=Exclusions',
+        calloutSelector: 'text=Inclusions',
       },
       async () => {
-        await tutorial.fillByLabel(/inclusion/i, data.inclusions);
-        await tutorial.fillByLabel(/exclusion/i, data.exclusions);
+        await tutorial.scrollToText(/inclusions/i);
       },
     );
 
@@ -90,11 +85,7 @@ export default defineTutorial<CreateSubcontractData>({
         calloutSelector: 'text=Contract Dates',
       },
       async () => {
-        await page
-          .getByText(/contract dates/i)
-          .first()
-          .scrollIntoViewIfNeeded()
-          .catch(() => undefined);
+        await tutorial.scrollToText(/contract dates/i);
       },
     );
 
@@ -105,13 +96,14 @@ export default defineTutorial<CreateSubcontractData>({
           "In Attachments, upload supporting files such as the signed subcontract, proposal, or scope sheet.",
         expected: "The attached files are listed on the form before saving.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'input[type="file"], text=Attachments',
+        calloutSelector: 'text=Attachments',
       },
       async () => {
         const fixturePath = path.join(os.tmpdir(), "alleato-tutorial-subcontract-backup.txt");
         await writeFile(fixturePath, "Tutorial fixture: signed subcontract backup.\n", "utf8").catch(
           () => undefined,
         );
+        await tutorial.scrollToText(/attachments/i);
         await tutorial.uploadFirstFile(fixturePath);
       },
     );
@@ -123,17 +115,10 @@ export default defineTutorial<CreateSubcontractData>({
           "In Schedule of Values, add the line items that make up the contract total. For each line set the budget code, description, and amount (or quantity, unit of measure, and unit cost when using unit/quantity accounting).",
         expected: "The SOV line items total to the full subcontract value.",
         screenshot: { mode: "viewport" },
-        calloutSelector: 'text=Schedule of Values, button:has-text("Add Line Item")',
+        calloutSelector: 'text=Schedule of Values',
       },
       async () => {
-        await page
-          .getByRole("button", { name: /add line item/i })
-          .first()
-          .click()
-          .catch(() => undefined);
-        await tutorial.selectFirstComboboxOption(/budget code|cost code/i);
-        await page.getByLabel(/description/i).last().fill(data.sovDescription).catch(() => undefined);
-        await page.getByLabel(/amount/i).last().fill(data.sovAmount).catch(() => undefined);
+        await tutorial.scrollToText(/schedule of values/i);
       },
     );
 
@@ -143,8 +128,8 @@ export default defineTutorial<CreateSubcontractData>({
         instruction:
           "In the Privacy section, mark the subcontract private and add the specific users who may access it if it should not be visible to the whole project. In Invoice Contacts, add the people vendor billing should route to.",
         expected: "Visibility and invoice-routing settings match the contract's requirements.",
-        screenshot: { mode: "fullPage" },
-        calloutSelector: 'text=Privacy, text=Invoice Contacts',
+        screenshot: { mode: "viewport" },
+        calloutSelector: 'text=Privacy',
       },
       async () => {
         await page
