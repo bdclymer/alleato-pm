@@ -49,6 +49,38 @@ function formatLabel(value: string): string {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function normalizeCandidateText(candidate: DailyDeepReadReviewCandidate): string {
+  return `${candidate.title}\n${candidate.summary ?? ""}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function reviewQuestion(signalType: string): string {
+  switch (signalType) {
+    case "project_update":
+      return "Accept if this is an accurate project status update you want preserved in project intelligence.";
+    case "task":
+      return "Accept only if this contains a real follow-up someone should own. Reject if it is just status without a clear action.";
+    case "risk":
+      return "Accept if this is a real exposure to monitor. Reject if it is stale, speculative, or already resolved.";
+    case "decision":
+      return "Accept only if there is an actual decision needed or made. Reject if it is just a normal project update.";
+    case "process_issue":
+      return "Accept only if this exposes a repeatable workflow problem. Reject if it is just project-specific status.";
+    default:
+      return "Accept if this is accurate and useful enough to keep; reject if it is wrong, duplicate, stale, or not actionable.";
+  }
+}
+
+function promotionOutcome(signalType: string): string {
+  if (signalType === "task") {
+    return "Promoting creates a project task.";
+  }
+  return "Promoting writes this into project intelligence.";
+}
+
 export function DailyDeepReadCandidateReview({
   candidates,
   error,
@@ -63,6 +95,15 @@ export function DailyDeepReadCandidateReview({
   const acceptedCount = visibleCandidates.filter(
     (candidate) => candidate.status === "candidate",
   ).length;
+  const duplicateCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const candidate of visibleCandidates) {
+      const key = normalizeCandidateText(candidate);
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [visibleCandidates]);
 
   React.useEffect(() => {
     setVisibleCandidates(candidates);
@@ -198,9 +239,10 @@ export function DailyDeepReadCandidateReview({
         ) : null}
       </div>
       <p className="max-w-4xl text-sm leading-6 text-muted-foreground">
-        Review-gated updates from the full-source Daily Deep Read. Accepting
-        keeps the candidate ready for promotion; rejecting removes it from the
-        live review queue.
+        First decide whether the statement is true, useful, and typed correctly.
+        Accepting marks it as ready; promoting is the step that writes it into
+        project intelligence or creates a task. Reject duplicates, wrong labels,
+        stale items, and vague status that should not become a record.
       </p>
       {error ? (
         <ErrorState
@@ -213,6 +255,8 @@ export function DailyDeepReadCandidateReview({
         <div className="divide-y divide-border/60">
           {visibleCandidates.map((candidate) => {
             const busy = busyId === candidate.id;
+            const duplicateCount =
+              duplicateCounts.get(normalizeCandidateText(candidate)) ?? 0;
             return (
               <article
                 key={candidate.id}
@@ -237,6 +281,19 @@ export function DailyDeepReadCandidateReview({
                         {candidate.summary}
                       </p>
                     ) : null}
+                    <p className="text-xs leading-5 text-foreground">
+                      {reviewQuestion(candidate.signalType)}
+                    </p>
+                    <p className="text-xs leading-5 text-muted-foreground">
+                      {promotionOutcome(candidate.signalType)}
+                    </p>
+                    {duplicateCount > 1 ? (
+                      <p className="text-xs leading-5 text-warning">
+                        Possible duplicate: the same statement appears in{" "}
+                        {duplicateCount} candidate types. Keep the best type and
+                        dismiss the repeated ones.
+                      </p>
+                    ) : null}
                     {candidate.nextAction ? (
                       <p className="text-xs leading-5 text-muted-foreground">
                         Next: {candidate.nextAction}
@@ -250,7 +307,7 @@ export function DailyDeepReadCandidateReview({
                         disabled={busy}
                         onClick={() => void promoteCandidate(candidate.id)}
                       >
-                        Promote
+                        Promote now
                       </Button>
                     </div>
                   ) : (
@@ -261,14 +318,14 @@ export function DailyDeepReadCandidateReview({
                         disabled={busy}
                         onClick={() => void reviewCandidate(candidate.id, "reject")}
                       >
-                        Reject
+                        Dismiss
                       </Button>
                       <Button
                         size="sm"
                         disabled={busy}
                         onClick={() => void reviewCandidate(candidate.id, "accept")}
                       >
-                        Accept
+                        Accept as accurate
                       </Button>
                     </div>
                   )}

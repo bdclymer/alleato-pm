@@ -171,6 +171,69 @@ function stableKey(packetId, signalType, title) {
   return `daily-deep-read:${packetId}:${signalType}:${normalized}:${suffix}`;
 }
 
+function duplicateCandidateKey(candidate) {
+  return [
+    candidate.project_id ?? "unassigned",
+    candidate.title,
+    candidate.summary,
+    (candidate.extraction_json?.source_ids || []).join("|"),
+  ]
+    .join("\n")
+    .toLowerCase()
+    .replace(/[^a-z0-9|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function signalTypePriority(signalType) {
+  switch (signalType) {
+    case "project_update":
+      return 50;
+    case "risk":
+      return 40;
+    case "decision":
+      return 30;
+    case "task":
+      return 20;
+    case "process_issue":
+      return 10;
+    default:
+      return 0;
+  }
+}
+
+function isBetterDuplicateCandidate(next, current) {
+  if (!current) return true;
+  if (next.confidence_score !== current.confidence_score) {
+    return next.confidence_score > current.confidence_score;
+  }
+  return signalTypePriority(next.signal_type) > signalTypePriority(current.signal_type);
+}
+
+function dedupeCandidates(candidates) {
+  const selected = new Map();
+  const duplicateSections = new Map();
+  for (const candidate of candidates) {
+    const key = duplicateCandidateKey(candidate);
+    if (!key) continue;
+    const section = candidate.extraction_json?.section;
+    if (section) {
+      duplicateSections.set(key, [...(duplicateSections.get(key) || []), section]);
+    }
+    const current = selected.get(key);
+    if (isBetterDuplicateCandidate(candidate, current)) {
+      selected.set(key, candidate);
+    }
+  }
+  return [...selected.entries()].map(([key, candidate]) => ({
+    ...candidate,
+    extraction_json: {
+      ...candidate.extraction_json,
+      duplicate_sections_collapsed: [...new Set(duplicateSections.get(key) || [])],
+    },
+  }));
+}
+
 function confidenceForSection(section) {
   if (section === "Project Intelligence Updates") return { score: 0.86, label: "high" };
   if (section === "Task Candidates") return { score: 0.74, label: "medium" };
@@ -381,7 +444,7 @@ function candidatesFromPacket(packet, projectRows) {
       });
     }
   }
-  return candidates;
+  return dedupeCandidates(candidates);
 }
 
 async function writeCandidates(candidates, packet) {
