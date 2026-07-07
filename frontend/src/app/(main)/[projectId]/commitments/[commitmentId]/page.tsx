@@ -657,6 +657,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
               <SectionRuleHeading label="General Information" className="mb-8 pb-0" />
               <div className="space-y-8">
                 <DetailLayout
+                  variant="equal"
                   sidebar={
                     <div className="space-y-6">
                       <div className="space-y-2">

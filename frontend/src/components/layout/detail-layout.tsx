@@ -18,6 +18,11 @@ export interface DetailLayoutProps {
    * the main content flow instead of stacking an inspector below the content.
    */
   sidebarDesktopOnly?: boolean;
+  /**
+   * `sidebar` keeps the canonical detail-page main + narrow inspector layout.
+   * `equal` is for peer content columns where neither side is an inspector.
+   */
+  variant?: "sidebar" | "equal";
   className?: string;
 }
 
@@ -35,6 +40,7 @@ export function DetailLayout({
   sidebar,
   footer,
   sidebarDesktopOnly = false,
+  variant = "sidebar",
   className,
 }: DetailLayoutProps) {
   if (!sidebar && !footer) {
@@ -44,7 +50,14 @@ export function DetailLayout({
   return (
     <div className={cn("space-y-8 md:space-y-10", className)}>
       {sidebar ? (
-        <div className="grid grid-cols-1 gap-6 md:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-10">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-6 md:gap-8 xl:gap-10",
+            variant === "equal"
+              ? "xl:grid-cols-2"
+              : "xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]",
+          )}
+        >
           <div className="min-w-0 space-y-10">{children}</div>
           {sidebarDesktopOnly ? (
             <aside className="hidden min-w-0 space-y-8 xl:block">{sidebar}</aside>
