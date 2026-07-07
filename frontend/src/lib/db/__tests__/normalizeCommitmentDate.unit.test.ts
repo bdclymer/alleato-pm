@@ -16,11 +16,23 @@
 
 /** Mirrors the date-resolution branch in normalizeCommitment */
 function resolveCompletionDate(record: Record<string, unknown>): string | undefined {
-  return typeof record.estimated_completion_date === "string"
-    ? record.estimated_completion_date
-    : typeof record.substantial_completion_date === "string"
-      ? record.substantial_completion_date
-      : undefined;
+  return typeof record.delivery_date === "string"
+    ? record.delivery_date
+    : typeof record.estimated_completion_date === "string"
+      ? record.estimated_completion_date
+      : typeof record.substantial_completion_date === "string"
+        ? record.substantial_completion_date
+        : undefined;
+}
+
+function resolveSignedDate(record: Record<string, unknown>): string | undefined {
+  return typeof record.signed_contract_received_date === "string"
+    ? record.signed_contract_received_date
+    : typeof record.signed_po_received_date === "string"
+      ? record.signed_po_received_date
+      : typeof record.signed_received_date === "string"
+        ? record.signed_received_date
+        : undefined;
 }
 
 describe("normalizeCommitment — completion date resolution", () => {
@@ -59,5 +71,39 @@ describe("normalizeCommitment — completion date resolution", () => {
       estimated_completion_date: "2026-03-15",
     });
     expect(result).toBe("2026-03-15");
+  });
+
+  it("prefers delivery_date for purchase orders", () => {
+    const result = resolveCompletionDate({
+      delivery_date: "2026-04-20",
+      estimated_completion_date: "2026-03-15",
+      substantial_completion_date: "2026-02-01",
+    });
+    expect(result).toBe("2026-04-20");
+  });
+});
+
+describe("normalizeCommitment — signed date resolution", () => {
+  it("prefers signed_contract_received_date for subcontracts", () => {
+    const result = resolveSignedDate({
+      signed_contract_received_date: "2026-01-15",
+      signed_received_date: "2026-01-10",
+    });
+    expect(result).toBe("2026-01-15");
+  });
+
+  it("uses signed_po_received_date for purchase orders", () => {
+    const result = resolveSignedDate({
+      signed_po_received_date: "2026-02-20",
+      signed_received_date: "2026-02-10",
+    });
+    expect(result).toBe("2026-02-20");
+  });
+
+  it("falls back to signed_received_date for legacy payloads", () => {
+    const result = resolveSignedDate({
+      signed_received_date: "2026-03-05",
+    });
+    expect(result).toBe("2026-03-05");
   });
 });

@@ -1032,18 +1032,62 @@ class AcumaticaFinancialSyncService:
             }
 
             existing_row = by_acu_id.get(vendor_id) or by_name.get(vendor_name.lower())
-            if existing_row:
-                self.supabase.table("companies").update({**payload, "is_vendor": True}).eq("id", existing_row["id"]).execute()
-                updated += 1
-            else:
-                self.supabase.table("companies").insert(
-                    {
-                        "is_vendor": True,
-                        "status": "active",
-                        **payload,
-                    }
-                ).execute()
-                created += 1
+            target_id = existing_row.get("id") if existing_row else None
+
+            if target_id is None:
+                direct_match_rows = (
+                    self.supabase.table("companies")
+                    .select("id")
+                    .eq("acumatica_vendor_id", vendor_id)
+                    .limit(1)
+                    .execute()
+                ).data or []
+                target_id = direct_match_rows[0]["id"] if direct_match_rows else None
+
+            if target_id is None:
+                by_name_rows = (
+                    self.supabase.table("companies")
+                    .select("id")
+                    .eq("is_vendor", True)
+                    .eq("name", vendor_name)
+                    .limit(1)
+                    .execute()
+                ).data or []
+                target_id = by_name_rows[0]["id"] if by_name_rows else None
+
+            try:
+                if target_id:
+                    self.supabase.table("companies").update({**payload, "is_vendor": True}).eq("id", target_id).execute()
+                    updated += 1
+                else:
+                    self.supabase.table("companies").insert(
+                        {
+                            "is_vendor": True,
+                            "status": "active",
+                            **payload,
+                        }
+                    ).execute()
+                    created += 1
+            except Exception as exc:
+                if not _is_duplicate_key_error(exc):
+                    raise
+
+                # If another process inserted this vendor between sync map refresh and
+                # this write, recover by updating the row that now owns this acumatica id.
+                by_vendor_rows = (
+                    self.supabase.table("companies")
+                    .select("id")
+                    .eq("acumatica_vendor_id", vendor_id)
+                    .limit(1)
+                    .execute()
+                ).data or []
+                if by_vendor_rows:
+                    self.supabase.table("companies").update(
+                        {**payload, "is_vendor": True}
+                    ).eq("id", by_vendor_rows[0]["id"]).execute()
+                    updated += 1
+                else:
+                    raise
 
         result.upserted = created + updated
         self.vendor_map = self._load_vendor_map()
@@ -1514,12 +1558,9 @@ class AcumaticaFinancialSyncService:
                     "work_completed_previous": 0,
                     "work_completed_period": approved_amount,
                     "materials_stored": 0,
-                    "total_completed_stored": approved_amount,
-                    "work_completed_pct": 100 if approved_amount > 0 else 0,
+                    "work_completed_pct": 99.9999 if approved_amount > 0 else 0,
                     "retainage_amount": 0,
                     "retainage_released": 0,
-                    "net_amount_this_period": approved_amount,
-                    "balance_to_finish": 0,
                 })
             if owner_line_rows:
                 for chunk in _chunked(owner_line_rows):
@@ -2176,9 +2217,24 @@ class AcumaticaFinancialSyncService:
         rows: List[Dict[str, Any]] = []
 
         for row in acumatica_rows:
+            project_id = row["project_id"]
+            if not project_id:
+                result.skipped += 1
+                continue
+
+            # Project into prime_contract_change_orders must include one parent
+            # relation so constraint prime_contract_change_orders_parent_required_check passes.
+            contract_rows = (
+                self.supabase.table("prime_contracts").select("id").eq("project_id", project_id).execute()
+            ).data or []
+            if not contract_rows:
+                result.skipped += 1
+                continue
+
             rows.append(
                 {
-                    "project_id": row["project_id"],
+                    "project_id": project_id,
+                    "prime_contract_id": contract_rows[0]["id"],
                     "pcco_number": row["reference_nbr"],
                     "title": row.get("description") or row["reference_nbr"],
                     "status": self._map_co_status_prime(row.get("status")),

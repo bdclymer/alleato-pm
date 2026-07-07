@@ -298,7 +298,7 @@
     },
     {
       "url": "/[projectId]/intelligence",
-      "title": "Executive focus",
+      "title": "Act now",
       "description": "AI-powered project intelligence with insights, timeline, and source document references"
     },
     {
@@ -799,6 +799,11 @@
     {
       "url": "/ai/approvals",
       "title": "AI approvals",
+      "description": null
+    },
+    {
+      "url": "/ai/email-learning",
+      "title": "Email Learning",
       "description": null
     },
     {
@@ -1320,6 +1325,11 @@
       "url": "/meetings/[meetingId]",
       "title": null,
       "description": "Meeting detail page with transcript, segments, extracted items, and related meetings"
+    },
+    {
+      "url": "/megans-dashboard",
+      "title": "Megan's Dashboard",
+      "description": null
     },
     {
       "url": "/my-feedback",

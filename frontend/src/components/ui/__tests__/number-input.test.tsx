@@ -5,6 +5,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NumberInput } from "../number-input";
 
 describe("NumberInput", () => {
+  it("applies a readable minimum width by default", () => {
+    render(<NumberInput value="42" onChange={() => undefined} formatOnBlur={false} />);
+
+    expect(screen.getByRole("textbox")).toHaveClass("min-w-20");
+  });
+
   it("renders zero as empty content when clearZeroOnFocus is enabled", () => {
     render(
       <NumberInput

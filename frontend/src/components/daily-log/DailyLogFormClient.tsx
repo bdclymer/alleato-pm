@@ -47,6 +47,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -785,8 +786,37 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                             options={tradeOptions}
                           />
                         </TableCell>
-                        <TableCell><Input type="number" min={0} value={row.workersCount || ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { workersCount: numericValue(event.target.value) ?? 0 })} /></TableCell>
-                        <TableCell><Input type="number" min={0} step="0.25" value={row.hoursWorked ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { hoursWorked: numericValue(event.target.value) })} /></TableCell>
+                        <TableCell>
+                          <NumberInput
+                            min={0}
+                            decimals={0}
+                            formatOnBlur={false}
+                            value={row.workersCount || ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                workersCount: numericValue(event.target.value) ?? 0,
+                              })
+                            }
+                            className="min-w-20"
+                            aria-label={`Workers for manpower row ${row.id}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <NumberInput
+                            min={0}
+                            step="0.25"
+                            decimals={2}
+                            formatOnBlur={false}
+                            value={row.hoursWorked ?? ""}
+                            onChange={(event) =>
+                              updateRow(manpowerRows, setManpowerRows, row.id, {
+                                hoursWorked: numericValue(event.target.value),
+                              })
+                            }
+                            className="min-w-20"
+                            aria-label={`Hours worked for manpower row ${row.id}`}
+                          />
+                        </TableCell>
                         <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
                         <TableCell>
                           <Input

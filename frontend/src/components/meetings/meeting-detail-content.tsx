@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/detail-property-bar";
 import { PageShell } from "@/components/layout";
 import type { CuratedMeetingRisk } from "@/lib/meetings/server";
+import { areSemanticallySimilar } from "@/lib/meetings/text-dedupe";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
 import { MeetingCategoryControl } from "@/components/meetings/meeting-category-control";
 import { MeetingTasksManager } from "@/components/meetings/meeting-tasks-manager";
@@ -445,6 +446,16 @@ function meaningfulText(value: string | null | undefined): string | null {
   }
 
   return trimmed;
+}
+
+function shouldShowRiskDetail(
+  title: string,
+  whyItMatters: string | null | undefined,
+): whyItMatters is string {
+  const detail = meaningfulText(whyItMatters);
+  if (!detail) return false;
+
+  return !areSemanticallySimilar(title, detail, 0.5);
 }
 
 // ─── Project Assignment Dialog ───────────────────────────────────────────────
@@ -888,7 +899,7 @@ export function MeetingDetailContent({
                         <p className="text-sm leading-relaxed text-muted-foreground">
                           {risk.text}
                         </p>
-                        {risk.whyItMatters ? (
+                        {shouldShowRiskDetail(risk.text, risk.whyItMatters) ? (
                           <p className="text-xs leading-5 text-muted-foreground">
                             {risk.whyItMatters}
                           </p>

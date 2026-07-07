@@ -306,11 +306,17 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     start_date:
       typeof record.start_date === "string" ? record.start_date : undefined,
     substantial_completion_date:
-      typeof record.substantial_completion_date === "string"
-        ? record.substantial_completion_date
+      typeof record.delivery_date === "string"
+        ? record.delivery_date
         : typeof record.estimated_completion_date === "string"
           ? record.estimated_completion_date
-          : undefined,
+          : typeof record.substantial_completion_date === "string"
+            ? record.substantial_completion_date
+            : undefined,
+    actual_completion_date:
+      typeof record.actual_completion_date === "string"
+        ? record.actual_completion_date
+        : undefined,
     accounting_method: accountingMethod,
     retention_percentage: Number(record.default_retainage_percent ?? record.retention_percentage ?? 0),
     vendor_invoice_number:
@@ -318,9 +324,13 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
         ? record.vendor_invoice_number
         : undefined,
     signed_received_date:
-      typeof record.signed_received_date === "string"
-        ? record.signed_received_date
-        : undefined,
+      typeof record.signed_contract_received_date === "string"
+        ? record.signed_contract_received_date
+        : typeof record.signed_po_received_date === "string"
+          ? record.signed_po_received_date
+          : typeof record.signed_received_date === "string"
+            ? record.signed_received_date
+            : undefined,
     assignee_id: record.assignee_id ? String(record.assignee_id) : undefined,
     assignee,
     private:

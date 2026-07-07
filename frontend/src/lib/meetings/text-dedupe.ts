@@ -70,6 +70,21 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 const DEFAULT_SIMILARITY_THRESHOLD = 0.6;
 
+export function areSemanticallySimilar(
+  left: string,
+  right: string,
+  similarityThreshold = DEFAULT_SIMILARITY_THRESHOLD,
+): boolean {
+  const leftText = left.trim();
+  const rightText = right.trim();
+
+  if (!leftText || !rightText) return false;
+
+  return (
+    jaccard(tokenize(leftText), tokenize(rightText)) >= similarityThreshold
+  );
+}
+
 export function dedupeSemanticText(items: string[], similarityThreshold = DEFAULT_SIMILARITY_THRESHOLD): string[] {
   const result: { text: string; tokens: Set<string> }[] = [];
 

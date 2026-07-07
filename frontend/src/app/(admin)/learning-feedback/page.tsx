@@ -100,6 +100,7 @@ export default async function LearningFeedbackPage() {
   const excludedAdmin = candidatesTotal - triageable;
 
   const decisionMetrics = [
+    { label: "Email learning control", value: "Open", href: "/ai/email-learning" },
     { label: "Triageable learning candidates", value: String(triageable) },
     { label: "Promotions awaiting review", value: String(promotionsAwaiting), href: "/ai/learning-promotions" },
     { label: "Task review queue", value: "Open", href: "/admin/task-training" },
@@ -108,6 +109,7 @@ export default async function LearningFeedbackPage() {
   ];
 
   const reviewLinks = [
+    { href: "/ai/email-learning", label: "Email learning", hint: "Manage exclusion rules and see which email feedback actually matters" },
     { href: "/admin/task-training", label: "Task training", hint: "Review extracted Fireflies and AI-generated tasks" },
     { href: "/my-feedback", label: "My submitted feedback", hint: "Review, edit, or undo what you rated" },
     { href: "/executive", label: "Executive brief", hint: "Rate today's brief items" },

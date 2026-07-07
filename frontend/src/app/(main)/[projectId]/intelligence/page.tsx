@@ -2,18 +2,17 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, CircleDollarSign, GitCommitHorizontal, HelpCircle } from "lucide-react";
+import { AlertTriangle, GitCommitHorizontal, HelpCircle } from "lucide-react";
 
 import { Button, EmptyState, SectionHeader } from "@/components/ds";
-import { KpiRow, type KpiBlockProps } from "@/components/ds/kpi";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
 import {
   SourceReferenceButton,
   type SourceReferenceRecord,
 } from "@/components/ai-intelligence/source-reference-button";
-import { PageShell } from "@/components/layout";
-import { ChangeCard } from "@/features/intelligence/change-card";
+import { DetailLayout, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
+import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
@@ -166,6 +165,16 @@ type OperatingRecordState = {
   timelineEvents: OperatingTimelineEventRow[];
   changeEventCandidates: ChangeEventCandidateRow[];
   reportSuggestions: ProjectReportSuggestionRow[];
+};
+
+type DashboardActionItem = {
+  key: string;
+  title: string;
+  detail?: string;
+  meta: string;
+  href: string;
+  ctaLabel: string;
+  tone: StatusTone;
 };
 
 function formatLabel(value: string | null | undefined): string {
@@ -617,17 +626,6 @@ const FOCUS_RANK: Record<string, number> = {
   requirement: 7,
 };
 
-const FOCUS_ICON: Record<string, typeof AlertTriangle> = {
-  blocker: AlertTriangle,
-  risk: AlertTriangle,
-  schedule_risk: AlertTriangle,
-  financial_exposure: CircleDollarSign,
-  decision: GitCommitHorizontal,
-  change_management: GitCommitHorizontal,
-  open_question: HelpCircle,
-  requirement: HelpCircle,
-};
-
 /**
  * A title is "raw" when it's an un-synthesized source dump (an email/meeting
  * subject line) rather than an analyzed signal. ~22% of insight_cards, the
@@ -718,39 +716,134 @@ function ProjectHealthHero({
   );
 }
 
-function ExecutiveFocusSection({ cards }: { cards: InsightCard[] }) {
-  const focus = cards
+function nextDueTask(tasks: InternalTaskRow[]): InternalTaskRow | null {
+  return [...tasks]
+    .filter((task) => task.due_date)
+    .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""))
+    .at(0) ?? null;
+}
+
+function buildImmediateAttentionItems({
+  cards,
+  changeEventCandidates,
+  tasks,
+  projectId,
+}: {
+  cards: InsightCard[];
+  changeEventCandidates: ChangeEventCandidateRow[];
+  tasks: InternalTaskRow[];
+  projectId: number;
+}): DashboardActionItem[] {
+  const items: DashboardActionItem[] = [];
+  const now = Date.now();
+  const overdueTasks = tasks.filter((task) => {
+    if (!task.due_date) return false;
+    const dueMs = new Date(task.due_date).getTime();
+    return !Number.isNaN(dueMs) && dueMs < now;
+  });
+  const nextTask = nextDueTask(tasks);
+
+  if (overdueTasks.length > 0 || tasks.length > 0) {
+    const label = overdueTasks.length > 0
+      ? `${overdueTasks.length} task${overdueTasks.length === 1 ? "" : "s"} already need follow-up`
+      : `${tasks.length} open task${tasks.length === 1 ? "" : "s"} are part of the current work queue`;
+    const detail = nextTask
+      ? `Next due: ${cleanText(nextTask.title) || "Untitled task"}${nextTask.due_date ? ` on ${formatDate(nextTask.due_date)}` : ""}.`
+      : "Open the project task list to review ownership and due dates.";
+    items.push({
+      key: "tasks",
+      title: label,
+      detail,
+      meta: overdueTasks.length > 0 ? "Project tasks · overdue" : "Project tasks",
+      href: `/${projectId}/tasks`,
+      ctaLabel: "Open tasks",
+      tone: overdueTasks.length > 0 ? "risk" : "watch",
+    });
+  }
+
+  const focusCards = cards
     .filter((card) => FOCUS_CARD_TYPES.has(card.cardType))
     .sort(
       (a, b) =>
         (FOCUS_RANK[a.cardType] ?? 9) - (FOCUS_RANK[b.cardType] ?? 9) ||
         latestEvidenceDate(b).localeCompare(latestEvidenceDate(a)),
     )
-    .slice(0, 5);
+    .slice(0, 3);
 
-  if (focus.length === 0) return null;
+  focusCards.forEach((card) => {
+    const dateLabel = latestEvidenceDate(card) ? formatTimelineDate(latestEvidenceDate(card)) : "";
+    const detail = safeNarrative(card.nextAction || card.whyItMatters || card.summary, 170);
+    items.push({
+      key: card.id,
+      title: cleanText(card.title),
+      detail: detail || undefined,
+      meta: [formatLabel(card.cardType), dateLabel, `${card.evidence.length} source${card.evidence.length === 1 ? "" : "s"}`]
+        .filter(Boolean)
+        .join(" · "),
+      href: `#insight-card-${card.id}`,
+      ctaLabel: "Open evidence",
+      tone: cardTone(card),
+    });
+  });
+
+  changeEventCandidates
+    .filter((candidate) => !isRawTitle(candidate.title))
+    .slice(0, 2)
+    .forEach((candidate) => {
+      items.push({
+        key: candidate.id,
+        title: candidate.title,
+        detail: safeNarrative(candidate.reason || candidate.description, 170) || undefined,
+        meta: [
+          "Potential change order",
+          formatLabel(candidate.confidence),
+          formatLabel(candidate.status),
+        ].join(" · "),
+        href: `/${projectId}/change-events/new?candidateId=${candidate.id}`,
+        ctaLabel: "Create change event",
+        tone: "watch",
+      });
+    });
+
+  return items.slice(0, 5);
+}
+
+function ImmediateAttentionSection({
+  cards,
+  changeEventCandidates,
+  tasks,
+  projectId,
+}: {
+  cards: InsightCard[];
+  changeEventCandidates: ChangeEventCandidateRow[];
+  tasks: InternalTaskRow[];
+  projectId: number;
+}) {
+  const items = buildImmediateAttentionItems({ cards, changeEventCandidates, tasks, projectId });
+  if (items.length === 0) return null;
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <SectionHeader title="Executive focus" />
-        <span className="text-xs text-muted-foreground">top {focus.length}</span>
-      </div>
-      <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
-        {focus.map((card) => {
-          const Icon = FOCUS_ICON[card.cardType] ?? AlertTriangle;
+      <SectionHeader title="Act now" />
+      <div className="divide-y divide-border/60">
+        {items.map((item) => {
+          const Icon = item.tone === "risk" ? AlertTriangle : item.tone === "watch" ? HelpCircle : GitCommitHorizontal;
           return (
-            <a
-              key={card.id}
-              href={`#insight-card-${card.id}`}
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-            >
-              <Icon className={`h-4 w-4 shrink-0 ${toneClasses(cardTone(card))}`} aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate text-sm text-foreground">{cleanText(card.title)}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {card.evidence.length} source{card.evidence.length === 1 ? "" : "s"}
-              </span>
-            </a>
+            <article key={item.key} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+              <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClasses(item.tone)}`} aria-hidden="true" />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.meta}</p>
+                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={item.href}>{item.ctaLabel}</Link>
+                  </Button>
+                </div>
+                {item.detail ? <p className="text-sm leading-6 text-muted-foreground">{item.detail}</p> : null}
+              </div>
+            </article>
           );
         })}
       </div>
@@ -775,21 +868,24 @@ function WhatChangedSection({
   return (
     <section className="space-y-3">
       <SectionHeader title="What changed" />
-      <div className="flex flex-col gap-2">
-        {[...whatChanged].reverse().map((item) => (
-          <ChangeCard
-            key={item.title}
-            title={item.title}
-            preview={item.detail ? safeNarrative(item.detail, 120) : undefined}
-            detail={item.detail ? safeNarrative(item.detail, 600) : undefined}
-            sources={
-              <SourceLinkRow
-                projectId={projectId}
-                sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
-              />
-            }
-          />
-        ))}
+      <div className="divide-y divide-border/60">
+        {[...whatChanged].reverse().map((item) => {
+          const sources = supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap);
+          return (
+            <article key={item.title} className="space-y-2 py-3 first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-sm font-medium text-foreground">{item.title}</p>
+                {item.occurredAt ? (
+                  <span className="text-xs text-muted-foreground">{formatDate(item.occurredAt)}</span>
+                ) : null}
+              </div>
+              {item.detail ? (
+                <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(item.detail, 420)}</p>
+              ) : null}
+              <SourceLinkRow projectId={projectId} sources={sources} />
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -814,7 +910,7 @@ function RisksDecisionsSection({ cards, projectId }: { cards: InsightCard[]; pro
   );
 }
 
-function FinancialSnapshotSection({
+function FinancialContextSection({
   operatingRecord,
   projectId,
   projectBudget,
@@ -837,17 +933,17 @@ function FinancialSnapshotSection({
   const hasNumbers = budget != null || committed != null || directCosts != null || changeOrders != null;
   if (!hasNumbers && !financialRead && candidates.length === 0) return null;
 
-  const metrics: KpiBlockProps[] = [
-    { label: "Budget", value: budget != null ? formatCurrency(budget) : "Not set" },
-    { label: "Committed", value: formatCurrency(committed) },
-    { label: "Direct costs", value: formatCurrency(directCosts) },
-    { label: "Change orders", value: formatCurrency(changeOrders) },
-  ];
-
   return (
     <section className="space-y-4">
-      <SectionHeader title="Financial snapshot" />
-      {hasNumbers ? <KpiRow metrics={metrics} size="small" /> : null}
+      <SectionHeader title="Financial context" />
+      {hasNumbers ? (
+        <div className="space-y-3">
+          <LabelValueRow label="Budget">{budget != null ? formatCurrency(budget) : "Not set"}</LabelValueRow>
+          <LabelValueRow label="Committed">{formatCurrency(committed)}</LabelValueRow>
+          <LabelValueRow label="Direct costs">{formatCurrency(directCosts)}</LabelValueRow>
+          <LabelValueRow label="Change orders">{formatCurrency(changeOrders)}</LabelValueRow>
+        </div>
+      ) : null}
       {financialRead ? <p className="max-w-4xl text-sm leading-6 text-muted-foreground">{financialRead}</p> : null}
       <p className="text-xs text-muted-foreground">
         Schedule SPI and percent-complete are intentionally omitted — schedule data is not yet reliable enough to show.
@@ -855,7 +951,6 @@ function FinancialSnapshotSection({
 
       {candidates.length > 0 ? (
         <div className="space-y-3">
-          <SectionHeader title="Potential change orders" />
           <div className="divide-y divide-border/60">
             {candidates.map((candidate) => (
               <article key={candidate.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
@@ -877,6 +972,116 @@ function FinancialSnapshotSection({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function ReliabilitySection({
+  packet,
+  pageState,
+  operatingRecord,
+}: {
+  packet: ClientProjectIntelligencePacket | null;
+  pageState: ReturnType<typeof buildIntelligencePageState> | null;
+  operatingRecord: OperatingRecordState;
+}) {
+  const currentUpdatedAt = operatingRecord.currentState?.updated_at ?? null;
+  const latestSourceAt =
+    (typeof packet?.sourceCoverage.latestSourceAt === "string" ? packet.sourceCoverage.latestSourceAt : null) ??
+    operatingRecord.latestSnapshot?.snapshot_at ??
+    null;
+  const warnings = pageState?.warnings ?? [];
+  const limitations = pageState?.limitations ?? [];
+  const packetFreshness = packet ? formatLabel(packet.freshnessStatus) : "Unavailable";
+
+  return (
+    <section className="space-y-3">
+      <SectionHeader title="Trust this read" />
+      <div className="space-y-3">
+        <LabelValueRow label="Packet freshness">
+          {packet ? `${packetFreshness} · compiled ${formatDateTime(packet.generatedAt)}` : "No current packet available"}
+        </LabelValueRow>
+        <LabelValueRow label="Operating record">
+          {currentUpdatedAt ? `Updated ${formatDateTime(currentUpdatedAt)}` : "No current operating summary available"}
+        </LabelValueRow>
+        <LabelValueRow label="Latest source signal">
+          {latestSourceAt ? formatDateTime(latestSourceAt) : "Not available"}
+        </LabelValueRow>
+      </div>
+
+      {warnings.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-destructive">Warnings</p>
+          <ul className="space-y-2 text-sm leading-6 text-foreground">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {limitations.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Evidence limits</p>
+          <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+            {limitations.slice(0, 3).map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function CurrentOperatingReadSection({
+  packet,
+  pageState,
+  currentState,
+}: {
+  packet: ClientProjectIntelligencePacket | null;
+  pageState: ReturnType<typeof buildIntelligencePageState> | null;
+  currentState: ProjectCurrentStateRow | null;
+}) {
+  const primaryRead = safeNarrative(currentState?.current_summary, 560) || pageState?.briefing.body || "";
+  const whyItMatters = packet ? safeNarrative(packet.whyItMatters, 260) : "";
+  const nextMoves = packet?.recommendedNextMoves.map((move) => cleanText(move)).filter(Boolean).slice(0, 3) ?? [];
+
+  if (!primaryRead && !whyItMatters && nextMoves.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Operating read</p>
+        <SectionRuleHeading label={pageState?.briefing.title ?? "Current project intelligence"} className="mb-0 pb-0" />
+      </div>
+      {primaryRead ? <p className="max-w-4xl text-base leading-8 text-foreground">{primaryRead}</p> : null}
+      {whyItMatters ? (
+        <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{whyItMatters}</p>
+      ) : null}
+      {nextMoves.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Recommended next moves</p>
+          <ol className="space-y-2">
+            {nextMoves.map((move) => (
+              <li key={move} className="text-sm leading-6 text-foreground">{move}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SourceActivitySection({ projectId }: { projectId: number }) {
+  return (
+    <details className="space-y-4">
+      <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
+        View recent source activity
+      </summary>
+      <div className="pt-3">
+        <DailyIngestionFeed projectId={projectId} />
+      </div>
+    </details>
   );
 }
 
@@ -1358,7 +1563,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
     loadOperatingRecordState(supabase, numericProjectId),
     loadProjectTasks(supabase, numericProjectId),
   ]);
-  const nowMs = Date.now();
+  const pageState = packet ? buildIntelligencePageState(packet) : null;
 
   // insight_cards is the only clean, synthesized, evidence-linked source.
   // Drop raw-email contamination before anything reaches the thinking layer.
@@ -1387,6 +1592,16 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
     <PageShell
       variant="dashboard"
       title={`${project.name ?? `Project ${project.id}`} Project Intelligence`}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/${numericProjectId}/tasks`}>Open tasks</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/ai">Open assistant</Link>
+          </Button>
+        </div>
+      }
       titleContent={
         <div className="space-y-2">
           <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
@@ -1399,36 +1614,45 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
                 ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
                 : packet
                   ? `Last updated ${formatDateTime(packet.generatedAt)}`
-                  : "Last updated not available"}
+              : "Last updated not available"}
             </p>
           </div>
         </div>
       }
-      contentClassName="space-y-10"
+      contentClassName="space-y-8"
     >
-      {/* ---- Thinking ---- */}
       <ProjectHealthHero currentState={operatingRecord.currentState} latestSnapshot={operatingRecord.latestSnapshot} />
 
-      {hasCards ? <ExecutiveFocusSection cards={cleanCards} /> : null}
-
-      {packet ? (
-        <WhatChangedSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
-      ) : null}
-
-      {/* ---- Evidence ---- */}
-      {hasCards ? <RisksDecisionsSection cards={cleanCards} projectId={numericProjectId} /> : null}
-
-      <FinancialSnapshotSection
-        operatingRecord={operatingRecord}
-        projectId={numericProjectId}
-        projectBudget={project.budget}
-      />
-
-      {hasCards ? <ProjectTimelineSection cards={cleanCards} /> : null}
-
-      <DailyIngestionFeed projectId={numericProjectId} />
-
-      <TaskSection tasks={projectTasks} nowMs={nowMs} />
+      <DetailLayout
+        sidebar={
+          <>
+            <ImmediateAttentionSection
+              cards={cleanCards}
+              changeEventCandidates={operatingRecord.changeEventCandidates}
+              tasks={projectTasks}
+              projectId={numericProjectId}
+            />
+            <ReliabilitySection packet={packet} pageState={pageState} operatingRecord={operatingRecord} />
+            <FinancialContextSection
+              operatingRecord={operatingRecord}
+              projectId={numericProjectId}
+              projectBudget={project.budget}
+            />
+          </>
+        }
+      >
+        <CurrentOperatingReadSection
+          packet={packet}
+          pageState={pageState}
+          currentState={operatingRecord.currentState}
+        />
+        {packet ? (
+          <WhatChangedSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
+        ) : null}
+        {hasCards ? <RisksDecisionsSection cards={cleanCards} projectId={numericProjectId} /> : null}
+        {hasCards ? <ProjectTimelineSection cards={cleanCards} /> : null}
+        <SourceActivitySection projectId={numericProjectId} />
+      </DetailLayout>
 
       {!hasAnyContent ? (
         !target ? (

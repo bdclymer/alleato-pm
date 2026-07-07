@@ -211,7 +211,8 @@ export function MoneyField({
         onFocus={handleFocus}
         onPaste={handlePaste}
         className={cn(
-          "pl-8 text-right",
+          "pl-8 text-right tabular-nums",
+          inline && "min-w-36",
           showCurrency && !inline && currency === "USD" && "pr-12",
           error && "border-destructive",
           className,

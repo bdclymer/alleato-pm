@@ -110,7 +110,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       ship_to_zip: data.shipToZip || null,
       ship_via: data.shipVia || null,
       description: data.description || null,
-      accounting_method: data.accountingMethod || "unit-quantity",
+      accounting_method: data.accountingMethod || "amount",
       contract_date: data.dates?.contractDate || null,
       delivery_date: data.dates?.deliveryDate || null,
       signed_po_received_date: data.dates?.signedPoReceivedDate || null,

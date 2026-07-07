@@ -115,6 +115,7 @@ function renderTabWithSummary() {
         billedToDate: 5000,
         amountRemaining: 39370,
         currentRetainage: 555.56,
+        retainagePercent: 10,
       }}
     />,
   );
@@ -172,9 +173,37 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(screen.getByText("Contract Total")).toBeInTheDocument();
     expect(screen.getAllByText("Billed to Date").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Amount Remaining")).toBeInTheDocument();
-    expect(screen.getByText("Current Retainage")).toBeInTheDocument();
+    // Retainage rate from the commitment (default_retainage_percent) must be
+    // surfaced in the SOV summary label, not just the computed dollar amount.
+    expect(screen.getByText("Current Retainage (10%)")).toBeInTheDocument();
     expect(screen.getByText("$44,370.00")).toBeInTheDocument();
     expect(screen.getByText("$555.56")).toBeInTheDocument();
+  });
+
+  it("omits the rate from the retainage label when no retainage is configured", async () => {
+    render(
+      <ScheduleOfValuesTab
+        lineItems={lineItems}
+        projectId={25125}
+        commitmentId="test-commitment"
+        commitmentType="subcontract"
+        accountingMethod="amount"
+        summary={{
+          subtotal: 43120,
+          originalContract: 43120,
+          approvedChanges: 0,
+          contractTotal: 43120,
+          billedToDate: 0,
+          amountRemaining: 43120,
+          currentRetainage: 0,
+          retainagePercent: 0,
+        }}
+      />,
+    );
+    await waitForBudgetCodes();
+
+    expect(screen.getByText("Current Retainage")).toBeInTheDocument();
+    expect(screen.queryByText(/Current Retainage \(/)).not.toBeInTheDocument();
   });
 
   it("renders locked rows as read-only content instead of edit controls", async () => {

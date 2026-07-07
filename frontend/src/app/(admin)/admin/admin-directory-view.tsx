@@ -1,27 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import type { AdminMenuItem, AdminMenuSection } from "./admin-dashboard-data";
 
-type AdminDirectoryItem = {
-  label: string;
-  href?: string;
-  route: string;
-  description: string;
-  icon: LucideIcon;
-  badge?: string;
-};
-
-type AdminDirectorySection = {
-  title: string;
-  groups: {
-    items: AdminDirectoryItem[];
-  }[];
-};
-
-function MenuItemRow({ item }: { item: AdminDirectoryItem }) {
+function MenuItemRow({ item }: { item: AdminMenuItem }) {
   const Icon = item.icon;
 
   const content = (
@@ -57,7 +41,7 @@ function MenuItemRow({ item }: { item: AdminDirectoryItem }) {
   );
 }
 
-export function AdminDirectoryView({ sections }: { sections: AdminDirectorySection[] }) {
+export function AdminDirectoryView({ sections }: { sections: AdminMenuSection[] }) {
   return (
     <div className="grid gap-10 lg:grid-cols-2 2xl:grid-cols-3">
       {sections.map((section) => {

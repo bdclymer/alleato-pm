@@ -88,7 +88,6 @@ export function ChangeEventForm({
             primeContractSelectOptions={primeContractSelectOptions}
             hasPrimeContracts={primeContractOptions.length > 0}
             projectId={projectId}
-            showDescription={mode !== "edit"}
           />
 
           <LineItemsSection

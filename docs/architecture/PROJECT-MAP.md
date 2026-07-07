@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (330)
+## UI Routes (332)
 
-_299/330 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_299/332 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -177,6 +177,7 @@ _299/330 have a description (from the page's `PageShell` or the curated `fronten
 | `/ai/admin/agents` | AI agent registry with table and dependency graph views, status and impact filters | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
 | `/ai/admin/skills` | Review Skill Library records by status, scope, owner, reviewer, and usage. | frontend/src/app/(admin)/ai/admin/skills/page.tsx |
 | `/ai/approvals` | AI approvals | frontend/src/app/(main)/ai/approvals/page.tsx |
+| `/ai/email-learning` | Email Learning | frontend/src/app/(admin)/ai/email-learning/page.tsx |
 | `/ai/learning-promotions` | Review candidate learnings before they can become durable assistant behavior, memory, attribution, or retrieval rules. | frontend/src/app/(admin)/ai/learning-promotions/page.tsx |
 | `/ai/profile` | Review what Alleato AI knows about you and where to manage it. | frontend/src/app/(main)/ai/profile/page.tsx |
 | `/ai/skills` | Approved assistant skills by category, scope, owner, reviewer, and usage. | frontend/src/app/(main)/ai/skills/page.tsx |
@@ -281,6 +282,7 @@ _299/330 have a description (from the page's `PageShell` or the curated `fronten
 | `/meeting-templates/[templateId]` | — | frontend/src/app/(admin)/meeting-templates/[templateId]/page.tsx |
 | `/meetings` | Table of all meetings with summaries, participants, and action items | frontend/src/app/(tables)/meetings/page.tsx |
 | `/meetings/[meetingId]` | Meeting detail page with transcript, segments, extracted items, and related meetings | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
+| `/megans-dashboard` | Megan's Dashboard | frontend/src/app/(admin)/megans-dashboard/page.tsx |
 | `/my-feedback` | Thumbs-up/down, ratings, and corrections you give the AI anywhere in the app show up here so you can review or fix them. | frontend/src/app/(admin)/my-feedback/page.tsx |
 | `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |

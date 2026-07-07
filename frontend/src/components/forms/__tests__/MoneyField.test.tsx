@@ -5,6 +5,20 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MoneyField } from "../MoneyField";
 
 describe("MoneyField", () => {
+  it("applies a readable width floor in inline mode", () => {
+    render(
+      <MoneyField
+        label="Amount"
+        inline
+        value={1250}
+        onChange={() => undefined}
+        showCurrency={false}
+      />,
+    );
+
+    expect(screen.getByLabelText("Amount")).toHaveClass("min-w-36");
+  });
+
   it("replaces a focused existing value when the browser appends instead of replacing", () => {
     function Harness() {
       const [value, setValue] = React.useState<number | undefined>(100);

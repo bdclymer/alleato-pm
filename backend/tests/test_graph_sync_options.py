@@ -63,6 +63,10 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
 
     assert result["status"] == "complete"
     assert result["phases"]["embedding"] == "skipped"
+    assert result["source_sync"]["status"] == "complete"
+    assert result["downstream"]["status"] == "complete"
+    assert result["source_sync_errors"] == []
+    assert result["downstream_errors"] == []
     assert result["embed"]["status"] == "skipped"
     assert result["intelligence_extraction"]["status"] == "skipped"
 
@@ -125,8 +129,75 @@ def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypa
     assert result["status"] == "complete"
     assert result["teams"] == 2
     assert result["phases"]["embedding"] == "skipped"
+    assert result["source_sync"]["teams"] == 2
+    assert result["source_sync"]["communications_synced"] == 2
+    assert result["downstream"]["status"] == "complete"
     assert result["intelligence_extraction"]["projects"] == 1
     assert extraction_calls
+
+
+def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypatch):
+    phase_runs = []
+
+    monkeypatch.setattr(sync, "get_graph_client", lambda: _FakeGraph())
+    monkeypatch.setenv("GRAPH_SYNC_OUTLOOK", "false")
+    monkeypatch.setenv("GRAPH_SYNC_TEAMS", "true")
+    monkeypatch.setenv("GRAPH_SYNC_TEAMS_DM", "false")
+    monkeypatch.setenv("GRAPH_SYNC_ONEDRIVE", "false")
+    monkeypatch.setenv("SHAREPOINT_SYNC_FOLDERS", "")
+    monkeypatch.setenv("TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "1")
+
+    monkeypatch.setattr(
+        sync,
+        "get_all_teams_and_channels",
+        lambda _supabase: [
+            {
+                "team_id": "team-1",
+                "team_name": "Team",
+                "channel_id": "channel-1",
+                "channel_name": "General",
+            }
+        ],
+    )
+    monkeypatch.setattr(sync, "_get_delta_token", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        sync,
+        "_record_graph_phase_run_safe",
+        lambda *_args, **kwargs: phase_runs.append(kwargs),
+    )
+    monkeypatch.setattr(
+        sync,
+        "sync_teams_channel",
+        lambda *_args, **_kwargs: (1, "next-token"),
+    )
+    monkeypatch.setattr(
+        sync,
+        "embed_pending_graph_documents",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("embed blew up")),
+    )
+    monkeypatch.setattr(
+        "src.services.intelligence.project_synthesizer.synthesize_new_comms_since",
+        lambda _since: {"projects": 0, "cards_written": 0, "synthesis_packets_written": 0, "errors": []},
+    )
+
+    result = sync.run_graph_sync(
+        _FakeSupabase(),
+        run_embedding=True,
+        run_ocr=False,
+        run_attachment_promotion=False,
+    )
+
+    assert result["status"] == "complete_with_errors"
+    assert result["source_sync"]["status"] == "complete"
+    assert result["downstream"]["status"] == "complete_with_errors"
+    assert result["source_sync_errors"] == []
+    assert result["downstream_errors"] == ["Embedding failed: embed blew up"]
+    assert [(run["source"], run["status"]) for run in phase_runs] == [
+        ("microsoft_graph_source_sync", "succeeded"),
+        ("microsoft_graph_downstream", "failed"),
+    ]
 
 
 def test_ocr_no_text_fetch_times_out_loudly(monkeypatch):

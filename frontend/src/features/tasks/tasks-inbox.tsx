@@ -10,7 +10,6 @@ import {
   CalendarDays,
   CheckCircle2,
   CheckSquare2,
-  ClipboardList,
   Clock,
   Flag,
   FolderOpen,
@@ -1032,10 +1031,10 @@ function TaskSplitListItem({
         }
       }}
       className={cn(
-        "group flex cursor-pointer gap-2.5 border-b border-l-2 border-border/50 px-4 py-2.5 text-left transition-colors",
+        "group flex cursor-pointer gap-2.5 border-b border-border/40 px-5 py-3 text-left transition-colors",
         isSelected
-          ? "border-l-primary bg-muted/70"
-          : "border-l-transparent hover:bg-muted/40",
+          ? "bg-muted/55"
+          : "hover:bg-muted/30",
       )}
     >
       <Checkbox
@@ -1060,22 +1059,19 @@ function TaskSplitListItem({
             {dateLabel}
           </span>
         </div>
-        <div className="flex min-w-0 items-center gap-x-1.5 overflow-hidden text-xs text-muted-foreground">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 overflow-hidden text-xs text-muted-foreground">
           <span className="max-w-48 truncate">{projectLabel}</span>
-          <span aria-hidden="true">/</span>
           <span className="max-w-32 truncate">{assignedTo}</span>
-          <span aria-hidden="true">/</span>
-          <span className="max-w-32 truncate">{sourceLabel || "Source"}</span>
+          {sourceLabel ? (
+            <span className="max-w-32 truncate">{sourceLabel}</span>
+          ) : null}
           {priorityMeta ? (
-            <>
-              <span aria-hidden="true">/</span>
-              <span className="inline-flex items-center gap-1.5">
-                <span
-                  className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)}
-                />
-                {formatPriorityLabel(priority)}
-              </span>
-            </>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)}
+              />
+              {formatPriorityLabel(priority)}
+            </span>
           ) : null}
         </div>
       </div>
@@ -1747,60 +1743,33 @@ function TaskDetail({
 
 function EmptyDetail({
   total,
-  openCount,
-  doneCount,
   loading,
   scope,
-  isProjectScoped,
 }: {
   total: number;
-  openCount: number;
-  doneCount: number;
   loading: boolean;
   scope: Scope;
-  isProjectScoped: boolean;
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
-        <ClipboardList className="h-6 w-6 text-muted-foreground" />
-      </div>
-      <p className="mb-1 text-sm font-semibold text-foreground">
+    <div className="flex h-full flex-col justify-center px-8 py-10">
+      <div className="max-w-sm space-y-2">
+        <p className="text-sm font-semibold text-foreground">
         {loading
           ? "Loading tasks…"
           : total === 0
             ? "No tasks yet"
             : "Select a task"}
-      </p>
-      <p className="mb-6 max-w-xs text-xs text-muted-foreground leading-relaxed">
-        {scope === "mine"
-          ? "Tasks assigned to you from meetings, emails, and documents appear here."
-          : "All tasks across every team member and project appear here."}
-      </p>
-      {!loading && total > 0 && (
-        <div className="flex items-center gap-8 text-xs">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">
-              {openCount}
-            </p>
-            <p className="mt-0.5 text-muted-foreground">Open</p>
-          </div>
-          <div className="h-8 w-px bg-border/60" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">
-              {doneCount}
-            </p>
-            <p className="mt-0.5 text-muted-foreground">Done</p>
-          </div>
-          <div className="h-8 w-px bg-border/60" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground tabular-nums">
-              {total}
-            </p>
-            <p className="mt-0.5 text-muted-foreground">Total</p>
-          </div>
-        </div>
-      )}
+        </p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          {loading
+            ? "Fetching the task queue."
+            : total === 0
+              ? scope === "mine"
+                ? "Tasks assigned to you from meetings, email, and documents will appear here."
+                : "Company tasks from meetings, email, and documents will appear here."
+              : "Choose a task from the list to review details and make edits here."}
+        </p>
+      </div>
     </div>
   );
 }
@@ -2531,19 +2500,6 @@ export function TasksInbox({
     tableState.setSearchParams({ task: id });
   }
 
-  const openCount = useMemo(
-    () =>
-      items.filter((i) => {
-        const ds = toDisplayStatus(i.status);
-        return ds === "open" || ds === "in_progress";
-      }).length,
-    [items],
-  );
-  const doneCount = useMemo(
-    () => items.filter((i) => toDisplayStatus(i.status) === "done").length,
-    [items],
-  );
-
   const filters = useMemo(() => {
     const sourceFilters = buildTasksFilters(items).filter(
       (item) => item.id !== "status",
@@ -2908,11 +2864,8 @@ export function TasksInbox({
                 {!selectedWithContext ? (
                   <EmptyDetail
                     total={total}
-                    openCount={openCount}
-                    doneCount={doneCount}
                     loading={loading}
                     scope={scope}
-                    isProjectScoped={isProjectScoped}
                   />
                 ) : (
                   <TaskDetail
@@ -3222,11 +3175,8 @@ export function TasksInbox({
                   {!selectedWithContext ? (
                     <EmptyDetail
                       total={total}
-                      openCount={openCount}
-                      doneCount={doneCount}
                       loading={loading}
                       scope={scope}
-                      isProjectScoped={isProjectScoped}
                     />
                   ) : (
                     <TaskDetail

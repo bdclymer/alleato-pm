@@ -15,6 +15,8 @@ import {
   ExternalLink,
   MoreHorizontal,
   PanelRightOpen,
+  Plus,
+  Tag as TagIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -33,6 +35,7 @@ import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { PageTabs } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -69,6 +72,12 @@ import {
   type PageRoleAccessPolicy,
   type PageRoleAccessPolicyInput,
 } from "@/lib/page-role-access";
+import {
+  slugifyTagLabel,
+  type PageTag,
+  type PageTagAssignment,
+  type PageTagsResponse,
+} from "@/lib/page-tags";
 import type {
   PermissionLevel,
   PermissionModule,
@@ -146,6 +155,8 @@ export type InventoryRoute = {
   allowedPermissionTemplateIds: string[];
   roleAccessUpdatedAt: string | null;
   roleAccessIsExplicit: boolean;
+  /** Slugs of the tags applied to this route (from app_page_tag_assignments). */
+  tags: string[];
   _group?: string;
   _groupCount?: number;
 };
@@ -256,6 +267,7 @@ const columns: ColumnConfig[] = [
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "layout", label: "Layout", defaultVisible: true },
+  { id: "tags", label: "Tags", defaultVisible: true },
   { id: "accessLevel", label: "Required Access", defaultVisible: true },
   { id: "permissionModule", label: "Required Module", defaultVisible: true },
   { id: "allowedRoles", label: "Allowed Roles", defaultVisible: true },
@@ -446,6 +458,28 @@ async function fetchPermissionTemplates(): Promise<PermissionTemplate[]> {
     "/api/permissions/templates",
   );
   return data;
+}
+
+async function fetchPageTags(): Promise<PageTagsResponse> {
+  return apiFetch<PageTagsResponse>("/api/admin/page-tags");
+}
+
+function applyPageTagAssignments(
+  routes: InventoryRoute[],
+  assignments: PageTagAssignment[],
+): InventoryRoute[] {
+  const tagsByRoute = new Map<string, string[]>();
+  for (const assignment of assignments) {
+    tagsByRoute.set(assignment.route, [
+      ...(tagsByRoute.get(assignment.route) ?? []),
+      assignment.tagSlug,
+    ]);
+  }
+
+  return routes.map((route) => ({
+    ...route,
+    tags: tagsByRoute.get(route.route) ?? [],
+  }));
 }
 
 function defaultModuleForRoute(route: InventoryRoute): PermissionModule {
@@ -664,6 +698,132 @@ function RoleAccessSelect({
   );
 }
 
+/**
+ * Tag editor for a single route. Renders the applied tags as badges and opens a
+ * dropdown to toggle any catalog tag on/off or create a brand-new tag inline.
+ */
+function TagCell({
+  route,
+  catalog,
+  isBusy,
+  onToggleTag,
+  onCreateTag,
+}: {
+  route: InventoryRoute;
+  catalog: PageTag[];
+  isBusy: boolean;
+  onToggleTag: (route: InventoryRoute, slug: string, next: boolean) => void;
+  onCreateTag: (route: InventoryRoute, label: string) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const applied = new Set(route.tags);
+  const appliedTags = catalog.filter((tag) => applied.has(tag.slug));
+  const trimmed = draft.trim();
+  const draftSlug = slugifyTagLabel(trimmed);
+  const draftExists =
+    draftSlug.length > 0 && catalog.some((tag) => tag.slug === draftSlug);
+  const canCreate = draftSlug.length > 0 && !draftExists;
+
+  const submitCreate = () => {
+    if (!canCreate) return;
+    onCreateTag(route, trimmed);
+    setDraft("");
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-row-interactive="true"
+          className="h-8 max-w-60 justify-start gap-1 px-0 text-left text-xs font-normal"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {appliedTags.length > 0 ? (
+            <span className="flex flex-wrap items-center gap-1">
+              {appliedTags.map((tag) => (
+                <Badge
+                  key={tag.slug}
+                  variant="secondary"
+                  className="font-normal"
+                >
+                  {tag.label}
+                </Badge>
+              ))}
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <TagIcon className="h-3.5 w-3.5" />
+              Add tags
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="w-64"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {catalog.length === 0 ? (
+          <p className="px-2 py-1.5 text-xs text-muted-foreground">
+            No tags yet — create the first one below.
+          </p>
+        ) : (
+          catalog.map((tag) => (
+            <DropdownMenuCheckboxItem
+              key={tag.slug}
+              checked={applied.has(tag.slug)}
+              disabled={isBusy}
+              onCheckedChange={(checked) =>
+                onToggleTag(route, tag.slug, checked === true)
+              }
+              onSelect={(event) => event.preventDefault()}
+            >
+              <span className="truncate">{tag.label}</span>
+            </DropdownMenuCheckboxItem>
+          ))
+        )}
+        <DropdownMenuSeparator />
+        <div
+          className="flex items-center gap-1.5 p-1.5"
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <Input
+            value={draft}
+            placeholder="New tag name"
+            className="h-8 text-xs"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                submitCreate();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="h-8 w-8 shrink-0"
+            disabled={!canCreate || isBusy}
+            onClick={submitCreate}
+            aria-label="Create tag"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        {draftExists ? (
+          <p className="px-2 pb-1.5 text-[11px] text-muted-foreground">
+            A tag with that name already exists.
+          </p>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function getGroupKey(route: InventoryRoute, groupBy: GroupBy): string {
   if (groupBy === "category") return route.category;
   if (groupBy === "type") return route.type;
@@ -705,6 +865,11 @@ function buildGroupedItems(
       permissionModule: null,
       accessUpdatedAt: null,
       accessIsExplicit: false,
+      roleAccessMode: "inherit_requirement",
+      allowedPermissionTemplateIds: [],
+      roleAccessUpdatedAt: null,
+      roleAccessIsExplicit: false,
+      tags: [],
       _group: group,
       _groupCount: groupRoutes.length,
     });
@@ -922,14 +1087,20 @@ function pageModuleSelect({
 function RouteDetailPanel({
   route,
   permissionTemplates,
+  tagCatalog,
+  isTagBusy,
   onFieldChange,
   onAccessChange,
   onModuleChange,
   onRoleAccessChange,
+  onToggleTag,
+  onCreateTag,
   onMarkReviewed,
 }: {
   route: InventoryRoute;
   permissionTemplates: PermissionTemplate[];
+  tagCatalog: PageTag[];
+  isTagBusy: boolean;
   onFieldChange: <TKey extends keyof InventoryOverlay>(
     route: string,
     key: TKey,
@@ -944,6 +1115,8 @@ function RouteDetailPanel({
     route: InventoryRoute,
     input: PageRoleAccessPolicyInput,
   ) => void;
+  onToggleTag: (route: InventoryRoute, slug: string, next: boolean) => void;
+  onCreateTag: (route: InventoryRoute, label: string) => void;
   onMarkReviewed: (route: string) => void;
 }) {
   const qualifyingRoleNames = getQualifyingRoleNames(
@@ -1093,6 +1266,16 @@ function RouteDetailPanel({
             route={route}
             permissionTemplates={permissionTemplates}
             onChange={onRoleAccessChange}
+          />
+        </PanelField>
+
+        <PanelField label="Tags">
+          <TagCell
+            route={route}
+            catalog={tagCatalog}
+            isBusy={isTagBusy}
+            onToggleTag={onToggleTag}
+            onCreateTag={onCreateTag}
           />
         </PanelField>
       </div>
@@ -1307,18 +1490,24 @@ function AdminPagesListPanel({
 function buildColumns({
   overlay,
   permissionTemplates,
+  tagCatalog,
+  isTagBusy,
   selectedRouteId,
   collapsedGroups,
   onFieldChange,
   onAccessChange,
   onModuleChange,
   onRoleAccessChange,
+  onToggleTag,
+  onCreateTag,
   onToggleGroup,
   onOpenDetails,
   onMarkReviewed,
 }: {
   overlay: Record<string, InventoryOverlay>;
   permissionTemplates: PermissionTemplate[];
+  tagCatalog: PageTag[];
+  isTagBusy: boolean;
   selectedRouteId: string | null;
   collapsedGroups: Set<string>;
   onFieldChange: <TKey extends keyof InventoryOverlay>(
@@ -1335,6 +1524,8 @@ function buildColumns({
     route: InventoryRoute,
     input: PageRoleAccessPolicyInput,
   ) => void;
+  onToggleTag: (route: InventoryRoute, slug: string, next: boolean) => void;
+  onCreateTag: (route: InventoryRoute, label: string) => void;
   onToggleGroup: (group: string) => void;
   onOpenDetails: (route: string) => void;
   onMarkReviewed: (route: string) => void;
@@ -1462,6 +1653,29 @@ function buildColumns({
             }),
       csvValue: (item) => item.layout,
       sortValue: (item) => item.layout,
+      sortable: true,
+    },
+    {
+      ...columnById.tags,
+      width: 220,
+      render: (item) =>
+        item._group ? null : (
+          <TagCell
+            route={item}
+            catalog={tagCatalog}
+            isBusy={isTagBusy}
+            onToggleTag={onToggleTag}
+            onCreateTag={onCreateTag}
+          />
+        ),
+      csvValue: (item) =>
+        item.tags
+          .map(
+            (slug) =>
+              tagCatalog.find((tag) => tag.slug === slug)?.label ?? slug,
+          )
+          .join(", "),
+      sortValue: (item) => item.tags.length,
       sortable: true,
     },
     {
@@ -1717,6 +1931,11 @@ export default function SiteMapClient({
     queryFn: fetchPermissionTemplates,
   });
 
+  const pageTagsQuery = useQuery({
+    queryKey: ["page-tags"],
+    queryFn: fetchPageTags,
+  });
+
   const pageAccessMutation = useMutation({
     mutationFn: async (policies: PageAccessPolicyInput[]) => {
       const normalizedPolicies = policies.map(normalizePageAccessInput);
@@ -1772,6 +1991,50 @@ export default function SiteMapClient({
     },
   });
 
+  const setRouteTagsMutation = useMutation({
+    mutationFn: async (input: { route: string; tagSlugs: string[] }) => {
+      const { assignments } = await apiFetch<{
+        route: string;
+        assignments: PageTagAssignment[];
+      }>("/api/admin/page-tags", {
+        method: "PUT",
+        body: JSON.stringify(input),
+      });
+      return assignments;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["page-tags"] });
+    },
+    onError: (error) => {
+      reportNonCriticalFailure({
+        area: "site-map",
+        operation: "save-page-tags",
+        error,
+        userVisibleFallback: "Page tags were not saved.",
+      });
+      toast.error("Tags were not saved. Try refreshing the page.");
+    },
+  });
+
+  const createTagMutation = useMutation({
+    mutationFn: async (label: string) => {
+      const { tag } = await apiFetch<{ tag: PageTag }>("/api/admin/page-tags", {
+        method: "POST",
+        body: JSON.stringify({ action: "create-tag", label }),
+      });
+      return tag;
+    },
+    onError: (error) => {
+      reportNonCriticalFailure({
+        area: "site-map",
+        operation: "create-page-tag",
+        error,
+        userVisibleFallback: "Tag could not be created.",
+      });
+      toast.error("Tag could not be created.");
+    },
+  });
+
   const routesWithAccess = useMemo(
     () => applyPageAccessPolicies(routes, pageAccessQuery.data ?? []),
     [pageAccessQuery.data, routes],
@@ -1786,9 +2049,18 @@ export default function SiteMapClient({
     [pageRoleAccessQuery.data, routesWithAccess],
   );
 
+  const routesWithTags = useMemo(
+    () =>
+      applyPageTagAssignments(
+        routesWithRoleAccess,
+        pageTagsQuery.data?.assignments ?? [],
+      ),
+    [pageTagsQuery.data?.assignments, routesWithRoleAccess],
+  );
+
   const mergedRoutes = useMemo(
-    () => applyOverlay(routesWithRoleAccess, overlay),
-    [routesWithRoleAccess, overlay],
+    () => applyOverlay(routesWithTags, overlay),
+    [routesWithTags, overlay],
   );
 
   const tableState = useUnifiedTableState({
@@ -1936,6 +2208,36 @@ export default function SiteMapClient({
       ]);
     },
     [pageRoleAccessMutation],
+  );
+
+  const handleToggleTag = useCallback(
+    (route: InventoryRoute, slug: string, next: boolean) => {
+      const current = new Set(route.tags);
+      if (next) current.add(slug);
+      else current.delete(slug);
+      setRouteTagsMutation.mutate({
+        route: route.route,
+        tagSlugs: [...current],
+      });
+    },
+    [setRouteTagsMutation],
+  );
+
+  const handleCreateTag = useCallback(
+    async (route: InventoryRoute, label: string) => {
+      try {
+        const tag = await createTagMutation.mutateAsync(label);
+        // Apply the freshly created tag to the route it was created from.
+        setRouteTagsMutation.mutate({
+          route: route.route,
+          tagSlugs: [...new Set([...route.tags, tag.slug])],
+        });
+        toast.success(`Created "${tag.label}"`);
+      } catch {
+        // Surfaced by the mutation's onError handler.
+      }
+    },
+    [createTagMutation, setRouteTagsMutation],
   );
 
   const handleBulkAccessChange = useCallback(
@@ -2119,12 +2421,17 @@ export default function SiteMapClient({
       buildColumns({
         overlay,
         permissionTemplates: permissionTemplatesQuery.data ?? [],
+        tagCatalog: pageTagsQuery.data?.tags ?? [],
+        isTagBusy:
+          setRouteTagsMutation.isPending || createTagMutation.isPending,
         selectedRouteId: activeRouteId,
         collapsedGroups,
         onFieldChange: handleFieldChange,
         onAccessChange: handleAccessChange,
         onModuleChange: handleModuleChange,
         onRoleAccessChange: handleRoleAccessChange,
+        onToggleTag: handleToggleTag,
+        onCreateTag: handleCreateTag,
         onToggleGroup: handleToggleGroup,
         onOpenDetails: setActiveRouteId,
         onMarkReviewed: handleMarkReviewed,
@@ -2132,14 +2439,19 @@ export default function SiteMapClient({
     [
       activeRouteId,
       collapsedGroups,
+      createTagMutation.isPending,
       handleAccessChange,
+      handleCreateTag,
       handleFieldChange,
       handleMarkReviewed,
       handleModuleChange,
       handleRoleAccessChange,
       handleToggleGroup,
+      handleToggleTag,
       overlay,
+      pageTagsQuery.data?.tags,
       permissionTemplatesQuery.data,
+      setRouteTagsMutation.isPending,
     ],
   );
 
@@ -2400,10 +2712,16 @@ export default function SiteMapClient({
               <RouteDetailPanel
                 route={activeRoute}
                 permissionTemplates={permissionTemplatesQuery.data ?? []}
+                tagCatalog={pageTagsQuery.data?.tags ?? []}
+                isTagBusy={
+                  setRouteTagsMutation.isPending || createTagMutation.isPending
+                }
                 onFieldChange={handleFieldChange}
                 onAccessChange={handleAccessChange}
                 onModuleChange={handleModuleChange}
                 onRoleAccessChange={handleRoleAccessChange}
+                onToggleTag={handleToggleTag}
+                onCreateTag={handleCreateTag}
                 onMarkReviewed={handleMarkReviewed}
               />
             ) : (
@@ -2549,10 +2867,17 @@ export default function SiteMapClient({
                 <RouteDetailPanel
                   route={activeRoute}
                   permissionTemplates={permissionTemplatesQuery.data ?? []}
+                  tagCatalog={pageTagsQuery.data?.tags ?? []}
+                  isTagBusy={
+                    setRouteTagsMutation.isPending ||
+                    createTagMutation.isPending
+                  }
                   onFieldChange={handleFieldChange}
                   onAccessChange={handleAccessChange}
                   onModuleChange={handleModuleChange}
                   onRoleAccessChange={handleRoleAccessChange}
+                  onToggleTag={handleToggleTag}
+                  onCreateTag={handleCreateTag}
                   onMarkReviewed={handleMarkReviewed}
                 />
               ),

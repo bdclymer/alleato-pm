@@ -131,6 +131,15 @@ export default function EditCommitmentPage() {
       : [];
 
     if (isPO) {
+      const rawAccountingMethod =
+        typeof r.accounting_method === "string"
+          ? r.accounting_method.toLowerCase()
+          : "amount";
+      const normalizedPurchaseOrderAccountingMethod:
+        | "amount"
+        | "unit-quantity" = rawAccountingMethod.includes("unit")
+        ? "unit-quantity"
+        : "amount";
       const companyObj = r.contract_company as
         | { id: string; name: string; license_number?: string | null }
         | null
@@ -143,6 +152,7 @@ export default function EditCommitmentPage() {
         companyLicenseNumber: companyObj?.license_number ?? "",
         status: normalizedPurchaseOrderStatus,
         executed: typeof r.executed === "boolean" ? r.executed : false,
+        accountingMethod: normalizedPurchaseOrderAccountingMethod,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
         description: typeof r.description === "string" ? r.description : undefined,
         billTo: typeof r.bill_to === "string" ? r.bill_to : undefined,
@@ -388,7 +398,7 @@ export default function EditCommitmentPage() {
   if (isLoading || (isSubcontract && attachmentsLoading)) {
     return (
       <PageShell
-        variant="form"
+        variant="detailWide"
         title={title}
         onBack={handleCancel}
         backLabel="Cancel"
@@ -409,7 +419,7 @@ export default function EditCommitmentPage() {
   if (isApproved) {
     return (
       <PageShell
-        variant="form"
+        variant="detailWide"
         title={title}
         onBack={handleCancel}
         backLabel="Back"
@@ -425,7 +435,7 @@ export default function EditCommitmentPage() {
 
   return (
     <PageShell
-      variant="form"
+      variant="detailWide"
       title={title}
       onBack={handleCancel}
       backLabel="Cancel"

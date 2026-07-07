@@ -184,7 +184,7 @@ function NumberInput({
       onChange={handleChange}
       onPaste={handlePaste}
       className={cn(
-        "tabular-nums text-right !bg-transparent",
+        "min-w-20 tabular-nums text-right !bg-transparent",
         "focus:border-input focus:ring-0",
         "transition-all duration-200",
         className

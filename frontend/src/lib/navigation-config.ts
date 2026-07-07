@@ -744,6 +744,13 @@ export const adminTools: NavigationTool[] = [
     adminOnly: true,
   },
   {
+    name: "Email Learning",
+    path: "/ai/email-learning",
+    icon: Mail,
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
     name: "AI Skills Admin",
     path: "/ai/admin/skills",
     icon: Shield,

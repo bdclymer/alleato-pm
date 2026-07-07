@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import { ExternalLink, GripVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,27 +16,15 @@ import {
 } from "@/components/ui/kanban";
 import { cn } from "@/lib/utils";
 import { createRestrictToContainer } from "@/features/kanban/utils/restrict-to-container";
+import type { AdminMenuItem, AdminMenuSection } from "./admin-dashboard-data";
 
-type AdminKanbanItem = {
+type AdminKanbanItem = AdminMenuItem & {
   id: string;
-  label: string;
-  href?: string;
-  route: string;
-  description: string;
-  icon: LucideIcon;
-  badge?: string;
-};
-
-type AdminKanbanSection = {
-  title: string;
-  groups: {
-    items: Omit<AdminKanbanItem, "id">[];
-  }[];
 };
 
 type AdminKanbanColumns = Record<string, AdminKanbanItem[]>;
 
-function buildColumns(sections: AdminKanbanSection[]): AdminKanbanColumns {
+function buildColumns(sections: AdminMenuSection[]): AdminKanbanColumns {
   return Object.fromEntries(
     sections.map((section) => [
       section.title,
@@ -164,7 +151,7 @@ function AdminPageColumn({
 export function AdminKanbanView({
   sections,
 }: {
-  sections: AdminKanbanSection[];
+  sections: AdminMenuSection[];
 }) {
   const initialColumns = React.useMemo(() => buildColumns(sections), [sections]);
   const [columns, setColumns] =

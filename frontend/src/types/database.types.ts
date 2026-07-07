@@ -4469,6 +4469,62 @@ export type Database = {
           },
         ]
       }
+      app_page_tag_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          route: string
+          tag_slug: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          route: string
+          tag_slug: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          route?: string
+          tag_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_page_tag_assignments_tag_slug_fkey"
+            columns: ["tag_slug"]
+            isOneToOne: false
+            referencedRelation: "app_page_tags"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      app_page_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          label: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          label: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       app_pages: {
         Row: {
           category: string | null

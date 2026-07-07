@@ -42,6 +42,7 @@
     "guardrails:detail-pages": "node scripts/audits/check-detail-page-primitives.mjs",
     "repo:control": "node scripts/audits/check-repo-control.mjs",
     "audit:silent-fallbacks": "node scripts/audits/audit-silent-fallback-debt.mjs",
+    "audit:form-fields": "node scripts/audits/audit-form-field-inventory.mjs",
     "audit:dead-code:frontend": "pnpm --dir frontend exec knip --config knip.json --no-exit-code",
     "audit:dead-code:frontend:report": "node scripts/audits/run-knip-dead-code-report.mjs",
     "audit:toasts": "node scripts/audit-toast-surface.mjs",

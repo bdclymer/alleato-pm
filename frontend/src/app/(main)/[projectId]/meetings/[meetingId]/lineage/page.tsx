@@ -415,62 +415,34 @@ export default async function MeetingLineagePage({ params }: PageProps) {
 
         <Section
           title="Curated Intelligence"
-          description="These are the main fan-out tables currently being written from this meeting."
+          description="This view stays focused on the synthesized insight cards written from this meeting."
         >
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <SectionRuleHeading label={`insight_card_evidence (${data.insightCardEvidence.length})`} />
-              {data.insightCardEvidence.length > 0 ? (
-                <RowTable
-                  columns={[
-                    { key: "created_at", label: "Created" },
-                    { key: "insight_card_id", label: "Card id" },
-                    { key: "source_type", label: "Source type" },
-                    {
-                      key: "summary",
-                      label: "Summary",
-                      render: (row) => excerpt(String(row.summary ?? ""), 180),
-                    },
-                    {
-                      key: "excerpt",
-                      label: "Excerpt",
-                      render: (row) => excerpt(String(row.excerpt ?? ""), 180),
-                    },
-                    { key: "confidence", label: "Confidence" },
-                  ]}
-                  rows={data.insightCardEvidence as unknown as Array<Record<string, unknown>>}
-                />
-              ) : (
-                <EmptyRows label="No insight_card_evidence rows." />
-              )}
-            </div>
-            <div className="space-y-3">
-              <SectionRuleHeading label={`insight_cards (${data.insightCards.length})`} />
-              {data.insightCards.length > 0 ? (
-                <RowTable
-                  columns={[
-                    { key: "card_type", label: "Type" },
-                    { key: "severity", label: "Severity" },
-                    { key: "title", label: "Title" },
-                    {
-                      key: "summary",
-                      label: "Summary",
-                      render: (row) => excerpt(String(row.summary ?? ""), 180),
-                    },
-                    {
-                      key: "why_it_matters",
-                      label: "Why it matters",
-                      render: (row) => excerpt(String(row.why_it_matters ?? ""), 180),
-                    },
-                    { key: "current_status", label: "Status" },
-                    { key: "source_count", label: "Sources" },
-                  ]}
-                  rows={data.insightCards as unknown as Array<Record<string, unknown>>}
-                />
-              ) : (
-                <EmptyRows label="No insight_cards rows linked through evidence." />
-              )}
-            </div>
+          <div className="space-y-3">
+            <SectionRuleHeading label={`Risk insight cards (${data.insightCards.length})`} />
+            {data.insightCards.length > 0 ? (
+              <RowTable
+                columns={[
+                  { key: "card_type", label: "Type" },
+                  { key: "severity", label: "Severity" },
+                  { key: "title", label: "Title" },
+                  {
+                    key: "summary",
+                    label: "Summary",
+                    render: (row) => excerpt(String(row.summary ?? ""), 180),
+                  },
+                  {
+                    key: "why_it_matters",
+                    label: "Why it matters",
+                    render: (row) => excerpt(String(row.why_it_matters ?? ""), 180),
+                  },
+                  { key: "current_status", label: "Status" },
+                  { key: "source_count", label: "Sources" },
+                ]}
+                rows={data.insightCards as unknown as Array<Record<string, unknown>>}
+              />
+            ) : (
+              <EmptyRows label="No insight_cards rows linked to this meeting." />
+            )}
           </div>
         </Section>
 

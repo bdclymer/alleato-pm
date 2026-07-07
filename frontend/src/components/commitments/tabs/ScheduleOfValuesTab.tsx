@@ -58,6 +58,7 @@ interface CommitmentSovSummary {
   billedToDate: number;
   amountRemaining: number;
   currentRetainage: number;
+  retainagePercent?: number;
 }
 
 interface ScheduleOfValuesTabProps {
@@ -78,6 +79,11 @@ interface ScheduleOfValuesTabProps {
   onLineItemsChange?: (items: LineItem[]) => void;
   isLoading?: boolean;
   error?: string | null;
+}
+
+/** Formats a retainage rate for display, dropping trailing zeros (10 → "10", 7.5 → "7.5"). */
+function formatRetainageRate(percent: number): string {
+  return Number(percent.toFixed(2)).toString();
 }
 
 interface SaveLineItemsResponse {
@@ -203,7 +209,10 @@ export function ScheduleOfValuesTab({
         strong: true,
       },
       {
-        label: "Current Retainage",
+        label:
+          summary?.retainagePercent && summary.retainagePercent > 0
+            ? `Current Retainage (${formatRetainageRate(summary.retainagePercent)}%)`
+            : "Current Retainage",
         value: summary?.currentRetainage ?? 0,
         muted: true,
       },
