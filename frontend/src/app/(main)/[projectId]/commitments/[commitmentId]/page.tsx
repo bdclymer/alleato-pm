@@ -1234,6 +1234,7 @@ export default function CommitmentDetailPage() {
       variant="detailWide"
       title={commitment.title || (displayNumber ? `#${displayNumber}` : "Commitment")}
       eyebrow={headerEyebrow}
+      headerLayout="balanced"
       statusBadge={<StatusBadge status={displayStatus} />}
       actions={headerActions}
       onBack={() => router.back()}

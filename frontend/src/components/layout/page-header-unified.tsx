@@ -37,6 +37,7 @@ interface PageHeaderProps {
 
   // Layout options
   variant?: "default" | "executive" | "compact" | "budget";
+  headerLayout?: "default" | "balanced";
   actions?: React.ReactNode;
   mobileActionsInline?: boolean;
   className?: string;
@@ -97,6 +98,7 @@ export function PageHeader({
   eyebrow,
   description,
   variant = "default",
+  headerLayout = "default",
   actions,
   mobileActionsInline = false,
   className,
@@ -114,6 +116,7 @@ export function PageHeader({
   const selectedProject = projectContext?.selectedProject ?? null;
   const isLoading = projectContext?.isLoading ?? false;
   const useBudgetLayout = variant === "budget";
+  const useBalancedLayout = headerLayout === "balanced" && !useBudgetLayout;
 
   // Only show project name when explicitly requested
   const shouldShowProjectName = showProjectName && selectedProject;
@@ -190,11 +193,18 @@ export function PageHeader({
               ? "flex items-center justify-between gap-3"
               : useBudgetLayout
                 ? "flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4"
-                : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
+                : useBalancedLayout
+                  ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                  : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
           )}
         >
           {/* Left: title + badges (desktop only) */}
-          <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "min-w-0 flex-1",
+              useBalancedLayout && "sm:flex-[0_1_72%] lg:max-w-[760px] xl:max-w-[880px]",
+            )}
+          >
             {/* Project Name */}
             {shouldShowProjectName && (
               <div className="mb-1">

@@ -48,6 +48,7 @@ export interface PageShellProps {
   showHeader?: boolean;
   titleContent?: React.ReactNode;
   actions?: React.ReactNode;
+  headerLayout?: "default" | "balanced";
   statusBadge?: React.ReactNode;
   tabs?: { label: string; href: string; count?: number; isActive?: boolean }[];
   showExportButton?: boolean;
@@ -90,6 +91,7 @@ export function PageShell({
   showHeader = true,
   titleContent,
   actions,
+  headerLayout,
   statusBadge,
   showExportButton,
   onExportCSV,
@@ -177,6 +179,7 @@ export function PageShell({
       description={headerDescription}
       titleContent={effectiveTitleContent}
       actions={resolvedActions}
+      headerLayout={headerLayout}
       statusBadge={statusBadge}
       tabs={tabs}
       breadcrumbs={breadcrumbs}
