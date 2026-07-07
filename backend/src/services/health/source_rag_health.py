@@ -715,7 +715,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             ).data or [])
             chunk_rows.extend((
                 rag_client.table("document_chunks")
-                .select("document_id,source_type,updated_at")
+                .select("document_id,source_type,updated_at,text")
                 .in_("document_id", batch)
                 .not_.is_("embedding", "null")
                 .limit(1000)
@@ -770,6 +770,16 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             for row in source_intelligence_rows
         ],
     ])
+    chunk_text_by_document_id: Dict[str, str] = {}
+    for chunk in chunk_rows:
+        document_id = str(chunk.get("document_id") or "")
+        if not document_id:
+            continue
+        text = str(chunk.get("text") or "")
+        if not text:
+            continue
+        existing = chunk_text_by_document_id.get(document_id)
+        chunk_text_by_document_id[document_id] = f"{existing}\n{text}" if existing else text
     task_ids = {str(row.get("metadata_id")) for row in task_rows if row.get("metadata_id")}
     evidence_ids = {
         str(row.get("source_document_id"))
@@ -788,7 +798,14 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     lifecycle_alerts: List[Dict[str, Any]] = [*graph_conversation_health.get("alerts", [])]
 
     for family, label in family_labels.items():
-        rows = [row for row in source_rows if row.get("family") == family]
+        rows = [
+            {
+                **row,
+                "content": row.get("content") or chunk_text_by_document_id.get(str(row.get("id") or "")),
+            }
+            for row in source_rows
+            if row.get("family") == family
+        ]
         ids = {str(row.get("id")) for row in rows if row.get("id")}
         total = len(rows)
         vectorization_excluded_rows = [

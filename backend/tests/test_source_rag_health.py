@@ -179,6 +179,21 @@ def test_project_required_fallback_keeps_project_signal_teams_content_required()
     assert _is_project_required_row(row, {})
 
 
+def test_project_required_fallback_keeps_anonymized_teams_with_project_signal_required():
+    row = {
+        "id": "teamsdm_project_2026-07-06",
+        "title": "Teams DM Conversation: 19:8704ffd5b",
+        "family": "teams",
+        "category": "teams_message",
+        "type": "teams_dm_conversation",
+        "status": "embedded",
+        "project_id": None,
+        "content": "Hunter: Need drawings and pricing for Exol PA Phase 2 guardrails.",
+    }
+
+    assert _is_project_required_row(row, {})
+
+
 def test_project_required_metadata_overrides_fallback_classifier():
     row = {
         "id": "teamsdm_empty_2026-07-06",

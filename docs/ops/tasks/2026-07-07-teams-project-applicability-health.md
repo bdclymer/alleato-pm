@@ -46,28 +46,34 @@ Stop scheduled source/RAG health from raising false Teams project-assignment cri
   - Recent unassigned Teams docs are Teams DM/day conversations.
   - Sample titles include anonymized `Teams DM Conversation: 19:...`, `Teams DM Conversation: Indiana Office`, and `Teams DM Conversation: Printing Checks`.
   - `document_metadata.content` is empty for the inspected rows.
+  - Follow-up direct chunk inspection showed embedded `document_chunks.text` contains usable Teams message text for chunked rows, including project signals such as Exol PA Phase 2, Union Collective, drawings, pricing, and guardrails.
   - Several rows are terminal `skipped_low_content`.
   - `source_intelligence_jobs.output_summary.task_extraction_status` is `no_actionable_tasks`.
   - No `document_attribution_candidates` exist for inspected rows.
 - Root cause:
   - `backend/src/services/health/source_rag_health.py` defaults unassigned rows to project-required when no stored `project_required`/`project_applicability` metadata exists.
   - The JS lifecycle classifier already excludes empty anonymized Teams threads and low-content rows, but scheduled Python health did not apply that fallback classification.
+  - The first Python fallback used only `document_metadata.content`, which is blank for Teams DM/day rows even when embedded chunk text exists.
 - Detection gap:
-  - Scheduled health did not test Teams blank/anonymized project applicability, so false criticals could recur daily.
+  - Scheduled health did not test Teams blank/anonymized project applicability or the chunk-text fallback path, so false criticals and false exclusions could recur daily.
 - Prevention:
   - Added unit tests that empty Teams DM/day docs are excluded from project assignment health unless explicit metadata requires review, and that project-signal Teams content remains project-required.
 - Implemented:
   - `backend/src/services/health/source_rag_health.py` now includes a Python project-applicability fallback classifier for scheduled health.
   - Existing stored `project_required` and `project_applicability` metadata still takes precedence.
-  - The health app-source query now includes `document_metadata.content` so empty Teams DM classification is based on actual selected content.
+  - The health app-source query now includes `document_metadata.content`.
+  - The health chunk query now includes `document_chunks.text` and enriches source rows with embedded chunk text when metadata content is blank.
 - Unit tests:
   - `PYTHONPATH=backend python3 -m pytest backend/tests/test_source_rag_health.py -q`
-  - Result: `9 passed, 6 warnings`.
+  - Result: `10 passed, 6 warnings`.
 - Live scheduled health after fix:
   - Overall remains `degraded`.
   - `graphConversationChunks` remains `healthy`.
-  - Teams changed from project assignment `0/7 critical` to `0/0 unknown`, with `10` Teams rows excluded from project-required stages.
+  - Teams sync is healthy: `10/10`.
   - Teams vectorization remains healthy: `7/7`, with `3` terminal low-content rows excluded.
+  - Teams project assignment is still a real critical: `0/6`, with `4` non-project/low-content rows excluded.
+  - Teams task extraction has outcomes for the project-required rows: `6/6`.
+  - Teams project intelligence remains `unknown 0/0` because no recent Teams rows have project assignment yet.
   - Remaining real criticals: Meeting project intelligence `0/3`; SharePoint project intelligence `0/5`.
   - Remaining warnings: Meeting project assignment/tasks `3/6`; Emails project assignment `67/232`, tasks `131/232`, project intelligence `40/67`; SharePoint project assignment `5/68`, tasks `63/68`.
 
