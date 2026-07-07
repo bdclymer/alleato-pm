@@ -1117,7 +1117,9 @@ def run_graph_sync(
         items_failed=len(downstream_errors),
         error_message="; ".join(str(error) for error in downstream_errors[:3]) if downstream_errors else None,
         metadata={
+            "communications_synced": source_summary.get("communications_synced"),
             "outlook_conversations": downstream_summary.get("outlook_conversations"),
+            "project_backfill": downstream_summary.get("project_backfill"),
             "embedding": downstream_summary.get("embed"),
             "ocr": downstream_summary.get("ocr"),
             "attachment_promotion": downstream_summary.get("attachment_promotion"),

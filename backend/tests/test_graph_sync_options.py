@@ -219,6 +219,14 @@ def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypa
         ("microsoft_graph_source_sync", "succeeded"),
         ("microsoft_graph_downstream", "failed"),
     ]
+    downstream_metadata = phase_runs[1]["metadata"]
+    assert downstream_metadata["communications_synced"] == 1
+    assert downstream_metadata["project_backfill"] == {
+        "scanned": 1,
+        "assigned": 0,
+        "review_staged": 0,
+        "failed": 0,
+    }
 
 
 def test_downstream_project_backfill_failures_are_downstream_errors(monkeypatch):
