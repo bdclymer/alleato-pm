@@ -38,6 +38,8 @@ WATCHED_SOURCES = {
 DEFAULT_ALERT_TEAMS_USER_ID = "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0"
 LIFECYCLE_LOOKBACK_HOURS = int(os.getenv("RAG_HEALTH_LIFECYCLE_LOOKBACK_HOURS", "24"))
 MAX_PACKET_AGE_HOURS = int(os.getenv("RAG_HEALTH_MAX_PACKET_AGE_HOURS", "36"))
+GRAPH_CONVERSATION_HEALTH_LOOKBACK_DAYS = int(os.getenv("RAG_HEALTH_GRAPH_CONVERSATION_LOOKBACK_DAYS", "30"))
+GRAPH_CONVERSATION_HEALTH_LIMIT = int(os.getenv("RAG_HEALTH_GRAPH_CONVERSATION_LIMIT", "5000"))
 TERMINAL_DOCUMENT_STATUSES = {
     "intentionally_excluded",
     "deleted_no_transcript",
@@ -49,6 +51,11 @@ TERMINAL_DOCUMENT_STATUSES = {
     "graph_content_empty",
     "no_chunks",
     "ocr_failed",
+}
+GRAPH_CONVERSATION_ALLOWED_SOURCE_TYPES = {
+    "outlook": {"email"},
+    "teams_dm": {"teams_dm"},
+    "teams_channel": {"teams_channel", "teams_message"},
 }
 
 
@@ -221,6 +228,208 @@ def _has_full_transcript_read_proof(document_id: str, job_metadata_by_id: Dict[s
     )
 
 
+def _graph_conversation_kind(row: Dict[str, Any]) -> str | None:
+    source_metadata = row.get("source_metadata")
+    source_metadata = source_metadata if isinstance(source_metadata, dict) else {}
+    document_kind = str(source_metadata.get("document_kind") or "")
+    doc_type = str(row.get("type") or "")
+    row_id = str(row.get("id") or "")
+
+    if document_kind == "outlook_conversation" or doc_type == "outlook_conversation" or row_id.startswith("outlook_conversation_"):
+        return "outlook"
+    if document_kind == "teams_dm_conversation" or doc_type == "teams_dm_conversation" or row_id.startswith("teamsdm_"):
+        return "teams_dm"
+    if document_kind in {"teams_channel_thread", "teams_message"} or doc_type == "teams_message" or row_id.startswith("teams_"):
+        return "teams_channel"
+    return None
+
+
+def _graph_conversation_alert_source(kind: str) -> str:
+    if kind == "outlook":
+        return "emails"
+    return "teams"
+
+
+def _graph_conversation_chunk_alerts(
+    conversation_rows: List[Dict[str, Any]],
+    chunk_rows: List[Dict[str, Any]],
+    *,
+    now: datetime,
+    truncated: bool = False,
+) -> Dict[str, Any]:
+    chunks_by_document: Dict[str, List[Dict[str, Any]]] = {}
+    for chunk in chunk_rows:
+        document_id = str(chunk.get("document_id") or "")
+        if not document_id:
+            continue
+        chunks_by_document.setdefault(document_id, []).append(chunk)
+
+    summaries: Dict[str, Dict[str, Any]] = {
+        kind: {
+            "kind": kind,
+            "docs": 0,
+            "chunks": 0,
+            "embeddedChunks": 0,
+            "docsWithoutChunks": 0,
+            "embeddedDocsWithoutChunks": 0,
+            "sourceTypes": set(),
+            "badDocs": [],
+            "embeddedNoChunkDocs": [],
+        }
+        for kind in GRAPH_CONVERSATION_ALLOWED_SOURCE_TYPES
+    }
+    alerts: List[Dict[str, Any]] = []
+
+    for row in conversation_rows:
+        kind = _graph_conversation_kind(row)
+        if kind not in summaries:
+            continue
+        document_id = str(row.get("id") or "")
+        doc_chunks = chunks_by_document.get(document_id, [])
+        source_types = {
+            str(chunk.get("source_type") or "")
+            for chunk in doc_chunks
+            if chunk.get("source_type") is not None
+        }
+        bad_source_types = sorted(
+            source_type
+            for source_type in source_types
+            if source_type not in GRAPH_CONVERSATION_ALLOWED_SOURCE_TYPES[kind]
+        )
+        summary = summaries[kind]
+        summary["docs"] += 1
+        summary["chunks"] += len(doc_chunks)
+        summary["embeddedChunks"] += len(doc_chunks)
+        summary["sourceTypes"].update(source_types)
+        if not doc_chunks:
+            summary["docsWithoutChunks"] += 1
+            if str(row.get("embedding_status") or "").lower() == "embedded":
+                summary["embeddedDocsWithoutChunks"] += 1
+                summary["embeddedNoChunkDocs"].append(document_id)
+        if bad_source_types:
+            summary["badDocs"].append(
+                {
+                    "id": document_id,
+                    "title": row.get("title"),
+                    "sourceTypes": bad_source_types,
+                    "embeddingStatus": row.get("embedding_status"),
+                }
+            )
+
+    for kind, summary in summaries.items():
+        bad_docs = summary["badDocs"]
+        if bad_docs:
+            examples = ", ".join(
+                f"{doc['id']} ({','.join(doc['sourceTypes'])})"
+                for doc in bad_docs[:5]
+            )
+            alerts.append(
+                {
+                    "severity": "critical",
+                    "code": "graph_conversation_chunk_source_type_drift",
+                    "source": _graph_conversation_alert_source(kind),
+                    "resourceId": f"graph-conversation-chunks:{kind}",
+                    "message": (
+                        f"Graph-owned {kind} conversation docs have disallowed document_chunks.source_type values. "
+                        f"Affected docs: {len(bad_docs)}. Examples: {examples}. "
+                        "Owner: Graph embedder. Prevention: rerun the Graph conversation chunk ownership verifier and repair/reset scoped docs."
+                    ),
+                    "detectedAt": _iso(now),
+                }
+            )
+        no_chunk_docs = summary["embeddedNoChunkDocs"]
+        if no_chunk_docs:
+            examples = ", ".join(no_chunk_docs[:5])
+            alerts.append(
+                {
+                    "severity": "critical",
+                    "code": "graph_conversation_embedded_without_chunks",
+                    "source": _graph_conversation_alert_source(kind),
+                    "resourceId": f"graph-conversation-chunks:{kind}:missing",
+                    "message": (
+                        f"Graph-owned {kind} conversation docs are marked embedded but have no document_chunks rows. "
+                        f"Affected docs: {len(no_chunk_docs)}. Examples: {examples}. "
+                        "Owner: Graph embedder. Prevention: reset scoped RAG embedding_status to NULL so the Graph embedder reclassifies them."
+                    ),
+                    "detectedAt": _iso(now),
+                }
+            )
+
+    if truncated:
+        alerts.append(
+            {
+                "severity": "warning",
+                "code": "graph_conversation_health_sample_truncated",
+                "source": "teams",
+                "resourceId": "graph-conversation-chunks:sample",
+                "message": (
+                    f"Graph conversation health scan hit the {GRAPH_CONVERSATION_HEALTH_LIMIT} row sample limit. "
+                    "Increase RAG_HEALTH_GRAPH_CONVERSATION_LIMIT if source-type drift is suspected outside the sample."
+                ),
+                "detectedAt": _iso(now),
+            }
+        )
+
+    clean_summaries = []
+    for summary in summaries.values():
+        clean_summaries.append(
+            {
+                **summary,
+                "sourceTypes": sorted(summary["sourceTypes"]),
+                "badDocs": summary["badDocs"][:10],
+                "embeddedNoChunkDocs": summary["embeddedNoChunkDocs"][:10],
+            }
+        )
+
+    return {
+        "status": "degraded" if any(alert.get("severity") == "critical" for alert in alerts) else "healthy",
+        "lookbackDays": GRAPH_CONVERSATION_HEALTH_LOOKBACK_DAYS,
+        "limit": GRAPH_CONVERSATION_HEALTH_LIMIT,
+        "truncated": truncated,
+        "summaries": clean_summaries,
+        "alerts": alerts,
+    }
+
+
+def _load_graph_conversation_chunk_health(rag_client: Any, now: datetime) -> Dict[str, Any]:
+    cutoff = _iso(now - timedelta(days=GRAPH_CONVERSATION_HEALTH_LOOKBACK_DAYS))
+    conversation_rows = (
+        rag_client.table("rag_document_metadata")
+        .select("id,title,type,category,source,source_metadata,embedding_status,updated_at")
+        .eq("source", "microsoft_graph")
+        .gte("updated_at", cutoff)
+        .order("updated_at", desc=True)
+        .limit(GRAPH_CONVERSATION_HEALTH_LIMIT + 1)
+        .execute()
+    ).data or []
+    truncated = len(conversation_rows) > GRAPH_CONVERSATION_HEALTH_LIMIT
+    conversation_rows = conversation_rows[:GRAPH_CONVERSATION_HEALTH_LIMIT]
+    conversation_rows = [
+        row
+        for row in conversation_rows
+        if _graph_conversation_kind(row)
+    ]
+    conversation_ids = [str(row.get("id")) for row in conversation_rows if row.get("id")]
+    chunk_rows: List[Dict[str, Any]] = []
+    batch_size = 100
+    for start in range(0, len(conversation_ids), batch_size):
+        batch = conversation_ids[start:start + batch_size]
+        chunk_rows.extend((
+            rag_client.table("document_chunks")
+            .select("document_id,chunk_id,source_type,updated_at")
+            .in_("document_id", batch)
+            .limit(1000)
+            .execute()
+        ).data or [])
+
+    return _graph_conversation_chunk_alerts(
+        conversation_rows,
+        chunk_rows,
+        now=now,
+        truncated=truncated,
+    )
+
+
 def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     """Return lifecycle coverage and alerts for the minimum trusted RAG path.
 
@@ -232,6 +441,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     cutoff = _iso(now - timedelta(hours=LIFECYCLE_LOOKBACK_HOURS))
     packet_cutoff = _iso(now - timedelta(hours=MAX_PACKET_AGE_HOURS))
     rag_client = get_rag_read_client()
+    graph_conversation_health = _load_graph_conversation_chunk_health(rag_client, now)
 
     app_source_rows = (
         app_client.table("document_metadata")
@@ -370,7 +580,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
         "sharepoint": "SharePoint files",
     }
     family_summaries: List[Dict[str, Any]] = []
-    lifecycle_alerts: List[Dict[str, Any]] = []
+    lifecycle_alerts: List[Dict[str, Any]] = [*graph_conversation_health.get("alerts", [])]
 
     for family, label in family_labels.items():
         rows = [row for row in source_rows if row.get("family") == family]
@@ -513,6 +723,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
         "status": "degraded" if lifecycle_alerts else "healthy",
         "sources": family_summaries,
         "alerts": lifecycle_alerts,
+        "graphConversationChunks": graph_conversation_health,
         "latestPacketAt": latest_packet_at,
     }
 
