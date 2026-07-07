@@ -3,8 +3,15 @@
 /**
  * Backfill commitment SOV project_budget_code_id from live JobPlanner source data.
  *
- * Default is dry-run. Use --apply to mutate rows. The script only updates rows
- * when all of these are true:
+ * Default is dry-run. Use --apply to mutate resolvable SOV rows.
+ *
+ * Use --report-missing-budget-codes to emit a review ledger for rows whose
+ * JobPlanner source proves a cost-code/cost-type pair but the local project is
+ * missing that project_budget_codes row. This script deliberately does not
+ * create project_budget_codes; canonical budget master data needs stronger
+ * owner approval than a heuristic parent match.
+ *
+ * The script only updates rows when all of these are true:
  * - local project maps to one JobPlanner project
  * - local commitment maps uniquely to one JobPlanner commitment
  * - JobPlanner line items resolve the row's legacy budget code to one cost type
@@ -26,6 +33,8 @@ dotenv.config({ path: path.join(repoRoot, ".env.local"), quiet: true });
 dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true });
 
 const APPLY = process.argv.includes("--apply");
+const CREATE_MISSING_BUDGET_CODES = process.argv.includes("--create-missing-budget-codes");
+const REPORT_MISSING_BUDGET_CODES = process.argv.includes("--report-missing-budget-codes");
 const TARGET_PARENT = argValue("parent");
 const API_V1 = "https://api.jobplanner.com";
 const API_V2 = "https://api-v2.jobplanner.com";
@@ -40,6 +49,11 @@ const SERVICE_KEY =
 
 if (!JP_KEY) throw new Error("Missing JOBPLANNER_API_KEY");
 if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase service env");
+if (CREATE_MISSING_BUDGET_CODES) {
+  throw new Error(
+    "--create-missing-budget-codes is disabled. Use --report-missing-budget-codes to produce a review ledger; do not create canonical project_budget_codes from heuristic matches.",
+  );
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -238,10 +252,38 @@ function resolveLine(row, jpLines, jpCodeById, jpTypeById, localTypeByCode, budg
   if (sourceLines.length === 0) return { reason: "source_commitment_missing_cost_code" };
 
   const amountMatches = sourceLines.filter((line) => closeMoney(row.amount, line.amount));
-  const candidateLines = amountMatches.length > 0 ? amountMatches : sourceLines.filter((line) => line.amount !== 0);
+  const nonZeroSourceLines = sourceLines.filter((line) => line.amount !== 0);
+  const candidateLines = amountMatches.length > 0 ? amountMatches : nonZeroSourceLines;
   const typeCodes = new Set(candidateLines.map((line) => line.costTypeCode).filter(Boolean));
 
   if (typeCodes.size !== 1) {
+    const sourceTypeCodes = new Set(sourceLines.map((line) => line.costTypeCode).filter(Boolean));
+    if (candidateLines.length === 0 && sourceTypeCodes.size === 1) {
+      const costTypeCode = [...sourceTypeCodes][0];
+      const localType = localTypeByCode.get(costTypeCode);
+      if (!localType) return { reason: "missing_local_cost_type", costTypeCode };
+      const budgetCode = budgetCodeByKey.get(`${row.project_id}|${localCostCode}|${localType.id}`);
+      if (!budgetCode) {
+        return {
+          reason: "missing_project_budget_code",
+          costCodeId: localCostCode,
+          costTypeId: localType.id,
+          costTypeCode,
+          costTypeDescription: localType.description,
+          normalizedBudgetCode: localCostCode,
+          sourceLineIds: sourceLines.map((line) => line.line.id),
+          proofQuality: "source_cost_type_only_amount_unmatched",
+        };
+      }
+      return {
+        reason: "resolved",
+        projectBudgetCodeId: budgetCode.id,
+        normalizedBudgetCode: localCostCode,
+        costTypeCode,
+        sourceLineIds: sourceLines.map((line) => line.line.id),
+        proofQuality: "source_cost_type_only_amount_unmatched",
+      };
+    }
     return {
       reason: amountMatches.length > 0 ? "ambiguous_amount_matched_cost_types" : "ambiguous_source_cost_types",
       sourceLineCount: sourceLines.length,
@@ -260,6 +302,9 @@ function resolveLine(row, jpLines, jpCodeById, jpTypeById, localTypeByCode, budg
       costCodeId: localCostCode,
       costTypeId: localType.id,
       costTypeCode,
+      costTypeDescription: localType.description,
+      normalizedBudgetCode: localCostCode,
+      sourceLineIds: candidateLines.map((line) => line.line.id),
     };
   }
 
@@ -312,15 +357,17 @@ async function main() {
   const companies = await fetchCompanies([...new Set(parents.map((row) => row.contract_company_id))]);
   const companyById = new Map(companies.map((row) => [row.id, row]));
 
-  const [localTypes, localBudgetCodes, jpProjects] = await Promise.all([
+  const [localTypes, localBudgetCodes, localCostCodes, jpProjects] = await Promise.all([
     selectAll("cost_code_types", "id, code, description"),
     selectAll("project_budget_codes", "id, project_id, cost_code_id, cost_type_id, description, is_active", (query) =>
       query.in("project_id", projectIds).eq("is_active", true),
     ),
+    selectAll("cost_codes", "id, title"),
     jpGet(API_V1, "/projects"),
   ]);
 
   const localTypeByCode = new Map(localTypes.map((row) => [row.code, row]));
+  const localCostCodeById = new Map(localCostCodes.map((row) => [row.id, row]));
   const budgetCodeByKey = new Map(
     localBudgetCodes.map((row) => [`${row.project_id}|${row.cost_code_id}|${row.cost_type_id}`, row]),
   );
@@ -359,6 +406,7 @@ async function main() {
 
   const rowsByParent = Map.groupBy(unresolvedRows, (row) => row.parent_id);
   const updates = [];
+  const missingBudgetCodeRows = [];
   const reasons = new Map();
   const parentMatches = [];
 
@@ -412,6 +460,22 @@ async function main() {
         budgetCodeByKey,
       );
       if (resolved.reason !== "resolved") {
+        if (resolved.reason === "missing_project_budget_code") {
+          missingBudgetCodeRows.push({
+            table: row.table,
+            id: row.id,
+            parentId,
+            projectId: parent.project_id,
+            budgetCode: row.budget_code,
+            normalizedBudgetCode: resolved.normalizedBudgetCode,
+            costCodeId: resolved.costCodeId,
+            costTypeId: resolved.costTypeId,
+            costTypeCode: resolved.costTypeCode,
+            costTypeDescription: resolved.costTypeDescription,
+            sourceLineIds: resolved.sourceLineIds,
+            proofQuality: resolved.proofQuality ?? "source_cost_type_and_amount",
+          });
+        }
         addReason(resolved.reason, 1);
         continue;
       }
@@ -424,13 +488,70 @@ async function main() {
         projectBudgetCodeId: resolved.projectBudgetCodeId,
         costTypeCode: resolved.costTypeCode,
         sourceLineIds: resolved.sourceLineIds,
+        proofQuality: resolved.proofQuality ?? "source_cost_type_and_amount",
       });
     }
   }
 
+  const missingBudgetCodeCandidatesByKey = new Map();
+  for (const pending of missingBudgetCodeRows) {
+    const key = `${pending.projectId}|${pending.costCodeId}|${pending.costTypeId}`;
+    const costCode = localCostCodeById.get(pending.costCodeId);
+    const descriptionBase = costCode?.title?.trim() || pending.costCodeId;
+    const typeLabel = pending.costTypeDescription || pending.costTypeCode;
+    if (!missingBudgetCodeCandidatesByKey.has(key)) {
+      missingBudgetCodeCandidatesByKey.set(key, {
+        projectId: pending.projectId,
+        costCodeId: pending.costCodeId,
+        costTypeId: pending.costTypeId,
+        costTypeCode: pending.costTypeCode,
+        description: typeLabel ? `${descriptionBase} - ${typeLabel}` : descriptionBase,
+        descriptionMode: "concatenated",
+        rowCount: 0,
+        rows: [],
+      });
+    }
+    const candidate = missingBudgetCodeCandidatesByKey.get(key);
+    candidate.rowCount += 1;
+    candidate.rows.push({
+      table: pending.table,
+      id: pending.id,
+      parentId: pending.parentId,
+      legacyBudgetCode: pending.budgetCode,
+      normalizedBudgetCode: pending.normalizedBudgetCode,
+      sourceLineIds: pending.sourceLineIds,
+      proofQuality: pending.proofQuality,
+    });
+  }
+  const missingBudgetCodeCandidates = [...missingBudgetCodeCandidatesByKey.values()].map((candidate) => ({
+    ...candidate,
+    rows: REPORT_MISSING_BUDGET_CODES ? candidate.rows : candidate.rows.slice(0, 5),
+  }));
+
+  const disabledCreateModeNote = {
+    reason: "disabled_by_design",
+    details:
+      "Missing project_budget_codes are reported only. Creating canonical budget master data from heuristic JobPlanner parent matches is intentionally blocked.",
+  };
+
+  /*
+   * Historical note:
+   * A permissive create mode was rejected during review because it could create
+   * canonical project_budget_codes from source-system heuristics. Keep this
+   * utility link-only; use the emitted ledger for explicit budget-code setup.
+   */
+  const missingBudgetCodesToCreate = missingBudgetCodeCandidates.map((candidate) => ({
+    project_id: candidate.projectId,
+    cost_code_id: candidate.costCodeId,
+    cost_type_id: candidate.costTypeId,
+    description: candidate.description,
+    description_mode: "concatenated",
+    is_active: true,
+  }));
+
   if (APPLY) {
     for (const update of updates) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from(update.table)
         .update({
           project_budget_code_id: update.projectBudgetCodeId,
@@ -438,8 +559,12 @@ async function main() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", update.id)
-        .is("project_budget_code_id", null);
+        .is("project_budget_code_id", null)
+        .select("id");
       if (error) throw new Error(`${update.table} ${update.id}: ${error.message}`);
+      if ((data ?? []).length !== 1) {
+        throw new Error(`${update.table} ${update.id}: expected 1 updated row, got ${(data ?? []).length}`);
+      }
     }
   }
 
@@ -451,12 +576,20 @@ async function main() {
     JSON.stringify(
       {
         mode: APPLY ? "apply" : "dry-run",
+        createMissingBudgetCodes: false,
+        reportMissingBudgetCodes: REPORT_MISSING_BUDGET_CODES,
+        disabledCreateModeNote,
         targetParent: TARGET_PARENT,
         unresolvedRows: unresolvedRows.length,
         parentCount: parentIds.length,
+        missingBudgetCodeCandidateCount: missingBudgetCodeCandidates.length,
+        missingBudgetCodeRowCount: missingBudgetCodeRows.length,
+        missingBudgetCodesToCreate,
+        createdBudgetCodes: 0,
         resolvedUpdates: updates.length,
         resolvedByTable: byTable,
         reasonCounts: Object.fromEntries([...reasons.entries()].sort()),
+        missingBudgetCodeCandidates,
         updateSample: updates.slice(0, 25),
         parentMatchSample: parentMatches.slice(0, 25),
       },
