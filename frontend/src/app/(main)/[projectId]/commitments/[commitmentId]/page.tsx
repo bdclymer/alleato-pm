@@ -564,10 +564,7 @@ function CommitmentToggleRow({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-      <label htmlFor={id} className="min-w-0 text-xs text-muted-foreground">
-        {label}
-      </label>
+    <div className="flex min-w-0 flex-1 items-center gap-3">
       <Switch
         id={id}
         checked={checked}
@@ -575,6 +572,9 @@ function CommitmentToggleRow({
         onCheckedChange={onCheckedChange}
         aria-label={label}
       />
+      <label htmlFor={id} className="min-w-0 text-xs text-muted-foreground">
+        {label}
+      </label>
     </div>
   );
 }
@@ -654,7 +654,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
           sidebarAt="lg"
           sidebar={<FinancialSummaryPanel commitment={commitment} />}
         >
-          <div className="space-y-6">
+          <div className="space-y-10">
             {/* General Information */}
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-8 pb-0" />
