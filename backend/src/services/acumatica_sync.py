@@ -911,6 +911,28 @@ class AcumaticaFinancialSyncService:
         self.project_cost_code_map[cache_key] = project_cost_code_id
         return project_cost_code_id
 
+    def _resolve_commitment_sov_budget_code(
+        self,
+        *,
+        project_id: int,
+        detail: Dict[str, Any],
+    ) -> Optional[Dict[str, str]]:
+        cost_code = _unwrap(detail.get("CostCode"))
+        normalized_cost_code = (
+            _normalize_cost_code(str(cost_code)) if cost_code is not None else None
+        )
+        if not normalized_cost_code:
+            return None
+
+        project_budget_code_id = self._ensure_project_cost_code(project_id, normalized_cost_code)
+        if not project_budget_code_id:
+            return None
+
+        return {
+            "budget_code": normalized_cost_code,
+            "project_budget_code_id": project_budget_code_id,
+        }
+
     def _max_cursor(self, records: List[Dict[str, Any]]) -> Optional[str]:
         values = [
             value
@@ -2358,13 +2380,27 @@ class AcumaticaFinancialSyncService:
                 description = _unwrap(detail.get("Description")) or _unwrap(
                     detail.get("TransactionDescription")
                 )
+                budget_code = self._resolve_commitment_sov_budget_code(
+                    project_id=row["project_id"],
+                    detail=detail,
+                )
+                if not budget_code:
+                    result.skipped += 1
+                    logger.warning(
+                        "[AcumaticaSync] Skipping subcontract SOV line for %s line=%s "
+                        "because CostCode did not resolve to project_budget_codes.id",
+                        row["external_key"],
+                        line_nbr,
+                    )
+                    continue
                 sov_items.append(
                     {
                         "subcontract_id": subcontract_id,
                         "line_number": int(line_nbr),
                         "acumatica_line_nbr": int(line_nbr),
                         "description": description,
-                        "budget_code": _unwrap(detail.get("CostCode")),
+                        "budget_code": budget_code["budget_code"],
+                        "project_budget_code_id": budget_code["project_budget_code_id"],
                         "amount": amount,
                         "quantity": _num(_unwrap(detail.get("OrderQty")))
                         or _num(_unwrap(detail.get("Qty"))),
@@ -2484,13 +2520,27 @@ class AcumaticaFinancialSyncService:
                 description = _unwrap(detail.get("Description")) or _unwrap(
                     detail.get("TransactionDescription")
                 )
+                budget_code = self._resolve_commitment_sov_budget_code(
+                    project_id=row["project_id"],
+                    detail=detail,
+                )
+                if not budget_code:
+                    result.skipped += 1
+                    logger.warning(
+                        "[AcumaticaSync] Skipping purchase order SOV line for %s line=%s "
+                        "because CostCode did not resolve to project_budget_codes.id",
+                        row["external_key"],
+                        line_nbr,
+                    )
+                    continue
                 sov_items.append(
                     {
                         "purchase_order_id": po_id,
                         "line_number": int(line_nbr),
                         "acumatica_line_nbr": int(line_nbr),
                         "description": description,
-                        "budget_code": _unwrap(detail.get("CostCode")),
+                        "budget_code": budget_code["budget_code"],
+                        "project_budget_code_id": budget_code["project_budget_code_id"],
                         "quantity": _num(_unwrap(detail.get("OrderQty"))) or _num(_unwrap(detail.get("Qty"))),
                         "uom": _unwrap(detail.get("UOM")),
                         "unit_cost": _num(_unwrap(detail.get("UnitCost"))),
