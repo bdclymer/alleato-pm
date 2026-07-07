@@ -45,6 +45,10 @@ Verification:
 
 - `PYTHONPATH=backend /Users/meganharrison/Documents/alleato-pm/backend/.venv/bin/python -m py_compile backend/src/services/integrations/microsoft_graph/outlook_conversations.py backend/src/services/integrations/microsoft_graph/sync.py backend/tests/test_outlook_conversations.py backend/tests/test_graph_sync_options.py` - PASS
 - `PYTHONPATH=backend /Users/meganharrison/Documents/alleato-pm/backend/.venv/bin/python -m pytest backend/tests/test_outlook_conversations.py backend/tests/test_graph_sync_options.py -q` - PASS, `15 passed, 6 warnings`
+- `PYTHONPATH=backend /Users/meganharrison/Documents/alleato-pm/backend/.venv/bin/python -m pytest backend/tests/test_outlook_conversations.py backend/tests/test_document_low_content_pipeline.py backend/tests/test_graph_sync_options.py -q` - PASS, `18 passed, 6 warnings`
+- Live RAG read-back after bounded `bclymer@alleatogroup.com` backfill - PASS:
+  `10` Outlook conversation docs had `content`, `embedding_status='embedded'`,
+  and only `source_type='email'` chunks.
 
 Behavior changes captured:
 
@@ -61,6 +65,10 @@ Behavior changes captured:
   before embedding when Outlook source sync is enabled.
 - Compiler failures are recorded as Graph downstream errors and included in the
   downstream phase metadata.
+- Generic document embedding now skips `source_metadata.document_kind='outlook_conversation'`
+  rows so it cannot overwrite Graph-owned email chunks with generic meeting/document chunks.
+- The compiler repairs damaged rows whose `content_hash` matches but whose RAG
+  `content` / `raw_text` was stripped by another path.
 
 ## Initial Constraints
 

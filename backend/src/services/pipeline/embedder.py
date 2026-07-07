@@ -271,6 +271,26 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     metadata = resp.data
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
+    source_metadata = metadata.get("source_metadata") if isinstance(metadata, dict) else {}
+    if not isinstance(source_metadata, dict):
+        source_metadata = {}
+    if (
+        metadata.get("source") == "microsoft_graph"
+        and source_metadata.get("document_kind") == "outlook_conversation"
+    ):
+        update_ingestion_job_state(
+            metadata_id,
+            stage="done",
+            error_message=None,
+            client=client,
+        )
+        return {
+            "metadataId": metadata_id,
+            "chunkCount": 0,
+            "segmentCount": 0,
+            "skipped": True,
+            "skipReason": "owned_by_graph_email_embedder",
+        }
 
     rag_metadata = fetch_optional_row(
         get_rag_read_client(),

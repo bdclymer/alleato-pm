@@ -277,6 +277,8 @@ def _fetch_conversation_rows(
 
 def _existing_content_hash(store: SupabaseRagStore, document_id: str) -> Optional[str]:
     existing = store.fetch_rag_document_metadata(document_id) or {}
+    if not existing.get("content") and not existing.get("raw_text"):
+        return None
     source_metadata = existing.get("source_metadata") if isinstance(existing, dict) else {}
     if not isinstance(source_metadata, dict):
         source_metadata = {}

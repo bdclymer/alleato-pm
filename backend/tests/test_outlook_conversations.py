@@ -68,7 +68,7 @@ def test_compile_outlook_conversations_skips_unchanged_hash(monkeypatch):
             pass
 
         def fetch_rag_document_metadata(self, _document_id):
-            return {"content_hash": expected["content_hash"]}
+            return {"content_hash": expected["content_hash"], "content": expected["content"]}
 
         def upsert_document_metadata(self, payload):
             documents.append(payload)
@@ -111,3 +111,29 @@ def test_compile_outlook_conversations_upserts_changed_document(monkeypatch):
     assert result["compiled"] == 1
     assert result["documents"][0]["id"] == documents[0]["id"]
     assert documents[0]["source_metadata"]["compiled_from"] == "outlook_email_intake"
+
+
+def test_compile_outlook_conversations_repairs_missing_content_even_when_hash_matches(monkeypatch):
+    rows = [_row(id=1)]
+    expected = conversations.compile_conversation_payload(rows)
+    documents = []
+
+    class _Store:
+        def __init__(self, _client):
+            pass
+
+        def fetch_rag_document_metadata(self, _document_id):
+            return {"content_hash": expected["content_hash"], "content": None, "raw_text": None}
+
+        def upsert_document_metadata(self, payload):
+            documents.append(payload)
+
+    monkeypatch.setattr(conversations, "_fetch_recent_rows", lambda **_kwargs: rows)
+    monkeypatch.setattr(conversations, "_fetch_conversation_rows", lambda **_kwargs: rows)
+    monkeypatch.setattr(conversations, "SupabaseRagStore", _Store)
+
+    result = conversations.compile_outlook_conversations(object(), mailbox_user_id="megan@example.com")
+
+    assert result["status"] == "complete"
+    assert result["compiled"] == 1
+    assert documents[0]["content"] == expected["content"]

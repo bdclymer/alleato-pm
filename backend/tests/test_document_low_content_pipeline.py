@@ -154,3 +154,60 @@ def test_embedder_marks_no_segment_no_vision_document_skipped_low_content(monkey
     assert rag.tables["rag_document_metadata"][0]["embedding_status"] == "skipped_low_content"
     assert "no searchable text" in rag.tables["rag_document_metadata"][0]["embedding_error"]
     assert job_updates[-1]["kwargs"]["stage"] == "done"
+
+
+def test_embedder_skips_outlook_conversation_docs_owned_by_graph_embedder(monkeypatch):
+    metadata_id = "outlook_conversation_123"
+    app = _Supabase(
+        {
+            "document_metadata": [
+                {
+                    "id": metadata_id,
+                    "title": "Outlook conversation: Permit",
+                    "source": "microsoft_graph",
+                    "source_system": "outlook",
+                    "type": "email",
+                    "category": "email",
+                    "document_type": "email_message",
+                    "source_metadata": {"document_kind": "outlook_conversation"},
+                    "status": "raw_ingested",
+                }
+            ],
+            "fireflies_ingestion_jobs": [],
+        }
+    )
+    rag = _Supabase({"document_chunks": []})
+    job_updates = []
+
+    monkeypatch.setattr(embedder, "get_supabase_client", lambda: app)
+    monkeypatch.setattr(embedder, "get_rag_write_client", lambda: rag)
+    monkeypatch.setattr(
+        embedder,
+        "fetch_optional_row",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("generic embedder must not hydrate Outlook conversation content")
+        ),
+    )
+    monkeypatch.setattr(
+        embedder,
+        "update_ingestion_job_state",
+        lambda *args, **kwargs: job_updates.append({"args": args, "kwargs": kwargs}),
+    )
+    monkeypatch.setattr(
+        embedder.llm,
+        "batch_embed",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("generic embedder must not embed Outlook conversation docs")
+        ),
+    )
+
+    result = embedder.run_embedder(metadata_id)
+
+    assert result == {
+        "metadataId": metadata_id,
+        "chunkCount": 0,
+        "segmentCount": 0,
+        "skipped": True,
+        "skipReason": "owned_by_graph_email_embedder",
+    }
+    assert job_updates[-1]["kwargs"]["stage"] == "done"
