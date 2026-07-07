@@ -20,9 +20,10 @@ import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { usePeople } from "@/hooks/use-people";
-import { useProjectUsers } from "@/hooks/use-project-users";
+import { useProjectRoles } from "@/hooks/use-project-roles";
 import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 import { useSpecifications } from "@/hooks/use-specifications";
+import { projectTeamToUserOptions } from "@/lib/directory/rfi-people";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
 
 interface DirectoryPerson {
@@ -58,68 +59,36 @@ function buildPersonOptions(people: DirectoryPerson[]): PersonOption[] {
 
 /**
  * Person/company option sources for RFI forms, modeled on Procore's field rules:
- *  - `userOptions`      → RFI Manager + Assignees (internal users who are
- *                         members of THIS project — see below)
+ *  - `userOptions`      → RFI Manager + Assignees (the project's **Project Team**)
  *  - `directoryOptions` → Received From + Distribution List (full people directory)
  *  - `companyForPerson` → maps a Received-From display name to that person's
  *                         company, used to auto-prefill the read-only
  *                         Responsible Contractor field.
  *
- * RFI Manager and Assignees are scoped to `project_directory_memberships` for
- * `projectId` (client feedback: assignees must only be people on the project,
- * not the whole company roster). Access to a project already requires an
- * active `project_directory_memberships` row (see `auth-guard.ts`), so any
- * project with real users working on it has this populated — an empty result
- * here means no one has been added to the project's directory yet, not a data
- * gap to paper over with the full company list.
+ * RFI Manager and Assignees are sourced from the **Project Team** — the people
+ * assigned to project roles (`project_roles` / `project_role_members`), i.e.
+ * exactly the roster the client sees on the Project Directory → Project Team
+ * tab. This is intentionally narrow (repeated client feedback: only people
+ * staffed on the project, not the whole roster).
+ *
+ * NOTE: earlier versions scoped these to `project_directory_memberships`, which
+ * is the *broad* project roster (e.g. 27 people for a project whose Project
+ * Team is 5). That was the long-standing bug this hook now fixes. See
+ * `projectTeamToUserOptions` for why no `person_type` filter is applied
+ * (external consultants like the Architect are `contact` rows on the team).
  *
  * Received From / Distribution List stay sourced from the company-wide
- * directory — out of scope for this fix.
+ * directory — intentionally the full people list.
  */
 export function useRfiPeopleOptions(projectId: number) {
-  const { users: projectMembersRaw, isLoading: isLoadingUsers } = useProjectUsers(
-    String(projectId),
-    { type: "all" },
-  );
+  const { roles, isLoading: isLoadingTeam } = useProjectRoles(String(projectId));
   const { people: directory, isLoading: isLoadingDirectory } = usePeople({ type: "all" });
 
-  // PersonWithDetails (directoryService) types person_type/company loosely
-  // (plain `string` / full `Company` row) — map to the local DirectoryPerson
-  // shape used by buildPersonOptions. Explicit mapping (not a double-cast) so
-  // the quality gate stays happy and the field narrowing is visible.
-  const projectMembers = useMemo<DirectoryPerson[]>(
-    () =>
-      projectMembersRaw.map((person) => ({
-        first_name: person.first_name,
-        last_name: person.last_name,
-        email: person.email,
-        person_type: person.person_type as DirectoryPerson["person_type"],
-        company: person.company
-          ? { id: person.company.id, name: person.company.name }
-          : null,
-      })),
-    [projectMembersRaw],
-  );
-
-  // "Internal users" for RFI Manager / Assignees = project members whose
-  // person_type is employee or user (excludes external contacts added to the
-  // project directory, e.g. the client or a subcontractor's PM).
-  const userOptions = useMemo(
-    () =>
-      buildPersonOptions(
-        projectMembers.filter(
-          (person) =>
-            person.person_type === "employee" || person.person_type === "user",
-        ),
-      ),
-    [projectMembers],
-  );
+  // RFI Manager / Assignees = the project's Project Team (role assignments).
+  const userOptions = useMemo(() => projectTeamToUserOptions(roles), [roles]);
 
   const { directoryOptions, companyForPerson } = useMemo(() => {
-    const merged = [
-      ...projectMembers,
-      ...(directory as DirectoryPerson[]),
-    ];
+    const merged = directory as DirectoryPerson[];
     const companies = new Map<string, string>();
     for (const person of merged) {
       const fullName = fullNameOf(person);
@@ -131,13 +100,13 @@ export function useRfiPeopleOptions(projectId: number) {
       directoryOptions: buildPersonOptions(merged),
       companyForPerson: companies,
     };
-  }, [projectMembers, directory]);
+  }, [directory]);
 
   return {
     userOptions,
     directoryOptions,
     companyForPerson,
-    isLoading: isLoadingUsers || isLoadingDirectory,
+    isLoading: isLoadingTeam || isLoadingDirectory,
   };
 }
 
