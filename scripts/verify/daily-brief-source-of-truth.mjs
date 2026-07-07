@@ -46,11 +46,6 @@ const forbiddenRules = [
     message:
       "AI Ops Daily Brief persistence is retired unless it writes only to intelligence_packets.",
   },
-  {
-    pattern: /\bsend-(teams|email)-daily-brief\b/,
-    message:
-      "AI Ops Daily Brief delivery tools are retired until they consume the canonical packet.",
-  },
 ];
 
 const failures = [];

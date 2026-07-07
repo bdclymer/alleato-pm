@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
+import { previewCanonicalDailyBriefTeamsPayload } from "@/lib/daily-briefs/canonical-teams-delivery";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +15,11 @@ export const POST = withApiGuardrails(
       "Daily Brief access required.",
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "legacy_teams_preview_retired",
-        message:
-          "Daily Brief Teams preview is retired until delivery is rebuilt from the canonical intelligence_packets/daily-executive-brief packet.",
-        sourceOfTruth: "intelligence_packets",
-      },
-      { status: 409 },
-    );
+    const preview = await previewCanonicalDailyBriefTeamsPayload();
+    return NextResponse.json({
+      success: true,
+      preview,
+      sourceOfTruth: "intelligence_packets",
+    });
   },
 );

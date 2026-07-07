@@ -22,12 +22,7 @@ export type AssistantToolCategory =
   | "workflow";
 
 export type AssistantToolCapability =
-  | "read"
-  | "write"
-  | "delivery"
-  | "source"
-  | "generate"
-  | "persist";
+  "read" | "write" | "delivery" | "source" | "generate" | "persist";
 
 export type AssistantToolRoutingPolicy = {
   useWhen: string[];
@@ -1304,6 +1299,60 @@ export const GLOBAL_ASSISTANT_TOOL_REGISTRY: AssistantToolRegistryEntry[] = [
       ledgerRequired: true,
     },
     metadata: {
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+    },
+  }),
+  executiveDailyBriefTool({
+    name: "build-teams-daily-brief-payload",
+    description:
+      "Build a Teams payload from the current canonical Daily Executive Brief packet.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
+    inputSchemaName: "BuildTeamsDailyBriefPayloadInput",
+    outputSchemaName: "TeamsDailyBriefPayload",
+    failureShape: "throws",
+    category: "delivery",
+    capabilities: ["read", "delivery"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
+    allowedChannels: ["teams"],
+    requiresProjectScope: false,
+    requiresWritePermission: false,
+    requiresDeliveryPermission: false,
+    evidencePolicy: {
+      sourceBearing: true,
+      requiresSourceRefs: true,
+      ledgerRequired: true,
+    },
+    metadata: {
+      channel: "teams",
+      deliveryTool: false,
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+    },
+  }),
+  executiveDailyBriefTool({
+    name: "send-teams-daily-brief",
+    description:
+      "Send the current canonical Daily Executive Brief packet to Teams and record provider outcomes.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
+    inputSchemaName: "SendTeamsDailyBriefInput",
+    outputSchemaName: "DeliveryAttempt",
+    failureShape: "result_error",
+    category: "delivery",
+    capabilities: ["write", "delivery"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
+    allowedChannels: ["teams"],
+    requiresProjectScope: false,
+    requiresWritePermission: true,
+    requiresDeliveryPermission: true,
+    evidencePolicy: {
+      sourceBearing: true,
+      requiresSourceRefs: true,
+      ledgerRequired: true,
+    },
+    metadata: {
+      channel: "teams",
+      deliveryTool: true,
       sourceOfTruth: "intelligence_packets",
       targetSlug: "daily-executive-brief",
     },

@@ -18,6 +18,8 @@ export const EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS = [
   "fetch-project-intelligence-sources",
   "read-current-daily-executive-brief",
   "fetch-daily-executive-brief-sources",
+  "build-teams-daily-brief-payload",
+  "send-teams-daily-brief",
 ] as const;
 
 export const EXECUTIVE_DAILY_BRIEF_WORKFLOW: WorkflowDefinition = {
@@ -93,8 +95,7 @@ export function executiveDailyBriefSourcePolicyMetadata(input?: {
     freshnessMinutes:
       EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.freshnessMinutes,
     minimumEvidenceRefsPerClaim:
-      EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy
-        .minimumEvidenceRefsPerClaim,
+      EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.minimumEvidenceRefsPerClaim,
     failWhenRequiredSourcesMissing:
       EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy
         .failWhenRequiredSourcesMissing,
