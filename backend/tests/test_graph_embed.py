@@ -122,6 +122,68 @@ def test_embed_graph_document_skips_app_status_update_when_using_rag_metadata(mo
     assert rag.tables["rag_document_metadata"][0]["embedding_status"] == "skipped"
 
 
+def test_embed_graph_document_marks_empty_graph_item_skipped_low_content(monkeypatch):
+    doc_id = "teams-empty"
+    app = _Supabase(
+        {
+            "document_metadata": [
+                {
+                    "id": doc_id,
+                    "title": "Teams DM Conversation: Empty",
+                    "category": "teams_message",
+                    "source": "microsoft_graph",
+                    "project_id": None,
+                    "type": "teams_dm_conversation",
+                    "source_system": "teams_dm",
+                    "source_item_id": "chat-1",
+                    "status": "raw_ingested",
+                }
+            ],
+            "fireflies_ingestion_jobs": [],
+        }
+    )
+    rag = _Supabase(
+        {
+            "rag_document_metadata": [
+                {
+                    "id": doc_id,
+                    "title": "Teams DM Conversation: Empty",
+                    "category": "teams_message",
+                    "source": "microsoft_graph",
+                    "project_id": None,
+                    "type": "teams_dm_conversation",
+                    "source_system": "teams_dm",
+                    "source_item_id": "chat-1",
+                    "content": "",
+                    "raw_text": "",
+                }
+            ],
+            "document_chunks": [{"document_id": doc_id, "chunk_index": 0}],
+            "fireflies_ingestion_jobs": [],
+        }
+    )
+    recorded = []
+
+    monkeypatch.setattr(embed, "get_rag_read_client", lambda: rag)
+    monkeypatch.setattr(embed, "get_rag_write_client", lambda: rag)
+    monkeypatch.setattr(embed, "_rehydrate_graph_document_content", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(embed, "_ensure_vision_page_intelligence", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(embed, "_vision_page_chunks", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        embed,
+        "record_source_processing_status",
+        lambda *_args, **kwargs: recorded.append(kwargs),
+    )
+
+    chunks = embed.embed_graph_document(app, doc_id)
+
+    assert chunks == 0
+    assert app.tables["document_metadata"][0]["status"] == "skipped_low_content"
+    assert rag.tables["document_chunks"] == []
+    assert rag.tables["rag_document_metadata"][0]["embedding_status"] == "skipped"
+    assert recorded[-1]["error_code"] == "skipped_low_content"
+
+
 def test_graph_embed_success_upserts_missing_rag_metadata():
     rag = _Supabase({"rag_document_metadata": []})
     doc = {

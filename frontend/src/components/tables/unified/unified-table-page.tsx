@@ -2895,12 +2895,22 @@ export function UnifiedTablePage<T>({
                               ...getPinnedStyle(column.id),
                             } as React.CSSProperties)
                           : undefined;
+                        const columnAlignment = resolveColumnAlignment(
+                          column,
+                          "left",
+                        );
+                        const alignmentClass =
+                          columnAlignment === "right"
+                            ? "text-right"
+                            : columnAlignment === "center"
+                              ? "text-center"
+                              : "text-left";
                         const value = footerTotals.values[column.id];
                         if (index === 0 && !value) {
                           return (
                             <TableCell
                               key={column.id}
-                              className="font-semibold"
+                              className="font-semibold text-left"
                               style={columnStyle}
                             >
                               {footerTotals.label ?? "Totals"}
@@ -2910,7 +2920,7 @@ export function UnifiedTablePage<T>({
                         return (
                           <TableCell
                             key={column.id}
-                            className="font-semibold"
+                            className={cn("font-semibold", alignmentClass)}
                             style={columnStyle}
                           >
                             {value ?? null}

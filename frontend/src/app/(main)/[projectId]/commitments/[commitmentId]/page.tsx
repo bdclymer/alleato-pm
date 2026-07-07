@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
+  Check,
   ChevronDown,
   DollarSign,
   Download,
@@ -38,7 +39,7 @@ import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfVal
 import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
-import { StatusBadge } from "@/components/ds/status-badge";
+import { StatusBadge, StatusDot } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
 import {
   ContentSectionStack,
@@ -76,6 +77,8 @@ import type { CommitmentSovLockState } from "@/lib/commitments/commitment-sov-lo
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import { useConfirm } from "@/hooks/use-confirm";
 import { usePdfExport } from "@/hooks/use-pdf-export";
+import { CommitmentStatusValues } from "@/lib/schemas/create-subcontract-schema";
+import { cn } from "@/lib/utils";
 import type { Commitment } from "@/types/financial";
 
 // ---------------------------------------------------------------------------
@@ -377,10 +380,6 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     remaining_balance:
       typeof record.remaining_balance === "number" || typeof record.remaining_balance === "string"
         ? Number(record.remaining_balance)
-        : undefined,
-    actual_completion_date:
-      typeof record.actual_completion_date === "string"
-        ? record.actual_completion_date
         : undefined,
     issued_on_date:
       typeof record.issued_on_date === "string" ? record.issued_on_date : undefined,
@@ -954,6 +953,88 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
 }
 
 // ---------------------------------------------------------------------------
+// Status control — click the header badge to change the commitment status
+// ---------------------------------------------------------------------------
+
+/**
+ * Interactive status pill for the detail header. Renders the current status as
+ * a `StatusBadge` that opens a menu of the valid commitment statuses on click.
+ * Draft gets a stronger fill (`bg-muted-foreground/15 text-foreground`) so it
+ * reads as a real chip instead of blending into the surrounding muted text.
+ */
+function CommitmentStatusControl({
+  status,
+  onChange,
+}: {
+  status: string;
+  onChange: (next: string) => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const current =
+    CommitmentStatusValues.find(
+      (value) => value.toLowerCase() === (status || "draft").toLowerCase(),
+    ) ?? "Draft";
+  const isDraft = current.toLowerCase() === "draft";
+
+  const handleSelect = async (next: string) => {
+    if (next === current || saving) return;
+    setSaving(true);
+    try {
+      await onChange(next);
+      toast.success(`Status changed to ${next}`);
+    } catch (changeError) {
+      toast.error(
+        changeError instanceof Error && changeError.message
+          ? changeError.message
+          : "Failed to update status.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={saving}
+          aria-label="Change status"
+          className="h-7 gap-1.5 rounded-md px-1.5 hover:bg-muted"
+        >
+          <StatusBadge
+            status={current}
+            className={
+              isDraft ? "bg-muted-foreground/15 text-foreground" : undefined
+            }
+          />
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {CommitmentStatusValues.map((option) => (
+          <DropdownMenuItem
+            key={option}
+            onSelect={() => void handleSelect(option)}
+            className={cn("gap-2", option === current && "font-medium")}
+          >
+            <StatusDot status={option} />
+            {option === current ? (
+              <Check className="ml-auto h-3.5 w-3.5 text-primary" />
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -1141,12 +1222,6 @@ export default function CommitmentDetailPage() {
   const showSubcontractorSovTab = !isPO;
 
   const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
-  const displayStatus = commitment.status
-    ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : "Draft";
-  const headerEyebrow = isPO
-    ? `PO # ${displayNumber || "—"}`
-    : `Subcontract # ${displayNumber || "—"}`;
 
   const headerActions = (
     <>
@@ -1233,9 +1308,20 @@ export default function CommitmentDetailPage() {
     <PageShell
       variant="detailWide"
       title={commitment.title || (displayNumber ? `#${displayNumber}` : "Commitment")}
-      eyebrow={headerEyebrow}
+      eyebrow={
+        displayNumber ? (
+          <span className="text-sm font-semibold text-primary">
+            #{displayNumber}
+          </span>
+        ) : undefined
+      }
       headerLayout="balanced"
-      statusBadge={<StatusBadge status={displayStatus} />}
+      statusBadge={
+        <CommitmentStatusControl
+          status={commitment.status ?? "Draft"}
+          onChange={(next) => handleSaveField("status", next)}
+        />
+      }
       actions={headerActions}
       onBack={() => router.back()}
       contentClassName="space-y-0"

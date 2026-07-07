@@ -11,11 +11,8 @@ export const DAILY_DEEP_READ_PROMOTION_COMPILER_VERSION =
   "daily_deep_read_promotion_v1";
 export const DAILY_DEEP_READ_CONSUMER_COMPILER_VERSION =
   "daily_deep_read_consumers_v1";
-export const DAILY_DEEP_READ_PACKET_REFRESH_COMPILER_VERSION =
-  "ai_intelligence_compiler_v0_1";
 
 const WHERE = "daily-deep-read-promotion";
-const ACTIVE_PACKET_REFRESH_STATUSES = ["queued", "running"] as const;
 
 type AppClient = SupabaseClient<Database>;
 type RagClient = SupabaseClient<RagDatabase>;
@@ -72,6 +69,7 @@ type PromoteDeps = {
   appClient?: AppClient;
   ragClient?: RagClient;
   currentPacket?: CanonicalDailyBriefPacket;
+  refreshProjectIntelligence?: (projectId: number) => Promise<unknown>;
 };
 
 type PromoteBatchInput = {
@@ -582,82 +580,63 @@ async function markCandidatePromoted(params: {
   }
 }
 
-async function enqueuePacketRefresh(params: {
-  ragClient: RagClient;
-  targetId: string;
-  packet: CanonicalDailyBriefPacket;
-  candidate: SourceSignalCandidate;
-  createdRecordId: string;
-  kind: DailyDeepReadPromotionKind;
-}) {
-  const { data: existing, error: existingError } = await params.ragClient
-    .from("packet_refresh_jobs")
-    .select("id,priority,trigger_source_document_id,trigger_insight_card_id")
-    .eq("target_id", params.targetId)
-    .eq("compiler_version", DAILY_DEEP_READ_PACKET_REFRESH_COMPILER_VERSION)
-    .in("status", [...ACTIVE_PACKET_REFRESH_STATUSES])
-    .limit(1)
-    .maybeSingle();
+function backendUrl(): string {
+  const rawUrl = (process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL || "").trim();
+  try {
+    return new URL(rawUrl).toString().replace(/\/$/, "");
+  } catch {
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: WHERE,
+      message:
+        "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL before promoting Daily Deep Read candidates.",
+      status: 503,
+    });
+  }
+}
 
-  if (existingError) {
+function backendAdminApiKey(): string {
+  const apiKey = process.env.ADMIN_API_KEY?.trim();
+  if (!apiKey) {
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: WHERE,
+      message:
+        "ADMIN_API_KEY is required to refresh project intelligence after Daily Deep Read promotion.",
+      status: 503,
+    });
+  }
+  return apiKey;
+}
+
+async function refreshProjectIntelligence(projectId: number): Promise<unknown> {
+  const response = await fetch(
+    `${backendUrl()}/api/intelligence/project-intelligence/refresh`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-admin-api-key": backendAdminApiKey(),
+      },
+      body: JSON.stringify({ project_id: projectId }),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
     throw new GuardrailError({
       code: "UPSTREAM_FAILURE",
       where: WHERE,
-      message: "Failed to check for an active project intelligence packet refresh job.",
-      details: existingError.message,
+      message: "Backend project intelligence refresh failed after Daily Deep Read promotion.",
+      status: 502,
+      details: {
+        status: response.status,
+        response: detail.slice(0, 2000),
+      },
     });
   }
 
-  const triggerInsightCardId =
-    params.kind === "insight_card" ? params.createdRecordId : null;
-  const reason = "Daily Deep Read candidate promoted";
-  const triggerSourceDocumentId = params.packet.id;
-
-  if (existing?.id) {
-    const { error: updateError } = await params.ragClient
-      .from("packet_refresh_jobs")
-      .update({
-        reason,
-        trigger_source_document_id:
-          existing.trigger_source_document_id ?? triggerSourceDocumentId,
-        trigger_insight_card_id:
-          existing.trigger_insight_card_id ?? triggerInsightCardId,
-        priority: Math.max(Number(existing.priority ?? 0), 10),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-
-    if (updateError) {
-      throw new GuardrailError({
-        code: "UPSTREAM_FAILURE",
-        where: WHERE,
-        message: "Failed to update active project intelligence packet refresh job.",
-        details: updateError.message,
-      });
-    }
-    return;
-  }
-
-  const { error: insertError } = await params.ragClient
-    .from("packet_refresh_jobs")
-    .insert({
-      target_id: params.targetId,
-      reason,
-      trigger_source_document_id: triggerSourceDocumentId,
-      trigger_insight_card_id: triggerInsightCardId,
-      status: "queued",
-      priority: 10,
-      compiler_version: DAILY_DEEP_READ_PACKET_REFRESH_COMPILER_VERSION,
-    });
-
-  if (insertError) {
-    throw new GuardrailError({
-      code: "UPSTREAM_FAILURE",
-      where: WHERE,
-      message: "Failed to enqueue project intelligence packet refresh.",
-      details: insertError.message,
-    });
-  }
+  return response.json().catch(() => ({}));
 }
 
 export async function promoteDailyDeepReadCandidate(
@@ -697,15 +676,6 @@ export async function promoteDailyDeepReadCandidate(
           reviewedBy: input.reviewedBy,
       });
 
-  await enqueuePacketRefresh({
-    ragClient,
-    targetId: target.id,
-    packet,
-    candidate,
-    createdRecordId,
-    kind,
-  });
-
   await markCandidatePromoted({
     ragClient,
     candidate,
@@ -714,6 +684,7 @@ export async function promoteDailyDeepReadCandidate(
     kind,
     reviewedBy: input.reviewedBy,
   });
+  await (deps.refreshProjectIntelligence ?? refreshProjectIntelligence)(input.projectId);
 
   return {
     ok: true,
@@ -778,6 +749,7 @@ export async function promoteAcceptedDailyDeepReadCandidates(
             appClient,
             ragClient,
             currentPacket: packet,
+            refreshProjectIntelligence: deps.refreshProjectIntelligence,
           },
         ),
       );
