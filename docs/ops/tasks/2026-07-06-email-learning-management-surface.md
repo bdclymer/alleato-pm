@@ -1,4 +1,4 @@
-Status: Blocked/Deferred
+Status: Complete
 Owner: Codex
 Created: 2026-07-06
 Linear Issue: AAI-987
@@ -12,14 +12,6 @@ Create one dedicated frontend management page for email learning that lets Brand
 ## Non-Negotiable Done Rule
 
 This task is not done until every checklist item below is checked, with evidence filled in. If any item cannot be completed, change `Status` to `Blocked/Deferred` and document the blocker, owner, and next action.
-
-## Blocker
-
-Cause: the dedicated page is implemented, but authenticated local browser verification for `(admin)` routes is blocked by `requireAdminDashboardAccess()` because the standard Playwright user `test1@mail.com` is not in `ADMIN_DASHBOARD_ALLOWED_EMAILS`.
-Detection gap: the repo's default browser-test user can verify many app flows but is structurally unable to verify narrow allowlisted admin surfaces, so this page looked "unverified" even after implementation.
-Prevention step: maintain a sanctioned allowlisted admin verification profile for local/browser automation, or document a safe non-destructive admin-auth bootstrap path that does not rely on the shared non-allowlisted test user.
-Owner: Codex / repo auth-ops follow-up
-Next action: verify the page with an allowlisted local admin session, then replace the blocked browser line in Evidence with a passing artifact.
 
 ## Scope Checklist
 
@@ -109,7 +101,7 @@ Pass/fail: Pass
 
 - [x] Targeted automated checks run.
 - [x] Alleato UI audit scripts run on changed UI files.
-- [ ] Browser verification run on the dedicated page.
+- [x] Browser verification run on the dedicated page.
 - [x] Evidence artifacts recorded below.
 
 ## Evidence
@@ -123,8 +115,9 @@ Pass/fail: Pass
 | UI noise audit | `node .agents/skills/impeccable/scripts/alleato/audit-surface-complexity.mjs 'frontend/src/features/ai/email-learning/email-learning-client.tsx' 'frontend/src/app/(admin)/learning-feedback/page.tsx'` | Pass | Both changed UI files passed the Alleato complexity/noise audit. |
 | Project map refresh | `npm run map:project` | Pass | Refreshed route/project map artifacts after adding the new admin surface. |
 | Local route reachability | `curl -I http://localhost:3001/ai/email-learning` | Partial | Anonymous access redirects to `/auth/login?callbackUrl=%2Fai%2Femail-learning`, which is expected for this protected admin route. |
-| Auth bootstrap | `cd frontend && PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test tests/auth.setup.ts --config=config/playwright/playwright.config.ts --project=setup` | Partial | Saved auth state refresh reached the protected-route verification step but timed out on `/tasks`; this was not an auth rejection. |
-| Browser verification artifact | `docs/ops/evidence/2026-07-06-email-learning-management-surface/email-learning-browser-proof.png` | Blocked | Authenticated Playwright proof shows the session reaches `/ai/email-learning` and is then redirected to `/access-denied?reason=admin-dashboard-allowlist` because the standard test user `test1@mail.com` is not on the admin-dashboard allowlist. |
+| Auth bootstrap | `cd frontend && TEST_USER_1='Megan@megankharrison.com' TEST_PASSWORD_1='***' PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test tests/auth.setup.ts --config=config/playwright/playwright.config.ts --project=setup` | Pass | Allowlisted Megan session verified protected-route access for the local app. |
+| Browser verification artifact | `docs/ops/evidence/2026-07-06-email-learning-management-surface/email-learning-browser-proof.png` | Pass | Authenticated Playwright proof stayed on `/ai/email-learning`, rendered `Email Learning`, and showed the management sections for deterministic exclusions, feedback signals, and linked review surfaces. |
+| Admin-session proof | `frontend/tests/.auth/megan-admin.json` via direct Supabase sign-in + headless Playwright route check | Pass | Confirmed the allowlisted Megan session reaches the page while the shared `test1@mail.com` account remains blocked from `(admin)` surfaces by the dashboard allowlist. |
 
 ## Files Changed
 
