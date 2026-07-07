@@ -42,6 +42,7 @@ describe("legal template primitives", () => {
 
     expect(signatureHtml).toContain("legal-signature-block");
     expect(signatureHtml).toContain("legal-signature-fields");
+    expect(signatureHtml).toContain("legal-signature-field-row");
     expect(signatureHtml).toContain("R.J. Skelding Co, Inc");
     expect(signatureHtml).toContain("Alleato Group");
     expect(signatureHtml).toContain("Printed Name:");

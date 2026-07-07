@@ -196,10 +196,10 @@ export function renderLegalSignatureBlock({
   rightSignedDate?: string | null;
 }): string {
   const renderField = (label: string, value: string | null | undefined) => `
-    <tr class="legal-signature-field-row">
-      <td class="legal-signature-label" style="width:1.05in;padding:0 0.12in 0.08in 0;white-space:nowrap;vertical-align:bottom;">${esc(label)}</td>
-      <td class="legal-signature-line" style="padding:0 0 0.08in 0;vertical-align:bottom;border-bottom:1px solid #000;">${esc(value ?? "")}</td>
-    </tr>
+    <div class="legal-signature-field-row">
+      <div class="legal-signature-label">${esc(label)}</div>
+      <div class="legal-signature-line">${esc(value ?? "")}</div>
+    </div>
   `;
 
   const renderSide = (
@@ -212,14 +212,12 @@ export function renderLegalSignatureBlock({
     <div class="legal-signature-side">
       <div class="legal-signature-title" style="text-align:center;margin:0 0 0.12in 0;">${esc(title)}</div>
       <div class="legal-signature-company" style="border-bottom:1px solid #000;padding:0 0 0.08in 0;margin:0 0 0.12in 0;">${esc(company)}</div>
-      <table class="legal-signature-fields" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;table-layout:fixed;">
-        <col style="width:1.05in;" />
-        <col style="width:auto;" />
+      <div class="legal-signature-fields">
         ${renderField("By:", null)}
         ${renderField("Printed Name:", printedName)}
         ${renderField("Its:", roleTitle)}
         ${renderField("Date:", signedDate)}
-      </table>
+      </div>
     </div>
   `;
 
