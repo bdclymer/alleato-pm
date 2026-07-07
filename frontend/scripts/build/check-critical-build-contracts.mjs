@@ -16,19 +16,11 @@ const exportedModuleContracts = [
 ];
 
 const importContracts = [
-  {
-    importerPath: "src/app/(main)/notifications/page.tsx",
-    expectedImports: [
-      {
-        from: "@/hooks/use-comment-activity",
-        names: ["useCommentActivity"],
-      },
-      {
-        from: "@/lib/collaboration/notification-links",
-        names: ["getCollaborationNotificationHref"],
-      },
-    ],
-  },
+  // NOTE: The notifications page (src/app/(main)/notifications/page.tsx) was
+  // rebuilt on the Liveblocks inbox (`AppInboxList` + `useInboxNotifications`),
+  // which now surfaces comment/mention activity. It no longer imports the legacy
+  // `useCommentActivity` hook, so that import contract was removed. The hook and
+  // its export contract remain below until the legacy path is fully retired.
   {
     importerPath: "src/hooks/use-comment-activity.ts",
     expectedImports: [
