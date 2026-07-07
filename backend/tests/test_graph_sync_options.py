@@ -114,7 +114,7 @@ def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypa
     )
     monkeypatch.setattr(
         "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
-        lambda supabase: backfill_calls.append(supabase) or {
+        lambda supabase, *, since=None: backfill_calls.append((supabase, since)) or {
             "scanned": 2,
             "assigned": 1,
             "review_staged": 1,
@@ -151,6 +151,7 @@ def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypa
     assert result["intelligence_extraction"]["projects"] == 1
     assert extraction_calls
     assert len(backfill_calls) == 1
+    assert backfill_calls[0][1] is not None
 
 
 def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypatch):
@@ -191,7 +192,7 @@ def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypa
     )
     monkeypatch.setattr(
         "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
-        lambda _supabase: {"scanned": 1, "assigned": 0, "review_staged": 0, "failed": 0},
+        lambda _supabase, *, since=None: {"scanned": 1, "assigned": 0, "review_staged": 0, "failed": 0},
     )
     monkeypatch.setattr(
         sync,
@@ -232,7 +233,7 @@ def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypa
 def test_downstream_project_backfill_failures_are_downstream_errors(monkeypatch):
     monkeypatch.setattr(
         "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
-        lambda _supabase: {
+        lambda _supabase, *, since=None: {
             "scanned": 2,
             "assigned": 0,
             "review_staged": 1,

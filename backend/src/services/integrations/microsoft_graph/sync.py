@@ -970,7 +970,10 @@ def _run_graph_downstream_processing(
         try:
             from src.services.ingestion.sync_followups import maybe_run_comm_project_backfill
 
-            project_backfill_result = maybe_run_comm_project_backfill(supabase)
+            project_backfill_result = maybe_run_comm_project_backfill(
+                supabase,
+                since=sync_started_at,
+            )
             summary["project_backfill"] = project_backfill_result
             if project_backfill_result.get("failed"):
                 summary["errors"].append(

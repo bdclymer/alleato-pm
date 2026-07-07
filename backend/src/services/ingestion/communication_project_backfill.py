@@ -49,7 +49,7 @@ def _iter_unassigned_documents(
     query = (
         client.table("document_metadata")
         .select(
-            "id,title,source,category,content,summary,overview,participants,participants_array,host_email,organizer_email,tags,project_id",
+            "id,title,source,category,content,summary,overview,participants,participants_array,host_email,organizer_email,tags,project_id,created_at",
         )
         .is_("project_id", "null")
         .in_("source", sources)
@@ -57,7 +57,7 @@ def _iter_unassigned_documents(
         .limit(limit)
     )
     if since is not None:
-        query = query.gte("date", since.isoformat())
+        query = query.gte("created_at", since.isoformat())
     if categories:
         query = query.in_("category", categories)
     response = query.execute()

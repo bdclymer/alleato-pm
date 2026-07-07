@@ -30,8 +30,19 @@ const args = new Map();
 for (let index = 2; index < process.argv.length; index += 1) {
   const arg = process.argv[index];
   if (!arg.startsWith("--")) continue;
+  const raw = arg.slice(2);
+  if (raw.includes("=")) {
+    const [key, ...valueParts] = raw.split("=");
+    args.set(key, valueParts.join("=") || "true");
+    continue;
+  }
   const next = process.argv[index + 1];
-  args.set(arg.slice(2), next && !next.startsWith("--") ? next : "true");
+  if (next && !next.startsWith("--")) {
+    args.set(raw, next);
+    index += 1;
+  } else {
+    args.set(raw, "true");
+  }
 }
 
 const lookbackHours = numberArg("hours", "GRAPH_POST_SYNC_ATTRIBUTION_VERIFY_HOURS", 24);

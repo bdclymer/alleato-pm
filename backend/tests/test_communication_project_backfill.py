@@ -121,21 +121,21 @@ def test_iter_unassigned_documents_can_scope_to_teams_only():
                 "source": "microsoft_graph",
                 "category": "teams_message",
                 "project_id": None,
-                "date": "2026-07-07T00:00:00+00:00",
+                "created_at": "2026-07-07T00:00:00+00:00",
             },
             {
                 "id": "email-1",
                 "source": "microsoft_graph",
                 "category": "email",
                 "project_id": None,
-                "date": "2026-07-07T00:00:00+00:00",
+                "created_at": "2026-07-07T00:00:00+00:00",
             },
             {
                 "id": "meeting-1",
                 "source": "fireflies",
                 "category": "meeting",
                 "project_id": None,
-                "date": "2026-07-07T00:00:00+00:00",
+                "created_at": "2026-07-07T00:00:00+00:00",
             },
         ]
     )
@@ -162,7 +162,7 @@ def test_low_confidence_backfill_writes_pending_review_candidate(monkeypatch):
                 "source": "fireflies",
                 "category": "meeting",
                 "project_id": None,
-                "date": "2026-07-07T00:00:00+00:00",
+                "created_at": "2026-07-07T00:00:00+00:00",
                 "content": "Ambiguous discussion without a unique project identifier.",
             }
         ]
@@ -204,7 +204,7 @@ def test_high_confidence_backfill_still_auto_assigns(monkeypatch):
                 "source": "microsoft_graph",
                 "category": "teams_message",
                 "project_id": None,
-                "date": "2026-07-07T00:00:00+00:00",
+                "created_at": "2026-07-07T00:00:00+00:00",
                 "content": "EIFS samples for Union Collective.",
             }
         ],
