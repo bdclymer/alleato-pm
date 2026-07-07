@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "packetId": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+  "compilerVersion": "daily_deep_read_consumers_v1",
+  "shouldWrite": false,
+  "candidateCount": 27,
+  "writeResult": {
+    "deleted": 0,
+    "inserted": 0
+  },
+  "readBack": [],
+  "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-06"
+}

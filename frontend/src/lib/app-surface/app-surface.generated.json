@@ -1157,6 +1157,11 @@
       "description": "Authentication required."
     },
     {
+      "url": "/executive/editorial-brief",
+      "title": "Executive editorial brief",
+      "description": "This editorial executive brief is limited to users with executive briefing access."
+    },
+    {
       "url": "/executive/intelligence-brief",
       "title": "Executive briefing",
       "description": "This executive briefing is limited to users with executive briefing access."

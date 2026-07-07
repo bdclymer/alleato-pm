@@ -23,6 +23,8 @@ const activeDailyBriefFiles = [
   "frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts",
   "frontend/src/lib/ai-ops/source-adapters.ts",
   "frontend/src/lib/ai-ops/tool-registry.ts",
+  "scripts/intelligence/daily-executive-brief.mjs",
+  "scripts/intelligence/daily-deep-read-consumers.mjs",
 ];
 
 const forbiddenRules = [
@@ -45,6 +47,11 @@ const forbiddenRules = [
     pattern: /\bpersist-executive-daily-brief-artifact\b/,
     message:
       "AI Ops Daily Brief persistence is retired unless it writes only to intelligence_packets.",
+  },
+  {
+    pattern: /\b(?:from|table)\(["']document_chunks["']\)|\bsearch_document_chunks\b/,
+    message:
+      "Daily Deep Read synthesis must not query document_chunks directly; chunks are search/discovery/citation support only.",
   },
 ];
 
