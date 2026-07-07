@@ -1118,6 +1118,12 @@ export default function CommitmentDetailPage() {
   const showSubcontractorSovTab = !isPO;
 
   const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
+  const displayStatus = commitment.status
+    ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "Draft";
+  const headerEyebrow = isPO
+    ? `PO # ${displayNumber || "—"}`
+    : `Subcontract # ${displayNumber || "—"}`;
 
   const headerActions = (
     <>
@@ -1204,7 +1210,8 @@ export default function CommitmentDetailPage() {
     <PageShell
       variant="detailWide"
       title={commitment.title || (displayNumber ? `#${displayNumber}` : "Commitment")}
-      description={isPO ? "Purchase Order" : "Subcontract"}
+      eyebrow={headerEyebrow}
+      statusBadge={<StatusBadge status={displayStatus} />}
       actions={headerActions}
       onBack={() => router.back()}
       contentClassName="space-y-0"
