@@ -532,17 +532,17 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
     <DetailPanel>
       <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
       <dl className="space-y-3 text-sm">
-        <SummaryValueRow label="Original Amount" value={formatCurrency(commitment.original_amount)} />
-        <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContract)} />
-        <SummaryValueRow label="Pending Amount" value={formatCurrency(pendingRevised)} />
-        <SummaryValueRow label="Pending COs" value={formatCurrency(pendingCOs)} />
-        <SummaryValueRow label="Approved COs" value={formatCurrency(approvedCOs)} />
-        <SummaryValueRow label="Draft COs" value={formatCurrency(draftCOs)} />
-        <SummaryValueRow label="Invoiced" value={formatCurrency(invoiced)} />
-        <SummaryValueRow label="Payments Issued" value={formatCurrency(paymentsIssued)} />
+        <SummaryValueRow label="Original Contract" value={formatCurrency(commitment.original_amount)} />
+        <SummaryValueRow label="Approved Change Orders" value={formatCurrency(approvedCOs)} />
+        <SummaryValueRow label="Revised Contract" value={formatCurrency(revisedContract)} />
+        <SummaryValueRow label="Pending Change Orders" value={formatCurrency(pendingCOs)} />
+        <SummaryValueRow label="Pending Revised Contract" value={formatCurrency(pendingRevised)} />
+        <SummaryValueRow label="Draft Change Orders" value={formatCurrency(draftCOs)} />
+        <SummaryValueRow label="Invoices" value={formatCurrency(invoiced)} />
+        <SummaryValueRow label="Payments Issues" value={formatCurrency(paymentsIssued)} />
         <SummaryValueRow label="Retainage Withheld" value={formatCurrency(retainageWithheld)} />
-        <SummaryValueRow label="Balance" value={formatCurrency(remainingBalance)} />
-        <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
+        <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} />
+        <SummaryValueRow label="Remaining Balance Outstanding" value={formatCurrency(remainingBalance)} bold border />
       </dl>
     </DetailPanel>
   );
