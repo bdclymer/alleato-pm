@@ -110,7 +110,15 @@ export function ChangeEventDraftArtifact({
     .filter((item) => item.status !== "complete")
     .map((item) => item.label)
     .filter((label) => label !== "Review and create")
-    .slice(0, 4);
+    .slice(0, 3);
+  const previewBlockers = [
+    ...missingFields,
+    ...draft.missingRisks.slice(0, Math.max(0, 3 - missingFields.length)),
+  ];
+  const remainingBlockerCount =
+    draft.checklist.filter((item) => item.status !== "complete").length -
+      missingFields.length +
+    Math.max(0, draft.missingRisks.length - (3 - missingFields.length));
   const payload = buildDraftPayload(draft, editable);
 
   useEffect(() => {
@@ -365,56 +373,60 @@ export function ChangeEventDraftArtifact({
             </section>
           ) : null}
 
-          {draft.recommendedImpacts.length > 0 ? (
+          {previewBlockers.length > 0 ? (
             <section className="space-y-2">
               <div
                 role="heading"
                 aria-level={3}
                 className="text-xs font-medium text-muted-foreground"
               >
-                Recommendations
+                Before preview
               </div>
               <ul className="space-y-1 text-sm leading-6 text-foreground">
+                {previewBlockers.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {remainingBlockerCount > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {remainingBlockerCount} more item
+                  {remainingBlockerCount === 1 ? "" : "s"} will be checked before
+                  create.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+
+          {draft.recommendedImpacts.length > 0 ? (
+            <details className="group">
+              <summary className="cursor-pointer list-none text-xs font-medium text-muted-foreground">
+                AI notes
+              </summary>
+              <ul className="mt-2 space-y-1 text-sm leading-6 text-foreground">
                 {draft.recommendedImpacts.slice(0, 3).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-            </section>
-          ) : null}
-
-          {missingFields.length > 0 || draft.missingRisks.length > 0 ? (
-            <section className="space-y-2">
-              <div
-                role="heading"
-                aria-level={3}
-                className="text-xs font-medium text-muted-foreground"
-              >
-                Still needed
-              </div>
-              <ul className="space-y-1 text-sm leading-6 text-foreground">
-                {missingFields.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-                {draft.missingRisks.slice(0, 3).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
+            </details>
           ) : null}
         </div>
       </div>
 
       <div className="shrink-0 px-5 pb-5">
         <div className="space-y-3">
-          <div>
-            <div className="text-xs font-medium text-muted-foreground">
-              Next question
-            </div>
-            <p className="mt-1 text-sm leading-6 text-foreground">
+          {!draft.readyForPreview ? (
+            <p className="text-sm leading-6 text-muted-foreground">
               {draft.nextQuestion}
             </p>
-          </div>
+          ) : null}
           <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              disabled={!draft.readyForPreview}
+              onClick={handleReviewCreate}
+            >
+              Review create
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -422,13 +434,6 @@ export function ChangeEventDraftArtifact({
               onClick={handleSyncDraft}
             >
               {isSaving ? "Saving" : "Update draft"}
-            </Button>
-            <Button
-              size="sm"
-              disabled={!draft.readyForPreview}
-              onClick={handleReviewCreate}
-            >
-              Review create
             </Button>
           </div>
           {saveError ? (
