@@ -1,0 +1,13 @@
+- button "previous" [ref=e1] [disabled]:
+- button "next" [ref=e2] [disabled]:
+- link "Next.js 15.5.12 (outdated) Webpack" [ref=e3]
+- button "Copy Error Info" [ref=e4]
+- button "No related documentation found" [ref=e5] [disabled]:
+- link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e6]
+- button "Show More" [ref=e7]
+- button "Show 39 ignore-listed frame(s)" [ref=e8]
+- link "Was this helpful?" [ref=e9]
+- button "Mark as helpful" [ref=e10]
+- button "Mark as not helpful" [ref=e11]
+- button "Open issues overlay" [ref=e12]
+- button "Collapse issues badge" [ref=e13]

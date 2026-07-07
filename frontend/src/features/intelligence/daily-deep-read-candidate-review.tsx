@@ -13,6 +13,7 @@ import { apiFetch } from "@/lib/api-client";
 export type DailyDeepReadReviewCandidate = {
   id: string;
   signalType: string;
+  status: "needs_review" | "candidate";
   title: string;
   summary: string | null;
   nextAction: string | null;
@@ -28,6 +29,12 @@ type ReviewResponse = {
   action: "accept" | "reject";
   candidate: { id: string; status: string };
   packetId: string;
+};
+
+type PromoteResponse = {
+  ok: boolean;
+  kind: "task" | "insight_card";
+  createdRecordId: string;
 };
 
 function formatLabel(value: string): string {
@@ -64,12 +71,19 @@ export function DailyDeepReadCandidateReview({
             body: JSON.stringify({ action }),
           },
         );
-        setVisibleCandidates((current) =>
-          current.filter((candidate) => candidate.id !== candidateId),
-        );
+        setVisibleCandidates((current) => {
+          if (action === "reject") {
+            return current.filter((candidate) => candidate.id !== candidateId);
+          }
+          return current.map((candidate) =>
+            candidate.id === candidateId
+              ? { ...candidate, status: "candidate" }
+              : candidate,
+          );
+        });
         toast.success(
           action === "accept"
-            ? "Daily Deep Read candidate accepted"
+            ? "Daily Deep Read candidate ready to promote"
             : "Daily Deep Read candidate rejected",
         );
       } catch (reviewError) {
@@ -77,6 +91,36 @@ export function DailyDeepReadCandidateReview({
           description:
             reviewError instanceof Error
               ? reviewError.message
+              : "Unexpected error",
+        });
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [projectId],
+  );
+
+  const promoteCandidate = React.useCallback(
+    async (candidateId: string) => {
+      setBusyId(candidateId);
+      try {
+        const response = await apiFetch<PromoteResponse>(
+          `/api/projects/${projectId}/intelligence/daily-deep-read-candidates/${candidateId}/promote`,
+          { method: "POST" },
+        );
+        setVisibleCandidates((current) =>
+          current.filter((candidate) => candidate.id !== candidateId),
+        );
+        toast.success(
+          response.kind === "task"
+            ? "Promoted to project task"
+            : "Promoted to project intelligence",
+        );
+      } catch (promotionError) {
+        toast.error("Candidate promotion failed", {
+          description:
+            promotionError instanceof Error
+              ? promotionError.message
               : "Unexpected error",
         });
       } finally {
@@ -120,7 +164,10 @@ export function DailyDeepReadCandidateReview({
                       </p>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                         {formatLabel(candidate.signalType)} ·{" "}
-                        {formatLabel(candidate.confidence)}
+                        {formatLabel(candidate.confidence)} ·{" "}
+                        {candidate.status === "candidate"
+                          ? "Ready to promote"
+                          : "Needs review"}
                       </span>
                     </div>
                     {candidate.summary ? (
@@ -134,23 +181,35 @@ export function DailyDeepReadCandidateReview({
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => void reviewCandidate(candidate.id, "reject")}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => void reviewCandidate(candidate.id, "accept")}
-                    >
-                      Accept
-                    </Button>
-                  </div>
+                  {candidate.status === "candidate" ? (
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => void promoteCandidate(candidate.id)}
+                      >
+                        Promote
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => void reviewCandidate(candidate.id, "reject")}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => void reviewCandidate(candidate.id, "accept")}
+                      >
+                        Accept
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 {candidate.sources.length > 0 ? (
                   <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">

@@ -519,7 +519,7 @@ async function loadDailyDeepReadCandidates(projectId: number): Promise<{
     .eq("project_id", projectId)
     .eq("compiler_version", "daily_deep_read_consumers_v1")
     .eq("extraction_json->>daily_packet_id", currentPacketId)
-    .eq("status", "needs_review")
+    .in("status", ["needs_review", "candidate"])
     .order("created_at", { ascending: false })
     .limit(12);
 
@@ -1133,6 +1133,7 @@ function DailyDeepReadCandidateSection({
     return {
       id: candidate.id,
       signalType: candidate.signal_type,
+      status: candidate.status === "candidate" ? "candidate" : "needs_review",
       title,
       summary,
       nextAction,

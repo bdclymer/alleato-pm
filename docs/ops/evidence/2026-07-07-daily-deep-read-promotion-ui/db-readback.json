@@ -1,0 +1,82 @@
+{
+  "promotedCandidate": {
+    "id": "70f1cb12-b56e-4969-af11-ebb8cf1560ee",
+    "project_id": 1009,
+    "status": "promoted",
+    "current_status": "resolved",
+    "promoted_insight_card_id": "a060ec9e-2add-4ace-b846-1ad3072e7846",
+    "extraction_json": {
+      "review": {
+        "action": "accept",
+        "source": "project_intelligence_daily_deep_read_review",
+        "reviewed_at": "2026-07-07T19:23:23.912Z",
+        "reviewed_by": "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+        "review_notes": null,
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+      },
+      "section": "Project Intelligence Updates",
+      "promotion": {
+        "kind": "insight_card",
+        "promoted_at": "2026-07-07T19:24:22.438Z",
+        "promoted_by": "codex-debug",
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+        "compiler_version": "daily_deep_read_promotion_v1",
+        "promoted_record_id": "a060ec9e-2add-4ace-b846-1ad3072e7846"
+      },
+      "source_ids": [],
+      "business_date": "2026-07-06",
+      "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+      "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "candidate_policy": "review_gated_not_auto_promoted",
+      "consumer_compiler_version": "daily_deep_read_consumers_v1",
+      "daily_packet_generated_at": "2026-07-07T11:32:33.213Z",
+      "project_assignment_method": "project_name_or_number_match"
+    }
+  },
+  "promotedCard": {
+    "id": "a060ec9e-2add-4ace-b846-1ad3072e7846",
+    "card_type": "project_update",
+    "title": "Union Collective / Union Food Hall:",
+    "current_status": "open",
+    "metadata": {
+      "review": {
+        "action": "accept",
+        "source": "project_intelligence_daily_deep_read_review",
+        "reviewed_at": "2026-07-07T19:23:23.912Z",
+        "reviewed_by": "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+        "review_notes": null,
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+      },
+      "section": "Project Intelligence Updates",
+      "source_ids": [],
+      "promoted_at": "2026-07-07T19:24:22.255Z",
+      "promoted_by": "codex-debug",
+      "business_date": "2026-07-06",
+      "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+      "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "candidate_policy": "review_gated_not_auto_promoted",
+      "promoted_target_id": "93dc271e-dc59-4f51-9b3e-db402c67bf97",
+      "daily_packet_target_id": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+      "consumer_compiler_version": "daily_deep_read_consumers_v1",
+      "daily_packet_generated_at": "2026-07-07T11:32:33.213433+00:00",
+      "project_assignment_method": "project_name_or_number_match",
+      "daily_packet_business_date": "2026-07-06",
+      "promotion_compiler_version": "daily_deep_read_promotion_v1",
+      "daily_deep_read_candidate_id": "70f1cb12-b56e-4969-af11-ebb8cf1560ee"
+    }
+  },
+  "remainingVisibleCandidates": [
+    {
+      "id": "53cbff2d-4a86-4495-bcd2-87cbae8c33b4",
+      "status": "needs_review",
+      "signal_type": "decision",
+      "title": "Whether Union Collective solar should stay below the 45kW threshold to avoid Level 2 interconnection complexity unless the economic case clearly supports larger capacity. [outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1"
+    },
+    {
+      "id": "183ca0a2-b8a5-4af6-94da-779b934504b3",
+      "status": "needs_review",
+      "signal_type": "decision",
+      "title": "Decide solar direction for Union Collective immediately if schedule protection matters."
+    }
+  ]
+}
