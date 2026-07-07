@@ -707,6 +707,11 @@
       "description": "Verify the current user's authentication status and super admin privileges"
     },
     {
+      "url": "/admin/commitment-sov-cleanup",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/admin/company-info",
       "title": "Company Knowledge Base",
       "description": "Manage company profile and knowledge articles for the AI assistant"
