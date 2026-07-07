@@ -126,7 +126,7 @@ export function ScheduleOfValuesTab({
     message: null,
   };
   const approvedStatusMessage =
-    "This commitment is approved. Move it back to Draft before editing schedule-of-values line items.";
+    "Schedule of Values is locked for approved contracts.";
   const resolvedLockState = isApprovedStatus
     ? {
         locked: true,

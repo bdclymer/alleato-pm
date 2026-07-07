@@ -222,7 +222,7 @@ describe("ScheduleOfValuesTab column integrity", () => {
 
     expect(
       screen.getByText(
-        "This commitment is approved. Move it back to Draft before editing schedule-of-values line items.",
+        "Schedule of Values is locked for approved contracts.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Add Line Item")).not.toBeInTheDocument();
