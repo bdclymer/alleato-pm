@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "packetId": "a8fb06d4-9569-4eab-8aee-ff1bda249d85",
+  "compilerVersion": "daily_deep_read_consumers_v1",
+  "shouldWrite": true,
+  "candidateCount": 11,
+  "writeResult": {
+    "deleted": 0,
+    "inserted": 11
+  },
+  "readBack": [
+    {
+      "signal_type": "decision",
+      "status": "needs_review",
+      "count": 1
+    },
+    {
+      "signal_type": "process_issue",
+      "status": "needs_review",
+      "count": 1
+    },
+    {
+      "signal_type": "project_update",
+      "status": "needs_review",
+      "count": 5
+    },
+    {
+      "signal_type": "risk",
+      "status": "needs_review",
+      "count": 2
+    },
+    {
+      "signal_type": "task",
+      "status": "needs_review",
+      "count": 2
+    }
+  ],
+  "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-06-26"
+}

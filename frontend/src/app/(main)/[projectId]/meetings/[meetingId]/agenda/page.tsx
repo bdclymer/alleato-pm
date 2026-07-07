@@ -274,6 +274,7 @@ export default function MeetingAgendaPage() {
       <ContentSectionStack className="pt-1">
         {activeTab === "agenda" ? (
           <DetailLayout
+            sidebarAt="lg"
             sidebar={
               <MeetingCommandRail
                 projectId={projectId}

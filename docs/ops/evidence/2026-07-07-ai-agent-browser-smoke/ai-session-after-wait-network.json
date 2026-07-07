@@ -1,0 +1,26 @@
+[
+  {
+    "url": "http://localhost:3001/api/users/me/profile",
+    "status": 200
+  },
+  {
+    "url": "http://localhost:3001/api/comments/all",
+    "status": 200
+  },
+  {
+    "url": "http://localhost:3001/api/projects?limit=500&includeClient=false&archived=false",
+    "status": 200
+  },
+  {
+    "url": "http://localhost:3001/api/ai-assistant/workspace?type=change_event_draft&status=draft&sessionId=ee00981f-f500-4e51-a78d-08154d90f189&limit=1",
+    "status": 200
+  },
+  {
+    "url": "http://localhost:3001/api/ai-assistant/conversations",
+    "status": 200
+  },
+  {
+    "url": "http://localhost:3001/api/ai-assistant/messages/ee00981f-f500-4e51-a78d-08154d90f189",
+    "status": 200
+  }
+]

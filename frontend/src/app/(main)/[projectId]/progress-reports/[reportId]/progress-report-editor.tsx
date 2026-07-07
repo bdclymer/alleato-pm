@@ -681,7 +681,7 @@ export function ProgressReportEditor({
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
             <div className="space-y-8">
               <div className="space-y-2">
                 <Label htmlFor="highlights">Past week&apos;s highlights</Label>
@@ -1015,7 +1015,7 @@ export function ProgressReportEditor({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
         <div className="space-y-0">
           <DetailPanel className="space-y-8">
             <ReportMarkdownSection

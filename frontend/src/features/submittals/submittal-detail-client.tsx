@@ -1086,6 +1086,7 @@ export function SubmittalDetailClient({
             {activeTab === "details" && (
           <ContentSectionStack className="pt-6">
             <DetailLayout
+              sidebarAt="lg"
               sidebar={
                 workflowSteps.length > 0 ? (() => {
                   const completed = workflowSteps.filter(

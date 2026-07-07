@@ -1664,6 +1664,7 @@ export default function PrimeContractCODetailPage() {
           {activeTab === "general" && (
             <ContentSectionStack>
               <DetailLayout
+                sidebarAt="lg"
                 sidebar={
                   <div className="space-y-8">
                     <DetailPanel>
