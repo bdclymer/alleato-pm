@@ -118,6 +118,17 @@ export const EXECUTIVE_DAILY_BRIEF_SOURCE_ADAPTERS: SourceAdapterDefinition[] = 
     healthRecordType: "source_health_snapshot",
   },
   {
+    adapterId: "daily_executive_brief_canonical_packet",
+    title: "Canonical Daily Executive Brief packet adapter",
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
+    toolNames: ["fetch-daily-executive-brief-sources"],
+    requiredForExecutiveBrief: true,
+    defaultFreshnessMinutes: 1_440,
+    supportedHealthStates: REQUIRED_HEALTH_STATES,
+    outputRecordType: "evidence_ref",
+    healthRecordType: "source_health_snapshot",
+  },
+  {
     adapterId: "project_intelligence_packets",
     title: "Project Intelligence packet adapter",
     sourceFamilies: [

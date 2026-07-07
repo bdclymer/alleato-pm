@@ -162,16 +162,17 @@ describe("global AI assistant tool registry", () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       [...EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS].sort(),
     );
+    expect(tools.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining([
+        "read-current-daily-executive-brief",
+        "fetch-daily-executive-brief-sources",
+      ]),
+    );
     expect(
       tools
         .filter((tool) => tool.requiresDeliveryPermission)
         .map((tool) => tool.name),
-    ).toEqual(
-      expect.arrayContaining([
-        "send-teams-daily-brief",
-        "send-email-daily-brief",
-      ]),
-    );
+    ).toEqual([]);
   });
 
   it("exposes project and action factories to the assistant chat workflow", () => {
@@ -198,7 +199,7 @@ describe("global AI assistant tool registry", () => {
         "extractStructuredActionBrief",
         "getSpecRequirements",
         "getDomainIntelligence",
-        "generateExecutiveDailyBrief",
+        "readCurrentDailyExecutiveBrief",
         "createMarketingContentAsset",
       ]),
     );

@@ -6,7 +6,7 @@ import {
 
 export const EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID = "executive_daily_brief";
 export const EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION =
-  "2026-06-19.ai-ops-gateway-v1";
+  "2026-07-07.canonical-packet-read-v1";
 
 export const EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS = [
   "fetch-fireflies-meeting-sources",
@@ -16,12 +16,8 @@ export const EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS = [
   "fetch-acumatica-financial-sources",
   "fetch-procore-project-sources",
   "fetch-project-intelligence-sources",
-  "generate-executive-daily-brief-packet",
-  "persist-executive-daily-brief-artifact",
-  "build-teams-daily-brief-payload",
-  "send-teams-daily-brief",
-  "build-email-daily-brief-payload",
-  "send-email-daily-brief",
+  "read-current-daily-executive-brief",
+  "fetch-daily-executive-brief-sources",
 ] as const;
 
 export const EXECUTIVE_DAILY_BRIEF_WORKFLOW: WorkflowDefinition = {
@@ -70,13 +66,13 @@ export const EXECUTIVE_DAILY_BRIEF_WORKFLOW: WorkflowDefinition = {
     })),
     packetSchemaName: "ExecutiveDailyBriefPacket",
     promptContract:
-      "Produce Brandon-first concise executive claims. Every surfaced claim must carry source-backed citations or be excluded/degraded.",
+      "Read the canonical daily-executive-brief packet from intelligence_packets. Do not regenerate or deliver a Daily Brief unless the rebuilt compiler writes back to the same packet contract.",
     degradedOutputBehavior:
-      "Generate only source-backed sections that meet evidence policy; record missing/stale sources in source health and run metadata.",
+      "If the canonical packet is missing or stale, report that state and name the canonical manual source-bundle compiler as the missing generation step.",
     hardFailConditions: [
-      "No source-backed claims can be generated.",
-      "Artifact persistence fails.",
-      "Delivery attempt cannot be recorded when delivery is requested.",
+      "Canonical daily-executive-brief target is missing or inactive.",
+      "No current or snapshot intelligence_packets row exists for the canonical target.",
+      "A tool attempts to write to the legacy recap table or deliver from a non-canonical packet.",
     ],
   },
 };

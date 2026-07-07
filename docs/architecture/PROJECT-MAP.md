@@ -1169,7 +1169,7 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 
 | Tool | Description |
 |------|-------------|
-| `generateExecutiveDailyBrief` | Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. IMPORTANT: After this tool completes, output ONLY the single sentence 'Your brief is ready.' — do not summarize, paraphrase, or restate the tool output. The UI renders the brief as a structured card. |
+| `readCurrentDailyExecutiveBrief` | Read the current canonical Daily Executive Brief from intelligence_packets target slug daily-executive-brief. Use this when the user asks for today's brief, the current executive brief, or the saved daily update. Do not regenerate the brief; if the packet is missing or stale, report that the canonical packet must be compiled first. |
 
 ### `financial.ts` (6)
 

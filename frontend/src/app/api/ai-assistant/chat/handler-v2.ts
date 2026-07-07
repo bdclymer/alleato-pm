@@ -97,6 +97,10 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createChatHistoryWriter } from "./chat-history-writer";
 import {
+  loadCurrentDailyExecutiveBriefPacket,
+  type CanonicalDailyBriefPacket,
+} from "@/lib/daily-briefs/canonical-packets";
+import {
   DEFAULT_AI_ASSISTANT_MODEL,
   isDeepAgentsStrategistModelId,
   isAiAssistantModelId,
@@ -1958,41 +1962,21 @@ function buildDirectSourceLookupAnswer(params: {
   return lines.join("\n").trim();
 }
 
-type ExecutiveBriefingMetadataRow = Pick<
-  Database["public"]["Tables"]["daily_recaps"]["Row"],
-  | "id"
-  | "recap_date"
-  | "recap_kind"
-  | "created_at"
-  | "approved_at"
-  | "sent_at"
-  | "workflow_status"
-  | "meeting_count"
-  | "project_count"
-  | "ai_work_run_id"
->;
-
-async function loadLatestExecutiveBriefingMetadata(
-  supabase: SupabaseClient<Database>,
-): Promise<{
-  row: ExecutiveBriefingMetadataRow | null;
+async function loadLatestExecutiveBriefingMetadata(): Promise<{
+  packet: CanonicalDailyBriefPacket | null;
   errorMessage: string | null;
 }> {
-  const { data, error } = await supabase
-    .from("daily_recaps")
-    .select(
-      "id,recap_date,recap_kind,created_at,approved_at,sent_at,workflow_status,meeting_count,project_count,ai_work_run_id",
-    )
-    .eq("recap_kind", "executive_briefing")
-    .order("created_at", { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    return { row: null, errorMessage: error.message };
+  try {
+    return {
+      packet: await loadCurrentDailyExecutiveBriefPacket(),
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      packet: null,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  return { row: data ?? null, errorMessage: null };
 }
 
 function formatBriefingTimestamp(value: string | null): string {
@@ -2003,42 +1987,43 @@ function formatBriefingTimestamp(value: string | null): string {
 }
 
 function buildExecutiveBriefingMetadataContent(params: {
-  row: ExecutiveBriefingMetadataRow | null;
+  packet: CanonicalDailyBriefPacket | null;
   errorMessage: string | null;
 }): string {
   if (params.errorMessage) {
     return [
       "I checked the daily operating brief metadata, but the lookup failed.",
       "",
-      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "Source checked: intelligence_packets target daily-executive-brief",
       `Failure: ${params.errorMessage}`,
       "",
       "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
     ].join("\n");
   }
 
-  if (!params.row) {
+  if (!params.packet) {
     return [
-      "I checked the daily operating brief metadata and did not find an executive briefing row yet.",
+      "I checked the daily operating brief metadata and did not find a canonical Daily Executive Brief packet yet.",
       "",
-      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      "",
+      "Missing generation step: run the canonical manual source-bundle compiler so it writes to the daily-executive-brief packet.",
       "",
       "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
     ].join("\n");
   }
 
-  const regeneratedAt =
-    params.row.created_at ?? params.row.approved_at ?? params.row.sent_at;
+  const regeneratedAt = params.packet.generatedAt;
   return [
-    `The daily operating brief was last regenerated at ${formatBriefingTimestamp(regeneratedAt)}.`,
+    `The daily operating brief was last compiled at ${formatBriefingTimestamp(regeneratedAt)}.`,
     "",
-    "Source checked: daily_recaps.recap_kind=executive_briefing",
-    `Recap date: ${params.row.recap_date}`,
-    `Workflow status: ${params.row.workflow_status}`,
-    `Approved at: ${formatBriefingTimestamp(params.row.approved_at)}`,
-    `Sent at: ${formatBriefingTimestamp(params.row.sent_at)}`,
-    `Coverage: ${params.row.project_count ?? 0} projects, ${params.row.meeting_count ?? 0} meetings`,
-    params.row.ai_work_run_id ? `AI work run: ${params.row.ai_work_run_id}` : null,
+    "Source checked: intelligence_packets target daily-executive-brief",
+    `Packet ID: ${params.packet.id}`,
+    `Business date: ${params.packet.businessDate}`,
+    `Packet type: ${params.packet.packetType}`,
+    `Freshness status: ${params.packet.freshnessStatus ?? "not recorded"}`,
+    `Source count: ${params.packet.sourceCount}`,
+    `Compiler version: ${params.packet.compilerVersion ?? "not recorded"}`,
   ]
     .filter((line): line is string => Boolean(line))
     .join("\n");
@@ -2693,9 +2678,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           }
         }
 
-        const metadataLookup = await loadLatestExecutiveBriefingMetadata(
-          args.supabase,
-        );
+        const metadataLookup = await loadLatestExecutiveBriefingMetadata();
         const content = buildExecutiveBriefingMetadataContent(metadataLookup);
         const toolTrace = [
           {
@@ -2718,13 +2701,13 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             agent: "retrieval-planner-v2",
             status: metadataLookup.errorMessage ? "failed" : "success",
             input: {
-              table: "daily_recaps",
-              filter: "daily_recaps.recap_kind=executive_briefing",
-              order: "created_at desc",
+              table: "intelligence_packets",
+              targetSlug: "daily-executive-brief",
+              packetType: "current",
             },
             output: {
-              found: Boolean(metadataLookup.row),
-              row: metadataLookup.row,
+              found: Boolean(metadataLookup.packet),
+              packet: metadataLookup.packet,
               error: metadataLookup.errorMessage,
             },
             timestamp: new Date().toISOString(),
@@ -2737,14 +2720,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           memoryUsage,
           sourceCoverage: [
             {
-              sourceType: "daily_recaps",
-              status: metadataLookup.row ? "loaded" : "missing",
+              sourceType: "intelligence_packets",
+              status: metadataLookup.packet ? "loaded" : "missing",
               notes:
                 metadataLookup.errorMessage ??
-                "daily_recaps.recap_kind=executive_briefing",
+                "target_slug=daily-executive-brief packet_type=current",
             },
           ],
-          evidenceCount: metadataLookup.row ? 1 : 0,
+          evidenceCount: metadataLookup.packet ? 1 : 0,
         });
 
         await persistDirectDeepAgentResponse({
@@ -2774,7 +2757,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               intent: "executive_briefing_metadata",
               reason: plan.reason,
               responseFormat: "metadata_lookup",
-              sources: ["daily_recaps"],
+              sources: ["intelligence_packets"],
             },
             tool_trace: toolTrace,
             response_quality: buildResponseQualityMetadata({

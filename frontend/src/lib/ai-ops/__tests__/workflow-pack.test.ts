@@ -82,7 +82,7 @@ describe("Executive Daily Brief workflow pack", () => {
     );
   });
 
-  it("filters tools by workflow policy before runtime use", () => {
+  it("keeps Daily Brief workflow tools read-only until canonical generation and delivery are rebuilt", () => {
     const policy = createExecutiveDailyBriefToolPolicy({
       allowDelivery: true,
       allowWrites: true,
@@ -94,8 +94,20 @@ describe("Executive Daily Brief workflow pack", () => {
       policy,
     ).map((toolDefinition) => toolDefinition.name);
 
-    expect(visibleToolNames).toContain("send-teams-daily-brief");
-    expect(visibleToolNames).not.toContain("send-email-daily-brief");
+    expect(visibleToolNames).toEqual(
+      expect.arrayContaining([
+        "read-current-daily-executive-brief",
+        "fetch-daily-executive-brief-sources",
+      ]),
+    );
+    expect(visibleToolNames).not.toEqual(
+      expect.arrayContaining([
+        "generate-executive-daily-brief-packet",
+        "persist-executive-daily-brief-artifact",
+        "send-teams-daily-brief",
+        "send-email-daily-brief",
+      ]),
+    );
   });
 
   it("builds its registry from the global assistant registry", () => {
@@ -107,21 +119,18 @@ describe("Executive Daily Brief workflow pack", () => {
     expect(EXECUTIVE_DAILY_BRIEF_TOOL_REGISTRY).toEqual(globalDefinitions);
   });
 
-  it("hides send tools when delivery is disabled or dry-run only", () => {
+  it("does not expose send tools even when delivery flags are enabled", () => {
     const scope = executiveDailyBriefToolScope({
-      allowDelivery: false,
+      allowDelivery: true,
       allowWrites: true,
       allowedChannels: ["teams"],
     });
 
-    expect(scope.visibleToolNames).toContain("build-teams-daily-brief-payload");
-    expect(scope.visibleToolNames).not.toContain("send-teams-daily-brief");
-    expect(scope.hiddenToolNames).toEqual(
-      expect.arrayContaining([
-        "send-teams-daily-brief",
-        "send-email-daily-brief",
-      ]),
+    expect(scope.visibleToolNames).toContain(
+      "read-current-daily-executive-brief",
     );
+    expect(scope.visibleToolNames).not.toContain("send-teams-daily-brief");
+    expect(scope.visibleToolNames).not.toContain("send-email-daily-brief");
   });
 
   it("stores actor, project, and source access filters in the workflow policy", () => {

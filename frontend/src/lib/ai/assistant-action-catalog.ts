@@ -127,10 +127,10 @@ const FEATURED_ACTIONS: CatalogDefinition[] = [
     prompt: "Create a weekly progress report draft with source-backed highlights.",
   },
   {
-    toolName: "generateExecutiveDailyBrief",
-    label: "Generate executive brief",
+    toolName: "readCurrentDailyExecutiveBrief",
+    label: "Read executive brief",
     group: "Reports and briefings",
-    prompt: "Generate an executive brief with source confidence and open decisions.",
+    prompt: "Show me the current canonical Daily Executive Brief.",
   },
   {
     toolName: "reviewSubmittalAgainstDrawings",
