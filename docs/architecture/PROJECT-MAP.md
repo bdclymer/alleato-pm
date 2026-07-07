@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (333)
+## UI Routes (334)
 
-_299/333 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_300/334 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -249,6 +249,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/eval-runs` | Runs are written to docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression | frontend/src/app/(admin)/eval-runs/page.tsx |
 | `/executive` | No meeting records matched today's Eastern-time date. | frontend/src/app/(main)/executive/page.tsx |
 | `/executive/capabilities` | Authentication required. | frontend/src/app/(main)/executive/capabilities/page.tsx |
+| `/executive/daily-deep-read-review` | This review queue is limited to users with executive briefing access. | frontend/src/app/(main)/executive/daily-deep-read-review/page.tsx |
 | `/executive/intelligence-brief` | This executive briefing is limited to users with executive briefing access. | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
 | `/feedback-inbox` | Review feedback, assign tools, and sync issues to GitHub. | frontend/src/app/(admin)/feedback-inbox/page.tsx |
 | `/files` | Global file browser and manager | frontend/src/app/(tables)/files/page.tsx |
@@ -351,7 +352,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (750)
+## API Endpoints (751)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -602,6 +603,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/executive/daily-brief/preview-teams` | POST | frontend/src/app/api/executive/daily-brief/preview-teams/route.ts |
 | `/api/executive/daily-brief/send-teams` | POST | frontend/src/app/api/executive/daily-brief/send-teams/route.ts |
 | `/api/executive/daily-brief/widget` | GET | frontend/src/app/api/executive/daily-brief/widget/route.ts |
+| `/api/executive/daily-deep-read-candidates/[candidateId]` | PATCH | frontend/src/app/api/executive/daily-deep-read-candidates/[candidateId]/route.ts |
 | `/api/executive/intelligence-brief` | GET | frontend/src/app/api/executive/intelligence-brief/route.ts |
 | `/api/executive/intelligence-stats` | GET | frontend/src/app/api/executive/intelligence-stats/route.ts |
 | `/api/files/[docId]/download` | GET | frontend/src/app/api/files/[docId]/download/route.ts |

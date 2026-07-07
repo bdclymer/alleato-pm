@@ -1162,6 +1162,11 @@
       "description": "Authentication required."
     },
     {
+      "url": "/executive/daily-deep-read-review",
+      "title": "Daily Deep Read review",
+      "description": "This review queue is limited to users with executive briefing access."
+    },
+    {
       "url": "/executive/intelligence-brief",
       "title": "Executive briefing",
       "description": "This executive briefing is limited to users with executive briefing access."

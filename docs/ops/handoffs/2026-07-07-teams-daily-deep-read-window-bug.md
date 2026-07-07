@@ -1,10 +1,35 @@
 # Handoff: Fix Teams Exclusion From Workday Daily Deep Read
 
-Status: Ready for implementation
-Owner: Next agent
+Status: RESOLVED 2026-07-07 (see Resolution below)
+Owner: Claude (implemented)
 Created: 2026-07-07
-Related packet: `e081fd85-7314-4636-9fea-dc193bd7051c`
+Related packet: `e081fd85-7314-4636-9fea-dc193bd7051c` (superseded by `95317ddb-8ae4-4cc6-a80d-5fa34d93e36f`)
 Related task: `docs/ops/tasks/2026-07-07-daily-deep-read-workday-run.md`
+Resolution task: `docs/ops/tasks/2026-07-07-daily-deep-read-teams-fix-and-central-review.md`
+
+## Resolution (2026-07-07)
+
+Implemented in `scripts/intelligence/daily-executive-brief.mjs`:
+
+- Teams rows now include by per-message timestamps `[YYYY-MM-DD HH:mm:ss]` parsed as
+  **UTC** — not America/New_York as this handoff guessed. Proof: the ingestion writer
+  (`backend/src/services/integrations/microsoft_graph/teams.py`, `_ingest` message line)
+  formats `createdDateTime[:19]` from Microsoft Graph, which is UTC ISO.
+- Date-only `Date: YYYY-MM-DD` headers are day evidence only: they can include a row on a
+  full-day (>=24h) window matching the business date, and never exclude a row from a
+  sub-day window — the row-timestamp fallback decides instead.
+- Row fallback precedence now includes `last_synced_at` per this handoff.
+- Loud failure added: `assertLaneCoverage` throws before any live write when a lane has
+  in-window rows (by row fallback timestamp) but zero included sources
+  (`--allow-empty-lanes` overrides).
+- `--sources-only` flag added for cheap inclusion preflights without a model run.
+
+Verified: workday preflight for 2026-07-07 went from `teams: 0` to `teams: 15` (all
+`basis=teams-message-timestamps-utc`); 40 out-of-window Teams rows still skipped. Live
+rerun wrote current packet `95317ddb-8ae4-4cc6-a80d-5fa34d93e36f`
+(meetings 11 / emails 98 / teams 15 / documents 20); the old teams=0 packet flipped to
+`snapshot` by existing runner behavior. Evidence:
+`docs/ops/evidence/2026-07-07-daily-deep-read-workday-teams-fix/`.
 
 ## Problem
 

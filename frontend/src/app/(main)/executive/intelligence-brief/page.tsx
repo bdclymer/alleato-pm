@@ -137,6 +137,13 @@ export default async function IntelligenceBriefPage() {
           <Link href="/daily-briefs" className="underline-offset-4 hover:underline">
             History
           </Link>
+          {" · "}
+          <Link
+            href="/executive/daily-deep-read-review"
+            className="underline-offset-4 hover:underline"
+          >
+            Review candidates
+          </Link>
         </div>
       </div>
     </PageShell>

@@ -7,6 +7,34 @@
 
 ## Current focus
 
+**Status:** Daily Deep Read — Teams window bug fixed, July 7 workday packet rerun live, central review queue built (branch `feat/daily-deep-read-teams-fix-central-review`, PR pending merge).
+**Last updated:** 2026-07-07
+**Last worked on by:** Claude Code
+
+## Daily Deep Read Teams fix + central review (2026-07-07)
+
+- **Teams inclusion bug fixed** in `scripts/intelligence/daily-executive-brief.mjs`: Teams
+  per-message timestamps `[YYYY-MM-DD HH:mm:ss]` are **UTC** (proven from
+  `microsoft_graph/teams.py` — Graph `createdDateTime`); date-only `Date:` headers never
+  exclude rows from sub-day windows; `assertLaneCoverage` throws before live writes when a
+  lane has in-window rows but zero included; `--sources-only` = cheap inclusion preflight.
+- **July 7 workday packet rerun live**: current packet `95317ddb-8ae4-4cc6-a80d-5fa34d93e36f`
+  (meetings 11 / emails 98 / **teams 15** / documents 20); old teams=0 packet
+  `e081fd85…` demoted to snapshot. Consumers auto-ran via new orchestrator (brief runner
+  chains `daily-deep-read-consumers.mjs` after a live write; `--skip-consumers` opts out;
+  backfill passes it since it owns its own consumer step) → **31 candidates, all
+  `needs_review`, awaiting Megan's review**.
+- **Central review queue** at `/executive/daily-deep-read-review` (linked from the
+  executive brief footer): every current-packet candidate incl. unassigned; project picker
+  on unassigned rows so promotion has a target; PATCH
+  `/api/executive/daily-deep-read-candidates/[candidateId]` (capability
+  `view_executive_briefing`). Human gate intact — hourly cron
+  `daily-deep-read-promote-accepted` still only drains accepted (`status='candidate'`) rows.
+- Ledger: `docs/ops/tasks/2026-07-07-daily-deep-read-teams-fix-and-central-review.md`;
+  handoff `docs/ops/handoffs/2026-07-07-teams-daily-deep-read-window-bug.md` RESOLVED.
+
+## Previous focus
+
 **Status:** Meetings tool shipped to PR #641 (feat/meetings-tool) — awaiting preview-deploy test + review + merge.
 **Last updated:** 2026-07-02
 **Last worked on by:** Claude Code (orchestrated 17-task subagent build)

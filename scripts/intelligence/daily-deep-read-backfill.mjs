@@ -271,6 +271,9 @@ async function processDate(date) {
     "snapshot",
     "--evidence-dir",
     evidenceRoot,
+    // Backfill owns the consumer step below so it can capture per-day evidence;
+    // skip the brief runner's built-in consumer chaining to avoid a double run.
+    "--skip-consumers",
   ];
   if (model) briefArgs.push("--model", model);
   const briefRun = runNodeScript(briefArgs[0], briefArgs.slice(1));

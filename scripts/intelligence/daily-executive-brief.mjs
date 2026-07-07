@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -100,13 +101,55 @@ function resolveWindowBounds(date, parsedArgs) {
 
 function parseDateFromText(text) {
   if (!text) return null;
-  const markdownDate = text.match(/\*\*Date:\*\*\s*([^\n]+)/i)?.[1]?.trim();
-  if (markdownDate) return new Date(markdownDate);
-  const emailDate = text.match(/^Date:\s*([^\n]+)/im)?.[1]?.trim();
-  if (emailDate) return new Date(emailDate);
+  const rawDate =
+    text.match(/\*\*Date:\*\*\s*([^\n]+)/i)?.[1]?.trim() ??
+    text.match(/^Date:\s*([^\n]+)/im)?.[1]?.trim();
+  if (rawDate) {
+    const parsed = new Date(rawDate);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return {
+      date: parsed,
+      // "Date: 2026-07-07" is a day label, not an event time. Time-of-day is the
+      // signal that the header carries a real timestamp.
+      dateOnly: !/\d{1,2}:\d{2}/.test(rawDate),
+      dateString: rawDate.match(/(20\d{2}-\d{2}-\d{2})/)?.[1] ?? null,
+    };
+  }
   const bracketDate = text.match(/\[(20\d{2}-\d{2}-\d{2})[^\]]*\]/)?.[1];
-  if (bracketDate) return new Date(`${bracketDate}T12:00:00.000-04:00`);
+  if (bracketDate) {
+    return {
+      date: new Date(`${bracketDate}T12:00:00.000-04:00`),
+      dateOnly: true,
+      dateString: bracketDate,
+    };
+  }
   return null;
+}
+
+// Teams ingestion (backend/src/services/integrations/microsoft_graph/teams.py) writes
+// message markers as `[{createdDateTime[:19] with T→space}]` from Microsoft Graph,
+// so these per-message timestamps are UTC.
+const TEAMS_MESSAGE_TIMESTAMP_PATTERN = /\[(20\d{2}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})\]/g;
+
+function parseTeamsMessageTimestamps(text) {
+  const timestamps = [];
+  for (const match of String(text ?? "").matchAll(TEAMS_MESSAGE_TIMESTAMP_PATTERN)) {
+    const parsed = new Date(`${match[1]}T${match[2]}.000Z`);
+    if (!Number.isNaN(parsed.getTime())) timestamps.push(parsed);
+  }
+  return timestamps;
+}
+
+function rowFallbackTimestamp(row) {
+  const fallback =
+    row.source_at ??
+    row.last_content_loaded_at ??
+    row.last_indexed_at ??
+    row.last_synced_at ??
+    row.updated_at ??
+    row.created_at;
+  const parsed = fallback ? new Date(fallback) : null;
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
 }
 
 function cleanText(value) {
@@ -135,25 +178,65 @@ function classifyLane(row) {
   return "documents";
 }
 
-function isIncludedForBusinessDate(row, text) {
+const FULL_DAY_MS = 24 * 60 * 60 * 1000;
+const windowIsFullDayOrLonger =
+  windowBounds.end.getTime() - windowBounds.start.getTime() >= FULL_DAY_MS;
+
+function isInWindow(timeMs) {
+  return timeMs >= windowBounds.start.getTime() && timeMs < windowBounds.end.getTime();
+}
+
+function includeByRowFallback(row, basis) {
+  const fallbackDate = rowFallbackTimestamp(row);
+  return {
+    include: fallbackDate !== null && isInWindow(fallbackDate.getTime()),
+    basis,
+    sourceAt: fallbackDate ? fallbackDate.toISOString() : null,
+  };
+}
+
+function isIncludedForBusinessDate(row, text, lane) {
+  if (lane === "teams") {
+    // Teams content headers carry a date-only day label; the real event times are
+    // the per-message UTC timestamps. Include the conversation row if any message
+    // falls inside the covered window.
+    const messageTimes = parseTeamsMessageTimestamps(text);
+    if (messageTimes.length > 0) {
+      const inWindowTimes = messageTimes.filter((time) => isInWindow(time.getTime()));
+      const anchor = inWindowTimes[inWindowTimes.length - 1] ?? messageTimes[messageTimes.length - 1];
+      return {
+        include: inWindowTimes.length > 0,
+        basis: "teams-message-timestamps-utc",
+        sourceAt: anchor.toISOString(),
+        inWindowMessageCount: inWindowTimes.length,
+        messageCount: messageTimes.length,
+      };
+    }
+    return includeByRowFallback(row, "loaded-or-row-timestamp");
+  }
+
   const parsed = parseDateFromText(text);
-  if (parsed) {
-    const parsedTime = parsed.getTime();
+  if (parsed && !parsed.dateOnly) {
     return {
-      include: parsedTime >= windowBounds.start.getTime() && parsedTime < windowBounds.end.getTime(),
+      include: isInWindow(parsed.date.getTime()),
       basis: "parsed-source-timestamp",
-      sourceAt: parsed.toISOString(),
+      sourceAt: parsed.date.toISOString(),
     };
   }
-  const fallback = row.source_at ?? row.last_content_loaded_at ?? row.last_indexed_at ?? row.updated_at ?? row.created_at;
-  const fallbackDate = fallback ? new Date(fallback) : null;
-  const fallbackTime = fallbackDate && !Number.isNaN(fallbackDate.getTime()) ? fallbackDate.getTime() : null;
-  return {
-    include:
-      fallbackTime !== null && fallbackTime >= windowBounds.start.getTime() && fallbackTime < windowBounds.end.getTime(),
-    basis: "loaded-or-row-timestamp",
-    sourceAt: fallbackDate && fallbackTime !== null ? fallbackDate.toISOString() : null,
-  };
+  if (parsed?.dateOnly) {
+    // A date-only header is day evidence: it may include a row on a full-day run,
+    // but it must never exclude a row from a sub-day window — midnight coercion is
+    // what silently dropped every Teams row from the July 7 workday packet.
+    if (windowIsFullDayOrLonger && parsed.dateString === businessDate) {
+      return {
+        include: true,
+        basis: "date-only-source-day",
+        sourceAt: parsed.date.toISOString(),
+      };
+    }
+    return includeByRowFallback(row, "row-timestamp-with-date-only-header");
+  }
+  return includeByRowFallback(row, "loaded-or-row-timestamp");
 }
 
 async function withPg(rawUrl, options, callback) {
@@ -258,7 +341,7 @@ async function materializeSources(rows) {
         usedStorage = true;
       }
     }
-    const inclusion = isIncludedForBusinessDate(row, text);
+    const inclusion = isIncludedForBusinessDate(row, text, lane);
     if (!inclusion.include) {
       skipped.push({
         id: row.id,
@@ -302,6 +385,30 @@ function groupByLane(sources) {
   const grouped = { meetings: [], emails: [], teams: [], documents: [] };
   for (const source of sources) grouped[source.lane]?.push(source);
   return grouped;
+}
+
+function assertLaneCoverage(rows, sources) {
+  const included = groupByLane(sources);
+  const gaps = [];
+  for (const lane of ["meetings", "emails", "teams", "documents"]) {
+    if (included[lane].length > 0) continue;
+    const inWindowRows = rows.filter((row) => {
+      if (classifyLane(row) !== lane) return false;
+      const fallback = rowFallbackTimestamp(row);
+      return fallback !== null && isInWindow(fallback.getTime());
+    });
+    if (inWindowRows.length > 0) {
+      gaps.push({ lane, inWindowRowCount: inWindowRows.length });
+    }
+  }
+  if (gaps.length === 0) return;
+  const message =
+    `Lane coverage failure for ${businessDate}: rows exist inside the covered window ` +
+    `but zero were included: ${JSON.stringify(gaps)}.`;
+  if (shouldWrite && !args["allow-empty-lanes"]) {
+    throw new Error(`${message} Fix source inclusion or pass --allow-empty-lanes to override.`);
+  }
+  console.warn(`[warn] ${message}`);
 }
 
 function renderCorpus(sources, skipped) {
@@ -776,22 +883,37 @@ async function writePacket({ sources, brief, laneNotes }) {
   });
 }
 
+function runConsumersForPacket(packetId) {
+  const scriptArgs = ["scripts/intelligence/daily-deep-read-consumers.mjs", "--packetId", packetId];
+  const result = spawnSync(process.execPath, scriptArgs, {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    maxBuffer: 20 * 1024 * 1024,
+  });
+  let parsed = null;
+  const stdout = String(result.stdout || "").trim();
+  const jsonStart = stdout.lastIndexOf("\n{");
+  try {
+    parsed = JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart + 1) : stdout);
+  } catch {
+    parsed = null;
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      `Daily Deep Read packet ${packetId} was written, but the consumer run failed ` +
+        `(exit ${result.status}). Rerun: node ${scriptArgs.join(" ")}\n${String(result.stderr || "").slice(0, 4000)}`,
+    );
+  }
+  return parsed ?? { ok: true, packetId, note: "consumer output was not parseable JSON" };
+}
+
 async function main() {
   await fs.mkdir(evidenceDir, { recursive: true });
   const rows = await fetchRows();
   const { sources, skipped } = await materializeSources(rows);
+  assertLaneCoverage(rows, sources);
   const corpusMarkdown = renderCorpus(sources, skipped);
   await fs.writeFile(path.join(evidenceDir, "source-corpus.md"), corpusMarkdown);
-
-  const { brief, laneNotes } = await draftExecutiveBrief(sources);
-  const packetBrief = ensureDailyDeepReadSections(brief, sources, skipped);
-  const briefMarkdown = [
-    `# Daily Executive Brief - ${businessDate}`,
-    "",
-    packetBrief,
-    "",
-  ].join("\n");
-  await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
   await fs.writeFile(
     path.join(evidenceDir, "source-manifest.json"),
     JSON.stringify(
@@ -809,10 +931,46 @@ async function main() {
     ),
   );
 
+  if (args["sources-only"]) {
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          mode: "sources-only",
+          businessDate,
+          evidenceDir,
+          rowsConsidered: rows.length,
+          included: Object.fromEntries(
+            Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length]),
+          ),
+          skipped: skipped.length,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
+  const { brief, laneNotes } = await draftExecutiveBrief(sources);
+  const packetBrief = ensureDailyDeepReadSections(brief, sources, skipped);
+  const briefMarkdown = [
+    `# Daily Executive Brief - ${businessDate}`,
+    "",
+    packetBrief,
+    "",
+  ].join("\n");
+  await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
+
   let packet = null;
+  let consumers = null;
   if (shouldWrite) {
     packet = await writePacket({ sources, brief: packetBrief, laneNotes });
     await fs.writeFile(path.join(evidenceDir, "packet-write.json"), JSON.stringify(packet, null, 2));
+    if (!args["skip-consumers"]) {
+      consumers = runConsumersForPacket(packet.packetId);
+      await fs.writeFile(path.join(evidenceDir, "consumer-run.json"), JSON.stringify(consumers, null, 2));
+    }
   }
 
   console.log(
@@ -825,6 +983,7 @@ async function main() {
         included: Object.fromEntries(Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length])),
         skipped: skipped.length,
         packet,
+        consumers,
       },
       null,
       2,
