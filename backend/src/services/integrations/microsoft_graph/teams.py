@@ -272,14 +272,26 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         "id": doc_id,
         "title": f"Teams: {team_name} / {channel_name}",
         "source": "microsoft_graph",
+        "source_system": "teams",
         "category": "teams_message",
         "type": "teams_message",
         "content": thread_text,
+        "storage_bucket": "documents",
+        "storage_path": storage_path,
         "date": created[:10] if created else None,
         "participants": ", ".join(sorted(set(participants))),
         "status": "raw_ingested",
         "tags": ",".join(["teams", team_name.lower(), channel_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
         "project_id": project_id,
+        "source_metadata": {
+            "document_kind": "teams_channel_thread",
+            "team_id": team_id,
+            "team_name": team_name,
+            "channel_id": channel_id,
+            "channel_name": channel_name,
+            "root_message_id": msg_id,
+            "message_count": len(thread_messages),
+        },
     })
     _run_source_intelligence_compiler(supabase_client, doc_id)
     if project_id:
@@ -546,9 +558,12 @@ def _process_chat_message(
         "id": doc_id,
         "title": f"Teams DM Conversation: {chat_display_name}",
         "source": "microsoft_graph",
+        "source_system": "teams_dm",
         "category": "teams_message",  # same category → picked up by searchTeamsMessages tool
         "type": "teams_dm_conversation",
         "content": text,
+        "storage_bucket": "documents",
+        "storage_path": storage_path,
         "date": date_key,
         "participants": ", ".join(participants),
         "status": "raw_ingested" if is_embedding_ready else "skipped_low_content",
@@ -556,6 +571,7 @@ def _process_chat_message(
         "project_id": project_id,
         "source_metadata": {
             **(((existing_doc or {}).get("source_metadata") or {}) if isinstance((existing_doc or {}).get("source_metadata"), dict) else {}),
+            "document_kind": "teams_dm_conversation",
             "source_day": date_key,
             "source_day_timezone": "UTC",
             "teams_chat_id": chat_id,

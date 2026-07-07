@@ -38,6 +38,12 @@ SEGMENT_IDX_NOTES_TOPIC = -3
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 LOW_CONTENT_STATUS = "skipped_low_content"
 MIN_SEARCHABLE_CHARS = 50
+GRAPH_EMBEDDER_OWNED_TYPES = {
+    "outlook_conversation",
+    "teams_dm_conversation",
+    "teams_message",
+    "teams_dm",
+}
 
 
 def _hash_content(text: str) -> str:
@@ -274,9 +280,11 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     source_metadata = metadata.get("source_metadata") if isinstance(metadata, dict) else {}
     if not isinstance(source_metadata, dict):
         source_metadata = {}
-    if (
-        metadata.get("source") == "microsoft_graph"
-        and source_metadata.get("document_kind") == "outlook_conversation"
+    graph_owned_kind = source_metadata.get("document_kind")
+    graph_owned_type = metadata.get("type") or metadata.get("document_type")
+    if metadata.get("source") == "microsoft_graph" and (
+        graph_owned_kind in GRAPH_EMBEDDER_OWNED_TYPES
+        or graph_owned_type in GRAPH_EMBEDDER_OWNED_TYPES
     ):
         update_ingestion_job_state(
             metadata_id,
@@ -289,7 +297,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             "chunkCount": 0,
             "segmentCount": 0,
             "skipped": True,
-            "skipReason": "owned_by_graph_email_embedder",
+            "skipReason": "owned_by_graph_embedder",
         }
 
     rag_metadata = fetch_optional_row(

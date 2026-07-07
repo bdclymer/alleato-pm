@@ -156,7 +156,7 @@ def test_embedder_marks_no_segment_no_vision_document_skipped_low_content(monkey
     assert job_updates[-1]["kwargs"]["stage"] == "done"
 
 
-def test_embedder_skips_outlook_conversation_docs_owned_by_graph_embedder(monkeypatch):
+def test_embedder_skips_graph_conversation_docs_owned_by_graph_embedder(monkeypatch):
     metadata_id = "outlook_conversation_123"
     app = _Supabase(
         {
@@ -208,6 +208,65 @@ def test_embedder_skips_outlook_conversation_docs_owned_by_graph_embedder(monkey
         "chunkCount": 0,
         "segmentCount": 0,
         "skipped": True,
-        "skipReason": "owned_by_graph_email_embedder",
+        "skipReason": "owned_by_graph_embedder",
+    }
+    assert job_updates[-1]["kwargs"]["stage"] == "done"
+
+
+def test_embedder_skips_teams_dm_conversation_docs_owned_by_graph_embedder(monkeypatch):
+    metadata_id = "teamsdm_chat_2026-07-06"
+    app = _Supabase(
+        {
+            "document_metadata": [
+                {
+                    "id": metadata_id,
+                    "title": "Teams DM Conversation: Operations",
+                    "source": "microsoft_graph",
+                    "source_system": None,
+                    "type": "teams_dm_conversation",
+                    "category": "teams_message",
+                    "source_metadata": {
+                        "teams_chat_id": "chat-1",
+                        "source_day": "2026-07-06",
+                    },
+                    "status": "raw_ingested",
+                }
+            ],
+            "fireflies_ingestion_jobs": [],
+        }
+    )
+    rag = _Supabase({"document_chunks": []})
+    job_updates = []
+
+    monkeypatch.setattr(embedder, "get_supabase_client", lambda: app)
+    monkeypatch.setattr(embedder, "get_rag_write_client", lambda: rag)
+    monkeypatch.setattr(
+        embedder,
+        "fetch_optional_row",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("generic embedder must not hydrate Teams conversation content")
+        ),
+    )
+    monkeypatch.setattr(
+        embedder,
+        "update_ingestion_job_state",
+        lambda *args, **kwargs: job_updates.append({"args": args, "kwargs": kwargs}),
+    )
+    monkeypatch.setattr(
+        embedder.llm,
+        "batch_embed",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("generic embedder must not embed Teams conversation docs")
+        ),
+    )
+
+    result = embedder.run_embedder(metadata_id)
+
+    assert result == {
+        "metadataId": metadata_id,
+        "chunkCount": 0,
+        "segmentCount": 0,
+        "skipped": True,
+        "skipReason": "owned_by_graph_embedder",
     }
     assert job_updates[-1]["kwargs"]["stage"] == "done"
