@@ -166,6 +166,10 @@ const packet: CanonicalDailyBriefPacket = {
   compilerVersion: "daily-deep-read-v1",
 };
 
+function refreshProjectIntelligence() {
+  return Promise.resolve({ ok: true });
+}
+
 function candidate(overrides: Row = {}): Row {
   return {
     id: "candidate-1",
@@ -219,12 +223,16 @@ describe("promoteDailyDeepReadCandidate", () => {
     });
     const ragClient = new FakeSupabaseClient({
       source_signal_candidates: [candidate()],
-      packet_refresh_jobs: [],
     });
 
     const result = await promoteDailyDeepReadCandidate(
       { candidateId: "candidate-1", projectId: 1009, reviewedBy: "user-1" },
-      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+      {
+        appClient: appClient as never,
+        ragClient: ragClient as never,
+        currentPacket: packet,
+        refreshProjectIntelligence,
+      },
     );
 
     expect(result).toMatchObject({
@@ -256,14 +264,6 @@ describe("promoteDailyDeepReadCandidate", () => {
       current_status: "resolved",
       promoted_insight_card_id: "tasks-1",
     });
-    expect(ragClient.rows("packet_refresh_jobs")[0]).toMatchObject({
-      target_id: "target-1009",
-      reason: "Daily Deep Read candidate promoted",
-      trigger_source_document_id: packet.id,
-      status: "queued",
-      priority: 10,
-      compiler_version: "ai_intelligence_compiler_v0_1",
-    });
   });
 
   it("blocks duplicate promotion when an app record already exists", async () => {
@@ -291,13 +291,17 @@ describe("promoteDailyDeepReadCandidate", () => {
     });
     const ragClient = new FakeSupabaseClient({
       source_signal_candidates: [candidate()],
-      packet_refresh_jobs: [],
     });
 
     await expect(
       promoteDailyDeepReadCandidate(
         { candidateId: "candidate-1", projectId: 1009 },
-        { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+        {
+          appClient: appClient as never,
+          ragClient: ragClient as never,
+          currentPacket: packet,
+          refreshProjectIntelligence,
+        },
       ),
     ).rejects.toMatchObject<Partial<GuardrailError>>({
       code: "PRECONDITION_FAILED",
@@ -339,19 +343,22 @@ describe("promoteDailyDeepReadCandidate", () => {
           status: "needs_review",
         }),
       ],
-      packet_refresh_jobs: [],
     });
 
     const result = await promoteAcceptedDailyDeepReadCandidates(
       { projectId: 1009, reviewedBy: "user-1" },
-      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+      {
+        appClient: appClient as never,
+        ragClient: ragClient as never,
+        currentPacket: packet,
+        refreshProjectIntelligence,
+      },
     );
 
     expect(result.promoted).toHaveLength(2);
     expect(result.failed).toHaveLength(0);
     expect(appClient.rows("tasks")).toHaveLength(1);
     expect(appClient.rows("insight_cards")).toHaveLength(1);
-    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(1);
     expect(appClient.rows("insight_cards")[0]).toMatchObject({
       card_type: "decision",
       title: "Decide bid leveling approach",
@@ -401,12 +408,16 @@ describe("promoteDailyDeepReadCandidate", () => {
           signal_type: "decision",
         }),
       ],
-      packet_refresh_jobs: [],
     });
 
     const result = await promoteAcceptedDailyDeepReadCandidates(
       { projectId: 1009 },
-      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+      {
+        appClient: appClient as never,
+        ragClient: ragClient as never,
+        currentPacket: packet,
+        refreshProjectIntelligence,
+      },
     );
 
     expect(result.promoted).toHaveLength(1);
@@ -460,12 +471,16 @@ describe("promoteDailyDeepReadCandidate", () => {
           status: "needs_review",
         }),
       ],
-      packet_refresh_jobs: [],
     });
 
     const result = await drainAcceptedDailyDeepReadPromotions(
       { reviewedBy: "cron:test" },
-      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+      {
+        appClient: appClient as never,
+        ragClient: ragClient as never,
+        currentPacket: packet,
+        refreshProjectIntelligence,
+      },
     );
 
     expect(result).toMatchObject({
@@ -486,10 +501,9 @@ describe("promoteDailyDeepReadCandidate", () => {
       { id: "candidate-1010", status: "promoted" },
       { id: "candidate-ignored", status: "needs_review" },
     ]);
-    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(2);
   });
 
-  it("updates an active packet refresh job instead of inserting a duplicate", async () => {
+  it("refreshes canonical project intelligence after successful promotion", async () => {
     const appClient = new FakeSupabaseClient({
       intelligence_targets: [
         {
@@ -507,30 +521,19 @@ describe("promoteDailyDeepReadCandidate", () => {
     });
     const ragClient = new FakeSupabaseClient({
       source_signal_candidates: [candidate()],
-      packet_refresh_jobs: [
-        {
-          id: "refresh-existing",
-          target_id: "target-1009",
-          status: "queued",
-          priority: 3,
-          compiler_version: "ai_intelligence_compiler_v0_1",
-          trigger_source_document_id: null,
-          trigger_insight_card_id: null,
-        },
-      ],
     });
+    const refresh = jest.fn().mockResolvedValue({ ok: true });
 
     await promoteDailyDeepReadCandidate(
       { candidateId: "candidate-1", projectId: 1009 },
-      { appClient: appClient as never, ragClient: ragClient as never, currentPacket: packet },
+      {
+        appClient: appClient as never,
+        ragClient: ragClient as never,
+        currentPacket: packet,
+        refreshProjectIntelligence: refresh,
+      },
     );
 
-    expect(ragClient.rows("packet_refresh_jobs")).toHaveLength(1);
-    expect(ragClient.rows("packet_refresh_jobs")[0]).toMatchObject({
-      id: "refresh-existing",
-      reason: "Daily Deep Read candidate promoted",
-      trigger_source_document_id: packet.id,
-      priority: 10,
-    });
+    expect(refresh).toHaveBeenCalledWith(1009);
   });
 });
