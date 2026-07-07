@@ -20,6 +20,7 @@ SOURCE_FILTERS = {
     "fireflies": None,
 }
 BACKFILL_TAG = "project_backfill:incremental_assignment_v1"
+REVIEW_REQUIRED_METHOD = "review_required:communication_project_backfill"
 
 
 def _append_tag(existing: str | None, tag: str) -> str:
@@ -66,6 +67,58 @@ def _iter_unassigned_documents(
             yield document
 
 
+def _matched_fields_for_evidence(attribution_evidence: Dict[str, Any]) -> List[str]:
+    content_source = attribution_evidence.get("content_source")
+    fields = ["document_metadata.title"]
+    if content_source == "document_chunks":
+        fields.append("document_chunks.text")
+    elif content_source in {"document_metadata", "summary_metadata"}:
+        fields.append("document_metadata.content")
+    return fields
+
+
+def _write_pending_review_candidate(
+    document: Dict[str, Any],
+    *,
+    method: str,
+    confidence: float,
+    attribution_evidence: Dict[str, Any],
+) -> None:
+    """Stage unresolved source attribution for review instead of leaving a silent gap."""
+    document_id = document.get("id")
+    if not document_id:
+        return
+
+    bounded_confidence = max(0.0, min(1.0, float(confidence or 0.0)))
+    rag_client = get_rag_write_client()
+    rag_client.table("document_attribution_candidates").delete().eq(
+        "source_document_id", str(document_id)
+    ).eq("attribution_method", REVIEW_REQUIRED_METHOD).execute()
+    rag_client.table("document_attribution_candidates").insert(
+        {
+            "source_document_id": str(document_id),
+            "candidate_project_id": None,
+            "candidate_project_name": None,
+            "confidence": bounded_confidence,
+            "attribution_method": REVIEW_REQUIRED_METHOD,
+            "evidence_terms": [method] if method else [],
+            "matched_fields": _matched_fields_for_evidence(attribution_evidence),
+            "reasoning": (
+                "Shared communication project backfill could not infer a project "
+                "with enough confidence; explicit attribution review is required."
+            ),
+            "status": "pending_review",
+            "evidence": {
+                "source": document.get("source"),
+                "category": document.get("category"),
+                "title": attribution_evidence.get("title"),
+                "content_source": attribution_evidence.get("content_source"),
+                "assignment_method": method,
+            },
+        }
+    ).execute()
+
+
 def run_incremental_project_backfill(
     client: Client,
     *,
@@ -91,6 +144,7 @@ def run_incremental_project_backfill(
         "scanned": 0,
         "assigned": 0,
         "skipped_low_confidence": 0,
+        "review_staged": 0,
         "failed": 0,
         "methods": {},
         "errors": [],
@@ -115,6 +169,13 @@ def run_incremental_project_backfill(
 
             if not project_id or confidence < resolved_min_confidence:
                 stats["skipped_low_confidence"] += 1
+                _write_pending_review_candidate(
+                    document,
+                    method=method,
+                    confidence=confidence,
+                    attribution_evidence=attribution_evidence,
+                )
+                stats["review_staged"] += 1
                 continue
 
             project = (
