@@ -20,6 +20,7 @@ const AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1";
 const COMPILER_VERSION = "manual_daily_executive_brief_v1";
 const TIME_ZONE = "America/New_York";
 const MAX_MODEL_CHARS_PER_ITEM = 12_000;
+const MODEL_TIMEOUT_MS = 180_000;
 
 const args = parseArgs(process.argv.slice(2));
 const businessDate = args.date ?? previousBusinessDateInNewYork();
@@ -30,7 +31,7 @@ if (!["current", "snapshot"].includes(packetType)) {
   throw new Error(`--packetType must be current or snapshot, received: ${packetType}`);
 }
 
-const windowBounds = businessDayBoundsUtc(businessDate);
+const windowBounds = resolveWindowBounds(businessDate, args);
 const evidenceRoot =
   (typeof args.evidenceDir === "string" && args.evidenceDir) ||
   (typeof args["evidence-dir"] === "string" && args["evidence-dir"]) ||
@@ -72,18 +73,29 @@ function businessDayBoundsUtc(date) {
   return { start, end, startIso: start.toISOString(), endIso: end.toISOString() };
 }
 
-function sourceDateInNewYork(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
+function parseRequiredDateArg(value, flagName) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`${flagName} must be an ISO timestamp, received: ${value}`);
+  }
+  return parsed;
+}
+
+function resolveWindowBounds(date, parsedArgs) {
+  const defaultBounds = businessDayBoundsUtc(date);
+  const start =
+    parseRequiredDateArg(parsedArgs.coveredStartAt, "--coveredStartAt") ??
+    parseRequiredDateArg(parsedArgs["covered-start-at"], "--covered-start-at") ??
+    defaultBounds.start;
+  const end =
+    parseRequiredDateArg(parsedArgs.coveredEndAt, "--coveredEndAt") ??
+    parseRequiredDateArg(parsedArgs["covered-end-at"], "--covered-end-at") ??
+    defaultBounds.end;
+  if (end <= start) {
+    throw new Error(`Covered end must be after covered start: ${start.toISOString()} >= ${end.toISOString()}`);
+  }
+  return { start, end, startIso: start.toISOString(), endIso: end.toISOString() };
 }
 
 function parseDateFromText(text) {
@@ -125,14 +137,22 @@ function classifyLane(row) {
 
 function isIncludedForBusinessDate(row, text) {
   const parsed = parseDateFromText(text);
-  const parsedDay = sourceDateInNewYork(parsed);
-  if (parsedDay) return { include: parsedDay === businessDate, basis: "parsed-source-date", sourceAt: parsed.toISOString() };
+  if (parsed) {
+    const parsedTime = parsed.getTime();
+    return {
+      include: parsedTime >= windowBounds.start.getTime() && parsedTime < windowBounds.end.getTime(),
+      basis: "parsed-source-timestamp",
+      sourceAt: parsed.toISOString(),
+    };
+  }
   const fallback = row.source_at ?? row.last_content_loaded_at ?? row.last_indexed_at ?? row.updated_at ?? row.created_at;
-  const fallbackDay = sourceDateInNewYork(fallback);
+  const fallbackDate = fallback ? new Date(fallback) : null;
+  const fallbackTime = fallbackDate && !Number.isNaN(fallbackDate.getTime()) ? fallbackDate.getTime() : null;
   return {
-    include: fallbackDay === businessDate,
-    basis: "loaded-or-row-date",
-    sourceAt: fallback ? new Date(fallback).toISOString() : null,
+    include:
+      fallbackTime !== null && fallbackTime >= windowBounds.start.getTime() && fallbackTime < windowBounds.end.getTime(),
+    basis: "loaded-or-row-timestamp",
+    sourceAt: fallbackDate && fallbackTime !== null ? fallbackDate.toISOString() : null,
   };
 }
 
@@ -359,18 +379,31 @@ function getProviderConfig() {
 
 async function callModel(messages, maxCompletionTokens = 2200) {
   const provider = getProviderConfig();
-  const response = await fetch(`${provider.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${provider.apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: provider.model,
-      messages,
-      max_completion_tokens: maxCompletionTokens,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(`${provider.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${provider.apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        messages,
+        max_completion_tokens: maxCompletionTokens,
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Daily executive brief model request timed out after ${MODEL_TIMEOUT_MS}ms (${provider.model}).`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   const text = await response.text();
   let payload;
   try {
@@ -764,6 +797,7 @@ async function main() {
     JSON.stringify(
       {
         businessDate,
+        window: windowBounds,
         generatedAt: new Date().toISOString(),
         shouldWrite,
         rowsConsidered: rows.length,
