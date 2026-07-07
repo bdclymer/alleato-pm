@@ -1,6 +1,6 @@
 # Task: Manual Daily Executive Brief Source Of Truth
 
-Status: Partial - manual brief, 876 compiler repair, and dead-code deletion delivered; browser proof blocked by local auth state
+Status: Complete - manual brief, 876 compiler repair, dead-code deletion, and browser proof delivered
 Owner: Codex
 Created: 2026-07-07
 Linear Issue: Deferred - emergency manual source-of-truth repair; local task ledger is active.
@@ -53,7 +53,7 @@ This task is not done until every checklist item below is checked, with evidence
 
 - [x] Static/type/lint check run, or explicitly delegated to a cheaper sub-agent.
 - [x] Targeted automated test run.
-- [x] Browser/user-flow verification attempted and blocked by local auth/session state.
+- [x] Browser/user-flow verification completed for `/876/intelligence`.
 - [x] Database/provider read-back performed for migrations/config/external services.
 - [x] End-to-end workflow proof captured for the actual requested outcome.
 - [x] Evidence artifacts recorded below.
@@ -110,7 +110,8 @@ This task is not done until every checklist item below is checked, with evidence
 | Route artifacts | `npm run map:project`; `npm run docs:generate-app-expert`; `node scripts/verify/route-audit.mjs`; `npm run check:routes` | Pass | Project map/app-surface, app sitemap/feature registry, route reports regenerated; route conflict check passed. |
 | Full bounded typecheck | `cd frontend && npm run typecheck` | Fail - unrelated repo debt | Initial run found one touched-file type issue; fixed. Rerun had no errors in `frontend/src/app/(main)/[projectId]/intelligence/page.tsx` or `frontend/src/lib/ai/intelligence/packet-service.ts`; remaining failures are existing repo-wide errors such as `next.config.ts`, admin pages, training docs, budget routes, and PDF utilities. |
 | ESLint | `npm exec eslint -- frontend/src/app/(main)/[projectId]/intelligence/page.tsx frontend/src/lib/ai/intelligence/packet-service.ts` | Blocked - config/tooling | ESLint 10 could not resolve `next/core-web-vitals`; no file diagnostics produced. |
-| Browser route proof | `agent-browser open http://localhost:3001/876/intelligence` | Blocked - auth | Local route redirects to `/auth/login?callbackUrl=%2F876%2Fintelligence`; saved auth state is stale and test login did not produce a usable session in agent-browser. |
+| Browser auth setup | `PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test tests/auth.setup.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium` | Pass | Regenerated local auth state for `test1@mail.com`; auth state is local/test-only and not committed. |
+| Browser route proof | `agent-browser --session intelligence-876 --state frontend/tests/.auth/user.json open http://localhost:3001/876/intelligence` | Pass | Route stayed at `/876/intelligence`; screenshot saved at `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/browser/876-intelligence.png`; DOM proof confirms daily brief, July 6 business date, 212 sources, decisions, watch items, and project intelligence content. |
 
 ## Files Changed
 
@@ -132,17 +133,20 @@ This task is not done until every checklist item below is checked, with evidence
 - `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/2026-07-06/brief.md`
 - `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/2026-07-06/source-manifest.json`
 - `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/2026-07-06/packet-write.json`
+- `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/browser/876-intelligence.png`
+- `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/browser/876-intelligence-dom-proof.json`
+- `docs/ops/evidence/2026-07-07-manual-daily-executive-brief/browser/876-intelligence-body.txt` - local-only raw browser body dump, not committed.
 
 ## Risks / Gaps
 
-- Browser route verification is blocked by local auth/session state. The data path is verified by DB read-back, and the route code now reads the canonical daily brief packet, but a visual screenshot proof still needs a valid app session.
+- Raw source corpus and raw browser body dump remain local-only and uncommitted because they contain verbatim private source material. Committed evidence uses the generated brief, manifest, packet read-back, screenshot, and compact DOM proof.
 - Non-meeting source text is loaded from RAG source rows, not directly re-downloaded from Graph/SharePoint at run time. The current path avoids stale packet summaries but should be tightened if "direct provider re-fetch every run" becomes mandatory.
 - Automation remains intentionally deferred. The proven manual command is the source of truth until scheduled delivery is rebuilt on top of it.
 - The active deep-research archive API was not deleted because it is a live admin feature used by `frontend/src/app/(admin)/deep-research/page.tsx`; deleting active archive-functionality code by filename would create a regression, not remove dead code.
 
 ## Final Status
 
-- [ ] All checklist items are complete.
+- [x] All checklist items are complete.
 - [x] Evidence is recorded.
 - [x] Any deferred work is explicitly marked Blocked/Deferred with owner and next action.
 - [x] Final response includes what is done, what remains, and recommended next steps.
