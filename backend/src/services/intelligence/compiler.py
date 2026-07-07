@@ -22,6 +22,7 @@ from src.services.ops.db_pressure_guard import (
     enforce_app_db_pressure_guard,
     enforce_pm_app_final_projection_guard,
 )
+from src.services.ingestion.source_project_attribution import build_project_attribution_evidence
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 logger = logging.getLogger(__name__)
@@ -3787,11 +3788,12 @@ def process_source_document(
         project_name: Optional[str] = None
         target: Optional[Dict[str, Any]] = None
 
+        attribution_evidence = build_project_attribution_evidence(document)
         inferred_project_id, method, confidence = _infer_project_id(
             supabase,
-            title=str(document.get("title") or ""),
-            content=str(document.get("content") or ""),
-            participants=_participants(document),
+            title=str(attribution_evidence.get("title") or ""),
+            content=str(attribution_evidence.get("content") or ""),
+            participants=list(attribution_evidence.get("participants") or []),
             existing_project_id=int(existing_project_id) if existing_project_id else None,
         )
         if (

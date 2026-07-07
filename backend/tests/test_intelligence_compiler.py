@@ -626,6 +626,68 @@ def test_process_source_document_to_packet_records_status_metadata():
     assert compiler_metadata["result"]["promotion"]["status"] == "needs_review"
 
 
+def test_process_source_document_uses_shared_attribution_evidence(monkeypatch):
+    supabase = _FakeSupabase()
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "teams-1",
+            "title": "Teams DM Conversation: 19:8704ffd5b",
+            "content": "",
+            "category": "teams_message",
+            "source": "microsoft_graph",
+            "date": "2026-07-06T12:00:00+00:00",
+            "project_id": None,
+            "content_hash": "hash-1",
+            "source_metadata": {},
+        }
+    ]
+    supabase.tables["projects"] = [
+        {
+            "id": 876,
+            "name": "Exol PA Phase 2",
+            "project_number": "26-876",
+            "client": "Exol",
+            "aliases": [],
+        }
+    ]
+    captured = {}
+
+    def fake_build_project_attribution_evidence(document):
+        assert document["id"] == "teams-1"
+        return {
+            "title": document["title"],
+            "participants": ["Hunter Rutledge"],
+            "content": "Need drawings and pricing for Exol PA Phase 2 guardrails.",
+            "content_source": "document_chunks",
+        }
+
+    def fake_infer_project_id(_supabase, *, title, content, participants, existing_project_id=None):
+        captured["title"] = title
+        captured["content"] = content
+        captured["participants"] = participants
+        captured["existing_project_id"] = existing_project_id
+        return 876, "content_match", 0.7
+
+    monkeypatch.setattr(
+        compiler_module,
+        "build_project_attribution_evidence",
+        fake_build_project_attribution_evidence,
+    )
+    monkeypatch.setattr(compiler_module, "_infer_project_id", fake_infer_project_id)
+
+    result = process_source_document(supabase, "teams-1")
+
+    assert result["status"] == "succeeded"
+    assert result["project_id"] == 876
+    assert captured == {
+        "title": "Teams DM Conversation: 19:8704ffd5b",
+        "content": "Need drawings and pricing for Exol PA Phase 2 guardrails.",
+        "participants": ["Hunter Rutledge"],
+        "existing_project_id": None,
+    }
+    assert supabase.tables["document_metadata"][0]["project_id"] == 876
+
+
 def test_run_intelligence_compiler_batch_drains_source_jobs():
     supabase = _FakeSupabase()
     supabase.tables["document_metadata"] = [

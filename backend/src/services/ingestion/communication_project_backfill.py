@@ -10,6 +10,10 @@ from supabase import Client
 
 from ..supabase_helpers import get_rag_write_client
 from .project_assignment import ProjectAssigner
+from .source_project_attribution import (
+    build_project_attribution_evidence,
+    participants_for_document,
+)
 
 SOURCE_FILTERS = {
     "microsoft_graph": {"teams_message", "email", "document"},
@@ -25,24 +29,6 @@ def _append_tag(existing: str | None, tag: str) -> str:
     return ",".join(tags)
 
 
-def _participants_for_document(document: Dict[str, Any]) -> List[str]:
-    participants: List[str] = []
-    raw_participants = document.get("participants")
-    if raw_participants:
-        participants.append(str(raw_participants))
-
-    raw_array = document.get("participants_array") or []
-    if isinstance(raw_array, list):
-        participants.extend(str(item) for item in raw_array if item)
-
-    for field in ("host_email", "organizer_email"):
-        value = document.get(field)
-        if value:
-            participants.append(str(value))
-
-    return participants
-
-
 def _is_target_document(document: Dict[str, Any]) -> bool:
     source = document.get("source")
     allowed_categories = SOURCE_FILTERS.get(source)
@@ -55,19 +41,24 @@ def _iter_unassigned_documents(
     client: Client,
     limit: int,
     since: datetime | None = None,
+    source_filter: str | None = None,
+    categories: List[str] | None = None,
 ) -> Iterable[Dict[str, Any]]:
+    sources = [source_filter] if source_filter else list(SOURCE_FILTERS.keys())
     query = (
         client.table("document_metadata")
         .select(
             "id,title,source,category,content,summary,overview,participants,participants_array,host_email,organizer_email,tags,project_id",
         )
         .is_("project_id", "null")
-        .in_("source", list(SOURCE_FILTERS.keys()))
+        .in_("source", sources)
         .order("created_at", desc=True)
         .limit(limit)
     )
     if since is not None:
         query = query.gte("date", since.isoformat())
+    if categories:
+        query = query.in_("category", categories)
     response = query.execute()
 
     for document in response.data or []:
@@ -81,6 +72,8 @@ def run_incremental_project_backfill(
     limit: int | None = None,
     min_confidence: float | None = None,
     since: datetime | None = None,
+    source_filter: str | None = None,
+    categories: List[str] | None = None,
 ) -> Dict[str, Any]:
     """Assign project_id on recent unassigned communication documents.
 
@@ -103,17 +96,20 @@ def run_incremental_project_backfill(
         "errors": [],
     }
 
-    for document in _iter_unassigned_documents(client, resolved_limit, since=since):
+    for document in _iter_unassigned_documents(
+        client,
+        resolved_limit,
+        since=since,
+        source_filter=source_filter,
+        categories=categories,
+    ):
         stats["scanned"] += 1
         try:
-            content = " ".join(
-                str(document.get(field) or "")
-                for field in ("content", "summary", "overview")
-            )
+            attribution_evidence = build_project_attribution_evidence(document)
             project_id, method, confidence = assigner.assign_project(
-                meeting_title=str(document.get("title") or ""),
-                participants=_participants_for_document(document),
-                content=content[:3000],
+                meeting_title=str(attribution_evidence.get("title") or ""),
+                participants=participants_for_document(document),
+                content=str(attribution_evidence.get("content") or "")[:3000],
                 existing_project_id=None,
             )
 
