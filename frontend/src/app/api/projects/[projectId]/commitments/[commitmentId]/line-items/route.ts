@@ -11,6 +11,8 @@ interface LineItemInput {
   id?: string;
   line_number: number | null;
   budget_code: string | null;
+  project_budget_code_id?: string | null;
+  projectBudgetCodeId?: string | null;
   description: string | null;
   amount: number | null;
   billed_to_date: number | null;
@@ -37,6 +39,19 @@ type PurchaseOrderSovInsert = Tables["purchase_order_sov_items"]["Insert"];
 type PurchaseOrderSovUpdate = Tables["purchase_order_sov_items"]["Update"];
 type SovRow = SubcontractSovRow | PurchaseOrderSovRow;
 type ExistingSovItem = Pick<SovRow, "id" | "billed_to_date" | "amount">;
+type ProjectBudgetCodeLookupRow = {
+  id: string;
+  cost_code_id: string;
+  cost_type_id: string | null;
+  cost_code_types:
+    | { code: string | null; description: string | null }
+    | { code: string | null; description: string | null }[]
+    | null;
+};
+type ResolvedBudgetCode = {
+  projectBudgetCodeId: string | null;
+  displayBudgetCode: string | null;
+};
 
 const ROUTE_WHERE = "projects/[projectId]/commitments/[commitmentId]/line-items";
 
@@ -60,6 +75,104 @@ function normalizeCommitmentType(
     where: ROUTE_WHERE,
     message: `Unsupported commitment type: ${value ?? "missing"}`,
   });
+}
+
+function relationOne<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
+
+function normalizeBudgetCode(value: string): string {
+  return value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+function projectBudgetCodeDisplay(row: ProjectBudgetCodeLookupRow): string {
+  const costType = relationOne(row.cost_code_types);
+  return costType?.code ? `${row.cost_code_id}.${costType.code}` : row.cost_code_id;
+}
+
+async function fetchProjectBudgetCodeLookup(
+  supabase: DbClient,
+  projectId: number,
+): Promise<ProjectBudgetCodeLookupRow[]> {
+  const { data, error } = await supabase
+    .from("project_budget_codes")
+    .select("id, cost_code_id, cost_type_id, cost_code_types ( code, description )")
+    .eq("project_id", projectId)
+    .eq("is_active", true);
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: `${ROUTE_WHERE}#fetch-project-budget-codes`,
+      message: `Failed to fetch project budget codes: ${error.message}`,
+      cause: error,
+    });
+  }
+
+  return (data ?? []) as ProjectBudgetCodeLookupRow[];
+}
+
+function resolveLineItemBudgetCode(
+  item: LineItemInput,
+  budgetCodes: ProjectBudgetCodeLookupRow[],
+  lineNumber: number,
+): ResolvedBudgetCode {
+  const submittedProjectBudgetCodeId =
+    item.project_budget_code_id ?? item.projectBudgetCodeId ?? null;
+  const submittedBudgetCode = item.budget_code?.trim() || null;
+
+  if (submittedProjectBudgetCodeId) {
+    const match = budgetCodes.find((code) => code.id === submittedProjectBudgetCodeId);
+    if (!match) {
+      invalidPayload(
+        `Line ${lineNumber}: selected budget code is not active for this project.`,
+      );
+    }
+
+    return {
+      projectBudgetCodeId: match.id,
+      displayBudgetCode: submittedBudgetCode || projectBudgetCodeDisplay(match),
+    };
+  }
+
+  if (!submittedBudgetCode) {
+    return { projectBudgetCodeId: null, displayBudgetCode: null };
+  }
+
+  const normalizedSubmitted = normalizeBudgetCode(submittedBudgetCode);
+  const matchGroups = [
+    budgetCodes.filter((code) => code.id === submittedBudgetCode),
+    budgetCodes.filter((code) => {
+      const costType = relationOne(code.cost_code_types);
+      return (
+        costType?.code &&
+        normalizeBudgetCode(`${code.cost_code_id}${costType.code}`) ===
+          normalizedSubmitted
+      );
+    }),
+    budgetCodes.filter(
+      (code) => normalizeBudgetCode(code.cost_code_id) === normalizedSubmitted,
+    ),
+  ];
+
+  const matches = matchGroups.find((group) => group.length > 0) ?? [];
+  if (matches.length === 1) {
+    return {
+      projectBudgetCodeId: matches[0].id,
+      displayBudgetCode: projectBudgetCodeDisplay(matches[0]),
+    };
+  }
+
+  if (matches.length > 1) {
+    invalidPayload(
+      `Line ${lineNumber}: budget code "${submittedBudgetCode}" is ambiguous for this project. Select the specific budget code before saving.`,
+    );
+  }
+
+  invalidPayload(
+    `Line ${lineNumber}: budget code "${submittedBudgetCode}" is not active for this project.`,
+  );
 }
 
 async function fetchCommitmentType(
@@ -223,11 +336,13 @@ function buildSubcontractSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
+  budgetCode: ResolvedBudgetCode,
 ): SubcontractSovUpdate & SubcontractSovInsert {
   return {
     subcontract_id: commitmentId,
     line_number: lineNumber,
-    budget_code: item.budget_code || null,
+    budget_code: budgetCode.displayBudgetCode,
+    project_budget_code_id: budgetCode.projectBudgetCodeId,
     description: item.description || "",
     amount: item.amount ?? 0,
     billed_to_date: item.billed_to_date ?? 0,
@@ -243,11 +358,13 @@ function buildPurchaseOrderSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
+  budgetCode: ResolvedBudgetCode,
 ): PurchaseOrderSovUpdate & PurchaseOrderSovInsert {
   return {
     purchase_order_id: commitmentId,
     line_number: lineNumber,
-    budget_code: item.budget_code || null,
+    budget_code: budgetCode.displayBudgetCode,
+    project_budget_code_id: budgetCode.projectBudgetCodeId,
     description: item.description || "",
     amount: item.amount ?? 0,
     billed_to_date: item.billed_to_date ?? 0,
@@ -265,9 +382,10 @@ async function upsertSovItem(
   item: LineItemInput,
   lineNumber: number,
   isExisting: boolean,
+  budgetCode: ResolvedBudgetCode,
 ): Promise<SovRow> {
   if (commitmentType === "subcontract") {
-    const itemData = buildSubcontractSovData(commitmentId, lineNumber, item);
+    const itemData = buildSubcontractSovData(commitmentId, lineNumber, item, budgetCode);
     const result =
       item.id && isExisting
         ? await supabase
@@ -291,7 +409,7 @@ async function upsertSovItem(
     return result.data;
   }
 
-  const itemData = buildPurchaseOrderSovData(commitmentId, lineNumber, item);
+  const itemData = buildPurchaseOrderSovData(commitmentId, lineNumber, item, budgetCode);
   const result =
     item.id && isExisting
       ? await supabase
@@ -496,6 +614,11 @@ export const PUT = withApiGuardrails(
       });
     }
 
+    const projectBudgetCodes = await fetchProjectBudgetCodeLookup(
+      supabase,
+      numericProjectId,
+    );
+
     await deleteSovItems(supabase, commitmentType, idsToDelete);
 
     // Upsert line items
@@ -505,6 +628,11 @@ export const PUT = withApiGuardrails(
     for (let i = 0; i < lineItems.length; i++) {
       const item = lineItems[i];
       const lineNumber = item.line_number ?? i + 1;
+      const budgetCode = resolveLineItemBudgetCode(
+        item,
+        projectBudgetCodes,
+        lineNumber,
+      );
 
       try {
         const upsertedItem = await upsertSovItem(
@@ -514,6 +642,7 @@ export const PUT = withApiGuardrails(
           item,
           lineNumber,
           Boolean(item.id && existingIds.has(item.id)),
+          budgetCode,
         );
         upsertedItems.push(upsertedItem);
       } catch (error) {

@@ -8,6 +8,7 @@ import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commit
 
 type BudgetLine = {
   id: string;
+  project_budget_code_id: string | null;
   cost_code_id: string;
   cost_type_id: string;
   description: string | null;
@@ -120,6 +121,7 @@ export const POST = withApiGuardrails<
       .select(
         `
         id,
+        project_budget_code_id,
         cost_code_id,
         cost_type_id,
         description,
@@ -191,6 +193,14 @@ export const POST = withApiGuardrails<
       const budgetCode = costTypeCode
         ? `${budgetLine.cost_code_id}.${costTypeCode}`
         : budgetLine.cost_code_id;
+
+      if (!budgetLine.project_budget_code_id) {
+        errors.push(
+          `Line ${lineNumber}: Budget line ${budgetLine.id} has no project_budget_code_id; cannot import a text-only commitment SOV line.`,
+        );
+        continue;
+      }
+
       const baseDescription =
         budgetLine.description || costCode?.title || "Imported from budget";
       const typeSuffix = costType?.description ? ` - ${costType.description}` : "";
@@ -200,6 +210,7 @@ export const POST = withApiGuardrails<
         [fkColumn]: commitmentId,
         line_number: lineNumber,
         budget_code: budgetCode,
+        project_budget_code_id: budgetLine.project_budget_code_id,
         description,
         amount: budgetLine.original_amount,
         billed_to_date: 0,
