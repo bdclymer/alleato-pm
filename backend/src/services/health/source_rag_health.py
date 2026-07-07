@@ -38,9 +38,11 @@ WATCHED_SOURCES = {
 
 DEFAULT_ALERT_TEAMS_USER_ID = "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0"
 LIFECYCLE_LOOKBACK_HOURS = int(os.getenv("RAG_HEALTH_LIFECYCLE_LOOKBACK_HOURS", "24"))
+LIFECYCLE_PROCESSING_GRACE_MINUTES = int(os.getenv("RAG_HEALTH_LIFECYCLE_PROCESSING_GRACE_MINUTES", "60"))
 MAX_PACKET_AGE_HOURS = int(os.getenv("RAG_HEALTH_MAX_PACKET_AGE_HOURS", "36"))
 GRAPH_CONVERSATION_HEALTH_LOOKBACK_DAYS = int(os.getenv("RAG_HEALTH_GRAPH_CONVERSATION_LOOKBACK_DAYS", "30"))
 GRAPH_CONVERSATION_HEALTH_LIMIT = int(os.getenv("RAG_HEALTH_GRAPH_CONVERSATION_LIMIT", "5000"))
+LIFECYCLE_LOOKUP_BATCH_SIZE = 25
 TERMINAL_DOCUMENT_STATUSES = {
     "intentionally_excluded",
     "deleted_no_transcript",
@@ -183,6 +185,13 @@ def _coverage_status(count: int, total: int) -> str:
     return "critical"
 
 
+def _is_past_lifecycle_processing_grace(row: Dict[str, Any], now: datetime) -> bool:
+    created_at = _parse_datetime(row.get("created_at"))
+    if not created_at:
+        return True
+    return created_at <= now - timedelta(minutes=LIFECYCLE_PROCESSING_GRACE_MINUTES)
+
+
 def _source_family(row: Dict[str, Any]) -> str | None:
     source = str(row.get("source") or "").lower()
     category = str(row.get("category") or "").lower()
@@ -305,6 +314,8 @@ def _merge_source_synthesis_metadata(
         synthesis_metadata = row.get("metadata")
         synthesis_metadata = synthesis_metadata if isinstance(synthesis_metadata, dict) else {}
         synthesis_type = str(synthesis_metadata.get("deterministic_signal_type") or "")
+        if synthesis_type:
+            metadata.setdefault("source_synthesis_signal_type", synthesis_type)
         synthesis_tasks = row.get("tasks") if isinstance(row.get("tasks"), list) else []
         if synthesis_type == "task" or synthesis_tasks:
             metadata.setdefault("task_extraction_status", "task_signal_staged")
@@ -467,7 +478,12 @@ def _counts_project_intelligence_outcome(
         return False
     if family != "meetings":
         return True
-    return document_id in evidence_ids or _has_full_transcript_read_proof(document_id, job_metadata_by_id)
+    metadata = job_metadata_by_id.get(document_id) or {}
+    return (
+        document_id in evidence_ids
+        or _has_full_transcript_read_proof(document_id, job_metadata_by_id)
+        or bool(metadata.get("source_synthesis_signal_type"))
+    )
 
 
 def _graph_conversation_kind(row: Dict[str, Any]) -> str | None:
@@ -737,7 +753,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     ]
     source_ids = [str(row.get("id")) for row in source_rows if row.get("id")]
 
-    def _batched(values: List[str], size: int = 100) -> List[List[str]]:
+    def _batched(values: List[str], size: int = LIFECYCLE_LOOKUP_BATCH_SIZE) -> List[List[str]]:
         return [values[index:index + size] for index in range(0, len(values), size)]
 
     chunk_rows: List[Dict[str, Any]] = []
@@ -905,12 +921,18 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             for row in vectorization_excluded_rows
             if row.get("id")
         }
-        vectorization_required_ids = ids - vectorization_excluded_ids
+        processing_grace_ids = {
+            str(row.get("id"))
+            for row in rows
+            if row.get("id") and not _is_past_lifecycle_processing_grace(row, now)
+        }
+        downstream_excluded_ids = vectorization_excluded_ids | processing_grace_ids
+        vectorization_required_ids = ids - downstream_excluded_ids
         project_required_ids = {
             str(row.get("id"))
             for row in rows
             if row.get("id")
-            and str(row.get("id")) not in vectorization_excluded_ids
+            and str(row.get("id")) not in downstream_excluded_ids
             and _is_project_required_row(row, job_metadata_by_id)
         }
         project_assigned_ids = {
@@ -953,7 +975,8 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 "stage": "vectorized",
                 "count": vectorized_count,
                 "total": len(vectorization_required_ids),
-                "excluded": len(vectorization_excluded_ids),
+                "excluded": len(downstream_excluded_ids),
+                "graceExcluded": len(processing_grace_ids),
                 "owner": "RAG embedder",
                 "latestAt": _newest([
                     row.get("updated_at")
@@ -1206,10 +1229,11 @@ def run_source_rag_health_check(*, trigger_remediation: bool = True) -> Dict[str
         if str(source.get("source") or "") in WATCHED_SOURCES
         and source.get("status") in {"critical", "warning", "unknown"}
     ]
+    passed = not critical_alerts and not warning_alerts and not unhealthy_sources and not rag_lifecycle.get("alerts")
 
     report = {
-        "passed": not critical_alerts and not unhealthy_sources and health.get("status") == "healthy",
-        "status": health.get("status"),
+        "passed": passed,
+        "status": "healthy" if passed else "degraded",
         "generatedAt": health.get("generatedAt"),
         "snapshotWrites": snapshot_writes,
         "alertPersistence": alert_result,

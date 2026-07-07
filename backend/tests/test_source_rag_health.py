@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from src.services.health.source_rag_health import (
     _counts_project_intelligence_outcome,
@@ -7,6 +7,7 @@ from src.services.health.source_rag_health import (
     _has_project_attribution_review,
     _has_project_intelligence_outcome,
     _has_task_extraction_outcome,
+    _is_past_lifecycle_processing_grace,
     _is_project_required_row,
     _latest_job_metadata_by_document_id,
     _merge_source_synthesis_metadata,
@@ -178,6 +179,7 @@ def test_source_synthesis_rows_backfill_project_intelligence_metadata():
     )
 
     assert metadata_by_id["sharepoint-doc"]["source_synthesis_id"] == "source-synthesis-1"
+    assert metadata_by_id["sharepoint-doc"]["source_synthesis_signal_type"] == "task"
     assert metadata_by_id["sharepoint-doc"]["task_extraction_status"] == "task_signal_staged"
     assert _has_project_intelligence_outcome("sharepoint-doc", set(), metadata_by_id)
     assert _has_task_extraction_outcome("sharepoint-doc", set(), metadata_by_id)
@@ -238,6 +240,23 @@ def test_meeting_project_intelligence_requires_full_read_for_metadata_only_outco
     assert _counts_project_intelligence_outcome(
         family="meetings",
         document_id="meeting-2",
+        evidence_ids=set(),
+        job_metadata_by_id=metadata_by_id,
+    )
+
+
+def test_meeting_project_intelligence_counts_durable_source_synthesis_signal():
+    metadata_by_id = {
+        "meeting-1": {
+            "source_synthesis_id": "source-synthesis-1",
+            "source_synthesis_signal_type": "task",
+            "_updated_at": "2026-07-07T14:17:01+00:00",
+        }
+    }
+
+    assert _counts_project_intelligence_outcome(
+        family="meetings",
+        document_id="meeting-1",
         evidence_ids=set(),
         job_metadata_by_id=metadata_by_id,
     )
@@ -316,3 +335,16 @@ def test_project_required_metadata_overrides_fallback_classifier():
     }
 
     assert _is_project_required_row(row, {"teamsdm_empty_2026-07-06": {"project_required": True}})
+
+
+def test_lifecycle_processing_grace_excludes_fresh_rows():
+    now = datetime(2026, 7, 7, 14, 30, tzinfo=timezone.utc)
+
+    assert not _is_past_lifecycle_processing_grace(
+        {"created_at": (now - timedelta(minutes=5)).isoformat()},
+        now,
+    )
+    assert _is_past_lifecycle_processing_grace(
+        {"created_at": (now - timedelta(hours=2)).isoformat()},
+        now,
+    )
