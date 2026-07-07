@@ -195,11 +195,11 @@ export function renderLegalSignatureBlock({
   rightSignerTitle?: string | null;
   rightSignedDate?: string | null;
 }): string {
-  const renderField = (label: string, value: string | null | undefined, width = "100%") => `
-    <div class="legal-signature-field" style="display:flex;align-items:flex-end;gap:0.12in;margin:0 0 0.08in 0;">
-      <div class="legal-signature-label" style="min-width:1in;">${esc(label)}</div>
-      <div class="legal-signature-line" style="flex:1;border-bottom:1px solid #000;min-width:${width};min-height:1em;">${esc(value ?? "")}</div>
-    </div>
+  const renderField = (label: string, value: string | null | undefined) => `
+    <tr class="legal-signature-field-row">
+      <td class="legal-signature-label" style="width:1.05in;padding:0 0.12in 0.08in 0;white-space:nowrap;vertical-align:bottom;">${esc(label)}</td>
+      <td class="legal-signature-line" style="padding:0 0 0.08in 0;vertical-align:bottom;border-bottom:1px solid #000;">${esc(value ?? "")}</td>
+    </tr>
   `;
 
   const renderSide = (
@@ -212,15 +212,19 @@ export function renderLegalSignatureBlock({
     <div class="legal-signature-side">
       <div class="legal-signature-title" style="text-align:center;margin:0 0 0.12in 0;">${esc(title)}</div>
       <div class="legal-signature-company" style="border-bottom:1px solid #000;padding:0 0 0.08in 0;margin:0 0 0.12in 0;">${esc(company)}</div>
-      ${renderField("By:", null)}
-      ${renderField("Printed Name:", printedName)}
-      ${renderField("Its:", roleTitle)}
-      ${renderField("Date:", signedDate)}
+      <table class="legal-signature-fields" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <col style="width:1.05in;" />
+        <col style="width:auto;" />
+        ${renderField("By:", null)}
+        ${renderField("Printed Name:", printedName)}
+        ${renderField("Its:", roleTitle)}
+        ${renderField("Date:", signedDate)}
+      </table>
     </div>
   `;
 
   return `
-    <div class="legal-signature-block">
+    <div class="legal-signature-block legal-page-break">
       <p align="justify" style="line-height:100%;margin:0 0 0.14in 0;">
         <font color="#000000"><span style="text-decoration:none"><font face="Times New Roman, serif"><font size="3" style="font-size:12pt"><span style="font-style:normal"><span style="font-weight:normal">IN TENDING TO BE LEGALLY BOUND, the parties have voluntarily executed this Agreement, by their authorized representative.</span></span></font></font></span></font>
       </p>

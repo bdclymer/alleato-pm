@@ -537,21 +537,17 @@ export function buildBrandedDocumentHtml({
       line-height: 1.15;
       margin-bottom: 0.12in;
     }
-    .document-content .contract-template .legal-signature-field {
-      display: flex;
-      align-items: flex-end;
-      gap: 0.12in;
-      margin: 0 0 0.08in 0;
-    }
     .document-content .contract-template .legal-signature-label {
-      min-width: 1in;
       white-space: nowrap;
     }
     .document-content .contract-template .legal-signature-line {
-      flex: 1;
       min-height: 1em;
-      border-bottom: 1px solid #000;
       white-space: nowrap;
+    }
+    .document-content .contract-template .legal-signature-fields {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
     .document-content .contract-template .legal-page-break {
       page-break-before: always !important;
