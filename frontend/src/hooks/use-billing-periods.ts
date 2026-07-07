@@ -102,6 +102,31 @@ export function useBillingPeriodsList(
 }
 
 // =============================================================================
+// Detail Query Hook
+// =============================================================================
+
+/**
+ * React Query hook for fetching a single billing period by id.
+ * Backs the billing-period detail page.
+ */
+export function useBillingPeriod(projectId: string, periodId: string) {
+  return useQuery<BillingPeriod>({
+    queryKey: billingPeriodKeys.detail(periodId),
+    queryFn: async () => {
+      const data = await apiFetch<BillingPeriodsApiResponse<BillingPeriod>>(
+        `/api/projects/${projectId}/invoicing/billing-periods/${periodId}`,
+      );
+      if (!data.data) {
+        throw new Error("Billing period not found");
+      }
+      return data.data;
+    },
+    enabled: !!projectId && !!periodId,
+    staleTime: 30 * 1000,
+  });
+}
+
+// =============================================================================
 // Mutation Hooks
 // =============================================================================
 
