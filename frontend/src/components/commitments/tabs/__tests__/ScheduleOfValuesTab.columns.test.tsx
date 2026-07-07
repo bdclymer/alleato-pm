@@ -162,25 +162,23 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(assertTableColumnIntegrity(table as HTMLTableElement)).toBe(9);
   });
 
-  it("renders the commitment SOV financial summary rows", async () => {
+  it("omits duplicate commitment SOV financial summary rows", async () => {
     renderTabWithSummary();
     await waitForBudgetCodes();
 
-    expect(screen.getByText("Line Items Total")).toBeInTheDocument();
-    expect(screen.getByText("Subtotal")).toBeInTheDocument();
-    expect(screen.getByText("Original Contract")).toBeInTheDocument();
-    expect(screen.getByText("Approved Changes")).toBeInTheDocument();
-    expect(screen.getByText("Contract Total")).toBeInTheDocument();
-    expect(screen.getAllByText("Billed to Date").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Amount Remaining")).toBeInTheDocument();
-    // Retainage rate from the commitment (default_retainage_percent) must be
-    // surfaced in the SOV summary label, not just the computed dollar amount.
-    expect(screen.getByText("Current Retainage (10%)")).toBeInTheDocument();
-    expect(screen.getByText("$44,370.00")).toBeInTheDocument();
-    expect(screen.getByText("$555.56")).toBeInTheDocument();
+    expect(screen.queryByText("Line Items Total")).not.toBeInTheDocument();
+    expect(screen.queryByText("Subtotal")).not.toBeInTheDocument();
+    expect(screen.queryByText("Original Contract")).not.toBeInTheDocument();
+    expect(screen.queryByText("Approved Changes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Contract Total")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Billed to Date")).toHaveLength(1);
+    expect(screen.queryByText("Amount Remaining")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Current Retainage/)).not.toBeInTheDocument();
+    expect(screen.queryByText("$44,370.00")).not.toBeInTheDocument();
+    expect(screen.queryByText("$555.56")).not.toBeInTheDocument();
   });
 
-  it("omits the rate from the retainage label when no retainage is configured", async () => {
+  it("does not render a retainage summary when no retainage is configured", async () => {
     render(
       <ScheduleOfValuesTab
         lineItems={lineItems}
@@ -202,7 +200,7 @@ describe("ScheduleOfValuesTab column integrity", () => {
     );
     await waitForBudgetCodes();
 
-    expect(screen.getByText("Current Retainage")).toBeInTheDocument();
+    expect(screen.queryByText("Current Retainage")).not.toBeInTheDocument();
     expect(screen.queryByText(/Current Retainage \(/)).not.toBeInTheDocument();
   });
 

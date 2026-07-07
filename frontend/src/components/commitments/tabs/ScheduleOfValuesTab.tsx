@@ -82,11 +82,6 @@ interface ScheduleOfValuesTabProps {
   error?: string | null;
 }
 
-/** Formats a retainage rate for display, dropping trailing zeros (10 → "10", 7.5 → "7.5"). */
-function formatRetainageRate(percent: number): string {
-  return Number(percent.toFixed(2)).toString();
-}
-
 interface SaveLineItemsResponse {
   message?: string;
 }
@@ -101,7 +96,6 @@ export function ScheduleOfValuesTab({
   commitmentId,
   commitmentType,
   accountingMethod = "amount",
-  summary,
   showHeader = true,
   status,
   lockState,
@@ -189,38 +183,6 @@ export function ScheduleOfValuesTab({
   );
 
   const amountRemaining = Math.max(totals.amount - totals.billed, 0);
-  const summaryRows = useMemo(
-    () => [
-      { label: "Line Items Total", value: totals.amount },
-      { label: "Subtotal", value: summary?.subtotal ?? totals.amount },
-      {
-        label: "Original Contract",
-        value: summary?.originalContract ?? totals.amount,
-      },
-      { label: "Approved Changes", value: summary?.approvedChanges ?? 0 },
-      {
-        label: "Contract Total",
-        value: summary?.contractTotal ?? totals.amount,
-        strong: true,
-      },
-      { label: "Billed to Date", value: summary?.billedToDate ?? totals.billed },
-      {
-        label: "Amount Remaining",
-        value: summary?.amountRemaining ?? amountRemaining,
-        strong: true,
-      },
-      {
-        label:
-          summary?.retainagePercent && summary.retainagePercent > 0
-            ? `Current Retainage (${formatRetainageRate(summary.retainagePercent)}%)`
-            : "Current Retainage",
-        value: summary?.currentRetainage ?? 0,
-        muted: true,
-      },
-    ],
-    [amountRemaining, summary, totals.amount, totals.billed],
-  );
-
   const handleBudgetCodeCreated = useCallback(
     (created: { id: string; code: string; costType: string | null; costTypeId?: string | null; description: string; fullLabel: string }) => {
       const normalized = normalizeBudgetCodesForSelector([created])[0];
@@ -725,38 +687,6 @@ export function ScheduleOfValuesTab({
           </InlineTableFooterRow>
         </InlineTableFooter>
       </InlineTable>
-
-      <div className="flex justify-end">
-        <div className="w-full max-w-xl divide-y divide-border/60 border-t border-border/70">
-          {summaryRows.map((row) => (
-            <div
-              key={row.label}
-              className="flex items-center justify-between gap-6 py-3 text-sm"
-            >
-              <div
-                className={
-                  row.strong
-                    ? "font-semibold text-foreground"
-                    : row.muted
-                      ? "text-muted-foreground"
-                      : "font-medium text-foreground"
-                }
-              >
-                {row.label}
-              </div>
-              <div
-                className={
-                  row.strong
-                    ? "text-base font-semibold tabular-nums text-foreground"
-                    : "font-medium tabular-nums text-foreground"
-                }
-              >
-                {formatCurrency(row.value)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Actions below table, left-aligned */}
       {canEdit ? (
