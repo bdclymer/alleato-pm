@@ -1,6 +1,11 @@
 from datetime import datetime, timezone
 
-from src.services.health.source_rag_health import _graph_conversation_chunk_alerts
+from src.services.health.source_rag_health import (
+    _graph_conversation_chunk_alerts,
+    _has_project_intelligence_outcome,
+    _has_task_extraction_outcome,
+    _latest_job_metadata_by_document_id,
+)
 
 
 def test_graph_conversation_chunk_alerts_pass_for_source_owned_chunks_and_skips():
@@ -90,3 +95,39 @@ def test_graph_conversation_chunk_alerts_fail_for_embedded_doc_without_chunks():
     assert report["status"] == "degraded"
     assert any(alert["code"] == "graph_conversation_embedded_without_chunks" for alert in report["alerts"])
     assert report["alerts"][0]["source"] == "emails"
+
+
+def test_latest_job_metadata_prefers_source_intelligence_task_outcome():
+    metadata_by_id = _latest_job_metadata_by_document_id(
+        [
+            {
+                "source_document_id": "doc-email",
+                "metadata": {"embedding_path": "microsoft_graph.embed_graph_document"},
+                "updated_at": "2026-07-07T05:37:16+00:00",
+            },
+            {
+                "source_document_id": "doc-email",
+                "metadata": {
+                    "task_extraction_status": "no_actionable_tasks",
+                    "tasks_created_count": 0,
+                },
+                "updated_at": "2026-07-07T05:36:45+00:00",
+            },
+        ]
+    )
+
+    assert metadata_by_id["doc-email"]["task_extraction_status"] == "no_actionable_tasks"
+    assert _has_task_extraction_outcome("doc-email", set(), metadata_by_id)
+
+
+def test_project_intelligence_outcome_counts_source_synthesis_metadata():
+    metadata_by_id = {
+        "doc-email": {
+            "source_synthesis_id": "source-synthesis-1",
+            "_updated_at": "2026-07-07T05:36:45+00:00",
+        }
+    }
+
+    assert _has_project_intelligence_outcome("doc-email", set(), metadata_by_id)
+    assert _has_project_intelligence_outcome("doc-with-evidence", {"doc-with-evidence"}, {})
+    assert not _has_project_intelligence_outcome("doc-missing", set(), {})

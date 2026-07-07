@@ -172,15 +172,21 @@ def _is_terminal_vectorization_row(
 
 
 def _latest_job_metadata_by_document_id(job_rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    def sort_key(item: Dict[str, Any]) -> tuple[int, str]:
+    def sort_key(item: Dict[str, Any]) -> tuple[int, int, str]:
         metadata = item.get("metadata")
+        metadata = metadata if isinstance(metadata, dict) else {}
         read_proof = metadata.get("read_proof") if isinstance(metadata, dict) else None
         has_full_read_proof = (
             isinstance(read_proof, dict)
             and read_proof.get("status") == "full_source_read"
             and read_proof.get("scope") == "full_transcript"
         )
-        return (1 if has_full_read_proof else 0, str(item.get("updated_at") or ""))
+        has_task_extraction_outcome = bool(metadata.get("task_extraction_status"))
+        return (
+            1 if has_full_read_proof else 0,
+            1 if has_task_extraction_outcome else 0,
+            str(item.get("updated_at") or ""),
+        )
 
     metadata_by_id: Dict[str, Dict[str, Any]] = {}
     for row in sorted(job_rows, key=sort_key, reverse=True):
@@ -215,6 +221,22 @@ def _has_task_extraction_outcome(document_id: str, task_ids: set[str], job_metad
     metadata = job_metadata_by_id.get(document_id) or {}
     status = str(metadata.get("task_extraction_status") or "").strip().lower()
     return status in {"tasks_created", "no_actionable_tasks", "task_signal_staged"}
+
+
+def _has_project_intelligence_outcome(
+    document_id: str,
+    evidence_ids: set[str],
+    job_metadata_by_id: Dict[str, Dict[str, Any]],
+) -> bool:
+    if document_id in evidence_ids:
+        return True
+    metadata = job_metadata_by_id.get(document_id) or {}
+    return bool(
+        metadata.get("source_synthesis_id")
+        or metadata.get("signal_candidate_id")
+        or metadata.get("packet_refresh_job_id")
+        or metadata.get("packet_id")
+    )
 
 
 def _has_full_transcript_read_proof(document_id: str, job_metadata_by_id: Dict[str, Dict[str, Any]]) -> bool:
@@ -501,6 +523,7 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
     evidence_rows: List[Dict[str, Any]] = []
     rag_metadata_rows: List[Dict[str, Any]] = []
     job_rows: List[Dict[str, Any]] = []
+    source_intelligence_rows: List[Dict[str, Any]] = []
     if source_ids:
         for batch in _batched(source_ids):
             rag_metadata_rows.extend((
@@ -514,6 +537,15 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 rag_client.table("source_processing_jobs")
                 .select("source_document_id,metadata,updated_at")
                 .in_("source_document_id", batch)
+                .order("updated_at", desc=True)
+                .limit(1000)
+                .execute()
+            ).data or [])
+            source_intelligence_rows.extend((
+                rag_client.table("source_intelligence_jobs")
+                .select("source_document_id,output_summary,updated_at")
+                .in_("source_document_id", batch)
+                .eq("status", "succeeded")
                 .order("updated_at", desc=True)
                 .limit(1000)
                 .execute()
@@ -564,7 +596,17 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
         for row in rag_metadata_rows
         if row.get("id")
     }
-    job_metadata_by_id = _latest_job_metadata_by_document_id(job_rows)
+    job_metadata_by_id = _latest_job_metadata_by_document_id([
+        *job_rows,
+        *[
+            {
+                "source_document_id": row.get("source_document_id"),
+                "metadata": row.get("output_summary"),
+                "updated_at": row.get("updated_at"),
+            }
+            for row in source_intelligence_rows
+        ],
+    ])
     task_ids = {str(row.get("metadata_id")) for row in task_rows if row.get("metadata_id")}
     evidence_ids = {
         str(row.get("source_document_id"))
@@ -603,6 +645,13 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
             if row.get("id")
             and str(row.get("id")) not in vectorization_excluded_ids
             and _is_project_required_row(row, job_metadata_by_id)
+        }
+        project_assigned_ids = {
+            str(row.get("id"))
+            for row in rows
+            if row.get("id")
+            and str(row.get("id")) in project_required_ids
+            and row.get("project_id") is not None
         }
         vectorized_ids = embedded_meeting_transcript_ids if family == "meetings" else embedded_ids
         vectorized_count = sum(1 for row_id in vectorization_required_ids if row_id in vectorized_ids)
@@ -672,17 +721,25 @@ def _load_recent_rag_lifecycle_alerts(app_client: Any) -> Dict[str, Any]:
                 "stage": "project_intelligence_updated",
                 "count": sum(
                     1
-                    for row_id in project_required_ids
-                    if row_id in evidence_ids
+                    for row_id in project_assigned_ids
+                    if _has_project_intelligence_outcome(row_id, evidence_ids, job_metadata_by_id)
                     and (
                         family != "meetings"
                         or _has_full_transcript_read_proof(row_id, job_metadata_by_id)
                     )
                 ),
-                "total": len(project_required_ids),
+                "total": len(project_assigned_ids),
                 "excluded": total - len(project_required_ids),
                 "owner": "intelligence compiler",
-                "latestAt": _newest([row.get("created_at") for row in evidence_rows if str(row.get("source_document_id")) in project_required_ids]) or latest_packet_at,
+                "latestAt": _newest(
+                    [row.get("created_at") for row in evidence_rows if str(row.get("source_document_id")) in project_assigned_ids]
+                    + [
+                        metadata.get("_updated_at")
+                        for row_id, metadata in job_metadata_by_id.items()
+                        if row_id in project_assigned_ids
+                        and _has_project_intelligence_outcome(row_id, evidence_ids, job_metadata_by_id)
+                    ]
+                ) or latest_packet_at,
                 "forceCritical": not has_fresh_packets,
             },
         ]
