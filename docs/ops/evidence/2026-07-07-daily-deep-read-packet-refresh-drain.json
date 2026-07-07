@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-07-07T21:47:33.557Z",
+  "job": {
+    "id": "6728a0b6-1794-4522-b4f9-688ac1f1be04",
+    "status": "succeeded",
+    "attempt_count": 3,
+    "last_error": null,
+    "output_packet_id": "6e6558f3-b8b9-42fa-931a-c4cfafee4036",
+    "started_at": "2026-07-07T21:46:17.11946+00:00",
+    "finished_at": "2026-07-07T21:46:44.972013+00:00",
+    "updated_at": "2026-07-07T21:46:44.97202+00:00"
+  },
+  "packet": {
+    "id": "6e6558f3-b8b9-42fa-931a-c4cfafee4036",
+    "target_id": "93dc271e-dc59-4f51-9b3e-db402c67bf97",
+    "packet_type": "current",
+    "freshness_status": "fresh",
+    "generated_at": "2026-07-07T21:46:44.370294+00:00"
+  },
+  "promoted_card_link": {
+    "packet_id": "6e6558f3-b8b9-42fa-931a-c4cfafee4036",
+    "insight_card_id": "988cf9e2-84a0-4fca-82f3-bd130b4d23d0",
+    "section": "decisions",
+    "rank": 7
+  }
+}

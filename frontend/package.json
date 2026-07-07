@@ -82,6 +82,7 @@
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs",
     "audit:modals": "node scripts/audit-modals.mjs",
     "audit:inline-numeric-inputs": "node scripts/audit-inline-numeric-inputs.mjs",
+    "audit:consistency": "node scripts/audit/ui-consistency-audit.mjs",
     "design:ratchet": "node scripts/design-system/check-ratchet.mjs",
     "design:ratchet:update-baseline": "node scripts/design-system/check-ratchet.mjs --write-baseline",
     "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs",

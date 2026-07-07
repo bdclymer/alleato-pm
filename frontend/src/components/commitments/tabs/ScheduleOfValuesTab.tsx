@@ -451,6 +451,9 @@ export function ScheduleOfValuesTab({
   }
 
   const totalColumns = accountingMethod === "unit" ? (canEdit ? 10 : 9) : (canEdit ? 7 : 6);
+  // Leading columns before the Amount / Billed / Remaining value trio: total
+  // columns minus the 3 value columns minus the trailing actions column (edit mode only).
+  const totalLabelSpan = totalColumns - 3 - (canEdit ? 1 : 0);
 
   return (
     <div className="space-y-6">
@@ -676,7 +679,7 @@ export function ScheduleOfValuesTab({
             <InlineTableFooterRow type="totals">
               <InlineTableFooterCell
                 align="right"
-                colSpan={totalColumns - 3}
+                colSpan={totalLabelSpan}
                 className="text-muted-foreground"
               >
                 Total
@@ -684,6 +687,7 @@ export function ScheduleOfValuesTab({
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
+            {canEdit ? <InlineTableFooterCell /> : null}
           </InlineTableFooterRow>
         </InlineTableFooter>
       </InlineTable>

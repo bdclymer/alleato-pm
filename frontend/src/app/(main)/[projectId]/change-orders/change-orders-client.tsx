@@ -633,13 +633,21 @@ export function ChangeOrdersClient({
           title: "Change Orders",
           description: (
             <>
-              This view shows potential change orders and related Prime contract
-              change orders. Manage all change orders directly from the{" "}
+              This view shows all potential change orders related to the prime
+              contract and commitment. Manage all change orders directly from
+              the{" "}
               <Link
                 href={`/${projectId}/prime-contracts`}
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
-                Prime contract tool
+                prime contract tool
+              </Link>{" "}
+              or{" "}
+              <Link
+                href={`/${projectId}/commitments`}
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                commitment tool
               </Link>
               .
             </>
