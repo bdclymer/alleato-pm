@@ -8519,6 +8519,13 @@ export type Database = {
             foreignKeyName: "commitment_payments_subcontract_id_fkey"
             columns: ["subcontract_id"]
             isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -9849,6 +9856,80 @@ export type Database = {
           notes?: string | null
         }
         Relationships: []
+      }
+      daily_corpus_syntheses: {
+        Row: {
+          ai_work_run_id: string | null
+          artifact_version: string
+          briefing_date: string
+          compiler_version: string | null
+          confidence_summary: Json
+          covered_end_at: string
+          covered_start_at: string
+          created_at: string
+          derived_brief_packet: Json
+          executive_summary: string
+          freshness_status: string
+          generated_at: string
+          id: string
+          source_coverage: Json
+          source_manifest: Json
+          status: string
+          synthesis_json: Json
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          ai_work_run_id?: string | null
+          artifact_version: string
+          briefing_date: string
+          compiler_version?: string | null
+          confidence_summary?: Json
+          covered_end_at: string
+          covered_start_at: string
+          created_at?: string
+          derived_brief_packet?: Json
+          executive_summary: string
+          freshness_status: string
+          generated_at?: string
+          id?: string
+          source_coverage?: Json
+          source_manifest?: Json
+          status: string
+          synthesis_json?: Json
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          ai_work_run_id?: string | null
+          artifact_version?: string
+          briefing_date?: string
+          compiler_version?: string | null
+          confidence_summary?: Json
+          covered_end_at?: string
+          covered_start_at?: string
+          created_at?: string
+          derived_brief_packet?: Json
+          executive_summary?: string
+          freshness_status?: string
+          generated_at?: string
+          id?: string
+          source_coverage?: Json
+          source_manifest?: Json
+          status?: string
+          synthesis_json?: Json
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_corpus_syntheses_ai_work_run_id_fkey"
+            columns: ["ai_work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_log_equipment: {
         Row: {
@@ -27464,6 +27545,7 @@ export type Database = {
           description: string | null
           id: string
           line_number: number
+          project_budget_code_id: string | null
           purchase_order_id: string
           quantity: number | null
           sort_order: number | null
@@ -27481,6 +27563,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number: number
+          project_budget_code_id?: string | null
           purchase_order_id: string
           quantity?: number | null
           sort_order?: number | null
@@ -27498,6 +27581,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number
+          project_budget_code_id?: string | null
           purchase_order_id?: string
           quantity?: number | null
           sort_order?: number | null
@@ -27506,6 +27590,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_order_sov_items_project_budget_code_id_fkey"
+            columns: ["project_budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_order_sov_items_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
@@ -30382,6 +30473,13 @@ export type Database = {
             foreignKeyName: "subcontract_documents_subcontract_id_fkey"
             columns: ["subcontract_id"]
             isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -30398,6 +30496,7 @@ export type Database = {
           description: string | null
           id: string
           line_number: number | null
+          project_budget_code_id: string | null
           quantity: number | null
           retainage_percent: number | null
           sort_order: number | null
@@ -30416,6 +30515,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          project_budget_code_id?: string | null
           quantity?: number | null
           retainage_percent?: number | null
           sort_order?: number | null
@@ -30434,6 +30534,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          project_budget_code_id?: string | null
           quantity?: number | null
           retainage_percent?: number | null
           sort_order?: number | null
@@ -30444,10 +30545,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "subcontract_sov_items_project_budget_code_id_fkey"
+            columns: ["project_budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subcontract_sov_items_subcontract_id_fkey"
             columns: ["subcontract_id"]
             isOneToOne: false
             referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_sov_items_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
             referencedColumns: ["id"]
           },
           {
@@ -30939,6 +31054,13 @@ export type Database = {
             foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
             columns: ["subcontract_id"]
             isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -31047,6 +31169,13 @@ export type Database = {
             columns: ["commitment_id"]
             isOneToOne: true
             referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: true
+            referencedRelation: "subcontracts_with_invoice_stats"
             referencedColumns: ["id"]
           },
           {
@@ -37431,6 +37560,99 @@ export type Database = {
             columns: ["sov_id"]
             isOneToOne: false
             referencedRelation: "schedule_of_values"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontracts_with_invoice_stats: {
+        Row: {
+          actual_completion_date: string | null
+          acumatica_external_key: string | null
+          allow_non_admin_view_sov_items: boolean | null
+          contract_company_id: string | null
+          contract_date: string | null
+          contract_number: string | null
+          created_at: string | null
+          created_by: string | null
+          default_retainage_percent: number | null
+          deleted_at: string | null
+          description: string | null
+          estimated_completion_date: string | null
+          exclusions: string | null
+          executed: boolean | null
+          id: string | null
+          inclusions: string | null
+          invoice_contact_ids: string[] | null
+          invoice_count: number | null
+          is_private: boolean | null
+          issued_on_date: string | null
+          latest_invoice_created_at: string | null
+          non_admin_user_ids: string[] | null
+          prime_contract_id: string | null
+          project: string | null
+          project_id: number | null
+          signed_contract_received_date: string | null
+          start_date: string | null
+          status: string | null
+          title: string | null
+          total_billed_from_line_items: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
