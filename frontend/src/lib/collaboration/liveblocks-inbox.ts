@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 
 import { Liveblocks } from "@liveblocks/node";
 
-import { getRoomId } from "@/lib/collaboration/rooms";
 import { getCollaborationNotificationHref } from "@/lib/collaboration/notification-links";
 
 // Mirrors an app-domain notification into the Liveblocks inbox so it renders in
@@ -24,6 +23,20 @@ type MirrorInput = {
   entityId?: string | null;
   /** Stable id for dedup; falls back to a random id when absent. */
   subjectId?: string | null;
+};
+
+// Mirrors the `$alleato` shape declared in types/liveblocks.d.ts. Declared
+// locally because the imported `Liveblocks` node class shadows the global
+// `Liveblocks` interface, so it can't be referenced by indexed access here.
+type AlleatoActivity = {
+  title: string;
+  body?: string;
+  href?: string;
+  notificationKind?: string;
+  source?: string;
+  entityType?: string;
+  entityId?: string;
+  projectId?: number;
 };
 
 let cachedClient: Liveblocks | null = null;
@@ -50,7 +63,7 @@ function buildActivityData(input: MirrorInput) {
     entityId: input.entityId ?? null,
   });
 
-  const data: Record<string, string | number | boolean> = {
+  const data: AlleatoActivity = {
     title: input.title,
     notificationKind: input.notificationKind,
   };
@@ -74,17 +87,13 @@ async function mirrorOne(
   userId: string,
   input: MirrorInput,
 ) {
-  const roomId =
-    input.entityType && input.entityId
-      ? getRoomId(input.entityType, input.entityId)
-      : undefined;
-
+  // No roomId: the app-domain notification kinds don't map cleanly to
+  // CommentableEntityType room ids, and the href already handles navigation.
   await liveblocks.triggerInboxNotification({
     userId,
     kind: "$alleato",
     subjectId: cleanText(input.subjectId) ?? randomUUID(),
     activityData: buildActivityData(input),
-    ...(roomId ? { roomId } : {}),
   });
 }
 
