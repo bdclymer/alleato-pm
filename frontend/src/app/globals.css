@@ -90,8 +90,9 @@
     --popover-foreground: var(--neutral-900);
     --surface-alt: var(--neutral-50);
     --surface-soft: var(--neutral-100);
-    /* Very light gray for summary/sidebar panels (#FBFBFB). Use via <SummaryPanel>. */
-    --surface-summary: 0 0% 98.4%;
+    /* Very light gray for summary/sidebar panels (#F9F9F9). Use via <SummaryPanel>. */
+    --surface-summary: 0 0% 97.6%;
+    --summary-panel-padding: 30px;
     --right-sidebar-bg: 0 0% 100%;
 
     /* Primary Accent — Alleato brand orange */
@@ -322,6 +323,12 @@
     --sidebar-accent-foreground: hsl(0 0% 92%);
     --sidebar-border: hsl(240 5% 19%);
     --sidebar-ring: hsl(29 90% 61%);
+  }
+}
+
+@layer components {
+  .summary-panel {
+    padding: var(--summary-panel-padding);
   }
 }
 

@@ -47,10 +47,12 @@ import {
   LabelValueRow,
   PageShell,
   SectionRuleHeading,
+  SummaryPanel,
   SummaryValueRow,
 } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Collapsible,
   CollapsibleContent,
@@ -529,7 +531,7 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
   const percentPaid = revisedContract > 0 ? (paymentsIssued / revisedContract) * 100 : 0;
 
   return (
-    <DetailPanel>
+    <SummaryPanel>
       <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
       <dl className="space-y-3 text-sm">
         <SummaryValueRow label="Original Contract" value={formatCurrency(commitment.original_amount)} />
@@ -544,7 +546,36 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
         <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} />
         <SummaryValueRow label="Remaining Balance Outstanding" value={formatCurrency(remainingBalance)} bold border />
       </dl>
-    </DetailPanel>
+    </SummaryPanel>
+  );
+}
+
+function CommitmentToggleRow({
+  id,
+  label,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+      <label htmlFor={id} className="min-w-0 text-xs text-muted-foreground">
+        {label}
+      </label>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+        aria-label={label}
+      />
+    </div>
   );
 }
 
@@ -587,7 +618,7 @@ interface GeneralTabProps {
 
 function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onSaveField }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
-  const isApproved = (commitment.status ?? "").trim().toLowerCase() === "approved";
+  const [savingToggle, setSavingToggle] = useState<"is_private" | "executed" | null>(null);
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
   // <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp.
@@ -595,6 +626,26 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
     typeof value === "string" && value.length >= 10 ? value.slice(0, 10) : "";
   const inclusionLines = parseTextLines(commitment.inclusions);
   const exclusionLines = parseTextLines(commitment.exclusions);
+  const saveToggle = async (field: "is_private" | "executed", value: boolean) => {
+    setSavingToggle(field);
+    try {
+      await onSaveField(field, value);
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "commitments",
+        operation: "toggle-general-field",
+        error,
+        userVisibleFallback: "The commitment toggle was not updated.",
+        metadata: {
+          commitmentId,
+          field,
+        },
+      });
+      toast.error(`Failed to update ${field === "is_private" ? "private commitment" : "executed"}.`);
+    } finally {
+      setSavingToggle(null);
+    }
+  };
 
   return (
     <ContentSectionStack className="pb-20">
@@ -661,9 +712,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         }
                       />
                     </DetailField>
-                    <DetailField label="Private Commitment">
-                      {commitment.private ? "Yes" : "No"}
-                    </DetailField>
                     <DetailField label="Non-Admin SOV">
                       {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
                     </DetailField>
@@ -729,15 +777,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         onSave={(v) => onSaveField("issued_on_date", v || null)}
                       />
                     </DetailField>
-                    <DetailField label="Executed">
-                      <InlineEditField
-                        label="Executed"
-                        type="boolean"
-                        value={commitment.executed ? "true" : "false"}
-                        display={commitment.executed ? "Yes" : "No"}
-                        onSave={(v) => onSaveField("executed", v === "true")}
-                      />
-                    </DetailField>
                     <DetailField label="Created By">
                       {commitment.created_by_name || "—"}
                     </DetailField>
@@ -770,6 +809,22 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                       </DetailField>
                     )}
                   </DetailFieldGrid>
+                  <div className="flex flex-col gap-4 border-t border-border/50 pt-4 sm:flex-row sm:items-center">
+                    <CommitmentToggleRow
+                      id="commitment-private-toggle"
+                      label="Private Commitment"
+                      checked={commitment.private}
+                      disabled={savingToggle !== null}
+                      onCheckedChange={(checked) => void saveToggle("is_private", checked)}
+                    />
+                    <CommitmentToggleRow
+                      id="commitment-executed-toggle"
+                      label="Executed"
+                      checked={Boolean(commitment.executed)}
+                      disabled={savingToggle !== null}
+                      onCheckedChange={(checked) => void saveToggle("executed", checked)}
+                    />
+                  </div>
                 </DetailLayout>
               </div>
             </DetailPanel>
