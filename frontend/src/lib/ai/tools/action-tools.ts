@@ -96,6 +96,11 @@ import {
   recordAiNotificationDecision,
   type AiNotificationDecisionLedgerResult,
 } from "@/lib/ai/notification-decision-ledger";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -165,6 +170,10 @@ type Tables = Database["public"]["Tables"];
 type SubcontractSovInsert = Tables["subcontract_sov_items"]["Insert"];
 type PurchaseOrderSovInsert = Tables["purchase_order_sov_items"]["Insert"];
 type CommitmentSovInsert = SubcontractSovInsert | PurchaseOrderSovInsert;
+type CommitmentLineItemBudgetCodeResolution = {
+  projectBudgetCodeId: string | null;
+  displayBudgetCode: string | null;
+};
 
 function normalizeCommitmentLineItems(
   lineItems?: CommitmentLineItemInput[] | null,
@@ -206,13 +215,16 @@ export function buildCommitmentSovInserts(params: {
   commitmentId: string;
   type: "subcontract" | "purchase_order";
   lineItems?: CommitmentLineItemInput[] | null;
+  budgetCodeResolutions?: CommitmentLineItemBudgetCodeResolution[];
 }): CommitmentSovInsert[] {
   const now = new Date().toISOString();
   return normalizeCommitmentLineItems(params.lineItems).map((item, index) => {
     const lineNumber = index + 1;
+    const budgetCodeResolution = params.budgetCodeResolutions?.[index];
     const base = {
       line_number: lineNumber,
-      budget_code: item.budgetCode ?? null,
+      budget_code: budgetCodeResolution?.displayBudgetCode ?? item.budgetCode ?? null,
+      project_budget_code_id: budgetCodeResolution?.projectBudgetCodeId ?? null,
       description: item.description,
       amount: item.amount,
       billed_to_date: 0,
@@ -3202,6 +3214,43 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           return failure;
         }
 
+        let budgetCodeResolutions: CommitmentLineItemBudgetCodeResolution[] = [];
+        const normalizedLineItems = normalizeCommitmentLineItems(lineItems);
+        if (normalizedLineItems.length > 0) {
+          try {
+            const budgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+              supabase,
+              projectId,
+              "ai/tools/createCommitment",
+            );
+            budgetCodeResolutions = normalizedLineItems.map((item, index) =>
+              resolveCommitmentSovBudgetCodeFromLookup({
+                budgetCodes,
+                lineNumber: index + 1,
+                where: "ai/tools/createCommitment",
+                submittedBudgetCode: item.budgetCode ?? null,
+              }),
+            );
+          } catch (error) {
+            const failure = {
+              success: false,
+              error:
+                error instanceof GuardrailError
+                  ? error.message
+                  : "Cannot create the commitment because one or more SOV budget codes could not be validated.",
+            };
+            await recordWriteAudit({
+              toolName: "createCommitment",
+              idempotencyKey,
+              projectId: access.projectId,
+              input,
+              status: "error",
+              response: failure,
+            });
+            return failure;
+          }
+        }
+
         // Build the insert payload
         const insertPayload: Record<string, unknown> = {
           project_id: projectId,
@@ -3256,6 +3305,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           commitmentId: record.id,
           type,
           lineItems,
+          budgetCodeResolutions,
         });
 
         if (sovInserts.length > 0) {

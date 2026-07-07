@@ -1,3 +1,7 @@
+jest.mock("ai", () => ({
+  tool: jest.fn((definition) => definition),
+}));
+
 jest.mock("../guardrails", () => ({
   createToolGuardrails: jest.fn(),
 }));
@@ -1110,6 +1114,7 @@ describe("buildCommitmentDraftWidget", () => {
         subcontract_id: "commitment-1",
         line_number: 1,
         budget_code: "26-0000",
+        project_budget_code_id: null,
         description: "Electrical rough-in",
         amount: 12500,
         billed_to_date: 0,
@@ -1136,10 +1141,38 @@ describe("buildCommitmentDraftWidget", () => {
         purchase_order_id: "commitment-2",
         line_number: 1,
         budget_code: "22-0000",
+        project_budget_code_id: null,
         description: "Plumbing fixtures",
         amount: 8000,
         billed_to_date: 0,
         uom: "EA",
+      }),
+    ]);
+  });
+
+  it("uses resolved project budget code IDs when building commitment SOV inserts", () => {
+    expect(
+      buildCommitmentSovInserts({
+        commitmentId: "commitment-1",
+        type: "subcontract",
+        budgetCodeResolutions: [
+          {
+            projectBudgetCodeId: "project-budget-code-1",
+            displayBudgetCode: "26-0000.S",
+          },
+        ],
+        lineItems: [
+          {
+            budgetCode: "26-0000.S",
+            description: "Electrical rough-in",
+            amount: 12500,
+          },
+        ],
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        budget_code: "26-0000.S",
+        project_budget_code_id: "project-budget-code-1",
       }),
     ]);
   });
@@ -1477,6 +1510,25 @@ describe("createCommitment line-item writes", () => {
           })),
         };
       }
+      if (tableName === "project_budget_codes") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn().mockResolvedValue({
+                data: [
+                  {
+                    id: "project-budget-code-1",
+                    cost_code_id: "26-0000",
+                    cost_type_id: "cost-type-1",
+                    cost_code_types: { code: "S", description: "Subcontract" },
+                  },
+                ],
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
       if (tableName === "subcontract_sov_items") {
         return {
           insert: sovInsert,
@@ -1539,7 +1591,8 @@ describe("createCommitment line-item writes", () => {
       expect.objectContaining({
         subcontract_id: "subcontract-1",
         line_number: 1,
-        budget_code: "26-0000",
+        budget_code: "26-0000.S",
+        project_budget_code_id: "project-budget-code-1",
         description: "Electrical rough-in",
         amount: 12500,
         quantity: 1,
@@ -1548,5 +1601,102 @@ describe("createCommitment line-item writes", () => {
         retainage_percent: 10,
       }),
     ]);
+  });
+
+  it("does not create the commitment when an AI-provided SOV budget code is inactive", async () => {
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const subcontractInsert = jest.fn();
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "subcontracts") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+          insert: subcontractInsert,
+        };
+      }
+      if (tableName === "companies") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              ilike: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({
+                  data: [{ id: "company-1", name: "Acme Electric" }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        };
+      }
+      if (tableName === "project_budget_codes") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+            })),
+          })),
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table in inactive budget code test: ${tableName}`);
+    });
+
+    mockedCreateServiceClient.mockReturnValue({ from, rpc: jest.fn() } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      lineItems: [
+        {
+          budgetCode: "99-9999",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      confirmed: true,
+    });
+
+    expect(output).toMatchObject({
+      success: false,
+      error: 'Line 1: budget code "99-9999" is not active for this project.',
+    });
+    expect(subcontractInsert).not.toHaveBeenCalled();
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool_name: "createCommitment",
+        status: "error",
+      }),
+    );
   });
 });
