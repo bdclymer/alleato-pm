@@ -1,6 +1,6 @@
 # Graph Post-Sync Attribution Ledger
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Linear: AAI-1011
 Linear URL: https://linear.app/megankharrison/issue/AAI-1011/verify-graph-post-sync-attribution-follow-up-in-source-sync-ledger
@@ -33,7 +33,7 @@ Make the Graph communication attribution follow-up observable from the durable `
 - [x] Focused tests pass.
 - [x] Live health readback stays clean.
 - [x] Evidence section filled.
-- [ ] Task-owned files pushed to `origin/main`.
+- [x] Task-owned files pushed to `origin/main`.
 
 ## Evidence
 
@@ -71,3 +71,6 @@ Make the Graph communication attribution follow-up observable from the durable `
   - `alleato-graph-sync` active, not suspended, schedule `20 */2 * * *`, last successful run `2026-07-07T16:25:53Z`.
   - `alleato-teams-dm-sync` active, not suspended, schedule `40 * * * *`, last successful run `2026-07-07T16:40:45Z`.
   - `alleato-teams-channel-sync` active, not suspended, schedule `10 * * * *`, last successful run `2026-07-07T17:10:44Z`.
+- Publish evidence:
+  - `npm run codex:finish -- --message "Verify Graph attribution follow-up ledger" --files backend/src/services/integrations/microsoft_graph/sync.py backend/tests/test_graph_sync_options.py scripts/verify/verify_graph_post_sync_attribution_followup.mjs docs/architecture/AI-RAG-ARCHITECTURE.md docs/ops/tasks/2026-07-07-graph-post-sync-attribution-ledger.md`
+  - Result: published task-owned files to `origin/main` at `9cd28dac6`.
