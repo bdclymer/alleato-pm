@@ -129,6 +129,15 @@ async function main() {
   if (ctErr) throw new Error(`cost_code_types read: ${ctErr.message}`);
   const costTypeIdByCode = new Map((ctRows ?? []).map((r) => [r.code, r.id]));
 
+  // Vendor resolution: JP contractedContact.companyName -> companies.id (exact, then legal-suffix-stripped).
+  const { data: coRows } = await sb.from("companies").select("id, name");
+  const SUFFIX = /\b(inc|incorporated|llc|ltd|co|corp|corporation|company|lp|llp|pllc|plc)\b/g;
+  const normName = (s) => String(s || "").toLowerCase().replace(/^the\s+/, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  const normStrip = (s) => normName(s).replace(SUFFIX, "").replace(/\s+/g, " ").trim();
+  const coByExact = new Map(), coByStrip = new Map();
+  for (const co of coRows ?? []) { coByExact.set(normName(co.name), co.id); const k = normStrip(co.name); if (k && !coByStrip.has(k)) coByStrip.set(k, co.id); }
+  const resolveVendor = (name) => (name ? coByExact.get(normName(name)) ?? coByStrip.get(normStrip(name)) ?? null : null);
+
   // Existing app commitments on this project (both tables), with SOV totals.
   async function loadAppCommitments(table, sovTable, fk) {
     const { data, error } = await sb.from(table).select("id, contract_number, title, contract_company_id, deleted_at").eq("project_id", APP_PROJECT_ID);
@@ -168,17 +177,23 @@ async function main() {
       const typeCode = jpTypeCodeById.get(x.costTypeId) ?? null;
       const costTypeId = typeCode ? costTypeIdByCode.get(typeCode) ?? null : null;
       if (typeCode && !costTypeId) unresolvedTypes++;
+      // budget_code text uses native "CODE.TYPE" format (e.g. "50-7000.S") so the
+      // read-only/locked SOV view resolves it, matching how the app writes SOV rows.
+      const budgetCodeText = costCodeId ? (typeCode ? `${costCodeId}.${typeCode}` : costCodeId) : null;
       return {
         line_number: idx + 1,
         costCodeId, costTypeId,
-        budget_code: costCodeId,
+        budget_code: budgetCodeText,
         description: x.description?.trim() || costCodeTitleById.get(costCodeId) || jpCodeById.get(x.costCodeId)?.name || `Line ${idx + 1}`,
         amount: centsToDollars(x.amount),
       };
     });
     const existing = byNumber.get(number) || null;
+    const vendorName = jp.contractedContact?.companyName || null;
+    const vendorCompanyId = resolveVendor(vendorName);
     plan.jpCommitments.push({
       number, kind, title: jp.title || null,
+      vendorName, vendorCompanyId,
       jpHeaderTotal: centsToDollars(headerCents),
       jpSovLineCount: resolved.length,
       integrityOk,
@@ -211,6 +226,8 @@ async function main() {
     jpCommitments: plan.jpCommitments.length,
     toCreate: plan.jpCommitments.filter((c) => c.action === "CREATE").length,
     toRebuildSov: plan.jpCommitments.filter((c) => c.action === "REBUILD_SOV").length,
+    createsWithVendor: plan.jpCommitments.filter((c) => c.action === "CREATE" && c.vendorCompanyId).length,
+    createsMissingVendor: plan.jpCommitments.filter((c) => c.action === "CREATE" && !c.vendorCompanyId).map((c) => `${c.number} (${c.vendorName || "no name"})`),
     integrityFailures: plan.jpCommitments.filter((c) => !c.integrityOk).map((c) => c.number),
     totalJpSovLines: plan.jpCommitments.reduce((a, c) => a + c.jpSovLineCount, 0),
     acumaticaDuplicatesToRetire: plan.retireDuplicates.length,
@@ -248,7 +265,7 @@ async function main() {
 
       let commitmentId = c.appCommitmentId;
       if (!commitmentId) {
-        const { data: ins, error } = await sb.from(table).insert({ project_id: APP_PROJECT_ID, contract_number: c.number, title: c.title, status: "Draft" }).select("id").single();
+        const { data: ins, error } = await sb.from(table).insert({ project_id: APP_PROJECT_ID, contract_number: c.number, title: c.title, status: "Draft", contract_company_id: c.vendorCompanyId }).select("id").single();
         if (error) throw new Error(`${table} insert ${c.number}: ${error.message}`);
         commitmentId = ins.id;
       }
