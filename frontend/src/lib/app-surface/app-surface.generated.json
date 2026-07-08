@@ -948,8 +948,8 @@
     },
     {
       "url": "/daily-brief",
-      "title": null,
-      "description": null
+      "title": "Daily Executive Brief",
+      "description": "This executive brief is limited to users with executive briefing access."
     },
     {
       "url": "/daily-briefs",
