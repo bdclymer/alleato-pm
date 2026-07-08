@@ -55,6 +55,15 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget/modifications#GET",
+        message: "Authentication required.",
+      });
+    }
+
     const permissions = await loadUserPermissions(projectIdNum);
     if (!permissions || !hasPermission(permissions, "budget", "read")) {
       return NextResponse.json(
@@ -271,7 +280,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/modifications#POST",
   async ({ request, params }) => {
-  
+
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -280,6 +289,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         { error: "Invalid project ID" },
         { status: 400 },
       );
+    }
+
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget/modifications#POST",
+        message: "Authentication required.",
+      });
     }
 
     const permissions = await loadUserPermissions(projectIdNum);
@@ -349,15 +367,6 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     const supabase = await createClient();
-
-    // Get current user
-    const user = await getApiRouteUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 },
-      );
-    }
 
 type BudgetLineForModification = {
       id: string;
@@ -586,6 +595,15 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       voidedReason,
     } = validation.data;
 
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget/modifications#PATCH",
+        message: "Authentication required.",
+      });
+    }
+
     const permissions = await loadUserPermissions(projectIdNum);
     const budgetChangePermissions = getBudgetChangePermissions(permissions);
 
@@ -759,7 +777,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
 export const DELETE = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/modifications#DELETE",
   async ({ request, params }) => {
-  
+
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -768,6 +786,15 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
         { error: "Invalid project ID" },
         { status: 400 },
       );
+    }
+
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget/modifications#DELETE",
+        message: "Authentication required.",
+      });
     }
 
     const permissions = await loadUserPermissions(projectIdNum);
