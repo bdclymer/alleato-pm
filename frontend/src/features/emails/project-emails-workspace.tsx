@@ -2745,8 +2745,6 @@ export function EmailTrainingFeedbackPanel({
           {
             method: "POST",
             body: JSON.stringify({
-              assistantAction,
-              assistantPriority,
               assistantScore: selectedEmail.assistant_score ?? null,
               assistantReason: selectedEmail.assistant_reason ?? null,
               assistantOwner: selectedEmail.assistant_owner ?? null,

@@ -88,7 +88,6 @@ import {
   fetchUsers,
   formatProjectCount,
   toAccessSummary,
-  type PermissionUsersAccess,
   type TemplateScope,
   type UserAccessSummary,
   type UserLinkDiagnostic,
@@ -96,7 +95,6 @@ import {
 
 type PermissionsTab =
   | "app-users"
-  | "project-access"
   | "project-templates"
   | "company-templates";
 type AccessScope = "all_projects" | "selected_projects";
@@ -576,10 +574,9 @@ export default function PermissionsAdminPage() {
   const projectTemplates = projectTemplatesQuery.data ?? [];
   const companyTemplates = companyTemplatesQuery.data ?? [];
 
-  const userAccess: PermissionUsersAccess =
-    activeTab === "project-access" ? "project" : "app";
-  const activeUsersQuery =
-    userAccess === "project" ? projectAccessUsersQuery : appUsersQuery;
+  // The "project-access" tab was retired (see redirect effect above) — the
+  // users table now always shows app users.
+  const activeUsersQuery = appUsersQuery;
   const linkDiagnostics =
     activeUsersQuery.data?.diagnostics?.missingAuthLinks ?? [];
   const users = useMemo(
@@ -613,42 +610,23 @@ export default function PermissionsAdminPage() {
     [slugByPersonId],
   );
   const appUserCount = appUsersQuery.data?.data.length ?? 0;
-  const projectAccessUserCount = projectAccessUsersQuery.data?.data.length ?? 0;
+  // Descriptions below always use the "app users" copy — the "project-access"
+  // tab was retired (see redirect effect above).
   const usersDescription =
-    activeTab === "project-access"
-      ? "Project-limited users who can access the site because they were added to one or more projects. This is where subcontractors, owner contacts, and other external project contacts belong."
-      : "Internal app users who administer the system or have company-wide access across projects.";
-  const usersSearchPlaceholder =
-    activeTab === "project-access"
-      ? "Search project access users..."
-      : "Search app users...";
-  const usersEmptyTitle =
-    activeTab === "project-access" ? "No project access users" : "No app users";
+    "Internal app users who administer the system or have company-wide access across projects.";
+  const usersSearchPlaceholder = "Search app users...";
+  const usersEmptyTitle = "No app users";
   const usersEmptyDescription =
-    activeTab === "project-access"
-      ? "Project access is granted from the Project Directory inside each individual project."
-      : "Invite an app user to assign company-wide access or admin responsibility.";
+    "Invite an app user to assign company-wide access or admin responsibility.";
 
-  const usersFilteredDescription =
-    activeTab === "project-access"
-      ? "No project access users match your search."
-      : "No app users match your search.";
+  const usersFilteredDescription = "No app users match your search.";
 
-  const usersAddLabel =
-    activeTab === "project-access" ? "Add Project Access" : "Grant App Access";
-  const usersTotalCount =
-    activeTab === "project-access" ? projectAccessUserCount : appUserCount;
+  const usersAddLabel = "Grant App Access";
+  const usersTotalCount = appUserCount;
   const canManageUserRows = activeTab === "app-users";
-  const accessDialogMode: "app" | "project" =
-    activeTab === "project-access" ? "project" : "app";
+  const accessDialogMode: "app" | "project" = "app";
 
-  const usersTopContent =
-    activeTab === "project-access" ? (
-      <p className="mt-0 max-w-3xl pb-4 text-sm leading-6 text-muted-foreground">
-        Add Project Access assigns an employee to selected projects with a
-        project permission template.
-      </p>
-    ) : null;
+  const usersTopContent = null;
 
   const filteredUsers = useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
@@ -890,10 +868,9 @@ export default function PermissionsAdminPage() {
       return matchingTemplate?.id ?? companyTemplates[0]?.id ?? null;
     };
 
-    const roleEditOptions =
-      activeTab === "project-access"
-        ? projectTemplateOptions
-        : companyTemplateOptions;
+    // The "project-access" tab was retired — this table only ever shows app
+    // users now, so role edits always use company templates.
+    const roleEditOptions = companyTemplateOptions;
 
     return [
       {
@@ -975,22 +952,8 @@ export default function PermissionsAdminPage() {
         editable: roleEditOptions.length > 0,
         editType: "select",
         editOptions: roleEditOptions,
-        editValue: (user) => {
-          if (activeTab === "project-access") {
-            return user.memberships[0]?.templateId ?? "";
-          }
-
-          return resolveCompanyTemplateId(user) ?? "";
-        },
+        editValue: (user) => resolveCompanyTemplateId(user) ?? "",
         onEdit: async (user, value) => {
-          if (activeTab === "project-access") {
-            await tableProjectTemplateMutation.mutateAsync({
-              user,
-              templateId: value,
-            });
-            return;
-          }
-
           await tableCompanyTemplateMutation.mutateAsync({
             personId: user.personId,
             templateId: value,
@@ -1281,11 +1244,7 @@ export default function PermissionsAdminPage() {
   });
 
   useEffect(() => {
-    if (
-      (activeTab !== "app-users" && activeTab !== "project-access") ||
-      linkDiagnostics.length === 0
-    )
-      return;
+    if (activeTab !== "app-users" || linkDiagnostics.length === 0) return;
 
     const reconcileKey = linkDiagnostics
       .map(
@@ -1479,7 +1438,7 @@ export default function PermissionsAdminPage() {
 
   return (
     <>
-      {activeTab === "app-users" || activeTab === "project-access" ? (
+      {activeTab === "app-users" ? (
         <UnifiedTablePage<UserAccessSummary>
           header={{
             title: "Manage Users",

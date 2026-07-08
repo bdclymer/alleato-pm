@@ -322,7 +322,7 @@ export async function getSiteLeadChecklistForDate(params: {
     .eq("log_date", params.logDate)
     .maybeSingle();
 
-  if (!maybeNotFound(error)) {
+  if (error && !maybeNotFound(error)) {
     return { error: `Site lead checklist could not be loaded: ${error.message}` };
   }
 
@@ -363,7 +363,7 @@ export async function saveSiteLeadChecklistForDate(params: {
     .eq("log_date", params.logDate)
     .maybeSingle();
 
-  if (!maybeNotFound(existingResult.error)) {
+  if (existingResult.error && !maybeNotFound(existingResult.error)) {
     return { error: `Could not load the linked daily log: ${existingResult.error.message}` };
   }
 

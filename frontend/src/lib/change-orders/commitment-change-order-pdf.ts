@@ -1,9 +1,19 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 import { buildCommitmentCoPdfHtml } from "@/lib/commitment-co-pdf";
 import type { Database } from "@/types/database.types";
 
 type TypedSupabaseClient = SupabaseClient<Database>;
+
+type CommitmentTotalsRow = {
+  id: string | null;
+  contract_number: string | null;
+  title: string | null;
+  company_name: string | null;
+  contract_company_id: string | null;
+  total_sov_amount: number | null;
+  accounting_method: string | null;
+};
 
 type PersonRow = {
   id: string;
@@ -33,11 +43,13 @@ function formatCompanyAddress(company: {
   return [company.address, cityStateZip].filter((value): value is string => Boolean(value?.trim()));
 }
 
-function formatProjectAddress(project: {
+type ProjectAddressRow = {
   address?: string | null;
   state?: string | null;
   summary_metadata?: { city?: string | null; postal_code?: string | null } | null;
-} | null): string[] {
+};
+
+function formatProjectAddress(project: ProjectAddressRow | null): string[] {
   if (!project) return [];
   const cityStateZip = [project.summary_metadata?.city, project.state, project.summary_metadata?.postal_code]
     .filter(Boolean)
@@ -75,10 +87,44 @@ export async function buildCommitmentChangeOrderPdfArtifact(
     throw new Error("Commitment change order not found.");
   }
 
-  const totalsTable =
-    scoped.commitment_type === "purchase_order"
-      ? "purchase_orders_with_totals"
-      : "subcontracts_with_totals";
+  if (!scoped.contract_id) {
+    throw new Error("Commitment change order is missing its linked commitment.");
+  }
+  // Captured in a local so the non-null narrowing survives inside the async
+  // IIFE closure below (TS drops property narrowing across closures).
+  const contractId = scoped.contract_id;
+
+  // Query each possible totals view with its own literal table name rather
+  // than a union-typed variable — Supabase's generated types cannot resolve
+  // a `.select()` column list against a union of two views with different
+  // columns (accounting_method only exists on purchase_orders_with_totals).
+  // The IIFE's explicit return type also sidesteps a TS quirk where a
+  // ternary between two differently-typed PostgrestFilterBuilder instances
+  // collapses to their common shape instead of a real union.
+  const commitmentQuery: Promise<{
+    data: CommitmentTotalsRow | null;
+    error: PostgrestError | null;
+  }> = (async () => {
+    if (scoped.commitment_type === "purchase_order") {
+      const { data, error } = await supabase
+        .from("purchase_orders_with_totals")
+        .select(
+          "id, contract_number, title, company_name, contract_company_id, total_sov_amount, accounting_method",
+        )
+        .eq("id", contractId)
+        .maybeSingle();
+      return { data, error };
+    }
+
+    const { data, error } = await supabase
+      .from("subcontracts_with_totals")
+      .select(
+        "id, contract_number, title, company_name, contract_company_id, total_sov_amount",
+      )
+      .eq("id", contractId)
+      .maybeSingle();
+    return { data: data ? { ...data, accounting_method: null } : null, error };
+  })();
 
   const [
     lineItemsResult,
@@ -97,11 +143,7 @@ export async function buildCommitmentChangeOrderPdfArtifact(
       .select("name, project_number, address, state, summary_metadata")
       .eq("id", projectId)
       .single(),
-    supabase
-      .from(totalsTable)
-      .select("id, contract_number, title, company_name, contract_company_id, total_sov_amount, accounting_method")
-      .eq("id", scoped.contract_id)
-      .maybeSingle(),
+    commitmentQuery,
     supabase
       .from("contract_change_orders")
       .select("id, amount")
@@ -224,9 +266,7 @@ export async function buildCommitmentChangeOrderPdfArtifact(
     changeReason: scoped.change_reason,
     paidInFull: scoped.paid_in_full,
     executed: scoped.executed,
-    accountingMethod:
-      ("accounting_method" in commitmentResult.data ? commitmentResult.data.accounting_method : null) ??
-      "Amount Based",
+    accountingMethod: commitmentResult.data.accounting_method ?? "Amount Based",
     scheduleImpact: scoped.schedule_impact,
     fieldChange: scoped.field_change,
     signedChangeOrderReceivedDate: scoped.signed_co_received_date,
@@ -234,7 +274,9 @@ export async function buildCommitmentChangeOrderPdfArtifact(
     commitmentTitle: commitmentResult.data.title ?? scoped.commitment_title,
     projectName: projectResult.data?.name ?? null,
     projectNumber: projectResult.data?.project_number ?? null,
-    projectAddressLines: formatProjectAddress(projectResult.data),
+    projectAddressLines: formatProjectAddress(
+      projectResult.data as ProjectAddressRow | null,
+    ),
     contractorName: "Alleato Group",
     contractorAddressLines: [
       "8383 Craig St, Suite 150",

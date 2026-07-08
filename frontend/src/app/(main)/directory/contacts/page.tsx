@@ -72,7 +72,7 @@ function buildContactTableColumns(
     contact: ContactTableRow,
     field: ContactEditableField,
     value: string,
-  ) => Promise<void>,
+  ) => void | Promise<void>,
   companyOptions: CompanyOption[],
 ): TableColumn<ContactTableRow>[] {
   return [

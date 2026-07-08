@@ -31,7 +31,8 @@ export function normalizeTags(raw: unknown): string[] | null {
         return cleaned.length > 0 ? cleaned : null;
       }
     } catch (error) {
-      logger.warn("knowledge.tags_json_parse_failed", {
+      logger.warn({
+        msg: "knowledge.tags_json_parse_failed",
         error: error instanceof Error ? error.message : String(error),
       });
       // fall through to delimiter split

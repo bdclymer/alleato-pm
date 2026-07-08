@@ -220,6 +220,7 @@ function VeltCommentRestingStateController() {
 
   const finishCollapse = (collapseVersion: number) => {
     if (collapseVersionRef.current !== collapseVersion) return;
+    if (!commentElement) return;
 
     commentElement.selectCommentByAnnotationId?.();
     commentElement.clearPageModeComposerContext?.();

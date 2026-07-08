@@ -288,7 +288,7 @@ export function buildEmailTableColumns(options?: {
           {
             ...assistantReviewColumns[0],
             width: 118,
-            render: (item) => (
+            render: (item: ProjectEmail) => (
               <div className="inline-flex items-center gap-1.5 text-sm">
                 <Circle
                   className={cn(
@@ -300,31 +300,38 @@ export function buildEmailTableColumns(options?: {
                 <span>{formatAssistantValue(item.assistant_priority)}</span>
               </div>
             ),
-            csvValue: (item) => formatAssistantValue(item.assistant_priority),
-            sortValue: (item) => item.assistant_priority ?? "",
+            csvValue: (item: ProjectEmail) =>
+              formatAssistantValue(item.assistant_priority),
+            sortValue: (item: ProjectEmail) => item.assistant_priority ?? "",
           },
           {
             ...assistantReviewColumns[1],
             width: 140,
-            render: (item) => <CellText value={item.assistant_category ?? null} muted />,
-            csvValue: (item) => item.assistant_category ?? "",
-            sortValue: (item) => item.assistant_category ?? "",
+            render: (item: ProjectEmail) => (
+              <CellText value={item.assistant_category ?? null} muted />
+            ),
+            csvValue: (item: ProjectEmail) => item.assistant_category ?? "",
+            sortValue: (item: ProjectEmail) => item.assistant_category ?? "",
           },
           {
             ...assistantReviewColumns[2],
             width: 120,
-            render: (item) => <CellText value={formatAssistantValue(item.assistant_action)} muted />,
-            csvValue: (item) => formatAssistantValue(item.assistant_action),
-            sortValue: (item) => item.assistant_action ?? "",
+            render: (item: ProjectEmail) => (
+              <CellText value={formatAssistantValue(item.assistant_action)} muted />
+            ),
+            csvValue: (item: ProjectEmail) =>
+              formatAssistantValue(item.assistant_action),
+            sortValue: (item: ProjectEmail) => item.assistant_action ?? "",
           },
           {
             ...assistantReviewColumns[3],
             width: 96,
-            render: (item) => (
+            render: (item: ProjectEmail) => (
               <CellText value={hasAssistantDraft(item) ? "Recorded" : "Missing"} muted />
             ),
-            csvValue: (item) => (hasAssistantDraft(item) ? "Recorded" : "Missing"),
-            sortValue: (item) => (hasAssistantDraft(item) ? 1 : 0),
+            csvValue: (item: ProjectEmail) =>
+              hasAssistantDraft(item) ? "Recorded" : "Missing",
+            sortValue: (item: ProjectEmail) => (hasAssistantDraft(item) ? 1 : 0),
           },
         ]
       : []),

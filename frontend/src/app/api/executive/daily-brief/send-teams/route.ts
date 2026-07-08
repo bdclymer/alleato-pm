@@ -22,7 +22,11 @@ export const dynamic = "force-dynamic";
 function sourceHealthFromResult(
   result: CanonicalDailyBriefTeamsDeliveryResult,
 ): SourceHealthSnapshot[] {
-  if (!result.ok || !result.packet) {
+  // `packet` is a required field on the `ok: true` member, so checking
+  // `!result.ok` alone is sufficient to narrow to the `ok: false` member
+  // (which has `reason`) — an `||` on `!result.packet` prevented that
+  // narrowing without changing which branch actually runs.
+  if (!result.ok) {
     return [
       {
         sourceFamily: "intelligence_packet",

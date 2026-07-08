@@ -70,7 +70,7 @@ export function DocumentDeliveryDialog({
   emailEndpoint,
   downloadEndpoint,
 }: DocumentDeliveryDialogProps) {
-  const sanitizedAllowedTabs = React.useMemo(
+  const sanitizedAllowedTabs = React.useMemo<DialogTab[]>(
     () => (allowedTabs.length > 0 ? allowedTabs : ["download", "email"]),
     [allowedTabs],
   );

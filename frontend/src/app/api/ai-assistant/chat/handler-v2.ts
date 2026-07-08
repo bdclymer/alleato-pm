@@ -23,7 +23,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { planRetrieval } from "@/lib/ai/retrieval/planner";
 import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
 import { assembleSystemPromptFromContext } from "@/lib/ai/retrieval/system-prompt";
-import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
+import { buildExecutorDeps, DIRECT_EXEC_OPTIONS } from "@/lib/ai/retrieval/deps";
 import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
@@ -2693,7 +2693,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           throw new Error("createChangeEvent execute handler was not registered.");
         }
 
-        const output = await executeCreateChangeEvent(confirmedChangeEventInput as never);
+        const output = await executeCreateChangeEvent(
+          confirmedChangeEventInput as never,
+          DIRECT_EXEC_OPTIONS,
+        );
         const outputRecord =
           output && typeof output === "object" && "record" in output
             ? (output as { record?: unknown }).record

@@ -429,7 +429,7 @@ export async function loadMeetingLineage(
 
   return {
     projectId,
-    projectName: project.name,
+    projectName: project.name ?? `Project ${project.id}`,
     routeMeetingId,
     routeKind,
     documentId,

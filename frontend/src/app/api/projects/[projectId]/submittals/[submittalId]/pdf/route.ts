@@ -61,21 +61,25 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
-function formatProjectLines(project: {
+type ProjectLinesInput = {
   project_number?: string | null;
   name?: string | null;
   address?: string | null;
-  city?: string | null;
   state?: string | null;
-} | null): string[] {
+  // `city` isn't a column on `projects` — it lives inside summary_metadata.
+  summary_metadata?: { city?: string | null } | null;
+} | null;
+
+function formatProjectLines(project: ProjectLinesInput): string[] {
   if (!project) return [];
 
+  const city = project.summary_metadata?.city ?? null;
   const lines = [
     project.project_number || project.name
       ? `Project: ${[project.project_number, project.name].filter(Boolean).join(" ")}`
       : null,
     project.address ?? null,
-    [project.city, project.state].filter(Boolean).join(", ") || null,
+    [city, project.state].filter(Boolean).join(", ") || null,
   ];
 
   return lines.filter((line): line is string => Boolean(line && line.trim()));
@@ -170,7 +174,7 @@ export const GET = withApiGuardrails(
       await Promise.all([
         supabase
           .from("projects")
-          .select("name, project_number, address, city, state")
+          .select("name, project_number, address, state, summary_metadata")
           .eq("id", projectIdNum)
           .single(),
         submittal.responsible_contractor_id
@@ -571,7 +575,7 @@ export const GET = withApiGuardrails(
           ).join("")}
         </div>
         <div class="project-block" style="text-align:right;">
-          ${formatProjectLines(project).map((line, index) => {
+          ${formatProjectLines(project as ProjectLinesInput).map((line, index) => {
             const className = index === 0 ? "project-label" : "project-line";
             return `<div class="${className}">${esc(line)}</div>`;
           }).join("")}

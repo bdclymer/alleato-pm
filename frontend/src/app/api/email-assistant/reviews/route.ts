@@ -67,26 +67,13 @@ export const GET = withApiGuardrails(
 
     const isAdmin = profile?.is_admin === true;
 
+    // A literal (non-templated) select string lets Supabase's generated
+    // types parse the column list — a runtime-built string (e.g. via
+    // Array.join) types as an unparseable GenericStringError.
     let query = appService
       .from("outlook_email_assistant_reviews")
       .select(
-        [
-          "id",
-          "intake_email_id",
-          "graph_message_id",
-          "mailbox_user_id",
-          "assistant_action",
-          "assistant_priority",
-          "assistant_score",
-          "assistant_reason",
-          "assistant_owner",
-          "assistant_risk",
-          "assistant_evidence",
-          "review_outcome",
-          "reviewer_note",
-          "draft_body",
-          "created_at",
-        ].join(","),
+        "id, intake_email_id, graph_message_id, mailbox_user_id, assistant_action, assistant_priority, assistant_score, assistant_reason, assistant_owner, assistant_risk, assistant_evidence, review_outcome, reviewer_note, draft_body, created_at",
       )
       .in("intake_email_id", emailIds)
       .order("created_at", { ascending: false });

@@ -609,7 +609,9 @@ function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
   const contractorNotice = templateData?.contractorNotice;
   const counterpartyNotice = templateData?.counterpartyNotice;
 
-  const renderNoticeLines = (notice: CommitmentContractTemplateData["contractorNotice"]) =>
+  const renderNoticeLines = (
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) =>
     [
       notice?.name,
       notice?.companyName,
@@ -622,7 +624,10 @@ function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
       .map((line) => renderLegalParagraph(renderHtmlValue(line), { marginBottom: "0.08in" }))
       .join("");
 
-  const renderNoticeBlock = (label: string, notice: CommitmentContractTemplateData["contractorNotice"]) =>
+  const renderNoticeBlock = (
+    label: string,
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) =>
     `
       ${renderLegalParagraph(renderHtmlValue(label), { bold: true, marginBottom: "0.08in" })}
       <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">
@@ -1701,7 +1706,7 @@ async function loadCommitmentBundle(
         projectPrimeContract?.client_id,
         projectPrimeContract?.contract_company_id,
         projectPrimeContract?.contractor_id,
-      ].filter(Boolean),
+      ].filter((id): id is string => Boolean(id)),
     ),
   );
 

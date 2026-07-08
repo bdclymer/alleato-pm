@@ -171,7 +171,10 @@ export const GET = withApiGuardrails("email-inbox/reviewed#GET", async () => {
     .limit(200);
 
   if (!isAdmin) {
-    reviewQuery = reviewQuery.eq("mailbox_user_id", user.email);
+    // Non-admins are scoped to their own mailbox. If the session somehow has no
+    // email, scope to a sentinel that matches nothing (fail closed) rather than
+    // dropping the filter and exposing every mailbox's reviews.
+    reviewQuery = reviewQuery.eq("mailbox_user_id", user.email ?? "");
   }
 
   const { data: reviews, error: reviewError } = await reviewQuery;

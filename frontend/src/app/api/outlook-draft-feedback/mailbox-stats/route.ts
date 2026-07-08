@@ -98,7 +98,7 @@ export const GET = withApiGuardrails(
 
     if (!mailboxUserId || !mailboxUserId.includes("@")) {
       throw new GuardrailError({
-        code: "INVALID_REQUEST",
+        code: "INVALID_PAYLOAD",
         where: "outlook-draft-feedback/mailbox-stats#GET",
         message: "mailboxUserId is required.",
         status: 400,

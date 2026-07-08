@@ -187,7 +187,14 @@ export const POST = withApiGuardrails("/api/admin/feedback/comments#POST", async
       uploadCommentScreenshot(user.id, dataUrl),
     ),
   );
-  const commentRows =
+  const commentRows: {
+    feedback_item_id: string;
+    author_id: string;
+    body: string;
+    mentions: string[];
+    screenshot_url: string | null;
+    screenshot_path: string | null;
+  }[] =
     uploadedScreenshots.length > 0
       ? uploadedScreenshots.map((uploaded, index) => ({
           feedback_item_id: feedbackItemId,

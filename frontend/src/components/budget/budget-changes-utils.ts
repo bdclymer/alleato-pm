@@ -4,6 +4,8 @@ import {
   type BudgetChangeStatus,
 } from "@/lib/budget/budget-change-access";
 
+export type { BudgetChangeAction };
+
 export interface BudgetChangeLine {
   id: string;
   costCodeId: string;

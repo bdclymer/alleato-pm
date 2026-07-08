@@ -306,19 +306,27 @@ export async function listLinkedPatternCDocuments({
   }
 
   // Runtime-narrow the dynamically-selected junction rows instead of casting:
-  // only these two fields are consumed below, and a row missing its FK id is
+  // only these fields are consumed below, and a row missing its FK id is
   // unusable anyway.
   const linkedRows = (rows ?? []).flatMap(
-    (row): Array<{ document_metadata_id: string; document_type: string | null }> => {
+    (
+      row,
+    ): Array<{
+      document_metadata_id: string;
+      document_type: string | null;
+      attached_at: string;
+    }> => {
       if (typeof row !== "object" || row === null) return [];
       const record = row as Record<string, unknown>;
       const documentMetadataId = record.document_metadata_id;
       if (typeof documentMetadataId !== "string") return [];
       const documentType = record.document_type;
+      const timestampValue = record[timestampColumn];
       return [
         {
           document_metadata_id: documentMetadataId,
           document_type: typeof documentType === "string" ? documentType : null,
+          attached_at: String(timestampValue ?? ""),
         },
       ];
     },
@@ -361,7 +369,7 @@ export async function listLinkedPatternCDocuments({
     return {
       document_metadata_id: row.document_metadata_id,
       document_type: row.document_type ?? null,
-      attached_at: String(row[timestampColumn] ?? ""),
+      attached_at: row.attached_at,
       title: meta?.title ?? meta?.file_name ?? null,
       file_name: meta?.file_name ?? null,
       file_path: filePath,

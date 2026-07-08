@@ -6,10 +6,15 @@ type BillingPeriodDraftInput = {
   due_date?: string | null;
 };
 
-export function findOpenBillingPeriod(
-  periods: BillingPeriod[],
+type OpenBillingPeriodCandidate = Pick<
+  BillingPeriod,
+  "id" | "is_closed" | "period_number"
+>;
+
+export function findOpenBillingPeriod<T extends OpenBillingPeriodCandidate>(
+  periods: T[],
   excludePeriodId?: string,
-): BillingPeriod | null {
+): T | null {
   return (
     periods.find(
       (period) =>

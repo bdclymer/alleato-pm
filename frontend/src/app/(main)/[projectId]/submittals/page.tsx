@@ -305,10 +305,11 @@ function parseDefaultDistributionSelection(
   } catch (error) {
     reportNonCriticalFailure({
       area: "submittals.default-distribution",
-      message:
-        "Failed to parse saved default submittal distribution as JSON. Falling back to legacy text matching.",
+      operation: "parse-default-distribution",
       error,
-      meta: {
+      userVisibleFallback:
+        "Failed to parse saved default submittal distribution as JSON. Falling back to legacy text matching.",
+      metadata: {
         valuePreview: value.slice(0, 200),
       },
     });

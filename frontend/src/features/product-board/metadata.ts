@@ -1,5 +1,6 @@
 import type { BoardItem } from "./use-product-board";
 import { normalizeBoardCaptureTopics } from "./topics";
+import type { Json } from "@/types/database.types";
 
 export const BOARD_ITEM_TYPE_KEYS = [
   "design_issue",
@@ -49,8 +50,8 @@ export function buildBoardCaptureMetadata({
   tool,
   category,
   type,
-}: BoardCaptureMetadataInput): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
+}: BoardCaptureMetadataInput): Record<string, Json> {
+  const metadata: Record<string, Json> = {};
   const normalizedTopics = normalizeBoardCaptureTopics(topics);
   const normalizedTool = normalizeBoardTextField(tool);
   const normalizedCategory = normalizeBoardTextField(category);

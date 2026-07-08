@@ -8,6 +8,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   publishTrainingDocToDocsSite,
   resolveDocsSiteRoot,
+  type TrainingDocAssetPublishInput,
 } from "@/lib/training-docs/docs-site";
 import {
   getTrainingDoc,
@@ -64,7 +65,7 @@ export const POST = withApiGuardrails(WHERE_POST, async ({ params }) => {
           )
         : doc.assets;
     const assets = await Promise.all(
-      sourceAssets.map(async (asset) => {
+      sourceAssets.map(async (asset): Promise<TrainingDocAssetPublishInput> => {
         const { data, error } = await service.storage
           .from(asset.storage_bucket)
           .download(asset.storage_path);

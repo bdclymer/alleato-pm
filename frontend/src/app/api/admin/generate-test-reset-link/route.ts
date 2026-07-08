@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { APP_BASE_URL } from "@/lib/email/client";
 
-export async function GET(req) {
+export async function GET(req: Request) {
   const email = new URL(req.url).searchParams.get("email") || "test@example.com";
   const supabase = createServiceClient();
   const { data, error } = await supabase.auth.admin.generateLink({

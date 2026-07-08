@@ -22,7 +22,7 @@ type IntelligenceTarget =
   Database["public"]["Tables"]["intelligence_targets"]["Row"];
 type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
 type InsightCardInsert = Database["public"]["Tables"]["insight_cards"]["Insert"];
-type JsonRecord = Record<string, unknown>;
+type JsonRecord = Record<string, Json>;
 
 export type DailyDeepReadPromotionKind = "task" | "insight_card";
 

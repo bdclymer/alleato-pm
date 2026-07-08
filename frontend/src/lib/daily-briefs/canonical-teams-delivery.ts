@@ -146,7 +146,9 @@ export async function previewCanonicalDailyBriefTeamsPayload(
     businessDate: resolvedPacket.businessDate,
     sourceCount: resolvedPacket.sourceCount,
     card,
-    fallbackText: card.fallbackText,
+    fallbackText:
+      card.fallbackText ??
+      `Daily Executive Brief - ${resolvedPacket.businessDate}.`,
   };
 }
 
