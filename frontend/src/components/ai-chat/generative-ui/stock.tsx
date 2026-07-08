@@ -1,3 +1,5 @@
+import { SectionRuleHeading } from "@/components/layout";
+
 type StockProps = {
   price: number;
   symbol: string;
@@ -6,7 +8,7 @@ type StockProps = {
 export const Stock = ({ price, symbol }: StockProps) => {
   return (
     <div>
-      <h2>Stock Information</h2>
+      <SectionRuleHeading label="Stock Information" />
       <p>Symbol: {symbol}</p>
       <p>Price: ${price}</p>
     </div>

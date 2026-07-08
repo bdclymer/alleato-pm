@@ -246,6 +246,8 @@ export function buildEmailTableColumns(options?: {
     {
       ...emailColumns[3],
       width: 120,
+      // Email processing status is system-derived, not user-editable.
+      editable: false,
       render: (item) => <StatusBadge status={item.status} />,
       csvValue: (item) => item.status,
       sortValue: (item) => item.status,

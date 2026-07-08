@@ -158,6 +158,8 @@ export function buildTeamsConversationTableColumns(): TableColumn<PipelineDoc>[]
     },
     {
       ...teamsConversationColumns[5],
+      // Pipeline stage is system-derived, not user-editable.
+      editable: false,
       render: (item) => (
         <StatusBadge status={item.pipeline_stage === "done" ? "Complete" : item.pipeline_stage} variant={stageVariant(item)} />
       ),

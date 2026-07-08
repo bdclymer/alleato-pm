@@ -75,6 +75,8 @@ export function buildKnowledgeTableColumns(options: {
       label: "Status",
       defaultVisible: true,
       sortable: true,
+      // Ingestion status is system-derived, not user-editable.
+      editable: false,
       sortValue: (item) => item.status ?? "uploaded",
       render: (item) => (
         <StatusBadge status={item.status ?? "uploaded"} />

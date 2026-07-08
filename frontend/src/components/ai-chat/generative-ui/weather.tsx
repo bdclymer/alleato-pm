@@ -1,3 +1,5 @@
+import { SectionRuleHeading } from "@/components/layout";
+
 type WeatherProps = {
   temperature: number;
   weather: string;
@@ -7,7 +9,7 @@ type WeatherProps = {
 export const Weather = ({ temperature, weather, location }: WeatherProps) => {
   return (
     <div>
-      <h2>Current Weather for {location}</h2>
+      <SectionRuleHeading label={`Current Weather for ${location}`} />
       <p>Condition: {weather}</p>
       <p>Temperature: {temperature}°C</p>
     </div>
