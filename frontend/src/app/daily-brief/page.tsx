@@ -54,6 +54,18 @@ function noonUtc(dateKey: string): Date {
   return new Date(`${dateKey}T12:00:00Z`);
 }
 
+/**
+ * Parse a date string, anchoring date-only (YYYY-MM-DD) keys to noon UTC so they
+ * don't shift a day when formatted in Eastern time. Returns null on empty/invalid.
+ */
+function parseDateSafe(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const parsed = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : value,
+  );
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function meetingTime(dateValue: string | null): string | null {
   if (!dateValue || /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return null;
   const date = new Date(dateValue);
@@ -141,15 +153,8 @@ function buildCalendarDays(
     const dateKey = easternDateKey(dayNoon);
     const events = meetings
       .filter((meeting) => {
-        if (!meeting.date) return false;
-        const parsed = new Date(
-          /^\d{4}-\d{2}-\d{2}$/.test(meeting.date)
-            ? `${meeting.date}T12:00:00Z`
-            : meeting.date,
-        );
-        return (
-          !Number.isNaN(parsed.getTime()) && easternDateKey(parsed) === dateKey
-        );
+        const parsed = parseDateSafe(meeting.date);
+        return parsed ? easternDateKey(parsed) === dateKey : false;
       })
       .slice(0, 4)
       .map((meeting) => ({
@@ -261,17 +266,13 @@ function computeCarryover(
     const key = itemKey(item);
     if (!todayOpenKeys.has(key) || seen.has(key)) continue;
     seen.add(key);
-    const sourceNoon = item.date
-      ? new Date(
-          /^\d{4}-\d{2}-\d{2}$/.test(item.date)
-            ? `${item.date}T12:00:00Z`
-            : item.date,
+    const sourceNoon = parseDateSafe(item.date);
+    const ageDays = sourceNoon
+      ? Math.max(
+          1,
+          Math.round((todayNoon.getTime() - sourceNoon.getTime()) / DAY_MS),
         )
-      : null;
-    const ageDays =
-      sourceNoon && !Number.isNaN(sourceNoon.getTime())
-        ? Math.max(1, Math.round((todayNoon.getTime() - sourceNoon.getTime()) / DAY_MS))
-        : 1;
+      : 1;
     out.push({
       key,
       title: item.title,
@@ -336,16 +337,8 @@ export default async function DailyBriefPage() {
 
     const todaysMeetings = weekMeetings
       .filter((meeting) => {
-        const parsed = meeting.date
-          ? new Date(
-              /^\d{4}-\d{2}-\d{2}$/.test(meeting.date)
-                ? `${meeting.date}T12:00:00Z`
-                : meeting.date,
-            )
-          : null;
-        return parsed && !Number.isNaN(parsed.getTime())
-          ? easternDateKey(parsed) === todayKey
-          : false;
+        const parsed = parseDateSafe(meeting.date);
+        return parsed ? easternDateKey(parsed) === todayKey : false;
       })
       .slice(0, 10);
 

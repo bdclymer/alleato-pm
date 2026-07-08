@@ -83,9 +83,12 @@ export function DailyBriefDocument({ bodyHtml }: { bodyHtml: string }) {
     };
 
     const closeAllMenus = () => {
-      root
-        .querySelectorAll<HTMLElement>(".fb.is-open")
-        .forEach((el) => el.classList.remove("is-open"));
+      root.querySelectorAll<HTMLElement>(".fb.is-open").forEach((el) => {
+        el.classList.remove("is-open");
+        el
+          .querySelector<HTMLElement>(".fb-trigger")
+          ?.setAttribute("aria-expanded", "false");
+      });
     };
 
     const flagItem = (
@@ -153,14 +156,26 @@ export function DailyBriefDocument({ bodyHtml }: { bodyHtml: string }) {
       if (!box) return;
       const item = box.closest<HTMLElement>(".action-item");
       if (box.checked) {
-        item?.classList.add("is-done");
+        // Confirm the signal landed before showing "done", matching the
+        // feedback-menu handler — don't leave the UI ahead of the server.
+        box.disabled = true;
         void submitFeedback({
           subjectId: box.getAttribute("data-fb-id") ?? "",
           signal: "completed",
           title: box.getAttribute("data-fb-title"),
           project: null,
+        }).then((ok) => {
+          box.disabled = false;
+          if (ok) {
+            item?.classList.add("is-done");
+          } else {
+            box.checked = false;
+          }
         });
       } else {
+        // Unchecking is a local correction of a mis-click. There is no "un-complete"
+        // signal in the vocabulary, and "negative" means "inaccurate" — a different
+        // judgment — so we intentionally do not POST a reversing signal here.
         item?.classList.remove("is-done");
       }
     };

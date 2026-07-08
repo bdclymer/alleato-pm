@@ -196,10 +196,11 @@ function resolveHref(
     return citation.sourceUrl;
   }
   // A meeting/transcript with an id but no external link → in-app meeting page.
+  // Encode the id: it comes from upstream document metadata and could contain a
+  // reserved path character.
   if (citation.sourceId && /meeting|transcript/i.test(String(citation.source))) {
-    return projectInternalId
-      ? `/${projectInternalId}/meetings/${citation.sourceId}`
-      : `/meetings/${citation.sourceId}`;
+    const id = encodeURIComponent(citation.sourceId);
+    return projectInternalId ? `/${projectInternalId}/meetings/${id}` : `/meetings/${id}`;
   }
   return null;
 }
@@ -607,7 +608,12 @@ function buildProjects(input: BuildBriefInput): string {
 
   const decisionKeys = new Set(
     packet.sections.needsBrandon.map((item) =>
-      String(item.projectInternalId ?? (item.project || "").trim().toLowerCase()),
+      // Must use the SAME fallback as the group key above, or a cross-project
+      // decision (no project, no id) never matches its group and loses its badge.
+      String(
+        item.projectInternalId ??
+          (item.project || "Internal / cross-project").trim().toLowerCase(),
+      ),
     ),
   );
   const ordered = Array.from(groups.entries()).sort((a, b) => {
@@ -840,8 +846,9 @@ function buildCarryover(input: BuildBriefInput): string {
         item.ageDays >= 1
           ? `<span class="carry-item__age">${item.ageDays}d open</span>`
           : "";
+      // No inner src-row wrapper — the row below already provides one.
       const source = item.citation
-        ? `<div class="src-row">${srcHtml(item.citation, item.projectInternalId)}</div>`
+        ? srcHtml(item.citation, item.projectInternalId)
         : "";
       return `
           <div class="carry-item" data-fb-item>

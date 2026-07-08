@@ -97,4 +97,34 @@ describe("POST /api/executive/daily-brief/feedback", () => {
     expect(response.status).toBeGreaterThanOrEqual(400);
     expect(mockInsert).not.toHaveBeenCalled();
   });
+
+  it("returns 500 without leaking the raw DB error to the client", async () => {
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: "violates not-null constraint on ai_feedback_events" },
+    });
+
+    const response = await POST(postRequest(validBody));
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    // The client envelope carries the message under `error_message` — it must be
+    // the generic text, never the raw Supabase error (anywhere in the payload).
+    expect(json.error_message).toBe("Failed to record brief feedback.");
+    expect(JSON.stringify(json)).not.toContain("not-null constraint");
+  });
+
+  it("carries the item metadata into after_snapshot for the learning loop", async () => {
+    await POST(postRequest(validBody));
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        after_snapshot: {
+          title: "Force the Union Collective solar decision",
+          project: "Union Collective",
+          signal: "positive",
+        },
+      }),
+    );
+  });
 });

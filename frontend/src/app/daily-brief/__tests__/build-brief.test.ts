@@ -131,6 +131,27 @@ describe("buildBriefBody — output safety", () => {
     expect(html).toContain('rel="noopener noreferrer"');
   });
 
+  it("shows the Decision-open badge for a cross-project decision (no project, no id)", () => {
+    // Regression: the group-key and decision-key fallbacks must agree, or a
+    // decision with no project/id never matches its rendered group and loses
+    // its badge.
+    const packet = makePacket([
+      makeItem({
+        title: "Cross-project decision",
+        project: "",
+        projectInternalId: null,
+      }),
+    ]);
+
+    const html = buildBriefBody({
+      packet,
+      operatingBrief: emptyOperatingBrief(),
+      meetings: [],
+    });
+
+    expect(html).toContain("Decision open");
+  });
+
   it("falls back to a clear state when there is nothing to show", () => {
     const html = buildBriefBody({
       packet: makePacket([]),

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
 
 /**
@@ -69,10 +70,18 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
+      // Preserve the raw Supabase error for operators (server-only) — the
+      // generic GuardrailError below would otherwise drop it from telemetry.
+      logger.error({
+        msg: "[daily-brief.feedback] insert into ai_feedback_events failed",
+        data: error,
+      });
       throw new GuardrailError({
         code: "DB_INSERT_FAILED",
         where: "api.executive.daily-brief.feedback.POST",
-        message: `Failed to record brief feedback: ${error.message}`,
+        // Client gets a generic message so DB internals (table/constraint/
+        // connection details) don't leak into the response envelope.
+        message: "Failed to record brief feedback.",
         status: 500,
       });
     }
