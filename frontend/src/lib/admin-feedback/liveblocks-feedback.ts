@@ -1,8 +1,13 @@
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
 import {
   addGitHubIssueComment,
   addGitHubIssueLabels,
   createGitHubIssue,
+  reopenGitHubIssue,
 } from "@/lib/admin-feedback/github";
+import { getLanguageModel } from "@/lib/ai/providers";
 import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
 import {
@@ -337,7 +342,46 @@ export type LiveblocksReplyResult = {
   reason?: "no_feedback_item" | "no_issue";
   feedbackId?: string;
   issueNumber?: number;
+  /** True when a reply on a resolved item was classified as "still broken" and re-dispatched. */
+  reEngaged?: boolean;
 };
+
+// Cheap classifier — only ever runs on a reply to an ALREADY-RESOLVED item, so
+// volume is tiny. Decides whether the client is saying the fix didn't work
+// (re-engage the agent) vs. acknowledging/thanking (leave resolved). Defaults
+// to NOT re-engaging when unsure or on any failure.
+const CLASSIFIER_MODEL = "openai/gpt-4.1-nano";
+const replyVerdictSchema = z.object({
+  stillUnresolved: z.boolean(),
+  confidence: z.number().min(0).max(1),
+});
+
+async function replyIndicatesStillUnresolved(text: string): Promise<boolean> {
+  try {
+    const result = await generateText({
+      model: getLanguageModel(CLASSIFIER_MODEL),
+      output: Output.object({
+        schema: replyVerdictSchema,
+        name: "reply_still_unresolved",
+        description:
+          "Whether a client's reply on an issue marked resolved indicates the problem still persists.",
+      }),
+      instructions: `A client left feedback that was marked RESOLVED, then replied. Decide if their reply says the problem STILL persists (so an engineer should look again), or if it's just acknowledgement/thanks/confirmation/an unrelated aside.
+
+stillUnresolved = true ONLY when the reply indicates the fix did not work or the problem remains (e.g. "still broken", "nope, same thing", "that didn't fix it", "still shows the old number", "it's worse now").
+stillUnresolved = false for thanks, praise, "looks good", "works now", "perfect", questions unrelated to the fix, or anything ambiguous. When in doubt, choose false.`,
+      prompt: `Client reply: ${text}`,
+    });
+    const verdict = result.output;
+    return verdict.stillUnresolved && verdict.confidence >= 0.6;
+  } catch (error) {
+    logger.warn({
+      msg: "[LiveblocksFeedback] reply classification failed — not re-engaging",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+}
 
 /**
  * Append a follow-up client reply to the EXISTING feedback for its thread —
@@ -358,7 +402,7 @@ export async function appendReplyToFeedbackThread(input: {
 
   const { data: item } = await supabase
     .from("admin_feedback_items")
-    .select("id, github_issue_number")
+    .select("id, github_issue_number, status")
     .contains("metadata", { sourceSystem: "liveblocks", liveblocksThreadId: input.threadId })
     .maybeSingle();
 
@@ -392,6 +436,37 @@ export async function appendReplyToFeedbackThread(input: {
     item.github_issue_number,
     `**${who} replied on the page comment:**\n\n${text}`,
   );
+
+  // Re-engage ONLY when the item was already resolved AND the reply says the
+  // fix didn't work — the client disputing a "done". A reply on an in-progress
+  // item just adds context (the agent is still working); pleasantries never
+  // re-engage.
+  if (item.status === "resolved") {
+    const stillBroken = await replyIndicatesStillUnresolved(text);
+    if (stillBroken) {
+      const dispatch = resolveDispatchConfig();
+      const engineLabel = dispatch.target === "codex" ? "codex:fix" : "claude:fix";
+
+      await reopenGitHubIssue(item.github_issue_number);
+      await addGitHubIssueComment(
+        item.github_issue_number,
+        `⚠️ Client reports this is still not resolved after the previous fix. Reopening for another pass.\n\n> ${text.replace(/\n/g, "\n> ")}`,
+      );
+      const relabeled = await addGitHubIssueLabels(item.github_issue_number, [engineLabel]);
+
+      await supabase
+        .from("admin_feedback_items")
+        .update({ status: "in_progress" })
+        .eq("id", item.id);
+
+      return {
+        handled: true,
+        feedbackId: item.id,
+        issueNumber: item.github_issue_number,
+        reEngaged: Boolean(relabeled),
+      };
+    }
+  }
 
   return { handled: true, feedbackId: item.id, issueNumber: item.github_issue_number };
 }

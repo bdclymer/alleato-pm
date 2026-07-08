@@ -105,6 +105,14 @@ export async function POST(request: Request): Promise<Response> {
       authorName: replyAuthor.name,
       text: comment.text,
     });
+    if (replyResult.reEngaged) {
+      await postAgentThreadReply({
+        roomId,
+        threadId,
+        markdown:
+          "🔄 **Reopened.** Thanks for flagging — the previous fix didn't fully resolve it, so this is being looked at again. Updates will show up here.",
+      });
+    }
     return Response.json({ ok: true, reply: replyResult });
   }
 
