@@ -3,16 +3,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { FormGrid, FormSection } from "@/components/forms";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
@@ -373,19 +366,10 @@ export function RfiFormFields({
           />
         </FormGrid>
 
-        <FormField
+        <RHFCheckboxField
           control={form.control}
           name="is_private"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-4 space-y-0">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Private</FormLabel>
-              </div>
-            </FormItem>
-          )}
+          label="Private"
         />
       </FormSection>
     </>

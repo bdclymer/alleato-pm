@@ -7,31 +7,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Form } from "@/components/ui/form";
 import { FileUploadField } from "@/components/forms/FileUploadField";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormGrid } from "@/components/forms/FormGrid";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFFieldArrayTable } from "@/components/forms/fields/RHFFieldArrayTable";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { buildOptions } from "@/components/forms/utils/buildOptions";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
@@ -45,8 +38,6 @@ import {
   type SubmittalDetail,
   type SubmittalSummary,
 } from "@/hooks/use-submittals";
-import { SectionRuleHeading } from "@/components/layout/spacing";
-import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import {
   buildAuthUserOptions,
   buildCompanyContactOptions,
@@ -162,12 +153,19 @@ type SubmittalFormValues = z.infer<typeof submittalFormSchema>;
 type EditableSubmittal = SubmittalSummary & Partial<SubmittalDetail>;
 
 const STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"] as const;
-const WORKFLOW_ROLE_OPTIONS = SUBMITTAL_WORKFLOW_ROLES;
+
+// Sentinel for the "no template" choice in the workflow-template selector. The
+// field is discarded before POST, so this value never reaches the server.
+const WORKFLOW_TEMPLATE_NONE = "__none__";
 
 function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): string | null {
   if (!v) return null;
   if (typeof v === "object") return v.id ?? null;
   return null;
+}
+
+function createWorkflowStep(): SubmittalFormValues["initial_workflow_steps"][number] {
+  return { user_id: "", step_type: "Approver" };
 }
 
 function buildDefaults(
@@ -198,7 +196,7 @@ function buildDefaults(
         ? (submittal?.submittal_package as { id?: string } | null)?.id
         : null) ??
       null,
-    workflow_template_id: null,
+    workflow_template_id: WORKFLOW_TEMPLATE_NONE,
     initial_workflow_steps: [],
   };
 }
@@ -267,7 +265,9 @@ export function SubmittalFormPage({
   const watchedFinalDueDate = form.watch("final_due_date");
   const watchedSpecSection = form.watch("specification_section");
   const watchedWorkflowSteps = form.watch("initial_workflow_steps");
+  const watchedWorkflowTemplate = form.watch("workflow_template_id");
   const previousResponsibleContractor = React.useRef(watchedResponsibleContractor);
+  const previousWorkflowTemplate = React.useRef(watchedWorkflowTemplate);
 
   const {
     contacts: responsibleContractorContacts,
@@ -325,6 +325,28 @@ export function SubmittalFormPage({
     }
   }, [watchedSpecSection, form]);
 
+  // Populate the workflow steps from the chosen template. Mirrors the old
+  // handleWorkflowTemplateChange handler: "build from scratch" (or none) clears
+  // the steps, a real template replaces them with its steps. Guarded so it never
+  // runs on mount / hydration (only on an actual template change).
+  React.useEffect(() => {
+    if (previousWorkflowTemplate.current === watchedWorkflowTemplate) return;
+    previousWorkflowTemplate.current = watchedWorkflowTemplate;
+
+    if (!watchedWorkflowTemplate || watchedWorkflowTemplate === WORKFLOW_TEMPLATE_NONE) {
+      workflowFieldArray.replace([]);
+      return;
+    }
+
+    const template = workflowTemplates?.find((item) => item.id === watchedWorkflowTemplate);
+    workflowFieldArray.replace(
+      (template?.steps ?? []).map((step) => ({
+        user_id: step.user_id ?? "",
+        step_type: normalizeSubmittalWorkflowRole(step.step_type),
+      })),
+    );
+  }, [watchedWorkflowTemplate, workflowTemplates, workflowFieldArray]);
+
   const isPending =
     createMutation.isPending || updateMutation.isPending || isUploadingAttachments;
 
@@ -368,6 +390,29 @@ export function SubmittalFormPage({
     [responsibleContractorContacts],
   );
 
+  const packageOptions = useMemo(
+    () => (packages ?? []).map((p) => ({ value: p.id, label: p.name })),
+    [packages],
+  );
+
+  const typeOptions = useMemo(
+    () => (submittalTypes ?? []).map((t) => ({ value: t.id, label: t.name })),
+    [submittalTypes],
+  );
+
+  const workflowTemplateOptions = useMemo(
+    () => [
+      { value: WORKFLOW_TEMPLATE_NONE, label: "Build from scratch" },
+      ...(workflowTemplates ?? []).map((template) => ({
+        value: template.id,
+        label: template.name,
+      })),
+    ],
+    [workflowTemplates],
+  );
+
+  const roleOptions = useMemo(() => buildOptions(SUBMITTAL_WORKFLOW_ROLES), []);
+
   // Ball-in-court: when workflow steps are defined, restrict to those participants
   const ballInCourtOptions = useMemo(() => {
     const stepUserIds = new Set(
@@ -397,32 +442,6 @@ export function SubmittalFormPage({
       });
     }
   }, [form, watchedResponsibleContractor]);
-
-  function handleWorkflowTemplateChange(templateId: string) {
-    form.setValue("workflow_template_id", templateId === "__none__" ? null : templateId, {
-      shouldDirty: true,
-    });
-
-    if (templateId === "__none__") {
-      workflowFieldArray.replace([]);
-      return;
-    }
-
-    const template = workflowTemplates?.find((item) => item.id === templateId);
-    workflowFieldArray.replace(
-      (template?.steps ?? []).map((step) => ({
-        user_id: step.user_id ?? "",
-        step_type: normalizeSubmittalWorkflowRole(step.step_type),
-      })),
-    );
-  }
-
-  function addWorkflowStep() {
-    workflowFieldArray.append({
-      user_id: "",
-      step_type: "Approver",
-    });
-  }
 
   function handleAttachmentFilesSelected(files: File[]) {
     setPendingAttachmentEntries((current) =>
@@ -480,22 +499,30 @@ export function SubmittalFormPage({
       })),
     };
 
-    if (isEditing && submittal) {
-      await updateMutation.mutateAsync(payload);
-      if (onSaved) {
-        onSaved();
+    try {
+      if (isEditing && submittal) {
+        await updateMutation.mutateAsync(payload);
+        if (onSaved) {
+          onSaved();
+        } else {
+          router.push(`/${projectId}/submittals/${submittal.id}`);
+        }
       } else {
-        router.push(`/${projectId}/submittals/${submittal.id}`);
+        const result = await createMutation.mutateAsync(payload);
+        const newId = (result as { id?: string } | null)?.id;
+        if (newId) {
+          await uploadPendingAttachments(newId);
+          router.push(`/${projectId}/submittals/${newId}`);
+        } else {
+          router.push(`/${projectId}/submittals`);
+        }
       }
-    } else {
-      const result = await createMutation.mutateAsync(payload);
-      const newId = (result as { id?: string } | null)?.id;
-      if (newId) {
-        await uploadPendingAttachments(newId);
-        router.push(`/${projectId}/submittals/${newId}`);
-      } else {
-        router.push(`/${projectId}/submittals`);
-      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The submittal could not be saved. Please try again.";
+      form.setError("root", { type: "server", message });
     }
   }
 
@@ -514,194 +541,81 @@ export function SubmittalFormPage({
 
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* ── General Information ── */}
-        <section className="space-y-4">
-          <SectionRuleHeading label="General Information" />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
+      <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormSection title="General Information">
+          <FormGrid columns={2}>
+            <RHFTextField
               control={form.control}
               name="submittal_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Number *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. 08-1113-1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Number *"
+              placeholder="e.g. 08-1113-1"
             />
-            <FormField
+
+            <RHFNumberField
               control={form.control}
               name="revision"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Revision *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Revision *"
+              min={0}
+              step={1}
             />
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
+            <RHFTextField
               control={form.control}
               name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Doors, Frames, Hardware" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Title *"
+              placeholder="e.g. Doors, Frames, Hardware"
             />
 
-            <FormField
+            <RHFComboboxField
               control={form.control}
               name="submittal_package_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Submittal Package</FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                    value={field.value ?? "__none__"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={packagesLoading ? "Loading..." : "Select package"}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {(packages ?? []).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Submittal Package"
+              placeholder={packagesLoading ? "Loading..." : "Select package"}
+              searchPlaceholder="Search packages..."
+              emptyMessage="No packages found."
+              options={packageOptions}
+              disabled={packagesLoading}
+              clearable
             />
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
+            <RHFTextField
               control={form.control}
               name="specification_section"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specification Section</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. 08-1113 - Doors, Frames"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Specification Section"
+              placeholder="e.g. 08-1113 - Doors, Frames"
             />
-            <FormField
+
+            <RHFTextField
               control={form.control}
               name="division"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Division</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. Division 8"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Division"
+              placeholder="e.g. Division 8"
             />
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
+            <RHFComboboxField
               control={form.control}
               name="submittal_type_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Submittal Type</FormLabel>
-                  <Select
-                    onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                    value={field.value ?? "__none__"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={typesLoading ? "Loading..." : "Select type"}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {(submittalTypes ?? []).map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Submittal Type"
+              placeholder={typesLoading ? "Loading..." : "Select type"}
+              searchPlaceholder="Search types..."
+              emptyMessage="No types found."
+              options={typeOptions}
+              disabled={typesLoading}
+              clearable
             />
 
-            <FormField
+            <RHFSelectField
               control={form.control}
               name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Status"
+              placeholder="Select status"
+              options={buildOptions(STATUS_OPTIONS)}
             />
-          </div>
+          </FormGrid>
+        </FormSection>
 
-        </section>
-
-        {/* ── People & Companies ── */}
-        <section className="space-y-4">
-          <SectionRuleHeading label="People & Companies" />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormSection title="People & Companies">
+          <FormGrid columns={2}>
             <RHFComboboxField
               control={form.control}
               name="responsible_contractor_id"
@@ -743,14 +657,11 @@ export function SubmittalFormPage({
               disabled={usersLoading}
               clearable
             />
-          </div>
-        </section>
+          </FormGrid>
+        </FormSection>
 
-        {/* ── Distribution & Scheduling ── */}
-        <section className="space-y-4">
-          <SectionRuleHeading label="Distribution & Scheduling" />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormSection title="Distribution & Scheduling">
+          <FormGrid columns={2}>
             <RHFDateField
               control={form.control}
               name="final_due_date"
@@ -765,28 +676,12 @@ export function SubmittalFormPage({
               nullable
             />
 
-            <FormField
+            <RHFNumberField
               control={form.control}
               name="lead_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lead Time (days)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === "" ? null : parseInt(e.target.value, 10),
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Lead Time (days)"
+              min={0}
+              step={1}
             />
 
             <RHFComboboxField
@@ -800,182 +695,101 @@ export function SubmittalFormPage({
               disabled={usersLoading}
               clearable
             />
-          </div>
+          </FormGrid>
 
           {dueDateWarning && (
             <InfoAlert variant="warning">
               Due date plus lead time extends past the required on-site date. The submittal may not arrive in time.
             </InfoAlert>
           )}
-        </section>
+        </FormSection>
 
-        <section className="space-y-4">
-            <SectionRuleHeading label="Submittal Workflow" />
-
-            {(workflowTemplates?.length ?? 0) > 0 ? (
-              <div className="max-w-sm">
-                <FormField
-                  control={form.control}
-                  name="workflow_template_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Workflow Template</FormLabel>
-                      <Select
-                        onValueChange={handleWorkflowTemplateChange}
-                        value={field.value ?? "__none__"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                workflowTemplatesLoading
-                                  ? "Loading..."
-                                  : "Select template"
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="__none__">Build from scratch</SelectItem>
-                          {(workflowTemplates ?? []).map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ) : null}
-
-            <div className="space-y-3">
-              {workflowFieldArray.fields.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <div className="min-w-full divide-y rounded-md border">
-                    <div className="grid grid-cols-[4rem_minmax(16rem,1fr)_12rem_4rem] gap-3 bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      <span>Step</span>
-                      <span>Name</span>
-                      <span>Role</span>
-                      <span className="sr-only">Actions</span>
-                    </div>
-                    {workflowFieldArray.fields.map((field, index) => (
-                      <div
-                        key={field.id}
-                        className="grid grid-cols-[4rem_minmax(16rem,1fr)_12rem_4rem] items-start gap-3 px-3 py-3"
-                      >
-                        <div className="pt-2 text-sm text-muted-foreground">
-                          {index + 1}
-                        </div>
-                        <RHFComboboxField
-                          control={form.control}
-                          name={`initial_workflow_steps.${index}.user_id`}
-                          label="Name"
-                          placeholder={usersLoading ? "Loading..." : "Select person"}
-                          searchPlaceholder="Search by name or email..."
-                          emptyMessage="No matching person found."
-                          options={userOptions}
-                          disabled={usersLoading}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`initial_workflow_steps.${index}.step_type`}
-                          render={({ field: roleField }) => (
-                            <FormItem>
-                              <FormLabel>Role</FormLabel>
-                              <Select
-                                onValueChange={roleField.onChange}
-                                value={roleField.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {WORKFLOW_ROLE_OPTIONS.map((role) => (
-                                    <SelectItem key={role} value={role}>
-                                      {role}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="mt-6"
-                          aria-label={`Remove workflow step ${index + 1}`}
-                          onClick={() => workflowFieldArray.remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addWorkflowStep}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Step
-              </Button>
+        <FormSection title="Submittal Workflow">
+          {(workflowTemplates?.length ?? 0) > 0 ? (
+            <div className="max-w-sm">
+              <RHFSelectField
+                control={form.control}
+                name="workflow_template_id"
+                label="Workflow Template"
+                placeholder={
+                  workflowTemplatesLoading ? "Loading..." : "Select template"
+                }
+                options={workflowTemplateOptions}
+              />
             </div>
-          </section>
+          ) : null}
 
-        {/* ── Content ── */}
-        <section className="space-y-4">
-          <SectionRuleHeading label="Content" />
+          <RHFFieldArrayTable
+            control={form.control}
+            name="initial_workflow_steps"
+            addLabel="Add Step"
+            minRows={0}
+            createRow={createWorkflowStep}
+            columns={[
+              {
+                key: "step",
+                header: "Step",
+                mobileLabel: "Step",
+                className: "w-16",
+                cell: ({ index }) => (
+                  <span className="text-sm text-muted-foreground">{index + 1}</span>
+                ),
+              },
+              {
+                key: "user_id",
+                header: "Name",
+                mobileLabel: "Name",
+                className: "min-w-[220px]",
+                cell: ({ rowName }) => (
+                  <RHFComboboxField
+                    control={form.control}
+                    name={`${rowName}.user_id`}
+                    label="Name"
+                    placeholder={usersLoading ? "Loading..." : "Select person"}
+                    searchPlaceholder="Search by name or email..."
+                    emptyMessage="No matching person found."
+                    options={userOptions}
+                    disabled={usersLoading}
+                  />
+                ),
+              },
+              {
+                key: "step_type",
+                header: "Role",
+                mobileLabel: "Role",
+                className: "w-48",
+                cell: ({ rowName }) => (
+                  <RHFSelectField
+                    control={form.control}
+                    name={`${rowName}.step_type`}
+                    label="Role"
+                    placeholder="Select role"
+                    options={roleOptions}
+                  />
+                ),
+              },
+            ]}
+          />
+        </FormSection>
 
-          <FormField
+        <FormSection title="Content">
+          <RHFTextareaField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    rows={4}
-                    placeholder="Describe this submittal..."
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Description"
+            placeholder="Describe this submittal..."
+            rows={4}
           />
 
-          <FormField
+          <RHFCheckboxField
             control={form.control}
             name="is_private"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <FormLabel className="cursor-pointer font-normal">
-                  Private (visible only to admins and distribution list)
-                </FormLabel>
-              </FormItem>
-            )}
+            label="Private (visible only to admins and distribution list)"
           />
-        </section>
+        </FormSection>
 
         {!isEditing ? (
-          <section className="space-y-4">
-            <SectionRuleHeading label="Attachments" />
+          <FormSection title="Attachments">
             <FileUploadField
               value={pendingAttachmentEntries.map((entry) => entry.info)}
               onChange={handleAttachmentListChange}
@@ -990,31 +804,17 @@ export function SubmittalFormPage({
               fileListTestId="submittal-attachments-list"
               disabled={isPending}
             />
-          </section>
+          </FormSection>
         ) : null}
 
-        {/* ── Actions ── */}
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={isPending}>
-            {isPending
-              ? isEditing
-                ? "Updating..."
-                : isUploadingAttachments
-                  ? "Uploading attachments..."
-                  : "Creating..."
-              : isEditing
-                ? "Update Submittal"
-                : "Create Submittal"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={handleCancel}
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormServerError message={form.formState.errors.root?.message} />
+
+        <FormActions
+          onCancel={handleCancel}
+          isSubmitting={isPending}
+          submitLabel={isEditing ? "Update Submittal" : "Create Submittal"}
+          stickyOnMobile
+        />
       </form>
     </Form>
   );
@@ -1028,8 +828,11 @@ export function SubmittalFormPage({
       variant="form"
       title={isEditing ? "Edit Submittal" : "Create Submittal"}
       onBack={handleCancel}
+      backLabel="Back to Submittals"
     >
-      {formContent}
+      <FormContainer maxWidth="lg" withCard={false}>
+        {formContent}
+      </FormContainer>
     </PageShell>
   );
 }

@@ -17,6 +17,12 @@ interface Props<TFieldValues extends FieldValues> {
   label: string
   description?: string
   disabled?: boolean
+  /**
+   * Visually hide the text label (kept for screen readers). Use inside dense
+   * table cells where a column header already names the field, so the checkbox
+   * does not duplicate the header on every row.
+   */
+  hideLabel?: boolean
 }
 
 export function RHFCheckboxField<TFieldValues extends FieldValues>({
@@ -25,6 +31,7 @@ export function RHFCheckboxField<TFieldValues extends FieldValues>({
   label,
   description,
   disabled,
+  hideLabel,
 }: Props<TFieldValues>) {
   return (
     <FormField
@@ -41,7 +48,9 @@ export function RHFCheckboxField<TFieldValues extends FieldValues>({
           </FormControl>
 
           <div className="space-y-1 leading-none">
-            <FormLabel>{label}</FormLabel>
+            <FormLabel className={hideLabel ? "sr-only" : undefined}>
+              {label}
+            </FormLabel>
             {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />
           </div>
