@@ -947,6 +947,11 @@
       "description": "Set up core project details, location, and delivery defaults."
     },
     {
+      "url": "/daily-brief",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/daily-briefs",
       "title": null,
       "description": "Historical record of executive Daily Brief packets and delivery status"

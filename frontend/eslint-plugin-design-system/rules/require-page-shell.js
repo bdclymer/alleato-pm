@@ -92,6 +92,10 @@ module.exports = {
       // Public no-auth pages (e.g. subcontractor RFI response): these live outside the
       // authenticated app shell entirely and use their own lightweight layouts.
       'app/respond/',
+      // Daily Executive Brief: a bespoke, full-viewport editorial document
+      // (masthead + index rail + sections) rendered outside the app shell. It
+      // intentionally does not use PageShell — see daily-brief/brief-markup.ts.
+      'daily-brief/page.tsx',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 

@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (333)
+## UI Routes (334)
 
-_299/333 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_299/334 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -206,6 +206,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/command-center/file` | — | frontend/src/app/(admin)/command-center/file/page.tsx |
 | `/comments` | — | frontend/src/app/(main)/comments/page.tsx |
 | `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
+| `/daily-brief` | — | frontend/src/app/daily-brief/page.tsx |
 | `/daily-briefs` | Historical record of executive Daily Brief packets and delivery status | frontend/src/app/(tables)/daily-briefs/page.tsx |
 | `/daily-briefs/[briefId]` | Daily Brief history is limited to users with executive briefing access. | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
 | `/daily-logs` | Table of daily construction logs with weather, manpower, and work completed entries | frontend/src/app/(tables)/daily-logs/page.tsx |
@@ -351,7 +352,7 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (750)
+## API Endpoints (749)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -537,7 +538,6 @@ _299/333 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
