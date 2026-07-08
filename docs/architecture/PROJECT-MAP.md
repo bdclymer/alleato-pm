@@ -352,7 +352,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (751)
+## API Endpoints (752)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -538,7 +538,6 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -630,7 +629,9 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/knowledge/sync-sharepoint` | POST | frontend/src/app/api/knowledge/sync-sharepoint/route.ts |
 | `/api/knowledge/upload` | POST | frontend/src/app/api/knowledge/upload/route.ts |
 | `/api/liveblocks/auth` | POST | frontend/src/app/api/liveblocks/auth/route.ts |
+| `/api/liveblocks/mentions` | GET | frontend/src/app/api/liveblocks/mentions/route.ts |
 | `/api/liveblocks/users` | GET | frontend/src/app/api/liveblocks/users/route.ts |
+| `/api/liveblocks/webhook` | POST | frontend/src/app/api/liveblocks/webhook/route.ts |
 | `/api/manpower` | GET | frontend/src/app/api/manpower/route.ts |
 | `/api/manpower/assignments/[assignmentId]` | PATCH | frontend/src/app/api/manpower/assignments/[assignmentId]/route.ts |
 | `/api/manpower/import` | POST | frontend/src/app/api/manpower/import/route.ts |

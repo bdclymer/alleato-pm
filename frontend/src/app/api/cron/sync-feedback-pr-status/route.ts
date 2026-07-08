@@ -29,6 +29,7 @@ import {
   buildFeedbackPullRequestIndex,
   checkGitHubIssueExistence,
 } from "@/lib/admin-feedback/github";
+import { postAgentThreadReply } from "@/lib/collaboration/agent-comments";
 
 export const maxDuration = 60;
 
@@ -137,6 +138,24 @@ export const POST = withApiGuardrails(
           if (!ok) continue;
           if (nextStatus === "resolved") resolved++;
           else prCreated++;
+
+          // If this feedback came from a client's Liveblocks comment, post the
+          // status update back into that same thread so the client sees it.
+          // Runs once per transition (the status-equality guard above dedupes).
+          const lbThread = existingMetadata.liveblocksThread;
+          if (lbThread && typeof lbThread === "object" && !Array.isArray(lbThread)) {
+            const { roomId, threadId } = lbThread as {
+              roomId?: string;
+              threadId?: string;
+            };
+            if (roomId && threadId) {
+              const markdown =
+                nextStatus === "resolved"
+                  ? `✅ **Resolved.** A fix was merged ([PR #${targetPull.number}](${targetPull.url})). Refresh the page to see the change.`
+                  : `🔧 **In progress.** A fix is up for review ([PR #${targetPull.number}](${targetPull.url})).`;
+              await postAgentThreadReply({ roomId, threadId, markdown });
+            }
+          }
           continue;
         }
 

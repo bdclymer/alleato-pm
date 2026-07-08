@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { AGENT_USERS, isAgentUserId } from "@/lib/collaboration/agent-comments";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -32,14 +33,21 @@ export const GET = withApiGuardrails(ROUTE, async ({ request }) => {
     return NextResponse.json({ users: [] });
   }
 
+  // Agent bot users (e.g. "agent:claude-code") aren't in user_profiles — resolve
+  // them from the static registry so their comments render with a name.
+  const dbIds = ids.filter((id) => !isAgentUserId(id));
+
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("user_profiles")
-    .select("id, full_name, email")
-    .in("id", ids);
+  const { data } = dbIds.length
+    ? await supabase
+        .from("user_profiles")
+        .select("id, full_name, email")
+        .in("id", dbIds)
+    : { data: [] };
 
   const byId = new Map((data ?? []).map((row) => [row.id, row]));
   const users = ids.map((id) => {
+    if (isAgentUserId(id)) return { name: AGENT_USERS[id].name };
     const row = byId.get(id);
     if (!row) return null;
     return { name: row.full_name ?? row.email ?? "Teammate" };
