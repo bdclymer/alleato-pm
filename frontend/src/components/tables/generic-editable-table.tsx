@@ -28,7 +28,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
@@ -359,7 +359,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

@@ -79,7 +79,7 @@ import {
   Filter,
   Github,
   Lightbulb,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Rows3,
   Search,
@@ -1081,7 +1081,7 @@ const CardContent = React.forwardRef<HTMLDivElement, {
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 onClick={(event) => event.stopPropagation()}
               >
-                <MoreHorizontal />
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">

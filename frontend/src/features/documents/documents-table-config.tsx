@@ -6,7 +6,7 @@ import {
   Eye,
   FolderOpen,
   Link,
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -613,7 +613,7 @@ export function renderDocumentRowActions(
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

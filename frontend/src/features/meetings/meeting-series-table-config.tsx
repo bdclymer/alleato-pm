@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,7 @@ export function renderMeetingRowActions(
           onClick={(event) => event.stopPropagation()}
           aria-label="Meeting actions"
         >
-          <MoreHorizontal className="h-3.5 w-3.5" />
+          <MoreVertical className="h-3.5 w-3.5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

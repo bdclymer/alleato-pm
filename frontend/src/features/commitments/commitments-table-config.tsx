@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
 
@@ -602,7 +602,7 @@ export function renderCommitmentRowActions(
           className="h-8 w-8"
           aria-label="Row actions"
         >
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

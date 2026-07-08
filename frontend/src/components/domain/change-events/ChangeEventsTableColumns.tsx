@@ -2,7 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,7 +142,7 @@ export const ChangeEventsTableColumns = ({
               data-testid={`change-event-actions-${changeEvent.id}`}
             >
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

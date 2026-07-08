@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   Link,
   MoreHorizontal,
+  MoreVertical,
   StarOff,
   Trash2,
 } from "lucide-react";
@@ -52,7 +53,7 @@ export function NavFavorites({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
+                  <MoreVertical />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>

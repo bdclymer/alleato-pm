@@ -88,7 +88,6 @@ import {
   EyeOff,
   GripVertical,
   Inbox,
-  MoreHorizontal,
   MoreVertical,
   PanelRightClose,
   PanelRightOpen,
@@ -2821,7 +2820,7 @@ export function UnifiedTablePage<T>({
                                     className="h-8 w-8"
                                     aria-label="Row actions"
                                   >
-                                    <MoreHorizontal />
+                                    <MoreVertical />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">

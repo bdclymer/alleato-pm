@@ -11,7 +11,7 @@ import {
 import {
   ChevronDown,
   FileSignature,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -1038,7 +1038,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     className="h-8 w-8"
                     aria-label="Row actions"
                   >
-                    <MoreHorizontal />
+                    <MoreVertical />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

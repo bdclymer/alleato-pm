@@ -8,7 +8,7 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { Plus, Eye, MoreHorizontal } from "lucide-react";
+import { Plus, Eye, MoreVertical } from "lucide-react";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { KpiStrip, StatusBadge } from "@/components/ds";
@@ -949,7 +949,7 @@ export default function ProjectInvoicesPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

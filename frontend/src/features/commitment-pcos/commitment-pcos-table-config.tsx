@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowRight, Eye, MoreVertical, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { formatDate } from "@/lib/format";
@@ -239,7 +239,7 @@ export function renderPcoRowActions(
             className="h-7 w-7"
             onClick={(e) => e.stopPropagation()}
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

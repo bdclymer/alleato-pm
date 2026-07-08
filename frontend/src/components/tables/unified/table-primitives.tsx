@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { LucideIcon } from "lucide-react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -732,7 +732,7 @@ export function TableRowActionsMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal />
+          <MoreVertical />
           <span className="sr-only">Open actions menu</span>
         </Button>
       </DropdownMenuTrigger>

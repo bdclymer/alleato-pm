@@ -7,7 +7,7 @@ import {
   Check,
   ChevronsUpDown,
   ExternalLink,
-  MoreHorizontal,
+  MoreVertical,
 } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
@@ -630,7 +630,7 @@ export default function CompanyDetailsPage() {
                                   aria-label="Contact actions"
                                   disabled={removingContactId === contact.id}
                                 >
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                  <MoreVertical className="h-3.5 w-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">

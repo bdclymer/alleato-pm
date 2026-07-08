@@ -47,7 +47,7 @@ import {
   ChevronsUpDown,
   ExternalLink,
   Mail,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -978,7 +978,7 @@ export default function ContactDetailsPage() {
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
               <span className="sr-only">More actions</span>
             </Button>
           </DropdownMenuTrigger>

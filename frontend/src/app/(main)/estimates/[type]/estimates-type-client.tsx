@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus, ChevronLeft } from "lucide-react";
+import { MoreVertical, Plus, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   UnifiedTablePage,
@@ -323,7 +323,7 @@ export function EstimatesTypeClient({ estimateType, typeSlug, estimates }: Props
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal />
+                  <MoreVertical />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

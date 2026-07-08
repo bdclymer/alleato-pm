@@ -5,6 +5,7 @@ import {
   Folder,
   Forward,
   MoreHorizontal,
+  MoreVertical,
   Trash2,
   type LucideIcon,
 } from "lucide-react"
@@ -52,7 +53,7 @@ export function NavProjects({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
+                  <MoreVertical />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>

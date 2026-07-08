@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { SectionHeader } from '@/components/ds/section-header'
@@ -439,7 +439,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" />
                             <span className="sr-only">PCO actions</span>
                           </Button>
                         </DropdownMenuTrigger>

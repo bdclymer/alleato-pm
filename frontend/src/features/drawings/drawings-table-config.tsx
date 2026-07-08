@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
-import { FileText, MoreHorizontal, QrCode } from "lucide-react";
+import { FileText, MoreVertical, QrCode } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ds";
@@ -342,7 +342,7 @@ export function buildDrawingRowActions(callbacks: DrawingRowActionCallbacks) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreVertical className="h-4 w-4" />
           <span className="sr-only">Open actions</span>
         </Button>
       </DropdownMenuTrigger>
@@ -700,7 +700,7 @@ export function renderDrawingCard(
                 aria-label="Open drawing actions"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="h-3.5 w-3.5" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -782,7 +782,7 @@ export function renderDrawingList(
                 aria-label="Open drawing actions"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

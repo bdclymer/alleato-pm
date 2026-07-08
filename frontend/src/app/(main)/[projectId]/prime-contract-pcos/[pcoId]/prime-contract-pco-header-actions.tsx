@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Copy, Download, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpRight, Copy, Download, MoreVertical, Trash2 } from "lucide-react";
 
 import { Inline } from "@/components/layout/inline";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export function PrimeContractPcoHeaderActions({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

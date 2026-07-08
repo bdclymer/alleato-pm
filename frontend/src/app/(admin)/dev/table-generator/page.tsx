@@ -169,7 +169,7 @@ function generateConfigCode(
   if (hasDate) imports.push(`import { format } from "date-fns";`);
   if (hasBadge) imports.push(`import { StatusBadge } from "@/components/ds";`);
   imports.push(
-    `import { Eye, MoreHorizontal } from "lucide-react";`,
+    `import { Eye, MoreVertical } from "lucide-react";`,
     `import { Button } from "@/components/ui/button";`,
     `import {`,
     `  DropdownMenu,`,
@@ -243,7 +243,7 @@ ${columnRenderSnippet(col)}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

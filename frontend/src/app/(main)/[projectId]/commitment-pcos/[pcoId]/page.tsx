@@ -8,7 +8,7 @@ import {
   Copy,
   Download,
   FileText,
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -215,7 +215,7 @@ export default function CommitmentPcoDetailPage() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
