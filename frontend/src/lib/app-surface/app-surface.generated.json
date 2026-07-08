@@ -947,6 +947,11 @@
       "description": "Set up core project details, location, and delivery defaults."
     },
     {
+      "url": "/daily-brief",
+      "title": "Daily Executive Brief",
+      "description": "This executive brief is limited to users with executive briefing access."
+    },
+    {
       "url": "/daily-briefs",
       "title": null,
       "description": "Historical record of executive Daily Brief packets and delivery status"

@@ -206,6 +206,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/command-center/file` | — | frontend/src/app/(admin)/command-center/file/page.tsx |
 | `/comments` | — | frontend/src/app/(main)/comments/page.tsx |
 | `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
+| `/daily-brief` | This executive brief is limited to users with executive briefing access. | frontend/src/app/daily-brief/page.tsx |
 | `/daily-briefs` | Historical record of executive Daily Brief packets and delivery status | frontend/src/app/(tables)/daily-briefs/page.tsx |
 | `/daily-briefs/[briefId]` | Daily Brief history is limited to users with executive briefing access. | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
 | `/daily-logs` | Table of daily construction logs with weather, manpower, and work completed entries | frontend/src/app/(tables)/daily-logs/page.tsx |
@@ -598,6 +599,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/executive/brandon-daily-update` | GET | frontend/src/app/api/executive/brandon-daily-update/route.ts |
 | `/api/executive/brandon-daily-update/widget` | — | frontend/src/app/api/executive/brandon-daily-update/widget/route.ts |
 | `/api/executive/daily-brief` | GET | frontend/src/app/api/executive/daily-brief/route.ts |
+| `/api/executive/daily-brief/feedback` | POST | frontend/src/app/api/executive/daily-brief/feedback/route.ts |
 | `/api/executive/daily-brief/history` | GET | frontend/src/app/api/executive/daily-brief/history/route.ts |
 | `/api/executive/daily-brief/preview-teams` | POST | frontend/src/app/api/executive/daily-brief/preview-teams/route.ts |
 | `/api/executive/daily-brief/send-teams` | POST | frontend/src/app/api/executive/daily-brief/send-teams/route.ts |

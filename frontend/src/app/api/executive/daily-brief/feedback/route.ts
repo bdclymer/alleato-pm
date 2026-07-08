@@ -1,0 +1,82 @@
+export const dynamic = "force-dynamic";
+
+import { z } from "zod";
+
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { createServiceClient } from "@/lib/supabase/service";
+
+/**
+ * Records a viewer's judgment on a single Daily Executive Brief item into the
+ * shared AI learning loop (`ai_feedback_events`). This is the human signal that
+ * later feeds candidate → review → apply — it does NOT itself mutate the packet.
+ *
+ * Signals map to the standard feedback vocabulary:
+ *   - positive  → "Accurate"
+ *   - negative  → "Inaccurate / not true"
+ *   - completed → "Done / resolved"
+ *
+ * Items on the brief carry a stable, position-independent key (see `itemKey` in
+ * build-brief.ts) which is used as the feedback subject id so signals for the
+ * same item accumulate across days.
+ */
+const briefFeedbackSchema = z.object({
+  subjectId: z.string().trim().min(1).max(128),
+  signal: z.enum(["positive", "negative", "completed"]),
+  title: z.string().trim().max(240).nullable().optional(),
+  project: z.string().trim().max(160).nullable().optional(),
+  note: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const POST = withApiGuardrails(
+  "api.executive.daily-brief.feedback.POST",
+  async ({ request }) => {
+    // Gate on the same capability as the page and every sibling
+    // /api/executive/daily-brief/* route — a user who can't see the brief must
+    // not be able to write feedback into the shared AI learning loop.
+    const { user } = await requireCurrentUserAppCapability(
+      "view_executive_briefing",
+      "api.executive.daily-brief.feedback.POST",
+      "Daily Brief access required.",
+    );
+
+    const body = await parseJsonBody(
+      request,
+      briefFeedbackSchema,
+      "api.executive.daily-brief.feedback.POST",
+    );
+
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("ai_feedback_events")
+      .insert({
+        event_family: "packet_quality",
+        event_type: "daily_brief_item_feedback",
+        signal: body.signal,
+        subject_type: "daily_brief_item",
+        subject_id: body.subjectId,
+        surface: "daily-brief",
+        free_text: body.note ?? null,
+        user_id: user.id,
+        after_snapshot: {
+          title: body.title ?? null,
+          project: body.project ?? null,
+          signal: body.signal,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      throw new GuardrailError({
+        code: "DB_INSERT_FAILED",
+        where: "api.executive.daily-brief.feedback.POST",
+        message: `Failed to record brief feedback: ${error.message}`,
+        status: 500,
+      });
+    }
+
+    return Response.json({ success: true, eventId: data.id });
+  },
+);
