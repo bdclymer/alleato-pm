@@ -352,7 +352,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (749)
+## API Endpoints (750)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -598,6 +598,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/executive/brandon-daily-update` | GET | frontend/src/app/api/executive/brandon-daily-update/route.ts |
 | `/api/executive/brandon-daily-update/widget` | — | frontend/src/app/api/executive/brandon-daily-update/widget/route.ts |
 | `/api/executive/daily-brief` | GET | frontend/src/app/api/executive/daily-brief/route.ts |
+| `/api/executive/daily-brief/feedback` | POST | frontend/src/app/api/executive/daily-brief/feedback/route.ts |
 | `/api/executive/daily-brief/history` | GET | frontend/src/app/api/executive/daily-brief/history/route.ts |
 | `/api/executive/daily-brief/preview-teams` | POST | frontend/src/app/api/executive/daily-brief/preview-teams/route.ts |
 | `/api/executive/daily-brief/send-teams` | POST | frontend/src/app/api/executive/daily-brief/send-teams/route.ts |

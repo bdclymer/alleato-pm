@@ -31,10 +31,57 @@ export type BriefMeeting = {
   href: string | null;
 };
 
+/** One event on the week strip — a meeting transcript or a dated deadline. */
+export type BriefCalendarEvent = {
+  title: string;
+  time: string | null;
+  href: string | null;
+  kind: "meeting" | "due";
+};
+
+/** One column of the calendar week strip. */
+export type BriefCalendarDay = {
+  /** Eastern YYYY-MM-DD key for the day. */
+  dateKey: string;
+  /** Short weekday label, e.g. "Mon". */
+  dow: string;
+  /** Day-of-month number, e.g. "8". */
+  dayNum: string;
+  isToday: boolean;
+  isWeekend: boolean;
+  events: BriefCalendarEvent[];
+};
+
+/**
+ * An item that was open in yesterday's packet and is still unresolved today — so
+ * nothing pending silently drops off the radar between briefs.
+ */
+export type BriefCarryoverItem = {
+  /** Stable key matching the same item's feedback subject id. */
+  key: string;
+  title: string;
+  project: string | null;
+  summary: string;
+  /** How many days this has been carried, ≥1. */
+  ageDays: number;
+  citation: {
+    source: BrandonBriefItem["source"];
+    sourceDetail?: string;
+    sourceUrl?: string;
+    sourceId?: string;
+    date?: string;
+  } | null;
+  projectInternalId: number | null;
+};
+
 export type BuildBriefInput = {
   packet: BrandonDailyUpdatePacket;
   operatingBrief: ExecutiveOperatingBrief;
   meetings: BriefMeeting[];
+  /** Current-week strip (Mon–Sun), computed in the page from real meeting data. */
+  calendar?: BriefCalendarDay[];
+  /** Still-open items carried over from yesterday's packet. */
+  carryover?: BriefCarryoverItem[];
 };
 
 const LANE_LABELS: Record<string, string> = {
@@ -215,6 +262,59 @@ function itemSourcesHtml(item: BrandonBriefItem, max = 3): string {
     .map((citation) => srcHtml(citation, item.projectInternalId))
     .join("");
   return `<div class="src-row">${links}</div>`;
+}
+
+// ── stable item keys + feedback affordance ──────────────────────────────────────
+
+/**
+ * A deterministic, render-stable key for a brief item so (a) the same item can be
+ * matched across yesterday/today for carryover, and (b) feedback written to the
+ * learning loop points at a consistent subject. Derived from the item's identity
+ * (project + title, plus source id when present), NOT its position.
+ */
+function hashKey(input: string): string {
+  let hash = 5381;
+  for (let index = 0; index < input.length; index += 1) {
+    hash = (hash * 33) ^ input.charCodeAt(index);
+  }
+  // >>> 0 → unsigned; base36 keeps it short and url/attr safe.
+  return (hash >>> 0).toString(36);
+}
+
+export function itemKey(
+  item: Pick<
+    BrandonBriefItem,
+    "title" | "project" | "projectInternalId" | "sourceId"
+  >,
+): string {
+  const identity = [
+    item.projectInternalId ?? (item.project || "").trim().toLowerCase(),
+    (item.title || "").trim().toLowerCase(),
+    item.sourceId || "",
+  ].join("|");
+  return hashKey(identity);
+}
+
+/**
+ * The quiet per-item feedback control. Renders a single low-contrast trigger that
+ * opens an accurate / inaccurate / done menu. All the data the client POST needs
+ * (subject id + a minimal snapshot) rides on data-* attributes so the document
+ * stays a pure string with no per-item inline handlers.
+ */
+function fbHtml(
+  subjectId: string,
+  snapshot: { title: string; project?: string | null },
+): string {
+  const title = escAttr(truncate(snapshot.title || "", 160));
+  const project = escAttr(snapshot.project || "");
+  return `<span class="fb" data-fb data-fb-id="${escAttr(subjectId)}" data-fb-title="${title}" data-fb-project="${project}">
+    <button type="button" class="fb-trigger" aria-haspopup="true" aria-expanded="false" aria-label="Rate this item for the AI feedback loop">&#8942;</button>
+    <span class="fb-menu" role="menu">
+      <button type="button" class="fb-btn" role="menuitem" data-signal="positive"><span class="fb-dot"></span> Accurate</button>
+      <button type="button" class="fb-btn" role="menuitem" data-signal="negative"><span class="fb-dot"></span> Inaccurate / not true</button>
+      <button type="button" class="fb-btn" role="menuitem" data-signal="completed"><span class="fb-dot"></span> Done / resolved</button>
+    </span>
+  </span>`;
 }
 
 // ── severity → badge/pill class ─────────────────────────────────────────────────
@@ -414,7 +514,7 @@ function buildDecisions(input: BuildBriefInput): string {
           </details>`
         : "";
       return `
-        <article class="decision${cardClass}">
+        <article class="decision${cardClass}" data-fb-item>
           <div class="decision__head">
             <div class="decision__ref">${esc(item.project || "Portfolio")}</div>
             <h3>${esc(item.title)}</h3>
@@ -423,6 +523,7 @@ function buildDecisions(input: BuildBriefInput): string {
           </div>
           <div class="decision__due">
             <span class="badge ${badgeClass}">${due}</span>
+            ${fbHtml(itemKey(item), { title: item.title, project: item.project })}
           </div>
           ${step}
         </article>`;
@@ -447,10 +548,10 @@ function watchItemHtml(
   const fig = esc(truncate(item.impact || brief.status || "", 16));
   const detail = esc(truncate(item.nextAction || brief.summary || "", 220));
   return `
-          <div class="watch-item ${wClass}">
+          <div class="watch-item ${wClass}" data-fb-item>
             <div class="watch-item__top">
               <h4>${esc(truncate(brief.title, 60))}</h4>
-              <span class="watch-item__fig ${figClass}">${fig}</span>
+              <span class="watch-item__fig ${figClass}">${fig}${fbHtml(itemKey(brief), { title: brief.title, project: brief.project })}</span>
             </div>
             <p>${detail}</p>
             ${itemSourcesHtml(brief, 1)}
@@ -543,7 +644,7 @@ function buildProjects(input: BuildBriefInput): string {
       const rows = group.items
         .map((item) => {
           return `
-              <div class="subsite">
+              <div class="subsite" data-fb-item>
                 <div class="subsite__name">${esc(truncate(item.title, 48))}</div>
                 <p>${esc(truncate(item.summary || "", 200))}${itemSourcesHtml(item, 2)}</p>
                 <div class="subsite__status"><span class="pill ${
@@ -552,7 +653,7 @@ function buildProjects(input: BuildBriefInput): string {
                     : severity(item.tone ?? item.status) === "amber"
                       ? "pill--amber"
                       : "pill--info"
-                }">${esc(item.owner ? `Owner: ${truncate(item.owner, 18)}` : (item.status || "Update"))}</span></div>
+                }">${esc(item.owner ? `Owner: ${truncate(item.owner, 18)}` : (item.status || "Update"))}</span>${fbHtml(itemKey(item), { title: item.title, project: item.project })}</div>
               </div>`;
         })
         .join("");
@@ -574,7 +675,7 @@ function buildProjects(input: BuildBriefInput): string {
 
   return `
     <section id="projects">
-      <div class="sec-head"><span class="idx">04</span><h2>By project</h2><span class="count">${ordered.length} active</span></div>
+      <div class="sec-head"><span class="idx">05</span><h2>By project</h2><span class="count">${ordered.length} active</span></div>
       <div class="projects">${cards}</div>
     </section>`;
 }
@@ -598,8 +699,164 @@ function buildMeetings(input: BuildBriefInput): string {
     .join("");
   return `
     <section id="meetings">
-      <div class="sec-head"><span class="idx">05</span><h2>Today's meetings</h2><span class="count">${meetings.length} · open the transcript</span></div>
+      <div class="sec-head"><span class="idx">07</span><h2>Today's meetings</h2><span class="count">${meetings.length} · open the transcript</span></div>
       <div class="meetings">${rows}</div>
+    </section>`;
+}
+
+function buildCalendar(input: BuildBriefInput): string {
+  const days = input.calendar ?? [];
+  const hasAnyEvent = days.some((day) => day.events.length > 0);
+  if (days.length === 0 || !hasAnyEvent) return "";
+  const cols = days
+    .map((day) => {
+      const events = day.events
+        .map((event) => {
+          const time = event.time
+            ? `<span class="cal-event__time">${esc(event.time)}</span>`
+            : "";
+          const dueClass = event.kind === "due" ? " is-due" : "";
+          const label = `${time}${esc(truncate(event.title, 46))}`;
+          return event.href
+            ? `<a class="cal-event${dueClass}" href="${escAttr(event.href)}"${
+                /^https?:\/\//i.test(event.href)
+                  ? ' target="_blank" rel="noopener noreferrer"'
+                  : ""
+              }>${label}</a>`
+            : `<span class="cal-event${dueClass}">${label}</span>`;
+        })
+        .join("");
+      const body =
+        day.events.length > 0
+          ? events
+          : `<div class="cal-day__empty">Clear</div>`;
+      const dayClass = [
+        "cal-day",
+        day.isToday ? "is-today" : "",
+        day.isWeekend ? "is-weekend" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return `
+          <div class="${dayClass}">
+            <div class="cal-day__head">
+              <span class="cal-day__dow">${esc(day.dow)}</span>
+              <span class="cal-day__num">${esc(day.dayNum)}</span>
+            </div>
+            ${body}
+          </div>`;
+    })
+    .join("");
+  return `
+    <section id="calendar">
+      <div class="sec-head"><span class="idx">06</span><h2>This week</h2><span class="count">meetings &amp; deadlines</span></div>
+      <div class="cal-strip">${cols}</div>
+    </section>`;
+}
+
+type ActionRow = {
+  key: string;
+  text: string;
+  owner: string | null;
+  citation: CitationLike | null;
+  projectInternalId: number | null | undefined;
+};
+
+function buildActions(input: BuildBriefInput): string {
+  const rows: ActionRow[] = [];
+  const seen = new Set<string>();
+  const push = (
+    baseItem: BrandonBriefItem,
+    text: string | undefined | null,
+  ) => {
+    const clean = (text ?? "").replace(/\s+/g, " ").trim();
+    if (!clean) return;
+    const dedupeKey = clean.toLowerCase();
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    rows.push({
+      key: `${itemKey(baseItem)}:action`,
+      text: clean,
+      owner: baseItem.owner || null,
+      citation: {
+        source: baseItem.source,
+        sourceDetail: baseItem.sourceDetail,
+        sourceUrl: baseItem.sourceUrl,
+        sourceId: baseItem.sourceId,
+        date: baseItem.date,
+      },
+      projectInternalId: baseItem.projectInternalId,
+    });
+  };
+
+  for (const item of input.packet.sections.needsBrandon) {
+    push(item, item.recommendedAction);
+  }
+  for (const risk of input.operatingBrief.cashAndMarginWatch) {
+    push(risk.item, risk.nextAction);
+  }
+  for (const risk of input.operatingBrief.projectRiskRadar) {
+    push(risk.item, risk.nextAction);
+  }
+
+  const capped = rows.slice(0, 12);
+  if (capped.length === 0) return "";
+
+  const items = capped
+    .map((row) => {
+      const owner = row.owner
+        ? `<div class="action-item__owner">Owner <b>${esc(truncate(row.owner, 24))}</b></div>`
+        : "";
+      const source = row.citation
+        ? `<div class="src-row">${srcHtml(row.citation, row.projectInternalId)}</div>`
+        : "";
+      return `
+          <div class="action-item" data-fb-item>
+            <input type="checkbox" class="action-check" data-fb-id="${escAttr(row.key)}" data-fb-title="${escAttr(truncate(row.text, 160))}" aria-label="Mark done — feeds the AI loop" />
+            <div class="action-item__body">
+              <div class="action-item__text">${esc(row.text)}</div>
+              ${owner}${source}
+            </div>
+            <div class="action-item__meta">
+              ${fbHtml(row.key, { title: row.text })}
+            </div>
+          </div>`;
+    })
+    .join("");
+  return `
+    <section id="actions">
+      <div class="sec-head"><span class="idx">04</span><h2>Action list</h2><span class="count">${capped.length} to move · check to resolve</span></div>
+      <div class="actions">${items}</div>
+    </section>`;
+}
+
+function buildCarryover(input: BuildBriefInput): string {
+  const items = input.carryover ?? [];
+  if (items.length === 0) return "";
+  const cards = items
+    .slice(0, 8)
+    .map((item) => {
+      const age =
+        item.ageDays >= 1
+          ? `<span class="carry-item__age">${item.ageDays}d open</span>`
+          : "";
+      const source = item.citation
+        ? `<div class="src-row">${srcHtml(item.citation, item.projectInternalId)}</div>`
+        : "";
+      return `
+          <div class="carry-item" data-fb-item>
+            <div class="carry-item__ref">${esc(item.project || "Portfolio")} · carried from yesterday</div>
+            <h4>${esc(truncate(item.title, 90))}</h4>
+            ${age}
+            <p>${esc(truncate(item.summary || "", 220))}</p>
+            <div class="src-row">${source}${fbHtml(item.key, { title: item.title, project: item.project })}</div>
+          </div>`;
+    })
+    .join("");
+  return `
+    <section id="carryover">
+      <div class="sec-head"><span class="idx">08</span><h2>Still open from yesterday</h2><span class="count">${Math.min(items.length, 8)} unresolved · don't let these drop</span></div>
+      <div class="carryover">${cards}</div>
     </section>`;
 }
 
@@ -650,8 +907,11 @@ export function buildBriefBody(input: BuildBriefInput): string {
     { id: "read", label: "Today's read", html: buildTodaysRead(input) },
     { id: "decisions", label: "Decisions", html: buildDecisions(input) },
     { id: "watch", label: "Watch", html: buildWatch(input) },
+    { id: "actions", label: "Action list", html: buildActions(input) },
     { id: "projects", label: "Projects", html: buildProjects(input) },
+    { id: "calendar", label: "This week", html: buildCalendar(input) },
     { id: "meetings", label: "Meetings", html: buildMeetings(input) },
+    { id: "carryover", label: "Still open", html: buildCarryover(input) },
   ].filter((section) => section.html.trim().length > 0);
 
   if (sections.length === 0) {
