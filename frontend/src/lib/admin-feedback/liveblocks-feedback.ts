@@ -331,3 +331,67 @@ export async function mirrorLiveblocksCommentToFeedback(
     target: dispatched ? dispatch.target : null,
   };
 }
+
+export type LiveblocksReplyResult = {
+  handled: boolean;
+  reason?: "no_feedback_item" | "no_issue";
+  feedbackId?: string;
+  issueNumber?: number;
+};
+
+/**
+ * Append a follow-up client reply to the EXISTING feedback for its thread —
+ * never opens a new issue. Adds the reply as a comment on the linked GitHub
+ * issue (so it becomes context for the agent/human working it) and mirrors it
+ * into the inbox's comment history. No re-dispatch: the engine label is already
+ * applied, so the fix is already assigned.
+ */
+export async function appendReplyToFeedbackThread(input: {
+  threadId: string;
+  authorId: string | null;
+  authorName: string | null;
+  text: string;
+}): Promise<LiveblocksReplyResult> {
+  const supabase = createServiceClient();
+  const text = input.text.trim();
+  if (!text) return { handled: false, reason: "no_feedback_item" };
+
+  const { data: item } = await supabase
+    .from("admin_feedback_items")
+    .select("id, github_issue_number")
+    .contains("metadata", { sourceSystem: "liveblocks", liveblocksThreadId: input.threadId })
+    .maybeSingle();
+
+  if (!item) return { handled: false, reason: "no_feedback_item" };
+
+  // Mirror into the inbox comment history (best-effort).
+  if (input.authorId) {
+    const { error: commentError } = await supabase
+      .from("admin_feedback_comments")
+      .insert({
+        feedback_item_id: item.id,
+        author_id: input.authorId,
+        body: text,
+        mentions: [],
+      });
+    if (commentError) {
+      logger.warn({
+        msg: "[LiveblocksFeedback] reply mirror into inbox failed",
+        feedbackId: item.id,
+        error: commentError.message,
+      });
+    }
+  }
+
+  if (!item.github_issue_number) {
+    return { handled: true, reason: "no_issue", feedbackId: item.id };
+  }
+
+  const who = input.authorName?.trim() || "The client";
+  await addGitHubIssueComment(
+    item.github_issue_number,
+    `**${who} replied on the page comment:**\n\n${text}`,
+  );
+
+  return { handled: true, feedbackId: item.id, issueNumber: item.github_issue_number };
+}

@@ -1,11 +1,16 @@
 import { WebhookHandler } from "@liveblocks/node";
 
 import {
+  getCommentText,
   getFirstCommentText,
+  isAgentUserId,
   postAgentThreadReply,
   type AgentUserId,
 } from "@/lib/collaboration/agent-comments";
-import { mirrorLiveblocksCommentToFeedback } from "@/lib/admin-feedback/liveblocks-feedback";
+import {
+  appendReplyToFeedbackThread,
+  mirrorLiveblocksCommentToFeedback,
+} from "@/lib/admin-feedback/liveblocks-feedback";
 import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -80,9 +85,29 @@ export async function POST(request: Request): Promise<Response> {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  // A new comment thread = a new piece of client feedback. Replies within a
-  // thread (commentCreated on an existing thread) are intentionally ignored so
-  // we don't re-dispatch the same feedback.
+  // A follow-up reply on an existing thread: append it to the EXISTING feedback
+  // item's GitHub issue (context for the agent) — never open a new issue, never
+  // re-dispatch. The first comment of a thread is owned by the threadCreated
+  // handler below, and the agent's own replies are skipped so it doesn't echo.
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId, createdBy } = event.data;
+    if (isAgentUserId(createdBy)) {
+      return Response.json({ ok: true, ignored: "agent_comment" });
+    }
+    const comment = await getCommentText({ roomId, threadId, commentId });
+    if (!comment || !comment.text || comment.isFirstComment) {
+      return Response.json({ ok: true, skipped: "not_a_reply" });
+    }
+    const replyAuthor = await resolveAuthor(comment.authorId);
+    const replyResult = await appendReplyToFeedbackThread({
+      threadId,
+      authorId: comment.authorId,
+      authorName: replyAuthor.name,
+      text: comment.text,
+    });
+    return Response.json({ ok: true, reply: replyResult });
+  }
+
   if (event.type !== "threadCreated") {
     return Response.json({ ok: true, ignored: event.type });
   }

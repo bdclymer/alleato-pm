@@ -93,3 +93,39 @@ export async function getFirstCommentText(input: {
     return null;
   }
 }
+
+/**
+ * Read a specific comment in a thread as plain text, plus whether it's the
+ * FIRST comment (the thread opener). Used by the webhook to distinguish a new
+ * feedback thread (first comment — owned by the threadCreated handler) from a
+ * follow-up reply (append to the existing issue). Returns null if unreadable.
+ */
+export async function getCommentText(input: {
+  roomId: string;
+  threadId: string;
+  commentId: string;
+}): Promise<{ text: string; authorId: string; isFirstComment: boolean } | null> {
+  const liveblocks = getLiveblocks();
+  if (!liveblocks) return null;
+
+  try {
+    const thread = await liveblocks.getThread({
+      roomId: input.roomId,
+      threadId: input.threadId,
+    });
+    const comments = thread.comments ?? [];
+    const index = comments.findIndex((c) => c.id === input.commentId);
+    const comment = index >= 0 ? comments[index] : undefined;
+    if (!comment?.body) return null;
+    const text = (await stringifyCommentBody(comment.body)).trim();
+    return { text, authorId: comment.userId, isFirstComment: index === 0 };
+  } catch (error) {
+    console.error("[agent-comments] failed to read comment", {
+      roomId: input.roomId,
+      threadId: input.threadId,
+      commentId: input.commentId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
