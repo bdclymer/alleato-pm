@@ -134,7 +134,8 @@ export const POST = withApiGuardrails(
         status: "draft",
         schedule_impact: maxScheduleImpact || null,
         total_amount: totalAmount,
-        approved_at: now,
+        // A promoted PCCO starts as a draft; approval (and approved_at) is owned by the
+        // dedicated approve route. Stamping approved_at here left draft rows looking approved.
         created_at: now,
         created_by: user.id,
       })

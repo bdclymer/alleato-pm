@@ -19,6 +19,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
 import { mapPrimePcoLineItemToPccoLineItem } from "@/lib/change-events/pco-promotion-line-items";
+import { resolvePromotedPccoTotalAmount } from "@/lib/prime-contract-pcos/promote-total";
 
 export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]/promote#POST",
@@ -95,17 +96,17 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
       );
     }
 
-    // Calculate total from line items
+    // Resolve the PCCO total. The PCO's persisted total (prime_contract_pcos.total_amount)
+    // already includes the prime contract's financial markup and is what the detail page
+    // and the promote confirmation dialog show. Re-summing base line-item amounts here would
+    // silently drop the markup, understating the owner-facing change order.
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("amount")
       .eq("pco_id", pcoId)
       .eq("pco_type", "prime");
 
-    const totalAmount = (lineItems || []).reduce(
-      (sum, item) => sum + (item.amount || 0),
-      0,
-    );
+    const totalAmount = resolvePromotedPccoTotalAmount(pco, lineItems);
 
     // Generate PCCO number — count existing PCCOs for the contract + 1
     const { data: existingPccos } = await supabase
@@ -133,7 +134,8 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
         due_date: pco.due_date,
         designated_reviewer: pco.designated_reviewer_id,
         total_amount: totalAmount,
-        approved_at: now,
+        // A promoted PCCO starts as a draft; approval (and approved_at) is owned by the
+        // dedicated approve route. Stamping approved_at here left draft rows looking approved.
         created_at: now,
         created_by: user.id,
       })
