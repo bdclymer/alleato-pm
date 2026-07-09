@@ -15,6 +15,7 @@
  */
 import {
   computeLineFinancials,
+  computePrimePaymentApplication,
   computeSubcontractorRollup,
   materialsCurrentlyRetained,
   workCurrentlyRetained,
@@ -220,5 +221,86 @@ describe("computeSubcontractorRollup — G702 nine-line certificate", () => {
     expect(rollup.total_completed_and_stored).toBe(0);
     expect(rollup.current_payment_due).toBe(0);
     expect(rollup.balance_to_finish_including_retainage).toBe(50_000);
+  });
+
+  test("Line 5 is cumulative retainage held (this + previous − released)", () => {
+    const rollup = computeSubcontractorRollup({
+      lineItems: [
+        {
+          total_completed_stored: 60_000,
+          retainage_amount: 500, // this period work
+          previous_work_retainage: 1_000, // held from prior periods
+          work_retainage_released: 200,
+          materials_retainage_amount: 0,
+          previous_materials_retainage: 0,
+          materials_retainage_released: 0,
+          net_amount_this_period: 0,
+        },
+      ],
+      original_contract_sum: 100_000,
+      net_change_by_change_orders: 0,
+      less_previous_certificates: 0,
+      is_retainage_release: false,
+    });
+    // 500 + 1000 − 200 = 1300 held, NOT just this period's 500.
+    expect(rollup.total_work_retainage).toBe(1_300);
+    expect(rollup.total_earned_less_retainage).toBe(58_700);
+  });
+
+  test("no carried-forward retainage ⇒ cumulative Line 5 equals this-period (prod no-op)", () => {
+    const lineItems = [
+      { total_completed_stored: 50_000, retainage_amount: 3_000, materials_retainage_amount: 500 },
+    ];
+    const rollup = computeSubcontractorRollup({
+      lineItems,
+      original_contract_sum: 100_000,
+      net_change_by_change_orders: 0,
+      less_previous_certificates: 10_000,
+      is_retainage_release: false,
+    });
+    expect(rollup.total_retainage).toBe(3_500);
+    expect(rollup.total_earned_less_retainage).toBe(46_500);
+  });
+});
+
+describe("computePrimePaymentApplication — corrected AIA Line 9", () => {
+  const line = (over: Partial<Parameters<typeof computePrimePaymentApplication>[0]["lineItems"][number]> = {}) => ({
+    scheduled_value: 100_000,
+    total_completed: 40_000,
+    retainage_this_period_work: 2_000,
+    retainage_previous_work: 2_000,
+    retainage_released_work: 0,
+    retainage_this_period_materials: 0,
+    retainage_previous_materials: 0,
+    retainage_released_materials: 0,
+    ...over,
+  });
+
+  test("Line 9 = Contract Sum to Date − Total Earned Less Retainage (with change orders)", () => {
+    const { lines } = computePrimePaymentApplication({
+      lineItems: [line()],
+      contract: { original_contract_value: 100_000, revised_contract_value: 110_000 },
+      previousPaymentDue: 10_000,
+    });
+    const byNum = Object.fromEntries(lines.map((l) => [l.number, l.value]));
+    expect(byNum["3"]).toBe(110_000); // Contract Sum to Date (revised)
+    expect(byNum["4"]).toBe(40_000); // Total Completed & Stored
+    expect(byNum["5"]).toBe(4_000); // cumulative retainage held (2000+2000)
+    expect(byNum["6"]).toBe(36_000); // earned less retainage
+    // Correct AIA Line 9 = 110,000 − 36,000 = 74,000.
+    // The OLD prime formula (scheduled − completed = 100,000 − 40,000 = 60,000) was wrong.
+    expect(byNum["9"]).toBe(74_000);
+    expect(byNum["9"]).not.toBe(60_000);
+  });
+
+  test("Line 8 Current Payment Due = Line 6 − previous certificates", () => {
+    const { lines } = computePrimePaymentApplication({
+      lineItems: [line()],
+      contract: { original_contract_value: 100_000, revised_contract_value: 110_000 },
+      previousPaymentDue: 10_000,
+    });
+    const cur = lines.find((l) => l.number === "8");
+    expect(cur?.value).toBe(26_000); // 36,000 − 10,000
+    expect(cur?.highlight).toBe(true);
   });
 });
