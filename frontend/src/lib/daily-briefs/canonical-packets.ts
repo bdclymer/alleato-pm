@@ -19,14 +19,19 @@ export type DailyBriefMarkdownSection = {
 
 /**
  * One source that fed the brief, carried through from the compiler's
- * `packet_json.sourceSet.sources` manifest. `id` matches the citation tokens
- * embedded in the brief markdown, so the renderer can turn a cited id into a
- * readable, linked reference. `url` is the source's original location
- * (Outlook web for emails, the stored transcript for meetings, the file for
- * documents); Teams messages have no addressable url.
+ * `packet_json.sourceSet.sources` manifest. `id` is the source's full, stable
+ * id (Outlook message id, meeting ulid, …) — the durable link key. `alias` is
+ * the short, mangle-proof citation token the model was told to cite (e.g.
+ * `S12`); the brief markdown cites the alias, and the resolver maps it back to
+ * this source. Older packets predate aliases and cite the full `id` directly,
+ * so `alias` is nullable and the resolver still accepts full-id citations.
+ * `url` is the source's original location (Outlook web for emails, the stored
+ * transcript for meetings, the file for documents); Teams messages have no
+ * addressable url.
  */
 export type DailyBriefSourceRef = {
   id: string;
+  alias: string | null;
   title: string;
   lane: string;
   projectId: number | null;
@@ -141,6 +146,7 @@ function mapSourceRefs(packetJson: JsonRecord): DailyBriefSourceRef[] {
     if (!id) continue;
     refs.push({
       id,
+      alias: stringValue(raw.alias),
       title: stringValue(raw.title) ?? id,
       lane: stringValue(raw.lane) ?? "documents",
       projectId: numberOrNull(raw.projectId),

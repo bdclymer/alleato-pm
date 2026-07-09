@@ -42,10 +42,13 @@ export function cleanSourceTitle(ref: DailyBriefSourceRef): string {
 
 export interface DailyBriefSourceIndex {
   /**
-   * Resolve a citation token from the brief markdown to its source. Handles
-   * ids the model truncated with a trailing ellipsis by falling back to a
-   * UNIQUE prefix match — an ambiguous prefix resolves to null so we never
-   * link to the wrong record.
+   * Resolve a citation token from the brief markdown to its source. A token is
+   * either a short alias the model was told to cite (`S12`, the current scheme)
+   * or, for pre-alias packets, a full source id — both resolve by exact match.
+   * Full ids the model truncated with a trailing/interior ellipsis fall back to
+   * a UNIQUE prefix match; an ambiguous prefix resolves to null so we never
+   * link to the wrong record. (Aliases are short and never truncated, which is
+   * the whole point of the scheme.)
    */
   resolve(token: string): DailyBriefSourceRef | null;
   size: number;
@@ -54,11 +57,20 @@ export interface DailyBriefSourceIndex {
 export function buildSourceIndex(
   sources: DailyBriefSourceRef[],
 ): DailyBriefSourceIndex {
-  const byId = new Map<string, DailyBriefSourceRef>();
+  // Exact-match lookup keyed by BOTH the alias and the full id, so `S12` and
+  // the raw Outlook id both resolve to the same source. Prefix matching runs
+  // over full ids only (aliases are short and exact).
+  const byKey = new Map<string, DailyBriefSourceRef>();
+  const ids: string[] = [];
   for (const source of sources) {
-    if (!byId.has(source.id)) byId.set(source.id, source);
+    if (!byKey.has(source.id)) {
+      byKey.set(source.id, source);
+      ids.push(source.id);
+    }
+    if (source.alias && !byKey.has(source.alias)) {
+      byKey.set(source.alias, source);
+    }
   }
-  const ids = [...byId.keys()];
   const cache = new Map<string, DailyBriefSourceRef | null>();
 
   function resolve(rawToken: string): DailyBriefSourceRef | null {
@@ -66,10 +78,10 @@ export function buildSourceIndex(
     if (!token) return null;
     if (cache.has(token)) return cache.get(token) ?? null;
 
-    let result = byId.get(token) ?? null;
-    // Citations the model shortened won't match exactly. Split on the ellipsis
-    // into a prefix and (optional) suffix, then accept ONLY a unique match so we
-    // never link an ambiguous prefix to the wrong record.
+    let result = byKey.get(token) ?? null;
+    // Pre-alias citations the model shortened won't match exactly. Split on the
+    // ellipsis into a prefix and (optional) suffix, then accept ONLY a unique
+    // match so we never link an ambiguous prefix to the wrong record.
     if (!result && ELLIPSIS_SPLIT.test(token)) {
       const [prefix, suffix = ""] = token
         .split(ELLIPSIS_SPLIT)
@@ -79,12 +91,59 @@ export function buildSourceIndex(
           (id) =>
             id.startsWith(prefix) && (suffix === "" || id.endsWith(suffix)),
         );
-        result = matches.length === 1 ? (byId.get(matches[0]) ?? null) : null;
+        result = matches.length === 1 ? (byKey.get(matches[0]) ?? null) : null;
       }
     }
     cache.set(token, result);
     return result;
   }
 
-  return { resolve, size: byId.size };
+  return { resolve, size: ids.length };
+}
+
+/**
+ * Collect the citation tokens a `source_signal_candidates` row points at — the
+ * ids in `extraction_json.source_ids` plus `source_document_id`. These are the
+ * same tokens the brief markdown cites, so they resolve against the packet
+ * `sourceSet` manifest. Order is preserved with `source_document_id` last, so
+ * the first-cited source stays primary.
+ */
+export function candidateSourceTokens(row: {
+  source_document_id: string | null;
+  extraction_json: unknown;
+}): string[] {
+  const tokens: string[] = [];
+  const extraction = row.extraction_json;
+  if (extraction && typeof extraction === "object" && !Array.isArray(extraction)) {
+    const rawIds = (extraction as Record<string, unknown>).source_ids;
+    if (Array.isArray(rawIds)) {
+      for (const value of rawIds) {
+        if (typeof value === "string" && value.trim()) tokens.push(value);
+      }
+    }
+  }
+  if (row.source_document_id) tokens.push(row.source_document_id);
+  return tokens;
+}
+
+/**
+ * Resolve a candidate's citation tokens to their manifest sources, de-duped by
+ * source id. A token resolves only on an exact or UNIQUE-prefix match (see
+ * `buildSourceIndex`); ambiguous truncated ids (long Outlook ids the brief
+ * shortened) resolve to nothing rather than mislinking, so every returned
+ * source is guaranteed to be the right record.
+ */
+export function resolveCandidateSources(
+  row: { source_document_id: string | null; extraction_json: unknown },
+  index: DailyBriefSourceIndex,
+): DailyBriefSourceRef[] {
+  const resolved: DailyBriefSourceRef[] = [];
+  const seen = new Set<string>();
+  for (const token of candidateSourceTokens(row)) {
+    const ref = index.resolve(token);
+    if (!ref || seen.has(ref.id)) continue;
+    seen.add(ref.id);
+    resolved.push(ref);
+  }
+  return resolved;
 }

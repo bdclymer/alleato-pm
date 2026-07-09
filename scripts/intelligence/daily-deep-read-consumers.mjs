@@ -114,7 +114,8 @@ function sourceIdsFromText(value) {
     const id = match[1].trim();
     if (
       id &&
-      (id.startsWith("outlook_") ||
+      (/^S\d+$/.test(id) || // short citation alias, e.g. `S12`
+        id.startsWith("outlook_") ||
         id.startsWith("teams") ||
         id.startsWith("sharepoint_") ||
         id.startsWith("01") ||
@@ -124,6 +125,62 @@ function sourceIdsFromText(value) {
     }
   }
   return [...ids];
+}
+
+const ELLIPSIS_SPLIT = /…|\.{3,}/;
+
+/**
+ * Map each citation token the brief cited to its full, durable source id using
+ * the packet's `sourceSet` manifest, so candidates store real ids (not the
+ * short `S12` alias, which is only meaningful inside one packet, and not a
+ * truncated Outlook prefix). Resolution mirrors the frontend resolver
+ * (`buildSourceIndex`): exact alias/id match first, then a UNIQUE trailing/
+ * interior-ellipsis prefix match for pre-alias packets. Alias-shaped tokens
+ * that don't map are dropped (a bare `S12` is meaningless downstream); other
+ * unresolved tokens are kept verbatim for provenance/back-compat.
+ */
+function canonicalizeSourceIds(tokens, sourceSet) {
+  const sources = sourceSet?.sources || [];
+  const byKey = new Map();
+  const ids = [];
+  for (const source of sources) {
+    if (!source?.id) continue;
+    if (!byKey.has(source.id)) {
+      byKey.set(source.id, source.id);
+      ids.push(source.id);
+    }
+    if (source.alias && !byKey.has(source.alias)) byKey.set(source.alias, source.id);
+  }
+  const out = [];
+  const seen = new Set();
+  const push = (id) => {
+    if (id && !seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  };
+  for (const token of tokens) {
+    const exact = byKey.get(token);
+    if (exact) {
+      push(exact);
+      continue;
+    }
+    if (ELLIPSIS_SPLIT.test(token)) {
+      const [prefix, suffix = ""] = token.split(ELLIPSIS_SPLIT).map((part) => part.trim());
+      if (prefix.length >= 6) {
+        const matches = ids.filter(
+          (id) => id.startsWith(prefix) && (suffix === "" || id.endsWith(suffix)),
+        );
+        if (matches.length === 1) {
+          push(matches[0]);
+          continue;
+        }
+      }
+    }
+    if (/^S\d+$/.test(token)) continue; // unresolved alias — meaningless, drop it
+    push(token); // pre-alias full id we couldn't disambiguate; keep for provenance
+  }
+  return out;
 }
 
 function parseBullets(markdown) {
@@ -395,7 +452,7 @@ function candidatesFromPacket(packet, projectRows) {
     for (const bullet of parseBullets(body)) {
       const title = titleFromBullet(bullet);
       const summary = summaryFromBullet(bullet, title);
-      const sourceIds = sourceIdsFromText(bullet);
+      const sourceIds = canonicalizeSourceIds(sourceIdsFromText(bullet), sourceSet);
       const primarySourceId = sourceIds[0] || `daily_packet:${packet.id}`;
       const { score, label } = confidenceForSection(section);
       const sourceProjectId = projectIdForSourceIds(sourceIds, sourceSet);
