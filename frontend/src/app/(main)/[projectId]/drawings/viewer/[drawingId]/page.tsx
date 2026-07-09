@@ -11,6 +11,7 @@ import {
   Search,
   Activity,
   X,
+  MoreVertical,
   Eye,
   EyeOff,
   Pencil,
@@ -529,7 +530,7 @@ export default function DrawingViewerPage() {
                   onClick={handleClose}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="text-xs">Drawings</span>
+                  <span className="text-xs hidden sm:inline">Drawings</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">Back to Drawings</TooltipContent>
@@ -577,12 +578,12 @@ export default function DrawingViewerPage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-56 h-auto"
+                    className="flex items-center justify-start overflow-hidden gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-[120px] sm:max-w-56 h-auto"
                   >
                     {drawingIdentity?.number && (
                       <span className="text-muted-foreground text-xs shrink-0">{drawingIdentity.number}</span>
                     )}
-                    <span className="truncate">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
+                    <span className="truncate min-w-0">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
                     <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-muted-foreground shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -610,74 +611,121 @@ export default function DrawingViewerPage() {
             )}
 
             {rev && (
-              <>
+              <div className="hidden md:flex items-center">
                 <div className="w-px h-4 bg-muted mx-1" />
                 <span className="text-xs text-muted-foreground shrink-0">Rev {rev.revision_number}</span>
-              </>
+              </div>
             )}
 
             {pageInfo.total > 1 && (
-              <>
+              <div className="hidden md:flex items-center">
                 <div className="w-px h-4 bg-muted mx-1" />
                 <span className="text-xs text-muted-foreground shrink-0">
                   Page {pageInfo.current} / {pageInfo.total}
                 </span>
-              </>
+              </div>
             )}
           </div>
 
           {/* Right: panel toggles + download + close */}
           <div className="flex items-center gap-0.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
-                  onClick={handleDownload}
-                >
-                  <Download />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Download</TooltipContent>
-            </Tooltip>
-
-            <div className="w-px h-4 bg-muted mx-1" />
-
-            {(
-              [
-                { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
-                { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
-                { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
-                { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
-                { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
-              ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
-            ).map(({ panel, icon, label }) => (
-              <Tooltip key={panel!}>
+            {/* Desktop (md+): download + inline panel toggles */}
+            <div className="hidden md:flex items-center gap-0.5">
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost" size="sm"
-                    className={cn(
-                      "h-7 w-7 p-0 relative transition-colors",
-                      activePanel === panel
-                        ? "bg-muted text-white"
-                        : "text-foreground/80 hover:text-foreground hover:bg-muted"
-                    )}
-                    onClick={() => togglePanel(panel)}
-                    aria-label={label}
+                    className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
+                    onClick={handleDownload}
                   >
-                    {icon}
-                    {panel === "links" && pins.length > 0 && (
+                    <Download />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Download</TooltipContent>
+              </Tooltip>
+
+              <div className="w-px h-4 bg-muted mx-1" />
+
+              {(
+                [
+                  { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                  { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
+                  { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
+                  { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
+                  { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
+                ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+              ).map(({ panel, icon, label }) => (
+                <Tooltip key={panel!}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className={cn(
+                        "h-7 w-7 p-0 relative transition-colors",
+                        activePanel === panel
+                          ? "bg-muted text-white"
+                          : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                      )}
+                      onClick={() => togglePanel(panel)}
+                      aria-label={label}
+                    >
+                      {icon}
+                      {panel === "links" && pins.length > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
+                          {pins.length}
+                        </span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{label}</TooltipContent>
+                </Tooltip>
+              ))}
+
+              <div className="w-px h-4 bg-muted mx-1" />
+            </div>
+
+            {/* Mobile (below md): download + panel toggles collapse into one overflow menu */}
+            <div className="flex md:hidden items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost" size="sm"
+                    className="h-7 w-7 p-0 relative text-foreground/80 hover:text-foreground hover:bg-muted"
+                    aria-label="More actions"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    {pins.length > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
                         {pins.length}
                       </span>
                     )}
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{label}</TooltipContent>
-              </Tooltip>
-            ))}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleDownload}>
+                    <Download className="h-4 w-4 mr-2" /> Download
+                  </DropdownMenuItem>
+                  {(
+                    [
+                      { panel: "links" as RightPanel, icon: <Link className="h-4 w-4 mr-2" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                      { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4 mr-2" />, label: "Filter annotations" },
+                      { panel: "info" as RightPanel, icon: <Info className="h-4 w-4 mr-2" />, label: "Info" },
+                      { panel: "search" as RightPanel, icon: <Search className="h-4 w-4 mr-2" />, label: "Search drawings" },
+                      { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4 mr-2" />, label: "Activity & Comments" },
+                    ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+                  ).map(({ panel, icon, label }) => (
+                    <DropdownMenuItem
+                      key={panel!}
+                      onClick={() => togglePanel(panel)}
+                      className={cn(activePanel === panel && "bg-accent")}
+                    >
+                      {icon} {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <div className="w-px h-4 bg-muted mx-1" />
+              <div className="w-px h-4 bg-muted mx-1" />
+            </div>
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -703,8 +751,8 @@ export default function DrawingViewerPage() {
           )}
         >
 
-          {/* ── Tools sidebar (left on desktop, fixed bottom bar on mobile) ── */}
-          <div className="shrink-0 bg-card flex items-center gap-1 md:w-14 md:flex-col md:py-3 md:border-r md:border-border max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:h-14 max-md:w-full max-md:overflow-x-auto max-md:border-t max-md:border-border max-md:px-2">
+          {/* ── Tools sidebar (left) ──────────────────────────────────── */}
+          <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-card border-r border-border">
             {ANNOTATION_TOOLS.map(({ tool, icon, label }) => (
               <Tooltip key={tool}>
                 <TooltipTrigger asChild>
@@ -713,7 +761,7 @@ export default function DrawingViewerPage() {
                     variant="ghost"
                     onClick={() => setActiveTool(tool)}
                     className={cn(
-                      "w-10 h-10 shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-xs p-0",
+                      "w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-xs p-0",
                       activeTool === tool
                         ? tool === "link"
                           ? "bg-status-success text-white"
@@ -732,8 +780,8 @@ export default function DrawingViewerPage() {
             {/* Color swatches — only for drawing tools */}
             {activeTool !== "select" && activeTool !== "comment" && activeTool !== "link" && (
               <>
-                <div className="w-8 h-px bg-muted my-1 max-md:hidden" />
-                <div className="flex items-center gap-1 shrink-0 md:flex-col max-md:flex-row">
+                <div className="w-8 h-px bg-muted my-1" />
+                <div className="flex flex-col items-center gap-1">
                   {PRESET_COLORS.map((c) => (
                     <Button
                       key={c}
@@ -755,16 +803,16 @@ export default function DrawingViewerPage() {
             {/* Link mode hint */}
             {activeTool === "link" && (
               <>
-                <div className="w-8 h-px bg-muted my-1 max-md:hidden" />
-                <p className="text-[9px] text-muted-foreground/80 text-center px-1 leading-tight max-md:hidden">
+                <div className="w-8 h-px bg-muted my-1" />
+                <p className="text-[9px] text-muted-foreground/80 text-center px-1 leading-tight">
                   Click on drawing to place a link pin
                 </p>
               </>
             )}
 
-            {/* Zoom + rotate at bottom (right side on mobile) */}
-            <div className="md:mt-auto pb-1 flex items-center gap-1 shrink-0 md:flex-col max-md:flex-row max-md:ml-auto">
-              <div className="w-8 h-px bg-muted mb-1 max-md:hidden" />
+            {/* Zoom + rotate at bottom */}
+            <div className="mt-auto pb-1 flex flex-col items-center gap-1">
+              <div className="w-8 h-px bg-muted mb-1" />
               {[
                 { action: zoomIn, icon: <ZoomIn className="h-4 w-4" />, label: "Zoom in" },
                 { action: zoomOut, icon: <ZoomOut className="h-4 w-4" />, label: "Zoom out" },
@@ -826,7 +874,7 @@ export default function DrawingViewerPage() {
           {/* ── Right sidebar ────────────────────────────────────────────── */}
           {activePanel && (
             <div
-              className="relative shrink-0 flex flex-col bg-card border-l border-border overflow-hidden max-md:fixed max-md:inset-0 max-md:z-50 max-md:!w-full max-md:border-l-0"
+              className="relative shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
               style={{
                 width: isRightPanelExpanded
                   ? "calc(100% - 3.5rem)"
@@ -842,7 +890,7 @@ export default function DrawingViewerPage() {
                   setIsResizingRightPanel(true);
                 }}
                 className={cn(
-                  "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center rounded-none h-auto p-0 max-md:hidden",
+                  "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center rounded-none h-auto p-0",
                   "text-muted-foreground/80 hover:text-foreground/80",
                   isResizingRightPanel && "text-foreground"
                 )}
@@ -865,7 +913,7 @@ export default function DrawingViewerPage() {
                     type="button"
                     variant="ghost"
                     onClick={handleRightPanelExpandToggle}
-                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0 max-md:hidden"
+                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0"
                     aria-label={isRightPanelExpanded ? "Restore sidebar width" : "Expand sidebar"}
                   >
                     {isRightPanelExpanded ? (
