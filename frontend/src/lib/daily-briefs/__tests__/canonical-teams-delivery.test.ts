@@ -44,6 +44,7 @@ const packet: CanonicalDailyBriefPacket = {
   sourceCoverage: {},
   sourceCounts: { email: 2, meeting: 1 },
   sourceIds: ["source-1", "source-2", "source-3"],
+  sources: [],
   sourceCount: 3,
   briefMarkdown: "## Executive read\nSummary",
   sections: [{ title: "Executive read", body: "Summary" }],

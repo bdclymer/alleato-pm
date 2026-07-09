@@ -397,6 +397,11 @@ async function materializeSources(rows) {
     }
     sources.push({
       id: row.id,
+      // Short, stable, mangle-proof citation token. The model is only ever
+      // shown this alias (never the raw id), so it cannot truncate a long
+      // Outlook id into an ambiguous prefix. The packet manifest maps the alias
+      // back to `id`, and the review-page/consumer resolvers do the same.
+      alias: `S${sources.length + 1}`,
       appDocumentId: row.app_document_id,
       title: row.title || row.file_name || row.id,
       lane,
@@ -468,7 +473,7 @@ function renderCorpus(sources, skipped) {
     }
     for (const source of grouped[lane]) {
       lines.push(
-        `- ${source.id} | ${source.title} | project=${source.projectName ?? "unassigned"} | sourceAt=${source.sourceAt ?? "unknown"} | chars=${source.charCount} | basis=${source.inclusionBasis} | storage=${source.usedStorage ? "yes" : "no"}`,
+        `- ${source.alias} = ${source.id} | ${source.title} | project=${source.projectName ?? "unassigned"} | sourceAt=${source.sourceAt ?? "unknown"} | chars=${source.charCount} | basis=${source.inclusionBasis} | storage=${source.usedStorage ? "yes" : "no"}`,
       );
     }
     lines.push("");
@@ -478,7 +483,7 @@ function renderCorpus(sources, skipped) {
     lines.push(
       `### ${source.lane.toUpperCase()} | ${source.title}`,
       "",
-      `Source ID: ${source.id}`,
+      `Source ID: ${source.alias} = ${source.id}`,
       `Project: ${source.projectName ?? "Unassigned"}`,
       `Source at: ${source.sourceAt ?? "unknown"}`,
       `URL: ${source.url ?? "none"}`,
@@ -495,7 +500,10 @@ function renderCorpus(sources, skipped) {
 
 function sourceForModel(source) {
   return {
-    id: source.id,
+    // The model cites this short alias, NOT the raw id — see the alias comment
+    // in materializeSources. Keeping the raw id out of the model's context is
+    // what makes citations unmangleable.
+    id: source.alias,
     lane: source.lane,
     title: source.title,
     project: source.projectName ?? "Unassigned",
@@ -573,7 +581,7 @@ async function summarizeLane(lane, items) {
         {
           role: "system",
           content:
-            "You are preparing source notes for an owner-grade construction executive brief. Extract only concrete decisions, risks, money, schedule movement, commitments, blockers, and owner-relevant context. Preserve source IDs. Always refer to a project by its name (the `project` field) — never by a numeric id, and never write 'Project <number>'. If a source's project is 'Unassigned', say 'an unassigned project'. Do not write generic summaries.",
+            "You are preparing source notes for an owner-grade construction executive brief. Extract only concrete decisions, risks, money, schedule movement, commitments, blockers, and owner-relevant context. Each source's `id` field is a short citation tag like `S12`; cite it verbatim in backticks (e.g. `S12`) for every fact and NEVER alter, lengthen, shorten, merge, or invent a tag. Always refer to a project by its name (the `project` field) — never by a numeric id, and never write 'Project <number>'. If a source's project is 'Unassigned', say 'an unassigned project'. Do not write generic summaries.",
         },
         {
           role: "user",
@@ -599,7 +607,7 @@ async function draftExecutiveBrief(sources) {
       {
         role: "system",
         content:
-          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Always refer to a project by its name — never by a numeric id, and never write 'Project <number>' (e.g. write 'Hillsdale', not 'Project 67'). Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
+          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. The source notes tag every fact with a short citation like `S12`; carry those tags through verbatim, inline, wrapped in backticks (e.g. `S12`), and NEVER alter, lengthen, shorten, merge, or invent a tag. Always refer to a project by its name — never by a numeric id, and never write 'Project <number>' (e.g. write 'Hillsdale', not 'Project 67'). Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
       },
       {
         role: "user",
@@ -841,6 +849,7 @@ async function writePacket({ sources, brief, laneNotes }) {
         sourceSet: {
           sources: sources.map((source) => ({
             id: source.id,
+            alias: source.alias,
             title: source.title,
             lane: source.lane,
             projectId: source.projectId,

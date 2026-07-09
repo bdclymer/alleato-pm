@@ -17,6 +17,29 @@ export type DailyBriefMarkdownSection = {
   body: string;
 };
 
+/**
+ * One source that fed the brief, carried through from the compiler's
+ * `packet_json.sourceSet.sources` manifest. `id` is the source's full, stable
+ * id (Outlook message id, meeting ulid, …) — the durable link key. `alias` is
+ * the short, mangle-proof citation token the model was told to cite (e.g.
+ * `S12`); the brief markdown cites the alias, and the resolver maps it back to
+ * this source. Older packets predate aliases and cite the full `id` directly,
+ * so `alias` is nullable and the resolver still accepts full-id citations.
+ * `url` is the source's original location (Outlook web for emails, the stored
+ * transcript for meetings, the file for documents); Teams messages have no
+ * addressable url.
+ */
+export type DailyBriefSourceRef = {
+  id: string;
+  alias: string | null;
+  title: string;
+  lane: string;
+  projectId: number | null;
+  projectName: string | null;
+  sourceAt: string | null;
+  url: string | null;
+};
+
 export type CanonicalDailyBriefPacket = {
   id: string;
   targetId: string;
@@ -37,6 +60,7 @@ export type CanonicalDailyBriefPacket = {
   sourceCounts: Record<string, number>;
   sourceIds: string[];
   sourceCount: number;
+  sources: DailyBriefSourceRef[];
   briefMarkdown: string;
   sections: DailyBriefMarkdownSection[];
   compilerVersion: string | null;
@@ -108,6 +132,32 @@ export function splitDailyBriefMarkdown(markdown: string): DailyBriefMarkdownSec
   return sections;
 }
 
+function numberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function mapSourceRefs(packetJson: JsonRecord): DailyBriefSourceRef[] {
+  const sourceSet = isRecord(packetJson.sourceSet) ? packetJson.sourceSet : {};
+  const rawSources = Array.isArray(sourceSet.sources) ? sourceSet.sources : [];
+  const refs: DailyBriefSourceRef[] = [];
+  for (const raw of rawSources) {
+    if (!isRecord(raw)) continue;
+    const id = stringValue(raw.id);
+    if (!id) continue;
+    refs.push({
+      id,
+      alias: stringValue(raw.alias),
+      title: stringValue(raw.title) ?? id,
+      lane: stringValue(raw.lane) ?? "documents",
+      projectId: numberOrNull(raw.projectId),
+      projectName: stringValue(raw.projectName),
+      sourceAt: stringValue(raw.sourceAt),
+      url: stringValue(raw.url),
+    });
+  }
+  return refs;
+}
+
 function extractBusinessDate(row: IntelligencePacketRow, packetJson: JsonRecord): string {
   return (
     stringValue(packetJson.businessDate) ??
@@ -150,6 +200,7 @@ function mapPacket(row: IntelligencePacketRow): CanonicalDailyBriefPacket {
     sourceCount:
       sourceIds.length ||
       Object.values(sourceCounts).reduce((total, count) => total + count, 0),
+    sources: mapSourceRefs(packetJson),
     briefMarkdown,
     sections: splitDailyBriefMarkdown(briefMarkdown),
     compilerVersion: row.compiler_version,

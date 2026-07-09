@@ -160,6 +160,7 @@ const packet: CanonicalDailyBriefPacket = {
   sourceCoverage: {},
   sourceCounts: {},
   sourceIds: [],
+  sources: [],
   sourceCount: 0,
   briefMarkdown: "## Executive read\nSummary",
   sections: [{ title: "Executive read", body: "Summary" }],

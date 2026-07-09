@@ -1,5 +1,5 @@
 {
-  "packetId": "99b58337-3067-427d-bd66-9e11ab594664",
+  "packetId": "c2625323-60b8-4026-a157-536bc9b6e7d5",
   "shouldWrite": true,
   "candidates": [
     {
@@ -8,8 +8,8 @@
       "target_id": null,
       "project_id": 67,
       "signal_type": "project_update",
-      "title": "3 mechanical pads",
-      "summary": "Footings for were poured; slabs next week; HVAC and underground plumbing continue, and heater demolition has started (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
+      "title": "Vermillion Rise Warehouse:",
+      "summary": "Mechanical pad footings are poured; slab pours are planned next week, followed by indoor trash compactor slab work. `S53` Underground plumbing/roof drains continue, HVAC layout follows, and electrical mobilization is planned next week. `S53` Permitting remains blocked at the state level, with county ready once state clears. `S53`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -20,11 +20,11 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Footings for **3 mechanical pads** were poured; **slabs next week**; HVAC and underground plumbing continue, and heater demolition has started (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:3-mechanical-pads:1f94975884",
+      "excerpt": "- **Vermillion Rise Warehouse:** Mechanical pad footings are poured; slab pours are planned next week, followed by indoor trash compactor slab work. `S53` Underground plumbing/roof drains continue, HVAC layout follows, and electrical mobilization is planned next week. `S53` Permitting remains blocked at the state level, with county ready once state clears. `S53`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:vermillion-rise-warehouse:a57f1f2a73",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
           "01KWYW9F66ADP5JQW8FKV9RTS1"
@@ -41,13 +41,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
+      "source_document_id": "01KWENX1J352C1R8E3VPVZ69A4",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 67,
+      "project_id": 1009,
       "signal_type": "project_update",
-      "title": "28 weeks to 8–10 weeks",
-      "summary": "Electrical gear lead time improved from by changing suppliers; the $20,000 rush fee was deferred to contingency review (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
+      "title": "Union Collective:",
+      "summary": "Permit submission target is late July, with site earthwork goal in September to avoid winter-condition impacts. `S54` Steel budgets are moving: R.A.D. Fabrication lists structural steel/decking install at $950,109, while prior G&H Welding budget was $820,000 and multiple steel bidders were asked to re-review updated drawings. `S287` `S42` `S41`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -58,14 +58,17 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Electrical gear lead time improved from **28 weeks to 8–10 weeks** by changing suppliers; the **$20,000 rush fee** was deferred to contingency review (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:28-weeks-to-8-10-weeks:5741626465",
+      "excerpt": "- **Union Collective:** Permit submission target is late July, with site earthwork goal in September to avoid winter-condition impacts. `S54` Steel budgets are moving: R.A.D. Fabrication lists structural steel/decking install at **$950,109**, while prior G&H Welding budget was **$820,000** and multiple steel bidders were asked to re-review updated drawings. `S287` `S42` `S41`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:union-collective:32d0e95913",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "01KWYW9F66ADP5JQW8FKV9RTS1"
+          "01KWENX1J352C1R8E3VPVZ69A4",
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA=",
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH2yhfBAAA=",
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH2yhfAAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -79,469 +82,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 67,
-      "signal_type": "project_update",
-      "title": "State permit approval is still pending, but the team is keeping work moving in parallel to avoid idle time (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "summary": "State permit approval is still pending, but the team is keeping work moving in parallel to avoid idle time (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- State permit approval is still pending, but the team is keeping work moving in parallel to avoid idle time (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:state-permit-approval-is-still-pending-but-the-team-is-keeping-work-moving-in-parallel-to-avoid-idle-time-01kwyw9f66adp5:e41107f059",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWYW9F66ADP5JQW8FKV9RTS1"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 67,
-      "signal_type": "project_update",
-      "title": "$2,500 replacement",
-      "summary": "A roof hatch leak was found; authorized, with a rotation fix and possible railing addition (`01KWYW9F66ADP5JQW8FKV9RTS1`). ### Union Collective",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- A roof hatch leak was found; **$2,500 replacement** authorized, with a rotation fix and possible railing addition (`01KWYW9F66ADP5JQW8FKV9RTS1`).\n### Union Collective",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:2-500-replacement:3e9d392cd1",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWYW9F66ADP5JQW8FKV9RTS1"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "revise pricing",
-      "summary": "Design/budget package is still in motion; updated drawings were sent out and bidders were told to (`outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Design/budget package is still in motion; updated drawings were sent out and bidders were told to **revise pricing** (`outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:revise-pricing:764d9a59f4",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "metal stud framing, drywall, acoustical ceilings, EIFS",
-      "summary": "Valcom revised budget pricing for ; Fields Welding was asked to rework structural/misc steel pricing (`outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Valcom revised budget pricing for **metal stud framing, drywall, acoustical ceilings, EIFS**; Fields Welding was asked to rework structural/misc steel pricing (`outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:metal-stud-framing-drywall-acoustical-ceilings-eifs:4574e8f568",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "teamsdm_cd0dcb2f4f189d3c_2026-07-08",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 60,
-      "signal_type": "project_update",
-      "title": "permit submission on the 27th",
-      "summary": "Team-level direction from finance: , full release last week of August/first week of September, and an in-person city caucus meeting on July 20 (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Team-level direction from finance: **permit submission on the 27th**, **full release last week of August/first week of September**, and an in-person city caucus meeting on **July 20** (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:permit-submission-on-the-27th:1fa4f4398c",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "teamsdm_cd0dcb2f4f189d3c_2026-07-08",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 60,
-      "signal_type": "project_update",
-      "title": "45 kW only",
-      "summary": "Solar decision is narrowed to ; that should prevent further budget drift (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`). ### Port Collective",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Solar decision is narrowed to **45 kW only**; that should prevent further budget drift (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).\n### Port Collective",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:45-kw-only:138d8c3478",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 34,
-      "signal_type": "project_update",
-      "title": "3.5 acres at $5,075,000",
-      "summary": "Land deal is active: , plus $2.75M infrastructure and $1.9M seller financing; total hotel budget discussed at $60M (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Land deal is active: **3.5 acres at $5,075,000**, plus **$2.75M infrastructure** and **$1.9M seller financing**; total hotel budget discussed at **$60M** (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:3-5-acres-at-5-075-000:d913829a7a",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 34,
-      "signal_type": "project_update",
-      "title": "$200k design cost already committed",
-      "summary": "; pausing now saves only about $30k and delays restart 5–6 weeks (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **$200k design cost already committed**; pausing now saves only about **$30k** and delays restart **5–6 weeks** (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:200k-design-cost-already-committed:5f0ae0e21a",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 34,
-      "signal_type": "project_update",
-      "title": "Appraisal/financing is still pending; a bank call is planned to clear closure timing (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "summary": "Appraisal/financing is still pending; a bank call is planned to clear closure timing (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Appraisal/financing is still pending; a bank call is planned to clear closure timing (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:appraisal-financing-is-still-pending-a-bank-call-is-planned-to-clear-closure-timing-01kwwc06pdh1fcvwp28cr08sxt:27f7a19ab1",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 34,
-      "signal_type": "project_update",
-      "title": "July 28 city meeting remains a key external milestone (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "summary": "### Uniqlo Phillipsburg NJ",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- July 28 city meeting remains a key external milestone (`01KWWC06PDH1FCVWP28CR08SXT`).\n### Uniqlo Phillipsburg NJ",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:july-28-city-meeting-remains-a-key-external-milestone-01kwwc06pdh1fcvwp28cr08sxt:c2a217dd8e",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "source_set_single_project",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 834,
-      "signal_type": "project_update",
-      "title": "Material $10,530",
-      "summary": "FA panel scope is still unresolved at leadership level, but a cost breakdown is now in hand: , Labor/Install & Programming $18,603, Design/Engineering/Permits $5,967, Total $35,100 (`outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- FA panel scope is still unresolved at leadership level, but a cost breakdown is now in hand: **Material $10,530**, **Labor/Install & Programming $18,603**, **Design/Engineering/Permits $5,967**, **Total $35,100** (`outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:material-10-530:cfbb30cf17",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADk2MTgx...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "Option B",
-      "summary": "Sequence must avoid disrupting Skypod operations; that means and one extra day after installation to disconnect/reconnect the system (`outlook_AAMkADk2MTgx...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Sequence must avoid disrupting Skypod operations; that means **Option B** and one extra day after installation to disconnect/reconnect the system (`outlook_AAMkADk2MTgx...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:option-b:97a94220a9",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADk2MTgx..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...",
+      "source_document_id": "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKcj8AAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 754,
       "signal_type": "project_update",
-      "title": "Landlord is asking for status; leadership approval is still pending on the breakdown (`outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...`).",
-      "summary": "### Goodwill Allisonville Rd IN",
+      "title": "Goodwill Allisonville Rd IN:",
+      "summary": "Sign permits are approved and SignCraft is scheduled for July 20–22 install, supporting first-week-August turnover. `S20` Access panel/truss concern appears resolved because the canopy ceiling is flat and framing should be below trusses. `S14` HVAC closeout package is requested by July 24 ahead of substantial completion August 7. `S265`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -552,20 +99,22 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Landlord is asking for status; leadership approval is still pending on the breakdown (`outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT...`).\n### Goodwill Allisonville Rd IN",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:landlord-is-asking-for-status-leadership-approval-is-still-pending-on-the-breakdown-outlook-aamkadawnzg3zta5ltjmmwetndcz:4f339eecbf",
+      "excerpt": "- **Goodwill Allisonville Rd IN:** Sign permits are approved and SignCraft is scheduled for **July 20–22** install, supporting first-week-August turnover. `S20` Access panel/truss concern appears resolved because the canopy ceiling is flat and framing should be below trusses. `S14` HVAC closeout package is requested by **July 24** ahead of substantial completion **August 7**. `S265`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:goodwill-allisonville-rd-in:27de8c4f49",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WT..."
+          "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKcj8AAA=",
+          "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckGAAA=",
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -573,88 +122,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "2' x 2' access panels",
-      "summary": "SignCraft confirmed are sufficient; permits are approved; sign install is scheduled July 20–22 (`outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI...`, `outlook_AAMkAGU5ZWY5OGRh...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- SignCraft confirmed **2' x 2' access panels** are sufficient; permits are approved; sign install is scheduled **July 20–22** (`outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI...`, `outlook_AAMkAGU5ZWY5OGRh...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:2-x-2-access-panels:d4c76da175",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI...",
-          "outlook_AAMkAGU5ZWY5OGRh..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "daily_packet:99b58337-3067-427d-bd66-9e11ab594664",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "first week of August",
-      "summary": "Turnover to Goodwill is planned for the .",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Turnover to Goodwill is planned for the **first week of August**.",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:first-week-of-august:a48c8de8e7",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkAGU5ZWY5OGRh...",
+      "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchxAAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 877,
       "signal_type": "project_update",
-      "title": "canopy completion, especially the donation letters",
-      "summary": "Remaining dependency: (`outlook_AAMkAGU5ZWY5OGRh...`). ### Goodwill Brookville Road",
+      "title": "Goodwill Brookville Road:",
+      "summary": "Tony Courtney and Douglas Franklin are now the forward project contacts. `S118` Merritt records are incomplete because Lisa Turner lacks JobPlanner access. `S118` ATMI Indy is awaiting return/update of a precast wall panel design change order; no cost was visible. `S131`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -665,20 +139,21 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Remaining dependency: **canopy completion, especially the donation letters** (`outlook_AAMkAGU5ZWY5OGRh...`).\n### Goodwill Brookville Road",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:canopy-completion-especially-the-donation-letters:d93777e31b",
+      "excerpt": "- **Goodwill Brookville Road:** Tony Courtney and Douglas Franklin are now the forward project contacts. `S118` Merritt records are incomplete because Lisa Turner lacks JobPlanner access. `S118` ATMI Indy is awaiting return/update of a precast wall panel design change order; no cost was visible. `S131`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:goodwill-brookville-road:0e74e8f4c4",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkAGU5ZWY5OGRh..."
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchxAAA=",
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchgAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -686,89 +161,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADI0ZjEzNjMw...AALgMchlAAA=",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "Subcontract agreement is still not fully executed; Brian needs the signed subcontract, W-9, and current COI before submittals/vendor pricing lock (`outlook_AAMkADI0ZjEzNjMw...AALgMchlAAA=`).",
-      "summary": "Subcontract agreement is still not fully executed; Brian needs the signed subcontract, W-9, and current COI before submittals/vendor pricing lock (`outlook_AAMkADI0ZjEzNjMw...AALgMchlAAA=`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Subcontract agreement is still not fully executed; Brian needs the signed subcontract, W-9, and current COI before submittals/vendor pricing lock (`outlook_AAMkADI0ZjEzNjMw...AALgMchlAAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:subcontract-agreement-is-still-not-fully-executed-brian-needs-the-signed-subcontract-w-9-and-current-coi-before-submitta:c13ebdee7b",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADI0ZjEzNjMw...AALgMchlAAA="
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADI0ZjEzNjMw...AALgMchfAAA=",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "intermediate shear wall",
-      "summary": "There is also an outstanding change order for the structural revision (`outlook_AAMkADI0ZjEzNjMw...AALgMchfAAA=`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- There is also an outstanding change order for the **intermediate shear wall** structural revision (`outlook_AAMkADI0ZjEzNjMw...AALgMchfAAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:intermediate-shear-wall:bcf5eb9a9a",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADI0ZjEzNjMw...AALgMchfAAA="
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADI0ZjEzNjMw...AALgMchyAAA=",
+      "source_document_id": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7Jr5KAAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 1067,
       "signal_type": "project_update",
-      "title": "Lisa Turner only has partial records access and will forward the rest later (`outlook_AAMkADI0ZjEzNjMw...AALgMchyAAA=`).",
-      "summary": "### Playmakers",
+      "title": "Playmakers:",
+      "summary": "Slate gray flooring was approved. `S8` Largo permit is in final reviewer queue, roofing permit remains in progress, and Notice of Commencement is required before work starts. `S263` Long-lead spend documented at $15,263.95. `S305`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -779,20 +178,22 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Lisa Turner only has partial records access and will forward the rest later (`outlook_AAMkADI0ZjEzNjMw...AALgMchyAAA=`).\n### Playmakers",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:lisa-turner-only-has-partial-records-access-and-will-forward-the-rest-later-outlook-aamkadi0zjeznjmw-aalgmchyaaa:4d0d7e4f5c",
+      "excerpt": "- **Playmakers:** Slate gray flooring was approved. `S8` Largo permit is in final reviewer queue, roofing permit remains in progress, and Notice of Commencement is required before work starts. `S263` Long-lead spend documented at **$15,263.95**. `S305`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:playmakers:2cf7dbe376",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADI0ZjEzNjMw...AALgMchyAAA="
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7Jr5KAAA=",
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA=",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sYAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -800,91 +201,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkAGU5ZWY5OGRh...AAF7Jr5KAAA=",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "Slate gray",
-      "summary": "Dale approved flooring color: / “Yes” on flooring (`outlook_AAMkAGU5ZWY5OGRh...AAF7Jr5KAAA=`, `outlook_AAMkAGMxYzli...AAGMHK45AAA=`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Dale approved flooring color: **Slate gray** / “Yes” on flooring (`outlook_AAMkAGU5ZWY5OGRh...AAF7Jr5KAAA=`, `outlook_AAMkAGMxYzli...AAGMHK45AAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:slate-gray:4cfc3d38de",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkAGU5ZWY5OGRh...AAF7Jr5KAAA=",
-          "outlook_AAMkAGMxYzli...AAGMHK45AAA="
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkADAwNzg3...",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "project_update",
-      "title": "Lowe’s $8,825.98",
-      "summary": "Long-lead materials were bought on Jesse’s card: , Home Depot $503.97, and FRP Specialties $5,934.00 (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADI0ZjEz...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
-      "current_status": "open",
-      "confidence_score": 0.86,
-      "confidence": "high",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Long-lead materials were bought on Jesse’s card: **Lowe’s $8,825.98**, **Home Depot $503.97**, and **FRP Specialties $5,934.00** (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADI0ZjEz...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:lowe-s-8-825-98:2b7240e6e8",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADAwNzg3...",
-          "outlook_AAMkADI0ZjEz..."
-        ],
-        "section": "Project Intelligence Updates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Project Intelligence Updates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "outlook_AAMkAGMxYzli...AAGMHK45AAA=",
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sIAAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 31,
       "signal_type": "project_update",
-      "title": "LED lights in the kitchen",
-      "summary": "Ceiling tile is approved; Dale asked to include (`outlook_AAMkAGMxYzli...AAGMHK45AAA=`). ### Uniqlo Phillipsburg NJ / McLane Jazz - UT / Pensacola fire sprinkler",
+      "title": "Uniqlo Phillipsburg NJ:",
+      "summary": "West WH estimating must be itemized by scope for internal budget alignment by July 17. `S236` FA panel cost breakdown is approval-sensitive and punch-list photo closeout remains outstanding. `S307`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -895,20 +218,21 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Ceiling tile is approved; Dale asked to include **LED lights in the kitchen** (`outlook_AAMkAGMxYzli...AAGMHK45AAA=`).\n### Uniqlo Phillipsburg NJ / McLane Jazz - UT / Pensacola fire sprinkler",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:led-lights-in-the-kitchen:d0d79800ee",
+      "excerpt": "- **Uniqlo Phillipsburg NJ:** West WH estimating must be itemized by scope for internal budget alignment by **July 17**. `S236` FA panel cost breakdown is approval-sensitive and punch-list photo closeout remains outstanding. `S307`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:uniqlo-phillipsburg-nj:bc10bd6667",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkAGMxYzli...AAGMHK45AAA="
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sIAAA=",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -916,13 +240,89 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADk2MTgx...AAEowm08AAA=",
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1rvAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 876,
+      "signal_type": "project_update",
+      "title": "Exol Morrisville:",
+      "summary": "Phase 1 is green with mobilization started, fiber underway, and chargers being assembled. `S65` Phase 2 construction start is targeted around July 22, dependent on permit approval or starting at risk. `S65` Structural review and Symbotic electrical coordination remain blockers. `S65`",
+      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
+      "current_status": "open",
+      "confidence_score": 0.86,
+      "confidence": "high",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Exol Morrisville:** Phase 1 is green with mobilization started, fiber underway, and chargers being assembled. `S65` Phase 2 construction start is targeted around **July 22**, dependent on permit approval or starting at risk. `S65` Structural review and Symbotic electrical coordination remain blockers. `S65`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:exol-morrisville:d60c8d3456",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1rvAAA="
+        ],
+        "section": "Project Intelligence Updates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Project Intelligence Updates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_conversation_f14e2f1e121b2e93575daaf62621fbcc",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 761,
+      "signal_type": "project_update",
+      "title": "Ulta Beauty Fresno:",
+      "summary": "BAS/HVAC shutdown validation is blocked because HCI does not have marked-up RTU/fan pretest documentation and redirected Alleato to the facility. `S74`",
+      "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
+      "current_status": "open",
+      "confidence_score": 0.86,
+      "confidence": "high",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Ulta Beauty Fresno:** BAS/HVAC shutdown validation is blocked because HCI does not have marked-up RTU/fan pretest documentation and redirected Alleato to the facility. `S74`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:ulta-beauty-fresno:727def79c0",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_conversation_f14e2f1e121b2e93575daaf62621fbcc"
+        ],
+        "section": "Project Intelligence Updates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Project Intelligence Updates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 879,
       "signal_type": "project_update",
       "title": "McLane Jazz",
-      "summary": "- UT: Exotec forced a constructability change; vertical sprinkler support must use the rear upright, not the front upright, and Alleato will update the proposal drawing accordingly (`outlook_AAMkADk2MTgx...AAEowm08AAA=`).",
+      "summary": "- UT: Alleato accepted Exotec’s bracket-based sprinkler support approach using rear uprights only. `S259` `S261` `S262` Front uprights are rejected due to robot-arm access and 9 mm hole / 1/2-inch bolt incompatibility. `S259` `S261` `S262`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -933,20 +333,22 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **McLane Jazz - UT:** Exotec forced a constructability change; vertical sprinkler support must use the **rear upright**, not the front upright, and Alleato will update the proposal drawing accordingly (`outlook_AAMkADk2MTgx...AAEowm08AAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:mclane-jazz:aaa5c16776",
+      "excerpt": "- **McLane Jazz - UT:** Alleato accepted Exotec’s bracket-based sprinkler support approach using rear uprights only. `S259` `S261` `S262` Front uprights are rejected due to robot-arm access and 9 mm hole / 1/2-inch bolt incompatibility. `S259` `S261` `S262`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:mclane-jazz:c1277420e3",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADk2MTgx...AAEowm08AAA="
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA=",
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm08AAA=",
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm09AAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -954,13 +356,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADk2MTgx...AAEowm1GAAA=",
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sHAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": null,
+      "project_id": 1008,
       "signal_type": "project_update",
-      "title": "Pensacola fire sprinkler RFQ:",
-      "summary": "Core & Main quoted $30,690.71 total for fab + loose materials; painting still needs to be added, and install was expected to start 7/27 with shipment around 7/20 (`outlook_AAMkADk2MTgx...AAEowm1GAAA=`).",
+      "title": "Champaign Ace Addition:",
+      "summary": "Permit was submitted to City of Champaign under application BS-26-2149. `S237` Separate state design-firm registration approval is still required before building permit issuance, with timing possibly “a few weeks.” `S302`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -971,20 +373,21 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Pensacola fire sprinkler RFQ:** Core & Main quoted **$30,690.71 total** for fab + loose materials; painting still needs to be added, and install was expected to start **7/27** with shipment around **7/20** (`outlook_AAMkADk2MTgx...AAEowm1GAAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:pensacola-fire-sprinkler-rfq:6dfced7073",
+      "excerpt": "- **Champaign Ace Addition:** Permit was submitted to City of Champaign under application **BS-26-2149**. `S237` Separate state design-firm registration approval is still required before building permit issuance, with timing possibly “a few weeks.” `S302`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:champaign-ace-addition:ca92f217d3",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADk2MTgx...AAEowm1GAAA="
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sHAAA=",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -992,13 +395,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADk2MTgx...AAEowm1D/AAA=",
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": null,
+      "project_id": 43,
       "signal_type": "project_update",
-      "title": "Quote work is still blocked in places by account details and revised quantities/clarifications (`outlook_AAMkADk2MTgx...AAEowm1D/AAA=`).",
-      "summary": "Quote work is still blocked in places by account details and revised quantities/clarifications (`outlook_AAMkADk2MTgx...AAEowm1D/AAA=`).",
+      "title": "Westfield Collective:",
+      "summary": "TIF, CID, and IRB/sales-tax exemption applications are active; owner/developer inputs are needed for sources/uses, pro forma, capital stack, phasing, and construction-cost support. `S301`",
       "why_it_matters": "Derived from Daily Deep Read section: Project Intelligence Updates",
       "current_status": "open",
       "confidence_score": 0.86,
@@ -1009,20 +412,20 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Quote work is still blocked in places by account details and revised quantities/clarifications (`outlook_AAMkADk2MTgx...AAEowm1D/AAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:project_update:quote-work-is-still-blocked-in-places-by-account-details-and-revised-quantities-clarifications-outlook-aamkadk2mtgx-aaeo:863f5df704",
+      "excerpt": "- **Westfield Collective:** TIF, CID, and IRB/sales-tax exemption applications are active; owner/developer inputs are needed for sources/uses, pro forma, capital stack, phasing, and construction-cost support. `S301`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:project_update:westfield-collective:5973cd14a6",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADk2MTgx...AAEowm1D/AAA="
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA="
         ],
         "section": "Project Intelligence Updates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Project Intelligence Updates"
         ]
@@ -1035,8 +438,8 @@
       "target_id": null,
       "project_id": 60,
       "signal_type": "risk",
-      "title": "Union Collective cash burn",
-      "summary": ": general conditions labor is being burned while the solar/design decision and permit cadence are still moving (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
+      "title": "Union Collective schedule/GC burn:",
+      "summary": "Brandon said Union must move because it is burning through general-condition labor; July 27 permit path could push dirt work to mid-September. `S247`",
       "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1047,11 +450,11 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Union Collective cash burn**: general conditions labor is being burned while the solar/design decision and permit cadence are still moving (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:risk:union-collective-cash-burn:26b8b0795b",
+      "excerpt": "- **Union Collective schedule/GC burn:** Brandon said Union must move because it is burning through general-condition labor; July 27 permit path could push dirt work to mid-September. `S247`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:union-collective-schedule-gc-burn:b35f4b640c",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
           "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
@@ -1068,13 +471,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADAwNzg3...",
+      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 31,
+      "project_id": 67,
       "signal_type": "risk",
-      "title": "Uniqlo Phillipsburg NJ approval delay",
-      "summary": ": FA panel cost needs leadership approval; until then, landlord pressure and schedule sequencing remain open (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADk2MTgx...`).",
+      "title": "Vermillion Rise Warehouse permit:",
+      "summary": "State approval is still pending; county cannot proceed until state clears. `S53`",
       "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1085,53 +488,14 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Uniqlo Phillipsburg NJ approval delay**: FA panel cost needs leadership approval; until then, landlord pressure and schedule sequencing remain open (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADk2MTgx...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:risk:uniqlo-phillipsburg-nj-approval-delay:03dbf92125",
+      "excerpt": "- **Vermillion Rise Warehouse permit:** State approval is still pending; county cannot proceed until state clears. `S53`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:vermillion-rise-warehouse-permit:eec8ba3fb9",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADAwNzg3...",
-          "outlook_AAMkADk2MTgx..."
-        ],
-        "section": "Risk Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
-        "duplicate_sections_collapsed": [
-          "Risk Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 34,
-      "signal_type": "risk",
-      "title": "Port financing/appraisal timing",
-      "summary": ": appraisal is pending and closure timing is not fixed (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
-      "current_status": "open",
-      "confidence_score": 0.8,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Port financing/appraisal timing**: appraisal is pending and closure timing is not fixed (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:risk:port-financing-appraisal-timing:432603ceb7",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
+          "01KWYW9F66ADP5JQW8FKV9RTS1"
         ],
         "section": "Risk Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1145,13 +509,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADI0ZjEz...AALgMchlAAA=",
+      "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 877,
+      "project_id": 31,
       "signal_type": "risk",
-      "title": "Goodwill Brookville Road procurement risk",
-      "summary": ": submittals and vendor pricing are blocked until the subcontract is fully executed (`outlook_AAMkADI0ZjEz...AALgMchlAAA=`).",
+      "title": "Uniqlo Phillipsburg NJ approval/schedule:",
+      "summary": "FA panel approval timing is live risk because TPG asked when UQ response is needed before cost or schedule impacts occur. `S260`",
       "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1162,14 +526,204 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Goodwill Brookville Road procurement risk**: submittals and vendor pricing are blocked until the subcontract is fully executed (`outlook_AAMkADI0ZjEz...AALgMchlAAA=`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:risk:goodwill-brookville-road-procurement-risk:7a342e1a6c",
+      "excerpt": "- **Uniqlo Phillipsburg NJ approval/schedule:** FA panel approval timing is live risk because TPG asked when UQ response is needed before cost or schedule impacts occur. `S260`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:uniqlo-phillipsburg-nj-approval-schedule:c0381b3b48",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADI0ZjEz...AALgMchlAAA="
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA="
+        ],
+        "section": "Risk Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Risk Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 877,
+      "signal_type": "risk",
+      "title": "Goodwill Brookville Road procurement:",
+      "summary": "Koontz-Wagner cannot proceed with submittals/vendor pricing without executed contract. `S126`",
+      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Goodwill Brookville Road procurement:** Koontz-Wagner cannot proceed with submittals/vendor pricing without executed contract. `S126`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:goodwill-brookville-road-procurement:099ff5d879",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA="
+        ],
+        "section": "Risk Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Risk Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 178,
+      "signal_type": "risk",
+      "title": "Superior Beverage Exotec material quality:",
+      "summary": "Mack flagged prior leakage issues from Anvil-type grooved couplings and asked how leaking couplings would be fixed/replaced. `S79`",
+      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Superior Beverage Exotec material quality:** Mack flagged prior leakage issues from Anvil-type grooved couplings and asked how leaking couplings would be fixed/replaced. `S79`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:superior-beverage-exotec-material-quality:43d6a2363a",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA="
+        ],
+        "section": "Risk Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Risk Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqcAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 761,
+      "signal_type": "risk",
+      "title": "Ulta Beauty Fresno scope validation:",
+      "summary": "Missing verified pretest documentation prevents BAS/HVAC shutdown scope validation. `S68`",
+      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Ulta Beauty Fresno scope validation:** Missing verified pretest documentation prevents BAS/HVAC shutdown scope validation. `S68`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:ulta-beauty-fresno-scope-validation:6480b0f178",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqcAAA="
+        ],
+        "section": "Risk Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Risk Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 1067,
+      "signal_type": "risk",
+      "title": "Playmakers start condition:",
+      "summary": "Notice of Commencement is required before work can start. `S263`",
+      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Playmakers start condition:** Notice of Commencement is required before work can start. `S263`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:playmakers-start-condition:cd09ce0936",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA="
+        ],
+        "section": "Risk Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Risk Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 1008,
+      "signal_type": "risk",
+      "title": "Champaign Ace Addition permitting:",
+      "summary": "City can review but will not issue until state design-firm approvals are in place. `S302`",
+      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Champaign Ace Addition permitting:** City can review but will not issue until state design-firm approvals are in place. `S302`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:risk:champaign-ace-addition-permitting:9dab85a62e",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA="
         ],
         "section": "Risk Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1183,52 +737,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADk2MTgx...",
+      "source_document_id": "teamsdm_cd0dcb2f4f189d3c_2026-07-08",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": null,
-      "signal_type": "risk",
-      "title": "Travelers / vendor admin risk on approvals",
-      "summary": ": several vendor threads show “need this today / by noon / as soon as possible” pressure, which can turn into schedule slips if account details or POs lag (`outlook_AAMkADk2MTgx...`, `outlook_AAMkAGMxYzli...`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Risk Candidates",
-      "current_status": "open",
-      "confidence_score": 0.8,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- **Travelers / vendor admin risk on approvals**: several vendor threads show “need this today / by noon / as soon as possible” pressure, which can turn into schedule slips if account details or POs lag (`outlook_AAMkADk2MTgx...`, `outlook_AAMkAGMxYzli...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:risk:travelers-vendor-admin-risk-on-approvals:ce950405e8",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "outlook_AAMkADk2MTgx...",
-          "outlook_AAMkAGMxYzli..."
-        ],
-        "section": "Risk Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Risk Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 67,
+      "project_id": 60,
       "signal_type": "decision",
-      "title": "Vermillion Rise",
-      "summary": "Approve road/parking resurfacing add-on at roughly $11k (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
+      "title": "Union Collective:",
+      "summary": "Confirm final solar and battery storage position; authorize split/early civil or foundation submission. `S247`",
       "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1239,11 +754,87 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Approve **Vermillion Rise** road/parking resurfacing add-on at roughly **$11k** (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:decision:vermillion-rise:d83e15234e",
+      "excerpt": "- **Union Collective:** Confirm final solar and battery storage position; authorize split/early civil or foundation submission. `S247`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:union-collective:d1e0cd350c",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
+        ],
+        "section": "Decision Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Decision Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 31,
+      "signal_type": "decision",
+      "title": "Uniqlo Phillipsburg NJ:",
+      "summary": "Decide whether one-day Skypod transfer is acceptable or require option-B/no-disruption plan before approval. `S260`",
+      "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Uniqlo Phillipsburg NJ:** Decide whether one-day Skypod transfer is acceptable or require option-B/no-disruption plan before approval. `S260`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:uniqlo-phillipsburg-nj:139ed58c81",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA="
+        ],
+        "section": "Decision Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Decision Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 67,
+      "signal_type": "decision",
+      "title": "Vermillion Rise Warehouse:",
+      "summary": "Approve/reject $11,000 paving uniformity/durability scope and confirm how to carry deferred $20,000 electrical rush exposure. `S53`",
+      "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Vermillion Rise Warehouse:** Approve/reject $11,000 paving uniformity/durability scope and confirm how to carry deferred $20,000 electrical rush exposure. `S53`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:vermillion-rise-warehouse:e5d1846b69",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
           "01KWYW9F66ADP5JQW8FKV9RTS1"
@@ -1260,13 +851,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "teamsdm_cd0dcb2f4f189d3c_2026-07-08",
+      "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 60,
+      "project_id": 877,
       "signal_type": "decision",
-      "title": "Union",
-      "summary": "Confirm stays at 45 kW solar and move to permit/design closeout (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
+      "title": "Goodwill Brookville Road:",
+      "summary": "Decide whether Tony should escalate Koontz-Wagner signature directly to avoid procurement delay. `S126`",
       "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1277,14 +868,14 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Confirm **Union** stays at **45 kW solar** and move to permit/design closeout (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:decision:union:118b82d2a8",
+      "excerpt": "- **Goodwill Brookville Road:** Decide whether Tony should escalate Koontz-Wagner signature directly to avoid procurement delay. `S126`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:goodwill-brookville-road:dea849c737",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA="
         ],
         "section": "Decision Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1298,13 +889,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADAwNzg3...",
+      "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 31,
+      "project_id": 178,
       "signal_type": "decision",
-      "title": "Uniqlo FA panel",
-      "summary": "Approve at $35,100 and the Option B no-disruption sequence (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADk2MTgx...`).",
+      "title": "Superior Beverage Exotec:",
+      "summary": "Approve LOI/contract path and progress billing structure for Mack Plumbing. `S79`",
       "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1315,21 +906,20 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Approve **Uniqlo FA panel** at **$35,100** and the Option B no-disruption sequence (`outlook_AAMkADAwNzg3...`, `outlook_AAMkADk2MTgx...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:decision:uniqlo-fa-panel:2f3e598c25",
+      "excerpt": "- **Superior Beverage Exotec:** Approve LOI/contract path and progress billing structure for Mack Plumbing. `S79`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:superior-beverage-exotec:9fe0ce568f",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADAwNzg3...",
-          "outlook_AAMkADk2MTgx..."
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA="
         ],
         "section": "Decision Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Decision Candidates"
         ]
@@ -1337,13 +927,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "01KWWC06PDH1FCVWP28CR08SXT",
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1rvAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 34,
+      "project_id": 876,
       "signal_type": "decision",
-      "title": "Port",
-      "summary": "Decide whether to continue the acquisition/development path given sunk design costs and restart penalty (`01KWWC06PDH1FCVWP28CR08SXT`).",
+      "title": "Exol Morrisville:",
+      "summary": "Decide whether Phase 2 starts at risk around July 22 if permit approval is not yet in hand. `S65`",
       "why_it_matters": "Derived from Daily Deep Read section: Decision Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1354,14 +944,14 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Decide whether to continue the **Port** acquisition/development path given sunk design costs and restart penalty (`01KWWC06PDH1FCVWP28CR08SXT`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:decision:port:f17e9e155d",
+      "excerpt": "- **Exol Morrisville:** Decide whether Phase 2 starts at risk around July 22 if permit approval is not yet in hand. `S65`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:decision:exol-morrisville:eba7efce08",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "01KWWC06PDH1FCVWP28CR08SXT"
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1rvAAA="
         ],
         "section": "Decision Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1380,8 +970,8 @@
       "target_id": null,
       "project_id": 60,
       "signal_type": "task",
-      "title": "Union",
-      "summary": "Get the city caucus meeting on the calendar for July 20 with Brandon included (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
+      "title": "Union Collective:",
+      "summary": "Andrew to push Viox for July 14 70% progress set and copy Brandon. `S247`",
       "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
       "current_status": "open",
       "confidence_score": 0.74,
@@ -1392,11 +982,11 @@
       "next_action": "Review and either assign as a task or reject.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Get the **Union** city caucus meeting on the calendar for **July 20** with Brandon included (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:task:union:a0cc4b4421",
+      "excerpt": "- **Union Collective:** Andrew to push Viox for July 14 70% progress set and copy Brandon. `S247`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:union-collective:184e557171",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
           "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
@@ -1413,13 +1003,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADAwNzg3...",
+      "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 31,
       "signal_type": "task",
-      "title": "Uniqlo FA panel cost breakdown",
-      "summary": "Send the to leadership/landlord and request approval (`outlook_AAMkADAwNzg3...`).",
+      "title": "Uniqlo Phillipsburg NJ:",
+      "summary": "Send FA panel cost breakdown, follow directly with Yusuke for formal approval, and issue punch-list closeout report with photos. `S260` `S307`",
       "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
       "current_status": "open",
       "confidence_score": 0.74,
@@ -1430,20 +1020,21 @@
       "next_action": "Review and either assign as a task or reject.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Send the **Uniqlo FA panel cost breakdown** to leadership/landlord and request approval (`outlook_AAMkADAwNzg3...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:task:uniqlo-fa-panel-cost-breakdown:1301149eb1",
+      "excerpt": "- **Uniqlo Phillipsburg NJ:** Send FA panel cost breakdown, follow directly with Yusuke for formal approval, and issue punch-list closeout report with photos. `S260` `S307`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:uniqlo-phillipsburg-nj:5e26b8afef",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADAwNzg3..."
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA="
         ],
         "section": "Task Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
         "candidate_policy": "review_gated_not_auto_promoted",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
+        "project_assignment_method": "source_set_single_project",
         "duplicate_sections_collapsed": [
           "Task Candidates"
         ]
@@ -1451,13 +1042,51 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADI0ZjEz...",
+      "source_document_id": "outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JCvAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 754,
+      "signal_type": "task",
+      "title": "Goodwill Allisonville Rd IN:",
+      "summary": "Confirm canopy completion date to SignCraft for donation letters. `S25`",
+      "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
+      "current_status": "open",
+      "confidence_score": 0.74,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review and either assign as a task or reject.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Goodwill Allisonville Rd IN:** Confirm canopy completion date to SignCraft for donation letters. `S25`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:goodwill-allisonville-rd-in:f921b1864c",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JCvAAA="
+        ],
+        "section": "Task Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Task Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA=",
       "source_chunk_id": null,
       "target_id": null,
       "project_id": 877,
       "signal_type": "task",
-      "title": "Goodwill Brookville Road",
-      "summary": "Review and respond to subcontract/change-order items so submittals can proceed (`outlook_AAMkADI0ZjEz...`).",
+      "title": "Goodwill Brookville Road:",
+      "summary": "Collect Koontz-Wagner signed subcontract, W-9, and COI. `S126`",
       "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
       "current_status": "open",
       "confidence_score": 0.74,
@@ -1468,52 +1097,14 @@
       "next_action": "Review and either assign as a task or reject.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Review and respond to **Goodwill Brookville Road** subcontract/change-order items so submittals can proceed (`outlook_AAMkADI0ZjEz...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:task:goodwill-brookville-road:c35adec476",
+      "excerpt": "- **Goodwill Brookville Road:** Collect Koontz-Wagner signed subcontract, W-9, and COI. `S126`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:goodwill-brookville-road:6da3041148",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADI0ZjEz..."
-        ],
-        "section": "Task Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
-        "duplicate_sections_collapsed": [
-          "Task Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWYW9F66ADP5JQW8FKV9RTS1",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 67,
-      "signal_type": "task",
-      "title": "Vermillion Rise",
-      "summary": "Continue collecting and posting board materials/photos/videos for the meeting (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
-      "current_status": "open",
-      "confidence_score": 0.74,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review and either assign as a task or reject.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Continue collecting and posting **Vermillion Rise** board materials/photos/videos for the meeting (`01KWYW9F66ADP5JQW8FKV9RTS1`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:task:vermillion-rise:74e997c386",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWYW9F66ADP5JQW8FKV9RTS1"
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA="
         ],
         "section": "Task Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1527,13 +1118,13 @@
       "compiler_version": "daily_deep_read_consumers_v1"
     },
     {
-      "source_document_id": "outlook_AAMkADllNTZk...",
+      "source_document_id": "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA=",
       "source_chunk_id": null,
       "target_id": null,
-      "project_id": 1009,
+      "project_id": 1067,
       "signal_type": "task",
-      "title": "Union Collective",
-      "summary": "Push updated budget re-pricing from bidders and reconcile it in BuildingConnected (`outlook_AAMkADllNTZk...`).",
+      "title": "Playmakers:",
+      "summary": "Get Dale to complete/return Notice of Commencement. `S263`",
       "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
       "current_status": "open",
       "confidence_score": 0.74,
@@ -1544,14 +1135,128 @@
       "next_action": "Review and either assign as a task or reject.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Push updated **Union Collective** budget re-pricing from bidders and reconcile it in BuildingConnected (`outlook_AAMkADllNTZk...`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:task:union-collective:df458d85c0",
+      "excerpt": "- **Playmakers:** Get Dale to complete/return Notice of Commencement. `S263`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:playmakers:a9de4b02d9",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
-          "outlook_AAMkADllNTZk..."
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA="
+        ],
+        "section": "Task Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Task Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_conversation_f14e2f1e121b2e93575daaf62621fbcc",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 761,
+      "signal_type": "task",
+      "title": "Ulta Beauty Fresno:",
+      "summary": "Obtain facility RTU/fan pretest list, markup, or verification from Adam/facility team. `S74`",
+      "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
+      "current_status": "open",
+      "confidence_score": 0.74,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review and either assign as a task or reject.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Ulta Beauty Fresno:** Obtain facility RTU/fan pretest list, markup, or verification from Adam/facility team. `S74`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:ulta-beauty-fresno:95847027f1",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_conversation_f14e2f1e121b2e93575daaf62621fbcc"
+        ],
+        "section": "Task Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Task Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 178,
+      "signal_type": "task",
+      "title": "Superior Beverage Exotec:",
+      "summary": "Provide Mack Plumbing contract timing, billing process, COI/license response, and coupling remediation plan. `S79`",
+      "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
+      "current_status": "open",
+      "confidence_score": 0.74,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review and either assign as a task or reject.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Superior Beverage Exotec:** Provide Mack Plumbing contract timing, billing process, COI/license response, and coupling remediation plan. `S79`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:superior-beverage-exotec:abe6e6c6b1",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqSAAA="
+        ],
+        "section": "Task Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Task Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 1008,
+      "signal_type": "task",
+      "title": "Champaign Ace Addition:",
+      "summary": "Track Illinois design-firm registration confirmations for architect, MEP, and structural team. `S302`",
+      "why_it_matters": "Derived from Daily Deep Read section: Task Candidates",
+      "current_status": "open",
+      "confidence_score": 0.74,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review and either assign as a task or reject.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Champaign Ace Addition:** Track Illinois design-firm registration confirmations for architect, MEP, and structural team. `S302`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:task:champaign-ace-addition:440291bab9",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA="
         ],
         "section": "Task Candidates",
         "consumer_compiler_version": "daily_deep_read_consumers_v1",
@@ -1560,121 +1265,6 @@
         "project_assignment_method": "project_name_or_number_match",
         "duplicate_sections_collapsed": [
           "Task Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "daily_packet:99b58337-3067-427d-bd66-9e11ab594664",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": 31,
-      "signal_type": "process_issue",
-      "title": "permit/approval tracker",
-      "summary": "Tighten the for Union, Port, and Uniqlo so decision latency is visible in one place.",
-      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
-      "current_status": "open",
-      "confidence_score": 0.8,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Tighten the **permit/approval tracker** for Union, Port, and Uniqlo so decision latency is visible in one place.",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:process_issue:permit-approval-tracker:2f42260c9d",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [],
-        "section": "Initiative Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "initiative_subtype": "initiative_candidate",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "project_name_or_number_match",
-        "duplicate_sections_collapsed": [
-          "Initiative Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWW9ZY2WQAHC9HQ2QAJWFRJQ",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "process_issue",
-      "title": "Notion",
-      "summary": "Keep using as the source of truth for vendor updates and copy Maria on vendor emails for faster decisions (`01KWW9ZY2WQAHC9HQ2QAJWFRJQ`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
-      "current_status": "open",
-      "confidence_score": 0.8,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Keep using **Notion** as the source of truth for vendor updates and copy Maria on vendor emails for faster decisions (`01KWW9ZY2WQAHC9HQ2QAJWFRJQ`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:process_issue:notion:87e2fde15c",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWW9ZY2WQAHC9HQ2QAJWFRJQ"
-        ],
-        "section": "Initiative Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "initiative_subtype": "initiative_candidate",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Initiative Candidates"
-        ]
-      },
-      "compiler_version": "daily_deep_read_consumers_v1"
-    },
-    {
-      "source_document_id": "01KWW9ZY2WQAHC9HQ2QAJWFRJQ",
-      "source_chunk_id": null,
-      "target_id": null,
-      "project_id": null,
-      "signal_type": "process_issue",
-      "title": "laptop security onboarding",
-      "summary": "Standardize so Windows Security setup is included in new-hire setup and IT owns the process (`01KWW9ZY2WQAHC9HQ2QAJWFRJQ`).",
-      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
-      "current_status": "open",
-      "confidence_score": 0.8,
-      "confidence": "medium",
-      "status": "needs_review",
-      "suggested_owner_person_id": null,
-      "suggested_owner_label": null,
-      "next_action": "Review candidate and decide whether to promote into project intelligence.",
-      "stale_after": null,
-      "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Standardize **laptop security onboarding** so Windows Security setup is included in new-hire setup and IT owns the process (`01KWW9ZY2WQAHC9HQ2QAJWFRJQ`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:process_issue:laptop-security-onboarding:9f1c4aef42",
-      "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
-        "business_date": "2026-07-08",
-        "source_ids": [
-          "01KWW9ZY2WQAHC9HQ2QAJWFRJQ"
-        ],
-        "section": "Initiative Candidates",
-        "consumer_compiler_version": "daily_deep_read_consumers_v1",
-        "candidate_policy": "review_gated_not_auto_promoted",
-        "initiative_subtype": "initiative_candidate",
-        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-        "project_assignment_method": "unassigned_company_wide",
-        "duplicate_sections_collapsed": [
-          "Initiative Candidates"
         ]
       },
       "compiler_version": "daily_deep_read_consumers_v1"
@@ -1685,8 +1275,8 @@
       "target_id": null,
       "project_id": 60,
       "signal_type": "process_issue",
-      "title": "Continue moving company card charges into the required coding workflow; June transactions still need cleanup (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "summary": "Continue moving company card charges into the required coding workflow; June transactions still need cleanup (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
+      "title": "Early-release permitting playbook:",
+      "summary": "Use Union Collective as the template for civil/foundation-first submissions where full drawings lag but dirt/structure can move. `S247`",
       "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
       "current_status": "open",
       "confidence_score": 0.8,
@@ -1697,11 +1287,11 @@
       "next_action": "Review candidate and decide whether to promote into project intelligence.",
       "stale_after": null,
       "source_occurred_at": "2026-07-09T04:00:00.000Z",
-      "excerpt": "- Continue moving company card charges into the required coding workflow; June transactions still need cleanup (`teamsdm_cd0dcb2f4f189d3c_2026-07-08`).",
-      "normalized_signal_key": "daily-deep-read:99b58337-3067-427d-bd66-9e11ab594664:process_issue:continue-moving-company-card-charges-into-the-required-coding-workflow-june-transactions-still-need-cleanup-teamsdm-cd0d:8217204dd0",
+      "excerpt": "- **Early-release permitting playbook:** Use Union Collective as the template for civil/foundation-first submissions where full drawings lag but dirt/structure can move. `S247`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:process_issue:early-release-permitting-playbook:b938091432",
       "extraction_json": {
-        "daily_packet_id": "99b58337-3067-427d-bd66-9e11ab594664",
-        "daily_packet_generated_at": "2026-07-09T09:39:00.618Z",
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
         "business_date": "2026-07-08",
         "source_ids": [
           "teamsdm_cd0dcb2f4f189d3c_2026-07-08"
@@ -1712,6 +1302,130 @@
         "initiative_subtype": "initiative_candidate",
         "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
         "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Initiative Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": null,
+      "signal_type": "process_issue",
+      "title": "Approval-risk dashboard:",
+      "summary": "Track scopes requiring owner/client formal approval before cost/schedule exposure: Uniqlo FA panel, Vermillion paving/rush fee, Union solar/battery, Exol start-at-risk. `S260` `S53` `S247` `S65`",
+      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Approval-risk dashboard:** Track scopes requiring owner/client formal approval before cost/schedule exposure: Uniqlo FA panel, Vermillion paving/rush fee, Union solar/battery, Exol start-at-risk. `S260` `S53` `S247` `S65`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:process_issue:approval-risk-dashboard:d226f48aac",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=",
+          "01KWYW9F66ADP5JQW8FKV9RTS1",
+          "teamsdm_cd0dcb2f4f189d3c_2026-07-08",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1rvAAA="
+        ],
+        "section": "Initiative Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "initiative_subtype": "initiative_candidate",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "unassigned_company_wide",
+        "duplicate_sections_collapsed": [
+          "Initiative Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": 877,
+      "signal_type": "process_issue",
+      "title": "Procurement blocker log:",
+      "summary": "Centralize unsigned contracts, payment-before-pickup orders, joint-check needs, PO gaps, and account setup blockers across Goodwill Brookville Road, FRP, Core & Main, and sprinkler vendors. `S126` `S93` `S76` `S4`",
+      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Procurement blocker log:** Centralize unsigned contracts, payment-before-pickup orders, joint-check needs, PO gaps, and account setup blockers across Goodwill Brookville Road, FRP, Core & Main, and sprinkler vendors. `S126` `S93` `S76` `S4`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:process_issue:procurement-blocker-log:c0faa67399",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchlAAA=",
+          "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5FAAA=",
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqLAAA=",
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEoHcDfAAA="
+        ],
+        "section": "Initiative Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "initiative_subtype": "initiative_candidate",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "source_set_single_project",
+        "duplicate_sections_collapsed": [
+          "Initiative Candidates"
+        ]
+      },
+      "compiler_version": "daily_deep_read_consumers_v1"
+    },
+    {
+      "source_document_id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA=",
+      "source_chunk_id": null,
+      "target_id": null,
+      "project_id": null,
+      "signal_type": "process_issue",
+      "title": "Closeout evidence standard:",
+      "summary": "Require photo-backed closeout reports for punch-list items and closeout packages before turnover milestones. `S307` `S265`",
+      "why_it_matters": "Derived from Daily Deep Read section: Initiative Candidates",
+      "current_status": "open",
+      "confidence_score": 0.8,
+      "confidence": "medium",
+      "status": "needs_review",
+      "suggested_owner_person_id": null,
+      "suggested_owner_label": null,
+      "next_action": "Review candidate and decide whether to promote into project intelligence.",
+      "stale_after": null,
+      "source_occurred_at": "2026-07-09T04:00:00.000Z",
+      "excerpt": "- **Closeout evidence standard:** Require photo-backed closeout reports for punch-list items and closeout packages before turnover milestones. `S307` `S265`",
+      "normalized_signal_key": "daily-deep-read:c2625323-60b8-4026-a157-536bc9b6e7d5:process_issue:closeout-evidence-standard:42e9cb0d69",
+      "extraction_json": {
+        "daily_packet_id": "c2625323-60b8-4026-a157-536bc9b6e7d5",
+        "daily_packet_generated_at": "2026-07-09T12:21:56.845Z",
+        "business_date": "2026-07-08",
+        "source_ids": [
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA=",
+          "outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA="
+        ],
+        "section": "Initiative Candidates",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "candidate_policy": "review_gated_not_auto_promoted",
+        "initiative_subtype": "initiative_candidate",
+        "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+        "project_assignment_method": "unassigned_company_wide",
         "duplicate_sections_collapsed": [
           "Initiative Candidates"
         ]

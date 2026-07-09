@@ -149,6 +149,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [progressReportTitle, setProgressReportTitle] = useState<string | null>(
     null,
   );
+  const [dailyBriefTitle, setDailyBriefTitle] = useState<string | null>(null);
 
   // Title caches scoped to this component instance — cleared on unmount
   const meetingTitleCache = useRef(new Map<string, string>()).current;
@@ -171,6 +172,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const drawingTitleCache = useRef(new Map<string, string>()).current;
   const testRunTitleCache = useRef(new Map<string, string>()).current;
   const progressReportTitleCache = useRef(new Map<string, string>()).current;
+  const dailyBriefTitleCache = useRef(new Map<string, string>()).current;
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -398,6 +400,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[0] === "testing" &&
       segments[1] === "runs" &&
       /^[0-9a-f-]{36}$/i.test(segments[2]);
+    const isDailyBriefDetailRoute =
+      segments.length >= 2 &&
+      segments[0] === "daily-briefs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[1]);
     const isUserManagementUserDetailRoute =
       segments.length >= 3 &&
       segments[0] === "user-management" &&
@@ -519,6 +525,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = testRunTitle || "Run";
       } else if (isProgressReportDetailRoute && index === 2) {
         label = progressReportTitle || "Progress Report";
+      } else if (isDailyBriefDetailRoute && index === 1) {
+        label = dailyBriefTitle || "Daily Brief";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -594,6 +602,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     drawingTitle,
     testRunTitle,
     progressReportTitle,
+    dailyBriefTitle,
   ]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
@@ -809,6 +818,56 @@ export function useHeaderNav(): UseHeaderNavReturn {
         reportHeaderNavFailure("resolve-progress-report-title", error, {
           reportId,
         });
+      }
+    };
+
+    fetchTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  // Fetch business date for the global Daily Brief detail route
+  // (/daily-briefs/[briefId]) so the crumb reads the date, not a raw UUID.
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isDailyBriefDetailRoute =
+      segments.length >= 2 &&
+      segments[0] === "daily-briefs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[1]);
+
+    if (!isDailyBriefDetailRoute) {
+      setDailyBriefTitle(null);
+      return;
+    }
+
+    const briefId = segments[1];
+    const cached = dailyBriefTitleCache.get(briefId);
+    if (cached) {
+      setDailyBriefTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const data = await apiFetch<{
+          businessDate?: unknown;
+          title?: unknown;
+        }>(`/api/executive/daily-brief/${briefId}`);
+        const label =
+          typeof data?.businessDate === "string" &&
+          data.businessDate.length > 0
+            ? data.businessDate
+            : typeof data?.title === "string" && data.title.length > 0
+              ? data.title
+              : null;
+        if (isActive && label) {
+          dailyBriefTitleCache.set(briefId, label);
+          setDailyBriefTitle(label);
+        }
+      } catch (error) {
+        reportHeaderNavFailure("resolve-daily-brief-title", error, { briefId });
       }
     };
 

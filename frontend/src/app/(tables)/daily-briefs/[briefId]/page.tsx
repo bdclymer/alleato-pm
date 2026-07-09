@@ -64,11 +64,17 @@ function PacketSummary({ packet }: { packet: CanonicalDailyBriefPacket }) {
   );
 }
 
-function BriefSection({ section }: { section: DailyBriefMarkdownSection }) {
+function BriefSection({
+  section,
+  sources,
+}: {
+  section: DailyBriefMarkdownSection;
+  sources: CanonicalDailyBriefPacket["sources"];
+}) {
   return (
     <section className="space-y-3">
       <SectionRuleHeading label={section.title} />
-      <BriefMarkdown content={section.body} />
+      <BriefMarkdown content={section.body} sources={sources} />
     </section>
   );
 }
@@ -123,7 +129,11 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
       <div className="space-y-10">
         <PacketSummary packet={packet} />
         {packet.sections.map((section) => (
-          <BriefSection key={section.title} section={section} />
+          <BriefSection
+            key={section.title}
+            section={section}
+            sources={packet.sources}
+          />
         ))}
         <SourceCoverage packet={packet} />
       </div>
