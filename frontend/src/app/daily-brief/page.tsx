@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -8,18 +9,10 @@ import { listDailyExecutiveBriefPackets } from "@/lib/daily-briefs/canonical-pac
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
   hydrateExecutiveOperatingBrief,
-  type BrandonBriefItem,
-  type BrandonDailyUpdatePacket,
 } from "@/lib/executive/brandon-daily-update";
-import { DailyBriefDocument } from "./daily-brief-document";
-import {
-  buildBriefBody,
-  buildEmptyBody,
-  itemKey,
-  type BriefCalendarDay,
-  type BriefCarryoverItem,
-  type BriefMeeting,
-} from "./build-brief";
+import { DailyBriefView } from "./daily-brief-view";
+import { itemKey } from "./brief-format";
+import { buildBriefModel, type BriefResolvedVM } from "./brief-model";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,10 +20,8 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Daily Executive Brief",
   description:
-    "Owner-facing daily executive brief — decisions, financial and schedule watch, and per-project status, each traced to its source.",
+    "Owner-facing daily executive brief — decisions, per-project status, and action items, each traced to its source.",
 };
-
-const DAY_MS = 86_400_000;
 
 function easternDateKey(value: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -39,257 +30,92 @@ function easternDateKey(value: Date) {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(value);
-  const get = (type: string) =>
-    parts.find((part) => part.type === type)?.value ?? "";
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-function easternPart(value: Date, option: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    ...option,
-  }).format(value);
-}
-
-/** Noon-UTC anchor for a YYYY-MM-DD key — safe from any US-timezone DST edge. */
-function noonUtc(dateKey: string): Date {
-  return new Date(`${dateKey}T12:00:00Z`);
-}
-
-function meetingTime(dateValue: string | null): string | null {
-  if (!dateValue || /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return null;
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return null;
-  return easternPart(date, { hour: "numeric", minute: "2-digit" });
-}
-
 /**
- * Load this week's meetings with real links so each row can open the transcript.
- * Prefers an external URL (Fireflies / Outlook / SharePoint) and falls back to
- * the in-app meeting page. Loaded from the start of the current Eastern week so
- * the calendar strip and the "today's meetings" list share one query.
+ * Item keys that were open yesterday AND are still open today — surfaced as a
+ * quiet "Carried" marker so nothing pending silently drops off the radar. Both
+ * days are routed through the SAME canonical mapper, so their item keys are
+ * computed identically and can be matched.
  */
-async function loadWeekMeetings(weekStartKey: string): Promise<BriefMeeting[]> {
-  const supabase = createServiceClient();
-  const weekStartIso = noonUtc(weekStartKey).toISOString();
-
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .select(
-      "id,title,date,created_at,captured_at,project,project_id,type,category,source_web_url,fireflies_link,meeting_link,url",
-    )
-    .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
-    .or(
-      `date.gte.${weekStartIso},created_at.gte.${weekStartIso},captured_at.gte.${weekStartIso}`,
-    )
-    .order("date", { ascending: false, nullsFirst: false })
-    .limit(60);
-
-  if (error) {
-    throw new Error(`Failed to load this week's meetings: ${error.message}`);
-  }
-
-  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => {
-    const date =
-      (row.date as string | null) ??
-      (row.captured_at as string | null) ??
-      (row.created_at as string | null) ??
-      null;
-    const projectId = (row.project_id as number | null) ?? null;
-    const id = row.id as string;
-    const externalUrl =
-      (row.source_web_url as string | null) ??
-      (row.fireflies_link as string | null) ??
-      (row.meeting_link as string | null) ??
-      (row.url as string | null) ??
-      null;
-    const href =
-      externalUrl && /^https?:\/\//i.test(externalUrl)
-        ? externalUrl
-        : projectId
-          ? `/${projectId}/meetings/${id}`
-          : `/meetings/${id}`;
-    return {
-      id,
-      title: (row.title as string | null) ?? "Untitled meeting",
-      date,
-      project: (row.project as string | null) ?? null,
-      projectId,
-      href,
-    } satisfies BriefMeeting;
-  });
-}
-
-/** Monday→Sunday of the Eastern week containing `todayKey`. */
-function currentWeekStartKey(todayKey: string): string {
-  const todayNoon = noonUtc(todayKey);
-  const weekdayShort = easternPart(todayNoon, { weekday: "short" });
-  const isoIndex =
-    ({ Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 } as Record<
-      string,
-      number
-    >)[weekdayShort] ?? 0;
-  return easternDateKey(new Date(todayNoon.getTime() - isoIndex * DAY_MS));
-}
-
-function buildCalendarDays(
-  weekStartKey: string,
+async function loadCarriedKeys(
   todayKey: string,
-  meetings: BriefMeeting[],
-): BriefCalendarDay[] {
-  const startNoon = noonUtc(weekStartKey);
-  return Array.from({ length: 7 }, (_, index) => {
-    const dayNoon = new Date(startNoon.getTime() + index * DAY_MS);
-    const dateKey = easternDateKey(dayNoon);
-    const events = meetings
-      .filter((meeting) => {
-        if (!meeting.date) return false;
-        const parsed = new Date(
-          /^\d{4}-\d{2}-\d{2}$/.test(meeting.date)
-            ? `${meeting.date}T12:00:00Z`
-            : meeting.date,
-        );
-        return (
-          !Number.isNaN(parsed.getTime()) && easternDateKey(parsed) === dateKey
-        );
-      })
-      .slice(0, 4)
-      .map((meeting) => ({
-        title: meeting.title,
-        time: meetingTime(meeting.date),
-        href: meeting.href,
-        kind: "meeting" as const,
-      }));
-    return {
-      dateKey,
-      dow: easternPart(dayNoon, { weekday: "short" }),
-      dayNum: easternPart(dayNoon, { day: "numeric" }),
-      isToday: dateKey === todayKey,
-      isWeekend: index >= 5,
-      events,
-    } satisfies BriefCalendarDay;
-  });
-}
-
-type YesterdayItem = Pick<
-  BrandonBriefItem,
-  | "title"
-  | "project"
-  | "projectInternalId"
-  | "summary"
-  | "source"
-  | "sourceDetail"
-  | "sourceUrl"
-  | "sourceId"
-  | "date"
->;
-
-/**
- * Yesterday's open owner items (decisions + waiting-on-others), read from the
- * most recent prior-day CANONICAL brief packet in `intelligence_packets` and
- * routed through the SAME candidate mapper as today's brief
- * (`buildCanonicalOperatingPacket`). This replaces the retired `daily_recaps`
- * generator (#792) — there is now one brief pipeline. Sourcing both days from
- * the same mapper is also what makes carryover work: item keys derived from
- * today's and yesterday's items are computed identically, so
- * `computeCarryover` can actually match a still-open item across the two days.
- */
-async function loadYesterdayOpenItems(
-  todayKey: string,
-): Promise<YesterdayItem[]> {
-  // Packets are ordered newest-first; take the most recent one whose business
-  // date is strictly before today (reruns can produce multiple per date).
+  todayOpenKeys: Set<string>,
+): Promise<Set<string>> {
   const packets = await listDailyExecutiveBriefPackets(60);
   const prior = packets.find(
     (packet) => packet.businessDate && packet.businessDate < todayKey,
   );
-  if (!prior) return [];
+  if (!prior) return new Set();
 
   const yesterday = await buildCanonicalOperatingPacket(prior);
-  return [
+  const carried = new Set<string>();
+  for (const item of [
     ...yesterday.sections.needsBrandon,
     ...yesterday.sections.waitingOnOthers,
-  ].map((item) => ({
-    title: item.title,
-    project: item.project,
-    projectInternalId: item.projectInternalId ?? null,
-    summary: item.summary,
-    source: item.source,
-    sourceDetail: item.sourceDetail,
-    sourceUrl: item.sourceUrl,
-    sourceId: item.sourceId,
-    date: item.date,
-  }));
-}
-
-/**
- * Carryover = items open yesterday that are STILL open today (matched by their
- * stable item key). This is a confident "don't forget this" signal — we only
- * surface items confirmed present in both packets, never speculative ones.
- */
-function computeCarryover(
-  todayPacket: BrandonDailyUpdatePacket,
-  yesterday: YesterdayItem[],
-  todayKey: string,
-): BriefCarryoverItem[] {
-  const todayOpenKeys = new Set(
-    [
-      ...todayPacket.sections.needsBrandon,
-      ...todayPacket.sections.waitingOnOthers,
-      ...todayPacket.sections.importantUpdates,
-    ].map((item) => itemKey(item)),
-  );
-
-  const seen = new Set<string>();
-  const out: BriefCarryoverItem[] = [];
-  const todayNoon = noonUtc(todayKey);
-  for (const item of yesterday) {
+  ]) {
     const key = itemKey(item);
-    if (!todayOpenKeys.has(key) || seen.has(key)) continue;
-    seen.add(key);
-    const sourceNoon = item.date
-      ? new Date(
-          /^\d{4}-\d{2}-\d{2}$/.test(item.date)
-            ? `${item.date}T12:00:00Z`
-            : item.date,
-        )
-      : null;
-    const ageDays =
-      sourceNoon && !Number.isNaN(sourceNoon.getTime())
-        ? Math.max(1, Math.round((todayNoon.getTime() - sourceNoon.getTime()) / DAY_MS))
-        : 1;
-    out.push({
-      key,
-      title: item.title,
-      project: item.project ?? null,
-      summary: item.summary ?? "",
-      ageDays,
-      projectInternalId: item.projectInternalId ?? null,
-      citation: {
-        source: item.source,
-        sourceDetail: item.sourceDetail,
-        sourceUrl: item.sourceUrl,
-        sourceId: item.sourceId,
-        date: item.date,
-      },
-    });
+    if (todayOpenKeys.has(key)) carried.add(key);
   }
-  return out;
+  return carried;
 }
 
 /**
- * Standalone, full-viewport Daily Executive Brief.
+ * Items resolved earlier today via the feedback loop (signal = "completed",
+ * surface = "daily-brief"). This makes "Resolved today" persist across reloads
+ * within the day. Fails soft — a query error just yields an empty set so the
+ * brief still renders.
+ */
+async function loadResolvedToday(
+  todayKey: string,
+): Promise<{ keys: Set<string>; seed: BriefResolvedVM[] }> {
+  try {
+    const supabase = createServiceClient();
+    const startIso = new Date(`${todayKey}T00:00:00-04:00`).toISOString();
+    const { data, error } = await supabase
+      .from("ai_feedback_events")
+      .select("subject_id, after_snapshot, created_at")
+      .eq("surface", "daily-brief")
+      .eq("signal", "completed")
+      .gte("created_at", startIso)
+      .order("created_at", { ascending: false });
+    if (error || !data) return { keys: new Set(), seed: [] };
+
+    const keys = new Set<string>();
+    const seed: BriefResolvedVM[] = [];
+    for (const row of data as Array<Record<string, unknown>>) {
+      const key = String(row.subject_id ?? "");
+      if (!key || keys.has(key)) continue;
+      keys.add(key);
+      const snapshot = (row.after_snapshot ?? {}) as {
+        title?: string | null;
+        project?: string | null;
+      };
+      seed.push({
+        key,
+        title: snapshot.title ?? "Resolved item",
+        project: snapshot.project ?? null,
+        summary: "",
+      });
+    }
+    return { keys, seed };
+  } catch {
+    return { keys: new Set(), seed: [] };
+  }
+}
+
+/**
+ * Standalone Daily Executive Brief — an editorial, source-backed morning read
+ * for the owner. Bound to the canonical executive-brief packet
+ * (`intelligence_packets`, target `daily-executive-brief`), the same deep-read
+ * data that powers /executive. Rendered as real interactive React: every item
+ * can be resolved, rated for the AI loop, or turned into a task, and each claim
+ * links to its real source.
  *
- * Bound to the canonical executive-brief packet (`intelligence_packets`, target
- * `daily-executive-brief`) — the same deep-read data that powers /executive —
- * and rendered in a bespoke editorial layout outside the app's PageShell chrome.
- * Every claim links to its real source (Fireflies transcript, Outlook email,
- * document, or in-app meeting).
- *
- * Access is gated by the same `view_executive_briefing` capability as every
- * other Daily Brief surface — the page exposes owner-level financials, schedule
- * risk, and project detail, so it must not be visible to every authenticated
- * user.
+ * Gated by the `view_executive_briefing` capability — it exposes owner-level
+ * decisions, financial and schedule risk, and per-project detail.
  */
 export default async function DailyBriefPage() {
   const canViewExecutiveBriefing = await canCurrentUserAccessAppCapability(
@@ -305,56 +131,59 @@ export default async function DailyBriefPage() {
     );
   }
 
-  let bodyHtml: string;
   try {
     const todayKey = easternDateKey(new Date());
-    const weekStartKey = currentWeekStartKey(todayKey);
 
-    const [dashboard, weekMeetings, yesterdayItems] = await Promise.all([
-      getExecutiveBriefingDashboard({
-        windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
-      }),
-      loadWeekMeetings(weekStartKey),
-      loadYesterdayOpenItems(todayKey),
-    ]);
-
+    const dashboard = await getExecutiveBriefingDashboard({
+      windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
+    });
     const packet = dashboard.draft.packet;
     const operatingBrief = hydrateExecutiveOperatingBrief(packet);
 
-    const todaysMeetings = weekMeetings
-      .filter((meeting) => {
-        const parsed = meeting.date
-          ? new Date(
-              /^\d{4}-\d{2}-\d{2}$/.test(meeting.date)
-                ? `${meeting.date}T12:00:00Z`
-                : meeting.date,
-            )
-          : null;
-        return parsed && !Number.isNaN(parsed.getTime())
-          ? easternDateKey(parsed) === todayKey
-          : false;
-      })
-      .slice(0, 10);
+    const todayOpenKeys = new Set(
+      [
+        ...packet.sections.needsBrandon,
+        ...packet.sections.waitingOnOthers,
+        ...packet.sections.importantUpdates,
+      ].map((item) => itemKey(item)),
+    );
 
-    const calendar = buildCalendarDays(weekStartKey, todayKey, weekMeetings);
-    const carryover = computeCarryover(packet, yesterdayItems, todayKey);
+    const [carriedKeys, resolved] = await Promise.all([
+      loadCarriedKeys(todayKey, todayOpenKeys),
+      loadResolvedToday(todayKey),
+    ]);
 
-    bodyHtml = buildBriefBody({
+    const model = buildBriefModel({
       packet,
       operatingBrief,
-      meetings: todaysMeetings,
-      calendar,
-      carryover,
+      carriedKeys,
+      resolvedKeys: resolved.keys,
+      resolvedSeed: resolved.seed,
+      preparedFor: "Brandon",
     });
-  } catch (error) {
-    // Fail loudly to the server logs; show a clear state rather than a fake brief.
-    console.error("[daily-brief] failed to build brief", error);
-    bodyHtml = buildEmptyBody("Couldn't load today's brief");
-  }
 
-  return (
-    <div className="min-h-screen">
-      <DailyBriefDocument bodyHtml={bodyHtml} />
-    </div>
-  );
+    return (
+      <div className="min-h-screen bg-background">
+        <DailyBriefView model={model} />
+      </div>
+    );
+  } catch (error) {
+    console.error("[daily-brief] failed to build brief", error);
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-6 py-24 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Couldn&apos;t load today&apos;s brief
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Today&apos;s executive brief hasn&apos;t been generated yet, or no material items
+          surfaced in the current window. Check back after the next daily run, or open the
+          operating brief at{" "}
+          <Link href="/executive" className="text-primary hover:underline">
+            /executive
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
 }
