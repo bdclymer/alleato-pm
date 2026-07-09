@@ -96,6 +96,15 @@ async function main() {
       const billed = new Map(sovRows.map((r) => [r.id, 0]));
       const sovAmt = (r) => Math.max(Number(r.amount) || 0, 0);
       const totalSovAmt = sovRows.reduce((a, r) => a + sovAmt(r), 0);
+
+      // GUARDRAIL: billed far exceeding the contract amount means invoices are
+      // mis-linked to this commitment (e.g. a catch-all shell that soaked up a whole
+      // project's AP bills — SC-000316 on Goodwill Bloomington: $1.13M on a $6,500
+      // contract). Never write that; flag for re-attribution instead.
+      if (totalSovAmt > 0 && acuTotal > 2 * totalSovAmt) {
+        flagged.push({ commitmentId, contract_number: head.contract_number, reason: `MIS-LINKED (SKIPPED): billed $${round2(acuTotal)} is ${(acuTotal / totalSovAmt).toFixed(1)}x the $${round2(totalSovAmt)} contract`, acuTotal });
+        continue;
+      }
       let unmatched = 0;
       for (const [code, amt] of billedByCode) {
         const matches = sovRows.filter((r) => codePart(r.budget_code) === code);
