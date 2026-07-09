@@ -21,8 +21,6 @@ type DailyBriefFilterState = Record<string, FilterValue>;
 
 const EMPTY_FILTERS: DailyBriefFilterState = {
   workflowStatus: undefined,
-  delivery: undefined,
-  packet: undefined,
 };
 
 function searchHaystack(item: DailyBriefHistoryItem) {
@@ -31,26 +29,8 @@ function searchHaystack(item: DailyBriefHistoryItem) {
     item.dateRangeStart,
     item.dateRangeEnd,
     item.workflowStatus,
-    item.sentTeams ? "teams sent delivered" : "not sent",
-    item.hasPacket ? "packet ready" : "missing packet",
-    item.sourceWarningCount > 0 ? "source warnings" : "sources ready",
     item.modelUsed ?? "",
   ].join(" ");
-}
-
-function matchesDeliveryFilter(item: DailyBriefHistoryItem, value: FilterValue) {
-  if (!value) return true;
-  if (value === "sent") return item.sentTeams;
-  if (value === "not_sent") return !item.sentTeams;
-  return true;
-}
-
-function matchesPacketFilter(item: DailyBriefHistoryItem, value: FilterValue) {
-  if (!value) return true;
-  if (value === "ready") return item.hasPacket && item.sourceWarningCount === 0;
-  if (value === "warnings") return item.sourceWarningCount > 0;
-  if (value === "missing") return !item.hasPacket;
-  return true;
 }
 
 export default function DailyBriefsTablePage() {
@@ -62,8 +42,6 @@ export default function DailyBriefsTablePage() {
   const initialFilters = React.useMemo<DailyBriefFilterState>(
     () => ({
       workflowStatus: searchParams?.get("workflowStatus") ?? undefined,
-      delivery: searchParams?.get("delivery") ?? undefined,
-      packet: searchParams?.get("packet") ?? undefined,
     }),
     [searchParams],
   );
@@ -98,18 +76,10 @@ export default function DailyBriefsTablePage() {
       ) {
         return false;
       }
-      if (!matchesDeliveryFilter(item, activeFilters.delivery)) return false;
-      if (!matchesPacketFilter(item, activeFilters.packet)) return false;
       if (!searchTerm) return true;
       return searchHaystack(item).toLowerCase().includes(searchTerm);
     });
-  }, [
-    activeFilters.delivery,
-    activeFilters.packet,
-    activeFilters.workflowStatus,
-    briefs,
-    tableState.debouncedSearch,
-  ]);
+  }, [activeFilters.workflowStatus, briefs, tableState.debouncedSearch]);
 
   const isFiltered =
     tableState.debouncedSearch.trim().length > 0 ||
@@ -119,8 +89,6 @@ export default function DailyBriefsTablePage() {
     tableState.setActiveFilters(filters);
     tableState.setSearchParams({
       workflowStatus: (filters.workflowStatus as string | undefined) ?? null,
-      delivery: (filters.delivery as string | undefined) ?? null,
-      packet: (filters.packet as string | undefined) ?? null,
       page: "1",
     });
     tableState.setPage(1);
@@ -155,6 +123,20 @@ export default function DailyBriefsTablePage() {
         isFetching: briefsQuery.isFetching,
         error: briefsQuery.error,
       }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+            page: "1",
+          });
+          tableState.setPage(1);
+        },
+      }}
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
@@ -170,7 +152,7 @@ export default function DailyBriefsTablePage() {
           "No Daily Briefs match the current search and filters.",
         isFiltered,
       }}
-      layout={{ fullBleedTable: true, minWidth: 1100 }}
+      layout={{ fullBleedTable: false }}
       features={{
         enableRowSelection: false,
         enableRowActions: false,
