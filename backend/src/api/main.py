@@ -375,17 +375,65 @@ async def health_check() -> Dict[str, Any]:
     except Exception:  # pragma: no cover - never let a probe break /health
         deep_agent_storage = {"durable": None, "roots": {}}
 
+    # App-DB connectivity + DATABASE_URL host-parity. Surfaced here (always HTTP
+    # 200 — this is Render's liveness healthCheckPath, so a down app DB must NOT
+    # flap the web container) so a human/monitor sees the degradation. The 503
+    # readiness signal lives on the separate /health/ready endpoint.
+    app_db: Dict[str, Any] = {"reachable": None}
+    database_url_host: Dict[str, Any] = {}
+    try:
+        from src.services.agents.alleato_ai_tools.db_health import (
+            database_url_host_status,
+            probe_app_db,
+        )
+
+        probe = probe_app_db()
+        app_db = probe.as_dict()
+        database_url_host = database_url_host_status().as_dict()
+    except Exception as exc:  # pragma: no cover - never let a probe break /health
+        app_db = {"reachable": None, "error": str(exc)[:200]}
+
+    degraded = app_db.get("reachable") is False or database_url_host.get("ok") is False
+
     return {
-        "status": "healthy",
+        "status": "degraded" if degraded else "healthy",
         "ai_provider_path": get_ai_provider_path(),
         "ai_gateway_configured": ai_gateway_configured(),
         "ai_gateway_required": ai_gateway_required(),
         "openai_configured": openai_configured(),
         "embedding_provider_configured": embedding_provider_configured(),
         "supabase_service_configured": supabase_service_configured,
+        "app_db": app_db,
+        "database_url_host": database_url_host,
         "deep_agent_storage": deep_agent_storage,
         "timestamp": datetime.now().isoformat()
     }
+
+
+@app.get("/health/ready", tags=["System"], summary="Readiness check (app DB reachable)")
+async def readiness_check() -> JSONResponse:
+    """Readiness probe: 200 only when the app database is reachable, else 503.
+
+    Deliberately NOT wired to Render's `healthCheckPath` (that points at
+    `/health`, which stays 200 on a DB outage so the web container is not
+    restarted for an infra/config problem it cannot fix). Monitors and alerting
+    hit this endpoint to detect the "database unreachable" degraded state.
+    """
+    from src.services.agents.alleato_ai_tools.db_health import (
+        database_url_host_status,
+        probe_app_db,
+    )
+
+    probe = probe_app_db()
+    parity = database_url_host_status()
+    ready = probe.reachable and parity.ok
+    payload = {
+        "ready": ready,
+        "app_db": probe.as_dict(),
+        "database_url_host": parity.as_dict(),
+        "timestamp": datetime.now().isoformat(),
+    }
+    return JSONResponse(status_code=200 if ready else 503, content=payload)
 
 
 @app.get("/api/mcp/status", tags=["System"], summary="Hosted MCP status")
@@ -1847,6 +1895,38 @@ async def start_scheduler():
     if alleato_system_mcp_enabled():
         app.state.alleato_system_mcp_lifespan = create_alleato_system_mcp_lifespan()
         await app.state.alleato_system_mcp_lifespan.__aenter__()
+
+
+@app.on_event("startup")
+async def check_database_url_host_parity() -> None:
+    """Flag at boot if DATABASE_URL drifted off the known-good IPv4 pooler host.
+
+    The 2026-07-09 outage was exactly this: the Render env pointed DATABASE_URL
+    at the Supabase IPv6-only direct host and every AI DB tool silently failed.
+    Catch a repeat on deploy instead of discovering it via a wrong AI answer.
+    Never crashes the app — a bad host is a config problem to surface, not a
+    reason to refuse to boot.
+    """
+    try:
+        from src.services.agents.alleato_ai_tools.db_health import (
+            database_url_host_status,
+            emit_db_connectivity_alert,
+            probe_app_db,
+        )
+
+        parity = database_url_host_status()
+        if parity.ok:
+            logger.info("[db-parity] DATABASE_URL host OK (pooler): %s", parity.host)
+            return
+
+        logger.error("[db-parity] DATABASE_URL host check FAILED: %s", parity.detail)
+        # Only page Sentry if the DB is actually unreachable — an unrecognized
+        # host that still connects is worth a log but not an alert storm.
+        probe = probe_app_db()
+        if not probe.reachable:
+            emit_db_connectivity_alert(source="startup_parity", probe=probe)
+    except Exception as exc:  # pragma: no cover - probe must never break startup
+        logger.warning("[db-parity] host parity check skipped: %s", exc)
 
 
 @app.on_event("startup")

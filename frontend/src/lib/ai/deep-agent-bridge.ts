@@ -27,7 +27,7 @@ const DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS = new Set<AssistantIntent>([
 const toolTraceSchema = z.object({
   agent: z.string(),
   tool: z.string(),
-  status: z.enum(["success", "failed", "skipped"]),
+  status: z.enum(["success", "failed", "skipped", "degraded"]),
   durationMs: z.number(),
   detail: z.string().nullable().optional(),
 });
@@ -54,7 +54,9 @@ const appExpertSourceSchema = z.object({
 
 export const deepResearchResponseSchema = z.object({
   answer: z.string(),
-  mode: z.enum(["deep_agents", "unavailable"]),
+  // "deep_agents_degraded": answer produced while the app DB was unreachable —
+  // it carries a loud degraded-mode banner and must still reach the user.
+  mode: z.enum(["deep_agents", "deep_agents_degraded", "unavailable"]),
   sources: z.array(researchSourceSchema),
   toolTrace: z.array(toolTraceSchema),
   skillsLoaded: z.array(z.string()),
@@ -377,12 +379,12 @@ export function shouldUseDeepAgentResearchDirectResponse(
   packet: DeepResearchResponse,
 ): boolean {
   return (
-    packet.mode === "deep_agents" &&
+    (packet.mode === "deep_agents" || packet.mode === "deep_agents_degraded") &&
     packet.answer.trim().length >= 40 &&
     packet.toolTrace.some(
       (item) =>
         item.tool === "deepagents_research_runtime" &&
-        item.status === "success",
+        (item.status === "success" || item.status === "degraded"),
     )
   );
 }
