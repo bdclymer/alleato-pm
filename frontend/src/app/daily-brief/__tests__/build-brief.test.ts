@@ -1,9 +1,44 @@
-import { buildBriefBody, buildEmptyBody, itemKey } from "../build-brief";
+import { buildBriefBody, buildEmptyBody, cleanProse, itemKey } from "../build-brief";
 import type {
   BrandonBriefItem,
   BrandonDailyUpdatePacket,
   ExecutiveOperatingBrief,
 } from "@/lib/executive/brandon-daily-update";
+
+describe("cleanProse", () => {
+  it("strips raw source tokens (alias, channel-prefixed, ULID)", () => {
+    expect(cleanProse("Approve the panel `S260` before Friday.")).toBe(
+      "Approve the panel before Friday.",
+    );
+    expect(
+      cleanProse("Blocked until executed (`outlook_AAMkAD/I0=Zj+Ez`)."),
+    ).toBe("Blocked until executed.");
+    expect(
+      cleanProse("Confirm scope [`teamsdm_240a50c23fbd2bca_2026-07-08`]."),
+    ).toBe("Confirm scope.");
+  });
+
+  it("removes bracket/paren residue left after token removal", () => {
+    expect(cleanProse("The sequence (`S1`, `S2`).")).toBe("The sequence.");
+    expect(cleanProse("Options `S1` and `S2` both apply.")).toBe(
+      "Options and both apply.",
+    );
+  });
+
+  it("strips the deep-read consumer's placeholder prose (even mid-sentence)", () => {
+    expect(cleanProse("Derived from Daily Deep Read section: Decision Candidates")).toBe("");
+    expect(
+      cleanProse(
+        "Uniqlo approval risk. Review candidate and decide whether to promote into project intelligence.",
+      ),
+    ).toBe("Uniqlo approval risk.");
+    expect(cleanProse("Review and either assign as a task or reject.")).toBe("");
+  });
+
+  it("trims trailing separator punctuation from titles", () => {
+    expect(cleanProse("Union Collective:")).toBe("Union Collective");
+  });
+});
 
 function makeItem(overrides: Partial<BrandonBriefItem>): BrandonBriefItem {
   return {
