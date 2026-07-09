@@ -127,6 +127,7 @@ function makePacket(): CanonicalDailyBriefPacket {
     },
     sourceCounts: { meetings: 11, emails: 98, teams: 15, documents: 20 },
     sourceIds: [],
+    sources: [],
     sourceCount: 144,
     briefMarkdown: SAMPLE_MARKDOWN,
     sections: splitDailyBriefMarkdown(SAMPLE_MARKDOWN),

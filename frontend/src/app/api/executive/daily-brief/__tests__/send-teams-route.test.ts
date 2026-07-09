@@ -82,6 +82,7 @@ const canonicalPacket = {
   sourceCoverage: {},
   sourceCounts: { email: 2 },
   sourceIds: ["source-1", "source-2"],
+  sources: [],
   sourceCount: 2,
   briefMarkdown: "## Executive read\nSummary",
   sections: [{ title: "Executive read", body: "Summary" }],
