@@ -231,7 +231,7 @@ function OneTimeTable({ tabs }: { tabs: TabItem[] }) {
         filteredDescription: "No items match your search.",
         isFiltered: Boolean(tableState.debouncedSearch),
       }}
-      layout={{ fullBleedTable: true }}
+      layout={{ fullBleedTable: true, toolbarWithTabs: true }}
     />
   );
 }
@@ -294,7 +294,7 @@ function OngoingTable({ tabs }: { tabs: TabItem[] }) {
         filteredDescription: "No tasks match your search.",
         isFiltered: Boolean(tableState.debouncedSearch),
       }}
-      layout={{ fullBleedTable: true }}
+      layout={{ fullBleedTable: true, toolbarWithTabs: true }}
     />
   );
 }
