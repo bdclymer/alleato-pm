@@ -73,8 +73,8 @@ type CoSummary = {
 };
 
 type InvoiceShape = {
-  subcontract_id?: number | null;
-  purchase_order_id?: number | null;
+  subcontract_id?: string | null;
+  purchase_order_id?: string | null;
   acumatica_doc_type?: string | null;
   acumatica_ref_nbr?: string | null;
   acumatica_sync_at?: string | null;

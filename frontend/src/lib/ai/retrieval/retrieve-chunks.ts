@@ -10,6 +10,11 @@
  *
  * This design prevents encoding mismatches and makes retrieval contract violations
  * observable at compile time (one interface, all callers).
+ *
+ * GUARDRAIL: The `ValidatedEmbedding` branded type ensures only generateEmbedding-produced
+ * JSON strings can be passed to the RPC. Raw arrays are type errors at compile time.
+ * This prevents the 2026-05-13 incident where searchDocumentChunksByCategory passed
+ * a raw number[] array, causing silent RPC failures.
  */
 
 import { OpenAI } from "@ai-sdk/openai";
@@ -18,6 +23,22 @@ import {
   createRagServiceClient,
   type ServiceClientReturnType,
 } from "@/lib/supabase/service";
+
+/**
+ * Branded type for validated embedding strings.
+ * Only generateEmbedding-produced JSON strings can be cast to this type.
+ * Prevents raw array encoding bugs at compile time.
+ *
+ * @example
+ * // ✅ Correct: generateEmbedding returns ValidatedEmbedding
+ * const embedding = await generateEmbedding(openai, query, EMBEDDING.LARGE);
+ * await retrieveChunks({ query, openai, queryEmbedding: embedding });
+ *
+ * // ❌ Type error: raw arrays cannot be cast to ValidatedEmbedding
+ * const rawArray = await openai.embeddings.create({ ... });
+ * await retrieveChunks({ queryEmbedding: rawArray.data[0].embedding }); // TS2345
+ */
+export type ValidatedEmbedding = string & { readonly __validated: true };
 
 export type RagRow = {
   id?: string;

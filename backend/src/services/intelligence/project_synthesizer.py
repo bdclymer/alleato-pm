@@ -980,14 +980,14 @@ def run_synthesis_sweep(
         "per_project": [],
     }
 
-    # Reset the projection budget per project to prevent accumulation across the
-    # entire sweep. This fixes incident #759 where the projection guard self-blocked
-    # on large sweeps (104+ projects) because accumulated card counts exceeded the
-    # cap after ~30 projects. Each project gets its own projection budget allocation
-    # so no single project's cards/packets can be blamed for blocking future projects.
+    # Cumulative projection budget across the entire sweep. This bounds total PM app
+    # writes to prevent DB pressure (see db_pressure_guard.py:28-29). If a project
+    # exceeds the budget, that project fails but remaining projects continue. The budget
+    # is intentionally cumulative so the sweep cannot evade the guard by splitting
+    # writes across multiple projects.
+    project_projection_counts: Dict[str, int] = {}
+
     for pid in project_ids:
-        # Fresh budget per project — each project's projection reserve is independent
-        project_projection_counts: Dict[str, int] = {}
 
         try:
             r = synthesize_project_intelligence(

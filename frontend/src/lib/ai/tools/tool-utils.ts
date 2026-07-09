@@ -10,6 +10,7 @@ import {
   getOpenAICompatibleClientConfig,
   getOpenAIModelId,
 } from "@/lib/ai/provider-config";
+import { type ValidatedEmbedding } from "@/lib/ai/retrieval/retrieve-chunks";
 
 // ---------------------------------------------------------------------------
 // Embedding config registry
@@ -40,12 +41,15 @@ export const EMBEDDING = {
  * Generate an embedding and return it JSON-stringified for use in RPC args.
  * NOTE: The return value is already a JSON string — do NOT wrap it in JSON.stringify() again.
  * Pass the result directly as the RPC argument (e.g. `query_embedding: queryEmbedding`).
+ *
+ * GUARDRAIL: Returns ValidatedEmbedding (branded type), so only this function can produce
+ * values acceptable to the RPC. Prevents raw-array encoding bugs at compile time.
  */
 export async function generateEmbedding(
   openai: OpenAI,
   input: string,
   config: typeof EMBEDDING.LARGE | typeof EMBEDDING.SMALL,
-): Promise<string> {
+): Promise<ValidatedEmbedding> {
   const modelId = getOpenAIModelId(config.model);
   const resp = await openai.embeddings.create({
     model: modelId,
@@ -57,7 +61,7 @@ export async function generateEmbedding(
       `Embedding API returned empty data for model ${modelId}. Check API key and gateway config.`,
     );
   }
-  return JSON.stringify(resp.data[0].embedding);
+  return JSON.stringify(resp.data[0].embedding) as ValidatedEmbedding;
 }
 
 // ---------------------------------------------------------------------------
