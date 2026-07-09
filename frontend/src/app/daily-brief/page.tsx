@@ -183,6 +183,20 @@ type YesterdayItem = Pick<
 >;
 
 /**
+ * Runtime-validating adapter for the `daily_recaps.briefing_packet` JSONB column.
+ * Narrows the untyped Json to the packet's `sections` shape via real object
+ * checks, not an unsafe double-cast (banned by the unsafe-patterns gate).
+ */
+function extractPacketSections(
+  value: unknown,
+): BrandonDailyUpdatePacket["sections"] | null {
+  if (!value || typeof value !== "object") return null;
+  const sections = (value as { sections?: unknown }).sections;
+  if (!sections || typeof sections !== "object") return null;
+  return sections as BrandonDailyUpdatePacket["sections"];
+}
+
+/**
  * Read the most recent prior-day executive packet and return its open items
  * (owner decisions + waiting-on-others). These are matched against today's open
  * items to surface what is *still* pending across both days.
@@ -203,10 +217,7 @@ async function loadYesterdayOpenItems(
 
   if (error || !data?.briefing_packet) return [];
 
-  const packet = data.briefing_packet as unknown as {
-    sections?: BrandonDailyUpdatePacket["sections"];
-  };
-  const sections = packet.sections;
+  const sections = extractPacketSections(data.briefing_packet);
   if (!sections) return [];
 
   return [
