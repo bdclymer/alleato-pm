@@ -1036,6 +1036,97 @@ def run_synthesis_sweep(
                     logger.error("[ProjectSynthesizer] L2 synthesis failed for %s: %s", pid, sexc, exc_info=True)
                     summary["errors"].append({"project_id": pid, "stage": "synthesis", "error": str(sexc)})
 
+            # Operating-record projection: writes project_current_state so the UI
+            # gets the latest narrative. Uses the L2 synthesis packet as the source
+            # of truth. If no packets exist, skips (project is new).
+            operating_res: Dict[str, Any] = {}
+            try:
+                from .compiler import apply_source_operating_record_projection
+
+                rag_client = get_rag_read_client()
+                # Fetch the latest synthesis packet (which was just written).
+                packets = (
+                    client.table("intelligence_packets")
+                    .select("packet_json,packet_type,generated_at")
+                    .eq("packet_type", "current")
+                    .gte("target_id", 0)
+                    .order("generated_at", desc=True)
+                    .limit(10)
+                    .execute()
+                    .data
+                    or []
+                )
+                # Find the packet for this project (target_id is a client_project_target row).
+                latest_packet = None
+                for pkt in packets:
+                    pkt_json = pkt.get("packet_json") or {}
+                    if int(pkt_json.get("target", {}).get("projectId")) == pid:
+                        latest_packet = pkt
+                        break
+
+                if latest_packet:
+                    # Reconstruct a minimal daily_delta from the packet to pass to
+                    # apply_source_operating_record_projection. The projection function
+                    # reads operating_read from delta.metadata, which is set by
+                    # compile_project_daily_delta. For a fresh sweep, we synthesize
+                    # current_summary from the packet's executive_summary.
+                    pkt_json = latest_packet.get("packet_json") or {}
+                    summary_data = pkt_json.get("summary") or {}
+
+                    daily_delta = {
+                        "id": latest_packet.get("id"),
+                        "headline": summary_data.get("currentExecutiveRead"),
+                        "confidence": latest_packet.get("confidence"),
+                        "source_coverage": pkt_json.get("sourceSet", {}).get("sources", []),
+                        "metadata": {
+                            "operating_read": {
+                                "current_summary": summary_data.get("currentExecutiveRead"),
+                            }
+                        },
+                        "risks": summary_data.get("risks", []),
+                        "issues": summary_data.get("issues", []),
+                        "what_changed": summary_data.get("whatChanged", []),
+                        "decisions": summary_data.get("decisions", []),
+                        "financial_changes": summary_data.get("financialChanges", []),
+                        "schedule_changes": summary_data.get("scheduleChanges", []),
+                        "daily_report_draft": summary_data.get("dailyReport", {}),
+                    }
+
+                    # Snapshot (required by apply_source_operating_record_projection).
+                    snapshot = {
+                        "id": f"sweep_snapshot_{pid}_{int(datetime.now(timezone.utc).timestamp())}",
+                    }
+
+                    # Minimal signal/source_synthesis/document for projection compatibility.
+                    signal = {"type": "synthesized", "is_synthesized": True}
+                    source_synthesis = {"executive_summary": summary_data.get("currentExecutiveRead")}
+                    document = {
+                        "id": latest_packet.get("id"),
+                        "project_id": pid,
+                        "date": latest_packet.get("generated_at"),
+                    }
+
+                    _reserve_pm_projection_budget(
+                        "project_synthesizer_sweep_projection",
+                        project_projection_counts,
+                        {"project_current_state": 1},
+                    )
+                    summary["pm_projection_rows"] = dict(project_projection_counts)
+
+                    apply_source_operating_record_projection(
+                        client,
+                        document=document,
+                        project_id=pid,
+                        source_synthesis=source_synthesis,
+                        daily_delta=daily_delta,
+                        signal=signal,
+                    )
+                    operating_res["updated"] = True
+                    summary["operating_records_written"] = summary.get("operating_records_written", 0) + 1
+            except Exception as oprec:  # noqa: BLE001 — operating record must not abort sweep
+                logger.error("[ProjectSynthesizer] operating-record projection failed for %s: %s", pid, oprec, exc_info=True)
+                summary["errors"].append({"project_id": pid, "stage": "operating_record", "error": str(oprec)})
+
             summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written"), "flags_resolved": flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0) if flag_res else 0, "synthesis_packet": synthesis_res.get("packet_id")})
         except Exception as exc:  # noqa: BLE001 — one project must not abort the sweep
             logger.error("[ProjectSynthesizer] sweep failed for project %s: %s", pid, exc, exc_info=True)
