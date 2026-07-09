@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { loadDailyExecutiveBriefPacketById } from "@/lib/daily-briefs/canonical-packets";
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 /**
  * Lightweight lookup for a single canonical Daily Brief packet. Used by the
@@ -21,7 +22,12 @@ export const GET = withApiGuardrails<{ briefId: string }>(
     const { briefId } = await params;
     const packet = await loadDailyExecutiveBriefPacketById(briefId);
     if (!packet) {
-      return NextResponse.json({ error: "Daily Brief not found." }, { status: 404 });
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: "/api/executive/daily-brief/[briefId]#GET",
+        message: "Daily Brief not found.",
+        status: 404,
+      });
     }
 
     return NextResponse.json({
