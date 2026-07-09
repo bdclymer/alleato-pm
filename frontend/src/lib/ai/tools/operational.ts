@@ -24,6 +24,7 @@ import { type ToolGuardrails } from "./guardrails";
 import { createToolContext, type ToolContext } from "./tool-context";
 import { createProjectRepo, isOpenRfiStatus } from "@/lib/ai/data/project-repo";
 import { createStructuredQueryTools } from "./structured-queries";
+import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
 import {
   type ToolTracePayload,
   asNumber,
@@ -3510,50 +3511,27 @@ async function searchDocumentChunksByCategory({
   filterProjectId?: number | null;
 }) {
   try {
-    const queryEmbedding = await generateEmbedding(
-      getOpenAI(),
+    const data = await retrieveChunks({
       query,
-      EMBEDDING.LARGE,
-    );
-
-    const { data, error } = await supabase.rpc("search_document_chunks", {
-      query_embedding: queryEmbedding,
-      filter_source_types: sourceTypesForCategory(category) ?? undefined,
-      filter_project_id:
+      openai: getOpenAI(),
+      ragClient: supabase,
+      projectId:
         typeof filterProjectId === "number"
           ? filterProjectId
           : (scope.pinnedProjectId ?? undefined),
-      match_count: matchCount,
-      match_threshold: 0.45,
+      sourceTypes: sourceTypesForCategory(category) ?? undefined,
+      matchCount,
+      matchThreshold: 0.45,
+      errorLabel: `Category search (${sourceLabel})`,
     });
 
-    if (error) {
-      const message = (error as { message: string }).message;
-      const isTimeout =
-        message.includes("canceling statement due to statement timeout") ||
-        message.includes("statement timeout");
-      if (
-        message.includes(
-          "structure of query does not match function result type",
-        ) ||
-        isTimeout
-      ) {
-        return searchDocumentChunksByCategoryFallback({
-          supabase,
-          metadataSupabase,
-          query,
-          category,
-          matchCount,
-          sourceLabel,
-          scope,
-          filterProjectId,
-          rpcError: isTimeout
-            ? `vector search timed out — returning keyword-matched results instead`
-            : message,
-        });
-      }
-
-      return { error: message };
+    const isEmptyResult = !data || data.length === 0;
+    if (isEmptyResult) {
+      // Log the empty retrieval so degradation is visible
+      console.warn(
+        `[searchDocumentChunksByCategory] zero results for category '${category}' after successful RPC`,
+        { query, matchCount },
+      );
     }
 
     type ChunkRow = {
