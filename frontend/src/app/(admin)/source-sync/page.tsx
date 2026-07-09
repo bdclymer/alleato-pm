@@ -1,16 +1,12 @@
 import { PageShell } from "@/components/layout";
-import { SourceSyncHealthPanel } from "@/components/ai-intelligence/source-sync-health-panel";
+import { DailyContentPanel } from "@/components/ai-intelligence/daily-content-panel";
 
 export const dynamic = "force-dynamic";
 
 export default function SourceSyncPage() {
   return (
-    <PageShell
-      variant="dashboard"
-      title="Source Sync"
-      description="Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness."
-    >
-      <SourceSyncHealthPanel />
+    <PageShell variant="content" title="Content Sync">
+      <DailyContentPanel />
     </PageShell>
   );
 }

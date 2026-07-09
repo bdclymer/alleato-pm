@@ -69,10 +69,11 @@ export const sections: AdminMenuSection[] = [
         title: "AI Feedback and Learning",
         items: [
           {
-            label: "Source Sync",
+            label: "Content Sync",
             href: "/source-sync",
             route: "/source-sync",
-            description: "Cross-source ingestion, vectorization, and extraction health.",
+            description:
+              "How many emails, meetings, documents, and Teams messages synced and embedded each day.",
             icon: Activity,
           },
           {
@@ -399,11 +400,11 @@ export const sections: AdminMenuSection[] = [
             icon: Activity,
           },
           {
-            label: "Source Sync",
+            label: "Content Sync",
             href: "/source-sync",
             route: "/source-sync",
             description:
-              "Source ingestion freshness, sync runs, and recompute controls.",
+              "Daily count of synced and embedded content, with drill-down to the files.",
             icon: ArrowLeftRight,
           },
           {

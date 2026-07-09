@@ -13,7 +13,7 @@
 
 ## UI Routes (337)
 
-_301/337 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_300/337 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -323,7 +323,7 @@ _301/337 have a description (from the page's `PageShell` or the curated `fronten
 | `/settings/profile` | View and edit user profile, avatar, account details, role, and integration connections | frontend/src/app/(main)/settings/profile/page.tsx |
 | `/settings/security` | Require a second verification step when members sign in. Applies to all workspace members. | frontend/src/app/(main)/settings/security/page.tsx |
 | `/site-map` | Admin inventory of all application pages with access levels and permission module mapping | frontend/src/app/(admin)/site-map/page.tsx |
-| `/source-sync` | Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness. | frontend/src/app/(admin)/source-sync/page.tsx |
+| `/source-sync` | Content Sync | frontend/src/app/(admin)/source-sync/page.tsx |
 | `/stats` | Daily activity summary including meetings, tasks, emails, documents, and project activity breakdown | frontend/src/app/(main)/stats/page.tsx |
 | `/support-articles` | Browse Procore support articles with chunking stats and embedding coverage for the knowledge base | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
 | `/support-articles/[articleId]` | This article has not been crawled yet. | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
@@ -355,7 +355,7 @@ _301/337 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (754)
+## API Endpoints (756)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -436,6 +436,7 @@ _301/337 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/admin/send-info-email` | GET | frontend/src/app/api/admin/send-info-email/route.ts |
 | `/api/admin/set-admin-status` | POST | frontend/src/app/api/admin/set-admin-status/route.ts |
 | `/api/admin/source-sync/active-alerts` | GET | frontend/src/app/api/admin/source-sync/active-alerts/route.ts |
+| `/api/admin/source-sync/daily-content` | GET | frontend/src/app/api/admin/source-sync/daily-content/route.ts |
 | `/api/admin/source-sync/graph-embed` | POST | frontend/src/app/api/admin/source-sync/graph-embed/route.ts |
 | `/api/admin/source-sync/graph-sync` | POST | frontend/src/app/api/admin/source-sync/graph-sync/route.ts |
 | `/api/admin/source-sync/lifecycle-documents` | GET | frontend/src/app/api/admin/source-sync/lifecycle-documents/route.ts |

@@ -119,6 +119,7 @@ export const LifecycleDocumentSchema = z.object({
     projectIntelligenceUpdated: z.boolean(),
   }),
   detailHref: z.string().nullable(),
+  webUrl: z.string().nullable(),
 });
 
 export const LifecycleDocumentsResponseSchema = z.object({
@@ -133,6 +134,23 @@ export const LifecycleDocumentsResponseSchema = z.object({
 });
 
 export type LifecycleDocumentsResponse = z.infer<typeof LifecycleDocumentsResponseSchema>;
+
+export const DailyContentSourceSchema = z.object({
+  key: z.enum(["emails", "meetings", "sharepoint", "teams"]),
+  label: z.string(),
+  synced: z.number(),
+  embedded: z.number(),
+  latestAt: z.string().nullable(),
+});
+
+export const DailyContentResponseSchema = z.object({
+  date: z.string(),
+  generatedAt: z.string(),
+  sources: z.array(DailyContentSourceSchema),
+  totals: z.object({ synced: z.number(), embedded: z.number() }),
+});
+
+export type DailyContentResponse = z.infer<typeof DailyContentResponseSchema>;
 
 export const SourceSyncStatusSchema = z.object({
   status: z.enum(["healthy", "degraded", "unavailable"]),

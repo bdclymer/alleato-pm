@@ -7,6 +7,7 @@ import {
   LifecycleDocumentsResponseSchema,
   type LifecycleDocumentsResponse,
 } from "../_contracts";
+import { loadCohort } from "../_daily";
 import {
   batches,
   computeDocumentStages,
@@ -18,8 +19,6 @@ import {
   type LifecycleJobRow,
   type LifecycleStageKey,
   type LifecycleSupport,
-  type RagEmailSourceRow,
-  type SourceFamilyConfig,
   type SourceRow,
 } from "../_lifecycle";
 import { requireAdmin } from "../_shared";
@@ -68,69 +67,6 @@ const STAGE_KEY_SET = new Set<string>(STAGE_KEYS);
 function parseStageKey(request: Request): LifecycleStageKey | null {
   const stage = new URL(request.url).searchParams.get("stage");
   return stage && STAGE_KEY_SET.has(stage) ? (stage as LifecycleStageKey) : null;
-}
-
-/**
- * Load the same source cohort the matrix uses (app document_metadata + RAG-only
- * Outlook rows), then narrow to the requested family. Identical query shape to
- * status/route.ts; keep the two in sync.
- */
-async function loadFamilyCohort(family: SourceFamilyConfig, window: Window): Promise<SourceRow[]> {
-  const appClient = createServiceClient();
-  const ragClient = createRagServiceClient();
-
-  const appRows = await readSupabaseRows<SourceRow>("daily source metadata", () =>
-    appClient
-      .from("document_metadata")
-      .select(
-        "id,title,source,category,type,project_id,source_system,source_item_id,fireflies_id,created_at,date,source_last_modified_at",
-      )
-      .is("deleted_at", null)
-      .gte("created_at", window.sinceISO)
-      .lte("created_at", window.untilISO)
-      .in("source", ["fireflies", "microsoft_graph"])
-      .order("created_at", { ascending: false })
-      .limit(2000),
-  );
-
-  const appRowIds = new Set(appRows.map((row) => row.id));
-
-  // Only Outlook needs the RAG-only email merge; other families live entirely
-  // in the app's document_metadata, so skip the second read for them.
-  let ragOnlyEmailRows: SourceRow[] = [];
-  if (family.key === "emails") {
-    const ragEmailRows = await readSupabaseRows<RagEmailSourceRow>("RAG email metadata", () =>
-      ragClient
-        .from("rag_document_metadata")
-        .select(
-          "id,title,source,type,source_system,source_item_id,source_web_url,created_at,updated_at,project_id",
-        )
-        .eq("source", "microsoft_graph")
-        .or("type.in.(email,email_attachment),id.like.outlook_%")
-        .gte("updated_at", window.sinceISO)
-        .lte("updated_at", window.untilISO)
-        .order("updated_at", { ascending: false })
-        .limit(2000),
-    );
-    ragOnlyEmailRows = ragEmailRows
-      .filter((row) => !appRowIds.has(row.id))
-      .map<SourceRow>((row) => ({
-        id: row.id,
-        title: row.title,
-        source: row.source,
-        category: row.type === "email_attachment" ? "email_attachment" : "email",
-        type: row.type,
-        project_id: row.project_id,
-        source_system: row.source_system,
-        source_item_id: row.source_item_id,
-        fireflies_id: null,
-        created_at: row.created_at,
-        date: row.created_at,
-        source_last_modified_at: row.updated_at,
-      }));
-  }
-
-  return [...appRows, ...ragOnlyEmailRows].filter(family.matches);
 }
 
 /**
@@ -273,7 +209,7 @@ export const GET = withApiGuardrails(
     const window = parseWindow(request);
     const stageKey = parseStageKey(request);
 
-    const familyRows = await loadFamilyCohort(family, window);
+    const familyRows = (await loadCohort(window)).filter(family.matches);
     const support = await loadSupport(familyRows, window);
 
     const projectIds = Array.from(
@@ -299,8 +235,10 @@ export const GET = withApiGuardrails(
           support.jobMetadataByDocumentId,
         ),
         stages,
-        // Only meetings have a guaranteed detail route keyed by document id.
+        // Only meetings have a guaranteed in-app detail route keyed by document id.
         detailHref: family.key === "meetings" ? `/meetings/${row.id}` : null,
+        // External source link (Outlook / SharePoint web URL) when captured.
+        webUrl: row.source_web_url ?? null,
       };
     });
 

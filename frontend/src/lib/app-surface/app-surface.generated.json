@@ -1533,8 +1533,8 @@
     },
     {
       "url": "/source-sync",
-      "title": "Source Sync",
-      "description": "Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness."
+      "title": "Content Sync",
+      "description": null
     },
     {
       "url": "/stats",

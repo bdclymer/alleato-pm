@@ -48,6 +48,7 @@ export type SourceRow = {
   created_at: string | null;
   date: string | null;
   source_last_modified_at: string | null;
+  source_web_url?: string | null;
 };
 
 export type RagEmailSourceRow = {
