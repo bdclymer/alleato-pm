@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (336)
+## UI Routes (337)
 
-_301/336 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_301/337 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -267,6 +267,7 @@ _301/336 have a description (from the page's `PageShell` or the curated `fronten
 | `/insights/[insightId]` | — | frontend/src/app/(tables)/insights/[insightId]/page.tsx |
 | `/intelligence-packets` | Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking | frontend/src/app/(admin)/intelligence-packets/page.tsx |
 | `/intelligence-vision` | How AI is woven through the life of a project — from chasing the work to closing it out — built like a building, floor by floor. What's live today, what's framing up, and where it all goes. | frontend/src/app/(admin)/intelligence-vision/page.tsx |
+| `/intelligence/sources/[sourceDocumentId]` | Intelligence source | frontend/src/app/(main)/intelligence/sources/[sourceDocumentId]/page.tsx |
 | `/invoice/add` | Create a new invoice | frontend/src/app/(dashboard)/invoice/add/page.tsx |
 | `/invoice/edit` | Edit an existing invoice | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
 | `/invoice/list` | List all invoices | frontend/src/app/(dashboard)/invoice/list/page.tsx |
@@ -354,7 +355,7 @@ _301/336 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (755)
+## API Endpoints (754)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -540,7 +541,6 @@ _301/336 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
-| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
