@@ -1044,25 +1044,32 @@ def run_synthesis_sweep(
                 from .compiler import apply_source_operating_record_projection
 
                 rag_client = get_rag_read_client()
-                # Fetch the latest synthesis packet (which was just written).
-                packets = (
-                    client.table("intelligence_packets")
-                    .select("packet_json,packet_type,generated_at")
-                    .eq("packet_type", "current")
-                    .gte("target_id", 0)
-                    .order("generated_at", desc=True)
-                    .limit(10)
-                    .execute()
-                    .data
-                    or []
-                )
-                # Find the packet for this project (target_id is a client_project_target row).
+                # Fetch the exact packet just written by refresh_project_intelligence
+                # above, by its known packet_id.
+                #
+                # BUG #759 (fixed): the previous implementation fetched the 10 most
+                # recent "current" packets globally, filtered with
+                # `.gte("target_id", 0)`, then matched projectId in Python. But
+                # `target_id` is a UUID column, so `.gte("target_id", 0)` raised
+                # Postgres 22P02 ("invalid input syntax for type uuid: 0") on EVERY
+                # run — the operating-record projection never executed and
+                # `project_current_state` froze (stale since 2026-06-24). Fetching by
+                # the packet_id returned from refresh_project_intelligence is exact,
+                # cannot crash on a type mismatch, and cannot silently bind the wrong
+                # project's packet.
                 latest_packet = None
-                for pkt in packets:
-                    pkt_json = pkt.get("packet_json") or {}
-                    if int(pkt_json.get("target", {}).get("projectId")) == pid:
-                        latest_packet = pkt
-                        break
+                _packet_id = synthesis_res.get("packet_id") if refresh_intelligence else None
+                if _packet_id:
+                    _rows = (
+                        client.table("intelligence_packets")
+                        .select("id,packet_json,packet_type,generated_at,confidence_summary")
+                        .eq("id", _packet_id)
+                        .limit(1)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    latest_packet = _rows[0] if _rows else None
 
                 if latest_packet:
                     # Reconstruct a minimal daily_delta from the packet to pass to
@@ -1076,7 +1083,7 @@ def run_synthesis_sweep(
                     daily_delta = {
                         "id": latest_packet.get("id"),
                         "headline": summary_data.get("currentExecutiveRead"),
-                        "confidence": latest_packet.get("confidence"),
+                        "confidence": (latest_packet.get("confidence_summary") or {}).get("overall"),
                         "source_coverage": pkt_json.get("sourceSet", {}).get("sources", []),
                         "metadata": {
                             "operating_read": {
