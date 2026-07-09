@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-07-09T05:08:02.643Z",
+  "jpProjectId": 4389,
+  "appProjectId": 840,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 1,
+    "adopt": 0,
+    "create": 1,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 1,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 1,
+    "pccoWithExecutedTwin": 1
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 806,
+      "number": "CR-4389-0001",
+      "title": "Move Furniture",
+      "statusId": 8,
+      "cost": 1280,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-4389-0001",
+        "commitmentNumber": "SC-4389-0001",
+        "amount": 1280,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-4389-0001",
+        "amount": 1500,
+        "twin": {
+          "id": 28,
+          "number": "000694",
+          "amount": 1500
+        }
+      }
+    ]
+  }
+}

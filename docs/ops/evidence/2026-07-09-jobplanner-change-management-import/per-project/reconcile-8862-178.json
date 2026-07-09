@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-07-09T05:07:59.316Z",
+  "jpProjectId": 8862,
+  "appProjectId": 178,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 0,
+    "adopt": 0,
+    "create": 0,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": []
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "generatedAt": "2026-07-09T05:08:00.452Z",
+  "jpProjectId": 6669,
+  "appProjectId": 764,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 3,
+    "adopt": 0,
+    "create": 3,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 2,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 2,
+    "pccoWithExecutedTwin": 2
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1839,
+      "number": "CR-6669-0002",
+      "title": "Repairs to Existing CMU Infill Panels",
+      "statusId": 8,
+      "cost": 12204,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1841,
+      "number": "CR-6669-0003",
+      "title": "Added Roofer Time for Concrete Cutting",
+      "statusId": 8,
+      "cost": 1085,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2033,
+      "number": "CR-6669-0004",
+      "title": "Owner Change Request- Add (14) quad outlets",
+      "statusId": 8,
+      "cost": 10120,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-6669-0001",
+        "commitmentNumber": "SC-6669-0006",
+        "amount": 1085,
+        "twin": null
+      },
+      {
+        "number": "CCO-6669-0002",
+        "commitmentNumber": "SC-6669-0002",
+        "amount": 10120,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-6669-0001",
+        "amount": 14702.65,
+        "twin": {
+          "id": 1737,
+          "number": "001867",
+          "amount": 14702.65
+        }
+      },
+      {
+        "number": "PCCO-6669-0003",
+        "amount": 14102.86,
+        "twin": {
+          "id": 1750,
+          "number": "001950",
+          "amount": 14102.86
+        }
+      }
+    ]
+  }
+}

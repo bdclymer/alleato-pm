@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-07-09T05:07:51.435Z",
+  "jpProjectId": 9299,
+  "appProjectId": 1067,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 1,
+    "adopt": 0,
+    "create": 1,
+    "flag": 0,
+    "existingChangeEvents": 1,
+    "appOnly": 1,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 1,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2674,
+      "number": "CR-9299-0030",
+      "title": "Design Updates",
+      "statusId": 8,
+      "cost": 75639.12,
+      "lineItems": 57,
+      "fork": {
+        "prime": 34,
+        "commitment": 0,
+        "unlinked": 23
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 30, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [
+    {
+      "id": "fb624fb3-3111-4b5b-877d-47f8fc5b54e8",
+      "number": "001",
+      "title": "CE-9299-0030 Design Updates",
+      "cost": 0,
+      "lineCount": 0
+    }
+  ],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": [
+      {
+        "number": "PCCO-9299-0027",
+        "amount": 46198.06,
+        "twin": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-09T05:07:54.649Z",
+  "jpProjectId": 8262,
+  "appProjectId": 877,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 1,
+    "adopt": 0,
+    "create": 1,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2399,
+      "number": "CR-8262-0001",
+      "title": "R1 Drawing Changes ",
+      "statusId": 0,
+      "cost": 41163.39,
+      "lineItems": 16,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 16
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": []
+  }
+}
