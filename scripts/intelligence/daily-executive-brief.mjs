@@ -26,7 +26,7 @@ const MODEL_TIMEOUT_MS = 180_000;
 const args = parseArgs(process.argv.slice(2));
 const businessDate = args.date ?? previousBusinessDateInNewYork();
 const shouldWrite = !args["no-write"] && !args["dry-run"];
-const model = args.model ?? "openai/gpt-5.4";
+const model = args.model ?? "openai/gpt-5.5";
 const packetType = args.packetType ?? "current";
 if (!["current", "snapshot"].includes(packetType)) {
   throw new Error(`--packetType must be current or snapshot, received: ${packetType}`);
