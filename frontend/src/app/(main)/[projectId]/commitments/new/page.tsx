@@ -282,32 +282,38 @@ export default function NewCommitmentPage() {
         ? "New Purchase Order"
         : "New Commitment";
 
-  return (
-    <PageShell
-      variant="detail"
-      title={title}
-      description={
-        type === "subcontract"
-          ? "Create a new subcontract commitment"
-          : "Create a new purchase order commitment"
-      }
-      onBack={() => router.back()}
-      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
-    >
-      {type === "purchase_order" ? (
+  if (type === "purchase_order") {
+    return (
+      <PageShell
+        variant="detail"
+        title={title}
+        description="Create a new purchase order commitment"
+        onBack={() => router.back()}
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+      >
         <CreatePurchaseOrderForm
           projectId={projectId}
           onSubmit={handleSubmitPurchaseOrder}
           onCancel={handleCancel}
         />
-      ) : (
-        <CreateSubcontractForm
-          projectId={projectId}
-          onSubmit={handleSubmitSubcontract}
-          onCancel={handleCancel}
-          initialData={subcontractInitialData}
-        />
-      )}
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="form"
+      title={title}
+      description="Create a new subcontract commitment"
+      onBack={() => router.back()}
+      backLabel="Back to Commitments"
+    >
+      <CreateSubcontractForm
+        projectId={projectId}
+        onSubmit={handleSubmitSubcontract}
+        onCancel={handleCancel}
+        initialData={subcontractInitialData}
+      />
     </PageShell>
   );
 }

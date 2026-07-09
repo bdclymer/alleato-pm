@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useWatch, type Control, type FieldArrayWithId } from "react-hook-form";
 import { ChevronDown, Download, Upload } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ import {
 
 import { LineItemRow } from "./LineItemRow";
 import type {
+  ChangeEventFormData,
   ChangeEventLineItem,
   VendorOption,
   ContractOption,
@@ -41,7 +43,8 @@ import type {
 } from "./types";
 
 interface LineItemsSectionProps {
-  lineItems: ChangeEventLineItem[];
+  control: Control<ChangeEventFormData>;
+  fields: FieldArrayWithId<ChangeEventFormData, "lineItems", "id">[];
   updateLineItem: (index: number, key: keyof ChangeEventLineItem, value: string | number) => void;
   addLineItem: () => void;
   removeLineItem: (index: number) => void;
@@ -60,7 +63,8 @@ interface LineItemsSectionProps {
 }
 
 export function LineItemsSection({
-  lineItems,
+  control,
+  fields,
   updateLineItem,
   addLineItem,
   removeLineItem,
@@ -100,7 +104,7 @@ export function LineItemsSection({
       scrollContainer.removeEventListener("scroll", updateScrollAffordance);
       window.removeEventListener("resize", updateScrollAffordance);
     };
-  }, [lineItems.length, expectingRevenue]);
+  }, [fields.length, expectingRevenue]);
 
   return (
     <FormSection
@@ -135,14 +139,14 @@ export function LineItemsSection({
             <LineItemsColumnGroup showRevenue={expectingRevenue} />
             <LineItemsTableHeader showRevenue={expectingRevenue} />
             <TableBody>
-              {lineItems.map((item, index) => (
+              {fields.map((field, index) => (
                 <LineItemRow
-                  key={`line-item-${index}`}
-                  item={item}
+                  key={field.id}
+                  control={control}
                   index={index}
                   updateLineItem={updateLineItem}
                   removeLineItem={removeLineItem}
-                  canRemove={lineItems.length > 1}
+                  canRemove={fields.length > 1}
                   vendors={vendors}
                   contracts={contracts}
                   budgetCodes={budgetCodes}
@@ -154,7 +158,7 @@ export function LineItemsSection({
                   lineItemRevenueSource={lineItemRevenueSource}
                 />
               ))}
-              <LineItemsTotalsRow lineItems={lineItems} showRevenue={expectingRevenue} />
+              <LineItemsTotalsRow control={control} showRevenue={expectingRevenue} />
             </TableBody>
           </Table>
         </div>
@@ -265,12 +269,13 @@ function LineItemsTableHeader({ showRevenue }: { showRevenue: boolean }) {
 // ── Totals Row ──
 
 function LineItemsTotalsRow({
-  lineItems,
+  control,
   showRevenue,
 }: {
-  lineItems: ChangeEventLineItem[];
+  control: Control<ChangeEventFormData>;
   showRevenue: boolean;
 }) {
+  const lineItems = (useWatch({ control, name: "lineItems" }) ?? []) as ChangeEventLineItem[];
   const totalCostRom = lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0);
   const totalRevenueRom = lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0);
   const totalNonCommitted = lineItems.reduce((sum, i) => sum + (i.nonCommittedCost || 0), 0);

@@ -433,23 +433,15 @@ export default function EditCommitmentPage() {
     );
   }
 
-  return (
-    <PageShell
-      variant="detailWide"
-      title={title}
-      onBack={handleCancel}
-      backLabel="Cancel"
-      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
-    >
-      {isSubcontract ? (
-        <CreateSubcontractForm
-          projectId={projectId}
-          onSubmit={handleSubmitSubcontract}
-          onCancel={handleCancel}
-          initialData={subcontractData}
-          mode="edit"
-        />
-      ) : (
+  if (!isSubcontract) {
+    return (
+      <PageShell
+        variant="detailWide"
+        title={title}
+        onBack={handleCancel}
+        backLabel="Cancel"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+      >
         <CreatePurchaseOrderForm
           projectId={projectId}
           onSubmit={handleSubmitPurchaseOrder}
@@ -457,7 +449,24 @@ export default function EditCommitmentPage() {
           initialData={purchaseOrderData}
           mode="edit"
         />
-      )}
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="form"
+      title={title}
+      onBack={handleCancel}
+      backLabel="Cancel"
+    >
+      <CreateSubcontractForm
+        projectId={projectId}
+        onSubmit={handleSubmitSubcontract}
+        onCancel={handleCancel}
+        initialData={subcontractData}
+        mode="edit"
+      />
     </PageShell>
   );
 }

@@ -1,39 +1,42 @@
 "use client";
 
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { format } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
-import { ChevronDown, ChevronUp, Paperclip } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DateField } from "@/components/forms/DateField";
+import { Form } from "@/components/ui/form";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { FormGrid, FormSection } from "@/components/forms";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { MoneyField } from "@/components/forms/MoneyField";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import {
   calculateCompletionPercentFromCurrentAmount,
   calculateCurrentAmountFromCompletionPercent,
   validateCurrentAmount,
 } from "@/lib/invoicing/subcontractor-percent-autofill";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,6 +97,26 @@ function formatPercentInput(value: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const subInvoiceFormSchema = z.object({
+  pickerType: z.enum(["subcontract", "purchase_order"]),
+  pickerCommitmentId: z.string(),
+  periodStart: z.string().nullable(),
+  periodEnd: z.string().nullable(),
+  billingDate: z.string().nullable(),
+  invoiceNumber: z.string(),
+});
+
+type SubInvoiceFormValues = z.infer<typeof subInvoiceFormSchema>;
+
+const COMMITMENT_TYPE_OPTIONS = [
+  { value: "subcontract", label: "Subcontract" },
+  { value: "purchase_order", label: "Purchase Order" },
+];
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -114,22 +137,29 @@ export default function NewSubcontractorInvoicePage() {
   const urlCommitmentId = searchParams.get("commitmentId");
   const urlCommitmentType = searchParams.get("commitmentType");
 
-  // Picker state (used when no URL commitment)
-  const [pickerType, setPickerType] = useState<"subcontract" | "purchase_order">("subcontract");
-  const [pickerCommitmentId, setPickerCommitmentId] = useState("");
+  const form = useForm<SubInvoiceFormValues>({
+    resolver: zodResolver(subInvoiceFormSchema),
+    defaultValues: {
+      pickerType: "subcontract",
+      pickerCommitmentId: "",
+      periodStart: "",
+      periodEnd: "",
+      billingDate: "",
+      invoiceNumber: "",
+    },
+  });
+
+  // Picklist options (used when no URL commitment)
   const [subcontracts, setSubcontracts] = useState<CommitmentOption[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<CommitmentOption[]>([]);
   const [picklistLoading, setPicklistLoading] = useState(false);
 
+  const pickerType = form.watch("pickerType");
+  const pickerCommitmentId = form.watch("pickerCommitmentId");
+
   // Resolved effective values (URL params take priority)
   const commitmentId = urlCommitmentId ?? (pickerCommitmentId || null);
   const commitmentType = urlCommitmentType ?? pickerType;
-
-  // Header fields
-  const [periodStart, setPeriodStart] = useState<Date | undefined>(undefined);
-  const [periodEnd, setPeriodEnd] = useState<Date | undefined>(undefined);
-  const [billingDate, setBillingDate] = useState<Date | undefined>(undefined);
-  const [invoiceNumber, setInvoiceNumber] = useState("");
 
   // SOV line item edits: { [itemId]: { work_completed_period, materials_stored } }
   const [sovEdits, setSovEdits] = useState<Record<string, SovEdit>>({});
@@ -146,9 +176,13 @@ export default function NewSubcontractorInvoicePage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Section collapse state
-  const [sovOpen, setSovOpen] = useState(true);
-  const [cosOpen, setCosOpen] = useState(true);
+  // Switching commitment type clears the previously selected contract.
+  const previousPickerType = useRef(pickerType);
+  useEffect(() => {
+    if (previousPickerType.current === pickerType) return;
+    previousPickerType.current = pickerType;
+    form.setValue("pickerCommitmentId", "");
+  }, [pickerType, form]);
 
   // ---------------------------------------------------------------------------
   // Load picklist options when no URL commitment provided
@@ -340,6 +374,55 @@ export default function NewSubcontractorInvoicePage() {
     );
   }, [approvedCOs, coEdits]);
 
+  const sovRowErrors = useMemo(
+    () =>
+      Object.fromEntries(
+        sovItems.map((item) => {
+          const edit = sovEdits[item.id] ?? {
+            completion_percent: "0",
+            work_completed_period: "",
+            materials_stored: "",
+          };
+
+          const validation = validateCurrentAmount({
+            scheduledValue: item.scheduled_value,
+            previouslyBilled: item.from_previous,
+            currentAmount: parseNum(edit.work_completed_period),
+          });
+
+          return [item.id, validation.error];
+        }),
+      ) as Record<string, string | null>,
+    [sovEdits, sovItems],
+  );
+
+  const coRowErrors = useMemo(
+    () =>
+      Object.fromEntries(
+        approvedCOs.map((co) => {
+          const edit = coEdits[co.id] ?? {
+            completion_percent: "0",
+            work_completed_period: "",
+            materials_stored: "",
+          };
+
+          const validation = validateCurrentAmount({
+            scheduledValue: co.amount,
+            previouslyBilled: 0,
+            currentAmount: parseNum(edit.work_completed_period),
+          });
+
+          return [co.id, validation.error];
+        }),
+      ) as Record<string, string | null>,
+    [approvedCOs, coEdits],
+  );
+
+  const formErrors = [
+    ...Object.values(sovRowErrors).filter((error): error is string => Boolean(error)),
+    ...Object.values(coRowErrors).filter((error): error is string => Boolean(error)),
+  ];
+
   // ---------------------------------------------------------------------------
   // Submit
   // ---------------------------------------------------------------------------
@@ -353,6 +436,7 @@ export default function NewSubcontractorInvoicePage() {
       toast.error(formErrors[0]);
       return;
     }
+    const values = form.getValues();
     setSubmitting(true);
     try {
       const lineItems = sovItems.map((item) => {
@@ -410,10 +494,10 @@ export default function NewSubcontractorInvoicePage() {
 
       const body = {
         [contractKey]: commitmentId,
-        period_start: periodStart ? format(periodStart, "yyyy-MM-dd") : null,
-        period_end: periodEnd ? format(periodEnd, "yyyy-MM-dd") : null,
-        billing_date: billingDate ? format(billingDate, "yyyy-MM-dd") : null,
-        invoice_number: invoiceNumber || null,
+        period_start: values.periodStart || null,
+        period_end: values.periodEnd || null,
+        billing_date: values.billingDate || null,
+        invoice_number: values.invoiceNumber || null,
         status,
         line_items: [...lineItems, ...coLineItems],
       };
@@ -434,6 +518,7 @@ export default function NewSubcontractorInvoicePage() {
       router.push(`/${projectId}/invoicing/subcontractor/${result.data.id}`);
     } catch (err) {
       const message = err instanceof Error && err.message ? err.message : "Failed to save invoice";
+      form.setError("root", { type: "server", message });
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -441,120 +526,25 @@ export default function NewSubcontractorInvoicePage() {
   }
 
   // ---------------------------------------------------------------------------
-  // Early states
+  // Derived render data
   // ---------------------------------------------------------------------------
 
-  // Picker options for the currently selected type
   const pickerOptions = pickerType === "subcontract" ? subcontracts : purchaseOrders;
 
-  // Commitment picker section — shown only when no URL-provided commitment
-  const CommitmentPicker = !urlCommitmentId ? (
-    <div className="space-y-4 pb-6 border-b border-border">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-        <div className="space-y-1.5">
-          <Label>Commitment Type</Label>
-          <Select
-            value={pickerType}
-            onValueChange={(v) => {
-              setPickerType(v as "subcontract" | "purchase_order");
-              setPickerCommitmentId("");
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="subcontract">Subcontract</SelectItem>
-              <SelectItem value="purchase_order">Purchase Order</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Contract</Label>
-          <Select
-            value={pickerCommitmentId}
-            onValueChange={setPickerCommitmentId}
-            disabled={picklistLoading || pickerOptions.length === 0}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={picklistLoading ? "Loading…" : "Select a contract"} />
-            </SelectTrigger>
-            <SelectContent>
-              {pickerOptions.map((opt) => (
-                <SelectItem key={opt.id} value={opt.id}>
-                  {[opt.contract_number, opt.title].filter(Boolean).join(" — ")}
-                  {opt.company_name ? ` (${opt.company_name})` : ""}
-                </SelectItem>
-              ))}
-              {!picklistLoading && pickerOptions.length === 0 && (
-                <SelectItem value="__empty" disabled>
-                  No {pickerType === "subcontract" ? "subcontracts" : "purchase orders"} found
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
-  ) : null;
+  const pickerComboOptions = useMemo(
+    () =>
+      pickerOptions.map((opt) => ({
+        value: opt.id,
+        label: `${[opt.contract_number, opt.title].filter(Boolean).join(" — ")}${
+          opt.company_name ? ` (${opt.company_name})` : ""
+        }`,
+      })),
+    [pickerOptions],
+  );
 
   const subtitle = contractInfo
-    ? [
-        contractInfo.number,
-        contractInfo.company,
-      ]
-        .filter(Boolean)
-        .join(" — ")
+    ? [contractInfo.number, contractInfo.company].filter(Boolean).join(" — ")
     : undefined;
-
-  const sovRowErrors = useMemo(
-    () =>
-      Object.fromEntries(
-        sovItems.map((item) => {
-          const edit = sovEdits[item.id] ?? {
-            completion_percent: "0",
-            work_completed_period: "",
-            materials_stored: "",
-          };
-
-          const validation = validateCurrentAmount({
-            scheduledValue: item.scheduled_value,
-            previouslyBilled: item.from_previous,
-            currentAmount: parseNum(edit.work_completed_period),
-          });
-
-          return [item.id, validation.error];
-        }),
-      ) as Record<string, string | null>,
-    [sovEdits, sovItems],
-  );
-
-  const coRowErrors = useMemo(
-    () =>
-      Object.fromEntries(
-        approvedCOs.map((co) => {
-          const edit = coEdits[co.id] ?? {
-            completion_percent: "0",
-            work_completed_period: "",
-            materials_stored: "",
-          };
-
-          const validation = validateCurrentAmount({
-            scheduledValue: co.amount,
-            previouslyBilled: 0,
-            currentAmount: parseNum(edit.work_completed_period),
-          });
-
-          return [co.id, validation.error];
-        }),
-      ) as Record<string, string | null>,
-    [approvedCOs, coEdits],
-  );
-
-  const formErrors = [
-    ...Object.values(sovRowErrors).filter((error): error is string => Boolean(error)),
-    ...Object.values(coRowErrors).filter((error): error is string => Boolean(error)),
-  ];
 
   // ---------------------------------------------------------------------------
   // Render
@@ -565,527 +555,508 @@ export default function NewSubcontractorInvoicePage() {
       variant="form"
       title="Create New Invoice"
       description={subtitle}
-      onBack={() =>
-        router.push(`/${projectId}/invoices?tab=subcontractor`)
-      }
+      onBack={() => router.push(`/${projectId}/invoices?tab=subcontractor`)}
       backLabel="Back to Invoices"
     >
-      <div className="space-y-8">
-        {CommitmentPicker}
+      <FormContainer maxWidth="lg" withCard={false}>
+        <Form {...form}>
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(() => handleAction("under_review"))}
+            className="space-y-8"
+          >
+            {!urlCommitmentId ? (
+              <FormSection title="Commitment">
+                <FormGrid columns={2}>
+                  <RHFSelectField
+                    control={form.control}
+                    name="pickerType"
+                    label="Commitment Type"
+                    placeholder="Select commitment type"
+                    options={COMMITMENT_TYPE_OPTIONS}
+                  />
 
-        {loading ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Loading commitment data…
-          </div>
-        ) : !commitmentId ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Select a contract above to load the Schedule of Values.
-          </div>
-        ) : (
-        <>
-          {/* ----------------------------------------------------------------
-              Header fields — Period Start, Period End, Billing Date, Invoice #
-          ---------------------------------------------------------------- */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <DateField
-              label="Period Start"
-              value={periodStart}
-              onChange={setPeriodStart}
-            />
-            <DateField
-              label="Period End"
-              value={periodEnd}
-              onChange={setPeriodEnd}
-            />
-            <DateField
-              label="Billing Date"
-              value={billingDate}
-              onChange={setBillingDate}
-            />
-            <div className="space-y-1.5">
-              <Label htmlFor="invoice-number">Invoice #:</Label>
-              <Input
-                id="invoice-number"
-                type="text"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="Auto-assigned if blank"
-                maxLength={255}
-              />
-            </div>
-          </div>
+                  <RHFComboboxField
+                    control={form.control}
+                    name="pickerCommitmentId"
+                    label="Contract"
+                    placeholder={picklistLoading ? "Loading…" : "Select a contract"}
+                    searchPlaceholder="Search contracts..."
+                    emptyMessage={
+                      pickerType === "subcontract"
+                        ? "No subcontracts found."
+                        : "No purchase orders found."
+                    }
+                    options={pickerComboOptions}
+                    disabled={picklistLoading || pickerComboOptions.length === 0}
+                  />
+                </FormGrid>
+              </FormSection>
+            ) : null}
 
-          {/* ----------------------------------------------------------------
-              Complete Schedule of Values
-          ---------------------------------------------------------------- */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setSovOpen((v) => !v)}
-              className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground hover:text-primary transition-colors"
-            >
-              {sovOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-              Complete Schedule of Values
-            </button>
+            {loading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                Loading commitment data…
+              </div>
+            ) : !commitmentId ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                Select a contract above to load the Schedule of Values.
+              </div>
+            ) : (
+              <>
+                <FormSection title="Invoice Details">
+                  <FormGrid columns={2}>
+                    <RHFDateField
+                      control={form.control}
+                      name="periodStart"
+                      label="Period Start"
+                      nullable
+                    />
+                    <RHFDateField
+                      control={form.control}
+                      name="periodEnd"
+                      label="Period End"
+                      nullable
+                    />
+                    <RHFDateField
+                      control={form.control}
+                      name="billingDate"
+                      label="Billing Date"
+                      nullable
+                    />
+                    <RHFTextField
+                      control={form.control}
+                      name="invoiceNumber"
+                      label="Invoice #"
+                      placeholder="Auto-assigned if blank"
+                      maxLength={255}
+                    />
+                  </FormGrid>
+                </FormSection>
 
-            {sovOpen && (
-              <div className="border border-border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="w-28">Subjob</TableHead>
-                        <TableHead>Description of Work</TableHead>
-                        <TableHead className="text-right w-32">Value</TableHead>
-                        <TableHead className="text-right w-40">
+                <FormSection title="Complete Schedule of Values">
+                  <InlineTable
+                    variant="edit"
+                    className="rounded-lg border border-border/70 bg-muted/20 px-2"
+                    tableClassName="min-w-[880px]"
+                  >
+                    <InlineTableHeader>
+                      <InlineTableHeaderRow className="border-b border-border/60">
+                        <InlineTableHeaderCell className="w-28">Subjob</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Description of Work</InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-32">
+                          Value
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           From Previous Application
-                        </TableHead>
-                        <TableHead className="text-right w-16">%</TableHead>
-                        <TableHead className="text-right w-40">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-16">
+                          %
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           From This Period
-                        </TableHead>
-                        <TableHead className="text-right w-40">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           Materials Presently Stored
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </InlineTableHeaderCell>
+                      </InlineTableHeaderRow>
+                    </InlineTableHeader>
+                    <InlineTableBody>
                       {sovItems.length === 0 ? (
-                        <TableRow>
-                          <TableCell
+                        <InlineTableRow>
+                          <InlineTableCell
                             colSpan={7}
-                            className="text-center text-sm text-muted-foreground py-8"
+                            className="py-8 text-center text-sm text-muted-foreground"
                           >
                             No schedule of values found for this commitment.
-                          </TableCell>
-                        </TableRow>
+                          </InlineTableCell>
+                        </InlineTableRow>
                       ) : (
-                        <>
-                          {sovItems.map((item) => {
-                            const e = sovEdits[item.id] ?? {
-                              completion_percent: "0",
-                              work_completed_period: "",
-                              materials_stored: "",
-                            };
-                            return (
-                              <TableRow key={item.id}>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {item.budget_code ?? "N/A"}
-                                </TableCell>
-                                <TableCell className="text-sm">
-                                  {item.description}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm">
-                                  {formatCurrency(item.scheduled_value)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm">
-                                  {formatCurrency(item.from_previous)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  <NumberInput
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    decimals={2}
-                                    formatOnBlur={false}
-                                    autoSelectOnFocus
-                                    clearZeroOnFocus
-                                    aria-label={`Percent complete for ${item.description}`}
-                                    className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
-                                    value={e.completion_percent}
-                                    onChange={(ev) => {
-                                      const nextPercent = ev.target.value;
-                                      setSovEdits((prev) => {
-                                        const next = {
-                                          ...prev,
-                                          [item.id]: {
-                                            ...prev[item.id],
-                                            completion_percent: nextPercent,
-                                          },
-                                        };
+                        sovItems.map((item) => {
+                          const e = sovEdits[item.id] ?? {
+                            completion_percent: "0",
+                            work_completed_period: "",
+                            materials_stored: "",
+                          };
+                          return (
+                            <InlineTableRow key={item.id}>
+                              <InlineTableCell className="text-sm text-muted-foreground">
+                                {item.budget_code ?? "N/A"}
+                              </InlineTableCell>
+                              <InlineTableCell className="text-sm">
+                                {item.description}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" numeric className="text-sm">
+                                {formatCurrency(item.scheduled_value)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" numeric className="text-sm">
+                                {formatCurrency(item.from_previous)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="text-muted-foreground">
+                                <NumberInput
+                                  step="0.01"
+                                  min="0"
+                                  max="100"
+                                  decimals={2}
+                                  formatOnBlur={false}
+                                  autoSelectOnFocus
+                                  clearZeroOnFocus
+                                  aria-label={`Percent complete for ${item.description}`}
+                                  className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
+                                  value={e.completion_percent}
+                                  onChange={(ev) => {
+                                    const nextPercent = ev.target.value;
+                                    setSovEdits((prev) => {
+                                      const next = {
+                                        ...prev,
+                                        [item.id]: {
+                                          ...prev[item.id],
+                                          completion_percent: nextPercent,
+                                        },
+                                      };
 
-                                        if (nextPercent.trim() === "") {
-                                          return next;
-                                        }
-
-                                        const calculated = calculateCurrentAmountFromCompletionPercent({
-                                          scheduledValue: item.scheduled_value,
-                                          previouslyBilled: item.from_previous,
-                                          completionPercent: parseNum(nextPercent),
-                                        });
-
-                                        if (calculated.error) {
-                                          return next;
-                                        }
-
-                                        next[item.id] = {
-                                          ...next[item.id],
-                                          work_completed_period:
-                                            calculated.amount == null ? "" : String(calculated.amount),
-                                        };
+                                      if (nextPercent.trim() === "") {
                                         return next;
+                                      }
+
+                                      const calculated = calculateCurrentAmountFromCompletionPercent({
+                                        scheduledValue: item.scheduled_value,
+                                        previouslyBilled: item.from_previous,
+                                        completionPercent: parseNum(nextPercent),
                                       });
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <MoneyField
-                                    label={`${item.description} work completed this period`}
-                                    inline
-                                    showCurrency={false}
-                                    clearZeroOnFocus
-                                    className="h-8 w-28 text-sm"
-                                    value={
-                                      e.work_completed_period
-                                        ? parseNum(e.work_completed_period)
-                                        : undefined
-                                    }
-                                    placeholder=""
-                                    onChange={(value) =>
-                                      setSovEdits((prev) => ({
-                                        ...prev,
-                                        [item.id]: {
-                                          ...prev[item.id],
-                                          completion_percent: formatPercentInput(
-                                            calculateCompletionPercentFromCurrentAmount({
-                                              scheduledValue: item.scheduled_value,
-                                              previouslyBilled: item.from_previous,
-                                              currentAmount: value ?? 0,
-                                            }),
-                                          ),
-                                          work_completed_period:
-                                            value == null ? "" : String(value),
-                                        },
-                                      }))
-                                    }
-                                  />
-                                  {sovRowErrors[item.id] ? (
-                                    <p className="mt-1 text-xs text-destructive">
-                                      {sovRowErrors[item.id]}
-                                    </p>
-                                  ) : null}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <MoneyField
-                                    label={`${item.description} materials stored`}
-                                    inline
-                                    showCurrency={false}
-                                    clearZeroOnFocus
-                                    className="h-8 w-28 text-sm"
-                                    value={
-                                      e.materials_stored
-                                        ? parseNum(e.materials_stored)
-                                        : undefined
-                                    }
-                                    placeholder=""
-                                    onChange={(value) =>
-                                      setSovEdits((prev) => ({
-                                        ...prev,
-                                        [item.id]: {
-                                          ...prev[item.id],
-                                          materials_stored:
-                                            value == null ? "" : String(value),
-                                        },
-                                      }))
-                                    }
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
 
-                          {/* Totals row */}
-                          <TableRow className="bg-muted/50 font-semibold text-sm border-t border-border">
-                            <TableCell colSpan={2} className="text-muted-foreground">
-                              Total
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(totals.scheduled)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(totals.fromPrevious)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-muted-foreground">
-                              {pct(totals.fromPrevious + totals.thisPeriod, totals.scheduled)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(totals.thisPeriod)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(totals.materialsStored)}
-                            </TableCell>
-                          </TableRow>
-                        </>
+                                      if (calculated.error) {
+                                        return next;
+                                      }
+
+                                      next[item.id] = {
+                                        ...next[item.id],
+                                        work_completed_period:
+                                          calculated.amount == null ? "" : String(calculated.amount),
+                                      };
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              </InlineTableCell>
+                              <InlineTableCell align="right">
+                                <MoneyField
+                                  label={`${item.description} work completed this period`}
+                                  inline
+                                  showCurrency={false}
+                                  clearZeroOnFocus
+                                  className="h-8 w-28 text-sm"
+                                  value={
+                                    e.work_completed_period
+                                      ? parseNum(e.work_completed_period)
+                                      : undefined
+                                  }
+                                  placeholder=""
+                                  onChange={(value) =>
+                                    setSovEdits((prev) => ({
+                                      ...prev,
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        completion_percent: formatPercentInput(
+                                          calculateCompletionPercentFromCurrentAmount({
+                                            scheduledValue: item.scheduled_value,
+                                            previouslyBilled: item.from_previous,
+                                            currentAmount: value ?? 0,
+                                          }),
+                                        ),
+                                        work_completed_period:
+                                          value == null ? "" : String(value),
+                                      },
+                                    }))
+                                  }
+                                />
+                                {sovRowErrors[item.id] ? (
+                                  <p className="mt-1 text-xs text-destructive">
+                                    {sovRowErrors[item.id]}
+                                  </p>
+                                ) : null}
+                              </InlineTableCell>
+                              <InlineTableCell align="right">
+                                <MoneyField
+                                  label={`${item.description} materials stored`}
+                                  inline
+                                  showCurrency={false}
+                                  clearZeroOnFocus
+                                  className="h-8 w-28 text-sm"
+                                  value={
+                                    e.materials_stored
+                                      ? parseNum(e.materials_stored)
+                                      : undefined
+                                  }
+                                  placeholder=""
+                                  onChange={(value) =>
+                                    setSovEdits((prev) => ({
+                                      ...prev,
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        materials_stored:
+                                          value == null ? "" : String(value),
+                                      },
+                                    }))
+                                  }
+                                />
+                              </InlineTableCell>
+                            </InlineTableRow>
+                          );
+                        })
                       )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-          </div>
+                    </InlineTableBody>
+                    {sovItems.length > 0 ? (
+                      <InlineTableFooter>
+                        <InlineTableFooterRow type="totals">
+                          <InlineTableFooterCell colSpan={2}>Total</InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(totals.scheduled)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(totals.fromPrevious)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {pct(totals.fromPrevious + totals.thisPeriod, totals.scheduled)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(totals.thisPeriod)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(totals.materialsStored)}
+                          </InlineTableFooterCell>
+                        </InlineTableFooterRow>
+                      </InlineTableFooter>
+                    ) : null}
+                  </InlineTable>
+                </FormSection>
 
-          {/* ----------------------------------------------------------------
-              Approved Commitment Change Orders
-          ---------------------------------------------------------------- */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setCosOpen((v) => !v)}
-              className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground hover:text-primary transition-colors"
-            >
-              {cosOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-              Approved Commitment Change Orders
-            </button>
-
-            {cosOpen && (
-              <div className="border border-border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead>Change Order</TableHead>
-                        <TableHead>Description of Work</TableHead>
-                        <TableHead className="text-right w-32">Value</TableHead>
-                        <TableHead className="text-right w-40">
+                <FormSection title="Approved Commitment Change Orders">
+                  <InlineTable
+                    variant="edit"
+                    className="rounded-lg border border-border/70 bg-muted/20 px-2"
+                    tableClassName="min-w-[880px]"
+                  >
+                    <InlineTableHeader>
+                      <InlineTableHeaderRow className="border-b border-border/60">
+                        <InlineTableHeaderCell>Change Order</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Description of Work</InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-32">
+                          Value
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           From Previous Application
-                        </TableHead>
-                        <TableHead className="text-right w-16">%</TableHead>
-                        <TableHead className="text-right w-40">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-16">
+                          %
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           From This Period
-                        </TableHead>
-                        <TableHead className="text-right w-40">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40">
                           Materials Presently Stored
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </InlineTableHeaderCell>
+                      </InlineTableHeaderRow>
+                    </InlineTableHeader>
+                    <InlineTableBody>
                       {approvedCOs.length === 0 ? (
-                        <TableRow>
-                          <TableCell
+                        <InlineTableRow>
+                          <InlineTableCell
                             colSpan={7}
-                            className="text-center text-sm text-muted-foreground py-8"
+                            className="py-8 text-center text-sm text-muted-foreground"
                           >
-                            There are no approved Commitment Change Orders added
-                            to this Invoice
-                          </TableCell>
-                        </TableRow>
+                            There are no approved Commitment Change Orders added to this Invoice
+                          </InlineTableCell>
+                        </InlineTableRow>
                       ) : (
-                        <>
-                          {approvedCOs.map((co) => {
-                            const e = coEdits[co.id] ?? {
-                              completion_percent: "0",
-                              work_completed_period: "",
-                              materials_stored: "",
-                            };
-                            return (
-                              <TableRow key={co.id}>
-                                <TableCell className="text-sm font-medium">
-                                  {co.change_order_number}
-                                </TableCell>
-                                <TableCell className="text-sm">
-                                  {co.title ?? co.description ?? "—"}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm">
-                                  {formatCurrency(co.amount)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm">
-                                  {formatCurrency(0)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                                  <NumberInput
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    decimals={2}
-                                    formatOnBlur={false}
-                                    autoSelectOnFocus
-                                    clearZeroOnFocus
-                                    aria-label={`Percent complete for change order ${co.change_order_number}`}
-                                    className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
-                                    value={e.completion_percent}
-                                    onChange={(ev) => {
-                                      const nextPercent = ev.target.value;
-                                      setCoEdits((prev) => {
-                                        const next = {
-                                          ...prev,
-                                          [co.id]: {
-                                            ...prev[co.id],
-                                            completion_percent: nextPercent,
-                                          },
-                                        };
+                        approvedCOs.map((co) => {
+                          const e = coEdits[co.id] ?? {
+                            completion_percent: "0",
+                            work_completed_period: "",
+                            materials_stored: "",
+                          };
+                          return (
+                            <InlineTableRow key={co.id}>
+                              <InlineTableCell className="text-sm font-medium">
+                                {co.change_order_number}
+                              </InlineTableCell>
+                              <InlineTableCell className="text-sm">
+                                {co.title ?? co.description ?? "—"}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" numeric className="text-sm">
+                                {formatCurrency(co.amount)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" numeric className="text-sm">
+                                {formatCurrency(0)}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="text-muted-foreground">
+                                <NumberInput
+                                  step="0.01"
+                                  min="0"
+                                  max="100"
+                                  decimals={2}
+                                  formatOnBlur={false}
+                                  autoSelectOnFocus
+                                  clearZeroOnFocus
+                                  aria-label={`Percent complete for change order ${co.change_order_number}`}
+                                  className="ml-auto h-8 w-20 text-right tabular-nums text-sm"
+                                  value={e.completion_percent}
+                                  onChange={(ev) => {
+                                    const nextPercent = ev.target.value;
+                                    setCoEdits((prev) => {
+                                      const next = {
+                                        ...prev,
+                                        [co.id]: {
+                                          ...prev[co.id],
+                                          completion_percent: nextPercent,
+                                        },
+                                      };
 
-                                        if (nextPercent.trim() === "") {
-                                          return next;
-                                        }
-
-                                        const calculated = calculateCurrentAmountFromCompletionPercent({
-                                          scheduledValue: co.amount,
-                                          previouslyBilled: 0,
-                                          completionPercent: parseNum(nextPercent),
-                                        });
-
-                                        if (calculated.error) {
-                                          return next;
-                                        }
-
-                                        next[co.id] = {
-                                          ...next[co.id],
-                                          work_completed_period:
-                                            calculated.amount == null ? "" : String(calculated.amount),
-                                        };
+                                      if (nextPercent.trim() === "") {
                                         return next;
+                                      }
+
+                                      const calculated = calculateCurrentAmountFromCompletionPercent({
+                                        scheduledValue: co.amount,
+                                        previouslyBilled: 0,
+                                        completionPercent: parseNum(nextPercent),
                                       });
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <MoneyField
-                                    label={`Change order ${co.change_order_number} work completed this period`}
-                                    inline
-                                    showCurrency={false}
-                                    clearZeroOnFocus
-                                    className="h-8 w-28 text-sm"
-                                    value={
-                                      e.work_completed_period
-                                        ? parseNum(e.work_completed_period)
-                                        : undefined
-                                    }
-                                    placeholder=""
-                                    onChange={(value) =>
-                                      setCoEdits((prev) => ({
-                                        ...prev,
-                                        [co.id]: {
-                                          ...prev[co.id],
-                                          completion_percent: formatPercentInput(
-                                            calculateCompletionPercentFromCurrentAmount({
-                                              scheduledValue: co.amount,
-                                              previouslyBilled: 0,
-                                              currentAmount: value ?? 0,
-                                            }),
-                                          ),
-                                          work_completed_period:
-                                            value == null ? "" : String(value),
-                                        },
-                                      }))
-                                    }
-                                  />
-                                  {coRowErrors[co.id] ? (
-                                    <p className="mt-1 text-xs text-destructive">
-                                      {coRowErrors[co.id]}
-                                    </p>
-                                  ) : null}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <MoneyField
-                                    label={`Change order ${co.change_order_number} materials stored`}
-                                    inline
-                                    showCurrency={false}
-                                    clearZeroOnFocus
-                                    className="h-8 w-28 text-sm"
-                                    value={
-                                      e.materials_stored
-                                        ? parseNum(e.materials_stored)
-                                        : undefined
-                                    }
-                                    placeholder=""
-                                    onChange={(value) =>
-                                      setCoEdits((prev) => ({
-                                        ...prev,
-                                        [co.id]: {
-                                          ...prev[co.id],
-                                          materials_stored:
-                                            value == null ? "" : String(value),
-                                        },
-                                      }))
-                                    }
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                          <TableRow className="bg-muted/50 font-semibold text-sm border-t border-border">
-                            <TableCell colSpan={2} className="text-muted-foreground">
-                              Total
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(coTotals.scheduled)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(coTotals.fromPrevious)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-muted-foreground">
-                              {pct(coTotals.fromPrevious + coTotals.thisPeriod, coTotals.scheduled)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(coTotals.thisPeriod)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(coTotals.materialsStored)}
-                            </TableCell>
-                          </TableRow>
-                        </>
+
+                                      if (calculated.error) {
+                                        return next;
+                                      }
+
+                                      next[co.id] = {
+                                        ...next[co.id],
+                                        work_completed_period:
+                                          calculated.amount == null ? "" : String(calculated.amount),
+                                      };
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              </InlineTableCell>
+                              <InlineTableCell align="right">
+                                <MoneyField
+                                  label={`Change order ${co.change_order_number} work completed this period`}
+                                  inline
+                                  showCurrency={false}
+                                  clearZeroOnFocus
+                                  className="h-8 w-28 text-sm"
+                                  value={
+                                    e.work_completed_period
+                                      ? parseNum(e.work_completed_period)
+                                      : undefined
+                                  }
+                                  placeholder=""
+                                  onChange={(value) =>
+                                    setCoEdits((prev) => ({
+                                      ...prev,
+                                      [co.id]: {
+                                        ...prev[co.id],
+                                        completion_percent: formatPercentInput(
+                                          calculateCompletionPercentFromCurrentAmount({
+                                            scheduledValue: co.amount,
+                                            previouslyBilled: 0,
+                                            currentAmount: value ?? 0,
+                                          }),
+                                        ),
+                                        work_completed_period:
+                                          value == null ? "" : String(value),
+                                      },
+                                    }))
+                                  }
+                                />
+                                {coRowErrors[co.id] ? (
+                                  <p className="mt-1 text-xs text-destructive">
+                                    {coRowErrors[co.id]}
+                                  </p>
+                                ) : null}
+                              </InlineTableCell>
+                              <InlineTableCell align="right">
+                                <MoneyField
+                                  label={`Change order ${co.change_order_number} materials stored`}
+                                  inline
+                                  showCurrency={false}
+                                  clearZeroOnFocus
+                                  className="h-8 w-28 text-sm"
+                                  value={
+                                    e.materials_stored
+                                      ? parseNum(e.materials_stored)
+                                      : undefined
+                                  }
+                                  placeholder=""
+                                  onChange={(value) =>
+                                    setCoEdits((prev) => ({
+                                      ...prev,
+                                      [co.id]: {
+                                        ...prev[co.id],
+                                        materials_stored:
+                                          value == null ? "" : String(value),
+                                      },
+                                    }))
+                                  }
+                                />
+                              </InlineTableCell>
+                            </InlineTableRow>
+                          );
+                        })
                       )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                    </InlineTableBody>
+                    {approvedCOs.length > 0 ? (
+                      <InlineTableFooter>
+                        <InlineTableFooterRow type="totals">
+                          <InlineTableFooterCell colSpan={2}>Total</InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(coTotals.scheduled)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(coTotals.fromPrevious)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {pct(coTotals.fromPrevious + coTotals.thisPeriod, coTotals.scheduled)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(coTotals.thisPeriod)}
+                          </InlineTableFooterCell>
+                          <InlineTableFooterCell align="right" numeric>
+                            {formatCurrency(coTotals.materialsStored)}
+                          </InlineTableFooterCell>
+                        </InlineTableFooterRow>
+                      </InlineTableFooter>
+                    ) : null}
+                  </InlineTable>
+                </FormSection>
+
+                <FormSection title="Attachments">
+                  <p className="text-xs text-muted-foreground">
+                    Files can be attached after saving the invoice.
+                  </p>
+                </FormSection>
+              </>
             )}
-          </div>
 
-          {/* ----------------------------------------------------------------
-              Attachments
-          ---------------------------------------------------------------- */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Paperclip className="h-3.5 w-3.5" />
-              Attachments:
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Files can be attached after saving the invoice.
-            </p>
-          </div>
+            <FormServerError message={form.formState.errors.root?.message} />
 
-          {/* ----------------------------------------------------------------
-              Action buttons
-          ---------------------------------------------------------------- */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() =>
-                router.push(`/${projectId}/invoices?tab=subcontractor`)
-              }
-              disabled={submitting}
+            <FormActions
+              submitLabel="Submit"
+              isSubmitting={submitting}
+              submitDisabled={formErrors.length > 0}
+              onCancel={() => router.push(`/${projectId}/invoices?tab=subcontractor`)}
+              stickyOnMobile
             >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleAction("draft")}
-              disabled={submitting || formErrors.length > 0}
-            >
-              {submitting ? "Saving…" : "Save as Draft"}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => handleAction("under_review")}
-              disabled={submitting || formErrors.length > 0}
-            >
-              {submitting ? "Submitting…" : "Submit"}
-            </Button>
-          </div>
-        </>
-        )}
-      </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleAction("draft")}
+                disabled={submitting || formErrors.length > 0}
+              >
+                {submitting ? "Saving…" : "Save as Draft"}
+              </Button>
+            </FormActions>
+          </form>
+        </Form>
+      </FormContainer>
     </PageShell>
   );
 }

@@ -1,16 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, HelpCircle, UserPlus, X } from "lucide-react";
+import { Check, ChevronsUpDown, UserPlus, X } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Command,
   CommandEmpty,
@@ -30,8 +24,8 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import { LinkExistingContactSheet } from "@/components/domain/contacts/LinkExistingContactSheet";
+import { FormSection } from "@/components/forms";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InvoiceContactsSectionProps {
   isSubmitting: boolean;
@@ -107,20 +101,10 @@ export function InvoiceContactsSection({
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-start gap-2">
-        <SectionRuleHeading label="Invoice Contacts" className="!mb-0 !pb-0 !items-start" />
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <HelpCircle className="mt-0.5 h-4 w-4 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs text-sm">
-              This person will be added to the contract and will be the point of contact and signer for subcontractor invoices.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+    <FormSection
+      title="Invoice Contacts"
+      description="This person will be added to the contract and will be the point of contact and signer for subcontractor invoices."
+    >
       <div>
         {(
           <Controller
@@ -277,6 +261,6 @@ export function InvoiceContactsSection({
         )}
       </div>
       {/* contractCompanyId watched but no longer gates rendering */}
-    </section>
+    </FormSection>
   );
 }

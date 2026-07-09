@@ -16,15 +16,20 @@ jest.mock("../change-event-form", () => ({
   GeneralInfoSection: (props: unknown) => mockGeneralInfoSection(props as { showDescription?: boolean }),
   LineItemsSection: () => <div data-testid="line-items-section" />,
   useChangeEventFormData: () => ({
-    formData: {
-      lineItems: [],
-      attachments: [],
-      expectingRevenue: true,
-      lineItemRevenueSource: "",
+    // RHF-backed form stub — only the members ChangeEventForm touches at render.
+    form: {
+      watch: (name: string) =>
+        name === "attachments" ? [] : name === "expectingRevenue" ? true : "",
+      getValues: () => [],
+      setValue: jest.fn(),
+      handleSubmit: () => (event?: { preventDefault?: () => void }) => {
+        event?.preventDefault?.();
+      },
+      control: {},
+      formState: { errors: {} },
     },
+    lineItemFields: [],
     nextNumber: "CE-001",
-    errors: {},
-    updateFormData: jest.fn(),
     updateLineItem: jest.fn(),
     vendors: [],
     contracts: [],
@@ -42,10 +47,7 @@ jest.mock("../change-event-form", () => ({
     removeLineItem: jest.fn(),
     csvInputRef: { current: null },
     handleCsvImport: jest.fn(),
-    attachmentsAsInfo: [],
-    setFormData: jest.fn(),
     handleBudgetCodeCreated: jest.fn(),
-    validate: () => true,
   }),
 }));
 

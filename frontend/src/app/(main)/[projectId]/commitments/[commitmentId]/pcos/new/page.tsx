@@ -6,31 +6,31 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+
+import { ArrowLeft } from "lucide-react";
+
+import { FormContainer, PageShell } from "@/components/layout";
 import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Text } from "@/components/ds/text";
-import { apiFetch } from "@/lib/api-client";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  FormActions,
+  FormGrid,
+  FormSection,
+  FormServerError,
+} from "@/components/forms";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFMoneyField } from "@/components/forms/fields/RHFMoneyField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -57,6 +57,16 @@ const CHANGE_REASONS = [
   "Backcharge",
   "Allowance",
 ];
+
+const STATUS_OPTIONS = PCO_STATUSES.map((status) => ({
+  value: status.value,
+  label: status.label,
+}));
+
+const CHANGE_REASON_OPTIONS = CHANGE_REASONS.map((reason) => ({
+  value: reason,
+  label: reason,
+}));
 
 // ---------------------------------------------------------------------------
 // Types
@@ -176,7 +186,7 @@ export default function NewCommitmentPcoPage() {
       }
     };
     fetchData();
-     
+
   }, [commitmentId, projectId]);
 
   type PcoStatus = "open" | "pending" | "approved" | "rejected" | "void";
@@ -210,7 +220,7 @@ export default function NewCommitmentPcoPage() {
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const result = await apiFetch(
+      await apiFetch(
         `/api/projects/${projectId}/commitments/${commitmentId}/pcos`,
         {
           method: "POST",
@@ -242,6 +252,9 @@ export default function NewCommitmentPcoPage() {
         `/${projectId}/commitments/${commitmentId}?tab=change-orders`,
       );
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create PCO";
+      form.setError("root", { type: "server", message });
       toast.error("Failed to create PCO");
     } finally {
       setIsSubmitting(false);
@@ -255,426 +268,218 @@ export default function NewCommitmentPcoPage() {
       onBack={() => router.back()}
       actions={
         <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="gap-1.5 text-xs"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
           <CommitmentsHelpSheet buttonVariant="ghost" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              router.push(
-                `/${projectId}/commitments/${commitmentId}?tab=change-orders`,
-              )
-            }
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={isSubmitting || isLoading}
-          >
-            {isSubmitting ? "Creating…" : "Create"}
-          </Button>
         </div>
       }
     >
-      {isLoading ? (
-        <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-9 w-full" />
+      <FormContainer maxWidth="lg" withCard={false}>
+        {isLoading ? (
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-20 w-full" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-9 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-      ) : (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
-          >
-            {/* Contract Information (read-only) */}
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Contract Information"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                <FormItem>
-                  <FormLabel>Contract Company</FormLabel>
-                  <Input
-                    value={commitment?.vendor_name ?? ""}
-                    disabled
-                    placeholder="Determined by commitment"
+        ) : (
+          <Form {...form}>
+            <form
+              noValidate
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-8"
+            >
+              {/* Contract Information (read-only) */}
+              <FormSection title="Contract Information">
+                <FormGrid columns={2}>
+                  <div className="grid gap-2">
+                    <Label>Contract Company</Label>
+                    <Input
+                      value={commitment?.vendor_name ?? ""}
+                      disabled
+                      placeholder="Determined by commitment"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Contract</Label>
+                    <Input
+                      value={
+                        commitment
+                          ? `${commitment.contract_number ?? ""} — ${commitment.title ?? ""}`
+                          : ""
+                      }
+                      disabled
+                      placeholder="Linked commitment"
+                    />
+                  </div>
+                </FormGrid>
+              </FormSection>
+
+              {/* General Information */}
+              <FormSection title="General Information">
+                <FormGrid columns={2}>
+                  <RHFTextField
+                    control={form.control}
+                    name="number"
+                    label="# *"
+                    placeholder={nextNumber}
                   />
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Contract</FormLabel>
-                  <Input
-                    value={
-                      commitment
-                        ? `${commitment.contract_number ?? ""} — ${commitment.title ?? ""}`
-                        : ""
-                    }
-                    disabled
-                    placeholder="Linked commitment"
+
+                  <RHFNumberField
+                    control={form.control}
+                    name="revision"
+                    label="Revision"
+                    min={0}
+                    step={1}
                   />
-                </FormItem>
-              </div>
-            </section>
+                </FormGrid>
 
-            {/* General Information */}
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="General Information"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                {/* PCO Number */}
-                <FormField
-                  control={form.control}
-                  name="number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel># *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder={nextNumber} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Revision */}
-                <FormField
-                  control={form.control}
-                  name="revision"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Revision</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? 0}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : 0,
-                            )
-                          }
-                          placeholder=""
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Title */}
-                <FormField
+                <RHFTextField
                   control={form.control}
                   name="title"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Potential change order title" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Title *"
+                  placeholder="Potential change order title"
                 />
 
-                {/* Status */}
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PCO_STATUSES.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {s.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormGrid columns={2}>
+                  <RHFSelectField
+                    control={form.control}
+                    name="status"
+                    label="Status"
+                    placeholder="Select status"
+                    options={STATUS_OPTIONS}
+                  />
 
-                {/* Change Reason */}
-                <FormField
-                  control={form.control}
-                  name="change_reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Change Reason</FormLabel>
-                      <Select
-                        onValueChange={(val) =>
-                          field.onChange(val === "__none__" ? null : val)
-                        }
-                        value={field.value ?? "__none__"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select reason" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {CHANGE_REASONS.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFComboboxField
+                    control={form.control}
+                    name="change_reason"
+                    label="Change Reason"
+                    placeholder="Select reason"
+                    searchPlaceholder="Search reasons..."
+                    emptyMessage="No reasons found."
+                    options={CHANGE_REASON_OPTIONS}
+                    clearable
+                  />
 
-                {/* Amount */}
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount ($)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={field.value}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFMoneyField
+                    control={form.control}
+                    name="amount"
+                    label="Amount"
+                    min={0}
+                  />
 
-                {/* Request Received From */}
-                <FormField
-                  control={form.control}
-                  name="requested_by"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Request Received From</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder="Name of requester"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFTextField
+                    control={form.control}
+                    name="requested_by"
+                    label="Request Received From"
+                    placeholder="Name of requester"
+                  />
+                </FormGrid>
 
-                {/* Description */}
-                <FormField
+                <RHFTextareaField
                   control={form.control}
                   name="description"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          value={field.value ?? ""}
-                          rows={4}
-                          placeholder="Detailed description of the change…"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Description"
+                  placeholder="Detailed description of the change…"
+                  rows={4}
                 />
-              </div>
-            </section>
+              </FormSection>
 
-            {/* Dates & Details */}
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Dates & Details"
-                className="[&_span]:text-primary"
+              {/* Dates & Details */}
+              <FormSection title="Dates & Details">
+                <FormGrid columns={2}>
+                  <RHFDateField
+                    control={form.control}
+                    name="due_date"
+                    label="Due Date"
+                    nullable
+                  />
+
+                  <RHFDateField
+                    control={form.control}
+                    name="signed_co_received_date"
+                    label="Signed Change Order Received Date"
+                    nullable
+                  />
+
+                  <RHFNumberField
+                    control={form.control}
+                    name="schedule_impact"
+                    label="Schedule Impact (days)"
+                    step={1}
+                    placeholder="days"
+                  />
+
+                  <RHFTextField
+                    control={form.control}
+                    name="location"
+                    label="Location"
+                    placeholder="Project location"
+                  />
+
+                  <RHFTextField
+                    control={form.control}
+                    name="reference"
+                    label="Reference"
+                    placeholder="External reference number"
+                  />
+                </FormGrid>
+
+                <FormGrid columns={2}>
+                  <RHFCheckboxField
+                    control={form.control}
+                    name="is_private"
+                    label="Private"
+                  />
+                  <RHFCheckboxField
+                    control={form.control}
+                    name="executed"
+                    label="Executed"
+                  />
+                  <RHFCheckboxField
+                    control={form.control}
+                    name="field_change"
+                    label="Field Change"
+                  />
+                  <RHFCheckboxField
+                    control={form.control}
+                    name="paid_in_full"
+                    label="Paid in Full"
+                  />
+                </FormGrid>
+              </FormSection>
+
+              <FormServerError message={form.formState.errors.root?.message} />
+
+              <FormActions
+                onCancel={() =>
+                  router.push(
+                    `/${projectId}/commitments/${commitmentId}?tab=change-orders`,
+                  )
+                }
+                isSubmitting={isSubmitting}
+                submitLabel="Create"
+                stickyOnMobile
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                {/* Due Date */}
-                <RHFDateField
-                  control={form.control}
-                  name="due_date"
-                  label="Due Date"
-                  nullable
-                />
-
-                {/* Signed CO Received Date */}
-                <RHFDateField
-                  control={form.control}
-                  name="signed_co_received_date"
-                  label="Signed Change Order Received Date"
-                  nullable
-                />
-
-                {/* Schedule Impact */}
-                <FormField
-                  control={form.control}
-                  name="schedule_impact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Schedule Impact (days)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : null,
-                            )
-                          }
-                          placeholder="days"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Location */}
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder="Project location"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Reference */}
-                <FormField
-                  control={form.control}
-                  name="reference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reference</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder="External reference number"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Boolean flags */}
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4">
-                <FormField
-                  control={form.control}
-                  name="is_private"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">Private</FormLabel>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="executed"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">Executed</FormLabel>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="field_change"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Field Change
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="paid_in_full"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Paid in Full
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </section>
-          </form>
-        </Form>
-      )}
+            </form>
+          </Form>
+        )}
+      </FormContainer>
     </PageShell>
   );
 }
