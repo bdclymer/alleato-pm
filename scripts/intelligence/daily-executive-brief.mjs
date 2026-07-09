@@ -330,11 +330,14 @@ async function fetchProjectNames(projectIds) {
       );
       const map = new Map();
       for (const row of rows) {
+        // `projects.id` is int8, which node-pg returns as a string — coerce to
+        // Number so the key matches the numeric lookup below.
+        const id = Number(row.id);
         const label =
           (typeof row.name === "string" && row.name.trim()) ||
           (typeof row.project_number === "string" && row.project_number.trim()) ||
           null;
-        if (label) map.set(row.id, label);
+        if (Number.isFinite(id) && label) map.set(id, label);
       }
       return map;
     },
