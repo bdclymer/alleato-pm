@@ -60,7 +60,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "project-selector-trigger w-56",
+            "project-selector-trigger w-40 lg:w-48 xl:w-56",
             headerSelectTriggerClassName,
           )}
         >

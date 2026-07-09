@@ -516,6 +516,40 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
 
+  # Project intelligence narrative staleness check — daily at 8:30 AM UTC (30min
+  # after the project synthesis sweep completes at 7:00 AM). Monitors
+  # project_current_state and intelligence_packets freshness. Alerts if either
+  # is older than 2 days (default; override with PROJECT_INTELLIGENCE_STALENESS_CHECK_DAYS).
+  # Incident #759: silent staleness for 2+ weeks with no signal.
+  - type: cron
+    name: alleato-project-intelligence-staleness-check
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "30 8 * * *"
+    dockerCommand: python3 -m src.services.health.project_intelligence_staleness_check
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "false"
+      - key: PROJECT_INTELLIGENCE_STALENESS_CHECK_DAYS
+        value: "2"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+
   # Backend AI provider canary. The intelligence pipeline (meeting extraction
   # and project synthesis) must not swallow LLM failures into empty
   # results, so an OpenAI quota/auth outage is invisible — it looked like "no
