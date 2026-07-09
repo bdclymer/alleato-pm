@@ -8,6 +8,7 @@ import {
   type CanonicalDailyBriefPacket,
   type DailyBriefMarkdownSection,
 } from "@/lib/daily-briefs/canonical-packets";
+import { BriefMarkdown } from "@/features/daily-briefs/brief-markdown";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -50,45 +51,24 @@ function PacketSummary({ packet }: { packet: CanonicalDailyBriefPacket }) {
         <SummaryRow label="Generated" value={formatDateTime(packet.generatedAt)} />
       </div>
       <div className="text-xs text-muted-foreground">
-        Source of truth: `intelligence_packets` / `daily-executive-brief`
+        Source of truth:{" "}
+        <code className="rounded-sm bg-muted px-1 py-0.5 font-mono">
+          intelligence_packets
+        </code>{" "}
+        /{" "}
+        <code className="rounded-sm bg-muted px-1 py-0.5 font-mono">
+          daily-executive-brief
+        </code>
       </div>
     </section>
   );
 }
 
-function renderBodyLine(line: string) {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-
-  if (trimmed.startsWith("- ")) {
-    return (
-      <li key={trimmed} className="pl-1 text-sm leading-7 text-foreground">
-        {trimmed.slice(2)}
-      </li>
-    );
-  }
-
-  return (
-    <p key={trimmed} className="text-sm leading-7 text-foreground">
-      {trimmed}
-    </p>
-  );
-}
-
 function BriefSection({ section }: { section: DailyBriefMarkdownSection }) {
-  const lines = section.body.split(/\r?\n/);
-  const bulletLines = lines.filter((line) => line.trim().startsWith("- "));
-  const paragraphLines = lines.filter((line) => !line.trim().startsWith("- "));
-
   return (
     <section className="space-y-3">
       <SectionRuleHeading label={section.title} />
-      {paragraphLines.map(renderBodyLine)}
-      {bulletLines.length > 0 && (
-        <ul className="list-disc space-y-1 pl-5">
-          {bulletLines.map(renderBodyLine)}
-        </ul>
-      )}
+      <BriefMarkdown content={section.body} />
     </section>
   );
 }
