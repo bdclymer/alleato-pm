@@ -787,7 +787,137 @@ function validateDailyDeepReadSections(sections) {
   }
 }
 
-async function writePacket({ sources, brief, laneNotes }) {
+// --- Candidate B: structured per-project operating records --------------------
+// The packet's prose "Project Intelligence Updates" section is owner-readable but
+// not machine-usable — the consumer used to regex bullets and could only fill
+// current_summary, leaving health/risks/financials on /intelligence stale. Here
+// the compiler ALSO emits a structured record per project (from the same full
+// transcripts), so every project that gets a fresh summary gets a fresh health
+// read too. Shape mirrors project_current_state's columns; the consumer maps it
+// straight to the table with no markdown parsing.
+
+const ALLOWED_HEALTH = new Set([
+  "on_track",
+  "watch",
+  "at_risk",
+  "critical",
+  "unknown",
+]);
+const MAX_RECORD_CHARS_PER_SOURCE = 4_000;
+const PROJECT_RECORD_BATCH = 5;
+
+function parseModelJson(text) {
+  const cleaned = String(text || "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Best-effort: pull the outermost JSON object if the model added prose.
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+function groupSourcesByProject(sources) {
+  const byProject = new Map();
+  for (const source of sources) {
+    const projectId = Number(source.projectId);
+    if (!Number.isInteger(projectId) || projectId <= 0) continue; // 0 = unassigned
+    if (!source.projectName) continue;
+    if (!byProject.has(projectId)) {
+      byProject.set(projectId, {
+        projectId,
+        projectName: source.projectName,
+        sources: [],
+      });
+    }
+    byProject.get(projectId).sources.push({
+      id: source.alias,
+      title: source.title,
+      sourceAt: source.sourceAt,
+      text: truncate(source.text, MAX_RECORD_CHARS_PER_SOURCE),
+    });
+  }
+  return Array.from(byProject.values());
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item ?? "").trim())
+    .filter((item) => item.length > 0)
+    .slice(0, 8);
+}
+
+function normalizeRecord(raw, projectId, projectName) {
+  const health = String(raw?.healthStatus ?? "unknown").toLowerCase().trim();
+  return {
+    projectId,
+    projectName,
+    healthStatus: ALLOWED_HEALTH.has(health) ? health : "unknown",
+    whatChanged: String(raw?.whatChanged ?? "").trim(),
+    needsAttention: normalizeStringArray(raw?.needsAttention),
+    openDecisions: normalizeStringArray(raw?.openDecisions),
+    activeRisks: normalizeStringArray(raw?.activeRisks),
+    financialRead: String(raw?.financialRead ?? "").trim(),
+    scheduleRead: String(raw?.scheduleRead ?? "").trim(),
+    fieldRead: String(raw?.fieldRead ?? "").trim(),
+    confidence:
+      typeof raw?.confidence === "number" &&
+      raw.confidence >= 0 &&
+      raw.confidence <= 1
+        ? raw.confidence
+        : null,
+  };
+}
+
+// Emit one structured operating record per project that appears in today's
+// sources. Batched to bound context; the model must name a project we asked
+// about or its record is dropped.
+async function extractProjectRecords(sources) {
+  const grouped = groupSourcesByProject(sources);
+  if (!grouped.length) return [];
+  const records = [];
+  for (let i = 0; i < grouped.length; i += PROJECT_RECORD_BATCH) {
+    const batch = grouped.slice(i, i + PROJECT_RECORD_BATCH);
+    const byName = new Map(batch.map((p) => [p.projectName.toLowerCase(), p]));
+    const content = await callModel(
+      [
+        {
+          role: "system",
+          content:
+            "You assess construction project operating health from source notes and return STRUCTURED JSON. Return ONLY a JSON object of the form " +
+            '{"records":[{"projectName":"...","healthStatus":"on_track|watch|at_risk|critical|unknown","whatChanged":"...","needsAttention":["..."],"openDecisions":["..."],"activeRisks":["..."],"financialRead":"...","scheduleRead":"...","fieldRead":"...","confidence":0.0}]} ' +
+            "— one record per project in the input, using the project's EXACT projectName. Ground every field in the provided sources; NEVER invent, and NEVER paste raw email/transcript text — write concise owner-grade phrases. If a dimension has no evidence use an empty string or empty array. Use healthStatus 'unknown' when evidence is too thin to judge. Keep each list item to one short clause.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({ businessDate, projects: batch }, null, 2),
+        },
+      ],
+      2600,
+    );
+    const parsed = parseModelJson(content);
+    const rawRecords = Array.isArray(parsed?.records) ? parsed.records : [];
+    for (const raw of rawRecords) {
+      const match = byName.get(String(raw?.projectName ?? "").toLowerCase().trim());
+      if (!match) continue; // model must name a project we asked about
+      records.push(normalizeRecord(raw, match.projectId, match.projectName));
+    }
+  }
+  return records;
+}
+
+async function writePacket({ sources, brief, laneNotes, projectRecords = [] }) {
   return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
     await client.query("begin");
     try {
@@ -858,6 +988,10 @@ async function writePacket({ sources, brief, laneNotes }) {
             url: source.url,
           })),
         },
+        // Candidate B: structured per-project operating records the consumer
+        // maps straight into project_current_state (health/risks/financials),
+        // so those fields refresh with the summary instead of going stale.
+        projectRecords,
       };
       const packetResult = await client.query(
         `
@@ -1017,10 +1151,19 @@ async function main() {
   ].join("\n");
   await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
 
+  // Candidate B: structured per-project operating records (health/risks/etc).
+  // Written to evidence ALWAYS (incl. --dry-run) so quality is inspectable
+  // without a production packet write.
+  const projectRecords = await extractProjectRecords(sources);
+  await fs.writeFile(
+    path.join(evidenceDir, "project-records.json"),
+    JSON.stringify({ businessDate, count: projectRecords.length, projectRecords }, null, 2),
+  );
+
   let packet = null;
   let consumers = null;
   if (shouldWrite) {
-    packet = await writePacket({ sources, brief: packetBrief, laneNotes });
+    packet = await writePacket({ sources, brief: packetBrief, laneNotes, projectRecords });
     await fs.writeFile(path.join(evidenceDir, "packet-write.json"), JSON.stringify(packet, null, 2));
     if (!args["skip-consumers"]) {
       consumers = runConsumersForPacket(packet.packetId);
