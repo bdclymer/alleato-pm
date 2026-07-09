@@ -754,11 +754,17 @@ class FirefliesIngestionPipeline:
             "phase": "construction",
             "status": "processed",
         }
-        # Merge in any extra structured metadata from the raw Fireflies transcript
+        # Merge in any extra structured metadata from the raw Fireflies transcript.
+        # Fireflies returns absent summary sub-fields (action_items, bullet_gist, …)
+        # as an empty dict `{}` rather than null. Storing that into a text column
+        # serializes to the literal 2-char string "{}", which is what caused
+        # action_items / bullet_points to show garbage instead of being empty.
+        # Drop empty containers so the column stays NULL.
         if extra_metadata:
             for key, value in extra_metadata.items():
-                if value is not None:
-                    metadata[key] = value
+                if value is None or value == {} or value == []:
+                    continue
+                metadata[key] = value
 
         segments = parsed.transcript_segments
         chunks = list(
@@ -969,25 +975,28 @@ class FirefliesIngestionPipeline:
         analytics = transcript.get("analytics") or {}
         sentiments = analytics.get("sentiments") or {}
 
-        # Duration: Fireflies returns duration in minutes (integer column).
-        # Some transcripts arrive with duration=0 or duration=1 before full
-        # processing completes. Fall back to the last sentence's end_time
-        # (in seconds) when the API value is suspiciously low (< 2 minutes).
+        # Duration: Fireflies returns duration in minutes (float). Some
+        # transcripts arrive with a stub value (0, 1, 2…) before Fireflies
+        # finishes processing, so the API value UNDER-reports the real length.
+        # The last sentence's end_time (seconds) is a reliable lower bound of
+        # the true duration, so take the MAX of the two rather than trusting a
+        # low API value. (A ~2-hour meeting was showing "2 min" because the
+        # API duration arrived as 2 and the old `> 1` guard accepted it.)
         duration_raw = transcript.get("duration")
-        duration_minutes = None
-        if isinstance(duration_raw, (int, float)) and duration_raw > 1:
-            duration_minutes = int(round(duration_raw))
-        else:
-            sentences = transcript.get("sentences") or []
-            if sentences:
-                last_end = max(
-                    (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
-                )
-                if isinstance(last_end, (int, float)) and last_end > 0:
-                    duration_minutes = max(1, int(round(last_end / 60)))
-            # If sentences gave us nothing, keep the API value (even if 0 or 1)
-            if duration_minutes is None and isinstance(duration_raw, (int, float)) and duration_raw > 0:
-                duration_minutes = int(round(duration_raw))
+        api_minutes = (
+            int(round(duration_raw))
+            if isinstance(duration_raw, (int, float)) and duration_raw > 0
+            else 0
+        )
+        sentence_minutes = 0
+        sentences = transcript.get("sentences") or []
+        if sentences:
+            last_end = max(
+                (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
+            )
+            if isinstance(last_end, (int, float)) and last_end > 0:
+                sentence_minutes = int(round(last_end / 60))
+        duration_minutes = max(api_minutes, sentence_minutes) or None
 
         # Keywords: may be a list or newline-separated string
         keywords_raw = summary.get("keywords") or []
@@ -1046,7 +1055,9 @@ class FirefliesIngestionPipeline:
             "host_email": transcript.get("host_email"),
             "calendar_type": transcript.get("calendar_type"),
             "privacy": transcript.get("privacy"),
-            "bullet_points": summary.get("bullet_gist") or summary.get("shorthand_bullet"),
+            "bullet_points": self._coerce_summary_text(
+                summary.get("bullet_gist") or summary.get("shorthand_bullet")
+            ),
             "notes": summary.get("notes"),
             "outline": summary.get("outline"),
             "meeting_type": summary.get("meeting_type"),
@@ -2161,9 +2172,25 @@ class FirefliesIngestionPipeline:
         return pairs
 
     @staticmethod
+    def _coerce_summary_text(value: Any) -> Optional[str]:
+        """Return a non-empty string, or None for missing / empty-container values.
+
+        Fireflies returns absent summary fields as an empty dict ``{}`` (not null),
+        which would otherwise be stored as the literal string ``"{}"``.
+        """
+        if not isinstance(value, str):
+            return None
+        text = value.strip()
+        return text or None
+
+    @staticmethod
     def _append_text_section(lines: List[str], title: str, value: Any) -> None:
+        # Guard against Fireflies' empty-container placeholders ({} / []) whose
+        # str() would emit literal "## Title\n{}" junk into the markdown body.
+        if isinstance(value, (dict, list)) and not value:
+            return
         text = str(value).strip() if value is not None else ""
-        if not text:
+        if not text or text in ("{}", "[]"):
             return
         lines.append(f"## {title}")
         lines.append(text)

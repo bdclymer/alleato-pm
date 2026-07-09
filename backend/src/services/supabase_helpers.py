@@ -494,10 +494,15 @@ class SupabaseRagStore:
             "processing_metadata",
         ):
             catalog.pop(field, None)
+        # Drop empty containers ({} / []) as well as None: Fireflies returns absent
+        # summary fields as {} which would serialize into text columns as "{}".
         return {
             key: value
             for key, value in catalog.items()
-            if key in _APP_DOCUMENT_METADATA_COLUMNS and value is not None
+            if key in _APP_DOCUMENT_METADATA_COLUMNS
+            and value is not None
+            and value != {}
+            and value != []
         }
 
     def _rag_document_metadata_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:

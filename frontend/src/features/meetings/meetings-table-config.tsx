@@ -83,7 +83,6 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
-  { id: "keywords", label: "Keywords", defaultVisible: true },
   { id: "sentiment", label: "Sentiment", defaultVisible: true },
   { id: "overview", label: "Overview", defaultVisible: false },
   { id: "action_items", label: "Action Items", defaultVisible: false },
@@ -92,9 +91,11 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "summary", label: "Summary", defaultVisible: false },
   { id: "content", label: "Content", defaultVisible: false },
   { id: "type", label: "Type", defaultVisible: false },
-  { id: "category", label: "Category", defaultVisible: false },
+  { id: "category", label: "Category", defaultVisible: true },
   { id: "links", label: "Links", defaultVisible: true },
   { id: "embedding", label: "Embedding", defaultVisible: false },
+  // Keywords lives last so it renders as the right-most column in the table.
+  { id: "keywords", label: "Keywords", defaultVisible: true },
 ];
 
 export const meetingDefaultVisibleColumns = meetingColumns
@@ -1103,15 +1104,6 @@ export function buildMeetingTableColumns(
       sortValue: (item) => parseParticipants(item).length,
     },
 
-    // ── Keywords: compact text preview ──────────────────────────────────────
-    {
-      ...getMeetingColumn("keywords"),
-      render: (item) => <KeywordTagsCell keywords={item.keywords} />,
-      csvValue: (item) => formatKeywords(item.keywords),
-      sortValue: (item) => formatKeywords(item.keywords),
-      width: 220,
-    },
-
     // ── Sentiment: compact percentage preview ──────────────────────────────
     {
       ...getMeetingColumn("sentiment"),
@@ -1313,6 +1305,15 @@ export function buildMeetingTableColumns(
       sortValue: (item) => getEmbeddingStatus(item).sortValue,
       sortable: true,
       editable: false,
+    },
+
+    // ── Keywords: compact tag preview, positioned as the last column ────────
+    {
+      ...getMeetingColumn("keywords"),
+      render: (item) => <KeywordTagsCell keywords={item.keywords} />,
+      csvValue: (item) => formatKeywords(item.keywords),
+      sortValue: (item) => formatKeywords(item.keywords),
+      width: 220,
     },
   ];
 }
