@@ -46,7 +46,6 @@ jest.mock("@/lib/supabase/service", () => ({
 }));
 
 jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
-  approveExecutiveBriefingDraft: jest.fn(),
   getExecutiveBriefingDashboard: (...args: unknown[]) =>
     mockGetExecutiveBriefingDashboard(...args),
   setExecutiveFollowUpState: jest.fn(),
@@ -61,7 +60,6 @@ jest.mock("@/lib/ai-ops/executive-daily-brief-ledger", () => ({
   recordDraftEvidence: (...args: unknown[]) => mockRecordDraftEvidence(...args),
   recordEmailPayloadArtifact: (...args: unknown[]) =>
     mockRecordEmailPayloadArtifact(...args),
-  regenerateDailyBriefDraftWithLedger: jest.fn(),
   sourceHealthForDraft: jest.fn(() => []),
   startDailyBriefRun: (...args: unknown[]) => mockStartDailyBriefRun(...args),
 }));

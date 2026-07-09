@@ -3,18 +3,11 @@ import type { Database, Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
-  DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
-  generateDailyBrief,
-  loadLiveDailyBriefSourceCoverage,
   type DailyBriefItem as BrandonBriefItem,
   type DailyBriefPacket as BrandonDailyUpdatePacket,
-  type DailyBriefRefreshRecord,
 } from "@/lib/executive/daily-brief";
-import { hydrateExecutiveOperatingBrief } from "@/lib/executive/brandon-daily-update";
-import { withBriefItemSourceRefs } from "@/lib/ai-ops/executive-daily-brief-evidence";
+import { buildCanonicalOperatingPacket } from "@/lib/executive/canonical-operating-packet";
 
-type DailyRecapRow = Database["public"]["Tables"]["daily_recaps"]["Row"];
-type DailyRecapInsert = Database["public"]["Tables"]["daily_recaps"]["Insert"];
 type FollowUpRow =
   Database["public"]["Tables"]["executive_briefing_follow_ups"]["Row"];
 type FollowUpInsert =
@@ -82,14 +75,6 @@ function parseDate(value: string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function getAllItems(packet: BrandonDailyUpdatePacket): BrandonBriefItem[] {
-  return [
-    ...packet.sections.needsBrandon,
-    ...packet.sections.waitingOnOthers,
-    ...packet.sections.importantUpdates,
-  ];
-}
-
 function getSectionEntries(packet: BrandonDailyUpdatePacket): Array<{
   section: FollowUpSection;
   item: BrandonBriefItem;
@@ -121,222 +106,6 @@ function createFingerprint(item: BrandonBriefItem, section: FollowUpSection) {
   });
 
   return createHash("sha256").update(raw).digest("hex");
-}
-
-function buildRecapText(packet: BrandonDailyUpdatePacket) {
-  if (packet.operatingBrief) {
-    const brief = hydrateExecutiveOperatingBrief(packet);
-    // Each focus item shows what it is, why it matters (the owner's judgment
-    // line), and the next move. Rendering whyItMatters is what makes this a brief
-    // worth reading instead of a flat task list.
-    const focusLines = brief.topExecutiveFocus.flatMap((entry) => {
-      const why = entry.whyItMatters?.trim();
-      return [
-        `- ${entry.item.project}: ${entry.item.title}`,
-        why ? `  Why it matters: ${why}` : null,
-        `  Next: ${entry.recommendedNextMove}`,
-      ].filter((line): line is string => Boolean(line));
-    });
-
-    // Only list recommended moves that are NOT already shown as a focus item's
-    // "Next:" line — otherwise every action prints twice.
-    const focusMoves = new Set(
-      brief.topExecutiveFocus.map((entry) =>
-        entry.recommendedNextMove.trim().toLowerCase(),
-      ),
-    );
-    const extraMoves = brief.recommendedMoves.filter(
-      (move) => !focusMoves.has(move.trim().toLowerCase()),
-    );
-
-    const lines = [
-      "CEO OPERATING BRIEF",
-      `Generated ${packet.generatedAt}`,
-      `Source window: last ${packet.windowDays} calendar day${packet.windowDays === 1 ? "" : "s"}`,
-      "",
-      "START HERE:",
-      ...brief.startHere.map((line) => `- ${line}`),
-      "",
-      "TOP EXECUTIVE FOCUS:",
-      ...focusLines,
-    ];
-
-    if (brief.businessHealth?.length) {
-      lines.push("", "BUSINESS HEALTH:");
-      brief.businessHealth.forEach((item) => {
-        lines.push(`- ${item.area} (${item.status}): ${item.summary}`);
-      });
-    }
-
-    if (brief.emergingPatterns?.length) {
-      lines.push("", "EMERGING PATTERNS:");
-      brief.emergingPatterns.forEach((pattern) => {
-        lines.push(`- ${pattern.title}: ${pattern.significance}`);
-        pattern.evidence.forEach((evidence) => lines.push(`  - ${evidence}`));
-      });
-    }
-
-    if (brief.strategicRisks?.length) {
-      lines.push("", "STRATEGIC RISKS:");
-      brief.strategicRisks.forEach((risk) => {
-        lines.push(
-          `- ${risk.title} (${risk.likelihood} likelihood, ${risk.trend}): ${risk.impact}. Next: ${risk.nextAction}`,
-        );
-      });
-    }
-
-    if (brief.opportunities?.length) {
-      lines.push("", "OPPORTUNITIES:");
-      brief.opportunities.forEach((opportunity) => {
-        lines.push(`- ${opportunity}`);
-      });
-    }
-
-    if (brief.leadershipWatchlist?.length) {
-      lines.push("", "LEADERSHIP WATCHLIST:");
-      brief.leadershipWatchlist.forEach((watchItem) => {
-        lines.push(`- ${watchItem}`);
-      });
-    }
-
-    if (brief.chiefOfStaffInsights?.length) {
-      lines.push("", "AI CHIEF OF STAFF INSIGHTS:");
-      brief.chiefOfStaffInsights.forEach((insight) => {
-        lines.push(`- ${insight}`);
-      });
-    }
-
-    if (extraMoves.length > 0) {
-      lines.push("", "OTHER MOVES:");
-      extraMoves.forEach((move, index) => lines.push(`${index + 1}. ${move}`));
-    }
-
-    return lines.join("\n").trim();
-  }
-
-  const sections = [
-    ["Critical Actions", packet.sections.needsBrandon],
-    ["Unblock Your People", packet.sections.waitingOnOthers],
-    ["Business Signal", packet.sections.importantUpdates],
-  ] as const;
-
-  const lines = [
-    "DAILY OPERATING BRIEF",
-    `Generated ${packet.generatedAt}`,
-    `Source window: last ${packet.windowDays} calendar day${packet.windowDays === 1 ? "" : "s"}`,
-    "",
-  ];
-
-  for (const [label, items] of sections) {
-    lines.push(`${label.toUpperCase()}:`);
-    if (items.length === 0) {
-      lines.push("- No items.");
-      lines.push("");
-      continue;
-    }
-
-    for (const item of items) {
-      lines.push(`- ${item.title} (${item.project})`);
-      lines.push(`  ${item.summary}`);
-      if (item.recommendedAction) {
-        lines.push(`  Action: ${item.recommendedAction}`);
-      }
-    }
-    lines.push("");
-  }
-
-  return lines.join("\n").trim();
-}
-
-function projectCount(packet: BrandonDailyUpdatePacket) {
-  return new Set(
-    getAllItems(packet)
-      .map((item) => item.project)
-      .filter(Boolean),
-  ).size;
-}
-
-function briefItemCounts(packet: BrandonDailyUpdatePacket) {
-  return {
-    needsBrandon: packet.sections.needsBrandon.length,
-    waitingOnOthers: packet.sections.waitingOnOthers.length,
-    importantUpdates: packet.sections.importantUpdates.length,
-  };
-}
-
-function buildRefreshRecord(
-  packet: BrandonDailyUpdatePacket,
-  version: number,
-  storedAt: string,
-): DailyBriefRefreshRecord {
-  return {
-    version,
-    generatedAt: packet.generatedAt,
-    storedAt,
-    windowDays: packet.windowDays,
-    itemCounts: briefItemCounts(packet),
-  };
-}
-
-function withDailyBriefVersionMetadata(
-  packet: BrandonDailyUpdatePacket,
-  previousPacket: BrandonDailyUpdatePacket | null,
-): BrandonDailyUpdatePacket {
-  const storedAt = new Date().toISOString();
-  const previousHistory = previousPacket?.refreshHistory ?? [];
-  const previousVersion = previousPacket
-    ? (previousPacket.briefVersion ?? Math.max(previousHistory.length, 1))
-    : 0;
-  const nextVersion = previousVersion + 1;
-  const history = [...previousHistory];
-
-  if (previousPacket) {
-    const previousRecord = buildRefreshRecord(
-      previousPacket,
-      previousVersion,
-      storedAt,
-    );
-    const alreadyRecorded = history.some(
-      (record) =>
-        record.version === previousRecord.version &&
-        record.generatedAt === previousRecord.generatedAt,
-    );
-    if (!alreadyRecorded) {
-      history.push(previousRecord);
-    }
-  }
-
-  return {
-    ...packet,
-    canonicalName: "Daily Brief",
-    audiencePreset: "brandon",
-    briefVersion: nextVersion,
-    refreshHistory: history.slice(-20),
-  };
-}
-
-function withPacketSourceRefs(
-  packet: BrandonDailyUpdatePacket,
-  recapDate: string,
-  briefId?: string,
-): BrandonDailyUpdatePacket {
-  let itemIndex = 0;
-  const attach = (item: BrandonBriefItem) =>
-    withBriefItemSourceRefs({
-      briefId,
-      recapDate,
-      item,
-      itemIndex: itemIndex++,
-    });
-
-  return {
-    ...packet,
-    sections: {
-      needsBrandon: packet.sections.needsBrandon.map(attach),
-      waitingOnOthers: packet.sections.waitingOnOthers.map(attach),
-      importantUpdates: packet.sections.importantUpdates.map(attach),
-    },
-  };
 }
 
 function sanitizeSupabaseText(value: string): string {
@@ -403,57 +172,6 @@ function toSupabaseText(value: string | null | undefined): string | null {
   return sanitizeSupabaseText(value);
 }
 
-function backfillCitations(item: BrandonBriefItem): BrandonBriefItem {
-  if (Array.isArray(item.citations) && item.citations.length > 0) return item;
-  return {
-    ...item,
-    citations: [
-      {
-        source: item.source,
-        sourceDetail: item.sourceDetail,
-        sourceUrl: item.sourceUrl,
-        sourceId: item.sourceId,
-        evidence: item.evidence,
-        date: item.date,
-      },
-    ],
-  };
-}
-
-function parseStoredPacket(
-  value: Json | null,
-): BrandonDailyUpdatePacket | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  if (
-    typeof candidate.generatedAt !== "string" ||
-    typeof candidate.windowDays !== "number" ||
-    typeof candidate.sections !== "object" ||
-    candidate.sections === null
-  ) {
-    return null;
-  }
-
-  const packet = candidate as unknown as BrandonDailyUpdatePacket;
-  return {
-    ...packet,
-    sections: {
-      needsBrandon: (packet.sections?.needsBrandon ?? []).map(
-        backfillCitations,
-      ),
-      waitingOnOthers: (packet.sections?.waitingOnOthers ?? []).map(
-        backfillCitations,
-      ),
-      importantUpdates: (packet.sections?.importantUpdates ?? []).map(
-        backfillCitations,
-      ),
-    },
-  };
-}
-
 function daysOpen(firstSeenAt: string) {
   const first = new Date(firstSeenAt);
   if (Number.isNaN(first.getTime())) return 0;
@@ -475,43 +193,6 @@ function toDashboardFollowUp(row: FollowUpRow): ExecutiveBriefingFollowUp {
     ...row,
     daysOpen: daysOpen(row.first_seen_at),
   };
-}
-
-async function loadExistingDraft(recapDate: string) {
-  const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("daily_recaps")
-    .select("*")
-    .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND)
-    .eq("recap_date", recapDate)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    return loadExistingDraftFromAppDb(recapDate);
-  }
-
-  return data;
-}
-
-function formatDailyRecapError(error: {
-  message: string;
-  code?: string | null;
-  details?: string | null;
-  hint?: string | null;
-}) {
-  const details = [
-    error.code ? `code=${error.code}` : null,
-    error.details ? `details=${error.details}` : null,
-    error.hint ? `hint=${error.hint}` : null,
-  ]
-    .filter(Boolean)
-    .join("; ");
-
-  return `Failed to save executive briefing draft: ${error.message}${
-    details ? ` (${details})` : ""
-  }`;
 }
 
 async function withAppDbClient<T>(
@@ -570,105 +251,6 @@ function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
       value instanceof Date ? value.toISOString() : value,
     ]),
   ) as T;
-}
-
-async function loadExistingDraftFromAppDb(
-  recapDate: string,
-): Promise<DailyRecapRow | null> {
-  return withAppDbClient(async (client) => {
-    const result = await client.query(
-      `
-        select *
-        from public.daily_recaps
-        where recap_kind = $1
-          and recap_date = $2::date
-        order by created_at desc
-        limit 1
-      `,
-      [CEO_EXECUTIVE_BRIEFING_RECAP_KIND, recapDate],
-    );
-    return result.rows[0]
-      ? (normalizeDbRow(result.rows[0]) as DailyRecapRow)
-      : null;
-  });
-}
-
-async function persistExecutiveBriefingDraftToAppDb(
-  row: DailyRecapInsert,
-): Promise<DailyRecapRow> {
-  return withAppDbClient(async (client) => {
-    const entries = Object.entries(row).filter(
-      ([, value]) => value !== undefined,
-    );
-    if (row.id) {
-      const updateEntries = entries.filter(([key]) => key !== "id");
-      const assignments = updateEntries.map(
-        ([key], index) => `${key} = $${index + 1}`,
-      );
-      const values = updateEntries.map(([, value]) => toDbValue(value));
-      const result = await client.query(
-        `
-          update public.daily_recaps
-          set ${assignments.join(", ")}
-          where id = $${values.length + 1}
-          returning *
-        `,
-        [...values, row.id],
-      );
-      if (result.rows[0])
-        return normalizeDbRow(result.rows[0]) as DailyRecapRow;
-    }
-
-    const columns = entries.map(([key]) => key);
-    const placeholders = entries.map(([, _value], index) => `$${index + 1}`);
-    const values = entries.map(([, value]) => toDbValue(value));
-    const updateColumns = columns.filter((column) => column !== "id");
-    const result = await client.query(
-      `
-        insert into public.daily_recaps (${columns.join(", ")})
-        values (${placeholders.join(", ")})
-        on conflict (recap_date) where recap_kind = 'executive_briefing'
-        do update set ${updateColumns.map((column) => `${column} = excluded.${column}`).join(", ")}
-        returning *
-      `,
-      values,
-    );
-    return normalizeDbRow(result.rows[0]) as DailyRecapRow;
-  });
-}
-
-async function persistExecutiveBriefingDraft(
-  row: DailyRecapInsert,
-  recapDate: string,
-) {
-  const supabase = createServiceClient();
-
-  const runUpsert = (payload: DailyRecapInsert) =>
-    supabase
-      .from("daily_recaps")
-      .upsert(payload, { onConflict: "id" })
-      .select("*")
-      .single();
-
-  let response = await runUpsert(row);
-
-  // Another request may have inserted today's recap after we checked. Reload the
-  // canonical row for the day and overwrite it instead of crashing the page.
-  if (response.error?.code === "23505" && !row.id) {
-    const duplicateDraft = await loadExistingDraft(recapDate);
-    if (duplicateDraft?.id) {
-      response = await runUpsert({
-        ...row,
-        id: duplicateDraft.id,
-      });
-    }
-  }
-
-  if (response.error) {
-    return persistExecutiveBriefingDraftToAppDb(row);
-  }
-
-  return response.data;
 }
 
 async function upsertFollowUps(
@@ -824,96 +406,6 @@ async function upsertFollowUpsToAppDb(
   });
 }
 
-/**
- * @deprecated Raw Executive Daily Brief regeneration is a legacy internal
- * primitive. Route, action, script, and tool callers must use the AI Ops
- * gateway helpers in `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`
- * so every generated packet has a canonical run, source health, artifacts, and
- * delivery attempts. This function remains callable only from the gateway
- * wrapper while the packet persistence internals are migrated.
- */
-export async function regenerateExecutiveBriefingDraft(options?: {
-  windowDays?: number;
-  sourceBackedOnly?: boolean;
-}) {
-  const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
-  const packet = await generateDailyBrief({
-    windowDays,
-    preset: "brandon",
-    sourceBackedOnly: options?.sourceBackedOnly,
-  });
-  const dateRange = getDateRange(windowDays);
-  const existingDraft = await loadExistingDraft(dateRange.recapDate);
-  const previousPacket = parseStoredPacket(
-    existingDraft?.briefing_packet ?? null,
-  );
-  const versionedPacket = withPacketSourceRefs(
-    withDailyBriefVersionMetadata(packet, previousPacket),
-    dateRange.recapDate,
-    existingDraft?.id,
-  );
-  const recapText = toSupabaseText(buildRecapText(versionedPacket)) ?? "";
-
-  const row: DailyRecapInsert = {
-    id: existingDraft?.id,
-    recap_kind: CEO_EXECUTIVE_BRIEFING_RECAP_KIND,
-    recap_date: dateRange.recapDate,
-    date_range_start: dateRange.dateRangeStart,
-    date_range_end: dateRange.dateRangeEnd,
-    recap_text: recapText,
-    recap_html: null,
-    meeting_count:
-      versionedPacket.sourceCoverage.find(
-        (source) => source.label === "Meeting",
-      )?.count ?? 0,
-    project_count: projectCount(versionedPacket),
-    briefing_packet: toSupabaseJson(versionedPacket),
-    workflow_status: "draft",
-    approved_at: null,
-    approved_by: null,
-    approval_notes: null,
-    model_used:
-      toSupabaseText(
-        (
-          process.env.EXECUTIVE_BRIEFING_SYNTHESIS_MODEL?.trim() ||
-          DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL
-        ).replace(/^openai\//, ""),
-      ) ?? DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
-    generation_time_seconds: null,
-    meetings_analyzed: null,
-    blockers: null,
-    commitments: null,
-    decisions: null,
-    recipients: null,
-    risks: null,
-    wins: null,
-    sent_at: null,
-    sent_email: false,
-    sent_teams: false,
-  };
-
-  const data = await persistExecutiveBriefingDraft(row, dateRange.recapDate);
-
-  try {
-    await upsertFollowUps(data.id, versionedPacket);
-  } catch (error) {
-    console.error("[executive-briefing] follow-up persistence failed", error);
-  }
-
-  return {
-    draft: {
-      id: data.id,
-      recapDate: data.recap_date,
-      workflowStatus: data.workflow_status as "draft" | "approved",
-      approvedAt: data.approved_at,
-      approvedBy: data.approved_by,
-      packet: versionedPacket,
-      createdAt: data.created_at,
-      updatedSummary: data.recap_text,
-    },
-  };
-}
-
 async function loadFollowUps() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -948,29 +440,30 @@ export async function getExecutiveBriefingDashboard(options?: {
 }) {
   const windowDays = options?.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
   const { recapDate, dateRangeStart } = getDateRange(windowDays);
-  const existingDraft = await loadExistingDraft(recapDate);
-  const storedPacket = parseStoredPacket(
-    existingDraft?.briefing_packet ?? null,
-  );
-  const packet = storedPacket
-    ? {
-        ...storedPacket,
-        sourceCoverage: await loadLiveDailyBriefSourceCoverage(windowDays),
-      }
-    : null;
-  const draft =
-    existingDraft && packet
-      ? {
-          id: existingDraft.id,
-          recapDate: existingDraft.recap_date,
-          workflowStatus: existingDraft.workflow_status as "draft" | "approved",
-          approvedAt: existingDraft.approved_at,
-          approvedBy: existingDraft.approved_by,
-          packet,
-          createdAt: existingDraft.created_at,
-          updatedSummary: existingDraft.recap_text,
-        }
-      : (await regenerateExecutiveBriefingDraft({ windowDays })).draft;
+  // The Daily Executive Brief has a single source of truth: the canonical
+  // intelligence deep-read (intelligence_packets + structured signal
+  // candidates). The dashboard reads that adapter — there is no separate
+  // daily_recaps draft to load, regenerate, or approve.
+  const packet = await buildCanonicalOperatingPacket();
+  const draft: ExecutiveBriefingDraft = {
+    id: recapDate,
+    recapDate,
+    workflowStatus: "draft",
+    approvedAt: null,
+    approvedBy: null,
+    packet,
+    createdAt: packet.generatedAt,
+    updatedSummary: "",
+  };
+
+  // Persist the live packet's items as follow-ups so the staleness tracker keeps
+  // working after the daily_recaps draft was retired. Failures here must not take
+  // down the dashboard read.
+  try {
+    await upsertFollowUps(draft.id, draft.packet);
+  } catch (error) {
+    console.error("[executive-briefing] follow-up persistence failed", error);
+  }
 
   const followUps = await loadFollowUps();
   const openFollowUps = followUps.filter(
@@ -998,28 +491,6 @@ export async function getExecutiveBriefingDashboard(options?: {
     liveFingerprints,
     fingerprintMap,
   } satisfies ExecutiveBriefingDashboard;
-}
-
-export async function approveExecutiveBriefingDraft(
-  draftId: string,
-  approvedBy: string | null,
-) {
-  const supabase = createServiceClient();
-  const { error } = await supabase
-    .from("daily_recaps")
-    .update({
-      workflow_status: "approved",
-      approved_at: new Date().toISOString(),
-      approved_by: approvedBy,
-    })
-    .eq("id", draftId)
-    .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND);
-
-  if (error) {
-    throw new Error(
-      `Failed to approve executive briefing draft: ${error.message}`,
-    );
-  }
 }
 
 export async function setExecutiveFollowUpState(params: {

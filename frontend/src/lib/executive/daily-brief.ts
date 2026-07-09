@@ -1,8 +1,6 @@
 import {
   DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
-  generateBrandonDailyUpdate,
-  loadLiveBrandonSourceCoverage,
   type BrandonBriefItem,
   type BrandonBriefSourceCoverage,
   type BrandonDailyUpdatePacket,
@@ -60,28 +58,4 @@ export function clampDailyBriefWindowDays(value: number) {
   return Number.isFinite(value)
     ? Math.min(Math.max(Math.trunc(value), 1), 14)
     : DEFAULT_EXECUTIVE_WINDOW_DAYS;
-}
-
-export async function generateDailyBrief(
-  options: {
-    windowDays?: number;
-    preset?: DailyBriefAudiencePresetId;
-    sourceBackedOnly?: boolean;
-  } = {},
-): Promise<DailyBriefPacket> {
-  const preset = options.preset ?? "brandon";
-  if (!DAILY_BRIEF_PRESETS[preset]) {
-    throw new Error(`Unknown Daily Brief preset: ${preset}`);
-  }
-
-  return generateBrandonDailyUpdate({
-    windowDays: options.windowDays,
-    sourceBackedOnly: options.sourceBackedOnly,
-  });
-}
-
-export async function loadLiveDailyBriefSourceCoverage(
-  windowDays = DEFAULT_EXECUTIVE_WINDOW_DAYS,
-): Promise<DailyBriefSourceCoverage[]> {
-  return loadLiveBrandonSourceCoverage(windowDays);
 }
