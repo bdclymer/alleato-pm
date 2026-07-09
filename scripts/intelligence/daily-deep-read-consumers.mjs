@@ -665,48 +665,133 @@ function projectHeaderFromBullet(bullet) {
   return { name: match[1].trim(), body: match[2].trim() };
 }
 
-function projectCurrentStateFromPacket(packet, projectRows) {
+// current_summary from the packet's prose section (owner-grade narrative).
+function summariesFromMarkdown(packet, projectRows) {
   const section = packet.packet_json?.sections?.[PROJECT_INTELLIGENCE_SECTION];
-  if (typeof section !== "string" || !section.trim()) return [];
-  const seen = new Set();
-  const records = [];
+  const map = new Map();
+  if (typeof section !== "string" || !section.trim()) return map;
   for (const bullet of parseBullets(section)) {
     const header = projectHeaderFromBullet(bullet);
     if (!header) continue;
     const projectId = projectIdForText(`${header.name}\n${header.body}`, projectRows);
-    if (!projectId || seen.has(projectId)) continue; // one row per project per run
-    seen.add(projectId);
+    if (!projectId || map.has(projectId)) continue; // one row per project per run
     const currentSummary = stripPacketCitations(`${header.name}: ${header.body}`);
     if (!currentSummary) continue;
+    map.set(projectId, { name: header.name, currentSummary });
+  }
+  return map;
+}
+
+// The page renders these arrays as objects (record.title || record.summary),
+// so each signal is stored as { title } — a plain string renders as nothing.
+function toTitleItems(list) {
+  return (Array.isArray(list) ? list : [])
+    .map((item) => stripPacketCitations(item))
+    .filter(Boolean)
+    .map((title) => ({ title }));
+}
+
+function resolveRecordProjectId(record, projectRows) {
+  const claimed = Number(record?.projectId);
+  if (Number.isInteger(claimed) && claimed > 0 && projectRows.some((p) => p.id === claimed)) {
+    return claimed;
+  }
+  // Fall back to name match if the compiler's id is stale/absent.
+  return record?.projectName ? projectIdForText(record.projectName, projectRows) : null;
+}
+
+// Candidate B: structured per-project rich fields (health/risks/decisions/etc)
+// straight from packet_json.projectRecords — no markdown parsing.
+function richFromRecords(packet, projectRows) {
+  const list = packet.packet_json?.projectRecords;
+  const map = new Map();
+  if (!Array.isArray(list)) return map;
+  for (const record of list) {
+    const projectId = resolveRecordProjectId(record, projectRows);
+    if (!projectId || map.has(projectId)) continue;
+    map.set(projectId, {
+      healthStatus: record.healthStatus,
+      activeRisks: toTitleItems(record.activeRisks),
+      openDecisions: toTitleItems(record.openDecisions),
+      needsAttention: toTitleItems(record.needsAttention),
+      whatChanged: record.whatChanged ? toTitleItems([record.whatChanged]) : [],
+      financialRead: stripPacketCitations(record.financialRead),
+      scheduleRead: stripPacketCitations(record.scheduleRead),
+      fieldRead: stripPacketCitations(record.fieldRead),
+      confidence:
+        typeof record.confidence === "number" ? { overall: record.confidence } : null,
+    });
+  }
+  return map;
+}
+
+// Merge: current_summary from the prose section + rich fields from the
+// structured records, keyed by project. Either source alone is valid.
+function projectCurrentStateFromPacket(packet, projectRows) {
+  const summaries = summariesFromMarkdown(packet, projectRows);
+  const rich = richFromRecords(packet, projectRows);
+  const projectIds = new Set([...summaries.keys(), ...rich.keys()]);
+  const records = [];
+  for (const projectId of projectIds) {
+    const summary = summaries.get(projectId) ?? null;
+    const r = rich.get(projectId) ?? null;
     records.push({
       project_id: projectId,
-      project_name: header.name,
-      current_summary: currentSummary,
+      project_name: summary?.name ?? null,
+      current_summary: summary?.currentSummary ?? null,
+      rich: r,
     });
   }
   return records;
 }
 
 async function writeProjectCurrentState(records) {
-  if (!records.length) return { updated: 0, unmatchedRowMissing: 0 };
+  if (!records.length) return { updated: 0, richUpdated: 0, unmatchedRowMissing: 0 };
   return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
     let updated = 0;
+    let richUpdated = 0;
     let unmatchedRowMissing = 0;
     for (const rec of records) {
+      // Build the SET clause from only the fields we actually have fresh signal
+      // for. Never overwrite a prior health/risk read with an empty/unknown —
+      // the daily read UPGRADES freshness where it has evidence, never wipes it.
+      const sets = ["updated_at = now()"];
+      const params = [rec.project_id];
+      const add = (sql, value) => {
+        params.push(value);
+        sets.push(sql.replace("$$", `$${params.length}`));
+      };
+      if (rec.current_summary) add("current_summary = $$", rec.current_summary);
+      const r = rec.rich;
+      let wroteRich = false;
+      if (r) {
+        if (r.healthStatus && r.healthStatus !== "unknown") {
+          add("health_status = $$", r.healthStatus);
+          wroteRich = true;
+        }
+        if (r.activeRisks.length) { add("active_risks = $$::jsonb", JSON.stringify(r.activeRisks)); wroteRich = true; }
+        if (r.openDecisions.length) { add("open_decisions = $$::jsonb", JSON.stringify(r.openDecisions)); wroteRich = true; }
+        if (r.needsAttention.length) { add("needs_attention = $$::jsonb", JSON.stringify(r.needsAttention)); wroteRich = true; }
+        if (r.whatChanged.length) { add("what_changed_since_last_update = $$::jsonb", JSON.stringify(r.whatChanged)); wroteRich = true; }
+        if (r.financialRead) { add("financial_read = $$", r.financialRead); wroteRich = true; }
+        if (r.scheduleRead) { add("schedule_read = $$", r.scheduleRead); wroteRich = true; }
+        if (r.fieldRead) { add("field_read = $$", r.fieldRead); wroteRich = true; }
+        if (r.confidence) { add("source_confidence = $$::jsonb", JSON.stringify(r.confidence)); wroteRich = true; }
+      }
+      if (sets.length === 1) continue; // nothing but updated_at — skip
       // UPDATE-only: every live project already has a project_current_state row.
-      // We never invent one here, so we can't trip a NOT NULL / enum default.
       const res = await client.query(
-        `
-          update public.project_current_state
-             set current_summary = $2, updated_at = now()
-           where project_id = $1
-        `,
-        [rec.project_id, rec.current_summary],
+        `update public.project_current_state set ${sets.join(", ")} where project_id = $1`,
+        params,
       );
-      if (res.rowCount > 0) updated += 1;
-      else unmatchedRowMissing += 1;
+      if (res.rowCount > 0) {
+        updated += 1;
+        if (wroteRich) richUpdated += 1;
+      } else {
+        unmatchedRowMissing += 1;
+      }
     }
-    return { updated, unmatchedRowMissing };
+    return { updated, richUpdated, unmatchedRowMissing };
   });
 }
 
