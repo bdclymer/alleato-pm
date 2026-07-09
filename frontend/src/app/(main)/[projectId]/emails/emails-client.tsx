@@ -58,6 +58,10 @@ import {
   EmailViewSwitcher,
   type EmailViewMode,
 } from "@/features/emails/email-view-switcher";
+import {
+  AiReviewPanel,
+  AI_REVIEW_PANEL_ENABLED,
+} from "@/features/emails/ai-review-panel";
 import { EmailFilterPopover } from "@/features/emails/email-filter-popover";
 import {
   buildMailboxWorkflowTabs,
@@ -1072,13 +1076,23 @@ export function EmailsClient({
             ? {
                 content: (
                   mailboxUserId ? (
-                    <EmailTrainingFeedbackPanel
-                      selectedEmail={selectedEmail}
-                      onSaved={() => {
-                        void refetchEmails();
-                      }}
-                      className="h-full"
-                    />
+                    AI_REVIEW_PANEL_ENABLED ? (
+                      <AiReviewPanel
+                        selectedEmail={selectedEmail}
+                        onSaved={() => {
+                          void refetchEmails();
+                        }}
+                        className="h-full"
+                      />
+                    ) : (
+                      <EmailTrainingFeedbackPanel
+                        selectedEmail={selectedEmail}
+                        onSaved={() => {
+                          void refetchEmails();
+                        }}
+                        className="h-full"
+                      />
+                    )
                   ) : (
                     <EmailReadingPanel
                       email={selectedEmail}

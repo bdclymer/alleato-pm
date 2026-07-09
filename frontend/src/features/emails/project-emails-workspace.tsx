@@ -117,6 +117,10 @@ import {
 } from "@/features/emails/email-thread";
 import { toast } from "sonner";
 import type { ProjectAssignmentReasonSignal } from "@/lib/email-assistant/brandon-review";
+import {
+  AiReviewPanel,
+  AI_REVIEW_PANEL_ENABLED,
+} from "@/features/emails/ai-review-panel";
 
 const PdfDocument = dynamic(
   async () => {
@@ -2745,6 +2749,8 @@ export function EmailTrainingFeedbackPanel({
           {
             method: "POST",
             body: JSON.stringify({
+              // assistantAction / assistantPriority come from `...commonPayload`
+              // below — do not repeat them here (TS2783 duplicate key).
               assistantScore: selectedEmail.assistant_score ?? null,
               assistantReason: selectedEmail.assistant_reason ?? null,
               assistantOwner: selectedEmail.assistant_owner ?? null,
@@ -3465,6 +3471,21 @@ export function ProjectEmailsWorkspace({
     setIsDetailsPanelOpen(false);
   }, []);
 
+  // Advance the AI-review queue to the email after the current one, so a
+  // reviewer can save-and-continue without leaving the keyboard. Returns false
+  // when there is no next email so the panel shows its success confirmation
+  // instead of appearing to do nothing on the last item in the queue.
+  const handleRequestNextEmail = React.useCallback((): boolean => {
+    const index = visibleEmails.findIndex(
+      (email) => email.id === selectedEmailId,
+    );
+    const next = index >= 0 ? visibleEmails[index + 1] : undefined;
+    if (!next) return false;
+    setSelectedEmailId(next.id);
+    setIsDetailsPanelOpen(false);
+    return true;
+  }, [visibleEmails, selectedEmailId]);
+
   return (
     <SplitPageFrame
       height="fill"
@@ -3801,10 +3822,18 @@ export function ProjectEmailsWorkspace({
               </>
             ) : null}
             {showAuxiliaryRail ? (
-              <EmailTrainingFeedbackPanel
-                selectedEmail={selectedEmail}
-                onSaved={onDraftFeedbackSaved}
-              />
+              AI_REVIEW_PANEL_ENABLED ? (
+                <AiReviewPanel
+                  selectedEmail={selectedEmail}
+                  onSaved={onDraftFeedbackSaved}
+                  onRequestNext={handleRequestNextEmail}
+                />
+              ) : (
+                <EmailTrainingFeedbackPanel
+                  selectedEmail={selectedEmail}
+                  onSaved={onDraftFeedbackSaved}
+                />
+              )
             ) : null}
           </div>
         </div>

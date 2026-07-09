@@ -5,6 +5,40 @@
 
 ---
 
+## AI Email Feedback panel redesign — "Confirm & Correct" (2026-07-08)
+
+- Replaced the confusing "AI Classification" verdict list on
+  `/outlook-draft-feedback` with the **Confirm & Correct** panel (design option 1a):
+  a plain-English summary of the AI's plan (What to do / Priority / Project /
+  Category) where one tap saves feedback and any line can be corrected inline.
+  Branch `claude/option-1a-design-ktb8gg`.
+- New component `frontend/src/features/emails/ai-review-panel.tsx` (`AiReviewPanel`).
+  Wired into both the mail-view right rail (`project-emails-workspace.tsx`) and the
+  table-view side panel (`emails-client.tsx`).
+- **Easy revert:** the old `EmailTrainingFeedbackPanel` is kept intact behind the
+  flag `AI_REVIEW_PANEL_ENABLED` (in `ai-review-panel.tsx`). Flip to `false` to
+  restore the previous panel at every call site.
+- Maps to the existing assistant-review contract (`fieldFeedback` verdicts +
+  `projectAssignment`) — confirmed→correct, corrected→incorrect; a still-unreviewed
+  decision is confirmed on save. Project stays `unreviewed` unless explicitly
+  reassigned so the one-tap save is never blocked by the reason requirement.
+- Legacy panel POST body: added an explanatory comment where duplicate
+  `assistantAction`/`assistantPriority` keys used to sit. (That TS2783 class was
+  already fixed on `main` before the rebase, so on this branch it's a comment
+  only — no behavior change.)
+- **Refinements (post-review):** status chip hidden until a decision is reviewed
+  (calmer default); **Corrected uses blue `status-info`, not brand orange**, so a
+  completed correction stands out; per-row "Change"/"Why" links replaced by a
+  tappable value + chevron and one section-level "Show AI reasoning" toggle;
+  reply block fixed ("Generate" vs "Regenerate", no pre-selected verdict, hidden
+  when the action needs no reply); footer helper dropped; added "Save & next" +
+  Enter shortcut (`onRequestNext`) for fast keyboard review of the pending queue.
+- **Post-review fixes (reviewer feedback):** payload logic extracted to pure,
+  unit-tested `ai-review-payload.ts` (+ `.unit.test.ts` covering the
+  projectAssignment-omission + verdict mapping); "Save & next" on the last email
+  now falls back to the success card (no silent no-op); the "over-flagged"
+  priority hint only shows for urgent/high picks.
+
 ## Current focus
 
 **Status:** Daily Deep Read — Teams window bug fixed, July 7 workday packet rerun live, central review queue built (branch `feat/daily-deep-read-teams-fix-central-review`, PR pending merge).
