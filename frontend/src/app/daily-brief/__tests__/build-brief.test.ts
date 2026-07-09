@@ -131,6 +131,45 @@ describe("buildBriefBody — output safety", () => {
     expect(html).toContain('rel="noopener noreferrer"');
   });
 
+  describe("citation date rendering (timezone offset regression)", () => {
+    // Production (Vercel) runs in UTC. Packet citations store dates as human
+    // strings like "Jul 8, 2026" with no time. The renderer must anchor those
+    // to noon UTC before formatting in Eastern time — otherwise a genuine Jul 8
+    // source renders as "Jul 7" (off by one day). Force UTC so the assertion
+    // catches the bug on any developer machine, not just UTC-or-ahead ones.
+    const originalTz = process.env.TZ;
+    beforeAll(() => {
+      process.env.TZ = "UTC";
+    });
+    afterAll(() => {
+      process.env.TZ = originalTz;
+    });
+
+    it("renders a human-formatted citation date on its own calendar day", () => {
+      const packet = makePacket([
+        makeItem({
+          title: "Superior Beverage permit",
+          citations: [
+            {
+              source: "Email",
+              sourceDetail: "RE: Superior beverage",
+              date: "Jul 8, 2026",
+            },
+          ],
+        }),
+      ]);
+
+      const html = buildBriefBody({
+        packet,
+        operatingBrief: emptyOperatingBrief(),
+        meetings: [],
+      });
+
+      expect(html).toContain("RE: Superior beverage · Jul 8");
+      expect(html).not.toContain("RE: Superior beverage · Jul 7");
+    });
+  });
+
   it("shows the Decision-open badge for a cross-project decision (no project, no id)", () => {
     // Regression: the group-key and decision-key fallbacks must agree, or a
     // decision with no project/id never matches its rendered group and loses

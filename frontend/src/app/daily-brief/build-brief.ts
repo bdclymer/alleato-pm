@@ -115,11 +115,31 @@ function parseDate(value: string | null | undefined): Date | null {
   // A date-only string (YYYY-MM-DD) parses as UTC midnight; formatting it in
   // Eastern time would shift it back a day. Anchor it to noon UTC so it stays
   // on the same calendar day in any US timezone.
-  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? `${value}T12:00:00Z`
-    : value;
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const isoDate = new Date(`${value}T12:00:00Z`);
+    return Number.isNaN(isoDate.getTime()) ? null : isoDate;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  // Packet citations store dates as human strings like "Jul 8, 2026" (no time).
+  // Those parse as midnight in the SERVER's timezone, so formatting them in
+  // Eastern time shifts them back a calendar day on a UTC host (Vercel) — the
+  // brief showed "Jul 7" for genuine Jul 8 sources. Re-anchor any value with no
+  // time-of-day component to noon UTC on its own calendar day so it is stable
+  // in every timezone. Values that DO carry a time (ISO datetimes) pass through
+  // untouched so fmtTime keeps working.
+  const hasTimeComponent = /\d{1,2}:\d{2}/.test(value) || /T\d{2}/.test(value);
+  if (!hasTimeComponent) {
+    return new Date(
+      Date.UTC(
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate(),
+        12,
+      ),
+    );
+  }
+  return parsed;
 }
 
 function fmtShortDate(value: string | null | undefined): string {
