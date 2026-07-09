@@ -8,10 +8,6 @@ jest.mock("@/lib/supabase/service", () => ({
   }),
 }));
 
-jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
-  regenerateExecutiveBriefingDraft: jest.fn(),
-}));
-
 import { linkDailyRecapToCanonicalRun } from "../daily-brief-canonical-link";
 import { evidenceRefSchema } from "../contracts";
 import { evidenceRefsFromDeliveryResult } from "../executive-daily-brief-ledger";
