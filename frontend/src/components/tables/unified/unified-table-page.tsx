@@ -2018,6 +2018,23 @@ export function UnifiedTablePage<T>({
   const headerContent = (
     <PageHeader
       title={header.title}
+      // Render the title with `truncate` instead of PageHeader's default
+      // `break-words`. Table-page headers place the toolbar inline with the
+      // title (mobileActionsInline), and the toolbar is `shrink-0`, so in a
+      // narrow container (e.g. the tablet 3-pane center column) the title's
+      // flex column can be squeezed below one word's width — `break-words`
+      // then shatters it one letter per line. Truncating fails gracefully to
+      // an ellipsis and is a no-op on desktop where the title fits.
+      // Scoped to the default variant: the `compact` variant renders the title
+      // as a small Eyebrow, so passing titleContent there would wrongly replace
+      // it with this large <h1>.
+      titleContent={
+        header.variant === "compact" ? undefined : (
+          <h1 className="truncate text-3xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
+            {header.title}
+          </h1>
+        )
+      }
       eyebrow={header.eyebrow}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
