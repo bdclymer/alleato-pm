@@ -253,10 +253,7 @@ function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
   ) as T;
 }
 
-async function upsertFollowUps(
-  recapId: string,
-  packet: BrandonDailyUpdatePacket,
-) {
+async function upsertFollowUps(packet: BrandonDailyUpdatePacket) {
   const supabase = createServiceClient();
   const entries = getSectionEntries(packet);
   if (entries.length === 0) {
@@ -272,7 +269,7 @@ async function upsertFollowUps(
     );
 
   if (existingResponse.error) {
-    return upsertFollowUpsToAppDb(recapId, packet);
+    return upsertFollowUpsToAppDb(packet);
   }
 
   const existingByFingerprint = new Map(
@@ -300,8 +297,12 @@ async function upsertFollowUps(
       source_url: toSupabaseText(item.sourceUrl),
       project_label: toSupabaseText(item.project) ?? "No project linked",
       source_date: toSupabaseText(item.date) ?? "",
-      first_seen_recap_id: existing?.first_seen_recap_id ?? recapId,
-      last_seen_recap_id: recapId,
+      // recap_id columns are uuid FKs to the retired daily_recaps draft. The
+      // canonical packet is keyed by business date, not a daily_recaps uuid, so
+      // there is no valid uuid to store here — leave them null (they are unused
+      // on read; staleness tracks first_seen_at/last_seen_at/source_date).
+      first_seen_recap_id: existing?.first_seen_recap_id ?? null,
+      last_seen_recap_id: null,
       first_seen_at: existing?.first_seen_at ?? new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
       resolved_at: existing?.resolved_at ?? null,
@@ -317,7 +318,7 @@ async function upsertFollowUps(
     .select("*");
 
   if (error) {
-    return upsertFollowUpsToAppDb(recapId, packet);
+    return upsertFollowUpsToAppDb(packet);
   }
 
   return new Map(
@@ -326,7 +327,6 @@ async function upsertFollowUps(
 }
 
 async function upsertFollowUpsToAppDb(
-  recapId: string,
   packet: BrandonDailyUpdatePacket,
 ): Promise<Map<string, ExecutiveBriefingFollowUp>> {
   const entries = getSectionEntries(packet);
@@ -372,8 +372,10 @@ async function upsertFollowUpsToAppDb(
         source_url: toSupabaseText(item.sourceUrl),
         project_label: toSupabaseText(item.project) ?? "No project linked",
         source_date: toSupabaseText(item.date) ?? "",
-        first_seen_recap_id: existing?.first_seen_recap_id ?? recapId,
-        last_seen_recap_id: recapId,
+        // See upsertFollowUps: recap_id uuid FKs left null now the daily_recaps
+        // draft is retired and the packet is keyed by business date.
+        first_seen_recap_id: existing?.first_seen_recap_id ?? null,
+        last_seen_recap_id: null,
         first_seen_at: existing?.first_seen_at ?? now,
         last_seen_at: now,
         resolved_at: existing?.resolved_at ?? null,
@@ -460,7 +462,7 @@ export async function getExecutiveBriefingDashboard(options?: {
   // working after the daily_recaps draft was retired. Failures here must not take
   // down the dashboard read.
   try {
-    await upsertFollowUps(draft.id, draft.packet);
+    await upsertFollowUps(draft.packet);
   } catch (error) {
     console.error("[executive-briefing] follow-up persistence failed", error);
   }
