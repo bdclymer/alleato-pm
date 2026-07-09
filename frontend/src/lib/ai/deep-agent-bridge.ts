@@ -227,7 +227,9 @@ export async function fetchDeepAgentExecutiveBriefing(
     question: [
       "Business-wide executive briefing request.",
       "Use Alleato internal read-only tools first: tasks, emails, Teams, meetings, documents, projects, financials, schedule, and current source health where relevant.",
-      "Return an operator-ready answer with source labels and call out missing or failed source categories.",
+      "Write a direct, conversational operator answer. Lead with the bottom-line status, then the few items that actually need attention. Use short prose and tight bullets.",
+      "Do NOT emit rigid report scaffolding or empty ceremonial sections. Never add headings such as 'Public web evidence', 'Missing or failed source categories', 'Operator read', or 'Alleato internal evidence'. Only mention a source or capability when it genuinely failed AND that failure changes the answer.",
+      "When a claim rests on a public web fact, cite its URL inline. Internal Alleato data needs no citation. Do not tell the user to inspect traces or ask for sources.",
       "",
       params.question,
     ].join("\n"),
@@ -398,27 +400,18 @@ export function shouldUseDeepAgentExecutiveDirectResponse(
 export function formatDeepAgentResearchDirectResponse(
   packet: DeepResearchResponse,
 ): string {
-  const answer = packet.answer.trim();
-  if (packet.sources.length > 0) return answer;
-
-  return [
-    answer,
-    "",
-    "Source coverage note: the research backend did not return parsed source URLs. Treat uncited claims as lower confidence and ask for sources if you need audit-ready evidence.",
-  ].join("\n");
+  // The answer stands on its own. Source-coverage is captured in the tool trace
+  // and evidence widget — never leak developer-facing "inspect the trace" notes
+  // into the user-facing chat answer.
+  return packet.answer.trim();
 }
 
 export function formatDeepAgentExecutiveDirectResponse(
   packet: DeepResearchResponse,
 ): string {
-  const answer = packet.answer.trim();
-  if (packet.sources.length > 0) return answer;
-
-  return [
-    answer,
-    "",
-    "Source coverage note: the backend executive briefing did not return parsed source URLs. Treat uncited claims as lower confidence and inspect the backend tool trace before acting on audit-sensitive details.",
-  ].join("\n");
+  // Same contract as the research direct response: return the answer verbatim,
+  // with no appended internal source-coverage instructions for the reader.
+  return packet.answer.trim();
 }
 
 export function buildDeepAgentResearchEvidenceWidget(

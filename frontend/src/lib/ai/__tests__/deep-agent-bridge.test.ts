@@ -1,7 +1,9 @@
 import {
   buildDeepAgentResearchEvidenceWidget,
   formatDeepAgentAppExpertContext,
+  formatDeepAgentExecutiveDirectResponse,
   formatDeepAgentResearchContext,
+  formatDeepAgentResearchDirectResponse,
   shouldUseDeepAgentAppExpertBridge,
   shouldUseDeepAgentResearchBridge,
   shouldUseDeepAgentResearchDirectResponse,
@@ -99,6 +101,26 @@ describe("Deep Agents live bridge", () => {
       id: "deep-agent-research-evidence",
       sources: [{ href: "https://example.com/source" }],
     });
+  });
+
+  it("never leaks developer-facing source-coverage notes into the user answer", () => {
+    const noSourcePacket: DeepResearchResponse = {
+      ...researchPacket,
+      answer: "## Status\n\nPortfolio is active with a few decision-gated jobs.\n",
+      sources: [],
+    };
+
+    const research = formatDeepAgentResearchDirectResponse(noSourcePacket);
+    const executive = formatDeepAgentExecutiveDirectResponse(noSourcePacket);
+
+    for (const output of [research, executive]) {
+      expect(output).toBe(
+        "## Status\n\nPortfolio is active with a few decision-gated jobs.",
+      );
+      expect(output).not.toContain("Source coverage note");
+      expect(output).not.toContain("backend tool trace");
+      expect(output).not.toContain("audit-ready evidence");
+    }
   });
 
   it("formats app expert context without project-status bridge wiring", () => {
