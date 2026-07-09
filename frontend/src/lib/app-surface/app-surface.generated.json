@@ -149,7 +149,7 @@
     {
       "url": "/[projectId]/commitments/new",
       "title": null,
-      "description": "Create new subcontract or purchase order with details and schedule of values"
+      "description": "Create a new purchase order commitment"
     },
     {
       "url": "/[projectId]/commitments/recycle-bin",
@@ -404,12 +404,12 @@
     {
       "url": "/[projectId]/pcos/[pcoId]/edit",
       "title": "Edit Potential Change Order",
-      "description": "Edit potential change order with change events, line items, and markup"
+      "description": "Update change events, line items, and PCO details."
     },
     {
       "url": "/[projectId]/pcos/new",
       "title": "New Potential Change Order",
-      "description": "Create new potential change order linked to change events with line items"
+      "description": "Group change events, add line items, and submit a PCO to the client."
     },
     {
       "url": "/[projectId]/permissions",
@@ -494,7 +494,7 @@
     {
       "url": "/[projectId]/prime-contracts/new",
       "title": "Create Prime Contract",
-      "description": "Create new prime contract with standard fields or from a project estimate"
+      "description": "Enter contract details, financial markup, and SOV line items."
     },
     {
       "url": "/[projectId]/progress-reports",
@@ -1167,6 +1167,11 @@
       "description": "Authentication required."
     },
     {
+      "url": "/executive/daily-deep-read-review",
+      "title": "Daily Deep Read review",
+      "description": "This review queue is limited to users with executive briefing access."
+    },
+    {
       "url": "/executive/intelligence-brief",
       "title": "Executive briefing",
       "description": "This executive briefing is limited to users with executive briefing access."
@@ -1473,6 +1478,11 @@
     },
     {
       "url": "/respond/rfi/[token]",
+      "title": null,
+      "description": null
+    },
+    {
+      "url": "/roadmap",
       "title": null,
       "description": null
     },

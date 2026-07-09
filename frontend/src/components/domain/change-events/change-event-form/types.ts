@@ -33,6 +33,10 @@ export interface ChangeEventLineItem {
   budgetCode: string;
   description: string;
   vendor: string;
+  // Display name for the saved vendor (companies.name). Not persisted — used
+  // only to seed the Vendor combobox on edit so a saved vendor whose commitment
+  // is inactive still shows its name instead of an empty placeholder.
+  vendorName?: string;
   contract: string;
   commitmentId?: string;
   commitmentLineItemId: string;

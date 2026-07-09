@@ -178,9 +178,9 @@ function AllDivisionGroup({
       </div>
 
       {expanded && (
-        <div className="ml-6 pl-4 border-l border-border pb-2">
+        <div className="ml-6 pl-4 border-l border-border pb-2 overflow-x-auto">
           {/* Column headers for cost types */}
-          <div className="flex items-center gap-4 py-2 px-2 border-b border-border mb-0">
+          <div className="flex min-w-max items-center gap-4 py-2 px-2 border-b border-border mb-0">
             <div className="w-64 text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Cost Code
             </div>
@@ -207,7 +207,7 @@ function AllDivisionGroup({
             return (
               <div
                 key={code.id}
-                className={`flex items-center gap-4 py-1.5 px-2 border-b border-border ${
+                className={`flex min-w-max items-center gap-4 py-1.5 px-2 border-b border-border ${
                   hasAnyType ? "bg-primary/5" : ""
                 }`}
               >
@@ -688,7 +688,7 @@ export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold text-foreground">
@@ -699,9 +699,9 @@ export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
             budget
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-1 items-center gap-3 sm:flex-none">
           {/* Search */}
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search codes or divisions…"

@@ -7,6 +7,7 @@ import {
   CellText,
   editableSelectColumn,
   editableTextColumn,
+  type ColumnConfig,
   type FilterConfig,
   type TableColumn,
 } from "@/components/tables/unified";
@@ -17,7 +18,7 @@ import {
 } from "@/lib/training-docs/constants";
 import type { TrainingDocWithAssets } from "@/lib/training-docs/types";
 
-export const trainingDocColumns = [
+export const trainingDocColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "training_page", label: "Training Page", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -28,7 +29,7 @@ export const trainingDocColumns = [
   { id: "assets", label: "Screenshots", defaultVisible: true },
   { id: "steps", label: "Steps", defaultVisible: true },
   { id: "published", label: "Published", defaultVisible: true },
-] as const;
+];
 
 export const trainingDocDefaultVisibleColumns = trainingDocColumns
   .filter((column) => column.defaultVisible || column.alwaysVisible)

@@ -14,7 +14,7 @@ import {
   FileText,
   Mail,
   Minus,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Plus,
   Table2,
@@ -903,7 +903,7 @@ export default function ProjectDrawingsPage() {
               className="h-8 w-8 p-0"
               aria-label="More drawing actions"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

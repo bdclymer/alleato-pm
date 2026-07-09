@@ -2,12 +2,10 @@
 
 import * as React from "react";
 
-import {
-  FileUploadField,
-  Form,
-  FormSection,
-} from "@/components/forms";
+import { Form } from "@/components/ui/form";
+import { FileUploadField, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
 import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal";
 
 import {
@@ -30,10 +28,9 @@ export function ChangeEventForm({
   projectId,
 }: ChangeEventFormProps) {
   const {
-    formData,
+    form,
+    lineItemFields,
     nextNumber,
-    errors,
-    updateFormData,
     updateLineItem,
     vendors,
     contracts,
@@ -51,47 +48,79 @@ export function ChangeEventForm({
     removeLineItem,
     csvInputRef,
     handleCsvImport,
-    attachmentsAsInfo,
-    setFormData,
     handleBudgetCodeCreated,
-    validate,
   } = useChangeEventFormData({ initialData, projectId });
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!validate()) {
-      // Scroll to the first visible field error so it's not hidden below the fold
+  const expectingRevenue = form.watch("expectingRevenue") !== false;
+  const lineItemRevenueSource = form.watch("lineItemRevenueSource");
+  const attachments = form.watch("attachments");
+
+  const attachmentsAsInfo = React.useMemo(
+    () =>
+      attachments.map((file) => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      })),
+    [attachments],
+  );
+
+  const setAttachments = React.useCallback(
+    (updater: (prev: File[]) => File[]) => {
+      form.setValue("attachments", updater(form.getValues("attachments")), {
+        shouldDirty: true,
+      });
+    },
+    [form],
+  );
+
+  const handleSubmit = form.handleSubmit(
+    async (data) => {
+      // Route-level failures surface via FormServerError (errors.root). The
+      // page's onSubmit throws on failure so the message lands here.
+      try {
+        await onSubmit(data);
+      } catch (error) {
+        form.setError("root", {
+          type: "server",
+          message:
+            error instanceof Error ? error.message : "Failed to save change event",
+        });
+      }
+    },
+    () => {
+      // Scroll to the first invalid field so validation errors aren't hidden
+      // below the fold.
       requestAnimationFrame(() => {
-        const firstError = document.querySelector<HTMLElement>("[data-field-error]");
+        const firstError = document.querySelector<HTMLElement>('[aria-invalid="true"]');
         if (firstError) {
           firstError.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       });
-      return;
-    }
-    await onSubmit(formData);
-  };
+    },
+  );
 
   return (
     <>
-      <Form
-        onSubmit={handleSubmit}
-        data-dev-autofill-disabled="true"
-        data-form-id="change-event-create"
-      >
-        <div className="space-y-10">
+      <Form {...form}>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className="space-y-8"
+          data-dev-autofill-disabled="true"
+          data-form-id="change-event-create"
+        >
           <GeneralInfoSection
-            formData={formData}
+            form={form}
             nextNumber={nextNumber}
-            errors={errors}
-            updateFormData={updateFormData}
             primeContractSelectOptions={primeContractSelectOptions}
             hasPrimeContracts={primeContractOptions.length > 0}
             projectId={projectId}
           />
 
           <LineItemsSection
-            lineItems={formData.lineItems}
+            control={form.control}
+            fields={lineItemFields}
             updateLineItem={updateLineItem}
             addLineItem={addLineItem}
             removeLineItem={removeLineItem}
@@ -105,11 +134,11 @@ export function ChangeEventForm({
             }}
             handleCommitmentChange={handleCommitmentChange}
             handleCommitmentLineItemChange={handleCommitmentLineItemChange}
-            expectingRevenue={formData.expectingRevenue ?? true}
+            expectingRevenue={expectingRevenue}
             csvInputRef={csvInputRef}
             handleCsvImport={handleCsvImport}
             handleAddAllCommitmentLineItems={handleAddAllCommitmentLineItems}
-            lineItemRevenueSource={formData.lineItemRevenueSource}
+            lineItemRevenueSource={lineItemRevenueSource}
           />
 
           <FormSection title="Attachments">
@@ -119,21 +148,17 @@ export function ChangeEventForm({
                 multiple
                 variant="minimal"
                 onFilesSelected={(files) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    attachments: [...prev.attachments, ...files],
-                  }));
+                  setAttachments((prev) => [...prev, ...files]);
                 }}
                 onChange={(nextFiles) => {
                   const remaining = nextFiles.map(
                     (f) => `${f.name}:${f.size}:${f.type || ""}`,
                   );
-                  setFormData((prev) => ({
-                    ...prev,
-                    attachments: prev.attachments.filter((file) =>
+                  setAttachments((prev) =>
+                    prev.filter((file) =>
                       remaining.includes(`${file.name}:${file.size}:${file.type || ""}`),
                     ),
-                  }));
+                  );
                 }}
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
                 maxSize={25 * 1024 * 1024}
@@ -141,13 +166,16 @@ export function ChangeEventForm({
             </div>
           </FormSection>
 
+          <FormServerError message={form.formState.errors.root?.message} />
+
           <FormActions
             onCancel={onCancel}
             isSubmitting={isSubmitting}
             submitLabel={mode === "create" ? "Create Change Event" : "Update Change Event"}
             submitDataTestId={mode === "create" ? "change-event-create-submit" : "change-event-update-submit"}
+            stickyOnMobile
           />
-        </div>
+        </form>
       </Form>
 
       <CreateBudgetCodeModal

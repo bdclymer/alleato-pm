@@ -8,7 +8,7 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { Plus, Eye, MoreHorizontal } from "lucide-react";
+import { Plus, Eye, MoreVertical, ExternalLink } from "lucide-react";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { KpiStrip, StatusBadge } from "@/components/ds";
@@ -62,6 +62,7 @@ import {
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 import { toast } from "sonner";
 import { validateOpenBillingPeriodCreate } from "@/lib/invoicing/billing-period-validation";
 
@@ -94,6 +95,8 @@ interface SubcontractorInvoiceRow {
   percent_complete: number;
   erp_status: string | null;
   payment_status: string | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type: string | null;
 }
 
 const INVOICE_STATUS_OPTIONS = [
@@ -108,6 +111,7 @@ const INVOICE_STATUS_OPTIONS = [
 
 const subcontractorColumnConfig: ColumnConfig[] = [
   { id: "invoice_number", label: "Invoice #", alwaysVisible: true },
+  { id: "acumatica", label: "Acumatica", defaultVisible: true },
   { id: "status", label: "Invoice Status", defaultVisible: true },
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
   { id: "billing_period", label: "Billing Period", defaultVisible: true },
@@ -123,7 +127,7 @@ const subcontractorColumnConfig: ColumnConfig[] = [
   },
   { id: "percent_complete", label: "% Complete", defaultVisible: true },
   { id: "total_amount", label: "Total Amount", defaultVisible: false },
-  { id: "erp_status", label: "ERP Status", defaultVisible: false },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
 ];
 
 const subcontractorDefaultVisibleColumns = subcontractorColumnConfig
@@ -494,6 +498,30 @@ export default function ProjectInvoicesPage(): ReactElement {
         ),
       },
       {
+        id: "acumatica",
+        label: "Acumatica",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.acumatica_ref_nbr ?? "",
+        render: (i) =>
+          i.acumatica_ref_nbr ? (
+            <a
+              href={buildAcumaticaApBillHref(
+                i.acumatica_doc_type,
+                i.acumatica_ref_nbr,
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+            >
+              <span className="tabular-nums">{i.acumatica_ref_nbr}</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">Not synced</span>
+          ),
+      },
+      {
         id: "status",
         label: "Invoice Status",
         defaultVisible: true,
@@ -585,17 +613,20 @@ export default function ProjectInvoicesPage(): ReactElement {
         defaultVisible: true,
         sortable: true,
         sortValue: (i) => i.contract_number ?? "",
-        render: (i) => (
-          <span className="text-sm text-foreground">
-            {i.contract_number ?? "-"}
-            {i.contract_title ? (
-              <span className="text-muted-foreground">
-                {" "}
-                — {i.contract_title}
-              </span>
-            ) : null}
-          </span>
-        ),
+        render: (i) => {
+          const number = i.contract_number ?? null;
+          const title = i.contract_title ?? null;
+          const label = number ?? title;
+          const suffix = title && title !== number ? title : null;
+          return (
+            <span className="text-sm text-foreground">
+              {label ?? "-"}
+              {suffix ? (
+                <span className="text-muted-foreground"> — {suffix}</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         id: "total_contract_amount",
@@ -949,7 +980,7 @@ export default function ProjectInvoicesPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

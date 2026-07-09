@@ -647,7 +647,8 @@ export function ForecastToCompleteModal({
                             <>
                               <DateField
                                 className="col-span-6 md:col-span-2"
-                                label={<span className="sr-only">Start date</span>}
+                                label="Start date"
+                                hideLabel
                                 value={parseStoredDate(item.startDate)}
                                 onChange={(value) =>
                                   updateLineItem(item.id, {
@@ -658,7 +659,8 @@ export function ForecastToCompleteModal({
                               />
                               <DateField
                                 className="col-span-6 md:col-span-2"
-                                label={<span className="sr-only">End date</span>}
+                                label="End date"
+                                hideLabel
                                 value={parseStoredDate(item.endDate)}
                                 onChange={(value) =>
                                   updateLineItem(item.id, {
@@ -669,7 +671,8 @@ export function ForecastToCompleteModal({
                               />
                               <SelectField
                                 className="col-span-4 md:col-span-2"
-                                label={<span className="sr-only">Units remaining mode</span>}
+                                label="Units remaining mode"
+                                hideLabel
                                 options={UNITS_REMAINING_OPTIONS}
                                 value={item.unitsRemainingMode}
                                 onValueChange={(value) =>

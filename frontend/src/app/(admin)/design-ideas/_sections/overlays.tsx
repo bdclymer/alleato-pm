@@ -27,7 +27,7 @@ import {
   Input,
   Label,
 } from "@/components/ds";
-import { MoreHorizontal, Pencil, Trash2, Copy } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Copy } from "lucide-react";
 
 export function OverlaysSection() {
   return (
@@ -151,7 +151,7 @@ export function OverlaysSection() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon-sm">
-                <MoreHorizontal />
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

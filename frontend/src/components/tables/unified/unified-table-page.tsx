@@ -88,7 +88,6 @@ import {
   EyeOff,
   GripVertical,
   Inbox,
-  MoreHorizontal,
   MoreVertical,
   PanelRightClose,
   PanelRightOpen,
@@ -138,6 +137,20 @@ export function shouldRenderRowSelection(
   features?: UnifiedTableFeatures,
 ): boolean {
   return features?.enableRowSelection ?? true;
+}
+
+/** Minimum width (px) a column can be dragged down to during a resize. */
+export const MIN_COLUMN_RESIZE_WIDTH = 120;
+
+/**
+ * Pure width computation for a column-resize drag, clamped to the minimum.
+ * Extracted so the resize floor is regression-tested without rendering the table.
+ */
+export function computeResizedColumnWidth(
+  startWidth: number,
+  deltaX: number,
+): number {
+  return Math.max(MIN_COLUMN_RESIZE_WIDTH, startWidth + deltaX);
 }
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
@@ -561,6 +574,12 @@ export interface UnifiedTablePageProps<T> {
     plainFooterTotals?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
+    /**
+     * Keep the toolbar (search/filter/column/export icons) on the SAME row as
+     * the tabs at every width, instead of the default (icons drop into the
+     * header row below `lg`). Only meaningful when `tabs` are provided.
+     */
+    toolbarWithTabs?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
     containerClassName?: string;
     /** Override the card-view grid className (default: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4) */
@@ -868,6 +887,7 @@ export function UnifiedTablePage<T>({
   const plainFooterTotals = layout?.plainFooterTotals ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
+  const toolbarWithTabs = (layout?.toolbarWithTabs ?? false) && Boolean(tabs);
   const containerMaxWidth = layout?.maxWidth ?? "full";
   const containerClassName = layout?.containerClassName;
   const containerPadding = layout?.containerPadding !== false;
@@ -1018,7 +1038,11 @@ export function UnifiedTablePage<T>({
     startX: number;
     startWidth: number;
   } | null>(null);
-  const [isResizingColumn, setIsResizingColumn] = React.useState(false);
+  // True from the first drag movement until the synthetic click that follows
+  // mouseup is consumed — lets the header's onClick skip sorting after a resize.
+  const didResizeRef = React.useRef(false);
+  // Coalesces mousemove width updates into one state write per animation frame.
+  const resizeRafRef = React.useRef<number | null>(null);
   const hasUserManagedColumnOrderRef = React.useRef(false);
   const selectionColumnWidth = 40;
 
@@ -1849,39 +1873,52 @@ export function UnifiedTablePage<T>({
         startX: event.clientX,
         startWidth: headerCell.getBoundingClientRect().width,
       };
-      setIsResizingColumn(true);
+      didResizeRef.current = false;
+      // Suppress text selection and lock the resize cursor for the whole drag.
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      // Attach listeners synchronously here — NOT via an effect keyed on state —
+      // so the drag is tracked from the very first pixel instead of after a
+      // re-render (which is slow on large tables and made resize feel laggy).
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const resizeState = resizeStateRef.current;
+        if (!resizeState) return;
+        didResizeRef.current = true;
+        const deltaX = moveEvent.clientX - resizeState.startX;
+        const nextWidth = computeResizedColumnWidth(
+          resizeState.startWidth,
+          deltaX,
+        );
+        // Coalesce into one state write per frame so a fast drag doesn't
+        // re-render the whole table body on every mousemove event.
+        if (resizeRafRef.current !== null) return;
+        resizeRafRef.current = window.requestAnimationFrame(() => {
+          resizeRafRef.current = null;
+          setColumnWidths((prev) => ({
+            ...prev,
+            [resizeState.columnId]: nextWidth,
+          }));
+        });
+      };
+
+      const handleMouseUp = () => {
+        resizeStateRef.current = null;
+        if (resizeRafRef.current !== null) {
+          window.cancelAnimationFrame(resizeRafRef.current);
+          resizeRafRef.current = null;
+        }
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     },
     [],
   );
-
-  React.useEffect(() => {
-    if (!isResizingColumn) return;
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const resizeState = resizeStateRef.current;
-      if (!resizeState) return;
-
-      const deltaX = event.clientX - resizeState.startX;
-      const nextWidth = Math.max(120, resizeState.startWidth + deltaX);
-      setColumnWidths((prev) => ({
-        ...prev,
-        [resizeState.columnId]: nextWidth,
-      }));
-    };
-
-    const handleMouseUp = () => {
-      resizeStateRef.current = null;
-      setIsResizingColumn(false);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizingColumn]);
 
   const renderTableToolbar = (className?: string) => (
     <TableToolbar
@@ -1981,6 +2018,23 @@ export function UnifiedTablePage<T>({
   const headerContent = (
     <PageHeader
       title={header.title}
+      // Render the title with `truncate` instead of PageHeader's default
+      // `break-words`. Table-page headers place the toolbar inline with the
+      // title (mobileActionsInline), and the toolbar is `shrink-0`, so in a
+      // narrow container (e.g. the tablet 3-pane center column) the title's
+      // flex column can be squeezed below one word's width — `break-words`
+      // then shatters it one letter per line. Truncating fails gracefully to
+      // an ellipsis and is a no-op on desktop where the title fits.
+      // Scoped to the default variant: the `compact` variant renders the title
+      // as a small Eyebrow, so passing titleContent there would wrongly replace
+      // it with this large <h1>.
+      titleContent={
+        header.variant === "compact" ? undefined : (
+          <h1 className="truncate text-3xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
+            {header.title}
+          </h1>
+        )
+      }
       eyebrow={header.eyebrow}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
@@ -1996,6 +2050,9 @@ export function UnifiedTablePage<T>({
             {headerActionsSlot}
             {tableToolbar}
           </div>
+        ) : toolbarWithTabs ? (
+          // Toolbar lives on the tabs row at all widths — no duplicate in the header.
+          headerActionsSlot
         ) : headerActionsSlot ? (
           <div className="flex items-center gap-2">
             {headerActionsSlot}
@@ -2026,10 +2083,15 @@ export function UnifiedTablePage<T>({
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
-            "flex flex-col gap-2",
-            tabs
-              ? "md:flex-row md:items-center md:justify-between md:gap-4"
-              : "md:flex-row md:items-center md:justify-end md:gap-4",
+            toolbarWithTabs
+              ? // Keep tabs + toolbar on one horizontal row at EVERY width.
+                "flex flex-row items-center justify-between gap-2"
+              : cn(
+                  "flex flex-col gap-2",
+                  tabs
+                    ? "md:flex-row md:items-center md:justify-between md:gap-4"
+                    : "md:flex-row md:items-center md:justify-end md:gap-4",
+                ),
             isCompactDensity
               ? "pb-1 pt-0"
               : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
@@ -2045,11 +2107,13 @@ export function UnifiedTablePage<T>({
           {!toolbarInlineWithHeader && !shouldPortalToolbar ? (
             <div
               className={cn(
-                TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
+                toolbarWithTabs
+                  ? "flex min-w-0 justify-end"
+                  : TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
                 tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >
-              {tableToolbar}
+              {toolbarWithTabs ? renderTableToolbar("w-auto py-0") : tableToolbar}
             </div>
           ) : null}
         </div>
@@ -2291,6 +2355,13 @@ export function UnifiedTablePage<T>({
                             }
                             style={columnStyle}
                             onClick={() => {
+                              // A resize drag ends with a synthetic click on the
+                              // <th> (the handle is a child). Consume it so the
+                              // resize doesn't also re-sort the column.
+                              if (didResizeRef.current) {
+                                didResizeRef.current = false;
+                                return;
+                              }
                               if (isSortable) {
                                 handleSortClick(column.id);
                               }
@@ -2327,6 +2398,7 @@ export function UnifiedTablePage<T>({
                                 <>
                                   {hasContextActions ? (
                                     <div className="flex items-center w-full">
+                                      {columnAlignment === "right" && dragHandle}
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button
@@ -2349,6 +2421,14 @@ export function UnifiedTablePage<T>({
                                               event.currentTarget.click();
                                             }}
                                           >
+                                            {/* Right-aligned headers place the sort
+                                                indicator BEFORE the label so the label
+                                                stays flush with the column's right edge,
+                                                matching the right-aligned numeric cells. */}
+                                            {columnAlignment === "right" &&
+                                              isSortable &&
+                                              column.showSortIcon !== false &&
+                                              renderSortIcon(column.id)}
                                             <span
                                               className={
                                                 TABLE_HEADER_LABEL_CLASSNAME
@@ -2356,7 +2436,8 @@ export function UnifiedTablePage<T>({
                                             >
                                               {column.label}
                                             </span>
-                                            {isSortable &&
+                                            {columnAlignment !== "right" &&
+                                              isSortable &&
                                               column.showSortIcon !== false &&
                                               renderSortIcon(column.id)}
                                           </Button>
@@ -2436,7 +2517,7 @@ export function UnifiedTablePage<T>({
                                           )}
                                         </DropdownMenuContent>
                                       </DropdownMenu>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   ) : (
                                     <div
@@ -2451,12 +2532,13 @@ export function UnifiedTablePage<T>({
                                             : "justify-start",
                                       )}
                                     >
+                                      {columnAlignment === "right" && dragHandle}
                                       <span
                                         className={TABLE_HEADER_LABEL_CLASSNAME}
                                       >
                                         {column.label}
                                       </span>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   )}
                                   <div
@@ -2464,6 +2546,9 @@ export function UnifiedTablePage<T>({
                                     onMouseDown={(event) =>
                                       handleColumnResizeStart(event, column.id)
                                     }
+                                    // A click on the handle itself (no drag) must
+                                    // not bubble to the header's sort onClick.
+                                    onClick={(event) => event.stopPropagation()}
                                     aria-hidden="true"
                                   />
                                 </>
@@ -2821,7 +2906,7 @@ export function UnifiedTablePage<T>({
                                     className="h-8 w-8"
                                     aria-label="Row actions"
                                   >
-                                    <MoreHorizontal />
+                                    <MoreVertical />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">

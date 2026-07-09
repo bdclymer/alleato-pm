@@ -77,9 +77,12 @@ export function AppInboxList({
     return <InboxSkeleton />;
   }
 
+  // useInboxNotifications (non-suspense) types this as possibly-undefined even
+  // after the isLoading guard, so default to an empty list.
+  const all = inboxNotifications ?? [];
   const items = unreadOnly
-    ? inboxNotifications.filter((notification) => notification.readAt === null)
-    : inboxNotifications;
+    ? all.filter((notification) => notification.readAt === null)
+    : all;
 
   if (error || items.length === 0) {
     return (

@@ -4,39 +4,27 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import { Text } from "@/components/ds/text";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  FormActions,
+  FormGrid,
+  FormSection,
+  FormServerError,
+} from "@/components/forms";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { apiFetch } from "@/lib/api-client";
 import {
   buildPrimePcoSourceTitle,
@@ -44,7 +32,6 @@ import {
   resolveSourceChangeReason,
   type PrimePcoSourceChangeEvent,
 } from "@/lib/change-events/prime-pco-source";
-import { cn } from "@/lib/utils";
 
 const CHANGE_REASONS = [
   "Allowance",
@@ -93,105 +80,6 @@ function buildCommitmentPcoTitle(events: ChangeEventSummary[]): string {
   return buildPrimePcoSourceTitle(events).replace(/^PCO for /, "PCO for ");
 }
 
-function CommitmentCombobox({
-  value,
-  onChange,
-  commitments,
-  search,
-  onSearchChange,
-  open,
-  onOpenChange,
-  isLoading,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  commitments: CommitmentOption[];
-  search: string;
-  onSearchChange: (value: string) => void;
-  open: boolean;
-  onOpenChange: (value: boolean) => void;
-  isLoading: boolean;
-}) {
-  const normalizedSearch = search.trim().toLowerCase();
-  const selected = commitments.find((option) => option.id === value);
-  const filtered = commitments.filter((option) => {
-    if (!normalizedSearch) return true;
-    const label = formatCommitmentLabel(option).toLowerCase();
-    const company = option.company_name?.toLowerCase() ?? "";
-    const type = option.commitment_type?.toLowerCase() ?? "";
-    return (
-      label.includes(normalizedSearch) ||
-      company.includes(normalizedSearch) ||
-      type.includes(normalizedSearch)
-    );
-  });
-
-  return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-label="Commitment"
-          className={cn(
-            "w-full justify-between font-normal",
-            !selected && "text-muted-foreground",
-          )}
-          disabled={isLoading}
-        >
-          <span className="truncate">
-            {selected ? formatCommitmentLabel(selected) : "Select a commitment"}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
-        align="start"
-      >
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search commitments..."
-            value={search}
-            onValueChange={onSearchChange}
-          />
-          <CommandList>
-            <CommandEmpty>No commitments found.</CommandEmpty>
-            <CommandGroup>
-              {filtered.map((option) => (
-                <CommandItem
-                  key={option.id}
-                  value={option.id}
-                  onSelect={() => {
-                    onChange(option.id);
-                    onOpenChange(false);
-                    onSearchChange("");
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate">{formatCommitmentLabel(option)}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {[option.company_name, option.commitment_type]
-                        .filter(Boolean)
-                        .join(" - ")}
-                    </span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 export default function NewCommitmentPcoPage() {
   const router = useRouter();
   const params = useParams()!;
@@ -209,8 +97,6 @@ export default function NewCommitmentPcoPage() {
 
   const [commitments, setCommitments] = useState<CommitmentOption[]>([]);
   const [changeEvents, setChangeEvents] = useState<ChangeEventSummary[]>([]);
-  const [commitmentSearch, setCommitmentSearch] = useState("");
-  const [commitmentOpen, setCommitmentOpen] = useState(false);
   const [isLoadingCommitments, setIsLoadingCommitments] = useState(true);
   const [isLoadingChangeEvents, setIsLoadingChangeEvents] = useState(false);
   const [sourceChangeEventError, setSourceChangeEventError] = useState<string | null>(null);
@@ -235,6 +121,18 @@ export default function NewCommitmentPcoPage() {
   const selectedCommitmentId = form.watch("commitment_id");
   const selectedCommitment = commitments.find(
     (commitment) => commitment.id === selectedCommitmentId,
+  );
+
+  const commitmentOptions = useMemo(
+    () =>
+      commitments.map((commitment) => ({
+        value: commitment.id,
+        label: formatCommitmentLabel(commitment),
+        keywords: [commitment.company_name, commitment.commitment_type].filter(
+          Boolean,
+        ) as string[],
+      })),
+    [commitments],
   );
 
   useEffect(() => {
@@ -401,10 +299,10 @@ export default function NewCommitmentPcoPage() {
       toast.success("Commitment PCO created");
       router.push(`/${projectId}/commitment-pcos/${created.id}`);
     } catch (err) {
-      toast.error("Failed to create Commitment PCO", {
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred.",
-      });
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      form.setError("root", { type: "server", message });
+      toast.error("Failed to create Commitment PCO", { description: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -446,57 +344,33 @@ export default function NewCommitmentPcoPage() {
       variant="form"
       title="Create Commitment PCO"
       onBack={() => router.back()}
-      actions={
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/commitment-pcos`)}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={isSubmitting || isLoading || hasMissingSourceChangeEvents}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create"
-            )}
-          </Button>
-        </div>
-      }
     >
-      {isLoading ? (
-        <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-9 w-full" />
+      <FormContainer maxWidth="lg" withCard={false}>
+        {isLoading ? (
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-20 w-full" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-9 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-            {hasSourceChangeEvents && (
-              <section className="space-y-3">
-                <SectionRuleHeading
-                  label={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
-                  className="[&_span]:text-primary"
-                />
+        ) : (
+          <Form {...form}>
+            <form
+              noValidate
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-8"
+            >
+              <FormSection
+                title={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
+              >
                 {sourceChangeEventError ? (
                   <InfoAlert variant="error" className="text-sm">
                     {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
@@ -523,147 +397,89 @@ export default function NewCommitmentPcoPage() {
                     ))}
                   </div>
                 )}
-              </section>
-            )}
+              </FormSection>
 
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="General Information"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="commitment_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Commitment *</FormLabel>
-                      <FormControl>
-                        <CommitmentCombobox
-                          value={field.value}
-                          onChange={field.onChange}
-                          commitments={commitments}
-                          search={commitmentSearch}
-                          onSearchChange={setCommitmentSearch}
-                          open={commitmentOpen}
-                          onOpenChange={setCommitmentOpen}
-                          isLoading={isLoadingCommitments}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormItem>
-                  <FormLabel>Contract Company</FormLabel>
-                  <Input
-                    value={selectedCommitment?.company_name ?? ""}
-                    disabled
-                    placeholder="Determined by selected commitment"
+              <FormSection title="General Information">
+                <FormGrid columns={2}>
+                  <RHFComboboxField
+                    control={form.control}
+                    name="commitment_id"
+                    label="Commitment *"
+                    placeholder="Select a commitment"
+                    searchPlaceholder="Search commitments..."
+                    emptyMessage="No commitments found."
+                    options={commitmentOptions}
+                    disabled={isLoadingCommitments}
                   />
-                </FormItem>
 
-                <FormField
+                  <div className="grid gap-2">
+                    <Label>Contract Company</Label>
+                    <Input
+                      value={selectedCommitment?.company_name ?? ""}
+                      disabled
+                      placeholder="Determined by selected commitment"
+                    />
+                  </div>
+                </FormGrid>
+
+                <RHFTextField
                   control={form.control}
                   name="title"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Potential change order title" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Title *"
+                  placeholder="Potential change order title"
                 />
 
-                <FormField
-                  control={form.control}
-                  name="change_reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Change Reason</FormLabel>
-                      <FormControl>
-                        <Input
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(event.target.value || null)
-                          }
-                          placeholder="Optional"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormGrid columns={2}>
+                  <RHFTextField
+                    control={form.control}
+                    name="change_reason"
+                    label="Change Reason"
+                    placeholder="Optional"
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="schedule_impact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Schedule Impact (days)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value
-                                ? Number.parseInt(event.target.value, 10)
-                                : null,
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFNumberField
+                    control={form.control}
+                    name="schedule_impact"
+                    label="Schedule Impact (days)"
+                    step={1}
+                  />
 
-                <RHFDateField
-                  control={form.control}
-                  name="due_date"
-                  label="Due Date"
-                  nullable
-                />
+                  <RHFDateField
+                    control={form.control}
+                    name="due_date"
+                    label="Due Date"
+                    nullable
+                  />
+                </FormGrid>
 
-                <FormField
+                <RHFTextareaField
                   control={form.control}
                   name="description"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          rows={4}
-                          placeholder="Describe the potential change..."
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Description"
+                  placeholder="Describe the potential change..."
+                  rows={4}
                 />
-              </div>
-            </section>
+              </FormSection>
 
-            {commitments.length === 0 ? (
-              <InfoAlert variant="warning">
-                No commitments were found for this project. Create a subcontract or purchase order before creating a Commitment PCO.
-              </InfoAlert>
-            ) : null}
+              {commitments.length === 0 ? (
+                <InfoAlert variant="warning">
+                  No commitments were found for this project. Create a subcontract or purchase order before creating a Commitment PCO.
+                </InfoAlert>
+              ) : null}
 
-            {!hasSourceChangeEvents ? (
-              <Text tone="muted" className="text-sm">
-                To copy change-event line items automatically, start from a Change Event and use Add to Commitment PCO.
-              </Text>
-            ) : null}
-          </form>
-        </Form>
-      )}
+              <FormServerError message={form.formState.errors.root?.message} />
+
+              <FormActions
+                onCancel={() => router.push(`/${projectId}/commitment-pcos`)}
+                isSubmitting={isSubmitting}
+                submitDisabled={isLoading || hasMissingSourceChangeEvents}
+                submitLabel="Create"
+                stickyOnMobile
+              />
+            </form>
+          </Form>
+        )}
+      </FormContainer>
     </PageShell>
   );
 }

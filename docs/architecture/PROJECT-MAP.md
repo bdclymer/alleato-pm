@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (334)
+## UI Routes (336)
 
-_300/334 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_301/336 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -46,7 +46,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | View subcontractor invoice details and payment information | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
 | `/[projectId]/commitments/[commitmentId]/pcos/new` | Create a new pending change order (PCO) for a subcontract or purchase order | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
 | `/[projectId]/commitments/configure` | Configure commitment defaults, workflows, billing, and permissions. | frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx |
-| `/[projectId]/commitments/new` | Create new subcontract or purchase order with details and schedule of values | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
+| `/[projectId]/commitments/new` | Create a new purchase order commitment | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
 | `/[projectId]/commitments/recycle-bin` | Redirect to commitments list filtered to recycle bin with soft-deleted records | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
 | `/[projectId]/commitments/settings` | Configure commitment settings for auto-numbering, defaults, and approval thresholds | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
 | `/[projectId]/daily-log` | List daily logs with weather, manpower, equipment, and general field activity details | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
@@ -97,8 +97,8 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
-| `/[projectId]/pcos/[pcoId]/edit` | Edit potential change order with change events, line items, and markup | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/pcos/new` | Create new potential change order linked to change events with line items | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
+| `/[projectId]/pcos/[pcoId]/edit` | Update change events, line items, and PCO details. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/pcos/new` | Group change events, add line items, and submit a PCO to the client. | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
 | `/[projectId]/permissions` | Legacy redirect to user management page | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
 | `/[projectId]/photos` | View geotagged photos on a project map. Photos with location data will appear as pins. | frontend/src/app/(main)/[projectId]/photos/page.tsx |
 | `/[projectId]/prime-contract-pcos` | Provide a valid project identifier to access PCOs. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
@@ -115,7 +115,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/prime-contracts/[contractId]/invoices/new` | Redirect to invoice creation with the prime contract pre-selected as context | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
 | `/[projectId]/prime-contracts/change-orders` | Redirect to prime change orders tab in the canonical change orders page | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
 | `/[projectId]/prime-contracts/configure` | Project-level settings for how prime contracts behave | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
-| `/[projectId]/prime-contracts/new` | Create new prime contract with standard fields or from a project estimate | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
+| `/[projectId]/prime-contracts/new` | Enter contract details, financial markup, and SOV line items. | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
 | `/[projectId]/progress-reports` | List weekly progress reports with photos, recipients, and publication status | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
 | `/[projectId]/progress-reports/[reportId]` | Edit and publish a weekly progress report from meetings, emails, and photos | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
 | `/[projectId]/project-status-report` | Monthly project budget, invoice, schedule, and open items summary for stakeholders | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
@@ -250,6 +250,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/eval-runs` | Runs are written to docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression | frontend/src/app/(admin)/eval-runs/page.tsx |
 | `/executive` | No meeting records matched today's Eastern-time date. | frontend/src/app/(main)/executive/page.tsx |
 | `/executive/capabilities` | Authentication required. | frontend/src/app/(main)/executive/capabilities/page.tsx |
+| `/executive/daily-deep-read-review` | This review queue is limited to users with executive briefing access. | frontend/src/app/(main)/executive/daily-deep-read-review/page.tsx |
 | `/executive/intelligence-brief` | This executive briefing is limited to users with executive briefing access. | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
 | `/feedback-inbox` | Review feedback, assign tools, and sync issues to GitHub. | frontend/src/app/(admin)/feedback-inbox/page.tsx |
 | `/files` | Global file browser and manager | frontend/src/app/(tables)/files/page.tsx |
@@ -312,6 +313,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/rag-eval` | Retrieval quality metrics, answer quality scores, and eval runners | frontend/src/app/(admin)/rag-eval/page.tsx |
 | `/redoc` | Explore auth flows, schema details, and every frontend/backend endpoint in one place. | frontend/src/app/(admin)/redoc/page.tsx |
 | `/respond/rfi/[token]` | — | frontend/src/app/respond/rfi/[token]/page.tsx |
+| `/roadmap` | — | frontend/src/app/(tables)/roadmap/page.tsx |
 | `/settings` | Redirect to user profile settings for account and preference management | frontend/src/app/(main)/settings/page.tsx |
 | `/settings/account` | Manage company account profile, logo, address, billing plan, seats, and renewal information | frontend/src/app/(main)/settings/account/page.tsx |
 | `/settings/audit` | Audit events will appear here as actions are taken in the system. | frontend/src/app/(main)/settings/audit/page.tsx |
@@ -352,7 +354,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (750)
+## API Endpoints (754)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -538,6 +540,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
+| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |
@@ -603,6 +606,7 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/executive/daily-brief/preview-teams` | POST | frontend/src/app/api/executive/daily-brief/preview-teams/route.ts |
 | `/api/executive/daily-brief/send-teams` | POST | frontend/src/app/api/executive/daily-brief/send-teams/route.ts |
 | `/api/executive/daily-brief/widget` | GET | frontend/src/app/api/executive/daily-brief/widget/route.ts |
+| `/api/executive/daily-deep-read-candidates/[candidateId]` | PATCH | frontend/src/app/api/executive/daily-deep-read-candidates/[candidateId]/route.ts |
 | `/api/executive/intelligence-brief` | GET | frontend/src/app/api/executive/intelligence-brief/route.ts |
 | `/api/executive/intelligence-stats` | GET | frontend/src/app/api/executive/intelligence-stats/route.ts |
 | `/api/files/[docId]/download` | GET | frontend/src/app/api/files/[docId]/download/route.ts |
@@ -629,7 +633,9 @@ _300/334 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/knowledge/sync-sharepoint` | POST | frontend/src/app/api/knowledge/sync-sharepoint/route.ts |
 | `/api/knowledge/upload` | POST | frontend/src/app/api/knowledge/upload/route.ts |
 | `/api/liveblocks/auth` | POST | frontend/src/app/api/liveblocks/auth/route.ts |
+| `/api/liveblocks/mentions` | GET | frontend/src/app/api/liveblocks/mentions/route.ts |
 | `/api/liveblocks/users` | GET | frontend/src/app/api/liveblocks/users/route.ts |
+| `/api/liveblocks/webhook` | POST | frontend/src/app/api/liveblocks/webhook/route.ts |
 | `/api/manpower` | GET | frontend/src/app/api/manpower/route.ts |
 | `/api/manpower/assignments/[assignmentId]` | PATCH | frontend/src/app/api/manpower/assignments/[assignmentId]/route.ts |
 | `/api/manpower/import` | POST | frontend/src/app/api/manpower/import/route.ts |

@@ -305,10 +305,11 @@ function parseDefaultDistributionSelection(
   } catch (error) {
     reportNonCriticalFailure({
       area: "submittals.default-distribution",
-      message:
-        "Failed to parse saved default submittal distribution as JSON. Falling back to legacy text matching.",
+      operation: "parse-default-distribution",
       error,
-      meta: {
+      userVisibleFallback:
+        "Failed to parse saved default submittal distribution as JSON. Falling back to legacy text matching.",
+      metadata: {
         valuePreview: value.slice(0, 200),
       },
     });
@@ -2898,7 +2899,7 @@ export default function SubmittalsPage(): ReactElement {
         header={{
           title: "Submittals",
           actions: (
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
               <Button
                 variant="ghost"
                 size="icon"

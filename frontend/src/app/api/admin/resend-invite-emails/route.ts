@@ -50,7 +50,7 @@ export async function GET() {
           template: "user-invite",
           to: email,
           subject: "You're invited to Alleato",
-          react: InviteUser({ inviteLink: inviteUrl }),
+          react: InviteUser({ inviterName: "Alleato", email, acceptUrl: inviteUrl }),
           entity: { type: "user_invite_resend", id: email },
           userId: linkData.user?.id ?? undefined,
           idempotencyKey: "resend-invite/" + email + "/" + Date.now(),

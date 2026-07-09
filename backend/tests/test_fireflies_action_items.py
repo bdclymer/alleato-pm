@@ -1114,3 +1114,98 @@ Overview one.
             FirefliesIngestionPipeline._stable_content_hash(self._BASE)
             == FirefliesIngestionPipeline._stable_content_hash(refined)
         )
+
+
+class TestEmptyDictSummaryHandling:
+    """Fireflies returns absent summary sub-fields as an empty dict ``{}`` (not
+    null). Storing that raw dict into the *text* columns action_items /
+    bullet_points serialized to the literal 2-char string "{}", which is why
+    149 of the last 150 meetings showed garbage instead of an empty field.
+    These guard every layer of the fix.
+    """
+
+    def test_coerce_summary_text_drops_empty_containers_and_blanks(self):
+        assert FirefliesIngestionPipeline._coerce_summary_text({}) is None
+        assert FirefliesIngestionPipeline._coerce_summary_text([]) is None
+        assert FirefliesIngestionPipeline._coerce_summary_text(None) is None
+        assert FirefliesIngestionPipeline._coerce_summary_text("   ") is None
+
+    def test_coerce_summary_text_keeps_real_text(self):
+        assert (
+            FirefliesIngestionPipeline._coerce_summary_text("  • point one  ")
+            == "• point one"
+        )
+
+    def test_append_text_section_skips_empty_container_and_brace_junk(self):
+        lines: list = []
+        FirefliesIngestionPipeline._append_text_section(lines, "Bullet Gist", {})
+        FirefliesIngestionPipeline._append_text_section(lines, "Bullet Gist", [])
+        FirefliesIngestionPipeline._append_text_section(lines, "Bullet Gist", "{}")
+        FirefliesIngestionPipeline._append_text_section(lines, "Bullet Gist", None)
+        assert lines == []
+
+    def test_append_text_section_writes_real_text(self):
+        lines: list = []
+        FirefliesIngestionPipeline._append_text_section(lines, "Overview", "A real overview.")
+        assert lines == ["## Overview", "A real overview.", ""]
+
+    def test_rich_metadata_bullet_points_is_none_for_empty_dict(self):
+        # The exact shape Fireflies sends for a short meeting with no generated
+        # summary: every sub-field is an empty dict rather than null.
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        transcript = {
+            "summary": {
+                "bullet_gist": {},
+                "shorthand_bullet": {},
+                "keywords": {},
+                "action_items": {},
+                "overview": "Some real overview text.",
+            },
+        }
+        rich = pipeline._extract_fireflies_rich_metadata(transcript)
+        # Before the fix this was the literal empty dict → stored as "{}".
+        assert rich["bullet_points"] is None
+        # Keywords ({} → None) is coerced too, proving the method ran to completion.
+        assert "keywords" in rich and rich["keywords"] is None
+
+    def test_rich_metadata_bullet_points_keeps_real_gist(self):
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        transcript = {
+            "summary": {
+                "bullet_gist": "☀️ Solar: proceed with 45 kW array.",
+                "overview": "Overview.",
+            },
+        }
+        rich = pipeline._extract_fireflies_rich_metadata(transcript)
+        assert rich["bullet_points"] == "☀️ Solar: proceed with 45 kW array."
+
+
+class TestDurationFromSentencesWhenApiUnderreports:
+    """Fireflies sends a stub `duration` (0/1/2…) before processing finishes.
+    A ~2-hour meeting was stored as duration_minutes=2 because the old guard
+    (`duration_raw > 1`) trusted the stub. Duration must take the MAX of the
+    API value and the last-sentence end_time so a low stub can't win.
+    """
+
+    def test_stub_api_duration_loses_to_sentence_length(self):
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        transcript = {
+            "duration": 2,  # stub value that used to slip through (2 > 1)
+            "sentences": [
+                {"end_time": 60},
+                {"end_time": 4650},  # 77.5 min → real length
+            ],
+        }
+        rich = pipeline._extract_fireflies_rich_metadata(transcript)
+        assert rich["duration_minutes"] == 78
+
+    def test_accurate_api_duration_is_kept_when_larger(self):
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        transcript = {"duration": 60, "sentences": [{"end_time": 3600}]}
+        rich = pipeline._extract_fireflies_rich_metadata(transcript)
+        assert rich["duration_minutes"] == 60
+
+    def test_no_signal_yields_none(self):
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        rich = pipeline._extract_fireflies_rich_metadata({"duration": 0, "sentences": []})
+        assert rich["duration_minutes"] is None

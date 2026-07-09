@@ -148,7 +148,7 @@ import {
   ChevronUp,
   Pencil,
   Trash2,
-  MoreHorizontal,
+  MoreVertical,
   ArrowUpDown,
   Table2,
   LayoutGrid,
@@ -1501,7 +1501,7 @@ export function GenericDataTable({
             className="h-8 w-8 p-0"
             data-testid={`row-actions-${row.id}`}
           >
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

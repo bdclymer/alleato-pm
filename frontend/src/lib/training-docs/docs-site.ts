@@ -9,6 +9,7 @@ import {
   TRAINING_DOC_INDEX_PATH,
   TRAINING_DOC_NAV_PAGE,
   normalizeTrainingDocSlug,
+  type TrainingDocStatus,
 } from "./constants";
 
 export interface TrainingDocAssetPublishInput {
@@ -39,7 +40,7 @@ export interface TrainingDocPublishInput {
   slug: string;
   summary: string | null;
   audience: "internal" | "client" | "subcontractor" | "admin";
-  status: "draft" | "in_review" | "approved" | "published" | "archived";
+  status: TrainingDocStatus;
   sourceRoute: string | null;
   reviewNotes: string | null;
   bodyMarkdown: string;

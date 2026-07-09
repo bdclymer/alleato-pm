@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "mode": "APPLY",
+    "acumaticaLinkedInvoices": 2416,
+    "alreadyHadLineItems": 1,
+    "invoicesTouched": 2369,
+    "commitmentLinkedTouched": 172,
+    "linesCreated": 2985,
+    "nullBudgetCodeLines": 528,
+    "skippedNoBillLines": 46,
+    "flaggedCount": 0
+  },
+  "flagged": []
+}

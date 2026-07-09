@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { MoreVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -72,7 +72,7 @@ function buildContactTableColumns(
     contact: ContactTableRow,
     field: ContactEditableField,
     value: string,
-  ) => Promise<void>,
+  ) => void | Promise<void>,
   companyOptions: CompanyOption[],
 ): TableColumn<ContactTableRow>[] {
   return [
@@ -398,7 +398,7 @@ export default function DirectoryContactsPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

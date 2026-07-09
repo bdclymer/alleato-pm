@@ -11,6 +11,7 @@ import {
   Search,
   Activity,
   X,
+  MoreVertical,
   Eye,
   EyeOff,
   Pencil,
@@ -442,7 +443,7 @@ export default function DrawingViewerV3Page() {
                     onClick={handleClose}
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    <span className="text-xs">Drawings</span>
+                    <span className="text-xs hidden sm:inline">Drawings</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">Back to Drawings</TooltipContent>
@@ -489,12 +490,12 @@ export default function DrawingViewerV3Page() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       type="button" variant="ghost"
-                      className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-56 h-auto"
+                      className="flex items-center justify-start overflow-hidden gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-[120px] sm:max-w-56 h-auto"
                     >
                       {drawingIdentity?.number && (
                         <span className="text-muted-foreground text-xs shrink-0">{drawingIdentity.number}</span>
                       )}
-                      <span className="truncate">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
+                      <span className="truncate min-w-0">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
                       <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-muted-foreground shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -521,89 +522,138 @@ export default function DrawingViewerV3Page() {
               )}
 
               {rev && (
-                <>
+                <div className="hidden md:flex items-center">
                   <div className="w-px h-4 bg-muted mx-1" />
                   <span className="text-xs text-muted-foreground shrink-0">Rev {rev.revision_number}</span>
-                </>
+                </div>
               )}
 
               {pageInfo.total > 1 && (
-                <>
+                <div className="hidden md:flex items-center">
                   <div className="w-px h-4 bg-muted mx-1" />
                   <span className="text-xs text-muted-foreground shrink-0">
                     Page {pageInfo.current} / {pageInfo.total}
                   </span>
-                </>
+                </div>
               )}
 
               {/* V1 escape hatch */}
-              <div className="w-px h-4 bg-muted mx-1" />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 px-2 text-[10px] text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted"
-                    onClick={() => router.push(`/${projectId}/drawings/viewer/${drawingId}`)}
-                  >
-                    v1
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Switch to legacy viewer</TooltipContent>
-              </Tooltip>
+              <div className="hidden md:flex items-center">
+                <div className="w-px h-4 bg-muted mx-1" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-7 px-2 text-[10px] text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted"
+                      onClick={() => router.push(`/${projectId}/drawings/viewer/${drawingId}`)}
+                    >
+                      v1
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Switch to legacy viewer</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
 
             {/* Right: panel toggles + download + close */}
             <div className="flex items-center gap-0.5 shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
-                    onClick={handleDownload}
-                  >
-                    <Download />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Download</TooltipContent>
-              </Tooltip>
-
-              <div className="w-px h-4 bg-muted mx-1" />
-
-              {(
-                [
-                  { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
-                  { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
-                  { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
-                  { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
-                  { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
-                ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
-              ).map(({ panel, icon, label }) => (
-                <Tooltip key={panel!}>
+              {/* Desktop (md+): download + inline panel toggles */}
+              <div className="hidden md:flex items-center gap-0.5">
+                <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost" size="sm"
-                      className={cn(
-                        "h-7 w-7 p-0 relative transition-colors",
-                        activePanel === panel
-                          ? "bg-muted text-white"
-                          : "text-foreground/80 hover:text-foreground hover:bg-muted"
-                      )}
-                      onClick={() => togglePanel(panel)}
-                      aria-label={label}
+                      className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
+                      onClick={handleDownload}
                     >
-                      {icon}
-                      {panel === "links" && pins.length > 0 && (
+                      <Download />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Download</TooltipContent>
+                </Tooltip>
+
+                <div className="w-px h-4 bg-muted mx-1" />
+
+                {(
+                  [
+                    { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                    { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
+                    { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
+                    { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
+                    { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
+                  ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+                ).map(({ panel, icon, label }) => (
+                  <Tooltip key={panel!}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost" size="sm"
+                        className={cn(
+                          "h-7 w-7 p-0 relative transition-colors",
+                          activePanel === panel
+                            ? "bg-muted text-white"
+                            : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                        )}
+                        onClick={() => togglePanel(panel)}
+                        aria-label={label}
+                      >
+                        {icon}
+                        {panel === "links" && pins.length > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
+                            {pins.length}
+                          </span>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{label}</TooltipContent>
+                  </Tooltip>
+                ))}
+
+                <div className="w-px h-4 bg-muted mx-1" />
+              </div>
+
+              {/* Mobile (below md): download + panel toggles collapse into one overflow menu */}
+              <div className="flex md:hidden items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-7 w-7 p-0 relative text-foreground/80 hover:text-foreground hover:bg-muted"
+                      aria-label="More actions"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                      {pins.length > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
                           {pins.length}
                         </span>
                       )}
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{label}</TooltipContent>
-                </Tooltip>
-              ))}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleDownload}>
+                      <Download className="h-4 w-4 mr-2" /> Download
+                    </DropdownMenuItem>
+                    {(
+                      [
+                        { panel: "links" as RightPanel, icon: <Link className="h-4 w-4 mr-2" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                        { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4 mr-2" />, label: "Filter annotations" },
+                        { panel: "info" as RightPanel, icon: <Info className="h-4 w-4 mr-2" />, label: "Info" },
+                        { panel: "search" as RightPanel, icon: <Search className="h-4 w-4 mr-2" />, label: "Search drawings" },
+                        { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4 mr-2" />, label: "Activity & Comments" },
+                      ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+                    ).map(({ panel, icon, label }) => (
+                      <DropdownMenuItem
+                        key={panel!}
+                        onClick={() => togglePanel(panel)}
+                        className={cn(activePanel === panel && "bg-accent")}
+                      >
+                        {icon} {label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              <div className="w-px h-4 bg-muted mx-1" />
+                <div className="w-px h-4 bg-muted mx-1" />
+              </div>
 
               <Tooltip>
                 <TooltipTrigger asChild>

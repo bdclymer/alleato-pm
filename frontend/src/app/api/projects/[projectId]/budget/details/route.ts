@@ -581,7 +581,7 @@ export const GET = withApiGuardrails(
     let pendingCompanyNames: Map<string, string>;
     try {
       pendingCompanyNames = await loadCompanyNameMap(
-        supabase as CompanyLookupClient,
+        supabase as unknown as CompanyLookupClient,
         pendingCompanyIds,
       );
     } catch (error) {

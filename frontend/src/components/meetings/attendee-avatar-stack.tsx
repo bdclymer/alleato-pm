@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import {
@@ -9,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePeople } from "@/hooks/use-people";
+import { cn } from "@/lib/utils";
 
 interface AttendeeAvatarStackProps {
   participants: string[];
@@ -45,6 +47,7 @@ export function AttendeeAvatarStack({
   maxVisible = 6,
 }: AttendeeAvatarStackProps) {
   const { people } = usePeople();
+  const [expanded, setExpanded] = useState(false);
   const emailToContactId = Object.fromEntries(
     people.filter((p) => p.email).map((p) => [p.email!.toLowerCase(), p.id])
   );
@@ -55,6 +58,15 @@ export function AttendeeAvatarStack({
   return (
     <TooltipProvider>
       <div className="group/attendees space-y-3">
+        {/* The whole avatar row is a tap target so touch devices can expand
+            the full attendee list (hover-only reveal never fires on touch). */}
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Hide attendee list" : "Show all attendees"}
+          className="block w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
         <AvatarGroup className="justify-start">
           {visibleParticipants.map((participant) => (
             <Tooltip key={participant}>
@@ -89,8 +101,16 @@ export function AttendeeAvatarStack({
             </Tooltip>
           ) : null}
         </AvatarGroup>
+        </button>
 
-        <div className="max-h-0 overflow-y-hidden opacity-0 transition-all duration-200 group-hover/attendees:max-h-80 group-hover/attendees:overflow-y-auto group-hover/attendees:opacity-100 group-focus-within/attendees:max-h-80 group-focus-within/attendees:overflow-y-auto group-focus-within/attendees:opacity-100">
+        <div
+          className={cn(
+            "overflow-y-hidden transition-all duration-200",
+            expanded
+              ? "max-h-80 overflow-y-auto opacity-100"
+              : "max-h-0 opacity-0 group-hover/attendees:max-h-80 group-hover/attendees:overflow-y-auto group-hover/attendees:opacity-100 group-focus-within/attendees:max-h-80 group-focus-within/attendees:overflow-y-auto group-focus-within/attendees:opacity-100",
+          )}
+        >
           <ul className="space-y-2 pt-1">
             {participants.map((participant) => {
               const contactId = emailToContactId[participant.toLowerCase()];

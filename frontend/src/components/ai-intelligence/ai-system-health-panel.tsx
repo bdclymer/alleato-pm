@@ -571,7 +571,7 @@ export function AiSystemHealthPanel() {
                 onValueChange={applyCoveragePreset}
                 variant="outline"
                 size="sm"
-                spacing="none"
+                spacing={0}
               >
                 <ToggleGroupItem value="1d" aria-label="1 day">1d</ToggleGroupItem>
                 <ToggleGroupItem value="3d" aria-label="3 days">3d</ToggleGroupItem>

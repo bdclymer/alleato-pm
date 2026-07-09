@@ -296,6 +296,31 @@ export async function addGitHubIssueLabels(issueNumber: number, labels: string[]
   return true;
 }
 
+/** Re-open a closed issue (used when a client disputes a "resolved" fix). */
+export async function reopenGitHubIssue(issueNumber: number): Promise<boolean> {
+  const config = getRepoConfig();
+  if (!config) return false;
+
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}`,
+      {
+        method: "PATCH",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${config.token}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: JSON.stringify({ state: "open" }),
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export type FeedbackIssueWriteHealth =
   | { ok: true }
   | {

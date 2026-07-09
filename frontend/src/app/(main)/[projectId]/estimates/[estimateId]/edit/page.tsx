@@ -6,14 +6,19 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { PageShell } from "@/components/layout";
-import { Form, FormGrid, FormSection } from "@/components/forms";
+import { FormContainer, PageShell } from "@/components/layout";
+import { Form } from "@/components/ui/form";
+import { FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
-import { TextField } from "@/components/forms/TextField";
-import { SelectField } from "@/components/forms/SelectField";
-import { NumberField } from "@/components/forms/NumberField";
-import { TextareaField } from "@/components/forms/TextareaField";
-import { DateField } from "@/components/forms/DateField";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFMoneyField } from "@/components/forms/fields/RHFMoneyField";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { buildOptions } from "@/components/forms/utils/buildOptions";
 import {
   EstimateCreateSchema,
   EstimateStatuses,
@@ -40,16 +45,8 @@ interface EstimateFormValues {
   notes?: string | null;
 }
 
-function toDateValue(value?: string | null) {
-  if (!value) return undefined;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
-function toDateString(value?: Date) {
-  if (!value) return undefined;
-  return value.toISOString().split("T")[0];
-}
+const STATUS_OPTIONS = buildOptions(EstimateStatuses, EstimateStatusLabels);
+const ESTIMATE_TYPE_OPTIONS = buildOptions(EstimateTypes, EstimateTypeLabels);
 
 export default function EditEstimatePage() {
   const router = useRouter();
@@ -124,12 +121,14 @@ export default function EditEstimatePage() {
       toast.success("Estimate updated successfully");
       router.push(`/${projectId}/estimates/${estimateId}`);
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The estimate could not be saved. Please try again.";
+      form.setError("root", { type: "server", message });
       toast.error("Failed to update estimate");
     }
   };
-
-  const values = form.watch();
-  const errors = form.formState.errors;
 
   if (loading) {
     return (
@@ -169,205 +168,139 @@ export default function EditEstimatePage() {
       onBack={() => router.back()}
       backLabel="Back to Estimate"
     >
-      <Form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormSection title="Basic Information">
-          <FormGrid columns={2}>
-            <TextField
-              label="Title"
-              required
-              fullWidth
-              value={values.title ?? ""}
-              onChange={(event) =>
-                form.setValue("title", event.target.value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.title?.message}
-              placeholder="e.g., Ulta Beauty Fresno DC New RTUs R6"
+      <FormContainer maxWidth="lg" withCard={false}>
+        <Form {...form}>
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8"
+          >
+            <FormSection title="Basic Information">
+              <FormGrid columns={2}>
+                <RHFTextField
+                  control={form.control}
+                  name="title"
+                  label="Title *"
+                  placeholder="e.g., Ulta Beauty Fresno DC New RTUs R6"
+                />
+
+                <RHFTextField
+                  control={form.control}
+                  name="estimate_number"
+                  label="Estimate Number"
+                  placeholder="Optional reference number"
+                />
+
+                <RHFNumberField
+                  control={form.control}
+                  name="revision"
+                  label="Revision"
+                  min={1}
+                  step={1}
+                />
+
+                <RHFSelectField
+                  control={form.control}
+                  name="status"
+                  label="Status"
+                  options={STATUS_OPTIONS}
+                />
+
+                <RHFComboboxField
+                  control={form.control}
+                  name="estimate_type"
+                  label="Estimate Type"
+                  placeholder="Select type (optional)"
+                  searchPlaceholder="Search types..."
+                  emptyMessage="No matching type."
+                  options={ESTIMATE_TYPE_OPTIONS}
+                  clearable
+                />
+
+                <RHFDateField
+                  control={form.control}
+                  name="estimate_date"
+                  label="Date"
+                  nullable
+                />
+
+                <RHFTextField
+                  control={form.control}
+                  name="estimator"
+                  label="Estimator"
+                  placeholder="Person preparing the estimate"
+                />
+
+                <RHFTextField
+                  control={form.control}
+                  name="location"
+                  label="Location"
+                  placeholder="Project location"
+                />
+              </FormGrid>
+            </FormSection>
+
+            <FormSection title="Project Duration & Markup Rates">
+              <FormGrid columns={3}>
+                <RHFNumberField
+                  control={form.control}
+                  name="project_duration_weeks"
+                  label="Project Duration (weeks)"
+                  min={1}
+                  step={1}
+                  placeholder="e.g., 12"
+                />
+
+                <RHFNumberField
+                  control={form.control}
+                  name="insurance_rate"
+                  label="Insurance Rate"
+                  min={0}
+                  max={1}
+                  step={0.0001}
+                  placeholder="0.0125"
+                />
+
+                <RHFNumberField
+                  control={form.control}
+                  name="fee_rate"
+                  label="Fee Rate"
+                  min={0}
+                  max={1}
+                  step={0.0001}
+                  placeholder="0.10"
+                />
+
+                <RHFMoneyField
+                  control={form.control}
+                  name="contingency_amount"
+                  label="Contingency Amount"
+                  min={0}
+                />
+              </FormGrid>
+            </FormSection>
+
+            <FormSection title="Notes">
+              <RHFTextareaField
+                control={form.control}
+                name="notes"
+                label="Notes"
+                placeholder="Additional notes about this estimate..."
+                rows={3}
+              />
+            </FormSection>
+
+            <FormServerError message={form.formState.errors.root?.message} />
+
+            <FormActions
+              submitLabel="Save Changes"
+              onCancel={() => router.back()}
+              isSubmitting={form.formState.isSubmitting}
+              stickyOnMobile
             />
-
-            <TextField
-              label="Estimate Number"
-              value={values.estimate_number ?? ""}
-              onChange={(event) =>
-                form.setValue("estimate_number", event.target.value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.estimate_number?.message}
-              placeholder="Optional reference number"
-            />
-
-            <NumberField
-              label="Revision"
-              value={values.revision ?? 1}
-              onChange={(value) =>
-                form.setValue("revision", value, { shouldValidate: true })
-              }
-              error={errors.revision?.message}
-              min={1}
-            />
-
-            <SelectField
-              label="Status"
-              value={values.status ?? "draft"}
-              onValueChange={(value) =>
-                form.setValue(
-                  "status",
-                  value as EstimateFormValues["status"],
-                  { shouldValidate: true }
-                )
-              }
-              error={errors.status?.message}
-              options={EstimateStatuses.map((status) => ({
-                value: status,
-                label: EstimateStatusLabels[status],
-              }))}
-            />
-
-            <SelectField
-              label="Estimate Type"
-              value={values.estimate_type ?? "none"}
-              onValueChange={(value) =>
-                form.setValue(
-                  "estimate_type",
-                  (value === "none"
-                    ? null
-                    : value) as EstimateFormValues["estimate_type"],
-                  { shouldValidate: true }
-                )
-              }
-              error={errors.estimate_type?.message}
-              placeholder="Select type (optional)"
-              options={[
-                { value: "none", label: "None" },
-                ...EstimateTypes.map((t) => ({
-                  value: t,
-                  label: EstimateTypeLabels[t],
-                })),
-              ]}
-            />
-
-            <DateField
-              label="Date"
-              value={toDateValue(values.estimate_date)}
-              onChange={(value) =>
-                form.setValue("estimate_date", toDateString(value), {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.estimate_date?.message}
-            />
-
-            <TextField
-              label="Estimator"
-              value={values.estimator ?? ""}
-              onChange={(event) =>
-                form.setValue("estimator", event.target.value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.estimator?.message}
-              placeholder="Person preparing the estimate"
-            />
-
-            <TextField
-              label="Location"
-              value={values.location ?? ""}
-              onChange={(event) =>
-                form.setValue("location", event.target.value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.location?.message}
-              placeholder="Project location"
-            />
-          </FormGrid>
-        </FormSection>
-
-        <FormSection title="Project Duration & Markup Rates">
-          <FormGrid columns={3}>
-            <NumberField
-              label="Project Duration (weeks)"
-              value={values.project_duration_weeks ?? undefined}
-              onChange={(value) =>
-                form.setValue("project_duration_weeks", value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.project_duration_weeks?.message}
-              min={1}
-              placeholder="e.g., 12"
-            />
-
-            <NumberField
-              label="Insurance Rate"
-              value={values.insurance_rate ?? undefined}
-              onChange={(value) =>
-                form.setValue("insurance_rate", value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.insurance_rate?.message}
-              min={0}
-              max={1}
-              step="0.0001"
-              placeholder="0.0125"
-            />
-
-            <NumberField
-              label="Fee Rate"
-              value={values.fee_rate ?? undefined}
-              onChange={(value) =>
-                form.setValue("fee_rate", value, { shouldValidate: true })
-              }
-              error={errors.fee_rate?.message}
-              min={0}
-              max={1}
-              step="0.0001"
-              placeholder="0.10"
-            />
-
-            <NumberField
-              label="Contingency Amount"
-              value={values.contingency_amount ?? undefined}
-              onChange={(value) =>
-                form.setValue("contingency_amount", value, {
-                  shouldValidate: true,
-                })
-              }
-              error={errors.contingency_amount?.message}
-              min={0}
-              step="0.01"
-              placeholder=""
-            />
-          </FormGrid>
-        </FormSection>
-
-        <FormSection title="Notes" className="border-b-0 pb-0">
-          <TextareaField
-            label="Notes"
-            value={values.notes ?? ""}
-            onChange={(event) =>
-              form.setValue("notes", event.target.value, {
-                shouldValidate: true,
-              })
-            }
-            error={errors.notes?.message}
-            placeholder="Additional notes about this estimate..."
-            rows={3}
-            fullWidth
-          />
-        </FormSection>
-
-        <FormActions
-          submitLabel={
-            form.formState.isSubmitting ? "Saving…" : "Save Changes"
-          }
-          onCancel={() => router.back()}
-          isSubmitting={form.formState.isSubmitting}
-        />
-      </Form>
+          </form>
+        </Form>
+      </FormContainer>
     </PageShell>
   );
 }

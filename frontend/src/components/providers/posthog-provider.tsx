@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import posthog from "posthog-js";
+import posthog, {
+  type DomAutocaptureEvents,
+  type PostHogInterface,
+} from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
@@ -22,7 +25,7 @@ function buildPostHogConfig(pathname: string | null | undefined) {
     capture_pageleave: true,
     persistence: "localStorage+cookie" as const,
     autocapture: {
-      dom_event_allowlist: ["click", "submit", "change"],
+      dom_event_allowlist: ["click", "submit", "change"] as DomAutocaptureEvents[],
     },
     // Project pages are high-traffic operational surfaces. Keep analytics
     // lightweight there and reserve heavier scripts for explicit AI/comment
@@ -39,7 +42,7 @@ function buildPostHogConfig(pathname: string | null | undefined) {
         }
       : undefined,
     external_scripts_inject_target: "head" as const,
-    loaded: (ph: typeof posthog) => {
+    loaded: (ph: PostHogInterface) => {
       if (process.env.NODE_ENV === "development") {
         ph.debug(false);
       }

@@ -16,6 +16,8 @@
  */
 
 import { embed } from "@/lib/ai/services/ai-memory-service";
+import { getOpenAI } from "@/lib/ai/tools/tool-utils";
+import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
 import {
@@ -527,16 +529,17 @@ export async function searchArtifacts(params: SearchArtifactsParams): Promise<Wo
   }
 
   try {
-    const ragClient = createRagServiceClient();
-    const { data: chunks, error: chunkError } = await ragClient.rpc("search_document_chunks", {
-      query_embedding: JSON.stringify(embeddingVec),
-      filter_source_types: ["workspace_artifact"],
-      filter_project_id: params.projectId ?? undefined,
-      match_count: params.matchCount ?? 10,
-      match_threshold: params.matchThreshold ?? 0.45,
+    const chunks = await retrieveChunks({
+      query: params.query,
+      openai: getOpenAI(),
+      ragClient: createRagServiceClient(),
+      projectId: params.projectId ?? undefined,
+      sourceTypes: ["workspace_artifact"],
+      matchCount: params.matchCount ?? 10,
+      matchThreshold: params.matchThreshold ?? 0.45,
+      errorLabel: "Workspace artifact search",
     });
 
-    if (chunkError) throw new Error(chunkError.message);
     if (!chunks || chunks.length === 0) return [];
 
     const artifactIds = (chunks as Array<{ document_id: string; similarity: number }>).map((c) => c.document_id);

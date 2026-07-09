@@ -49,7 +49,7 @@ export function buildCommentActivityItems(
 ): CommentActivityItem[] {
   return [...comments]
     .sort(sortComments)
-    .flatMap((comment) => {
+    .flatMap((comment): CommentActivityItem[] => {
       const latestMessage = getLatestMessage(comment);
       const latestAuthor = latestMessage?.authorName ?? comment.authorName;
       const mention = matchesMention(comment, currentUserName);

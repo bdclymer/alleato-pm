@@ -115,11 +115,31 @@ function parseDate(value: string | null | undefined): Date | null {
   // A date-only string (YYYY-MM-DD) parses as UTC midnight; formatting it in
   // Eastern time would shift it back a day. Anchor it to noon UTC so it stays
   // on the same calendar day in any US timezone.
-  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? `${value}T12:00:00Z`
-    : value;
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const isoDate = new Date(`${value}T12:00:00Z`);
+    return Number.isNaN(isoDate.getTime()) ? null : isoDate;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  // Packet citations store dates as human strings like "Jul 8, 2026" (no time).
+  // Those parse as midnight in the SERVER's timezone, so formatting them in
+  // Eastern time shifts them back a calendar day on a UTC host (Vercel) — the
+  // brief showed "Jul 7" for genuine Jul 8 sources. Re-anchor any value with no
+  // time-of-day component to noon UTC on its own calendar day so it is stable
+  // in every timezone. Values that DO carry a time (ISO datetimes) pass through
+  // untouched so fmtTime keeps working.
+  const hasTimeComponent = /\d{1,2}:\d{2}/.test(value) || /T\d{2}/.test(value);
+  if (!hasTimeComponent) {
+    return new Date(
+      Date.UTC(
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate(),
+        12,
+      ),
+    );
+  }
+  return parsed;
 }
 
 function fmtShortDate(value: string | null | undefined): string {
@@ -196,10 +216,11 @@ function resolveHref(
     return citation.sourceUrl;
   }
   // A meeting/transcript with an id but no external link → in-app meeting page.
+  // Encode the id: it comes from upstream document metadata and could contain a
+  // reserved path character.
   if (citation.sourceId && /meeting|transcript/i.test(String(citation.source))) {
-    return projectInternalId
-      ? `/${projectInternalId}/meetings/${citation.sourceId}`
-      : `/meetings/${citation.sourceId}`;
+    const id = encodeURIComponent(citation.sourceId);
+    return projectInternalId ? `/${projectInternalId}/meetings/${id}` : `/meetings/${id}`;
   }
   return null;
 }
@@ -607,7 +628,12 @@ function buildProjects(input: BuildBriefInput): string {
 
   const decisionKeys = new Set(
     packet.sections.needsBrandon.map((item) =>
-      String(item.projectInternalId ?? (item.project || "").trim().toLowerCase()),
+      // Must use the SAME fallback as the group key above, or a cross-project
+      // decision (no project, no id) never matches its group and loses its badge.
+      String(
+        item.projectInternalId ??
+          (item.project || "Internal / cross-project").trim().toLowerCase(),
+      ),
     ),
   );
   const ordered = Array.from(groups.entries()).sort((a, b) => {
@@ -840,8 +866,9 @@ function buildCarryover(input: BuildBriefInput): string {
         item.ageDays >= 1
           ? `<span class="carry-item__age">${item.ageDays}d open</span>`
           : "";
+      // No inner src-row wrapper — the row below already provides one.
       const source = item.citation
-        ? `<div class="src-row">${srcHtml(item.citation, item.projectInternalId)}</div>`
+        ? srcHtml(item.citation, item.projectInternalId)
         : "";
       return `
           <div class="carry-item" data-fb-item>

@@ -211,7 +211,42 @@ describe("ScheduleOfValuesTab column integrity", () => {
     expect(screen.queryByRole("textbox", { name: /Description 1/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Move line 1 up/i })).not.toBeInTheDocument();
     expect(screen.getByText("Demolition")).toBeInTheDocument();
-    expect(screen.getByText("Unmapped: 024113")).toBeInTheDocument();
+    // Read-only cell shows the stored budget_code text, never a raw "Unmapped:" prefix.
+    expect(screen.getByText("024113")).toBeInTheDocument();
+    expect(screen.queryByText(/^Unmapped:/)).not.toBeInTheDocument();
+  });
+
+  it("read-only cell falls back to stored budget_code text instead of a raw id when codes are unresolved", async () => {
+    // Mirrors an imported/adopted SOV line: project_budget_code_id is a real UUID,
+    // budget_code carries the human code, but the budget-codes option list is empty
+    // (still loading / failed). The cell must show the human code, never "Unmapped: <uuid>".
+    render(
+      <ScheduleOfValuesTab
+        lineItems={[
+          {
+            id: "line-x",
+            line_number: 1,
+            budget_code: "50-7000.S",
+            project_budget_code_id: "035f4c1f-d2f0-4b78-b55d-93977365f932",
+            description: "Fire Sprinkler Design",
+            amount: 500000,
+            billed_to_date: 0,
+          },
+        ]}
+        projectId={879}
+        commitmentId="test-commitment"
+        commitmentType="subcontract"
+        accountingMethod="amount"
+        lockState={{ locked: true, reason: "submitted_invoice", message: "locked" }}
+      />,
+    );
+    await waitForBudgetCodes();
+
+    expect(screen.getByText("50-7000.S")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/035f4c1f-d2f0-4b78-b55d-93977365f932/),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Unmapped:/)).not.toBeInTheDocument();
   });
 
   it("forces approved commitments into read-only mode even if lockState says unlocked", async () => {

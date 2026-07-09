@@ -1,10 +1,9 @@
 "use client";
 
-import { Controller, useFormContext } from "react-hook-form";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useFormContext } from "react-hook-form";
+import { FormSection } from "@/components/forms";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InclusionsExclusionsSectionProps {
   isSubmitting: boolean;
@@ -16,43 +15,24 @@ export function InclusionsExclusionsSection({
   const { control } = useFormContext<CreateSubcontractInput>();
 
   return (
-    <section className="space-y-4">
-      <SectionRuleHeading label="Inclusions & Exclusions" />
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label>Inclusions</Label>
-          <Controller
-            name="inclusions"
-            control={control}
-            render={({ field }) => (
-              <Textarea
-                value={field.value || ""}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="Enter scope inclusions..."
-                rows={3}
-              />
-            )}
-          />
-        </div>
+    <FormSection title="Inclusions & Exclusions">
+      <RHFTextareaField
+        control={control}
+        name="inclusions"
+        label="Inclusions"
+        placeholder="Enter scope inclusions..."
+        rows={3}
+        disabled={isSubmitting}
+      />
 
-        <div className="space-y-1.5">
-          <Label>Exclusions</Label>
-          <Controller
-            name="exclusions"
-            control={control}
-            render={({ field }) => (
-              <Textarea
-                value={field.value || ""}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="Enter scope exclusions..."
-                rows={3}
-              />
-            )}
-          />
-        </div>
-      </div>
-    </section>
+      <RHFTextareaField
+        control={control}
+        name="exclusions"
+        label="Exclusions"
+        placeholder="Enter scope exclusions..."
+        rows={3}
+        disabled={isSubmitting}
+      />
+    </FormSection>
   );
 }

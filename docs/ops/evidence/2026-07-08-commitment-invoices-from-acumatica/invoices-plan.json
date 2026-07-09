@@ -1,0 +1,214 @@
+{
+  "summary": {
+    "mode": "APPLY",
+    "billsScanned": 783,
+    "matched": 376,
+    "unmatched": 407,
+    "invoicesCreated": 139,
+    "invoicesLinked": 105,
+    "lineItemsCreated": 233,
+    "commitmentsBilled": 95,
+    "totalBilled": 6884628.73,
+    "flaggedCount": 18,
+    "projects": 21
+  },
+  "projectRows": [
+    {
+      "project": "25-125 Goodwill Noblesville",
+      "commitments": 17,
+      "billed": 1497022.8
+    },
+    {
+      "project": "25-127 Ulta Beauty Fresno",
+      "commitments": 5,
+      "billed": 1475470.26
+    },
+    {
+      "project": "25-109 Uniqlo Phillipsburg NJ",
+      "commitments": 5,
+      "billed": 1433034.39
+    },
+    {
+      "project": "24-115 Westfield Collective",
+      "commitments": 17,
+      "billed": 530515.67
+    },
+    {
+      "project": "26-113 Goodwill Allisonville Rd IN",
+      "commitments": 8,
+      "billed": 446022.58
+    },
+    {
+      "project": "26-103 Exol Wilmer",
+      "commitments": 3,
+      "billed": 357332.44
+    },
+    {
+      "project": "26-116 Exol Morrisville",
+      "commitments": 3,
+      "billed": 185070
+    },
+    {
+      "project": "26-102 Goodwill Commons",
+      "commitments": 5,
+      "billed": 174453
+    },
+    {
+      "project": "25-120 GPC Hai Robotic",
+      "commitments": 1,
+      "billed": 160633.29
+    },
+    {
+      "project": "25-108 Goodwill Tremont",
+      "commitments": 7,
+      "billed": 140613
+    },
+    {
+      "project": "26-106 Goodwill Washington",
+      "commitments": 5,
+      "billed": 91728.29
+    },
+    {
+      "project": "26-119 Union Collective",
+      "commitments": 5,
+      "billed": 84171.17
+    },
+    {
+      "project": "25-126 Vermillion Rise Warehouse",
+      "commitments": 3,
+      "billed": 84000
+    },
+    {
+      "project": "26-112 McLane Jazz - UT",
+      "commitments": 2,
+      "billed": 78890
+    },
+    {
+      "project": "26-118 Champaign Ace Addition",
+      "commitments": 1,
+      "billed": 39300
+    },
+    {
+      "project": "26-108 Goodwill Galesburg",
+      "commitments": 1,
+      "billed": 19710
+    },
+    {
+      "project": "26-107 Goodwill Canton, IL",
+      "commitments": 3,
+      "billed": 19622.84
+    },
+    {
+      "project": "— Goodwill Pioneer",
+      "commitments": 1,
+      "billed": 19575
+    },
+    {
+      "project": "26-123 Playmakers",
+      "commitments": 1,
+      "billed": 18810
+    },
+    {
+      "project": "25-119 Goodwill- Decatur",
+      "commitments": 1,
+      "billed": 18654
+    },
+    {
+      "project": "26-117 Superior Beverae Exotec ",
+      "commitments": 1,
+      "billed": 10000
+    }
+  ],
+  "flagged": [
+    {
+      "contract_number": "PO-2403-0008",
+      "reason": "MIS-LINKED (skipped): billed $21150 is 18.9x $1118.03 contract",
+      "total": 21150
+    },
+    {
+      "contract_number": "PO-2403-0012",
+      "reason": "MIS-LINKED (skipped): billed $88630 is 331.5x $267.35 contract",
+      "total": 88630
+    },
+    {
+      "contract_number": "SC-5092-0001",
+      "reason": "MIS-LINKED (skipped): billed $59346.68 is 5.9x $10000 contract",
+      "total": 59346.68
+    },
+    {
+      "contract_number": "PO-5347-0002",
+      "reason": "MIS-LINKED (skipped): billed $104390.89 is 7.6x $13805.65 contract",
+      "total": 104390.89
+    },
+    {
+      "contract_number": "PO-2403-0011",
+      "reason": "MIS-LINKED (skipped): billed $44053.65 is 30.9x $1425 contract",
+      "total": 44053.65
+    },
+    {
+      "contract_number": "PO-5296-0002",
+      "reason": "MIS-LINKED (skipped): billed $75310 is 2.0x $37500 contract",
+      "total": 75310
+    },
+    {
+      "contract_number": "PO-3729-0006",
+      "reason": "MIS-LINKED (skipped): billed $16270 is 18.1x $900 contract",
+      "total": 16270
+    },
+    {
+      "contract_number": "PO-8189-0001",
+      "reason": "MIS-LINKED (skipped): billed $333160.22 is 9.0x $37000 contract",
+      "total": 333160.22
+    },
+    {
+      "contract_number": "PO-2403-0005",
+      "reason": "MIS-LINKED (skipped): billed $350770.22 is 17.4x $20140.4 contract",
+      "total": 350770.22
+    },
+    {
+      "contract_number": "PO-2403-0013",
+      "reason": "MIS-LINKED (skipped): billed $33418.4 is 9.4x $3556.88 contract",
+      "total": 33418.4
+    },
+    {
+      "contract_number": "PO-2403-0007",
+      "reason": "MIS-LINKED (skipped): billed $766237.26 is 17.5x $43881.97 contract",
+      "total": 766237.26
+    },
+    {
+      "contract_number": "PO-8105-0001",
+      "reason": "MIS-LINKED (skipped): billed $25862.98 is 28.7x $902.13 contract",
+      "total": 25862.98
+    },
+    {
+      "contract_number": "SC-8109-0004",
+      "reason": "MIS-LINKED (skipped): billed $46408.5 is 3.2x $14485 contract",
+      "total": 46408.5
+    },
+    {
+      "contract_number": "PO-8189-0002",
+      "reason": "MIS-LINKED (skipped): billed $193376.43 is 3.2x $59900 contract",
+      "total": 193376.43
+    },
+    {
+      "contract_number": "PO-4493-0002",
+      "reason": "MIS-LINKED (skipped): billed $126955 is 127.0x $1000 contract",
+      "total": 126955
+    },
+    {
+      "contract_number": "PO-8105-0002",
+      "reason": "MIS-LINKED (skipped): billed $69181.68 is 10.1x $6861.18 contract",
+      "total": 69181.68
+    },
+    {
+      "contract_number": "PO-2403-0003",
+      "reason": "MIS-LINKED (skipped): billed $62100 is 2.1x $29757 contract",
+      "total": 62100
+    },
+    {
+      "contract_number": "PO-2403-0006",
+      "reason": "MIS-LINKED (skipped): billed $72416.77 is 13.2x $5500 contract",
+      "total": 72416.77
+    }
+  ]
+}

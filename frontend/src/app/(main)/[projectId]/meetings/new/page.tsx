@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { CreateMeetingForm } from "@/components/domain/meetings/create-meeting-form";
 
 export default function NewMeetingPage() {
@@ -17,7 +17,9 @@ export default function NewMeetingPage() {
       eyebrow="New meeting"
       onBack={() => router.push(`/${projectId}/meetings`)}
     >
-      <CreateMeetingForm projectId={projectId} />
+      <FormContainer maxWidth="lg" withCard={false}>
+        <CreateMeetingForm projectId={projectId} />
+      </FormContainer>
     </PageShell>
   );
 }

@@ -425,7 +425,7 @@ export function SubcontractorInvoiceDetail({
       backLabel={backLabel}
       contentClassName="space-y-4"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <CommitmentsHelpSheet buttonVariant="ghost" />
           {canInviteSubcontractor && (
             <Button

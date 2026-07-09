@@ -56,20 +56,26 @@ export function editableSelectColumn<T>(
     onEdit: options.onEdit,
   };
 
-  if (Array.isArray(options.options)) {
+  const optionsList = options.options;
+
+  if (Array.isArray(optionsList)) {
     return {
       ...common,
       editType: "select",
-      editOptions: options.options,
+      editOptions: optionsList,
     };
   }
+
+  // Captured in a local so the narrowing above survives inside the
+  // renderEditor closure (TS drops property narrowing across closures).
+  const resolveOptions = optionsList;
 
   return {
     ...common,
     renderEditor: ({ item, value, onChange, onCommit }) => (
       <InlineSelectEditor
         value={value}
-        options={options.options(item)}
+        options={resolveOptions(item)}
         placeholder={options.placeholder ?? options.emptyLabel}
         onChange={onChange}
         onCommit={onCommit}

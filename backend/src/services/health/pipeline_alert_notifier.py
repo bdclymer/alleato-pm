@@ -324,10 +324,46 @@ def _embedding_alert() -> Optional[Dict[str, Any]]:
     }
 
 
+def _project_intelligence_staleness_alert() -> Optional[Dict[str, Any]]:
+    """Page-worthy descriptor when project-intelligence narratives go stale — the
+    project_current_state / project-L2 intelligence_packets tables the
+    /[projectId]/intelligence page reads. Silent staleness (2+ weeks) with NO
+    alert was the 2026-06-24 failure mode (issue #759). Best-effort — never raises,
+    so it cannot take down the notifier it rides on."""
+    try:
+        from .project_intelligence_staleness_check import (
+            check_project_intelligence_staleness,
+        )
+
+        res = check_project_intelligence_staleness()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[PipelineAlert] project-intelligence-staleness check failed: %s", exc)
+        return None
+    if res.get("healthy", True):
+        return None
+    days = (
+        res.get("project_current_state_staleness_days")
+        or res.get("intelligence_packets_staleness_days")
+        or 0
+    )
+    reasons = "; ".join(
+        a.get("message", "") for a in (res.get("alerts") or []) if a.get("message")
+    )
+    return {
+        "source": "project_intelligence_staleness",
+        "label": "Project intelligence narratives (project pages)",
+        "reason": reasons or "Project intelligence narrative tables are stale.",
+        "failed": days,
+        "succeeded": 0,
+        "successAgeMinutes": days * 24 * 60,
+        "lastError": None,
+    }
+
+
 def run_pipeline_alert_check() -> Dict[str, Any]:
     now = _utcnow()
     alerts = evaluate_pipeline_outcomes(now)
-    for extra in (_outlook_promotion_alert(), _embedding_alert()):
+    for extra in (_outlook_promotion_alert(), _embedding_alert(), _project_intelligence_staleness_alert()):
         if extra:
             alerts.append(extra)
     result = notify(alerts, now=now)

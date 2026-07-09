@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GitBranch, LayoutList, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -20,9 +21,23 @@ import {
   type AiAgent,
 } from "@/features/ai-agents/ai-agents-table-config";
 import { AiAgentDetailPanel } from "@/features/ai-agents/ai-agent-detail-panel";
-import { AiAgentDag } from "@/features/ai-agents/ai-agent-dag";
 
-// ─── Data fetching ────────────────────────────────────────────────────────────
+// Lazy-load the dependency-graph view so the heavy `@xyflow/react` bundle only
+// loads when the user switches to the graph (the table view is the default).
+// ssr:false because the flow renderer is browser-only.
+const AiAgentDag = dynamic(
+  () => import("@/features/ai-agents/ai-agent-dag").then((mod) => mod.AiAgentDag),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/40 border-t-foreground" />
+      </div>
+    ),
+  },
+);
+
+// ─── Data fetching ───────────────────────────────────────────────────
 
 function useAiAgents(filters: Record<string, FilterValue>) {
   const [agents, setAgents] = React.useState<AiAgent[]>([]);
@@ -57,7 +72,7 @@ function useAiAgents(filters: Record<string, FilterValue>) {
   return { data: agents, isLoading, isFetching, error, refetch: fetchAgents };
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,

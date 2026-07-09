@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   PlusIcon,
-  MoreHorizontalIcon,
+  MoreVerticalIcon,
   PencilIcon,
   Trash2Icon,
   PinIcon,
@@ -183,7 +183,7 @@ function ConversationRow({
                 className="h-6 w-6 rounded-md text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                <MoreVerticalIcon className="h-3.5 w-3.5" />
                 <span className="sr-only">More options</span>
               </Button>
             </DropdownMenuTrigger>

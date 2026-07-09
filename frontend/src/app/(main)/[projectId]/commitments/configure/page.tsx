@@ -567,7 +567,7 @@ export default function CommitmentConfigurePage() {
                 </CardHeader>
                 <CardContent className="space-y-6 px-0">
                   <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-8 py-2 border-b">
+                    <div className="grid grid-cols-1 gap-4 py-2 border-b sm:grid-cols-2 sm:gap-8">
                       <div className="flex items-center justify-between">
                         <Label>Default Accounting Method for Purchase Orders:</Label>
                         <Select
@@ -618,7 +618,7 @@ export default function CommitmentConfigurePage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 py-2 border-b">
+                    <div className="grid grid-cols-1 gap-4 py-2 border-b sm:grid-cols-2 sm:gap-8">
                       <div className="flex items-center justify-between">
                         <Label>Default Purchase Order Retainage Percent:</Label>
                         <div className="flex items-center gap-1">

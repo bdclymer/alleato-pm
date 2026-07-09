@@ -19,7 +19,15 @@ function parseProjectId(value: string, where: string): number {
   return projectId;
 }
 
-async function throwAuthGuardrail(response: NextResponse, where: string): Promise<never> {
+// Returns (rather than throws) the GuardrailError so callers can write
+// `throw await buildAuthGuardrailError(...)` — a real `throw` statement,
+// which TS's control-flow analysis narrows correctly afterward. Awaiting a
+// Promise<never>-returning function as a bare statement does not reliably
+// mark the following code unreachable.
+async function buildAuthGuardrailError(
+  response: NextResponse,
+  where: string,
+): Promise<GuardrailError> {
   const payload = await response.json().catch(() => null);
   const message =
     payload &&
@@ -29,7 +37,7 @@ async function throwAuthGuardrail(response: NextResponse, where: string): Promis
       ? payload.error
       : "Project access denied.";
 
-  throw new GuardrailError({
+  return new GuardrailError({
     code: response.status === 401 ? "UNAUTHORIZED" : "AUTH_FORBIDDEN",
     where,
     message,
@@ -48,7 +56,7 @@ export const POST = withApiGuardrails<{
     const { projectId, candidateId } = await params;
     const numericProjectId = parseProjectId(projectId, where);
     const auth = await verifyProjectAccess(numericProjectId);
-    if (isAuthError(auth)) await throwAuthGuardrail(auth, where);
+    if (isAuthError(auth)) throw await buildAuthGuardrailError(auth, where);
 
     const result = await promoteDailyDeepReadCandidate({
       candidateId,

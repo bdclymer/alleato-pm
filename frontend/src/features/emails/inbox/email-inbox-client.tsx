@@ -278,7 +278,9 @@ function ReviewedReadingPane({
   const normalizedProjectAssignment = {
     status: projectAssignmentStatus,
     correctedProjectId:
-      Number.isInteger(correctedProjectId) && correctedProjectId > 0
+      correctedProjectId !== null &&
+      Number.isInteger(correctedProjectId) &&
+      correctedProjectId > 0
         ? correctedProjectId
         : null,
   };
@@ -293,10 +295,14 @@ function ReviewedReadingPane({
     ? `Feedback saved ${format(new Date(reviewed.feedbackProvidedAt), "MMM d, h:mm a")}`
     : "No feedback saved yet";
 
+  // Captured in a local so the non-null narrowing above survives inside the
+  // nested handleSave function (TS drops prop narrowing across closures).
+  const currentReviewed = reviewed;
+
   async function handleSave() {
     setSaveError(null);
     try {
-      await onSave(reviewed, {
+      await onSave(currentReviewed, {
         reviewOutcome,
         reviewerNote: normalizedReviewerNote,
         draftBody: normalizedDraftBody,
@@ -791,12 +797,12 @@ export function EmailInboxClient({
             reviewed={selectedReviewed}
             isSaving={reviewedUpdateMutation.isPending}
             projects={projects}
-            onSave={(reviewed, updates) =>
-              reviewedUpdateMutation.mutateAsync({
+            onSave={async (reviewed, updates) => {
+              await reviewedUpdateMutation.mutateAsync({
                 reviewed,
                 ...updates,
-              })
-            }
+              });
+            }}
           />
         ) : (
           <EmailReadingPane

@@ -2,11 +2,11 @@ import Link from "next/link";
 import { memo } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
+import { MoreVertical } from "lucide-react";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
   LockIcon,
-  MoreHorizontalIcon,
   ShareIcon,
   TrashIcon,
 } from "./icons";
@@ -56,7 +56,7 @@ const PureChatItem = ({
             className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             showOnHover={!isActive}
           >
-            <MoreHorizontalIcon />
+            <MoreVertical size={16} />
             <span className="sr-only">More</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>

@@ -6,17 +6,10 @@ import type {
   SourceHealthSnapshot,
   ToolPolicy,
 } from "./contracts";
-import {
-  assertExecutiveBriefingDraftEvidence,
-  evidenceRefsFromDraft,
-} from "./executive-daily-brief-evidence";
-import { linkDailyRecapToCanonicalRun } from "./daily-brief-canonical-link";
+import { assertExecutiveBriefingDraftEvidence } from "./executive-daily-brief-evidence";
 import { createAiOpsLedger } from "./ledger";
 import { createServiceClient } from "@/lib/supabase/service";
-import {
-  regenerateExecutiveBriefingDraft,
-  type ExecutiveBriefingDraft,
-} from "@/lib/executive/executive-briefing-workflow";
+import type { ExecutiveBriefingDraft } from "@/lib/executive/executive-briefing-workflow";
 import type {
   OwnerBriefingDeliveryResult,
   OwnerBriefingSourceSummary,
@@ -52,23 +45,6 @@ type StartDailyBriefRunInput = {
   deliveryTarget?: Record<string, unknown>;
   payload?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
-};
-
-type RegenerateDailyBriefDraftWithLedgerInput = {
-  windowDays: number;
-  sourceBackedOnly?: boolean;
-  triggerType: string;
-  surface: string;
-  title: string;
-  userGoal: string;
-  normalizedGoal: string;
-  actorDisplayName?: string | null;
-  metadata?: Record<string, unknown>;
-};
-
-type RegenerateDailyBriefDraftForRunInput = {
-  windowDays: number;
-  sourceBackedOnly?: boolean;
 };
 
 type CompleteDailyBriefRunInput = {
@@ -718,95 +694,4 @@ export async function recordDeliveryAttempt(
 
 export function sourceHealthForDraft(draft: ExecutiveBriefingDraft) {
   return sourceHealthFromDraft(draft);
-}
-
-export async function regenerateDailyBriefDraftForRun(
-  context: DailyBriefRunContext,
-  input: RegenerateDailyBriefDraftForRunInput,
-) {
-  const startedAt = nowIso();
-  try {
-    const { draft } = await regenerateExecutiveBriefingDraft({
-      windowDays: input.windowDays,
-      sourceBackedOnly: input.sourceBackedOnly,
-    });
-    await recordDraftEvidence(context, draft);
-    await linkDailyRecapToCanonicalRun({
-      dailyRecapId: draft.id,
-      runId: context.runId,
-    });
-    await recordToolCallStep(context, {
-      toolName: "generate-executive-daily-brief-packet",
-      status: "succeeded",
-      startedAt,
-      metadata: {
-        dailyRecapId: draft.id,
-        recapDate: draft.recapDate,
-        sourceRefCount: evidenceRefsFromDraft(draft).length,
-      },
-    });
-    return { draft };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    await recordToolCallStep(context, {
-      toolName: "generate-executive-daily-brief-packet",
-      status: "failed_retryable",
-      startedAt,
-      failureCode: "EXECUTIVE_DAILY_BRIEF_TOOL_CALL_FAILED",
-      failureMessage: message,
-    });
-    throw error;
-  }
-}
-
-export async function regenerateDailyBriefDraftWithLedger(
-  input: RegenerateDailyBriefDraftWithLedgerInput,
-) {
-  const runContext = await startDailyBriefRun({
-    eventType: "preview_request",
-    triggerType: input.triggerType,
-    surface: input.surface,
-    title: input.title,
-    userGoal: input.userGoal,
-    normalizedGoal: input.normalizedGoal,
-    actorDisplayName: input.actorDisplayName,
-    payload: {
-      windowDays: input.windowDays,
-      sourceBackedOnly: Boolean(input.sourceBackedOnly),
-    },
-    metadata: input.metadata,
-  });
-
-  try {
-    const { draft } = await regenerateDailyBriefDraftForRun(runContext, {
-      windowDays: input.windowDays,
-      sourceBackedOnly: input.sourceBackedOnly,
-    });
-    const itemCount =
-      draft.packet.sections.needsBrandon.length +
-      draft.packet.sections.waitingOnOthers.length +
-      draft.packet.sections.importantUpdates.length;
-
-    await completeDailyBriefRun(runContext, {
-      status: "succeeded",
-      dailyRecapId: draft.id,
-      resultSummary: `Generated Executive Daily Brief draft with ${itemCount} evidence-backed item(s).`,
-      sourceCounts: { itemCount, windowDays: input.windowDays },
-      sourceHealth: sourceHealthForDraft(draft),
-      metadata: {
-        recapDate: draft.recapDate,
-        dailyRecapId: draft.id,
-        sourceBackedOnly: Boolean(input.sourceBackedOnly),
-      },
-    });
-
-    return { draft, runId: runContext.runId };
-  } catch (error) {
-    await failDailyBriefRun(
-      runContext,
-      error,
-      "EXECUTIVE_DAILY_BRIEF_GENERATION_FAILED",
-    );
-    throw error;
-  }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { Check, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Modal,
@@ -484,7 +484,7 @@ function RoleRow({
             disabled={saving}
             aria-label={`Actions for ${role.role_name}`}
           >
-            <MoreHorizontal className="h-3.5 w-3.5" />
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

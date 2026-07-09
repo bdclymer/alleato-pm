@@ -3,25 +3,27 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
+  useForm,
+  useWatch,
+  type Control,
+  type FieldPath,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
   AlertTriangle,
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronDown,
-  ClipboardList,
-  CloudSun,
   ChevronsUpDown,
+  ClipboardList,
   LayoutList,
   Mail,
   PackageCheck,
-  Plus,
   ShieldAlert,
-  StickyNote,
   Timer,
-  Trash2,
   Truck,
   Users,
-  Wrench,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,15 +31,10 @@ import { toast } from "sonner";
 import {
   saveDailyLogWithCoreSections,
   updateDailyLogWithCoreSections,
-  type DailyLogEquipmentInput,
-  type DailyLogManpowerInput,
-  type DailyLogNoteInput,
   type DailyLogStatus,
-  type DailyLogWeatherInput,
 } from "@/app/(main)/actions/daily-log-actions";
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -46,39 +43,116 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  InlineTable as Table,
-  InlineTableBody as TableBody,
-  InlineTableCell as TableCell,
-  InlineTableHeader as TableHeader,
-  InlineTableHeaderCell as TableHead,
-  InlineTableRow as TableRow,
-} from "@/components/ds/inline-table";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormGrid } from "@/components/forms/FormGrid";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFTimeField } from "@/components/forms/fields/RHFTimeField";
+import { RHFFieldArrayTable } from "@/components/forms/fields/RHFFieldArrayTable";
+import { RHFFieldArrayRows } from "@/components/forms/fields/RHFFieldArrayRows";
+import { buildOptions } from "@/components/forms/utils/buildOptions";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { cn } from "@/lib/utils";
 
-type WeatherRow = DailyLogWeatherInput & { id: string };
-type ManpowerRow = DailyLogManpowerInput & { id: string };
-type EquipmentRow = DailyLogEquipmentInput & { id: string };
-type NoteRow = DailyLogNoteInput & { id: string };
+// ─────────────────────────────────────────────────────────────────────────────
+// Schema
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STATUS_VALUES = ["draft", "pending", "complete"] as const;
+
+const STATUS_OPTIONS = buildOptions(STATUS_VALUES, {
+  draft: "Draft",
+  pending: "Pending",
+  complete: "Complete",
+});
+
+// Row fields are permissive: empty rows are legal in the form and are filtered
+// out at submit (matching the original hand-rolled behavior). `.catch()` keeps
+// validation from ever blocking submit — a cleared numeric input becomes null
+// rather than a NaN validation error, which the server action already
+// normalizes to null via `cleanNumber`.
+const weatherRowSchema = z.object({
+  id: z.string(),
+  area: z.string().catch(""),
+  timeObserved: z.string().catch(""),
+  delay: z.boolean().catch(false),
+  location: z.string().catch(""),
+  sky: z.string().catch(""),
+  temperature: z.number().nullable().catch(null),
+  calamity: z.string().catch(""),
+  average: z.string().catch(""),
+  precipitation: z.string().catch(""),
+  wind: z.string().catch(""),
+  groundOrSea: z.string().catch(""),
+  comments: z.string().catch(""),
+});
+
+const manpowerRowSchema = z.object({
+  id: z.string(),
+  area: z.string().catch(""),
+  trade: z.string().catch(""),
+  workersCount: z.number().catch(0),
+  hoursWorked: z.number().nullable().catch(null),
+  costCode: z.string().catch(""),
+  location: z.string().catch(""),
+  comments: z.string().catch(""),
+  issueFlag: z.boolean().catch(false),
+});
+
+const equipmentRowSchema = z.object({
+  id: z.string(),
+  area: z.string().catch(""),
+  equipmentName: z.string().catch(""),
+  hoursOperated: z.number().nullable().catch(null),
+  hoursIdle: z.number().nullable().catch(null),
+  costCode: z.string().catch(""),
+  location: z.string().catch(""),
+  inspected: z.boolean().catch(false),
+  inspectionTime: z.string().catch(""),
+  comments: z.string().catch(""),
+});
+
+const noteRowSchema = z.object({
+  id: z.string(),
+  area: z.string().catch(""),
+  category: z.string().catch(""),
+  location: z.string().catch(""),
+  description: z.string().catch(""),
+  issueFlag: z.boolean().catch(false),
+});
+
+const dailyLogFormSchema = z.object({
+  logDate: z.string().trim().min(1, "Daily log date is required."),
+  status: z.enum(STATUS_VALUES),
+  generalNotes: z.string().catch(""),
+  weather: z.array(weatherRowSchema),
+  manpower: z.array(manpowerRowSchema),
+  equipment: z.array(equipmentRowSchema),
+  notes: z.array(noteRowSchema),
+});
+
+type DailyLogFormValues = z.infer<typeof dailyLogFormSchema>;
+
+type WeatherRow = DailyLogFormValues["weather"][number];
+type ManpowerRow = DailyLogFormValues["manpower"][number];
+type EquipmentRow = DailyLogFormValues["equipment"][number];
+type NoteRow = DailyLogFormValues["notes"][number];
 
 const pendingSections = [
   { label: "Timecards", icon: Timer },
@@ -97,8 +171,6 @@ const pendingSections = [
   { label: "Delays", icon: Timer },
   { label: "Emails", icon: Mail },
 ];
-
-const QUICK_LOG_SECTIONS = ["Weather", "Manpower", "Notes"];
 
 function newId() {
   return crypto.randomUUID();
@@ -162,11 +234,9 @@ function emptyNote(): NoteRow {
   };
 }
 
-function numericValue(value: string): number | null {
-  if (value.trim() === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Company / trade combobox (free-text-with-suggestions, wired into RHF)
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface TradeOption {
   id: string;
@@ -273,93 +343,53 @@ function TradeCombobox({
   );
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  meta,
-  action,
-}: {
-  icon: typeof CloudSun;
-  title: string;
-  meta?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Icon className="h-4 w-4 shrink-0 text-primary" />
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-foreground">{title}</div>
-          {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
-        </div>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-function Field({
+function RHFTradeCombobox({
+  control,
+  name,
   label,
-  children,
-  className,
+  options,
 }: {
+  control: Control<DailyLogFormValues>;
+  name: FieldPath<DailyLogFormValues>;
   label: string;
-  children: React.ReactNode;
-  className?: string;
+  options: TradeOption[];
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <Label className="text-[11px] font-medium text-muted-foreground">{label}</Label>
-      {children}
-    </div>
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <TradeCombobox
+              value={typeof field.value === "string" ? field.value : ""}
+              onChange={field.onChange}
+              options={options}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 
-function CollapsibleSectionShell({
-  id,
-  icon: Icon,
-  title,
-  meta,
-  action,
-  defaultOpen = false,
-  children,
+function ManpowerRowTotal({
+  control,
+  rowName,
 }: {
-  id: string;
-  icon: typeof CloudSun;
-  title: string;
-  meta?: string;
-  action?: React.ReactNode;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
+  control: Control<DailyLogFormValues>;
+  rowName: `manpower.${number}`;
 }) {
-  const [open, setOpen] = React.useState(defaultOpen);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen} className="border-b border-border/70 pb-1">
-      <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 rounded-md px-1 py-3 text-left hover:bg-muted/50 -mx-1">
-        <div id={id} className="flex min-w-0 items-center gap-3">
-          <Icon className="h-4 w-4 shrink-0 text-primary" />
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-foreground">{title}</div>
-            {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
-          </div>
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
-            open && "rotate-180",
-          )}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="space-y-4 pb-5 pt-2">
-          {action && <div className="flex justify-end">{action}</div>}
-          {children}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
+  const workers = useWatch({ control, name: `${rowName}.workersCount` });
+  const hours = useWatch({ control, name: `${rowName}.hoursWorked` });
+  const workerCount = Number.isFinite(workers as number) ? Number(workers) : 0;
+  const hourCount = Number.isFinite(hours as number) ? Number(hours) : 0;
+  return <span className="tabular-nums text-sm">{workerCount * hourCount}</span>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type DailyLogInitialData = {
   dailyLogId: string;
@@ -381,6 +411,7 @@ interface DailyLogFormClientProps {
 export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFormClientProps) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
+  const [quickLog, setQuickLog] = React.useState(false);
 
   const { companies } = useProjectCompanies(String(projectId), { per_page: 500 });
   const tradeOptions: TradeOption[] = React.useMemo(
@@ -391,29 +422,50 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     [companies],
   );
 
-  const [logDate, setLogDate] = React.useState(initialData?.logDate ?? today);
-  const [status, setStatus] = React.useState<DailyLogStatus>(initialData?.status ?? "draft");
-  const [generalNotes, setGeneralNotes] = React.useState(initialData?.generalNotes ?? "");
-  const [weatherRows, setWeatherRows] = React.useState<WeatherRow[]>(
-    initialData?.weather && initialData.weather.length > 0 ? initialData.weather : [emptyWeather()],
-  );
-  const [manpowerRows, setManpowerRows] = React.useState<ManpowerRow[]>(
-    initialData?.manpower && initialData.manpower.length > 0 ? initialData.manpower : [emptyManpower()],
-  );
-  const [equipmentRows, setEquipmentRows] = React.useState<EquipmentRow[]>(
-    initialData?.equipment && initialData.equipment.length > 0 ? initialData.equipment : [emptyEquipment()],
-  );
-  const [noteRows, setNoteRows] = React.useState<NoteRow[]>(
-    initialData?.notes && initialData.notes.length > 0 ? initialData.notes : [emptyNote()],
-  );
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [quickLog, setQuickLog] = React.useState(false);
+  const form = useForm<DailyLogFormValues>({
+    resolver: zodResolver(dailyLogFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      logDate: initialData?.logDate ?? today,
+      status: initialData?.status ?? "draft",
+      generalNotes: initialData?.generalNotes ?? "",
+      weather:
+        initialData?.weather && initialData.weather.length > 0
+          ? initialData.weather
+          : [emptyWeather()],
+      manpower:
+        initialData?.manpower && initialData.manpower.length > 0
+          ? initialData.manpower
+          : [emptyManpower()],
+      equipment:
+        initialData?.equipment && initialData.equipment.length > 0
+          ? initialData.equipment
+          : [emptyEquipment()],
+      notes:
+        initialData?.notes && initialData.notes.length > 0
+          ? initialData.notes
+          : [emptyNote()],
+    },
+  });
 
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { isSubmitting, errors },
+  } = form;
+
+  const watchedManpower = useWatch({ control, name: "manpower" });
   const manpowerTotals = React.useMemo(() => {
-    return manpowerRows.reduce(
+    return (watchedManpower ?? []).reduce(
       (totals, row) => {
-        const workers = row.workersCount || 0;
-        const hours = row.hoursWorked || 0;
+        const workers = Number.isFinite(row?.workersCount as number)
+          ? Number(row?.workersCount)
+          : 0;
+        const hours = Number.isFinite(row?.hoursWorked as number)
+          ? Number(row?.hoursWorked)
+          : 0;
         return {
           workers: totals.workers + workers,
           hours: totals.hours + workers * hours,
@@ -421,49 +473,28 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
       },
       { workers: 0, hours: 0 },
     );
-  }, [manpowerRows]);
+  }, [watchedManpower]);
 
-  const updateRow = <T extends { id: string }>(
-    rows: T[],
-    setRows: React.Dispatch<React.SetStateAction<T[]>>,
-    id: string,
-    patch: Partial<T>,
-  ) => {
-    setRows(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  };
+  const backPath = `/${projectId}/daily-log`;
+  const title = mode === "edit" ? "Edit Daily Log" : "Daily Log";
+  const saveLabel = mode === "edit" ? "Save Changes" : "Save Log";
 
-  const removeRow = <T extends { id: string }>(
-    rows: T[],
-    setRows: React.Dispatch<React.SetStateAction<T[]>>,
-    id: string,
-  ) => {
-    if (rows.length === 1) return;
-    setRows(rows.filter((row) => row.id !== id));
-  };
-
-  const submit = async () => {
-    if (!logDate) {
-      toast.error("Daily log date is required.");
-      return;
-    }
-
-    const weather = weatherRows.filter((row) =>
+  async function onSubmit(data: DailyLogFormValues) {
+    const weather = data.weather.filter((row) =>
       Boolean(row.sky || row.temperature || row.precipitation || row.wind || row.comments),
     );
-    const manpower = manpowerRows.filter((row) => row.workersCount > 0);
-    const equipment = equipmentRows.filter((row) => row.equipmentName.trim());
-    const notes = noteRows.filter((row) => row.description.trim());
-
-    setIsSubmitting(true);
+    const manpower = data.manpower.filter((row) => row.workersCount > 0);
+    const equipment = data.equipment.filter((row) => row.equipmentName.trim());
+    const notes = data.notes.filter((row) => row.description.trim());
 
     let result: { error?: string };
 
     if (mode === "edit" && initialData?.dailyLogId) {
       result = await updateDailyLogWithCoreSections(initialData.dailyLogId, {
         projectId,
-        logDate,
-        status,
-        generalNotes,
+        logDate: data.logDate,
+        status: data.status,
+        generalNotes: data.generalNotes,
         weather,
         manpower,
         equipment,
@@ -472,9 +503,9 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     } else {
       result = await saveDailyLogWithCoreSections({
         projectId,
-        logDate,
-        status,
-        generalNotes,
+        logDate: data.logDate,
+        status: data.status,
+        generalNotes: data.generalNotes,
         weather,
         manpower,
         equipment,
@@ -482,621 +513,490 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
       });
     }
 
-    setIsSubmitting(false);
-
     if (result.error) {
+      setError("root", { type: "server", message: result.error });
       toast.error(result.error);
       return;
     }
 
     toast.success(mode === "edit" ? "Daily log updated" : "Daily log saved");
-    router.push(`/${projectId}/daily-log`);
-  };
-
-  const backPath = `/${projectId}/daily-log`;
-  const title = mode === "edit" ? "Edit Daily Log" : "Daily Log";
-  const saveLabel = mode === "edit" ? "Save Changes" : "Save Log";
-
-  const navSections = quickLog
-    ? QUICK_LOG_SECTIONS
-    : [
-        "Weather",
-        "Manpower",
-        "Notes",
-        "Equipment",
-        ...pendingSections.map((s) => s.label),
-      ];
+    router.push(backPath);
+  }
 
   return (
     <PageShell
-      variant="detailXWide"
+      variant="form"
       title={title}
       description="Daily field record by date"
       onBack={() => router.push(backPath)}
       backLabel="Back to Daily Log"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            onClick={() => setQuickLog((v) => !v)}
-          >
-            {quickLog ? (
-              <>
-                <LayoutList className="mr-1 h-3.5 w-3.5" />
-                Full Log
-              </>
-            ) : (
-              <>
-                <Zap className="mr-1 h-3.5 w-3.5" />
-                Quick Log
-              </>
-            )}
-          </Button>
-          <Button variant="outline" size="sm" type="button" onClick={() => router.push(backPath)}>
-            Cancel
-          </Button>
-          <Button size="sm" type="button" onClick={submit} disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : saveLabel}
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          onClick={() => setQuickLog((value) => !value)}
+        >
+          {quickLog ? (
+            <>
+              <LayoutList className="mr-1 h-3.5 w-3.5" />
+              Full Log
+            </>
+          ) : (
+            <>
+              <Zap className="mr-1 h-3.5 w-3.5" />
+              Quick Log
+            </>
+          )}
+        </Button>
       }
     >
-      <div className="space-y-6">
-        {quickLog && (
-          <InfoAlert
-            variant="info"
-            icon={<Zap className="mt-px h-3.5 w-3.5 shrink-0" />}
-            className="items-center py-2 text-xs"
-          >
-            Quick Log — showing Weather, Manpower, and Notes only. Switch to Full Log to access all
-            sections.
-          </InfoAlert>
-        )}
+      <FormContainer maxWidth="xl" withCard={false}>
+        <Form {...form}>
+          <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {quickLog && (
+              <InfoAlert
+                variant="info"
+                icon={<Zap className="mt-px h-3.5 w-3.5 shrink-0" />}
+                className="items-center py-2 text-xs"
+              >
+                Quick Log — showing Weather, Manpower, and Notes only. Switch to Full Log to
+                access all sections.
+              </InfoAlert>
+            )}
 
-        <section className="grid gap-4 md:grid-cols-[180px_180px_1fr]">
-          <Field label="Date">
-            <Input type="date" value={logDate} onChange={(event) => setLogDate(event.target.value)} />
-          </Field>
-          <Field label="Status">
-            <Select value={status} onValueChange={(value) => setStatus(value as DailyLogStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="complete">Complete</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="General Notes">
-            <Input
-              value={generalNotes}
-              onChange={(event) => setGeneralNotes(event.target.value)}
-              placeholder="Overall daily summary"
-            />
-          </Field>
-        </section>
+            <FormSection title="Log Details">
+              <FormGrid columns={3}>
+                <RHFDateField control={control} name="logDate" label="Date *" />
 
-        <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <aside className="hidden lg:block">
-            <nav className="sticky top-20 space-y-1 border-r border-border/70 pr-4">
-              {navSections.map((label) => (
-                <a
-                  key={label}
-                  href={`#${label.toLowerCase().replaceAll(" ", "-")}`}
-                  className="block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  {label}
-                </a>
-              ))}
-            </nav>
-          </aside>
+                <RHFSelectField
+                  control={control}
+                  name="status"
+                  label="Status"
+                  options={STATUS_OPTIONS}
+                />
 
-          <div className="min-w-0 space-y-2">
-            <CollapsibleSectionShell
-              id="weather"
-              icon={CloudSun}
-              title="Observed Weather Conditions"
-              defaultOpen
-              action={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={() => setWeatherRows([...weatherRows, emptyWeather()])}
-                >
-                  <Plus />
-                  Add
-                </Button>
-              }
-            >
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Area</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Delay</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead className="min-w-32">Sky</TableHead>
-                      <TableHead>Temp</TableHead>
-                      <TableHead>Precipitation</TableHead>
-                      <TableHead>Wind</TableHead>
-                      <TableHead>Comments</TableHead>
-                      <TableHead />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {weatherRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          <Input
-                            value={row.area ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                area: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="time"
-                            value={row.timeObserved ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                timeObserved: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Checkbox
-                            checked={Boolean(row.delay)}
-                            onCheckedChange={(checked) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                delay: checked === true,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.location ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                location: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.sky ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                sky: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={row.temperature ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                temperature: numericValue(event.target.value),
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.precipitation ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                precipitation: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.wind ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                wind: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.comments ?? ""}
-                            onChange={(event) =>
-                              updateRow(weatherRows, setWeatherRows, row.id, {
-                                comments: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            onClick={() => removeRow(weatherRows, setWeatherRows, row.id)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CollapsibleSectionShell>
+                <RHFTextField
+                  control={control}
+                  name="generalNotes"
+                  label="General Notes"
+                  placeholder="Overall daily summary"
+                />
+              </FormGrid>
+            </FormSection>
 
-            <CollapsibleSectionShell
-              id="manpower"
-              icon={Users}
-              title="Manpower"
-              meta={`${manpowerTotals.workers} workers / ${manpowerTotals.hours} total hours`}
-              defaultOpen
-              action={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={() => setManpowerRows([...manpowerRows, emptyManpower()])}
-                >
-                  <Plus />
-                  Add
-                </Button>
-              }
-            >
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Area</TableHead>
-                      <TableHead>Company / Trade</TableHead>
-                      <TableHead>Workers</TableHead>
-                      <TableHead>Hours</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Cost Code</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Comments</TableHead>
-                      <TableHead>Issue</TableHead>
-                      <TableHead />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {manpowerRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell><Input value={row.area ?? ""} onChange={(event) => updateRow(manpowerRows, setManpowerRows, row.id, { area: event.target.value })} /></TableCell>
-                        <TableCell>
-                          <TradeCombobox
-                            value={row.trade ?? ""}
-                            onChange={(val) => updateRow(manpowerRows, setManpowerRows, row.id, { trade: val })}
-                            options={tradeOptions}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <NumberInput
-                            min={0}
-                            decimals={0}
-                            formatOnBlur={false}
-                            value={row.workersCount || ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                workersCount: numericValue(event.target.value) ?? 0,
-                              })
-                            }
-                            className="min-w-20"
-                            aria-label={`Workers for manpower row ${row.id}`}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <NumberInput
-                            min={0}
-                            step="0.25"
-                            decimals={2}
-                            formatOnBlur={false}
-                            value={row.hoursWorked ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                hoursWorked: numericValue(event.target.value),
-                              })
-                            }
-                            className="min-w-20"
-                            aria-label={`Hours worked for manpower row ${row.id}`}
-                          />
-                        </TableCell>
-                        <TableCell>{(row.workersCount || 0) * (row.hoursWorked || 0)}</TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.costCode ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                costCode: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.location ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                location: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.comments ?? ""}
-                            onChange={(event) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                comments: event.target.value,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Checkbox
-                            checked={Boolean(row.issueFlag)}
-                            onCheckedChange={(checked) =>
-                              updateRow(manpowerRows, setManpowerRows, row.id, {
-                                issueFlag: checked === true,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            onClick={() => removeRow(manpowerRows, setManpowerRows, row.id)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CollapsibleSectionShell>
-
-            <CollapsibleSectionShell
-              id="notes"
-              icon={StickyNote}
-              title="Notes"
-              defaultOpen
-              action={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={() => setNoteRows([...noteRows, emptyNote()])}
-                >
-                  <Plus />
-                  Add
-                </Button>
-              }
-            >
-              <div className="grid gap-3">
-                {noteRows.map((row) => (
-                  <div
-                    key={row.id}
-                    className="grid gap-3 border-b border-border/70 pb-3 md:grid-cols-[120px_160px_1fr_80px_40px]"
-                  >
-                    <Input
-                      value={row.area ?? ""}
-                      onChange={(event) =>
-                        updateRow(noteRows, setNoteRows, row.id, { area: event.target.value })
-                      }
-                    />
-                    <Input
-                      value={row.category ?? ""}
-                      placeholder="Category"
-                      onChange={(event) =>
-                        updateRow(noteRows, setNoteRows, row.id, { category: event.target.value })
-                      }
-                    />
-                    <Textarea
-                      value={row.description}
-                      placeholder="Comment"
-                      onChange={(event) =>
-                        updateRow(noteRows, setNoteRows, row.id, {
-                          description: event.target.value,
-                        })
-                      }
-                      rows={2}
-                    />
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Checkbox
-                        checked={Boolean(row.issueFlag)}
-                        onCheckedChange={(checked) =>
-                          updateRow(noteRows, setNoteRows, row.id, { issueFlag: checked === true })
-                        }
+            <FormSection title="Observed Weather Conditions">
+              <RHFFieldArrayTable
+                control={control}
+                name="weather"
+                addLabel="Add Weather Row"
+                createRow={emptyWeather}
+                columns={[
+                  {
+                    key: "area",
+                    header: "Area",
+                    mobileLabel: "Area",
+                    cell: ({ rowName }) => (
+                      <RHFTextField control={control} name={`${rowName}.area`} label="Area" />
+                    ),
+                  },
+                  {
+                    key: "timeObserved",
+                    header: "Time",
+                    mobileLabel: "Time",
+                    cell: ({ rowName }) => (
+                      <RHFTimeField
+                        control={control}
+                        name={`${rowName}.timeObserved`}
+                        label="Time"
                       />
-                      Issue
-                    </label>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      type="button"
-                      onClick={() => removeRow(noteRows, setNoteRows, row.id)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSectionShell>
+                    ),
+                  },
+                  {
+                    key: "delay",
+                    header: "Delay",
+                    mobileLabel: "Delay",
+                    cell: ({ rowName }) => (
+                      <RHFCheckboxField
+                        control={control}
+                        name={`${rowName}.delay`}
+                        label="Delay"
+                        hideLabel
+                      />
+                    ),
+                  },
+                  {
+                    key: "location",
+                    header: "Location",
+                    mobileLabel: "Location",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.location`}
+                        label="Location"
+                      />
+                    ),
+                  },
+                  {
+                    key: "sky",
+                    header: "Sky",
+                    mobileLabel: "Sky",
+                    className: "min-w-32",
+                    cell: ({ rowName }) => (
+                      <RHFTextField control={control} name={`${rowName}.sky`} label="Sky" />
+                    ),
+                  },
+                  {
+                    key: "temperature",
+                    header: "Temp",
+                    mobileLabel: "Temp",
+                    cell: ({ rowName }) => (
+                      <RHFNumberField
+                        control={control}
+                        name={`${rowName}.temperature`}
+                        label="Temp"
+                        step={1}
+                      />
+                    ),
+                  },
+                  {
+                    key: "precipitation",
+                    header: "Precipitation",
+                    mobileLabel: "Precipitation",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.precipitation`}
+                        label="Precipitation"
+                      />
+                    ),
+                  },
+                  {
+                    key: "wind",
+                    header: "Wind",
+                    mobileLabel: "Wind",
+                    cell: ({ rowName }) => (
+                      <RHFTextField control={control} name={`${rowName}.wind`} label="Wind" />
+                    ),
+                  },
+                  {
+                    key: "comments",
+                    header: "Comments",
+                    mobileLabel: "Comments",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.comments`}
+                        label="Comments"
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </FormSection>
+
+            <FormSection
+              title="Manpower"
+              description={`${manpowerTotals.workers} workers / ${manpowerTotals.hours} total hours`}
+            >
+              <RHFFieldArrayTable
+                control={control}
+                name="manpower"
+                addLabel="Add Manpower Row"
+                createRow={emptyManpower}
+                columns={[
+                  {
+                    key: "area",
+                    header: "Area",
+                    mobileLabel: "Area",
+                    cell: ({ rowName }) => (
+                      <RHFTextField control={control} name={`${rowName}.area`} label="Area" />
+                    ),
+                  },
+                  {
+                    key: "trade",
+                    header: "Company / Trade",
+                    mobileLabel: "Company / Trade",
+                    className: "min-w-[180px]",
+                    cell: ({ rowName }) => (
+                      <RHFTradeCombobox
+                        control={control}
+                        name={`${rowName}.trade`}
+                        label="Company / Trade"
+                        options={tradeOptions}
+                      />
+                    ),
+                  },
+                  {
+                    key: "workersCount",
+                    header: "Workers",
+                    mobileLabel: "Workers",
+                    className: "w-[140px]",
+                    cell: ({ rowName }) => (
+                      <RHFNumberField
+                        control={control}
+                        name={`${rowName}.workersCount`}
+                        label="Workers"
+                        min={0}
+                        step={1}
+                      />
+                    ),
+                  },
+                  {
+                    key: "hoursWorked",
+                    header: "Hours",
+                    mobileLabel: "Hours",
+                    className: "w-[140px]",
+                    cell: ({ rowName }) => (
+                      <RHFNumberField
+                        control={control}
+                        name={`${rowName}.hoursWorked`}
+                        label="Hours"
+                        min={0}
+                        step={0.25}
+                      />
+                    ),
+                  },
+                  {
+                    key: "total",
+                    header: "Total",
+                    mobileLabel: "Total",
+                    cell: ({ rowName }) => (
+                      <ManpowerRowTotal control={control} rowName={rowName} />
+                    ),
+                  },
+                  {
+                    key: "costCode",
+                    header: "Cost Code",
+                    mobileLabel: "Cost Code",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.costCode`}
+                        label="Cost Code"
+                      />
+                    ),
+                  },
+                  {
+                    key: "location",
+                    header: "Location",
+                    mobileLabel: "Location",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.location`}
+                        label="Location"
+                      />
+                    ),
+                  },
+                  {
+                    key: "comments",
+                    header: "Comments",
+                    mobileLabel: "Comments",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.comments`}
+                        label="Comments"
+                      />
+                    ),
+                  },
+                  {
+                    key: "issueFlag",
+                    header: "Issue",
+                    mobileLabel: "Issue",
+                    cell: ({ rowName }) => (
+                      <RHFCheckboxField
+                        control={control}
+                        name={`${rowName}.issueFlag`}
+                        label="Issue"
+                        hideLabel
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </FormSection>
+
+            <FormSection title="Notes">
+              <RHFFieldArrayRows
+                control={control}
+                name="notes"
+                addLabel="Add Note"
+                createRow={emptyNote}
+                columns={[
+                  {
+                    key: "area",
+                    className: "sm:max-w-[140px]",
+                    cell: ({ rowName }) => (
+                      <RHFTextField control={control} name={`${rowName}.area`} label="Area" />
+                    ),
+                  },
+                  {
+                    key: "category",
+                    className: "sm:max-w-[180px]",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.category`}
+                        label="Category"
+                        placeholder="Category"
+                      />
+                    ),
+                  },
+                  {
+                    key: "description",
+                    cell: ({ rowName }) => (
+                      <RHFTextareaField
+                        control={control}
+                        name={`${rowName}.description`}
+                        label="Comment"
+                        placeholder="Comment"
+                        rows={2}
+                      />
+                    ),
+                  },
+                  {
+                    key: "issueFlag",
+                    className: "sm:max-w-[120px]",
+                    cell: ({ rowName }) => (
+                      <RHFCheckboxField
+                        control={control}
+                        name={`${rowName}.issueFlag`}
+                        label="Issue"
+                        hideLabel
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </FormSection>
 
             {!quickLog && (
               <>
-                <CollapsibleSectionShell
-                  id="equipment"
-                  icon={Wrench}
-                  title="Equipment"
-                  defaultOpen={false}
-                  action={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={() => setEquipmentRows([...equipmentRows, emptyEquipment()])}
-                    >
-                      <Plus />
-                      Add
-                    </Button>
-                  }
-                >
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Area</TableHead>
-                          <TableHead>Equipment</TableHead>
-                          <TableHead>Operating</TableHead>
-                          <TableHead>Idle</TableHead>
-                          <TableHead>Cost Code</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Inspected</TableHead>
-                          <TableHead>Comments</TableHead>
-                          <TableHead />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {equipmentRows.map((row) => (
-                          <TableRow key={row.id}>
-                            <TableCell>
-                              <Input
-                                value={row.area ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    area: event.target.value,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={row.equipmentName}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    equipmentName: event.target.value,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
-                                step="0.25"
-                                value={row.hoursOperated ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    hoursOperated: numericValue(event.target.value),
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
-                                step="0.25"
-                                value={row.hoursIdle ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    hoursIdle: numericValue(event.target.value),
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={row.costCode ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    costCode: event.target.value,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={row.location ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    location: event.target.value,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Checkbox
-                                checked={Boolean(row.inspected)}
-                                onCheckedChange={(checked) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    inspected: checked === true,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={row.comments ?? ""}
-                                onChange={(event) =>
-                                  updateRow(equipmentRows, setEquipmentRows, row.id, {
-                                    comments: event.target.value,
-                                  })
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={() =>
-                                  removeRow(equipmentRows, setEquipmentRows, row.id)
-                                }
-                              >
-                                <Trash2 />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CollapsibleSectionShell>
+                <FormSection title="Equipment">
+                  <RHFFieldArrayTable
+                    control={control}
+                    name="equipment"
+                    addLabel="Add Equipment Row"
+                    createRow={emptyEquipment}
+                    columns={[
+                      {
+                        key: "area",
+                        header: "Area",
+                        mobileLabel: "Area",
+                        cell: ({ rowName }) => (
+                          <RHFTextField
+                            control={control}
+                            name={`${rowName}.area`}
+                            label="Area"
+                          />
+                        ),
+                      },
+                      {
+                        key: "equipmentName",
+                        header: "Equipment",
+                        mobileLabel: "Equipment",
+                        className: "min-w-[180px]",
+                        cell: ({ rowName }) => (
+                          <RHFTextField
+                            control={control}
+                            name={`${rowName}.equipmentName`}
+                            label="Equipment"
+                          />
+                        ),
+                      },
+                      {
+                        key: "hoursOperated",
+                        header: "Operating",
+                        mobileLabel: "Operating",
+                        className: "w-[140px]",
+                        cell: ({ rowName }) => (
+                          <RHFNumberField
+                            control={control}
+                            name={`${rowName}.hoursOperated`}
+                            label="Operating"
+                            min={0}
+                            step={0.25}
+                          />
+                        ),
+                      },
+                      {
+                        key: "hoursIdle",
+                        header: "Idle",
+                        mobileLabel: "Idle",
+                        className: "w-[140px]",
+                        cell: ({ rowName }) => (
+                          <RHFNumberField
+                            control={control}
+                            name={`${rowName}.hoursIdle`}
+                            label="Idle"
+                            min={0}
+                            step={0.25}
+                          />
+                        ),
+                      },
+                      {
+                        key: "costCode",
+                        header: "Cost Code",
+                        mobileLabel: "Cost Code",
+                        cell: ({ rowName }) => (
+                          <RHFTextField
+                            control={control}
+                            name={`${rowName}.costCode`}
+                            label="Cost Code"
+                          />
+                        ),
+                      },
+                      {
+                        key: "location",
+                        header: "Location",
+                        mobileLabel: "Location",
+                        cell: ({ rowName }) => (
+                          <RHFTextField
+                            control={control}
+                            name={`${rowName}.location`}
+                            label="Location"
+                          />
+                        ),
+                      },
+                      {
+                        key: "inspected",
+                        header: "Inspected",
+                        mobileLabel: "Inspected",
+                        cell: ({ rowName }) => (
+                          <RHFCheckboxField
+                            control={control}
+                            name={`${rowName}.inspected`}
+                            label="Inspected"
+                            hideLabel
+                          />
+                        ),
+                      },
+                      {
+                        key: "comments",
+                        header: "Comments",
+                        mobileLabel: "Comments",
+                        cell: ({ rowName }) => (
+                          <RHFTextField
+                            control={control}
+                            name={`${rowName}.comments`}
+                            label="Comments"
+                          />
+                        ),
+                      },
+                    ]}
+                  />
+                </FormSection>
 
-                <CollapsibleSectionShell
-                  id="additional-sections"
-                  icon={ClipboardList}
+                <FormSection
                   title="Additional Sections"
-                  meta={`${pendingSections.length} sections available`}
-                  defaultOpen={false}
+                  description={`${pendingSections.length} sections available`}
                 >
                   <div className="divide-y divide-border/70">
                     {pendingSections.map(({ label, icon: Icon }) => (
                       <div
                         key={label}
-                        id={label.toLowerCase().replaceAll(" ", "-")}
                         className="flex items-center justify-between gap-4 py-3"
                       >
                         <div className="flex items-center gap-3">
@@ -1107,12 +1007,21 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
                       </div>
                     ))}
                   </div>
-                </CollapsibleSectionShell>
+                </FormSection>
               </>
             )}
-          </div>
-        </div>
-      </div>
+
+            <FormServerError message={errors.root?.message} />
+
+            <FormActions
+              onCancel={() => router.push(backPath)}
+              isSubmitting={isSubmitting}
+              submitLabel={saveLabel}
+              stickyOnMobile
+            />
+          </form>
+        </Form>
+      </FormContainer>
     </PageShell>
   );
 }

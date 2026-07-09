@@ -94,7 +94,8 @@ module.exports = {
       'app/respond/',
       // Daily Executive Brief: a bespoke, full-viewport editorial document
       // (masthead + index rail + sections) rendered outside the app shell. It
-      // intentionally does not use PageShell — see daily-brief/brief-markup.ts.
+      // intentionally does not use PageShell — see daily-brief/build-brief.ts
+      // (body builder) and daily-brief/brief-styles.ts (styles).
       'daily-brief/page.tsx',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};

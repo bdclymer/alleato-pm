@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
 import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
-import { DetailField, DetailFieldGrid } from "@/components/ds";
+import { DetailField, DetailFieldGrid, InfoAlert } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,8 @@ type CoSummary = {
 };
 
 type InvoiceShape = {
+  subcontract_id?: number | null;
+  purchase_order_id?: number | null;
   acumatica_doc_type?: string | null;
   acumatica_ref_nbr?: string | null;
   acumatica_sync_at?: string | null;
@@ -254,8 +256,30 @@ export function SummaryTab({
     : null;
   const isErpLinked = Boolean(invoice.acumatica_sync_at || erpRefNbr);
 
+  // An invoice not linked to a subcontract/PO commitment cannot resolve its
+  // contract company, commitment number, original contract sum, or SOV — the
+  // whole G702 form renders blank/$0. Surface that loudly instead of letting a
+  // broken-looking page masquerade as a bug.
+  const isUnlinked = !invoice.subcontract_id && !invoice.purchase_order_id;
+
   return (
     <div className="space-y-12">
+      {isUnlinked && (
+        <InfoAlert variant="warning" role="alert">
+          <span className="font-medium">Not linked to a commitment.</span> This
+          invoice has no subcontract or purchase order, so the contract company,
+          commitment number, and original contract sum below cannot be shown and
+          the totals read $0. Link it to its commitment to populate this form
+          {invoice.notes ? (
+            <>
+              {" "}(the notes reference{" "}
+              <span className="font-medium">{invoice.notes}</span>)
+            </>
+          ) : null}
+          .
+        </InfoAlert>
+      )}
+
       {/* Edit actions bar */}
       {editing && (
         <div className="flex items-center justify-end gap-2">
@@ -383,7 +407,7 @@ export function SummaryTab({
         <SectionRuleHeading label="Summary Preview" />
 
         {/* TO / FROM address blocks (stacked) + Project metadata (right column) */}
-        <div className="grid grid-cols-2 gap-x-20 gap-y-0">
+        <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-20 sm:gap-y-0">
           {/* Left column: stacked TO then FROM */}
           <div className="space-y-6">
             <div className="space-y-1 text-sm">
@@ -571,7 +595,7 @@ export function SummaryTab({
                   </TableCell>
                   <TableCell
                     colSpan={2}
-                    className="text-center tabular-nums text-sm font-medium"
+                    className="text-right tabular-nums text-sm font-medium"
                   >
                     {formatCurrency(changeOrderNet)}
                   </TableCell>

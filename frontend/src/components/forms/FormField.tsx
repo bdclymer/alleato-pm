@@ -113,10 +113,10 @@ export function FormField({
   if (layout === "horizontal" && !fullWidth) {
     return (
       <FormFieldContext.Provider value={inputId}>
-        <div className={cn("flex items-start gap-x-2", className)}>
+        <div className={cn("flex flex-col gap-y-1 sm:flex-row sm:items-start sm:gap-x-2", className)}>
           <label
             htmlFor={inputId}
-            className="w-40 shrink-0 pt-2 text-[13px] font-medium text-foreground"
+            className="pt-0 text-[13px] font-medium text-foreground sm:w-40 sm:shrink-0 sm:pt-2"
           >
             <LabelContent label={label} required={required} labelTooltip={labelTooltip} />
           </label>

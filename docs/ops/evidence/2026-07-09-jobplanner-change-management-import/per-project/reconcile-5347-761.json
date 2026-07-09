@@ -1,0 +1,296 @@
+{
+  "generatedAt": "2026-07-09T05:07:47.021Z",
+  "jpProjectId": 5347,
+  "appProjectId": 761,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 10,
+    "adopt": 3,
+    "create": 7,
+    "flag": 0,
+    "existingChangeEvents": 4,
+    "appOnly": 1,
+    "jpCcos": 14,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2483,
+      "number": "CR-5347-0012",
+      "title": "AC4 Duct Re-Route",
+      "statusId": 0,
+      "cost": 0,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 12, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2420,
+      "number": "CR-5347-0006",
+      "title": "Mod Fan Electrical Rework ",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2510,
+      "number": "CR-5347-0013",
+      "title": "Fire Alarm System Pretest/Retest ",
+      "statusId": 8,
+      "cost": 10080,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 13, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1842,
+      "number": "CR-5347-0003",
+      "title": "KascoFab Equipment 1 week Rental ",
+      "statusId": 8,
+      "cost": 10297.49,
+      "lineItems": 4,
+      "fork": {
+        "prime": 0,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "seq 3 == CR-5347-0003; amount matches; titleSim 1.00",
+      "matchedExisting": {
+        "id": "db44260a-587f-49a5-9cad-26d28dada07e",
+        "number": "CR-5347-0003",
+        "title": "KascoFab Equipment 1 week Rental",
+        "cost": 10297,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2423,
+      "number": "CR-5347-0007",
+      "title": "AC-1 Crane Remobilization ",
+      "statusId": 8,
+      "cost": 19849,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1587,
+      "number": "CR-5347-0001",
+      "title": "Special Inspections for Structural Reinforcement ",
+      "statusId": 10,
+      "cost": 4075,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "ADOPT",
+      "reason": "seq 1 == CR-5347-0001; amount matches; titleSim 1.00",
+      "matchedExisting": {
+        "id": "11a55016-3fa4-4146-8c45-3c2cf9751613",
+        "number": "CR-5347-0001",
+        "title": "Special Inspections for Structural Reinforcement",
+        "cost": 4075,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2481,
+      "number": "CR-5347-0010",
+      "title": "Add Sprinkler Heads under new Duct Sock",
+      "statusId": 0,
+      "cost": 14686,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1588,
+      "number": "CR-5347-0002",
+      "title": "Conflict with RTU and existing utilities ",
+      "statusId": 8,
+      "cost": 61659.79,
+      "lineItems": 7,
+      "fork": {
+        "prime": 0,
+        "commitment": 7,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "seq 2 == CR-5347-0002; amount matches; titleSim 1.00",
+      "matchedExisting": {
+        "id": "294b7599-c52f-4c69-9ffc-80dc11c3c897",
+        "number": "CR-5347-0002",
+        "title": "Conflict with RTU and existing utilities",
+        "cost": 61660,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2512,
+      "number": "CR-5347-0014",
+      "title": "AC4 - 34\" Duct Sock Re-route",
+      "statusId": 8,
+      "cost": 96693,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 14, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2482,
+      "number": "CR-5347-0011",
+      "title": "Relocate Solar Raceway on Roof conflicting with new RTU",
+      "statusId": 0,
+      "cost": 41000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 11, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [
+    {
+      "id": "e5a0a139-0fdd-45e6-8e23-034225ffb751",
+      "number": "CR-5347-0005",
+      "title": "AC-1 Relocation",
+      "cost": 113440,
+      "lineCount": 1
+    }
+  ],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-5347-0003",
+        "commitmentNumber": "PO-5347-0002",
+        "amount": 2500,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0001",
+        "commitmentNumber": "SC-5347-0002",
+        "amount": 13271.38,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0002",
+        "commitmentNumber": "SC-5347-0007",
+        "amount": 4196,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0005",
+        "commitmentNumber": "SC-5347-0001",
+        "amount": 22215.41,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0006",
+        "commitmentNumber": "SC-5347-0005",
+        "amount": 10297.49,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0007",
+        "commitmentNumber": "PO-5347-0002",
+        "amount": 1000,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0008",
+        "commitmentNumber": "SC-5347-0007",
+        "amount": 3720,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0009",
+        "commitmentNumber": "SC-5347-0005",
+        "amount": 7073,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0015",
+        "commitmentNumber": "SC-5347-0001",
+        "amount": -13149.41,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0014",
+        "commitmentNumber": "SC-5347-0002",
+        "amount": 13149.41,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0016",
+        "commitmentNumber": "SC-5347-0001",
+        "amount": 19849,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0017",
+        "commitmentNumber": "SC-5347-0007",
+        "amount": 14686,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0018",
+        "commitmentNumber": "SC-5347-0002",
+        "amount": 10080,
+        "twin": null
+      },
+      {
+        "number": "CCO-5347-0019",
+        "commitmentNumber": "SC-5347-0001",
+        "amount": 96693,
+        "twin": null
+      }
+    ],
+    "prime": []
+  }
+}

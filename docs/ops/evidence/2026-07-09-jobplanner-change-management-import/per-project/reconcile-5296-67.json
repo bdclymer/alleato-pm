@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-07-09T05:07:48.915Z",
+  "jpProjectId": 5296,
+  "appProjectId": 67,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 6,
+    "adopt": 0,
+    "create": 6,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 3,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 3,
+    "pccoWithExecutedTwin": 1
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1625,
+      "number": "CR-5296-0001",
+      "title": "Reduced Building Redesign",
+      "statusId": 8,
+      "cost": 37000,
+      "lineItems": 5,
+      "fork": {
+        "prime": 3,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1909,
+      "number": "CR-5296-0002",
+      "title": "Design for existing 50k SF building",
+      "statusId": 8,
+      "cost": 93186,
+      "lineItems": 10,
+      "fork": {
+        "prime": 3,
+        "commitment": 0,
+        "unlinked": 7
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2142,
+      "number": "CR-5296-0005",
+      "title": "Mezzanine Structural Design, Furnish and Install",
+      "statusId": 8,
+      "cost": 30000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2548,
+      "number": "CR-5296-0006",
+      "title": "Full Scope of Work",
+      "statusId": 8,
+      "cost": 8054225,
+      "lineItems": 76,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 76
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2141,
+      "number": "CR-5296-0004",
+      "title": "Mezzanine Structural Design, Furnish and Install",
+      "statusId": 0,
+      "cost": 79975,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2619,
+      "number": "CR-5296-0007",
+      "title": "Sprinkler Nitro Generator",
+      "statusId": 0,
+      "cost": 69836.83,
+      "lineItems": 8,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 8
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-5296-0001",
+        "commitmentNumber": "PO-5296-0001",
+        "amount": -8765,
+        "twin": null
+      },
+      {
+        "number": "CCO-5296-0002",
+        "commitmentNumber": "PO-5296-0003",
+        "amount": 30000,
+        "twin": null
+      },
+      {
+        "number": "CCO-5296-0003",
+        "commitmentNumber": "PO-5296-0002",
+        "amount": 78000,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-5296-0003",
+        "amount": 78666.04,
+        "twin": null
+      },
+      {
+        "number": "PCCO-5296-0002",
+        "amount": 48854.99,
+        "twin": null
+      },
+      {
+        "number": "PCCO-5296-0004",
+        "amount": 0,
+        "twin": {
+          "id": 3961,
+          "number": null,
+          "amount": 0
+        }
+      }
+    ]
+  }
+}

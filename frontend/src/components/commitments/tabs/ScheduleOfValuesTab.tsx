@@ -493,9 +493,22 @@ export function ScheduleOfValuesTab({
               item.project_budget_code_id ?? item.budget_code,
               budgetCodes,
             );
-            const budgetCodeDisplay = budgetCodeResolution.isMapped
-              ? budgetCodeResolution.displayCode
-              : `Unmapped: ${budgetCodeResolution.displayCode}`;
+            // Fallback so the read-only cell never surfaces a raw id: if the stored
+            // project_budget_code_id hasn't resolved (budget codes still loading, or an
+            // imported id not yet in the option list), try the human budget_code text.
+            const budgetCodeResolved =
+              budgetCodeResolution.isMapped || !item.budget_code
+                ? budgetCodeResolution
+                : resolvePrimeCoBudgetCode(item.budget_code, budgetCodes);
+            const storedBudgetCodeText = item.budget_code?.trim() || "";
+            const budgetCodeMapped =
+              budgetCodeResolved.isMapped || Boolean(storedBudgetCodeText);
+            // Read-only cell shows the full "code – description" label (the same
+            // string the BudgetCodeSelector shows when picking), not just the code.
+            const budgetCodeDisplay = budgetCodeResolved.isMapped
+              ? budgetCodeResolved.displayLabel || budgetCodeResolved.displayCode
+              : storedBudgetCodeText ||
+                (budgetCodesLoading ? "Loading…" : "No budget code");
 
             return (
               <InlineTableRow key={item.id}>
@@ -540,11 +553,15 @@ export function ScheduleOfValuesTab({
                   ) : (
                     <div
                       className={
-                        budgetCodeResolution.isMapped
+                        budgetCodeMapped
                           ? "text-sm text-foreground"
                           : "text-sm font-medium text-destructive"
                       }
-                      title={budgetCodeResolution.displayLabel}
+                      title={
+                        budgetCodeResolved.isMapped
+                          ? budgetCodeResolved.displayLabel
+                          : budgetCodeDisplay
+                      }
                     >
                       {budgetCodeDisplay || "—"}
                     </div>

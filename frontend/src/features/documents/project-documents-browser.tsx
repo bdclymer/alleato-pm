@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { GripVertical } from "lucide-react";
+import { ArrowLeft, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/layout";
+import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
 import { DocumentsTablePage } from "@/features/documents/documents-table-page";
 import { createDocumentsTableDefinition } from "@/features/documents/documents-table-definition";
@@ -13,9 +14,13 @@ import {
   DocumentGridCard,
   type MoveTarget,
 } from "@/features/documents/document-grid-card";
-import { SmartGroupRail } from "@/features/documents/smart-group-rail";
+import {
+  SmartGroupRail,
+  SmartGroupPills,
+} from "@/features/documents/smart-group-rail";
 import { PreviewPane } from "@/features/documents/preview-pane";
 import { useResizableSplit } from "@/features/documents/use-resizable-split";
+import { cn } from "@/lib/utils";
 import {
   SMART_GROUPS,
   type SmartGroupCounts,
@@ -116,9 +121,18 @@ export function ProjectDocumentsBrowser({
     >
       <div
         data-testid="documents-browser-shell"
-        className="flex h-[calc(100vh-9rem)] w-full overflow-hidden"
+        className="flex h-[calc(100vh-9rem)] w-full flex-col overflow-hidden md:flex-row"
       >
-        <div className="w-44 shrink-0">
+        {/* Mobile: smart groups collapse into a horizontal pill row */}
+        <div className="shrink-0 border-b border-border md:hidden">
+          <SmartGroupPills
+            counts={counts}
+            activeGroupId={activeGroupId}
+            onSelect={(id) => setActiveGroupId(id)}
+          />
+        </div>
+        {/* Desktop: vertical smart-group rail */}
+        <div className="hidden w-44 shrink-0 md:block">
           <SmartGroupRail
             counts={counts}
             activeGroupId={activeGroupId}
@@ -127,7 +141,7 @@ export function ProjectDocumentsBrowser({
         </div>
         <div ref={containerRef} className="flex min-w-0 flex-1">
           <div
-            className="min-w-0 overflow-auto"
+            className="min-w-0 overflow-auto max-md:flex-1"
             style={{ flexBasis: `${ratio * 100}%` }}
           >
             <DocumentsTablePage
@@ -149,17 +163,37 @@ export function ProjectDocumentsBrowser({
           </div>
           <div
             onPointerDown={onHandleDown}
-            className="flex w-2 shrink-0 cursor-col-resize items-center justify-center bg-muted/40 text-muted-foreground"
+            className="hidden w-2 shrink-0 cursor-col-resize items-center justify-center bg-muted/40 text-muted-foreground md:flex"
             role="separator"
             aria-label="Resize preview"
           >
             <GripVertical className="h-3.5 w-3.5" />
           </div>
+          {/* Below md, the preview opens as a full-screen overlay so the file
+              table keeps the full width until a document is selected. */}
           <div
             data-testid="document-preview-pane"
-            className="min-w-0 flex-1 overflow-hidden"
+            className={cn(
+              "min-w-0 overflow-hidden md:flex-1",
+              selectedDoc
+                ? "fixed inset-0 z-50 flex flex-col bg-background md:static md:z-auto md:block"
+                : "hidden md:block",
+            )}
           >
-            <PreviewPane doc={selectedDoc} />
+            <div className="flex shrink-0 items-center gap-2 border-b border-border p-2 md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedDoc(null)}
+                className="gap-1.5"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to files
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden md:h-full">
+              <PreviewPane doc={selectedDoc} />
+            </div>
           </div>
         </div>
       </div>

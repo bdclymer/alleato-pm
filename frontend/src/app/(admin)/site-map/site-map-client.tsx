@@ -13,7 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  MoreHorizontal,
+  MoreVertical,
   PanelRightOpen,
   Plus,
   Tag as TagIcon,
@@ -1854,7 +1854,7 @@ function buildColumns({
                 className="h-8 w-8"
                 onClick={(event) => event.stopPropagation()}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -2224,18 +2224,18 @@ export default function SiteMapClient({
   );
 
   const handleCreateTag = useCallback(
-    async (route: InventoryRoute, label: string) => {
-      try {
-        const tag = await createTagMutation.mutateAsync(label);
-        // Apply the freshly created tag to the route it was created from.
-        setRouteTagsMutation.mutate({
-          route: route.route,
-          tagSlugs: [...new Set([...route.tags, tag.slug])],
-        });
-        toast.success(`Created "${tag.label}"`);
-      } catch {
-        // Surfaced by the mutation's onError handler.
-      }
+    (route: InventoryRoute, label: string) => {
+      // Errors surface loudly through createTagMutation's onError handler.
+      createTagMutation.mutate(label, {
+        onSuccess: (tag) => {
+          // Apply the freshly created tag to the route it was created from.
+          setRouteTagsMutation.mutate({
+            route: route.route,
+            tagSlugs: [...new Set([...route.tags, tag.slug])],
+          });
+          toast.success(`Created "${tag.label}"`);
+        },
+      });
     },
     [createTagMutation, setRouteTagsMutation],
   );

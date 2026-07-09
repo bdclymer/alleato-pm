@@ -171,7 +171,7 @@ function AccordionSection({
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex w-full items-center justify-between group">
         {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           {label}
         </h2>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -661,13 +661,24 @@ export function MeetingDetailContent({
     meaningfulText(parsedSections?.summary) ||
     meaningfulText(meeting.overview) ||
     meaningfulText(meeting.summary);
+  // The top "Meeting Overview" already leads with the prose read; only surface
+  // the Summary → Overview subsection when it says something different, so the
+  // same paragraph isn't printed twice on the page.
+  const summaryOverviewDistinct =
+    summaryOverviewContent &&
+    !(
+      overviewContent &&
+      areSemanticallySimilar(summaryOverviewContent, overviewContent)
+    )
+      ? summaryOverviewContent
+      : undefined;
   const shorthandBullet =
     meaningfulText(parsedSections?.shorthandBullet) ||
     meaningfulText(meeting.bullet_points);
   const hasActionSnapshot =
     riskItems.length > 0 || allOpportunities.length > 0;
   const hasSummarySection =
-    Boolean(summaryOverviewContent) ||
+    Boolean(summaryOverviewDistinct) ||
     Boolean(notesContent) ||
     Boolean(actionItemsContent);
 
@@ -743,9 +754,9 @@ export function MeetingDetailContent({
         ) : null}
       </DetailPropertyBar>
 
-      <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         {/* Main content */}
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* Meeting Overview — leads with the prose read of the meeting. */}
           {overviewContent || shorthandBullet ? (
             <section className="space-y-4">
@@ -761,12 +772,8 @@ export function MeetingDetailContent({
 
           {/* Tasks — AI-extracted action items, managed inline (status,
               assignee, priority, due date), with create + delete. */}
-          <section className="border-t border-border pt-6">
+          <section>
             <AccordionSection label={`Tasks (${meetingTasks.length})`}>
-              <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                Tasks are tracked follow-ups you can edit, assign, prioritize,
-                and close across Alleato.
-              </p>
               <MeetingTasksManager
                 meetingId={meeting.id}
                 initialTasks={meetingTasks}
@@ -785,12 +792,12 @@ export function MeetingDetailContent({
 
           {/* Summary — Fireflies overview, notes, and action items grouped into one section */}
           {hasSummarySection ? (
-            <section className="border-t border-border pt-6">
+            <section>
               <AccordionSection label="Summary" defaultOpen={false}>
                 <div className="space-y-6">
-                  {summaryOverviewContent ? (
+                  {summaryOverviewDistinct ? (
                     <SummarySubsection label="Overview">
-                      <FirefliesSectionContent value={summaryOverviewContent} />
+                      <FirefliesSectionContent value={summaryOverviewDistinct} />
                     </SummarySubsection>
                   ) : null}
                   {notesContent ? (
@@ -810,7 +817,7 @@ export function MeetingDetailContent({
 
           {/* Discussion Topics — collapsed by default */}
           {segments.length > 0 && (
-            <section className="border-t border-border pt-6">
+            <section>
               <AccordionSection
                 label={`Discussion Topics (${segments.length})`}
                 defaultOpen={false}
@@ -843,8 +850,8 @@ export function MeetingDetailContent({
 
           {/* Full Transcript */}
           {transcriptSlot ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label="Full Transcript">
+            <section>
+              <AccordionSection label="Full Transcript" defaultOpen={false}>
                 {transcriptSlot}
               </AccordionSection>
             </section>
@@ -868,12 +875,14 @@ export function MeetingDetailContent({
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className="space-y-8">
+        {/* Sidebar — sticky so attendees/related/keywords stay in view while
+            reading the long transcript. `lg:items-start` on the grid keeps this
+            column content-height so the sticky offset engages. */}
+        <aside className="space-y-8 lg:sticky lg:top-6">
           {/* Attendees */}
           {participantsList.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 <Users className="h-3.5 w-3.5" />
                 Attendees ({participantsList.length})
               </div>
@@ -884,12 +893,12 @@ export function MeetingDetailContent({
           {/* Action Snapshot */}
           {hasActionSnapshot && (
             <div className="space-y-4">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Action Snapshot
               </div>
 
               {riskItems.length > 0 && (
-                <div className="border-b border-border pb-4">
+                <div>
                   <SidebarList
                     label="Risks"
                     items={riskItems}
@@ -956,9 +965,9 @@ export function MeetingDetailContent({
 
           {/* Related Meetings */}
           {relatedMeetings.length > 0 && relatedMeetingsBaseHref && (
-            <div className="space-y-4 border-t border-border pt-6">
+            <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Related Meetings
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -1001,8 +1010,8 @@ export function MeetingDetailContent({
 
           {/* Keywords */}
           {keywordList.length > 0 && (
-            <div className="space-y-3 border-t border-border pt-6">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+            <div className="space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Keywords
               </div>
               <div className="flex flex-wrap gap-1.5">

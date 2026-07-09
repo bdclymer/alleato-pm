@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -247,7 +247,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>

@@ -16,7 +16,7 @@ import {
   Link2,
   Mail,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   PenLine,
   Printer,
   RotateCcw,
@@ -309,7 +309,7 @@ function RevisionRow({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <MoreHorizontal />
+              <MoreVertical />
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
@@ -923,7 +923,7 @@ export default function DrawingDetailPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="px-2">
-                <MoreHorizontal />
+                <MoreVertical />
                 <span className="sr-only">More actions</span>
               </Button>
             </DropdownMenuTrigger>

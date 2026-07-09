@@ -194,8 +194,8 @@ export const GET = withApiGuardrails(
           // Date columns for time-phased forecasting (Procore parity).
           // Backed by future budget_lines.forecast_start_date / forecast_end_date columns;
           // null until the schema migration lands and lines are populated.
-          forecastStartDate: line.forecastStartDate ?? null,
-          forecastEndDate: line.forecastEndDate ?? null,
+          forecastStartDate: null,
+          forecastEndDate: null,
         });
       }
     });

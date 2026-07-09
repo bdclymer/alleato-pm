@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { Json, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 import {
   TRAINING_DOC_ASSET_TYPES,
@@ -71,11 +71,13 @@ export function normalizeTrainingDocInput(input: {
     throw new Error("A slug could not be generated. Add a title or slug.");
   }
   const qaStatus = input.qa_status?.trim() ?? "";
+  // The `qa_status` column is NOT NULL in the database — fall back to the
+  // default status rather than null when the value is missing or invalid.
   const normalizedQaStatus = (TRAINING_DOC_QA_STATUSES as readonly string[]).includes(
     qaStatus,
   )
     ? (qaStatus as (typeof TRAINING_DOC_QA_STATUSES)[number])
-    : null;
+    : TRAINING_DOC_QA_STATUSES[0];
 
   return {
     title,

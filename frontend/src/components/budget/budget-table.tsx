@@ -13,7 +13,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2, Columns3 } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreVertical, Pencil, Trash2, Columns3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -1629,7 +1629,7 @@ export function BudgetTable({
                         className="h-11 w-11 shrink-0"
                         aria-label={`Actions for ${fullLabel}`}
                       >
-                        <MoreHorizontal />
+                        <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

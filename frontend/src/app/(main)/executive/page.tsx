@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { EmptyState } from "@/components/ds";
-import { ExecutiveBriefingRefreshButton } from "@/components/executive/executive-briefing-refresh-button";
 import { ExecutiveBriefingWindowToggle } from "@/components/executive/executive-briefing-window-toggle";
 import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
@@ -1041,18 +1040,13 @@ export default async function ExecutiveDailyInsightsPage({
       variant="detailWide"
       eyebrow="Executive briefing"
       title="Daily operating brief"
-      description={`Prepared ${generatedAt} · ${packet.windowDays}-day window${
-        packet.windowDays !== windowDays
-          ? ` (selected: ${windowDays}-day — click Regenerate to apply)`
-          : ""
-      }`}
+      description={`Prepared ${generatedAt} · ${packet.windowDays}-day window`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline">
             <Link href="/executive/capabilities">Brandon dashboard</Link>
           </Button>
           <ExecutiveBriefingWindowToggle windowDays={windowDays} />
-          <ExecutiveBriefingRefreshButton windowDays={windowDays} />
           <ExecutiveChatSheet packet={packet} />
         </div>
       }

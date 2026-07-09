@@ -11,7 +11,7 @@ import {
 import {
   ChevronDown,
   FileSignature,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -944,6 +944,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
         layout={{
           fullBleedTable: true,
           hideTableBody: isChangeOrdersTab,
+          cardGridClassName:
+            "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6",
         }}
         features={{
           // Click a cell to edit title / description / executed in place.
@@ -1038,7 +1040,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     className="h-8 w-8"
                     aria-label="Row actions"
                   >
-                    <MoreHorizontal />
+                    <MoreVertical />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

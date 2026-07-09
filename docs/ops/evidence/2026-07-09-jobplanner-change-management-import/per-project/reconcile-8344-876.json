@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-09T05:08:03.813Z",
+  "jpProjectId": 8344,
+  "appProjectId": 876,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 1,
+    "adopt": 0,
+    "create": 1,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2699,
+      "number": "CR-8344-0003",
+      "title": "",
+      "statusId": 0,
+      "cost": 4986479,
+      "lineItems": 28,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 28
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": []
+  }
+}

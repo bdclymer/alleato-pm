@@ -5,7 +5,7 @@ import { APP_BASE_URL } from "@/lib/email/client";
 
 export async function GET() {
   const supabase = createServiceClient();
-  const { data: { users } } = await supabase.auth.admin.listUsers({ limit: 1000 });
+  const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   
   const contacted = new Set([
     "aortiz@alleatogroup.com","awehner@alleatogroup.com","bwright@alleatogroup.com",

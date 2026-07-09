@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Edit2, Folder, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Edit2, Folder, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -103,7 +103,7 @@ export function DrawingAreaSelector({
                 onClick={(e) => e.stopPropagation()}
                 aria-label={`Actions for ${area.name}`}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

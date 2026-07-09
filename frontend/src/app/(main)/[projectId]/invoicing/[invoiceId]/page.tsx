@@ -2,15 +2,21 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useForm, type Control, type Resolver } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
+import { ArrowLeft, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail, MoreVertical } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   InlineTable,
   InlineTableBody,
@@ -36,17 +42,16 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
-import {
-  Form,
-} from "@/components/ui/form";
-import {
-  Slideover,
-  SlideoverContent,
-  SlideoverHeader,
-  SlideoverTitle,
-} from "@/components/ui/unified-slideover";
 import { StatusBadge } from "@/components/misc/status-badge";
-import { PageShell } from "@/components/layout";
+import {
+  PageShell,
+  ContentSectionStack,
+  DetailPanel,
+  SummaryPanel,
+  SummaryValueRow,
+  SectionRuleHeading,
+  SectionAction,
+} from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,19 +63,17 @@ import {
   type OwnerInvoice,
   type OwnerInvoiceLineItem,
 } from "@/features/invoicing/invoicing-table-config";
-import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ds/text";
-import { EmptyState } from "@/components/ds";
-import { FormGrid, FormSection } from "@/components/forms";
-import { FormActions } from "@/components/forms/FormActions";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
-import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
-import { RHFTextField } from "@/components/forms/fields/RHFTextField";
-import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import {
+  EmptyState,
+  DetailField,
+  DetailFieldGrid,
+  EditableDetailField,
+  EntityAttachments,
+} from "@/components/ds";
 import { apiFetch, apiFetchWithTimeout } from "@/lib/api-client";
 import { usePdfExport } from "@/hooks/use-pdf-export";
 import { formatPercent } from "@/lib/format";
-import { EntityAttachments } from "@/components/ds";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -81,30 +84,6 @@ const EDITABLE_STATUSES = ["draft", "revise_and_resubmit"] as const;
 function isEditable(status: string): boolean {
   return (EDITABLE_STATUSES as readonly string[]).includes(status);
 }
-
-// ---------------------------------------------------------------------------
-// Edit form schema
-// ---------------------------------------------------------------------------
-
-const invoiceEditSchema = z.object({
-  invoice_number: z.string().trim().max(255).nullable().optional(),
-  period_start: z.string().nullable().optional(),
-  period_end: z.string().nullable().optional(),
-  status: z.enum(["draft", "under_review", "approved", "approved_as_noted", "revise_and_resubmit", "paid", "void", "not_invited", "invited"]),
-  notes: z.string().trim().max(2000).nullable().optional(),
-});
-
-type InvoiceEditValues = z.infer<typeof invoiceEditSchema>;
-
-const invoiceStatusOptions = [
-  { value: "draft", label: "Draft" },
-  { value: "under_review", label: "Under Review" },
-  { value: "approved", label: "Approved" },
-  { value: "approved_as_noted", label: "Approved as Noted" },
-  { value: "revise_and_resubmit", label: "Revise & Resubmit" },
-  { value: "paid", label: "Paid" },
-  { value: "void", label: "Void" },
-];
 
 // ---------------------------------------------------------------------------
 // Add line item schema
@@ -130,6 +109,7 @@ type AddLineItemValues = z.infer<typeof addLineItemSchema>;
 interface EditableCellProps {
   value: number;
   onChange: (val: number) => void;
+  ariaLabel: string;
   prefix?: string;
   suffix?: string;
   min?: number;
@@ -137,7 +117,7 @@ interface EditableCellProps {
   step?: number;
 }
 
-function EditableCell({ value, onChange, prefix, suffix, min = 0, max, step = 0.01 }: EditableCellProps) {
+function EditableCell({ value, onChange, ariaLabel, prefix, suffix, min = 0, max, step = 0.01 }: EditableCellProps) {
   const [localValue, setLocalValue] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +141,7 @@ function EditableCell({ value, onChange, prefix, suffix, min = 0, max, step = 0.
       <Input
         ref={inputRef}
         type="number"
+        aria-label={ariaLabel}
         value={localValue}
         min={min}
         max={max}
@@ -264,58 +245,13 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
             <InlineTableHeaderCell>Category</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-28 text-right">Scheduled Value</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-28 text-right">Prev Work</InlineTableHeaderCell>
-            <InlineTableHeaderCell className="min-w-32 text-right">
-              {editable ? (
-                <span className="inline-flex items-center gap-1">
-                  Work This Period
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
-                </span>
-              ) : (
-                "Work This Period"
-              )}
-            </InlineTableHeaderCell>
-            <InlineTableHeaderCell className="min-w-32 text-right">
-              {editable ? (
-                <span className="inline-flex items-center gap-1">
-                  Materials Stored
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
-                </span>
-              ) : (
-                "Materials Stored"
-              )}
-            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">Work This Period</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">Materials Stored</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-28 text-right">Total Comp. &amp; Stored</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-20 text-right">% Complete</InlineTableHeaderCell>
-            <InlineTableHeaderCell className="min-w-32 text-right">
-              {editable ? (
-                <span className="inline-flex items-center gap-1">
-                  Retainage %
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
-                </span>
-              ) : (
-                "Retainage %"
-              )}
-            </InlineTableHeaderCell>
-            <InlineTableHeaderCell className="min-w-28 text-right">
-              {editable ? (
-                <span className="inline-flex items-center gap-1">
-                  Retainage $
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
-                </span>
-              ) : (
-                "Retainage $"
-              )}
-            </InlineTableHeaderCell>
-            <InlineTableHeaderCell className="min-w-32 text-right">
-              {editable ? (
-                <span className="inline-flex items-center gap-1">
-                  Retainage Released
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
-                </span>
-              ) : (
-                "Retainage Released"
-              )}
-            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">Retainage %</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Retainage $</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">Retainage Released</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-28 text-right">Net This Period</InlineTableHeaderCell>
             <InlineTableHeaderCell className="min-w-28 text-right">Balance to Finish</InlineTableHeaderCell>
           </InlineTableRow>
@@ -328,6 +264,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
             const retainageAmt = calcRetainageAmount(item, overrides);
             const netThisPeriod = calcNetAmountThisPeriod(item, overrides);
             const balance = calcBalanceToFinish(item, overrides);
+            const rowLabel = item.description || "line item";
 
             return (
               <InlineTableRow key={item.id}>
@@ -352,6 +289,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                     <EditableCell
                       value={overrides.work_completed_period ?? item.work_completed_period}
                       onChange={(val) => onDraftChange(item.id, "work_completed_period", val)}
+                      ariaLabel={`Work completed this period for ${rowLabel}`}
                       prefix="$"
                     />
                   ) : (
@@ -365,6 +303,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                     <EditableCell
                       value={overrides.materials_stored ?? item.materials_stored}
                       onChange={(val) => onDraftChange(item.id, "materials_stored", val)}
+                      ariaLabel={`Materials stored for ${rowLabel}`}
                       prefix="$"
                     />
                   ) : (
@@ -390,6 +329,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                         onDraftChange(item.id, "retainage_pct", pct);
                         onDraftChange(item.id, "retainage_amount", wcp * (pct / 100));
                       }}
+                      ariaLabel={`Retainage percent for ${rowLabel}`}
                       suffix="%"
                       max={100}
                       step={0.1}
@@ -411,6 +351,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                         onDraftChange(item.id, "retainage_amount", amt);
                         onDraftChange(item.id, "retainage_pct", wcp > 0 ? (amt / wcp) * 100 : 0);
                       }}
+                      ariaLabel={`Retainage amount for ${rowLabel}`}
                       prefix="$"
                     />
                   ) : (
@@ -424,6 +365,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                     <EditableCell
                       value={overrides.retainage_released ?? item.retainage_released}
                       onChange={(val) => onDraftChange(item.id, "retainage_released", val)}
+                      ariaLabel={`Retainage released for ${rowLabel}`}
                       prefix="$"
                     />
                   ) : (
@@ -504,8 +446,8 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
           <ModalTitle>Add Line Item</ModalTitle>
         </ModalHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2 space-y-1">
               <Label htmlFor="add-description">Description</Label>
               <Input
                 id="add-description"
@@ -588,135 +530,6 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
 }
 
 // ---------------------------------------------------------------------------
-// Invoice Edit Slideover form
-// ---------------------------------------------------------------------------
-
-interface InvoiceEditFormProps {
-  invoice: OwnerInvoice;
-  projectId: number;
-  invoiceId: number;
-  onCancel: () => void;
-  onSuccess: (updated: OwnerInvoice) => void;
-}
-
-function InvoiceEditForm({
-  invoice,
-  projectId,
-  invoiceId,
-  onCancel,
-  onSuccess,
-}: InvoiceEditFormProps) {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const form = useForm<InvoiceEditValues>({
-    resolver: zodResolver(invoiceEditSchema),
-    defaultValues: {
-      invoice_number: invoice.invoice_number ?? "",
-      period_start: invoice.period_start
-        ? invoice.period_start.slice(0, 10)
-        : "",
-      period_end: invoice.period_end ? invoice.period_end.slice(0, 10) : "",
-      status: invoice.status as InvoiceEditValues["status"],
-      // Load the existing notes value so an unchanged field does NOT send ""
-      // and wipe notes already saved on the invoice.
-      notes: invoice.notes ?? "",
-    },
-  });
-  const control = form.control as Control<InvoiceEditValues>;
-
-  const onSubmit = async (values: InvoiceEditValues) => {
-    setIsSaving(true);
-    try {
-      const payload: Record<string, string | null> = {
-        invoice_number: values.invoice_number || null,
-        period_start: values.period_start || null,
-        period_end: values.period_end || null,
-        status: values.status,
-        // Only send notes when the user has actually changed the field;
-        // fall back to the original value so we never overwrite with "".
-        notes: values.notes !== undefined ? (values.notes || null) : (invoice.notes ?? null),
-      };
-
-      const body = await apiFetch<{ data: OwnerInvoice }>(
-        `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        },
-      );
-      toast.success("Invoice updated successfully");
-      onSuccess(body.data);
-    } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : "Failed to update invoice";
-      toast.error(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4">
-        <FormSection
-          title="Invoice Details"
-          description="Update invoice metadata and review status."
-        >
-          <FormGrid columns={2}>
-            <div className="md:col-span-2">
-              <RHFTextField
-                control={control}
-                name="invoice_number"
-                label="Invoice Number"
-                placeholder="e.g. INV-001"
-                maxLength={255}
-              />
-            </div>
-            <RHFDateField
-              control={form.control}
-              name="period_start"
-              label="Period Start"
-              placeholder="Pick a start date"
-              nullable
-            />
-            <RHFDateField
-              control={form.control}
-              name="period_end"
-              label="Period End"
-              placeholder="Pick an end date"
-              nullable
-            />
-            <div className="md:col-span-2">
-              <RHFSelectField
-                control={control}
-                name="status"
-                label="Status"
-                options={invoiceStatusOptions}
-                placeholder="Select status"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <RHFTextareaField
-                control={control}
-                name="notes"
-                label="Notes"
-                placeholder="Optional notes about this invoice..."
-                rows={4}
-              />
-            </div>
-          </FormGrid>
-        </FormSection>
-
-        <FormActions
-          submitLabel="Save Changes"
-          onCancel={onCancel}
-          isSubmitting={isSaving}
-        />
-      </form>
-    </Form>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Invoice Detail Page
 // ---------------------------------------------------------------------------
 
@@ -725,6 +538,8 @@ function InvoiceEditForm({
  *
  * Displays detailed information about a specific owner invoice
  * including an editable SOV grid (when status is draft or revise_and_resubmit).
+ * Metadata fields are edited inline on the page; status transitions run through
+ * the workflow actions (Submit / Approve / Revise / Void).
  */
 export default function InvoiceDetailPage() {
   const router = useRouter();
@@ -743,7 +558,6 @@ export default function InvoiceDetailPage() {
   const [voidDialogOpen, setVoidDialogOpen] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [isVoiding, setIsVoiding] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [addLineItemOpen, setAddLineItemOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailTo, setEmailTo] = useState("");
@@ -788,6 +602,19 @@ export default function InvoiceDetailPage() {
   useEffect(() => {
     fetchInvoice();
   }, [fetchInvoice]);
+
+  // Inline field save — PATCH a single field, then refresh. Throws on failure
+  // so EditableDetailField reverts the field and toasts the error.
+  const handleSaveField = useCallback(
+    async (field: string, value: string | null) => {
+      await apiFetch(`/api/projects/${projectId}/invoicing/owner/${invoiceId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value }),
+      });
+      await fetchInvoice();
+    },
+    [projectId, invoiceId, fetchInvoice],
+  );
 
   // SOV draft change handler
   const handleDraftChange = useCallback(
@@ -838,20 +665,6 @@ export default function InvoiceDetailPage() {
   // Action handlers
   const handleBack = () => {
     router.push(`/${projectId}/invoices`);
-  };
-
-  const handleEdit = () => {
-    setIsEditOpen(true);
-  };
-
-  const handleEditSuccess = (updated: OwnerInvoice) => {
-    setIsEditOpen(false);
-    // Merge updated fields back, preserving line items already in state
-    setInvoice((prev) =>
-      prev
-        ? { ...prev, ...updated, owner_invoice_line_items: prev.owner_invoice_line_items }
-        : updated,
-    );
   };
 
   const handleSubmit = async () => {
@@ -1100,22 +913,19 @@ export default function InvoiceDetailPage() {
   if (error || !invoice) {
     return (
       <PageShell variant="detail" title="Invoice Details" onBack={() => router.back()}>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <Text tone="destructive" className="mb-4">
-                {error || "Invoice not found"}
-              </Text>
-              <Button onClick={handleBack}>
-                <ArrowLeft />
-                Back to Invoices
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <Text tone="destructive">{error || "Invoice not found"}</Text>
+          <Button onClick={handleBack}>
+            <ArrowLeft />
+            Back to Invoices
+          </Button>
+        </div>
       </PageShell>
     );
   }
+
+  const canVoid = invoice.status !== "paid" && invoice.status !== "void";
+  const canDelete = !["approved", "approved_as_noted", "paid"].includes(invoice.status);
 
   return (
     <>
@@ -1126,250 +936,233 @@ export default function InvoiceDetailPage() {
         statusBadge={<StatusBadge status={invoice.status} type="invoice" />}
         onBack={() => router.back()}
         actions={
-          <div className="flex gap-2">
-            {invoice.status === "draft" && (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {/* Primary workflow action(s) for the current status */}
+            {(invoice.status === "draft" || invoice.status === "revise_and_resubmit") && (
+              <Button size="sm" onClick={handleSubmit}>
+                <Send />
+                Submit for Approval
+              </Button>
+            )}
+            {invoice.status === "under_review" && (
               <>
-                <Button variant="outline" size="sm" onClick={handleEdit}>
-                  <Edit />
-                  Edit
+                <Button size="sm" onClick={handleApprove}>
+                  <Check />
+                  Approve
                 </Button>
-                <Button size="sm" onClick={handleSubmit}>
-                  <Send />
-                  Submit for Approval
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setApproveAsNotedDialogOpen(true)}
+                >
+                  <CheckCheck />
+                  Approve as Noted
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleRevise}>
+                  <RotateCcw />
+                  Revise &amp; Resubmit
                 </Button>
               </>
             )}
-            {invoice.status === "revise_and_resubmit" && (
-              <Button variant="outline" size="sm" onClick={handleEdit}>
-                <Edit />
-                Edit
-              </Button>
-            )}
-            {invoice.status === "under_review" && (
-              <Button size="sm" onClick={handleApprove}>
-                <Check />
-                Approve
-              </Button>
-            )}
-            {invoice.status === "under_review" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setApproveAsNotedDialogOpen(true)}
-              >
-                <CheckCheck />
-                Approve as Noted
-              </Button>
-            )}
-            {invoice.status === "under_review" && (
-              <Button variant="outline" size="sm" onClick={handleRevise}>
-                <RotateCcw />
-                Revise &amp; Resubmit
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download />
-              Export PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={openEmailDialog}>
-              <Mail />
-              Email Invoice
-            </Button>
-            {invoice.status !== "paid" && invoice.status !== "void" && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setVoidDialogOpen(true)}
-                disabled={isVoiding}
-              >
-                <Ban className="h-4 w-4 mr-2" />
-                Void
-              </Button>
-            )}
-            {!["approved", "approved_as_noted", "paid"].includes(invoice.status) && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            )}
+
+            {/* Secondary + destructive actions collapse into an overflow menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="More actions">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openEmailDialog}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email Invoice
+                </DropdownMenuItem>
+                {(canVoid || canDelete) && <DropdownMenuSeparator />}
+                {canVoid && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={isVoiding}
+                    onClick={() => setVoidDialogOpen(true)}
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Void
+                  </DropdownMenuItem>
+                )}
+                {canDelete && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={isDeleting}
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       >
-        <div className="space-y-6">
-          {/* Invoice Header */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Text size="sm" tone="muted">Invoice Date</Text>
-                  <Text weight="medium">
-                    {formatDate(invoice.created_at)}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="sm" tone="muted">Due Date</Text>
-                  <Text weight="medium">
-                    {invoice.due_date ? formatDate(invoice.due_date) : "—"}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="sm" tone="muted">Billing Period</Text>
-                  <Text weight="medium">
-                    {invoice.period_start && invoice.period_end
-                      ? `${formatDate(invoice.period_start)} - ${formatDate(invoice.period_end)}`
-                      : "—"}
-                  </Text>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <ContentSectionStack className="pt-3">
+          {/* Invoice Information */}
+          <DetailPanel>
+            <SectionRuleHeading label="Invoice Information" />
+            <DetailFieldGrid columns={2}>
+              {invoiceEditable ? (
+                <EditableDetailField
+                  label="Invoice Number"
+                  type="text"
+                  value={invoice.invoice_number ?? ""}
+                  emptyPlaceholder="Add number"
+                  onSave={(v) => handleSaveField("invoice_number", v || null)}
+                />
+              ) : (
+                <DetailField label="Invoice Number">
+                  {invoice.invoice_number || String(invoice.id)}
+                </DetailField>
+              )}
+
+              <DetailField label="Invoice Date">
+                {formatDate(invoice.created_at)}
+              </DetailField>
+
+              {invoiceEditable ? (
+                <EditableDetailField
+                  label="Period Start"
+                  type="date"
+                  value={invoice.period_start ? invoice.period_start.slice(0, 10) : ""}
+                  display={invoice.period_start ? formatDate(invoice.period_start) : undefined}
+                  emptyPlaceholder="Set date"
+                  onSave={(v) => handleSaveField("period_start", v || null)}
+                />
+              ) : invoice.period_start ? (
+                <DetailField label="Period Start">
+                  {formatDate(invoice.period_start)}
+                </DetailField>
+              ) : null}
+
+              {invoiceEditable ? (
+                <EditableDetailField
+                  label="Period End"
+                  type="date"
+                  value={invoice.period_end ? invoice.period_end.slice(0, 10) : ""}
+                  display={invoice.period_end ? formatDate(invoice.period_end) : undefined}
+                  emptyPlaceholder="Set date"
+                  onSave={(v) => handleSaveField("period_end", v || null)}
+                />
+              ) : invoice.period_end ? (
+                <DetailField label="Period End">
+                  {formatDate(invoice.period_end)}
+                </DetailField>
+              ) : null}
+
+              {invoice.due_date ? (
+                <DetailField label="Due Date">
+                  {formatDate(invoice.due_date)}
+                </DetailField>
+              ) : null}
+
+              {invoiceEditable ? (
+                <EditableDetailField
+                  label="Notes"
+                  type="textarea"
+                  span={2}
+                  value={invoice.notes ?? ""}
+                  emptyPlaceholder="Add notes"
+                  onSave={(v) => handleSaveField("notes", v || null)}
+                />
+              ) : invoice.notes ? (
+                <DetailField label="Notes" span={2}>
+                  {invoice.notes}
+                </DetailField>
+              ) : null}
+            </DetailFieldGrid>
+          </DetailPanel>
 
           {/* Schedule of Values */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle>Schedule of Values</CardTitle>
-                  {invoiceEditable && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
-                        Columns marked with a dot are editable
-                      </span>
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {invoiceEditable && hasSovChanges && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDiscardSOV}
-                        disabled={isSavingSOV}
-                      >
-                        Discard Changes
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveSOV}
-                        disabled={isSavingSOV}
-                      >
-                        <Save />
-                        {isSavingSOV ? "Saving..." : "Save Changes"}
-                      </Button>
-                    </>
-                  )}
-                  {invoiceEditable && (
-                    <Button
-                      variant="outline"
-                      size="sm"
+          <section>
+            <SectionRuleHeading
+              label="Schedule of Values"
+              actions={
+                invoiceEditable ? (
+                  <>
+                    <SectionAction
                       onClick={handleReleaseAllRetainage}
                       title="Pre-fills retainage released = retainage held for all line items"
                     >
                       Release All Retainage
-                    </Button>
-                  )}
-                  {invoiceEditable && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAddLineItemOpen(true)}
-                    >
-                      <Plus />
+                    </SectionAction>
+                    <SectionAction onClick={() => setAddLineItemOpen(true)}>
+                      <Plus className="h-3.5 w-3.5" />
                       Add Line Item
-                    </Button>
-                  )}
-                </div>
+                    </SectionAction>
+                  </>
+                ) : undefined
+              }
+            />
+            {invoiceEditable && hasSovChanges && (
+              <div className="mb-3 flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDiscardSOV}
+                  disabled={isSavingSOV}
+                >
+                  Discard Changes
+                </Button>
+                <Button size="sm" onClick={handleSaveSOV} disabled={isSavingSOV}>
+                  <Save />
+                  {isSavingSOV ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <SovTable
-                lineItems={lineItems}
-                editable={invoiceEditable}
-                draftMap={sovDraft}
-                onDraftChange={handleDraftChange}
-              />
-            </CardContent>
-          </Card>
+            )}
+            <SovTable
+              lineItems={lineItems}
+              editable={invoiceEditable}
+              draftMap={sovDraft}
+              onDraftChange={handleDraftChange}
+            />
+          </section>
 
-          {/* SOV Totals Summary */}
+          {/* Invoice Totals */}
           {lineItems.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Invoice Totals</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Scheduled Value</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatCurrency(sovTotals.scheduledValue)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Work from Previous Applications</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatCurrency(sovTotals.workPrevious)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Work Completed This Period</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatCurrency(sovTotals.workThisPeriod)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Materials Presently Stored</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatCurrency(sovTotals.materialsStored)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Total Completed &amp; Stored</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatCurrency(totalCompleted)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">% Complete</Text>
-                    <Text weight="medium" className="tabular-nums">
-                      {formatPercent(pctComplete)}
-                    </Text>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Text tone="muted">Less Retainage</Text>
-                    <Text weight="medium" tone="destructive" className="tabular-nums">
-                      -{formatCurrency(sovTotals.retainageAmount)}
-                    </Text>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <Text size="lg" weight="semibold">Net Amount This Period</Text>
-                    <Text size="lg" weight="bold" className="tabular-nums">
-                      {formatCurrency(sovTotals.netThisPeriod)}
-                    </Text>
-                  </div>
+            <section>
+              <SectionRuleHeading label="Invoice Totals" />
+              <SummaryPanel className="ml-auto max-w-md">
+                <div className="space-y-2.5">
+                  <SummaryValueRow label="Scheduled Value" value={formatCurrency(sovTotals.scheduledValue)} />
+                  <SummaryValueRow label="Work from Previous Applications" value={formatCurrency(sovTotals.workPrevious)} />
+                  <SummaryValueRow label="Work Completed This Period" value={formatCurrency(sovTotals.workThisPeriod)} />
+                  <SummaryValueRow label="Materials Presently Stored" value={formatCurrency(sovTotals.materialsStored)} />
+                  <SummaryValueRow label="Total Completed & Stored" value={formatCurrency(totalCompleted)} />
+                  <SummaryValueRow label="% Complete" value={formatPercent(pctComplete)} />
+                  <SummaryValueRow label="Less Retainage" value={`-${formatCurrency(sovTotals.retainageAmount)}`} />
+                  <SummaryValueRow
+                    label="Net Amount This Period"
+                    value={formatCurrency(sovTotals.netThisPeriod)}
+                    bold
+                    border
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              </SummaryPanel>
+            </section>
           )}
 
           {/* Attachments */}
-          <EntityAttachments
-            entityType="invoice"
-            entityId={String(invoiceId)}
-            projectId={projectId}
-          />
-        </div>
+          <section>
+            <SectionRuleHeading label="Attachments" />
+            <EntityAttachments
+              entityType="invoice"
+              entityId={String(invoiceId)}
+              projectId={projectId}
+              showLabel={false}
+            />
+          </section>
+        </ContentSectionStack>
       </PageShell>
 
       {/* Email Invoice Dialog */}
@@ -1523,28 +1316,6 @@ export default function InvoiceDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit Invoice Slideover */}
-      <Slideover
-        open={isEditOpen}
-        onOpenChange={(open) => !open && setIsEditOpen(false)}
-      >
-        <SlideoverContent
-          side="right"
-          className="w-full max-w-xl overflow-y-auto p-0"
-        >
-          <SlideoverHeader className="border-b p-4">
-            <SlideoverTitle>Edit Invoice</SlideoverTitle>
-          </SlideoverHeader>
-          <InvoiceEditForm
-            invoice={invoice}
-            projectId={projectId}
-            invoiceId={invoiceId}
-            onCancel={() => setIsEditOpen(false)}
-            onSuccess={handleEditSuccess}
-          />
-        </SlideoverContent>
-      </Slideover>
 
       {/* Add Line Item Dialog */}
       <AddLineItemDialog

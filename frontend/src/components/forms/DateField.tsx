@@ -40,6 +40,9 @@ function parseInputDate(input: string): Date | undefined {
 
 interface DateFieldProps extends FormFieldBaseProps {
   label: string;
+  /** Keep the label accessible (aria-label) but visually hide it — for
+   * compact grid layouts where the column header already conveys meaning. */
+  hideLabel?: boolean;
   value?: Date;
   onChange?: (date: Date | undefined) => void;
   className?: string;
@@ -49,6 +52,7 @@ interface DateFieldProps extends FormFieldBaseProps {
 
 export function DateField({
   label,
+  hideLabel = false,
   value,
   onChange,
   error,
@@ -92,7 +96,9 @@ export function DateField({
   return (
     <FormField
       label={
-        labelTooltip ? (
+        hideLabel ? (
+          <span className="sr-only">{label}</span>
+        ) : labelTooltip ? (
           <span className="inline-flex items-center gap-1">
             {label}
             <Tooltip>

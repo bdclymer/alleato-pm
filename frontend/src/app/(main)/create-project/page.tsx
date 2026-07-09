@@ -2,27 +2,27 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Controller, useForm, type Path, type Resolver } from "react-hook-form";
+import { useForm, type Path, type Resolver } from "react-hook-form";
 import { Settings } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { PageShell } from "@/components/layout";
+import { PageShell, FormContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
-import {
-  Form,
-  FormGrid,
-  FormLayoutProvider,
-  TextField,
-  TextareaField,
-  SelectField,
-  NumberField,
-  MoneyField,
-  DateField,
-  CheckboxField,
-  FileUploadField,
-} from "@/components/forms";
+import { Form, FormField } from "@/components/ui/form";
+import { FormGrid } from "@/components/forms/FormGrid";
+import { FormSection as StandardFormSection } from "@/components/forms/FormSection";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { FileUploadField } from "@/components/forms/FileUploadField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFMoneyField } from "@/components/forms/fields/RHFMoneyField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
 import { ProjectCreatedModal } from "@/components/project/ProjectCreatedModal";
 import { useCreateProjectDevConfig } from "@/components/project/create-project-dev-config";
 import { apiFetch } from "@/lib/api-client";
@@ -36,8 +36,6 @@ import {
   type FieldDefinition,
   type FormSection,
 } from "@/lib/create-project/form";
-import { FormSection as StandardFormSection } from "@/components/forms/FormSection";
-import { FormActions } from "@/components/forms/FormActions";
 import {
   Tooltip,
   TooltipContent,
@@ -45,7 +43,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
 const PROJECT_MEDIA_TOOLTIP: Record<string, string> = {
   project_logo:
     "Accepted formats: .jpg, .jpeg, .png, .tif, .tiff, .bmp. Square image recommended.",
@@ -164,189 +161,172 @@ function CreateProjectForm() {
       form.reset(defaultValues);
       setFileResetKey((key) => key + 1);
     } catch (error) {
-      toast.error("Failed to create project", {
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
+      const message = error instanceof Error ? error.message : "Please try again.";
+      form.setError("root", { type: "server", message });
+      toast.error("Failed to create project", { description: message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderField = (field: FieldDefinition) => {
+  const renderFileField = (field: FieldDefinition, fullWidth: boolean) => {
     const fieldName = field.name as Path<CreateProjectFormValues>;
-    const fullWidth = field.colSpan === "full";
+    const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
+    const shouldHideMediaHint =
+      field.name === "project_logo" || field.name === "project_photo";
+    const fieldLabel = tooltipContent ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{field.label}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-sm text-left">
+            {tooltipContent}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : (
+      field.label
+    );
 
     return (
-      <Controller
-        key={field.name}
+      <FormField
         control={form.control}
         name={fieldName}
         render={({ field: rhf, fieldState }) => {
-          const error = fieldState.error?.message;
           const value = rhf.value;
+          const file =
+            typeof File !== "undefined" && value instanceof File ? value : null;
 
-          switch (field.control) {
-            case "textarea":
-              return (
-                <TextareaField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  placeholder={field.placeholder}
-                  value={typeof value === "string" ? value : ""}
-                  onChange={(e) => rhf.onChange(e.target.value)}
-                  onBlur={rhf.onBlur}
-                  rows={5}
-                  fullWidth={fullWidth}
-                />
-              );
-
-            case "select": {
-              const options = field.allowEmptyOption
-                ? [{ value: CLEAR_SELECT_VALUE, label: "Clear selection" }, ...(field.options ?? [])]
-                : (field.options ?? []);
-              return (
-                <SelectField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
-                  options={options}
-                  value={typeof value === "string" ? value : undefined}
-                  onValueChange={(v) => {
-                    rhf.onChange(
-                      field.allowEmptyOption && v === CLEAR_SELECT_VALUE ? undefined : v,
-                    );
-                  }}
-                  fullWidth={fullWidth}
-                />
-              );
-            }
-
-            case "formatted-number":
-            case "number":
-              return (
-                <NumberField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  placeholder={field.placeholder}
-                  value={typeof value === "number" ? value : undefined}
-                  onChange={rhf.onChange}
-                  onBlur={rhf.onBlur}
-                  step={field.step ?? "1"}
-                  fullWidth={fullWidth}
-                />
-              );
-
-            case "currency":
-              return (
-                <MoneyField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  placeholder={field.placeholder}
-                  value={typeof value === "number" ? value : undefined}
-                  onChange={rhf.onChange}
-                  onBlur={rhf.onBlur}
-                  fullWidth={fullWidth}
-                />
-              );
-
-            case "date":
-              return (
-                <DateField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  value={
-                    typeof value === "string" && value
-                      ? new Date(`${value}T00:00:00`)
-                      : undefined
-                  }
-                  onChange={(v) => rhf.onChange(v ? v.toISOString().split("T")[0] : "")}
-                  fullWidth={fullWidth}
-                />
-              );
-
-            case "checkbox":
-              return (
-                <div className={fullWidth ? "sm:col-span-2" : undefined}>
-                  <CheckboxField
-                    label={field.label}
-                    checked={Boolean(value)}
-                    onCheckedChange={rhf.onChange}
-                    error={error}
-                  />
-                </div>
-              );
-
-            case "file": {
-              const file = typeof File !== "undefined" && value instanceof File ? value : null;
-              const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
-              const shouldHideMediaHint =
-                field.name === "project_logo" || field.name === "project_photo";
-              const fieldLabel = tooltipContent ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>{field.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-sm text-left">
-                      {tooltipContent}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                field.label
-              );
-
-              return (
-                <FileUploadField
-                  key={`${field.name}-${fileResetKey}`}
-                  label={fieldLabel}
-                  hint={shouldHideMediaHint ? undefined : field.description}
-                  error={error}
-                  accept={field.accept}
-                  maxFiles={1}
-                  variant="minimal"
-                  showMetaText={!shouldHideMediaHint}
-                  fullWidth={fullWidth}
-                  value={file ? [{ name: file.name, size: file.size, type: file.type }] : []}
-                  onChange={(files) => {
-                    if (files.length === 0) {
-                      rhf.onChange(undefined);
-                      setFileResetKey((k) => k + 1);
-                    }
-                  }}
-                  onFilesSelected={(files) => rhf.onChange(files[0] ?? undefined)}
-                />
-              );
-            }
-
-            default:
-              return (
-                <TextField
-                  label={field.label}
-                  required={field.required}
-                  hint={field.description}
-                  error={error}
-                  placeholder={field.placeholder}
-                  inputMode={field.inputMode}
-                  value={typeof value === "string" ? value : ""}
-                  onChange={(e) => rhf.onChange(e.target.value)}
-                  onBlur={rhf.onBlur}
-                  fullWidth={fullWidth}
-                />
-              );
-          }
+          return (
+            <FileUploadField
+              key={`${field.name}-${fileResetKey}`}
+              label={fieldLabel}
+              hint={shouldHideMediaHint ? undefined : field.description}
+              error={fieldState.error?.message}
+              accept={field.accept}
+              maxFiles={1}
+              variant="minimal"
+              showMetaText={!shouldHideMediaHint}
+              value={file ? [{ name: file.name, size: file.size, type: file.type }] : []}
+              onChange={(files) => {
+                if (files.length === 0) {
+                  rhf.onChange(undefined);
+                  setFileResetKey((k) => k + 1);
+                }
+              }}
+              onFilesSelected={(files) => rhf.onChange(files[0] ?? undefined)}
+            />
+          );
         }}
       />
+    );
+  };
+
+  const renderField = (field: FieldDefinition) => {
+    const fieldName = field.name as Path<CreateProjectFormValues>;
+    const fullWidth = field.colSpan === "full";
+    const label = `${field.label}${field.required ? " *" : ""}`;
+
+    let node: React.ReactNode;
+
+    switch (field.control) {
+      case "textarea":
+        node = (
+          <RHFTextareaField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+            placeholder={field.placeholder}
+            rows={5}
+          />
+        );
+        break;
+
+      case "select":
+        node = (
+          <RHFSelectField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+            placeholder={
+              field.placeholder ?? `Select ${field.label.toLowerCase()}`
+            }
+            options={field.options ?? []}
+          />
+        );
+        break;
+
+      case "formatted-number":
+      case "number":
+        node = (
+          <RHFNumberField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+            placeholder={field.placeholder}
+            step={field.step ? Number(field.step) : 1}
+          />
+        );
+        break;
+
+      case "currency":
+        node = (
+          <RHFMoneyField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+            placeholder={field.placeholder}
+          />
+        );
+        break;
+
+      case "date":
+        node = (
+          <RHFDateField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+          />
+        );
+        break;
+
+      case "checkbox":
+        node = (
+          <RHFCheckboxField
+            control={form.control}
+            name={fieldName}
+            label={field.label}
+            description={field.description}
+          />
+        );
+        break;
+
+      case "file":
+        node = renderFileField(field, fullWidth);
+        break;
+
+      default:
+        node = (
+          <RHFTextField
+            control={form.control}
+            name={fieldName}
+            label={label}
+            description={field.description}
+            placeholder={field.placeholder}
+          />
+        );
+    }
+
+    return (
+      <div key={field.name} className={fullWidth ? "md:col-span-2" : undefined}>
+        {node}
+      </div>
     );
   };
 
@@ -361,31 +341,17 @@ function CreateProjectForm() {
       section.id === "project-status" ? 1 : activeLayout === "single-column" ? 1 : 2;
     const hideSectionDescription = section.id === "logo";
 
-    const content = (
+    return (
       <StandardFormSection
         key={section.id}
         title={section.title}
         description={hideSectionDescription ? undefined : section.description}
-        showDivider={false}
       >
-        <FormGrid
-          columns={sectionColumns}
-          className={section.id === "project-status" ? "gap-y-2" : undefined}
-        >
+        <FormGrid columns={sectionColumns}>
           {section.fields.map(renderField)}
         </FormGrid>
       </StandardFormSection>
     );
-
-    if (section.id === "logo") {
-      return (
-        <FormLayoutProvider key={section.id} layout="stacked">
-          {content}
-        </FormLayoutProvider>
-      );
-    }
-
-    return content;
   };
 
   return (
@@ -401,9 +367,13 @@ function CreateProjectForm() {
         projectName={createdProject?.name ?? ""}
       />
 
-      <Form onSubmit={form.handleSubmit(handleSubmit)}>
-        <FormLayoutProvider layout="horizontal">
-          <div className="flex flex-col gap-8">
+      <FormContainer maxWidth="lg" withCard={false}>
+        <Form {...form}>
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-8"
+          >
             {effectiveFormSections.length > 0 ? (
               effectiveFormSections.map(renderSection)
             ) : (
@@ -413,29 +383,32 @@ function CreateProjectForm() {
                 description="No fields are currently visible for the selected template."
               />
             )}
-          </div>
-        </FormLayoutProvider>
 
-        <FormActions
-          submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
-          onCancel={() => router.push("/")}
-          isSubmitting={isSubmitting}
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <DevAutoFillButton />
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                form.reset(defaultValues);
-                setFileResetKey((key) => key + 1);
-              }}
+            <FormServerError message={form.formState.errors.root?.message} />
+
+            <FormActions
+              submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
+              onCancel={() => router.push("/")}
+              isSubmitting={isSubmitting}
+              stickyOnMobile
             >
-              Reset Form
-            </Button>
-          </div>
-        </FormActions>
-      </Form>
+              <div className="flex flex-wrap items-center gap-3">
+                <DevAutoFillButton />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    form.reset(defaultValues);
+                    setFileResetKey((key) => key + 1);
+                  }}
+                >
+                  Reset Form
+                </Button>
+              </div>
+            </FormActions>
+          </form>
+        </Form>
+      </FormContainer>
     </>
   );
 }

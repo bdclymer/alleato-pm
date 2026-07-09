@@ -14,7 +14,7 @@ import {
   FileVideo,
   FolderOpen,
   Lock,
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 
@@ -676,7 +676,7 @@ export function renderDocumentRowActions(
           className="h-8 w-8"
           aria-label="Row actions"
         >
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

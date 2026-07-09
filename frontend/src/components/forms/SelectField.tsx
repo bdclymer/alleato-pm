@@ -19,6 +19,9 @@ interface SelectOption {
 
 interface SelectFieldProps extends FormFieldBaseProps {
   label: string;
+  /** Keep the label accessible (aria-label) but visually hide it — for
+   * compact grid layouts where the column header already conveys meaning. */
+  hideLabel?: boolean;
   options: SelectOption[];
   value?: string;
   onValueChange?: (value: string) => void;
@@ -31,6 +34,7 @@ interface SelectFieldProps extends FormFieldBaseProps {
 
 export function SelectField({
   label,
+  hideLabel = false,
   options,
   value,
   onValueChange,
@@ -48,7 +52,7 @@ export function SelectField({
 
   return (
     <FormField
-      label={label}
+      label={hideLabel ? <span className="sr-only">{label}</span> : label}
       error={error}
       hint={hint}
       labelTooltip={labelTooltip}

@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Download, File, Loader2, MoreHorizontal, Pencil, Trash2, Upload, X } from 'lucide-react';
+import { Download, File, Loader2, MoreVertical, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -344,7 +344,7 @@ export function EntityAttachments({
             {isRemoving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             )}
           </Button>
         </DropdownMenuTrigger>

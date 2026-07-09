@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { FormActions, FormGrid, FormSection } from "@/components/forms";
+import { FormServerError } from "@/components/forms/FormServerError";
 import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
@@ -162,16 +163,6 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
     defaultValues: buildDefaultValues(),
   });
 
-  const projectQuickLinks = [
-    { label: "Submittals", href: `/${projectId}/submittals` },
-    { label: "RFIs", href: `/${projectId}/rfis` },
-    { label: "Change events", href: `/${projectId}/change-events` },
-    { label: "Change orders", href: `/${projectId}/change-orders` },
-    { label: "Schedule", href: `/${projectId}/schedule` },
-    { label: "Drawings", href: `/${projectId}/drawings` },
-    { label: "Commitments", href: `/${projectId}/commitments` },
-  ];
-
   const nameValue = form.watch("name");
   const seriesTouched = React.useRef(false);
   const suggestions = planningSuggestions.data?.suggestions ?? [];
@@ -263,6 +254,9 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
       }
       router.push(`/${projectId}/meetings/${created.meeting.id}/agenda`);
     } catch (error) {
+      form.setError("root", {
+        message: "Meeting was not created. Please try again.",
+      });
       reportNonCriticalFailure({
         area: "meetings",
         operation: "create-meeting",
@@ -275,230 +269,193 @@ export function CreateMeetingForm({ projectId, onCancel }: CreateMeetingFormProp
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
-          <div className="min-w-0 space-y-8">
-            <FormSection title="Meeting details">
-              <FormGrid columns={2} className="gap-y-5">
-                <RHFTextField
-                  control={form.control}
-                  name="name"
-                  label="Meeting title"
-                  placeholder="Weekly OAC meeting"
-                />
+      <form onSubmit={onSubmit} noValidate className="space-y-8">
+        <FormSection title="Template">
+          <RHFSelectField
+            control={form.control}
+            name="template_id"
+            label="Starting point"
+            options={templateOptions}
+            placeholder="No template"
+          />
+        </FormSection>
 
-                <RHFTextField
-                  control={form.control}
-                  name="series_name"
-                  label="Series"
-                  placeholder="Defaults to meeting title"
-                  list="meeting-series-options"
-                  onFocus={() => {
-                    seriesTouched.current = true;
-                  }}
-                />
-              </FormGrid>
-              <datalist id="meeting-series-options">
-                {existingSeriesNames.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
+        <FormSection title="Meeting details">
+          <FormGrid columns={2}>
+            <RHFTextField
+              control={form.control}
+              name="name"
+              label="Meeting title"
+              placeholder="Weekly OAC meeting"
+            />
 
-              <FormGrid columns={3} className="gap-y-5">
-                <RHFDateField control={form.control} name="meeting_date" label="Date" nullable />
-                <RHFTimeField control={form.control} name="start_time" label="Start time" />
-                <RHFTimeField control={form.control} name="end_time" label="End time" />
-              </FormGrid>
+            <RHFTextField
+              control={form.control}
+              name="series_name"
+              label="Series"
+              placeholder="Defaults to meeting title"
+              list="meeting-series-options"
+              onFocus={() => {
+                seriesTouched.current = true;
+              }}
+            />
+          </FormGrid>
+          <datalist id="meeting-series-options">
+            {existingSeriesNames.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
 
-              <FormGrid columns={2} className="gap-y-5">
-                <RHFSelectField
-                  control={form.control}
-                  name="timezone"
-                  label="Timezone"
-                  options={TIMEZONE_OPTIONS}
-                  placeholder="Select timezone"
-                />
+          <FormGrid columns={3}>
+            <RHFDateField control={form.control} name="meeting_date" label="Date" nullable />
+            <RHFTimeField control={form.control} name="start_time" label="Start time" />
+            <RHFTimeField control={form.control} name="end_time" label="End time" />
+          </FormGrid>
 
-                <RHFTextField
-                  control={form.control}
-                  name="location"
-                  label="Location"
-                  placeholder="Conference room or address"
-                />
-              </FormGrid>
+          <FormGrid columns={2}>
+            <RHFSelectField
+              control={form.control}
+              name="timezone"
+              label="Timezone"
+              options={TIMEZONE_OPTIONS}
+              placeholder="Select timezone"
+            />
 
-              <RHFTextField
-                control={form.control}
-                name="meeting_link"
-                label="Meeting link"
-                placeholder="https://..."
-              />
+            <RHFTextField
+              control={form.control}
+              name="location"
+              label="Location"
+              placeholder="Conference room or address"
+            />
+          </FormGrid>
 
-              <RHFTextareaField
-                control={form.control}
-                name="overview"
-                label="Objective"
-                placeholder="What should this meeting cover?"
-                rows={4}
-              />
-            </FormSection>
+          <RHFTextField
+            control={form.control}
+            name="meeting_link"
+            label="Meeting link"
+            placeholder="https://..."
+          />
 
-            <FormSection title="Attendees">
-              <RHFMultiComboboxField
-                control={form.control}
-                name="attendee_person_ids"
-                label="People"
-                options={attendeeOptions}
-                placeholder="Select attendees"
-                searchPlaceholder="Search people..."
-                emptyMessage="No matching person found."
-                disabled={isLoadingPeople}
-              />
-            </FormSection>
+          <RHFTextareaField
+            control={form.control}
+            name="overview"
+            label="Objective"
+            placeholder="What should this meeting cover?"
+            rows={4}
+          />
+        </FormSection>
 
-            <FormSection title="Meeting prep">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1">
-                    <p className="max-w-3xl text-sm text-muted-foreground">
-                      {suggestionSource === "ai"
-                        ? "AI-generated agenda prep from open project work. Remove anything that does not belong in this meeting."
-                        : "Source-backed agenda prep from open project work. Remove anything that does not belong in this meeting."}
-                    </p>
-                    {suggestionFallbackReason ? (
-                      <p className="text-xs text-muted-foreground">
-                        {suggestionFallbackReason}
-                      </p>
-                    ) : null}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => {
-                      setDismissedSuggestionIds(new Set());
-                      if (planningMode === "source") {
-                        setPlanningMode("ai");
-                        return;
-                      }
-                      void planningSuggestions.refetch();
-                    }}
-                    disabled={planningSuggestions.isFetching}
-                    className="w-fit"
-                  >
-                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                    {planningMode === "ai" ? "Regenerate" : "Generate AI prep"}
-                  </Button>
-                </div>
+        <FormSection title="Attendees">
+          <RHFMultiComboboxField
+            control={form.control}
+            name="attendee_person_ids"
+            label="People"
+            options={attendeeOptions}
+            placeholder="Select attendees"
+            searchPlaceholder="Search people..."
+            emptyMessage="No matching person found."
+            disabled={isLoadingPeople}
+          />
+        </FormSection>
 
-                <div className="divide-y divide-border/60">
-                  {planningSuggestions.isLoading || planningSuggestions.isFetching ? (
-                    <p className="py-2 text-sm text-muted-foreground">
-                      Preparing agenda suggestions...
-                    </p>
-                  ) : acceptedSuggestions.length > 0 ? (
-                    acceptedSuggestions.map((suggestion) => (
-                      <PlanningSuggestionRow
-                        key={suggestion.id}
-                        suggestion={suggestion}
-                        onRemove={() =>
-                          setDismissedSuggestionIds((current) => {
-                            const next = new Set(current);
-                            next.add(suggestion.id);
-                            return next;
-                          })
-                        }
-                      />
-                    ))
-                  ) : (
-                    <p className="py-2 text-sm text-muted-foreground">
-                      No suggestions selected. You can still create a blank agenda.
-                    </p>
-                  )}
-                </div>
+        <FormSection title="Meeting options">
+          <RHFCheckboxField control={form.control} name="is_private" label="Private" />
+          <RHFCheckboxField control={form.control} name="is_draft" label="Draft" />
+        </FormSection>
 
-                {dismissedSuggestionIds.size > 0 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => setDismissedSuggestionIds(new Set())}
-                  >
-                    Restore removed suggestions
-                  </Button>
+        <FormSection title="Meeting prep">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <p className="max-w-3xl text-sm text-muted-foreground">
+                  {suggestionSource === "ai"
+                    ? "AI-generated agenda prep from open project work. Remove anything that does not belong in this meeting."
+                    : "Source-backed agenda prep from open project work. Remove anything that does not belong in this meeting."}
+                </p>
+                {suggestionFallbackReason ? (
+                  <p className="text-xs text-muted-foreground">
+                    {suggestionFallbackReason}
+                  </p>
                 ) : null}
               </div>
-            </FormSection>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setDismissedSuggestionIds(new Set());
+                  if (planningMode === "source") {
+                    setPlanningMode("ai");
+                    return;
+                  }
+                  void planningSuggestions.refetch();
+                }}
+                disabled={planningSuggestions.isFetching}
+                className="w-fit"
+              >
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                {planningMode === "ai" ? "Regenerate" : "Generate AI prep"}
+              </Button>
+            </div>
 
-            {meetingRecaps.length > 0 ? (
-              <FormSection title="Recent meeting recaps">
-                <div className="divide-y divide-border/60">
-                  {meetingRecaps.map((recap) => (
-                    <MeetingRecapRow key={recap.id} recap={recap} />
-                  ))}
-                </div>
-              </FormSection>
+            <div className="divide-y divide-border/60">
+              {planningSuggestions.isLoading || planningSuggestions.isFetching ? (
+                <p className="py-2 text-sm text-muted-foreground">
+                  Preparing agenda suggestions...
+                </p>
+              ) : acceptedSuggestions.length > 0 ? (
+                acceptedSuggestions.map((suggestion) => (
+                  <PlanningSuggestionRow
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    onRemove={() =>
+                      setDismissedSuggestionIds((current) => {
+                        const next = new Set(current);
+                        next.add(suggestion.id);
+                        return next;
+                      })
+                    }
+                  />
+                ))
+              ) : (
+                <p className="py-2 text-sm text-muted-foreground">
+                  No suggestions selected. You can still create a blank agenda.
+                </p>
+              )}
+            </div>
+
+            {dismissedSuggestionIds.size > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => setDismissedSuggestionIds(new Set())}
+              >
+                Restore removed suggestions
+              </Button>
             ) : null}
-
-            <FormActions
-              submitLabel="Create agenda"
-              cancelVariant="ghost"
-              onCancel={handleCancel}
-              isSubmitting={createMeeting.isPending || isSeedingSuggestions}
-              stickyOnMobile
-            />
           </div>
+        </FormSection>
 
-          <aside aria-label="Meeting planning" className="min-w-0 space-y-6">
-            <section className="space-y-3">
-              <div className="text-sm font-semibold text-foreground">Template</div>
-              <RHFSelectField
-                control={form.control}
-                name="template_id"
-                label="Starting point"
-                options={templateOptions}
-                placeholder="No template"
-              />
-            </section>
+        {meetingRecaps.length > 0 ? (
+          <FormSection title="Recent meeting recaps">
+            <div className="divide-y divide-border/60">
+              {meetingRecaps.map((recap) => (
+                <MeetingRecapRow key={recap.id} recap={recap} />
+              ))}
+            </div>
+          </FormSection>
+        ) : null}
 
-            <section className="space-y-3 border-t border-border/60 pt-4">
-              <div className="text-sm font-semibold text-foreground">Meeting options</div>
-              <div className="space-y-3">
-                <RHFCheckboxField control={form.control} name="is_private" label="Private" />
-                <RHFCheckboxField control={form.control} name="is_draft" label="Draft" />
-              </div>
-            </section>
+        <FormServerError message={form.formState.errors.root?.message} />
 
-            <section className="space-y-3 border-t border-border/60 pt-4">
-              <div className="text-sm font-semibold text-foreground">Quick links</div>
-              <div className="grid gap-2">
-                {projectQuickLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex min-h-8 items-center justify-between gap-3 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <span>{link.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-3 border-t border-border/60 pt-4">
-              <div className="text-sm font-semibold text-foreground">After create</div>
-              <div className="grid gap-2 text-sm text-muted-foreground">
-                <div className="flex justify-between gap-3">
-                  <span>Open meeting</span>
-                  <span className="text-muted-foreground/70">Agenda tab</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span>Status</span>
-                  <span className="text-muted-foreground/70">Draft</span>
-                </div>
-              </div>
-            </section>
-          </aside>
-        </div>
+        <FormActions
+          submitLabel="Create agenda"
+          cancelVariant="ghost"
+          onCancel={handleCancel}
+          isSubmitting={createMeeting.isPending || isSeedingSuggestions}
+          stickyOnMobile
+        />
       </form>
     </Form>
   );

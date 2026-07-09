@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { FormProvider } from "react-hook-form";
 import { FileUploadField } from "@/components/forms/FileUploadField";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { FormContainer } from "@/components/layout";
+import { Form } from "@/components/ui/form";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
 import type {
   CreateSubcontractInput,
   SovLineItem,
@@ -20,7 +21,6 @@ import {
   SovSection,
 } from "./subcontract-form";
 import { useSubcontractFormState } from "./subcontract-form/useSubcontractFormState";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -40,9 +40,8 @@ export function CreateSubcontractForm({
   mode = "create",
 }: CreateSubcontractFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [errorDetails, setErrorDetails] = React.useState<unknown>(null);
-  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
+    React.useState(false);
 
   const {
     methods,
@@ -68,125 +67,120 @@ export function CreateSubcontractForm({
     handleFilesSelected,
   } = useSubcontractFormState({ projectId, initialData, mode: mode ?? "create" });
 
-  const { handleSubmit } = methods;
+  const {
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = methods;
 
   const handleFormSubmit = async (data: CreateSubcontractInput) => {
     setIsSubmitting(true);
-    setSubmitError(null);
-    setErrorDetails(null);
+    clearErrors("root");
     try {
       await onSubmit(
-        { ...data, sov: sovLines, attachments: attachments.map((a) => ({ name: a.name, size: a.size, type: a.type })) },
+        {
+          ...data,
+          sov: sovLines,
+          attachments: attachments.map((a) => ({
+            name: a.name,
+            size: a.size,
+            type: a.type,
+          })),
+        },
         pendingAttachmentFiles,
       );
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred");
-      setErrorDetails(err);
+      setError("root", {
+        type: "server",
+        message:
+          err instanceof Error ? err.message : "An unexpected error occurred",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-        <div className="space-y-8">
-          {submitError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Submission Failed</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p>{submitError}</p>
-                {errorDetails &&
-                typeof errorDetails === "object" &&
-                "details" in (errorDetails as Record<string, unknown>) ? (
-                  <div>
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-sm font-medium">
-                        View Error Details
-                      </summary>
-                      <pre className="mt-2 text-xs bg-destructive/10 p-2 rounded overflow-auto max-h-40">
-                        {JSON.stringify((errorDetails as Record<string, unknown>).details, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                ) : null}
-              </AlertDescription>
-            </Alert>
-          )}
+    <FormContainer maxWidth="lg" withCard={false}>
+      <Form {...methods}>
+        <form
+          noValidate
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="space-y-8"
+        >
+          <GeneralInfoSection
+            isSubmitting={isSubmitting}
+            vendorOptions={vendorOptions}
+            isLoadingVendors={isLoadingVendors}
+          />
 
-          <div className="space-y-8">
-            <GeneralInfoSection
-              isSubmitting={isSubmitting}
-              vendorOptions={vendorOptions}
-              isLoadingVendors={isLoadingVendors}
+          <InclusionsExclusionsSection isSubmitting={isSubmitting} />
+
+          <ContractDatesSection isSubmitting={isSubmitting} />
+
+          <FormSection title="Attachments">
+            <FileUploadField
+              value={attachments}
+              onChange={handleAttachmentListChange}
+              onFilesSelected={handleFilesSelected}
+              multiple
+              maxFiles={20}
+              maxSize={50 * 1024 * 1024}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              disabled={isSubmitting}
             />
-            <InclusionsExclusionsSection isSubmitting={isSubmitting} />
-            <ContractDatesSection isSubmitting={isSubmitting} />
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <SectionRuleHeading label="Attachments" />
-              </div>
-              <FileUploadField
-                value={attachments}
-                onChange={handleAttachmentListChange}
-                onFilesSelected={handleFilesSelected}
-                multiple
-                maxFiles={20}
-                maxSize={50 * 1024 * 1024}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                disabled={isSubmitting}
-              />
-            </section>
-            <SovSection
-              sovLines={sovLines}
-              onSovLinesChange={setSovLines}
-              accountingMethod={accountingMethod}
-              onToggleAccountingMethod={toggleAccountingMethod}
-              budgetCodes={budgetCodes}
-              loadingBudgetCodes={loadingBudgetCodes}
-              onCreateBudgetCode={() => setShowCreateBudgetCodeModal(true)}
-              isSubmitting={isSubmitting}
-            />
-            <PrivacySection isSubmitting={isSubmitting} userOptions={userOptions} isLoadingUsers={isLoadingUsers} />
-            <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} vendorId={vendorId} vendorCompanyId={vendorCompanyId} refetchContacts={refetchContacts} />
-          </div>
+          </FormSection>
 
-          <div className="mt-10 flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              <span className="text-destructive">*</span> Required fields
-            </p>
-            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {mode === "edit" ? "Saving..." : "Creating..."}
-                  </>
-                ) : mode === "edit" ? (
-                  "Save Changes"
-                ) : (
-                  "Create Subcontract"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
+          <SovSection
+            sovLines={sovLines}
+            onSovLinesChange={setSovLines}
+            accountingMethod={accountingMethod}
+            onToggleAccountingMethod={toggleAccountingMethod}
+            budgetCodes={budgetCodes}
+            loadingBudgetCodes={loadingBudgetCodes}
+            onCreateBudgetCode={() => setShowCreateBudgetCodeModal(true)}
+            isSubmitting={isSubmitting}
+          />
 
-        <CreateBudgetCodeModal
-          open={showCreateBudgetCodeModal}
-          onOpenChange={setShowCreateBudgetCodeModal}
-          projectId={projectId}
-          budgetCodes={budgetCodes}
-          onBudgetCodeCreated={(bc) => setBudgetCodes((prev) => [...prev, bc])}
-          sovLines={sovLines}
-          accountingMethod={accountingMethod}
-          onSovLinesChange={setSovLines}
-        />
-      </form>
-    </FormProvider>
+          <PrivacySection
+            isSubmitting={isSubmitting}
+            userOptions={userOptions}
+            isLoadingUsers={isLoadingUsers}
+          />
+
+          <InvoiceContactsSection
+            isSubmitting={isSubmitting}
+            invoiceContactOptions={invoiceContactOptions}
+            isLoadingContacts={isLoadingContacts}
+            vendorId={vendorId}
+            vendorCompanyId={vendorCompanyId}
+            refetchContacts={refetchContacts}
+          />
+
+          <FormServerError message={errors.root?.message} />
+
+          <FormActions
+            onCancel={onCancel}
+            isSubmitting={isSubmitting}
+            submitLabel={mode === "edit" ? "Save Changes" : "Create Subcontract"}
+            stickyOnMobile
+          />
+
+          <CreateBudgetCodeModal
+            open={showCreateBudgetCodeModal}
+            onOpenChange={setShowCreateBudgetCodeModal}
+            projectId={projectId}
+            budgetCodes={budgetCodes}
+            onBudgetCodeCreated={(bc) =>
+              setBudgetCodes((prev) => [...prev, bc])
+            }
+            sovLines={sovLines}
+            accountingMethod={accountingMethod}
+            onSovLinesChange={setSovLines}
+          />
+        </form>
+      </Form>
+    </FormContainer>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import type {
@@ -8,8 +10,10 @@ import type {
   ChangeEventFormData,
   ChangeEventLineItem,
   CommitmentSovLineItem,
+  VendorOption,
 } from "./types";
 import { createEmptyLineItem, isMatchCostRevenueSource } from "./types";
+import { changeEventFormSchema, buildChangeEventDefaults } from "./change-event-schema";
 import { apiFetch } from "@/lib/api-client";
 import { useDropdownData } from "./useDropdownData";
 import {
@@ -41,24 +45,14 @@ export function useChangeEventFormData({
   initialData,
   projectId,
 }: UseChangeEventFormDataOptions) {
-  const [formData, setFormData] = React.useState<ChangeEventFormData>({
-    contractNumber: initialData?.contractNumber || initialData?.number || "",
-    title: initialData?.title || "",
-    status: initialData?.status || "Open",
-    origin: initialData?.origin,
-    originId: initialData?.originId,
-    type: initialData?.type,
-    changeReason: initialData?.changeReason,
-    scope: initialData?.scope || "",
-    expectingRevenue: initialData?.expectingRevenue ?? true,
-    lineItemRevenueSource: initialData?.lineItemRevenueSource || "",
-    primeContractId: initialData?.primeContractId || "",
-    description: initialData?.description || "",
-    attachments: initialData?.attachments || [],
-    lineItems:
-      initialData?.lineItems && initialData.lineItems.length > 0
-        ? initialData.lineItems
-        : [createEmptyLineItem()],
+  const form = useForm<ChangeEventFormData>({
+    resolver: zodResolver(changeEventFormSchema),
+    defaultValues: buildChangeEventDefaults(initialData),
+  });
+
+  const lineItemArray = useFieldArray({
+    control: form.control,
+    name: "lineItems",
   });
 
   const [nextNumber, setNextNumber] = React.useState<string>("");
@@ -71,9 +65,6 @@ export function useChangeEventFormData({
       .catch(() => setNextNumber(""));
   }, [projectId, initialData?.contractNumber, initialData?.number]);
 
-  const [errors, setErrors] = React.useState<
-    Partial<Record<keyof ChangeEventFormData, string>>
-  >({});
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     React.useState(false);
   const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] =
@@ -92,6 +83,45 @@ export function useChangeEventFormData({
     primeContractSelectOptions,
     fetchBudgetCodes,
   } = useDropdownData({ projectId });
+
+  // ── Reactive money computations ──
+  // Cost ROM = cost qty × cost unit cost; Revenue ROM = revenue qty × revenue
+  // unit cost (or mirrors cost when the revenue source is "match cost");
+  // Non-committed = cost ROM − revenue ROM when the line has no commitment.
+  // This replaces the imperative recompute that used to live in updateLineItem
+  // so the computed columns (which ARE persisted to the server) stay correct.
+  // Guarded to only run on the four editable numeric inputs, so setting the
+  // computed fields below never re-triggers itself.
+  React.useEffect(() => {
+    const subscription = form.watch((values, { name }) => {
+      if (!name) return;
+      const match = /^lineItems\.(\d+)\.(costQuantity|costUnitCost|revenueQuantity|revenueUnitCost)$/.exec(
+        name,
+      );
+      if (!match) return;
+      const index = Number(match[1]);
+      const item = values.lineItems?.[index];
+      if (!item) return;
+
+      const costRom = Number(item.costQuantity || 0) * Number(item.costUnitCost || 0);
+      const matchCost = isMatchCostRevenueSource(values.lineItemRevenueSource);
+      const revenueRom = matchCost
+        ? costRom
+        : Number(item.revenueQuantity || 0) * Number(item.revenueUnitCost || 0);
+
+      form.setValue(`lineItems.${index}.costRom`, costRom, { shouldDirty: true });
+      form.setValue(`lineItems.${index}.revenueRom`, revenueRom, { shouldDirty: true });
+
+      if (!item.contract) {
+        form.setValue(
+          `lineItems.${index}.nonCommittedCost`,
+          costRom - revenueRom,
+          { shouldDirty: true },
+        );
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // On mount (edit mode): fetch SOV items for any committed line items that are
   // missing a budget code and don't yet have cached SOV data. This ensures the
@@ -121,83 +151,77 @@ export function useChangeEventFormData({
     });
   }, [initialLineItems, projectId]);
 
+  // On mount (edit mode): ensure every saved line item's vendor appears in the
+  // vendor dropdown. The vendor list is derived from active commitments that
+  // have a company_name; a saved vendor whose commitment is inactive/voided or
+  // whose company_name is null in the view would otherwise be absent, so the
+  // Vendor combobox would render an empty "Select vendor..." placeholder on
+  // edit even though vendor_id is stored — the exact edit-form-blank symptom
+  // the FK gate targets. Inject each saved vendor using the name carried on the
+  // line item (companies.name), falling back to the matching contract's vendor
+  // name. Runs once contracts are available; setVendors dedupes by id.
+  React.useEffect(() => {
+    if (!initialLineItems || initialLineItems.length === 0) return;
+    const savedVendors = new Map<string, string>();
+    for (const item of initialLineItems) {
+      const vendorId = item.vendor ? String(item.vendor) : "";
+      if (!vendorId || savedVendors.has(vendorId)) continue;
+      const fromContract = contracts.find(
+        (c) => String(c.vendorId ?? "") === vendorId,
+      )?.vendorName;
+      savedVendors.set(vendorId, item.vendorName || fromContract || "Saved vendor");
+    }
+    if (savedVendors.size === 0) return;
+    setVendors((prev) => {
+      const existing = new Set(prev.map((v) => v.id));
+      const additions: VendorOption[] = [];
+      savedVendors.forEach((vendorName, id) => {
+        if (!existing.has(id)) additions.push({ id, vendor_name: vendorName });
+      });
+      return additions.length ? [...prev, ...additions] : prev;
+    });
+  }, [initialLineItems, contracts, setVendors]);
+
   // Re-resolve budget codes for committed line items that are still missing one.
   // Handles two failure modes:
   //   1. Race condition — budgetCodes loaded after commitment was selected
   //   2. Edit form — existing line item has a commitment but budget_code_id was null in DB
   // Runs whenever budgetCodes or commitmentLineItemsMap becomes available.
+  //
+  // FK RESOLUTION PRESERVED: change_event_line_items.budget_code_id targets
+  // budget_lines.id, but the dropdown/value we store is project_budget_codes.id.
+  // resolveBudgetCodeFromSov maps via budget_lines.project_budget_code_id →
+  // project_budget_codes.id (see @/lib/change-events/budget-code-match). Do not
+  // change this mapping.
   React.useEffect(() => {
     if (budgetCodes.length === 0) return;
 
-    setFormData((prev) => {
-      let changed = false;
-      const nextItems = prev.lineItems.map((item) => {
-        if (!item.commitmentId || item.budgetCode) return item;
-        const cached = commitmentLineItemsMap[item.contract];
-        if (!cached || cached.length === 0) return item;
-        const updates = resolveBudgetCodeFromItems(cached, budgetCodes);
-        if (!updates.budgetCode) return item;
-        changed = true;
-        return { ...item, ...updates };
-      });
-      return changed ? { ...prev, lineItems: nextItems } : prev;
+    const items = form.getValues("lineItems");
+    items.forEach((item, index) => {
+      if (!item.commitmentId || item.budgetCode) return;
+      const cached = commitmentLineItemsMap[item.contract];
+      if (!cached || cached.length === 0) return;
+      const updates = resolveBudgetCodeFromItems(cached, budgetCodes);
+      if (!updates.budgetCode) return;
+      form.setValue(`lineItems.${index}`, { ...item, ...updates }, { shouldDirty: true });
     });
-  }, [budgetCodes, commitmentLineItemsMap]);
+  }, [budgetCodes, commitmentLineItemsMap, form]);
 
   // ── Update helpers ──
 
-  const updateFormData = React.useCallback(
-    (updates: Partial<ChangeEventFormData>) => {
-      setFormData((prev) => ({ ...prev, ...updates }));
-      setErrors((prev) => {
-        const next = { ...prev };
-        (Object.keys(updates) as Array<keyof ChangeEventFormData>).forEach(
-          (key) => {
-            delete next[key];
-          },
-        );
-        return next;
-      });
-    },
-    [],
-  );
-
+  // Writes a single line-item field. Numeric edits are handled by the RHF number
+  // / money field wrappers directly (which trigger the recompute subscription
+  // above); this helper is used by the commitment / budget-code / vendor / UOM
+  // combobox cells whose selection must be written imperatively.
   const updateLineItem = React.useCallback(
     (index: number, key: keyof ChangeEventLineItem, value: string | number) => {
-      setFormData((prev) => {
-        const nextItems = [...prev.lineItems];
-        const current = { ...nextItems[index], [key]: value };
-
-        if (key === "revenueQuantity" || key === "revenueUnitCost") {
-          current.revenueRom =
-            Number(current.revenueQuantity || 0) *
-            Number(current.revenueUnitCost || 0);
-        }
-        if (key === "costQuantity" || key === "costUnitCost") {
-          current.costRom =
-            Number(current.costQuantity || 0) *
-            Number(current.costUnitCost || 0);
-
-          // Auto-sync revenue ROM when revenue mirrors cost (match-cost source).
-          if (isMatchCostRevenueSource(prev.lineItemRevenueSource)) {
-            current.revenueRom = current.costRom;
-          }
-        }
-        if (
-          key === "costQuantity" || key === "costUnitCost" ||
-          key === "revenueQuantity" || key === "revenueUnitCost"
-        ) {
-          if (!current.contract) {
-            current.nonCommittedCost =
-              (Number(current.costRom) || 0) - (Number(current.revenueRom) || 0);
-          }
-        }
-
-        nextItems[index] = current;
-        return { ...prev, lineItems: nextItems };
-      });
+      form.setValue(
+        `lineItems.${index}.${key}` as `lineItems.${number}.${keyof ChangeEventLineItem}`,
+        value as never,
+        { shouldDirty: true },
+      );
     },
-    [],
+    [form],
   );
 
   // ── Commitment change handlers ──
@@ -224,19 +248,21 @@ export function useChangeEventFormData({
         });
       }
 
-      setFormData((prev) => {
-        const nextItems = [...prev.lineItems];
-        const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentId: commitmentId || undefined, commitmentLineItemId: "" };
-        if (commitment?.vendorId) {
-          current.vendor = String(commitment.vendorId);
-        }
-        // Immediately populate description from commitment title (same pattern as vendor)
-        if (commitment?.title && !current.description) {
-          current.description = commitment.title;
-        }
-        nextItems[rowIndex] = current;
-        return { ...prev, lineItems: nextItems };
-      });
+      const current = form.getValues(`lineItems.${rowIndex}`);
+      const nextRow: ChangeEventLineItem = {
+        ...current,
+        contract: commitmentId,
+        commitmentId: commitmentId || undefined,
+        commitmentLineItemId: "",
+      };
+      if (commitment?.vendorId) {
+        nextRow.vendor = String(commitment.vendorId);
+      }
+      // Immediately populate description from commitment title (same pattern as vendor)
+      if (commitment?.title && !nextRow.description) {
+        nextRow.description = commitment.title;
+      }
+      form.setValue(`lineItems.${rowIndex}`, nextRow, { shouldDirty: true });
 
       if (!commitmentId) return;
 
@@ -244,11 +270,12 @@ export function useChangeEventFormData({
         const items = commitmentLineItemsMap[commitmentId];
         const updates = resolveBudgetCodeFromItems(items, budgetCodes);
         if (Object.keys(updates).length > 0) {
-          setFormData((prev) => {
-            const nextItems = [...prev.lineItems];
-            nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
-            return { ...prev, lineItems: nextItems };
-          });
+          const row = form.getValues(`lineItems.${rowIndex}`);
+          form.setValue(
+            `lineItems.${rowIndex}`,
+            { ...row, ...updates },
+            { shouldDirty: true },
+          );
         }
         return;
       }
@@ -263,38 +290,39 @@ export function useChangeEventFormData({
 
         const updates = resolveBudgetCodeFromItems(items, budgetCodes);
         if (Object.keys(updates).length > 0) {
-          setFormData((prev) => {
-            const nextItems = [...prev.lineItems];
-            nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
-            return { ...prev, lineItems: nextItems };
-          });
+          const row = form.getValues(`lineItems.${rowIndex}`);
+          form.setValue(
+            `lineItems.${rowIndex}`,
+            { ...row, ...updates },
+            { shouldDirty: true },
+          );
         }
       } catch {
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
       }
     },
-    [contracts, commitmentLineItemsMap, budgetCodes, projectId, setVendors],
+    [contracts, commitmentLineItemsMap, budgetCodes, projectId, setVendors, form],
   );
 
   const handleCommitmentLineItemChange = React.useCallback(
     (rowIndex: number, commitmentId: string, sovLineItemId: string) => {
       const items = commitmentLineItemsMap[commitmentId] || [];
       const selectedItem = items.find((i) => i.id === sovLineItemId);
-      setFormData((prev) => {
-        const nextItems = [...prev.lineItems];
-        const current = { ...nextItems[rowIndex], commitmentLineItemId: sovLineItemId };
-        if (selectedItem?.budget_code) {
-          const bc = findBudgetCode(selectedItem.budget_code, budgetCodes);
-          if (bc) current.budgetCode = bc.id;
-        }
-        if (selectedItem?.description) {
-          current.description = selectedItem.description;
-        }
-        nextItems[rowIndex] = current;
-        return { ...prev, lineItems: nextItems };
-      });
+      const current = form.getValues(`lineItems.${rowIndex}`);
+      const nextRow: ChangeEventLineItem = {
+        ...current,
+        commitmentLineItemId: sovLineItemId,
+      };
+      if (selectedItem?.budget_code) {
+        const bc = findBudgetCode(selectedItem.budget_code, budgetCodes);
+        if (bc) nextRow.budgetCode = bc.id;
+      }
+      if (selectedItem?.description) {
+        nextRow.description = selectedItem.description;
+      }
+      form.setValue(`lineItems.${rowIndex}`, nextRow, { shouldDirty: true });
     },
-    [commitmentLineItemsMap, budgetCodes],
+    [commitmentLineItemsMap, budgetCodes, form],
   );
 
   // ── CSV import ──
@@ -347,15 +375,12 @@ export function useChangeEventFormData({
           });
         }
         if (newItems.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            lineItems:
-              prev.lineItems.length === 1 &&
-              !prev.lineItems[0].description &&
-              !prev.lineItems[0].budgetCode
-                ? newItems
-                : [...prev.lineItems, ...newItems],
-          }));
+          const existing = form.getValues("lineItems");
+          const shouldReplace =
+            existing.length === 1 &&
+            !existing[0].description &&
+            !existing[0].budgetCode;
+          lineItemArray.replace(shouldReplace ? newItems : [...existing, ...newItems]);
           toast.success(`Imported ${newItems.length} line item${newItems.length !== 1 ? "s" : ""} from CSV`);
           if (unresolvedBudgetCodes > 0) {
             toast.warning(
@@ -367,12 +392,10 @@ export function useChangeEventFormData({
       reader.readAsText(file);
       e.target.value = "";
     },
-    [budgetCodes],
+    [budgetCodes, form, lineItemArray],
   );
 
   // ── Add from commitment ──
-
-  const [addFromCommitmentId, setAddFromCommitmentId] = React.useState("");
 
   const handleAddAllCommitmentLineItems = React.useCallback(
     async (commitmentId: string) => {
@@ -408,52 +431,34 @@ export function useChangeEventFormData({
           commitmentLineItemId: li.id,
         };
       });
-      setFormData((prev) => ({
-        ...prev,
-        lineItems:
-          prev.lineItems.length === 1 &&
-          !prev.lineItems[0].description &&
-          !prev.lineItems[0].budgetCode
-            ? newRows
-            : [...prev.lineItems, ...newRows],
-      }));
-      setAddFromCommitmentId("");
+      const existing = form.getValues("lineItems");
+      const shouldReplace =
+        existing.length === 1 &&
+        !existing[0].description &&
+        !existing[0].budgetCode;
+      lineItemArray.replace(shouldReplace ? newRows : [...existing, ...newRows]);
       toast.success(
         `Added ${newRows.length} line item${newRows.length !== 1 ? "s" : ""} from commitment`,
       );
     },
-    [commitmentLineItemsMap, contracts, budgetCodes, projectId],
+    [commitmentLineItemsMap, contracts, budgetCodes, projectId, form, lineItemArray],
   );
 
   // ── Line item CRUD ──
 
   const addLineItem = React.useCallback(() => {
-    setFormData((prev) => ({
-      ...prev,
-      lineItems: [...prev.lineItems, createEmptyLineItem()],
-    }));
-  }, []);
+    lineItemArray.append(createEmptyLineItem());
+  }, [lineItemArray]);
 
-  const removeLineItem = React.useCallback((index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      lineItems:
-        prev.lineItems.length > 1
-          ? prev.lineItems.filter((_, i) => i !== index)
-          : [createEmptyLineItem()],
-    }));
-  }, []);
-
-  // ── Attachments ──
-
-  const attachmentsAsInfo = React.useMemo(
-    () =>
-      formData.attachments.map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      })),
-    [formData.attachments],
+  const removeLineItem = React.useCallback(
+    (index: number) => {
+      if (lineItemArray.fields.length > 1) {
+        lineItemArray.remove(index);
+      } else {
+        lineItemArray.replace([createEmptyLineItem()]);
+      }
+    },
+    [lineItemArray],
   );
 
   // ── Budget code created handler ──
@@ -470,30 +475,10 @@ export function useChangeEventFormData({
     [fetchBudgetCodes, targetBudgetCodeRowIndex, updateLineItem],
   );
 
-  // ── Validation ──
-
-  const validate = React.useCallback((): boolean => {
-    const nextErrors: Partial<Record<keyof ChangeEventFormData, string>> = {};
-    if (!formData.title.trim()) {
-      nextErrors.title = "Title is required";
-    } else if (formData.title.length > 255) {
-      nextErrors.title = "Title must be 255 characters or fewer";
-    }
-    if (!formData.status) {
-      nextErrors.status = "Status is required";
-    }
-    if (!formData.type) {
-      nextErrors.type = "Type is required";
-    }
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  }, [formData.title, formData.status, formData.type]);
-
   return {
-    formData,
+    form,
+    lineItemFields: lineItemArray.fields,
     nextNumber,
-    errors,
-    updateFormData,
     updateLineItem,
     vendors,
     contracts,
@@ -507,16 +492,11 @@ export function useChangeEventFormData({
     setTargetBudgetCodeRowIndex,
     handleCommitmentChange,
     handleCommitmentLineItemChange,
-    addFromCommitmentId,
-    setAddFromCommitmentId,
     handleAddAllCommitmentLineItems,
     addLineItem,
     removeLineItem,
     csvInputRef,
     handleCsvImport,
-    attachmentsAsInfo,
-    setFormData,
     handleBudgetCodeCreated,
-    validate,
   };
 }

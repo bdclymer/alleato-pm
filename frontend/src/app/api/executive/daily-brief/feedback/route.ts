@@ -2,9 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { z } from "zod";
 
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
 
 /**
@@ -32,15 +33,14 @@ const briefFeedbackSchema = z.object({
 export const POST = withApiGuardrails(
   "api.executive.daily-brief.feedback.POST",
   async ({ request }) => {
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({
-        code: "AUTH_EXPIRED",
-        where: "api.executive.daily-brief.feedback.POST",
-        message: "Authentication required.",
-        status: 401,
-      });
-    }
+    // Gate on the same capability as the page and every sibling
+    // /api/executive/daily-brief/* route — a user who can't see the brief must
+    // not be able to write feedback into the shared AI learning loop.
+    const { user } = await requireCurrentUserAppCapability(
+      "view_executive_briefing",
+      "api.executive.daily-brief.feedback.POST",
+      "Daily Brief access required.",
+    );
 
     const body = await parseJsonBody(
       request,
@@ -70,10 +70,18 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
+      // Preserve the raw Supabase error for operators (server-only) — the
+      // generic GuardrailError below would otherwise drop it from telemetry.
+      logger.error({
+        msg: "[daily-brief.feedback] insert into ai_feedback_events failed",
+        data: error,
+      });
       throw new GuardrailError({
         code: "DB_INSERT_FAILED",
         where: "api.executive.daily-brief.feedback.POST",
-        message: `Failed to record brief feedback: ${error.message}`,
+        // Client gets a generic message so DB internals (table/constraint/
+        // connection details) don't leak into the response envelope.
+        message: "Failed to record brief feedback.",
         status: 500,
       });
     }

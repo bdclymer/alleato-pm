@@ -1,0 +1,120 @@
+{
+  "generated": "as-applied reconstruction from live DB (post --apply)",
+  "shell": "SC-000316 (225fbd2d-9a42-4895-8183-2331d49ad8d4)",
+  "project": "24-109 Goodwill Bloomington",
+  "note": "142 invoices were on the shell; 100 re-attributed to their correct commitment, 42 left for manual review. 'invoices_on_target_commitments' also includes any invoices already correctly linked before this run.",
+  "invoices_on_target_commitments": 102,
+  "invoices_remaining_on_shell": 42,
+  "targets": [
+    {
+      "target": "SC-000217",
+      "count": 12,
+      "billed": 238283.8
+    },
+    {
+      "target": "SC-000290",
+      "count": 2,
+      "billed": 157473.44
+    },
+    {
+      "target": "SC-000156",
+      "count": 14,
+      "billed": 151604.05
+    },
+    {
+      "target": "SC-000224",
+      "count": 5,
+      "billed": 68789.13
+    },
+    {
+      "target": "SC-000295",
+      "count": 2,
+      "billed": 68742
+    },
+    {
+      "target": "SC-000151",
+      "count": 10,
+      "billed": 67038.55
+    },
+    {
+      "target": "SC-000232",
+      "count": 6,
+      "billed": 48798
+    },
+    {
+      "target": "SC-000222",
+      "count": 4,
+      "billed": 39105
+    },
+    {
+      "target": "SC-000176",
+      "count": 6,
+      "billed": 37124
+    },
+    {
+      "target": "SC-000251",
+      "count": 6,
+      "billed": 36116.55
+    },
+    {
+      "target": "SC-000225",
+      "count": 4,
+      "billed": 27250
+    },
+    {
+      "target": "SC-000235",
+      "count": 1,
+      "billed": 24189.12
+    },
+    {
+      "target": "SC-000199",
+      "count": 5,
+      "billed": 20372
+    },
+    {
+      "target": "SC-000227",
+      "count": 3,
+      "billed": 16998
+    },
+    {
+      "target": "SC-000182",
+      "count": 5,
+      "billed": 15652.03
+    },
+    {
+      "target": "SC-000160",
+      "count": 3,
+      "billed": 11371.45
+    },
+    {
+      "target": "SC-000302",
+      "count": 4,
+      "billed": 6132.69
+    },
+    {
+      "target": "SC-000303",
+      "count": 1,
+      "billed": 4500
+    },
+    {
+      "target": "SC-000223",
+      "count": 2,
+      "billed": 4091.75
+    },
+    {
+      "target": "SC-000226",
+      "count": 1,
+      "billed": 1480.49
+    },
+    {
+      "target": "SC-000221",
+      "count": 4,
+      "billed": 1398.6
+    },
+    {
+      "target": "SC-000208",
+      "count": 2,
+      "billed": 1225
+    }
+  ]
+}

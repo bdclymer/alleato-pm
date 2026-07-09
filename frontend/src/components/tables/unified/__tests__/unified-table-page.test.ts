@@ -1,4 +1,5 @@
 import {
+  MIN_COLUMN_RESIZE_WIDTH,
   TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
   TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME,
   TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME,
@@ -6,6 +7,7 @@ import {
   TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME,
   TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME,
   TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
+  computeResizedColumnWidth,
   shouldRenderRowSelection,
   shouldUseIconOnlyInlineEdit,
 } from "../unified-table-page";
@@ -71,5 +73,20 @@ describe("UnifiedTablePage header labels", () => {
     expect(shouldRenderRowSelection({ enableRowSelection: false })).toBe(
       false,
     );
+  });
+});
+
+describe("column resize width computation", () => {
+  it("tracks the drag delta while widening a column", () => {
+    expect(computeResizedColumnWidth(280, 150)).toBe(430);
+    expect(computeResizedColumnWidth(200, 0)).toBe(200);
+  });
+
+  it("never shrinks a column below the minimum resize width", () => {
+    expect(computeResizedColumnWidth(200, -500)).toBe(MIN_COLUMN_RESIZE_WIDTH);
+    expect(computeResizedColumnWidth(MIN_COLUMN_RESIZE_WIDTH, -1)).toBe(
+      MIN_COLUMN_RESIZE_WIDTH,
+    );
+    expect(MIN_COLUMN_RESIZE_WIDTH).toBe(120);
   });
 });

@@ -3,7 +3,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 export async function GET() {
   const supabase = createServiceClient();
-  const { data: users } = await supabase.auth.admin.listUsers();
+  const { data } = await supabase.auth.admin.listUsers();
+  const identities = data.users.flatMap((user) => user.identities ?? []);
   
   const alreadyContacted = new Set([
     "megan@nutritionsolutionslifestyle.com",
@@ -37,14 +38,14 @@ export async function GET() {
     "mharrison@alleatogroup.com",
   ]);
 
-  const usersToContact = users.identities
-    .map(i => i.identity_data?.email)
-    .filter(e => e && !alreadyContacted.has(e))
+  const usersToContact = identities
+    .map((i) => i.identity_data?.email)
+    .filter((e): e is string => Boolean(e) && !alreadyContacted.has(e ?? ""))
     .sort();
 
   const unique = [...new Set(usersToContact)];
   return NextResponse.json({
-    total_users: users.identities.length,
+    total_users: identities.length,
     already_contacted: alreadyContacted.size,
     need_to_contact: unique.length,
     email_list: unique

@@ -2313,6 +2313,12 @@ class AcumaticaFinancialSyncService:
             rows.append(
                 {
                     "contract_id": contract_id,
+                    # Stamp project_id from the Acumatica-native record (the source query
+                    # already filters project_id IS NOT NULL). Guardrail: without this,
+                    # rows whose commitment header is not yet synced end up with a null
+                    # project_id and become invisible per-project — the exact orphaning
+                    # backfilled by scripts/jobplanner/backfill-cco-project-id.mjs (2026-07-09).
+                    "project_id": row.get("project_id"),
                     "change_order_number": row["reference_nbr"],
                     "description": row.get("description") or row["reference_nbr"],
                     "amount": row.get("commitments_change_total") or 0,

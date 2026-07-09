@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,8 @@ export function buildKnowledgeTableColumns(options: {
       label: "Status",
       defaultVisible: true,
       sortable: true,
+      // Ingestion status is system-derived, not user-editable.
+      editable: false,
       sortValue: (item) => item.status ?? "uploaded",
       render: (item) => (
         <StatusBadge status={item.status ?? "uploaded"} />
@@ -160,7 +162,7 @@ export function buildKnowledgeTableColumns(options: {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

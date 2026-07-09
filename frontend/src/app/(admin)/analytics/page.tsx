@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/layout";
-import { PlatformAnalyticsPanel } from "@/components/admin/platform-analytics-panel";
+import PlatformAnalyticsPanel from "@/components/admin/platform-analytics-panel-dynamic";
 
 export const dynamic = "force-dynamic";
 
