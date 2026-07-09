@@ -29,6 +29,10 @@ from src.services.agents.alleato_ai_tools.graph_api import (
     search_emails,
     search_teams_messages,
 )
+from src.services.agents.alleato_ai_tools.intelligence import (
+    portfolio_intelligence_brief,
+    project_intelligence_brief,
+)
 from src.services.agents.alleato_ai_tools.pm import (
     portfolio_overview,
     project_briefing_snapshot,
@@ -58,6 +62,10 @@ RESOLVERS = [
 
 READ_ONLY_PM_TOOLS = [
     *RESOLVERS,
+    # Synthesized deep-read intelligence — the authoritative narrative source.
+    # Listed first so the model reaches for it before the raw-data fallbacks below.
+    project_intelligence_brief,
+    portfolio_intelligence_brief,
     project_briefing_snapshot,
     project_budget_summary,
     project_risk_snapshot,
@@ -130,9 +138,11 @@ __all__ = [
     "draft_task",
     "draft_teams_message",
     "list_recent_meetings",
+    "portfolio_intelligence_brief",
     "portfolio_overview",
     "project_briefing_snapshot",
     "project_budget_summary",
+    "project_intelligence_brief",
     "project_risk_snapshot",
     "query_db",
     "recent_activity",
