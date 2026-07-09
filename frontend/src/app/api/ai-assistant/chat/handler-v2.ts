@@ -1174,6 +1174,123 @@ function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+/**
+ * A single persisted source citation for `chat_history.sources`. This matches
+ * the `SourceItem` shape the chat UI reads
+ * (`frontend/src/components/ai-assistant/assistant-widget-renderer.tsx` →
+ * `AssistantSourceEvidenceWidget`, and `chat-history.ts` `extractSources`):
+ * each item exposes `snippet` and/or `metadata.title` so the widget renders it,
+ * plus metadata fields (`project_id`, `meeting_id`, `metadata_id`, `type`,
+ * `url`, `fireflies_link`, ...) used by `getSourceHref` to build a deep link.
+ */
+type PersistedAnswerSource = {
+  document_id?: string;
+  snippet?: string;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Build the clickable source-citation list persisted alongside a grounded
+ * assistant answer, from the retrieval context the answer was generated over
+ * (`latestRetrievalCtx`). Draws from the semantic vector results and the
+ * intelligence packet's card evidence. Fully defensive — returns `[]` when
+ * nothing groundable is present, and only emits items the UI will actually
+ * render (i.e. those carrying a `snippet` or a `metadata.title`).
+ */
+function buildAnswerSourceCitations(
+  ctx: unknown,
+  selectedProjectId: number | null,
+): PersistedAnswerSource[] {
+  const context = asRecord(ctx);
+  const sources: PersistedAnswerSource[] = [];
+  const seen = new Set<string>();
+
+  const pushUnique = (item: PersistedAnswerSource, dedupeKeyRaw: string) => {
+    const dedupeKey = dedupeKeyRaw.trim().toLowerCase();
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    // Only persist items the chat UI will render (needs snippet or a title).
+    if (!item.snippet && !asRecord(item.metadata).title) return;
+    seen.add(dedupeKey);
+    sources.push(item);
+  };
+
+  // 1) Semantic vector results — carry rich metadata (project_id, meeting_id,
+  //    url, fireflies_link) that resolve to deep links in the chat UI.
+  const semanticWrapper = asRecord(context.semanticVectorResults);
+  const semanticResults = Array.isArray(semanticWrapper.results)
+    ? semanticWrapper.results
+    : [];
+  for (const raw of semanticResults.slice(0, 12)) {
+    const result = asRecord(raw);
+    const metadata = asRecord(result.metadata);
+    const content = asString(result.content);
+    const title =
+      asString(metadata.title) ??
+      asString(metadata.subject) ??
+      asString(metadata.meeting_title) ??
+      asString(result.sourceTable);
+    const documentId =
+      asString(metadata.metadata_id) ??
+      asString(metadata.meeting_id) ??
+      asString(metadata.id) ??
+      undefined;
+    const mergedMetadata: Record<string, unknown> = { ...metadata };
+    if (title && !asString(mergedMetadata.title)) mergedMetadata.title = title;
+    if (!asString(mergedMetadata.type) && asString(result.sourceTable)) {
+      mergedMetadata.type = result.sourceTable;
+    }
+    pushUnique(
+      {
+        ...(documentId ? { document_id: documentId } : {}),
+        ...(content ? { snippet: content.slice(0, 600) } : {}),
+        metadata: mergedMetadata,
+      },
+      documentId ?? title ?? content ?? "",
+    );
+  }
+
+  // 2) Intelligence packet card evidence — the records the advisor answer is
+  //    grounded in. Each evidence row becomes a titled/snippeted source chip.
+  const packet = asRecord(context.intelligencePacket);
+  const packetProjectId =
+    typeof packet.projectId === "number" || typeof packet.projectId === "string"
+      ? packet.projectId
+      : selectedProjectId ?? undefined;
+  const cards = Array.isArray(packet.cards) ? packet.cards : [];
+  for (const rawCard of cards) {
+    const card = asRecord(rawCard);
+    const evidence = Array.isArray(card.evidence) ? card.evidence : [];
+    for (const rawEvidence of evidence) {
+      const ev = asRecord(rawEvidence);
+      const snippet =
+        asString(ev.excerpt) ??
+        asString(ev.summary) ??
+        asString(ev.sourceContentPreview);
+      const title = asString(ev.sourceTitle) ?? asString(card.title);
+      const documentId =
+        asString(ev.sourceDocumentId) ??
+        asString(ev.sourceMessageId) ??
+        undefined;
+      const type = asString(ev.sourceCategory) ?? asString(ev.sourceType);
+      const metadata: Record<string, unknown> = {};
+      if (title) metadata.title = title;
+      if (type) metadata.type = type;
+      if (documentId) metadata.metadata_id = documentId;
+      if (packetProjectId !== undefined) metadata.project_id = packetProjectId;
+      pushUnique(
+        {
+          ...(documentId ? { document_id: documentId } : {}),
+          ...(snippet ? { snippet: snippet.slice(0, 600) } : {}),
+          metadata,
+        },
+        documentId ?? title ?? snippet ?? "",
+      );
+    }
+  }
+
+  return sources.slice(0, 12);
+}
+
 function isCmoWeeklyContentWorkflowRequest(message: string): boolean {
   const normalized = message.toLowerCase();
   const asksForCalendar =
@@ -5821,6 +5938,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         user_id: args.user.id,
         role: "assistant",
         content: assistantContent,
+        sources: buildAnswerSourceCitations(
+          latestRetrievalCtx,
+          args.selectedProjectId ?? null,
+        ) as Json,
         metadata: metadata as Json,
       });
 
