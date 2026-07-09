@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { computeLineFinancials } from "@/lib/invoicing/payment-application";
 
 // PATCH /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items
 // Bulk-update editable SOV fields on line items of a draft / revise_and_resubmit invoice.
@@ -138,22 +139,27 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
       const prevWorkRetained = Number(existing.previous_work_retainage) || 0;
       const prevMatRetained = Number(existing.previous_materials_retainage) || 0;
 
-      // total_completed_stored, balance_to_finish, and net_amount_this_period
-      // are GENERATED ALWAYS columns in Postgres — do not write them.
-      const totalCompletedStored = previous + thisPeriod + stored;
-      const workCompletedPct =
-        scheduled > 0 ? (totalCompletedStored / scheduled) * 100 : 0;
-
-      // "Work Retainage This Period" applies ONLY to work billed this period,
-      // not cumulative. Previous periods' retainage is tracked in
-      // previous_work_retainage and carried forward independently.
-      const workRetainageAmount = (thisPeriod * workRetainagePct) / 100;
-      const materialsRetainageAmount = (stored * materialsRetainagePct) / 100;
-
-      // Maximum releasable = what was withheld in prior periods + what's being
-      // withheld this period. Cannot release more than this total.
-      const maxWorkReleasable = prevWorkRetained + workRetainageAmount;
-      const maxMatReleasable = prevMatRetained + materialsRetainageAmount;
+      // total_completed_stored, balance_to_finish, and net_amount_this_period are
+      // GENERATED ALWAYS columns in Postgres — do not write them. The payment-application
+      // module owns the derived per-line math (retainage this period, % complete, release
+      // caps). "Retainage this period" applies only to work billed this period; previous
+      // periods' retainage is carried in previous_work_retainage independently.
+      const fin = computeLineFinancials({
+        scheduled_value: scheduled,
+        work_completed_previous: previous,
+        work_completed_period: thisPeriod,
+        materials_stored: stored,
+        retainage_pct: workRetainagePct,
+        materials_retainage_pct: materialsRetainagePct,
+        previous_work_retainage: prevWorkRetained,
+        previous_materials_retainage: prevMatRetained,
+      });
+      const workCompletedPct = fin.work_completed_pct;
+      const workRetainageAmount = fin.retainage_amount;
+      const materialsRetainageAmount = fin.materials_retainage_amount;
+      // Maximum releasable = withheld in prior periods + withheld this period.
+      const maxWorkReleasable = fin.max_work_releasable;
+      const maxMatReleasable = fin.max_materials_releasable;
 
       let workRetainageReleased =
         patch.work_retainage_released !== undefined

@@ -8,6 +8,10 @@ import {
   type SubcontractorInvoiceStatus,
 } from "@/lib/invoicing/subcontractor-invoice-audit";
 import { resolveGeneralContractorCompany } from "@/lib/invoicing/subcontractor-invoice-company";
+import {
+  computeSubcontractorRollup,
+  type PaymentApplicationRollupLine,
+} from "@/lib/invoicing/payment-application";
 
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Fetch a single subcontractor invoice with line items, commitment, and billing period joins
@@ -191,36 +195,11 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       };
     });
 
-    // This invoice's totals from its line items
-    const lineItems = enrichedLineItems as unknown as Array<{
-      total_completed_stored: number | null;
-      retainage_amount: number | null;
-      materials_retainage_amount: number | null;
-      net_amount_this_period: number | null;
-      work_completed_period: number | null;
-      materials_stored: number | null;
-    }>;
-    const totalCompletedAndStored = lineItems.reduce(
-      (sum, li) => sum + (Number(li.total_completed_stored) || 0),
-      0,
-    );
-    const totalWorkRetainage = lineItems.reduce(
-      (sum, li) => sum + (Number(li.retainage_amount) || 0),
-      0,
-    );
-    const totalMaterialsRetainage = lineItems.reduce(
-      (sum, li) => sum + (Number(li.materials_retainage_amount) || 0),
-      0,
-    );
-    const invoiceNetAmount = lineItems.reduce(
-      (sum, li) => sum + (Number(li.net_amount_this_period) || 0),
-      0,
-    );
-    const totalRetainage = totalWorkRetainage + totalMaterialsRetainage;
-    const totalEarnedLessRetainage = totalCompletedAndStored - totalRetainage;
+    // This invoice's per-line figures come straight from the DB generated columns.
+    const lineItems = enrichedLineItems as unknown as PaymentApplicationRollupLine[];
 
     // Less previous certificates: sum of net_amount_this_period from approved
-    // prior invoices on the same commitment (before this invoice's period_end)
+    // prior invoices on the same commitment (before this invoice's period_end).
     let lessPreviousCertificates = 0;
     if (contractId) {
       const foreignKey = invoice.subcontract_id
@@ -253,28 +232,14 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       }
     }
 
-    const contractSumToDate = originalContractSum + netChangeByChangeOrders;
-    if (invoice.is_retainage_release) {
-      lessPreviousCertificates = Math.max(totalEarnedLessRetainage - invoiceNetAmount, 0);
-    }
-    const currentPaymentDue = invoice.is_retainage_release
-      ? invoiceNetAmount
-      : totalEarnedLessRetainage - lessPreviousCertificates;
-    const balanceToFinish = contractSumToDate - totalEarnedLessRetainage;
-
-    const rollup = {
+    // The AIA G702 rollup is owned by the payment-application module.
+    const rollup = computeSubcontractorRollup({
+      lineItems,
       original_contract_sum: originalContractSum,
       net_change_by_change_orders: netChangeByChangeOrders,
-      contract_sum_to_date: contractSumToDate,
-      total_completed_and_stored: totalCompletedAndStored,
-      total_work_retainage: totalWorkRetainage,
-      total_materials_retainage: totalMaterialsRetainage,
-      total_retainage: totalRetainage,
-      total_earned_less_retainage: totalEarnedLessRetainage,
       less_previous_certificates: lessPreviousCertificates,
-      current_payment_due: currentPaymentDue,
-      balance_to_finish_including_retainage: balanceToFinish,
-    };
+      is_retainage_release: Boolean(invoice.is_retainage_release),
+    });
 
     // Tab badge counts (single round-trip using head+count)
     const [
@@ -355,8 +320,8 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const percentComplete =
-      contractSumToDate > 0
-        ? (totalCompletedAndStored / contractSumToDate) * 100
+      rollup.contract_sum_to_date > 0
+        ? (rollup.total_completed_and_stored / rollup.contract_sum_to_date) * 100
         : 0;
 
     // Determine application number: count prior invoices on same commitment + 1

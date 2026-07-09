@@ -41,6 +41,11 @@ import {
   type LineItemEdits,
   type SovLineItem,
 } from "./shared";
+import {
+  computeLineFinancials,
+  materialsCurrentlyRetained,
+  workCurrentlyRetained,
+} from "@/lib/invoicing/payment-application";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 
 /* ─── Date helpers ─── */
@@ -301,54 +306,48 @@ export function GeneralTab({
     return lineItems.map((li) => {
       const e = edits[li.id];
       if (!e) return li;
-      const scheduled = Number(li.scheduled_value) || 0;
-      const previous = Number(li.work_completed_previous) || 0;
       const thisPeriod = Number(e.work_completed_period) || 0;
       const stored = Number(e.materials_stored) || 0;
       const workPct = Number(e.retainage_pct) || 0;
       const matPct = Number(e.materials_retainage_pct) || 0;
-      const totalCompleted = previous + thisPeriod + stored;
-      // Retainage applies only to THIS period's billing, not cumulative
-      const workRetainage = (thisPeriod * workPct) / 100;
-      const matRetainage = (stored * matPct) / 100;
-      const prevWorkRet = Number(li.previous_work_retainage) || 0;
-      const prevMatRet = Number(li.previous_materials_retainage) || 0;
       const workReleased = Number(e.work_retainage_released) || 0;
       const matReleased = Number(e.materials_retainage_released) || 0;
+      const fin = computeLineFinancials({
+        scheduled_value: li.scheduled_value,
+        work_completed_previous: li.work_completed_previous,
+        work_completed_period: thisPeriod,
+        materials_stored: stored,
+        retainage_pct: workPct,
+        materials_retainage_pct: matPct,
+        work_retainage_released: workReleased,
+        materials_retainage_released: matReleased,
+        previous_work_retainage: li.previous_work_retainage,
+        previous_materials_retainage: li.previous_materials_retainage,
+      });
       return {
         ...li,
         work_completed_period: thisPeriod,
         materials_stored: stored,
         retainage_pct: workPct,
         materials_retainage_pct: matPct,
-        retainage_amount: workRetainage,
-        materials_retainage_amount: matRetainage,
-        total_completed_stored: totalCompleted,
-        work_completed_pct:
-          scheduled > 0 ? (totalCompleted / scheduled) * 100 : 0,
-        balance_to_finish: scheduled - totalCompleted,
+        retainage_amount: fin.retainage_amount,
+        materials_retainage_amount: fin.materials_retainage_amount,
+        total_completed_stored: fin.total_completed_stored,
+        work_completed_pct: fin.work_completed_pct,
+        balance_to_finish: fin.balance_to_finish,
         // Currently retained = previous + this period - released
-        _work_currently_retained: prevWorkRet + workRetainage - workReleased,
-        _mat_currently_retained: prevMatRet + matRetainage - matReleased,
-        net_amount_this_period:
-          thisPeriod + stored - (workRetainage + matRetainage) + workReleased + matReleased,
+        _work_currently_retained: fin.work_currently_retained,
+        _mat_currently_retained: fin.materials_currently_retained,
+        net_amount_this_period: fin.net_amount_this_period,
       };
     });
   }, [editingSOV, edits, lineItems]);
 
   /* Computed retainage columns (derived from existing DB fields) */
-  function getWorkCurrentlyRetained(li: SovLineItem) {
-    const prev = Number(li.previous_work_retainage) || 0;
-    const thisPeriod = Number(li.retainage_amount) || 0;
-    const released = Number(li.work_retainage_released) || 0;
-    return prev + thisPeriod - released;
-  }
-  function getMatCurrentlyRetained(li: SovLineItem) {
-    const prev = Number(li.previous_materials_retainage) || 0;
-    const thisPeriod = Number(li.materials_retainage_amount) || 0;
-    const released = Number(li.materials_retainage_released) || 0;
-    return prev + thisPeriod - released;
-  }
+  const getWorkCurrentlyRetained = (li: SovLineItem) =>
+    workCurrentlyRetained(li);
+  const getMatCurrentlyRetained = (li: SovLineItem) =>
+    materialsCurrentlyRetained(li);
   function getTotalPreviousRetainage(li: SovLineItem) {
     return (
       (Number(li.previous_work_retainage) || 0) +
