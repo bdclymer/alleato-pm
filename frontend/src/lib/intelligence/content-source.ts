@@ -72,6 +72,14 @@ export interface ProjectContentItem {
   occurredAt: string | null;
   text: string;
   url: string | null;
+  /**
+   * The underlying `document_metadata` row, for consumers that do their own
+   * presentation mapping (e.g. the executive brief's item builder) and need
+   * more columns than the normalized fields above. Undefined for `chunks`.
+   * This is the typed escape hatch that lets rich consumers drop their own
+   * window/DB/table/id-resolution code and route through this module.
+   */
+  raw?: ContentRow;
 }
 
 /** Injected collaborators. Omit in production; the module creates real ones. */
@@ -81,20 +89,32 @@ export interface ContentSourceDeps {
   openai?: OpenAIClient;
 }
 
-/** The exact `document_metadata` columns the module reads. */
+/**
+ * The `document_metadata` columns the module reads. Superset of what the rich
+ * consumers (executive brief item builder, source-specific RAG) select today,
+ * so migrating them onto `raw` needs no second query.
+ */
 const CONTENT_SELECT =
-  "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,content,raw_text,url,source_web_url";
+  "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,content,raw_text,url,source_web_url,action_items,summary_bullets,decisions,key_topics,topics_discussed";
 
-interface ContentRow extends RecencyRow {
+export interface ContentRow extends RecencyRow {
   id: string;
   title: string | null;
+  project: string | null;
   project_id: number | null;
+  source: string | null;
+  source_system: string | null;
   summary: string | null;
   overview: string | null;
   content: string | null;
   raw_text: string | null;
   url: string | null;
   source_web_url: string | null;
+  action_items: string | null;
+  summary_bullets: unknown;
+  decisions: unknown;
+  key_topics: unknown;
+  topics_discussed: unknown;
 }
 
 /** How each lane is selected on `document_metadata`. One filter per lane. */
@@ -221,6 +241,7 @@ async function getMetadataContent(
       occurredAt: row.date ?? row.captured_at ?? row.created_at ?? null,
       text: textForGranularity(row, q.granularity),
       url: row.url ?? row.source_web_url ?? null,
+      raw: row,
     };
   });
 }

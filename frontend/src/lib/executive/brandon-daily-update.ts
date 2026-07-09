@@ -12,6 +12,7 @@ import {
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
 import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
+import { getProjectContent } from "@/lib/intelligence/content-source";
 import { withExecutiveDailyBriefObservation } from "@/lib/ai/executive-daily-brief-langfuse";
 import {
   buildAgentLearningContextBlock,
@@ -1603,32 +1604,28 @@ async function loadRecentMeetingTranscriptItems(
   cutoffIso: string,
   limit = 24,
 ): Promise<RecentTranscriptResult> {
-  const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .select(
-      "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,action_items,content,raw_text,url,source_web_url,fireflies_link,meeting_link",
-    )
-    .eq("type", "meeting")
-    .or(
-      `date.gte.${cutoffIso},created_at.gte.${cutoffIso},captured_at.gte.${cutoffIso}`,
-    )
-    .order("date", { ascending: false })
-    .limit(limit);
-
-  if (error) {
+  // Content Source owns the window predicate, the document_metadata read, and
+  // int8 project-id resolution (deduped from ~6 copies). We keep only brandon's
+  // own presentation mapping, sourced from each item's `raw` document row.
+  let content;
+  try {
+    content = await getProjectContent({
+      window: { since: cutoffIso },
+      granularity: "full",
+      sourceTypes: ["meeting"],
+      limit,
+    });
+  } catch (error) {
     return {
       items: [],
-      warnings: [`Recent meeting transcript retrieval failed: ${error.message}`],
+      warnings: [
+        `Recent meeting transcript retrieval failed: ${(error as Error).message}`,
+      ],
     };
   }
 
-  const cutoffDateKey = getEasternDateKey(
-    parseDate(cutoffIso) ?? new Date(cutoffIso),
-  );
-  const items = ((data ?? []) as DocumentMetaRow[])
-    .filter((row) => isRecentSourceRow(row, cutoffDateKey))
-    .map(makeFallbackItem)
+  const items = content
+    .map((c) => (c.raw ? makeFallbackItem(c.raw as unknown as DocumentMetaRow) : null))
     .filter((item): item is BrandonBriefItem => item !== null)
     .map((item) => ({
       ...item,

@@ -75,5 +75,11 @@ describeLive("getProjectContent — live parity vs the old meeting query", () =>
     for (const item of withProject) {
       expect(item.projectName).toBeTruthy();
     }
+
+    // The `raw` document row must be populated — the executive-brief item
+    // builder (loadRecentMeetingTranscriptItems) maps from it after migration.
+    for (const item of items) {
+      expect(item.raw?.id).toBe(item.documentId);
+    }
   });
 });
