@@ -134,7 +134,7 @@ export default async function DailyBriefPage() {
             {packet.sections.map((section) => (
               <section key={section.title} className="space-y-3">
                 <SectionRuleHeading label={section.title} />
-                <BriefMarkdown content={section.body} sources={packet.sources} />
+                <BriefMarkdown content={section.body} />
               </section>
             ))}
             <SourceCoverage packet={packet} />
