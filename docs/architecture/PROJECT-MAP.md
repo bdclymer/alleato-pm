@@ -46,7 +46,7 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | View subcontractor invoice details and payment information | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
 | `/[projectId]/commitments/[commitmentId]/pcos/new` | Create a new pending change order (PCO) for a subcontract or purchase order | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
 | `/[projectId]/commitments/configure` | Configure commitment defaults, workflows, billing, and permissions. | frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx |
-| `/[projectId]/commitments/new` | Create new subcontract or purchase order with details and schedule of values | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
+| `/[projectId]/commitments/new` | Create a new purchase order commitment | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
 | `/[projectId]/commitments/recycle-bin` | Redirect to commitments list filtered to recycle bin with soft-deleted records | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
 | `/[projectId]/commitments/settings` | Configure commitment settings for auto-numbering, defaults, and approval thresholds | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
 | `/[projectId]/daily-log` | List daily logs with weather, manpower, equipment, and general field activity details | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
@@ -97,8 +97,8 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
 | `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
-| `/[projectId]/pcos/[pcoId]/edit` | Edit potential change order with change events, line items, and markup | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/pcos/new` | Create new potential change order linked to change events with line items | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
+| `/[projectId]/pcos/[pcoId]/edit` | Update change events, line items, and PCO details. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/pcos/new` | Group change events, add line items, and submit a PCO to the client. | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
 | `/[projectId]/permissions` | Legacy redirect to user management page | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
 | `/[projectId]/photos` | View geotagged photos on a project map. Photos with location data will appear as pins. | frontend/src/app/(main)/[projectId]/photos/page.tsx |
 | `/[projectId]/prime-contract-pcos` | Provide a valid project identifier to access PCOs. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
@@ -115,7 +115,7 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/prime-contracts/[contractId]/invoices/new` | Redirect to invoice creation with the prime contract pre-selected as context | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
 | `/[projectId]/prime-contracts/change-orders` | Redirect to prime change orders tab in the canonical change orders page | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
 | `/[projectId]/prime-contracts/configure` | Project-level settings for how prime contracts behave | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
-| `/[projectId]/prime-contracts/new` | Create new prime contract with standard fields or from a project estimate | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
+| `/[projectId]/prime-contracts/new` | Enter contract details, financial markup, and SOV line items. | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
 | `/[projectId]/progress-reports` | List weekly progress reports with photos, recipients, and publication status | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
 | `/[projectId]/progress-reports/[reportId]` | Edit and publish a weekly progress report from meetings, emails, and photos | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
 | `/[projectId]/project-status-report` | Monthly project budget, invoice, schedule, and open items summary for stakeholders | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
@@ -353,7 +353,7 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (753)
+## API Endpoints (754)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -539,6 +539,7 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/dev/make-admin` | GET, POST | frontend/src/app/api/dev/make-admin/route.ts |
 | `/api/dev/schema` | GET, POST | frontend/src/app/api/dev/schema/route.ts |
 | `/api/dev/test-email` | GET, POST | frontend/src/app/api/dev/test-email/route.ts |
+| `/api/dev/test-results/[resultId]` | PATCH | frontend/src/app/api/dev/test-results/[resultId]/route.ts |
 | `/api/dev/test-runs` | POST | frontend/src/app/api/dev/test-runs/route.ts |
 | `/api/dev/test-runs/[runId]` | GET | frontend/src/app/api/dev/test-runs/[runId]/route.ts |
 | `/api/dev/test-suites/[tool]` | GET | frontend/src/app/api/dev/test-suites/[tool]/route.ts |

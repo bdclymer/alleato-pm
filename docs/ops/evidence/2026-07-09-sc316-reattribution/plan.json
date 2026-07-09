@@ -1,0 +1,12 @@
+{
+  "shell": "0816420e-09e1-4d44-8577-8853f7287785",
+  "project": 43,
+  "mode": "DRY_RUN",
+  "counts": {
+    "auto": 0,
+    "strong": 0,
+    "flag": 0
+  },
+  "perTarget": [],
+  "plan": []
+}

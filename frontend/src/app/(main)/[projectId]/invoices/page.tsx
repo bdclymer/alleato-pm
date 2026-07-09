@@ -585,17 +585,20 @@ export default function ProjectInvoicesPage(): ReactElement {
         defaultVisible: true,
         sortable: true,
         sortValue: (i) => i.contract_number ?? "",
-        render: (i) => (
-          <span className="text-sm text-foreground">
-            {i.contract_number ?? "-"}
-            {i.contract_title ? (
-              <span className="text-muted-foreground">
-                {" "}
-                — {i.contract_title}
-              </span>
-            ) : null}
-          </span>
-        ),
+        render: (i) => {
+          const number = i.contract_number ?? null;
+          const title = i.contract_title ?? null;
+          const label = number ?? title;
+          const suffix = title && title !== number ? title : null;
+          return (
+            <span className="text-sm text-foreground">
+              {label ?? "-"}
+              {suffix ? (
+                <span className="text-muted-foreground"> — {suffix}</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         id: "total_contract_amount",

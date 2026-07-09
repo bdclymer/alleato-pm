@@ -1,22 +1,87 @@
 {
   "summary": {
     "mode": "APPLY",
-    "commitmentsTouched": 18,
-    "sovLinesUpdated": 82,
-    "totalBilledPlaced": 3134245.86,
-    "flaggedCount": 3,
-    "projects": 9
+    "commitmentsTouched": 131,
+    "sovLinesUpdated": 455,
+    "totalBilledPlaced": 9684850.75,
+    "flaggedCount": 38,
+    "projects": 23
   },
   "projectRows": [
     {
       "project": "24-115 Westfield Collective",
-      "commitments": 8,
-      "billed": 1829483.17
+      "commitments": 24,
+      "billed": 2160153.84
+    },
+    {
+      "project": "25-125 Goodwill Noblesville",
+      "commitments": 17,
+      "billed": 1497022.8
+    },
+    {
+      "project": "25-127 Ulta Beauty Fresno",
+      "commitments": 5,
+      "billed": 1475470.26
+    },
+    {
+      "project": "25-109 Uniqlo Phillipsburg NJ",
+      "commitments": 6,
+      "billed": 1463287.89
     },
     {
       "project": "24-109 Goodwill Bloomington",
+      "commitments": 22,
+      "billed": 1047735.65
+    },
+    {
+      "project": "26-113 Goodwill Allisonville Rd IN",
+      "commitments": 8,
+      "billed": 446022.58
+    },
+    {
+      "project": "26-103 Exol Wilmer",
+      "commitments": 3,
+      "billed": 357332.44
+    },
+    {
+      "project": "26-102 Goodwill Commons",
+      "commitments": 7,
+      "billed": 187343.7
+    },
+    {
+      "project": "26-116 Exol Morrisville",
+      "commitments": 3,
+      "billed": 185070
+    },
+    {
+      "project": "25-120 GPC Hai Robotic",
       "commitments": 2,
-      "billed": 1148034.49
+      "billed": 181603.29
+    },
+    {
+      "project": "25-108 Goodwill Tremont",
+      "commitments": 7,
+      "billed": 140613
+    },
+    {
+      "project": "26-106 Goodwill Washington",
+      "commitments": 5,
+      "billed": 91728.29
+    },
+    {
+      "project": "26-119 Union Collective",
+      "commitments": 5,
+      "billed": 84171.17
+    },
+    {
+      "project": "25-126 Vermillion Rise Warehouse",
+      "commitments": 3,
+      "billed": 84000
+    },
+    {
+      "project": "26-112 McLane Jazz - UT",
+      "commitments": 2,
+      "billed": 78890
     },
     {
       "project": "25-113 Radial Martinsville VA",
@@ -24,42 +89,233 @@
       "billed": 53784
     },
     {
-      "project": "26-102 Goodwill Commons",
-      "commitments": 2,
-      "billed": 36470.7
-    },
-    {
-      "project": "25-109 Uniqlo Phillipsburg NJ",
-      "commitments": 1,
-      "billed": 30253.5
-    },
-    {
-      "project": "25-120 GPC Hai Robotic",
-      "commitments": 1,
-      "billed": 20970
-    },
-    {
       "project": "26-118 Champaign Ace Addition",
-      "commitments": 1,
-      "billed": 5300
-    },
-    {
-      "project": "26-112 McLane Jazz - UT",
-      "commitments": 1,
-      "billed": 5000
+      "commitments": 2,
+      "billed": 39300
     },
     {
       "project": "26-107 Goodwill Canton, IL",
+      "commitments": 4,
+      "billed": 24572.84
+    },
+    {
+      "project": "26-108 Goodwill Galesburg",
       "commitments": 1,
-      "billed": 4950
+      "billed": 19710
+    },
+    {
+      "project": "— Goodwill Pioneer",
+      "commitments": 1,
+      "billed": 19575
+    },
+    {
+      "project": "26-123 Playmakers",
+      "commitments": 1,
+      "billed": 18810
+    },
+    {
+      "project": "25-119 Goodwill- Decatur",
+      "commitments": 1,
+      "billed": 18654
+    },
+    {
+      "project": "26-117 Superior Beverae Exotec ",
+      "commitments": 1,
+      "billed": 10000
     }
   ],
   "flagged": [
     {
+      "commitmentId": "ca142244-59fd-43ae-8e3e-07cff8c1c030",
+      "contract_number": "SC-2403-0017",
+      "reason": "cost-code fallback: $462.3 spread proportionally",
+      "acuTotal": 9950
+    },
+    {
+      "commitmentId": "3869e111-cd88-4d76-845a-dff6c5c231ee",
+      "contract_number": "SC-000217",
+      "reason": "cost-code fallback: $27193.98 spread proportionally",
+      "acuTotal": 238283.8
+    },
+    {
+      "commitmentId": "2334695e-a90a-40b2-a2d2-1365a9b03d99",
+      "contract_number": "SC-000151",
+      "reason": "cost-code fallback: $5326.45 spread proportionally",
+      "acuTotal": 67038.55
+    },
+    {
+      "commitmentId": "5574d8fa-7241-4034-bfa4-bb3d4aa1508f",
+      "contract_number": "SC-3620-0002",
+      "reason": "cost-code fallback: $6998.6 spread proportionally",
+      "acuTotal": 69986
+    },
+    {
+      "commitmentId": "726fb316-5d47-4416-8fab-a6a747954a66",
+      "contract_number": "SC-5092-0008",
+      "reason": "cost-code fallback: $9025 spread proportionally",
+      "acuTotal": 28036.5
+    },
+    {
+      "commitmentId": "fcae1ec1-d93a-4b1d-b67d-9b18b125f603",
+      "contract_number": "SC-000251",
+      "reason": "cost-code fallback: $3611.66 spread proportionally",
+      "acuTotal": 36116.55
+    },
+    {
       "commitmentId": "225fbd2d-9a42-4895-8183-2331d49ad8d4",
       "contract_number": "SC-000316",
-      "reason": "cost-code fallback: $1126241.49 spread proportionally",
-      "acuTotal": 1126241.4900000002
+      "reason": "MIS-LINKED (SKIPPED): billed $100298.84 is 15.4x the $6500 contract",
+      "acuTotal": 100298.84
+    },
+    {
+      "commitmentId": "ff76b82a-ed6d-4ccb-8a2b-f736d4802065",
+      "contract_number": "SC-000221",
+      "reason": "cost-code fallback: $768.6 spread proportionally",
+      "acuTotal": 1398.6
+    },
+    {
+      "commitmentId": "404438c6-4401-42d4-8018-97cc0cf96686",
+      "contract_number": "SC-000160",
+      "reason": "cost-code fallback: $11371.45 spread proportionally",
+      "acuTotal": 11371.45
+    },
+    {
+      "commitmentId": "239b772e-e908-4337-b6b9-2efbfecc283d",
+      "contract_number": "SC-8189-0008",
+      "reason": "cost-code fallback: $26955 spread proportionally",
+      "acuTotal": 139046.91000000003
+    },
+    {
+      "commitmentId": "5ac6c193-fd82-42aa-8a17-5ba31ed9742c",
+      "contract_number": "SC-000222",
+      "reason": "cost-code fallback: $3910.5 spread proportionally",
+      "acuTotal": 39105
+    },
+    {
+      "commitmentId": "bce90ede-15be-4ba6-aeb6-da581fcd8735",
+      "contract_number": "SC-000302",
+      "reason": "cost-code fallback: $613.27 spread proportionally",
+      "acuTotal": 6132.69
+    },
+    {
+      "commitmentId": "f0bae17f-cdb8-43cc-9a11-f746ce4838e3",
+      "contract_number": "SC-3620-0004",
+      "reason": "cost-code fallback: $4191.7 spread proportionally",
+      "acuTotal": 41917
+    },
+    {
+      "commitmentId": "5162cc9b-bf7a-4729-aff4-08b9627e6ce7",
+      "contract_number": "SC-000224",
+      "reason": "cost-code fallback: $12116.91 spread proportionally",
+      "acuTotal": 68789.13
+    },
+    {
+      "commitmentId": "ba520964-e0f3-4990-a6ad-03085cbddf8b",
+      "contract_number": "SC-8105-0004",
+      "reason": "cost-code fallback: $10224 spread proportionally",
+      "acuTotal": 41580
+    },
+    {
+      "commitmentId": "82accc1c-7ee2-4b8a-b3c4-e4bb26964969",
+      "contract_number": "SC-3620-0006",
+      "reason": "cost-code fallback: $584.5 spread proportionally",
+      "acuTotal": 7005
+    },
+    {
+      "commitmentId": "fd61df0b-2f5c-4e23-b1ff-c0bab520d21c",
+      "contract_number": "SC-000227",
+      "reason": "cost-code fallback: $2290.2 spread proportionally",
+      "acuTotal": 16998
+    },
+    {
+      "commitmentId": "dca6639c-e4ea-4829-b3a1-4bfb511be9ae",
+      "contract_number": "SC-6669-0001",
+      "reason": "cost-code fallback: $4935 spread proportionally",
+      "acuTotal": 61833
+    },
+    {
+      "commitmentId": "6d63535c-b87c-4639-92e9-12f0b7999dda",
+      "contract_number": "SC-8862-0002",
+      "reason": "cost-code fallback: $10000 spread proportionally",
+      "acuTotal": 10000
+    },
+    {
+      "commitmentId": "b530f9ac-ac48-42c6-9aed-150cda95d414",
+      "contract_number": "SC-5347-0005",
+      "reason": "cost-code fallback: $88758 spread proportionally",
+      "acuTotal": 527383.44
+    },
+    {
+      "commitmentId": "c3846dab-cb1f-46e1-913c-34663fc90c38",
+      "contract_number": "SC-3620-0005",
+      "reason": "cost-code fallback: $110 spread proportionally",
+      "acuTotal": 1100
+    },
+    {
+      "commitmentId": "b56ba719-3156-4025-b4a6-3c1bb8d3d85e",
+      "contract_number": "SC-6669-0008",
+      "reason": "cost-code fallback: $9108 spread proportionally",
+      "acuTotal": 36108
+    },
+    {
+      "commitmentId": "43c9d8bc-5a30-4fb0-a8ae-70f3a7203090",
+      "contract_number": "SC-5092-0011",
+      "reason": "cost-code fallback: $3468.68 spread proportionally",
+      "acuTotal": 3468.6800000000003
+    },
+    {
+      "commitmentId": "6a4f9fa3-ad77-4526-9ac3-86ff8be9b5c7",
+      "contract_number": "SC-000176",
+      "reason": "cost-code fallback: $16764.2 spread proportionally",
+      "acuTotal": 37124
+    },
+    {
+      "commitmentId": "4eeca7aa-07fe-4232-b733-a54162d44699",
+      "contract_number": "SC-000156",
+      "reason": "cost-code fallback: $31557.15 spread proportionally",
+      "acuTotal": 151604.05
+    },
+    {
+      "commitmentId": "abf03da0-ee74-4fa0-aecb-18fc244f3998",
+      "contract_number": "SC-000208",
+      "reason": "cost-code fallback: $122.5 spread proportionally",
+      "acuTotal": 1225
+    },
+    {
+      "commitmentId": "d10c1dc4-990f-4139-a190-f463851c50ab",
+      "contract_number": "SC-000226",
+      "reason": "cost-code fallback: $1480.49 spread proportionally",
+      "acuTotal": 1480.49
+    },
+    {
+      "commitmentId": "f338696e-8c47-49fd-9cbb-f99f43c9198d",
+      "contract_number": "SC-000225",
+      "reason": "cost-code fallback: $2725 spread proportionally",
+      "acuTotal": 27250
+    },
+    {
+      "commitmentId": "58506838-d6fd-4969-ba04-f9159a9b9289",
+      "contract_number": "SC-000182",
+      "reason": "cost-code fallback: $9395.12 spread proportionally",
+      "acuTotal": 15652.03
+    },
+    {
+      "commitmentId": "df3165b9-455d-4808-b11b-73a6797835ea",
+      "contract_number": "SC-000232",
+      "reason": "cost-code fallback: $7759.8 spread proportionally",
+      "acuTotal": 48798
+    },
+    {
+      "commitmentId": "8f08441a-db7e-4490-831d-60f3274889c9",
+      "contract_number": "SC-000199",
+      "reason": "cost-code fallback: $9730.4 spread proportionally",
+      "acuTotal": 20372
+    },
+    {
+      "commitmentId": "4850161f-a677-4dd6-9ffc-8aa786d72928",
+      "contract_number": "SC-000290",
+      "reason": "cost-code fallback: $15747.34 spread proportionally",
+      "acuTotal": 157473.44
     },
     {
       "commitmentId": "8cfbbd0d-cbd0-4093-9172-6438d372363f",
@@ -68,10 +324,34 @@
       "acuTotal": 4950
     },
     {
-      "commitmentId": "fcae1ec1-d93a-4b1d-b67d-9b18b125f603",
-      "contract_number": "SC-000251",
-      "reason": "cost-code fallback: $2179.3 spread proportionally",
-      "acuTotal": 21793
+      "commitmentId": "e2569c94-6d4c-4cbc-8d96-4cf539832dd7",
+      "contract_number": "SC-6669-0002",
+      "reason": "cost-code fallback: $2620 spread proportionally",
+      "acuTotal": 3632
+    },
+    {
+      "commitmentId": "a81228ba-5100-4608-a3c5-a4577198ae24",
+      "contract_number": "SC-8189-0010",
+      "reason": "cost-code fallback: $5875 spread proportionally",
+      "acuTotal": 5875
+    },
+    {
+      "commitmentId": "4d2a25bd-8370-48db-a842-9e38b3c5c055",
+      "contract_number": "PO-5296-0004",
+      "reason": "cost-code fallback: $50000 spread proportionally",
+      "acuTotal": 50000
+    },
+    {
+      "commitmentId": "46caec56-edc7-422a-a248-1ae2c4884328",
+      "contract_number": "PO-8509-0001",
+      "reason": "cost-code fallback: $14490 spread proportionally",
+      "acuTotal": 73890
+    },
+    {
+      "commitmentId": "0816420e-09e1-4d44-8577-8853f7287785",
+      "contract_number": "PO-2403-0009",
+      "reason": "cost-code fallback: $950 spread proportionally",
+      "acuTotal": 9500
     }
   ]
 }

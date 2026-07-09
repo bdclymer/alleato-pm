@@ -1,0 +1,110 @@
+{
+  "shell": "0816420e-09e1-4d44-8577-8853f7287785",
+  "project": 43,
+  "mode": "APPLY",
+  "counts": {
+    "auto": 4,
+    "strong": 0,
+    "flag": 2
+  },
+  "perTarget": [
+    {
+      "target": "SC-2403-0009",
+      "count": 4,
+      "amount": 229087.27,
+      "contract": 482091
+    }
+  ],
+  "plan": [
+    {
+      "invoice_id": 694,
+      "invoice_number": "002145",
+      "amount": 124027.6,
+      "vendor_id": "MERCON",
+      "desc": "SC-2403-0009 Westfield Collective PayApp2",
+      "token": "SC-2403-0009",
+      "domCode": null,
+      "tier": "AUTO",
+      "target_id": "921e130f-fb95-4643-95a3-1d0505b0c825",
+      "target_number": "SC-2403-0009",
+      "target_fk": "subcontract_id",
+      "target_table": "subcontracts",
+      "reason": "token SC-2403-0009 == commitment SC-2403-0009"
+    },
+    {
+      "invoice_id": 209,
+      "invoice_number": "002898",
+      "amount": 8550,
+      "vendor_id": "BESTEQUIP",
+      "desc": "PO-2403-0009 Westfield Collective",
+      "token": "PO-2403-0009",
+      "domCode": "05-5823",
+      "tier": "FLAG",
+      "target_id": null,
+      "target_number": null,
+      "target_fk": null,
+      "target_table": null,
+      "reason": "no commitment (vendor BESTEQUIP, code 05-5823) — likely direct cost"
+    },
+    {
+      "invoice_id": 147,
+      "invoice_number": "002550",
+      "amount": 22586.36,
+      "vendor_id": "MERCON",
+      "desc": "SC-2403-0009 Westfield Collective PayApp5",
+      "token": "SC-2403-0009",
+      "domCode": null,
+      "tier": "AUTO",
+      "target_id": "921e130f-fb95-4643-95a3-1d0505b0c825",
+      "target_number": "SC-2403-0009",
+      "target_fk": "subcontract_id",
+      "target_table": "subcontracts",
+      "reason": "token SC-2403-0009 == commitment SC-2403-0009"
+    },
+    {
+      "invoice_id": 119,
+      "invoice_number": "002259",
+      "amount": 82273.31,
+      "vendor_id": "MERCON",
+      "desc": "SC-2403-0009 Westfield Collective PayApp3",
+      "token": "SC-2403-0009",
+      "domCode": null,
+      "tier": "AUTO",
+      "target_id": "921e130f-fb95-4643-95a3-1d0505b0c825",
+      "target_number": "SC-2403-0009",
+      "target_fk": "subcontract_id",
+      "target_table": "subcontracts",
+      "reason": "token SC-2403-0009 == commitment SC-2403-0009"
+    },
+    {
+      "invoice_id": 388,
+      "invoice_number": "003146",
+      "amount": 950,
+      "vendor_id": "BESTEQUIP",
+      "desc": "PO-2403-0009 Westfield Collective",
+      "token": "PO-2403-0009",
+      "domCode": null,
+      "tier": "FLAG",
+      "target_id": null,
+      "target_number": null,
+      "target_fk": null,
+      "target_table": null,
+      "reason": "no commitment (vendor BESTEQUIP, code {} only) — likely direct cost"
+    },
+    {
+      "invoice_id": 318,
+      "invoice_number": "003081",
+      "amount": 200,
+      "vendor_id": "MERCON",
+      "desc": "SC-2403-0009-3058",
+      "token": "SC-2403-0009",
+      "domCode": null,
+      "tier": "AUTO",
+      "target_id": "921e130f-fb95-4643-95a3-1d0505b0c825",
+      "target_number": "SC-2403-0009",
+      "target_fk": "subcontract_id",
+      "target_table": "subcontracts",
+      "reason": "token SC-2403-0009 == commitment SC-2403-0009"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { buildAcumaticaArInvoiceHref } from "@/lib/acumatica/ar-invoice-url";
 
 import type {
   ColumnConfig,
@@ -73,6 +74,7 @@ export interface OwnerInvoice {
   vendor_name?: string | null;
   // ERP sync
   acumatica_ref_nbr?: string | null;
+  acumatica_doc_type?: string | null;
   // Retention (stored as percentage, e.g. 5.0 = 5%)
   contract_retention_percentage?: number | null;
   // Change orders (computed from prime_contract_change_orders vs invoice period)
@@ -310,15 +312,18 @@ export function buildInvoiceTableColumns(
       label: "Contract",
       defaultVisible: true,
       render: (invoice) => {
-        const label = invoice.contract_number ?? invoice.contract_title ?? invoice.prime_contract_id;
-        const sublabel = invoice.contract_number && invoice.contract_title ? invoice.contract_title : null;
+        const number = invoice.contract_number ?? invoice.prime_contract_id ?? null;
+        const title = invoice.contract_title ?? null;
+        // Single line: prefer the contract number; only append the title when it
+        // adds information (i.e. it isn't just a repeat of the number).
+        const label = number ?? title;
+        const suffix = title && title !== number ? title : null;
+        if (!label) return <span className="text-muted-foreground">—</span>;
         return (
-          <div className="text-sm">
-            <span className="font-medium">{label}</span>
-            {sublabel && (
-              <p className="text-xs text-muted-foreground truncate max-w-40">{sublabel}</p>
-            )}
-          </div>
+          <span className="text-sm">
+            {label}
+            {suffix ? <span className="text-muted-foreground"> — {suffix}</span> : null}
+          </span>
         );
       },
     },
@@ -351,11 +356,20 @@ export function buildInvoiceTableColumns(
       id: "erp_status",
       label: "ERP Status",
       defaultVisible: false,
-      render: (invoice) => (
-        <span className="tabular-nums text-sm text-muted-foreground">
-          {invoice.acumatica_ref_nbr ?? "—"}
-        </span>
-      ),
+      render: (invoice) => {
+        const ref = invoice.acumatica_ref_nbr;
+        if (!ref) return null;
+        return (
+          <a
+            href={buildAcumaticaArInvoiceHref(ref, invoice.acumatica_doc_type)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tabular-nums text-sm text-primary underline-offset-4 hover:underline"
+          >
+            {ref}
+          </a>
+        );
+      },
     },
   ];
 }

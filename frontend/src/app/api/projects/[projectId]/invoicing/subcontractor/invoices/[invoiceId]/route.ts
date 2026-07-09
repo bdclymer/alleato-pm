@@ -324,27 +324,16 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     // Fetch project info (name, number, address)
     const { data: project } = await supabase
       .from("projects")
-      .select("name, project_number, address, company_id")
+      .select("name, project_number, address")
       .eq("id", projectIdNum)
       .maybeSingle();
 
-    // Fetch GC company (owner of the project) with address
-    let gcCompany: {
-      name: string | null;
-      address: string | null;
-      city: string | null;
-      state: string | null;
-      zip_code: string | null;
-    } | null = null;
-    if (project?.company_id) {
-      const { data: gc } = await supabase
-        .from("companies")
-        .select("name, address, city, state, zip_code")
-        .eq("id", project.company_id)
-        .maybeSingle();
-      gcCompany = gc ?? null;
-    }
-    const resolvedGcCompany = resolveGeneralContractorCompany(gcCompany);
+    // The "General Contractor" on a subcontractor invoice is the GC issuing the
+    // subcontract — Alleato — NEVER the project owner/client. `projects.company_id`
+    // holds the OWNER (e.g. "Goodwill Industries" on project 754), so deriving the
+    // GC from it mislabels the owner as the GC on the AIA G702 form. Always resolve
+    // to Alleato (resolveGeneralContractorCompany(null) returns the Alleato identity).
+    const resolvedGcCompany = resolveGeneralContractorCompany(null);
 
     // Contract date from subcontract or PO
     const contractDate = sc?.contract_date ?? po?.contract_date ?? null;

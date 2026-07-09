@@ -139,6 +139,20 @@ export function shouldRenderRowSelection(
   return features?.enableRowSelection ?? true;
 }
 
+/** Minimum width (px) a column can be dragged down to during a resize. */
+export const MIN_COLUMN_RESIZE_WIDTH = 120;
+
+/**
+ * Pure width computation for a column-resize drag, clamped to the minimum.
+ * Extracted so the resize floor is regression-tested without rendering the table.
+ */
+export function computeResizedColumnWidth(
+  startWidth: number,
+  deltaX: number,
+): number {
+  return Math.max(MIN_COLUMN_RESIZE_WIDTH, startWidth + deltaX);
+}
+
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -1017,7 +1031,11 @@ export function UnifiedTablePage<T>({
     startX: number;
     startWidth: number;
   } | null>(null);
-  const [isResizingColumn, setIsResizingColumn] = React.useState(false);
+  // True from the first drag movement until the synthetic click that follows
+  // mouseup is consumed — lets the header's onClick skip sorting after a resize.
+  const didResizeRef = React.useRef(false);
+  // Coalesces mousemove width updates into one state write per animation frame.
+  const resizeRafRef = React.useRef<number | null>(null);
   const hasUserManagedColumnOrderRef = React.useRef(false);
   const selectionColumnWidth = 40;
 
@@ -1848,39 +1866,52 @@ export function UnifiedTablePage<T>({
         startX: event.clientX,
         startWidth: headerCell.getBoundingClientRect().width,
       };
-      setIsResizingColumn(true);
+      didResizeRef.current = false;
+      // Suppress text selection and lock the resize cursor for the whole drag.
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      // Attach listeners synchronously here — NOT via an effect keyed on state —
+      // so the drag is tracked from the very first pixel instead of after a
+      // re-render (which is slow on large tables and made resize feel laggy).
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const resizeState = resizeStateRef.current;
+        if (!resizeState) return;
+        didResizeRef.current = true;
+        const deltaX = moveEvent.clientX - resizeState.startX;
+        const nextWidth = computeResizedColumnWidth(
+          resizeState.startWidth,
+          deltaX,
+        );
+        // Coalesce into one state write per frame so a fast drag doesn't
+        // re-render the whole table body on every mousemove event.
+        if (resizeRafRef.current !== null) return;
+        resizeRafRef.current = window.requestAnimationFrame(() => {
+          resizeRafRef.current = null;
+          setColumnWidths((prev) => ({
+            ...prev,
+            [resizeState.columnId]: nextWidth,
+          }));
+        });
+      };
+
+      const handleMouseUp = () => {
+        resizeStateRef.current = null;
+        if (resizeRafRef.current !== null) {
+          window.cancelAnimationFrame(resizeRafRef.current);
+          resizeRafRef.current = null;
+        }
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     },
     [],
   );
-
-  React.useEffect(() => {
-    if (!isResizingColumn) return;
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const resizeState = resizeStateRef.current;
-      if (!resizeState) return;
-
-      const deltaX = event.clientX - resizeState.startX;
-      const nextWidth = Math.max(120, resizeState.startWidth + deltaX);
-      setColumnWidths((prev) => ({
-        ...prev,
-        [resizeState.columnId]: nextWidth,
-      }));
-    };
-
-    const handleMouseUp = () => {
-      resizeStateRef.current = null;
-      setIsResizingColumn(false);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizingColumn]);
 
   const renderTableToolbar = (className?: string) => (
     <TableToolbar
@@ -2290,6 +2321,13 @@ export function UnifiedTablePage<T>({
                             }
                             style={columnStyle}
                             onClick={() => {
+                              // A resize drag ends with a synthetic click on the
+                              // <th> (the handle is a child). Consume it so the
+                              // resize doesn't also re-sort the column.
+                              if (didResizeRef.current) {
+                                didResizeRef.current = false;
+                                return;
+                              }
                               if (isSortable) {
                                 handleSortClick(column.id);
                               }
@@ -2474,6 +2512,9 @@ export function UnifiedTablePage<T>({
                                     onMouseDown={(event) =>
                                       handleColumnResizeStart(event, column.id)
                                     }
+                                    // A click on the handle itself (no drag) must
+                                    // not bubble to the header's sort onClick.
+                                    onClick={(event) => event.stopPropagation()}
                                     aria-hidden="true"
                                   />
                                 </>
