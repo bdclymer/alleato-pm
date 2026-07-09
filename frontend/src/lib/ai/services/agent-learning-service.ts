@@ -1,11 +1,7 @@
 import { createHash } from "crypto";
-import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { toSessionUuid } from "@/lib/ai/session-id";
-import {
-  getOpenAICompatibleClientConfig,
-  getOpenAIModelId,
-} from "@/lib/ai/provider-config";
+import { getOpenAIModelId } from "@/lib/ai/provider-config";
 import { getOpenAI } from "@/lib/ai/tools/tool-utils";
 import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
 import { createRagServiceClient } from "@/lib/supabase/service";
@@ -109,17 +105,6 @@ const STOPWORDS = new Set([
   "response",
   "feedback",
 ]);
-
-let cachedOpenAI: OpenAI | null = null;
-
-function getOpenAI(): OpenAI {
-  if (!cachedOpenAI) {
-    const config = getOpenAICompatibleClientConfig("Agent learning embeddings");
-    cachedOpenAI = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
-  }
-
-  return cachedOpenAI;
-}
 
 function createUntypedServiceClient() {
   const supabaseUrl =
