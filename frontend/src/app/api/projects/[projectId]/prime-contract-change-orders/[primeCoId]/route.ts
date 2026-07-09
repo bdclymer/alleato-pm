@@ -203,6 +203,19 @@ export const PUT = withApiGuardrails(
       );
     }
 
+    // Invariant: a PCCO carries `approved_at` only while its status is "approved".
+    // Approval (stamping `approved_at`) is owned by the dedicated approve route,
+    // which also recalculates the contract's revised value. This route only ever
+    // leaves the approved state, so any status change to a non-approved value must
+    // clear `approved_at` — otherwise a reverted-to-draft row keeps looking
+    // approved (phantom approved date in the budget CO drilldown and detail page).
+    if ("status" in updateData) {
+      const nextStatus = String(updateData.status ?? "").toLowerCase();
+      if (nextStatus !== "approved") {
+        updateData.approved_at = null;
+      }
+    }
+
     const { data, error } = await supabase
       .from("prime_contract_change_orders")
       .update(updateData)
