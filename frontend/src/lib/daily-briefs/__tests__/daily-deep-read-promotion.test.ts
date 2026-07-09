@@ -164,6 +164,7 @@ const packet: CanonicalDailyBriefPacket = {
   sourceCount: 0,
   briefMarkdown: "## Executive read\nSummary",
   sections: [{ title: "Executive read", body: "Summary" }],
+  brief: null,
   compilerVersion: "daily-deep-read-v1",
 };
 

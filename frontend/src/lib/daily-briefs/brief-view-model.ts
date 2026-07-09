@@ -1,3 +1,4 @@
+import type { BriefV3 } from "./brief-v3-types";
 import type { CanonicalDailyBriefPacket } from "./canonical-packets";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -637,9 +638,136 @@ function buildTemperature(
 
 // ── public builder ────────────────────────────────────────────────────────────
 
+// ── v3 structured brief → view model ────────────────────────────────────────
+// The packet now carries a structured `brief` (see brief-v3-types.ts). Build the
+// same view-model shape from it so the React view is unchanged. Legacy packets
+// (no `brief`) fall back to the section-parsing path below.
+
+function v3Decisions(brief: BriefV3): DecisionItem[] {
+  return brief.callsToday.map((call) => ({
+    reference: null,
+    title: plainText(call.project),
+    body: parseInline(stripCitations(call.question)),
+    badge: call.optional ? "Optional" : "Decision",
+    severity: call.optional ? "info" : classifySeverity(`${call.project} ${call.question}`),
+    due: null,
+  }));
+}
+
+function v3Projects(brief: BriefV3): ProjectCard[] {
+  return [...brief.projects]
+    .sort((a, b) => (a.urgencyRank ?? 99) - (b.urgencyRank ?? 99))
+    .map((project) => {
+      const clean = stripCitations(project.context);
+      const actionText = project.actionItems.map((item) => item.text).join(" ");
+      return {
+        name: project.name,
+        subtitle: project.hasOwnerDecision
+          ? "Needs a decision"
+          : project.resolvedToday
+            ? "Resolved today"
+            : "On track",
+        pill: project.hasOwnerDecision ? "Action" : "On track",
+        severity: project.hasOwnerDecision ? classifySeverity(clean) : "info",
+        body: parseInline(clean),
+        figures: buildProjectFigures(detectMoney(`${clean} ${actionText}`)),
+      };
+    });
+}
+
+function v3Operations(brief: BriefV3): OperationRow[] {
+  const rows: OperationRow[] = [];
+  for (const project of brief.projects) {
+    for (const item of project.actionItems) {
+      const owner = item.ownerIsBrandon ? "You" : item.owner;
+      const tag = item.due ? `Due ${item.due}` : item.urgency ? "Urgent" : owner;
+      rows.push({
+        title: `${project.name}: ${plainText(item.text)}`,
+        body: parseInline(stripCitations(`${owner} — ${item.text}`)),
+        tag,
+        severity: item.due || item.urgency ? classifySeverity(`${item.text} ${item.urgency ?? ""}`) : "info",
+      });
+    }
+  }
+  return rows.slice(0, 40);
+}
+
+function v3Money(brief: BriefV3): MoneyStat[] {
+  const stats: MoneyStat[] = [];
+  const seen = new Set<string>();
+  for (const project of brief.projects) {
+    const text = `${project.context} ${project.actionItems.map((item) => item.text).join(" ")}`;
+    for (const figure of detectMoney(text)) {
+      if (seen.has(figure)) continue;
+      seen.add(figure);
+      stats.push({
+        label: project.name,
+        figure,
+        tag: "Exposure",
+        severity: classifySeverity(project.context),
+        body: parseInline(stripCitations(firstSentence(project.context))),
+      });
+      if (stats.length >= 8) return stats;
+    }
+  }
+  return stats;
+}
+
+function v3Read(brief: BriefV3): ExecutiveBriefViewModel["read"] {
+  const items: ReadItem[] = [...brief.projects]
+    .filter((project) => project.hasOwnerDecision)
+    .sort((a, b) => (a.urgencyRank ?? 99) - (b.urgencyRank ?? 99))
+    .slice(0, 5)
+    .map((project) => ({
+      eyebrow: project.name,
+      tone: classifySeverity(project.context),
+      body: parseInline(stripCitations(firstSentence(project.context))),
+    }));
+  const count = brief.callsToday.length;
+  const lead = parseInline(
+    count ? `${count} decision${count === 1 ? "" : "s"} need you today.` : "No decisions need you today.",
+  );
+  return { lead, supporting: [], items };
+}
+
+function buildViewModelFromV3(
+  packet: CanonicalDailyBriefPacket,
+  brief: BriefV3,
+): ExecutiveBriefViewModel {
+  const { weekday, dateLabel } = formatBusinessDate(packet.businessDate);
+  const { counts, filteredCount } = extractCounts(packet);
+  const decisions = v3Decisions(brief);
+  const money = v3Money(brief);
+  const operations = v3Operations(brief);
+  const projects = v3Projects(brief);
+  const read = v3Read(brief);
+  const count = brief.callsToday.length;
+
+  return {
+    weekday,
+    dateLabel,
+    preparedFor: EXECUTIVE_BRIEF_PREPARED_FOR,
+    sourceWindowLabel: formatSourceWindow(packet.businessDate),
+    counts,
+    filteredCount,
+    asOfLabel: formatAsOf(packet.generatedAt),
+    thesis: count ? `${count} owner decision${count === 1 ? "" : "s"} need you today` : null,
+    temperature: buildTemperature(decisions, operations, money, projects),
+    read,
+    decisions,
+    money,
+    operations,
+    projects,
+  };
+}
+
 export function buildExecutiveBriefViewModel(
   packet: CanonicalDailyBriefPacket,
 ): ExecutiveBriefViewModel {
+  // v3 structured brief is the source of truth when present.
+  if (packet.brief) return buildViewModelFromV3(packet, packet.brief);
+
+  // Legacy packets: parse the markdown section map.
   const sectionMap = getSectionMap(packet);
   const { weekday, dateLabel } = formatBusinessDate(packet.businessDate);
   const { counts, filteredCount } = extractCounts(packet);

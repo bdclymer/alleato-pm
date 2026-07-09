@@ -131,7 +131,46 @@ function makePacket(): CanonicalDailyBriefPacket {
     sourceCount: 144,
     briefMarkdown: SAMPLE_MARKDOWN,
     sections: splitDailyBriefMarkdown(SAMPLE_MARKDOWN),
+    brief: null, // legacy packet: exercises the section-parsing fallback
     compilerVersion: "daily_deep_read",
+  };
+}
+
+function makeV3Packet(): CanonicalDailyBriefPacket {
+  return {
+    ...makePacket(),
+    brief: {
+      version: "v3",
+      businessDate: "2026-07-07",
+      callsToday: [
+        { project: "Union Collective", question: "decide on battery storage.", optional: false, sourceIds: ["S247"] },
+        { project: "Vermillion Rise", question: "approve the ~$11,000 paving change?", optional: false, sourceIds: ["S53"] },
+      ],
+      projects: [
+        {
+          name: "Union Collective",
+          urgencyRank: 1,
+          hasOwnerDecision: true,
+          resolvedToday: false,
+          actionItems: [
+            { ownerIsBrandon: true, owner: "You", text: "decide on battery storage", due: null, dueIso: null, urgency: null, optional: false, sourceIds: ["S247"] },
+            { ownerIsBrandon: false, owner: "Andrew Cannon", text: "email Viox for the 70% set", due: "July 14", dueIso: "2026-07-14", urgency: null, optional: false, sourceIds: ["S247"] },
+          ],
+          context: "Union is losing money this week; steel bid is $950,109. [S247]",
+        },
+        {
+          name: "McLane Jazz, Utah",
+          urgencyRank: 9,
+          hasOwnerDecision: false,
+          resolvedToday: true,
+          actionItems: [],
+          context: "Sprinkler support resolved today. [S259]",
+        },
+      ],
+      looseEnds: [],
+      sourceCoverage: { meetings: 11, emails: 98, teams: 15, documents: 20, thinLanes: [], note: null },
+      sources: {},
+    },
   };
 }
 
@@ -208,5 +247,35 @@ describe("buildExecutiveBriefViewModel", () => {
     expect(model.read.lead.length).toBeGreaterThan(0);
     expect(model.read.items.length).toBeGreaterThan(0);
     expect(model.read.items.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe("buildExecutiveBriefViewModel — v3 structured brief", () => {
+  const model = buildExecutiveBriefViewModel(makeV3Packet());
+
+  it("builds decisions from callsToday (optional flagged)", () => {
+    expect(model.decisions).toHaveLength(2);
+    expect(model.decisions[0].title).toBe("Union Collective");
+    expect(model.decisions[0].badge).toBe("Decision");
+  });
+
+  it("orders projects by urgency and labels decision vs on-track", () => {
+    expect(model.projects[0].name).toBe("Union Collective");
+    expect(model.projects[0].pill).toBe("Action");
+    const mclane = model.projects.find((p) => p.name.startsWith("McLane"));
+    expect(mclane?.subtitle).toBe("Resolved today");
+  });
+
+  it("derives operations from action items with owner/due tags", () => {
+    const viox = model.operations.find((o) => o.title.includes("Viox"));
+    expect(viox?.tag).toBe("Due July 14");
+  });
+
+  it("pulls money exposure from project context", () => {
+    expect(model.money.some((m) => m.figure.includes("950,109"))).toBe(true);
+  });
+
+  it("synthesizes a decisions-count thesis", () => {
+    expect(model.thesis).toBe("2 owner decisions need you today");
   });
 });

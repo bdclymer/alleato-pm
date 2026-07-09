@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database, Json } from "@/types/database.types";
+import type { BriefV3 } from "./brief-v3-types";
 import type { DailyBriefHistoryItem } from "./types";
 
 export const DAILY_EXECUTIVE_BRIEF_TARGET_SLUG = "daily-executive-brief";
@@ -63,8 +64,20 @@ export type CanonicalDailyBriefPacket = {
   sources: DailyBriefSourceRef[];
   briefMarkdown: string;
   sections: DailyBriefMarkdownSection[];
+  /** Structured v3 brief when the packet was generated in v3 format; null for legacy packets. */
+  brief: BriefV3 | null;
   compilerVersion: string | null;
 };
+
+/** Runtime type guard: a value is a structured v3 brief. */
+function isBriefV3(value: unknown): value is BriefV3 {
+  return isRecord(value) && value.version === "v3" && Array.isArray(value.projects);
+}
+
+/** Safely extract the structured v3 brief from a packet_json record. */
+function extractBriefV3(packetJson: JsonRecord): BriefV3 | null {
+  return isBriefV3(packetJson.brief) ? packetJson.brief : null;
+}
 
 export type CanonicalDailyBriefApiResponse = {
   sourceOfTruth: "intelligence_packets";
@@ -203,6 +216,7 @@ function mapPacket(row: IntelligencePacketRow): CanonicalDailyBriefPacket {
     sources: mapSourceRefs(packetJson),
     briefMarkdown,
     sections: splitDailyBriefMarkdown(briefMarkdown),
+    brief: extractBriefV3(packetJson),
     compilerVersion: row.compiler_version,
   };
 }

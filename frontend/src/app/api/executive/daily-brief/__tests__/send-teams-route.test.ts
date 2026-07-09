@@ -86,6 +86,7 @@ const canonicalPacket = {
   sourceCount: 2,
   briefMarkdown: "## Executive read\nSummary",
   sections: [{ title: "Executive read", body: "Summary" }],
+  brief: null,
   compilerVersion: "manual-v1",
 };
 

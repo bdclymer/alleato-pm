@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import dotenv from "dotenv";
 import pg from "pg";
@@ -91,42 +92,6 @@ async function loadDailyDeepReadPacket() {
   });
 }
 
-function normalizeTitle(value) {
-  return String(value || "")
-    .replace(/^\s*[-*]\s*/, "")
-    .replace(/^\*\*Candidate(?:\s+\w+)?:\*\*\s*/i, "")
-    .replace(/^Candidate(?:\s+\w+)?:\s*/i, "")
-    .replace(/\*\*/g, "")
-    .trim();
-}
-
-function cleanInline(value) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .replace(/\s+Sources?:\s*`[^`]+`.*$/i, "")
-    .trim();
-}
-
-function sourceIdsFromText(value) {
-  const ids = new Set();
-  const text = String(value || "");
-  for (const match of text.matchAll(/`([^`]+)`/g)) {
-    const id = match[1].trim();
-    if (
-      id &&
-      (/^S\d+$/.test(id) || // short citation alias, e.g. `S12`
-        id.startsWith("outlook_") ||
-        id.startsWith("teams") ||
-        id.startsWith("sharepoint_") ||
-        id.startsWith("01") ||
-        /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))
-    ) {
-      ids.add(id);
-    }
-  }
-  return [...ids];
-}
-
 const ELLIPSIS_SPLIT = /…|\.{3,}/;
 
 /**
@@ -181,45 +146,6 @@ function canonicalizeSourceIds(tokens, sourceSet) {
     push(token); // pre-alias full id we couldn't disambiguate; keep for provenance
   }
   return out;
-}
-
-function parseBullets(markdown) {
-  const lines = String(markdown || "").split(/\r?\n/);
-  const bullets = [];
-  let current = null;
-  for (const line of lines) {
-    if (/^\s*[-*]\s+/.test(line)) {
-      if (current) bullets.push(current.join("\n"));
-      current = [line];
-      continue;
-    }
-    if (current && line.trim()) {
-      current.push(line);
-    }
-  }
-  if (current) bullets.push(current.join("\n"));
-  return bullets;
-}
-
-function titleFromBullet(bullet) {
-  const firstLine = bullet.split(/\r?\n/)[0] || "";
-  const withoutBullet = firstLine.replace(/^\s*[-*]\s*/, "");
-  const afterCandidate = withoutBullet.match(/^\*\*Candidate(?:\s+\w+)?:\*\*\s*(.+)$/i)?.[1];
-  const bold = withoutBullet.match(/\*\*(?!Candidate(?:\s+\w+)?:)(.+?)\*\*/i)?.[1];
-  const raw = afterCandidate || bold || withoutBullet;
-  const normalized = cleanInline(normalizeTitle(raw));
-  const beforeDash = normalized.split(/\s+[—–-]\s+/)[0]?.trim();
-  return (beforeDash || normalized).slice(0, 220) || "Daily Deep Read candidate";
-}
-
-function summaryFromBullet(bullet, title) {
-  const text = cleanInline(
-    bullet
-      .replace(/^\s*[-*]\s*/, "")
-      .replace(/\*\*/g, "")
-      .replace(title, ""),
-  );
-  return text.slice(0, 1800) || title;
 }
 
 function stableKey(packetId, signalType, title) {
@@ -291,28 +217,10 @@ function dedupeCandidates(candidates) {
   }));
 }
 
-function confidenceForSection(section) {
-  if (section === "Project Intelligence Updates") return { score: 0.86, label: "high" };
-  if (section === "Task Candidates") return { score: 0.74, label: "medium" };
+function confidenceForSignal(signalType) {
+  if (signalType === "decision") return { score: 0.86, label: "high" };
+  if (signalType === "task") return { score: 0.74, label: "medium" };
   return { score: 0.8, label: "medium" };
-}
-
-function signalTypeForSection(section) {
-  switch (section) {
-    case "Project Intelligence Updates":
-      return "project_update";
-    case "Risk Candidates":
-      return "risk";
-    case "Decision Candidates":
-    case "Highest-Leverage Owner Decisions":
-      return "decision";
-    case "Task Candidates":
-      return "task";
-    case "Initiative Candidates":
-      return "process_issue";
-    default:
-      return null;
-  }
 }
 
 function projectIdForSourceIds(sourceIds, sourceSet) {
@@ -433,76 +341,99 @@ function projectIdForText(text, projectRows) {
   return scored[0].id;
 }
 
+// Candidates come straight from the STRUCTURED v3 brief: owner decisions from
+// `brief.callsToday`, tasks from each project's `actionItems`. No markdown/section
+// parsing — the structure already carries owner, due date, and source aliases.
 function candidatesFromPacket(packet, projectRows) {
-  const sections = packet.packet_json?.sections || {};
+  const brief = packet.packet_json?.brief;
   const sourceSet = packet.packet_json?.sourceSet || {};
   const businessDate = packet.packet_json?.businessDate || packet.covered_start_at?.toISOString?.()?.slice(0, 10);
+  if (!brief || typeof brief !== "object") return [];
   const candidates = [];
-  for (const section of [
-    "Project Intelligence Updates",
-    "Risk Candidates",
-    "Decision Candidates",
-    "Highest-Leverage Owner Decisions",
-    "Task Candidates",
-    "Initiative Candidates",
-  ]) {
-    const signalType = signalTypeForSection(section);
-    const body = sections[section];
-    if (!signalType || typeof body !== "string") continue;
-    for (const bullet of parseBullets(body)) {
-      const title = titleFromBullet(bullet);
-      const summary = summaryFromBullet(bullet, title);
-      const sourceIds = canonicalizeSourceIds(sourceIdsFromText(bullet), sourceSet);
-      const primarySourceId = sourceIds[0] || `daily_packet:${packet.id}`;
-      const { score, label } = confidenceForSection(section);
-      const sourceProjectId = projectIdForSourceIds(sourceIds, sourceSet);
-      const textProjectId = projectIdForText(`${title}\n${summary}\n${bullet}`, projectRows);
-      candidates.push({
-        source_document_id: primarySourceId,
-        source_chunk_id: null,
-        target_id: null,
-        project_id: sourceProjectId || textProjectId,
-        signal_type: signalType,
-        title,
-        summary,
-        // No real "why" is extracted from a bullet — the section it came from is
-        // already carried in extraction_json.section. Never store placeholder
-        // prose here: it gets woven into /daily-brief and /executive narrative.
-        why_it_matters: null,
-        current_status: "open",
-        confidence_score: score,
-        confidence: label,
-        status: "needs_review",
-        suggested_owner_person_id: null,
-        suggested_owner_label: null,
-        // No real next action is extracted; the review workflow owns "promote or
-        // reject". Store null rather than generic boilerplate that pollutes surfaces.
-        next_action: null,
-        stale_after: null,
-        source_occurred_at: packet.covered_end_at,
-        excerpt: bullet.slice(0, 2000),
-        normalized_signal_key: stableKey(packet.id, signalType, title),
-        extraction_json: {
-          daily_packet_id: packet.id,
-          daily_packet_generated_at: packet.generated_at,
-          business_date: businessDate,
-          source_ids: sourceIds,
-          section,
-          consumer_compiler_version: COMPILER_VERSION,
-          candidate_policy: "review_gated_not_auto_promoted",
-          initiative_subtype: section === "Initiative Candidates" ? "initiative_candidate" : undefined,
-          source_policy:
-            "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
-          project_assignment_method: sourceProjectId
-            ? "source_set_single_project"
-            : textProjectId
-              ? "project_name_or_number_match"
-              : "unassigned_company_wide",
-        },
-        compiler_version: COMPILER_VERSION,
+
+  const push = ({ signalType, project, title, summary, sourceIdsRaw, origin, extraction = {} }) => {
+    const cleanTitle = String(title || "").trim();
+    if (!cleanTitle) return;
+    const cleanSummary = String(summary || cleanTitle).trim();
+    const sourceIds = canonicalizeSourceIds(sourceIdsRaw || [], sourceSet);
+    const primarySourceId = sourceIds[0] || `daily_packet:${packet.id}`;
+    const { score, label } = confidenceForSignal(signalType);
+    const sourceProjectId = projectIdForSourceIds(sourceIds, sourceSet);
+    const textProjectId = projectIdForText(`${project || ""}\n${cleanTitle}\n${cleanSummary}`, projectRows);
+    candidates.push({
+      source_document_id: primarySourceId,
+      source_chunk_id: null,
+      target_id: null,
+      project_id: sourceProjectId || textProjectId,
+      signal_type: signalType,
+      title: cleanTitle,
+      summary: cleanSummary,
+      // No real "why" is extracted; the review workflow owns interpretation. Never
+      // store placeholder prose — it gets woven into /daily-brief and /executive.
+      why_it_matters: null,
+      current_status: "open",
+      confidence_score: score,
+      confidence: label,
+      status: "needs_review",
+      suggested_owner_person_id: null,
+      suggested_owner_label: extraction.owner ?? null,
+      next_action: null,
+      stale_after: null,
+      source_occurred_at: packet.covered_end_at,
+      excerpt: cleanSummary.slice(0, 2000),
+      normalized_signal_key: stableKey(packet.id, signalType, cleanTitle),
+      extraction_json: {
+        daily_packet_id: packet.id,
+        daily_packet_generated_at: packet.generated_at,
+        business_date: businessDate,
+        source_ids: sourceIds,
+        origin,
+        consumer_compiler_version: COMPILER_VERSION,
+        candidate_policy: "review_gated_not_auto_promoted",
+        source_policy: "Derived from daily_deep_read structured brief (v3); no direct chunk synthesis.",
+        project_assignment_method: sourceProjectId
+          ? "source_set_single_project"
+          : textProjectId
+            ? "project_name_or_number_match"
+            : "unassigned_company_wide",
+        ...extraction,
+      },
+      compiler_version: COMPILER_VERSION,
+    });
+  };
+
+  // Owner decisions → decision candidates.
+  for (const call of brief.callsToday || []) {
+    if (!call?.project || !call?.question) continue;
+    push({
+      signalType: "decision",
+      project: call.project,
+      title: `${call.project}: ${call.question}`,
+      summary: call.question,
+      sourceIdsRaw: call.sourceIds,
+      origin: "calls_today",
+      extraction: { optional: Boolean(call.optional) },
+    });
+  }
+
+  // Action items → task candidates (owner and due date carried through).
+  for (const project of brief.projects || []) {
+    for (const item of project.actionItems || []) {
+      if (!item?.text) continue;
+      const owner = item.ownerIsBrandon ? "Brandon" : item.owner || null;
+      const due = item.due ? ` (due ${item.due})` : "";
+      push({
+        signalType: "task",
+        project: project.name,
+        title: `${project.name}: ${item.text}`,
+        summary: `${item.text}${due}`,
+        sourceIdsRaw: item.sourceIds,
+        origin: "action_item",
+        extraction: { owner, due: item.due ?? null, due_iso: item.dueIso ?? null, project: project.name },
       });
     }
   }
+
   return dedupeCandidates(candidates);
 }
 
@@ -640,44 +571,37 @@ async function readBack(packet) {
 }
 
 // --- Slice A: project intelligence stems from the packet (ungated) ---------
-// The Daily Deep Read packet's "Project Intelligence Updates" section is already
-// a per-project narrative synthesized from the day's FULL transcripts / emails /
-// Teams. Roll each project's block straight into project_current_state.current_summary
-// — the exact field the /[projectId]/intelligence page reads — so project
-// intelligence is a CONSUMER of the one packet spine, not a parallel synthesizer.
-// No review gate: the packet is the source of truth. Corrections happen via
-// downstream feedback (remove/learn), never a pre-approval hold.
-
-const PROJECT_INTELLIGENCE_SECTION = "Project Intelligence Updates";
+// Each v3 project block carries a per-project narrative (`context`) synthesized
+// from the day's FULL transcripts / emails / Teams. Roll it straight into
+// project_current_state.current_summary — the exact field the /[projectId]/intelligence
+// page reads — so project intelligence is a CONSUMER of the one packet spine, not a
+// parallel synthesizer. No review gate: the packet is the source of truth.
+// Corrections happen via downstream feedback (remove/learn), never a pre-approval hold.
 
 function stripPacketCitations(text) {
   return String(text || "")
-    .replace(/`S\d+`/g, "") // packet source aliases don't resolve outside the packet
+    .replace(/`S\d+`/g, "") // legacy backtick aliases
+    .replace(/\[S\d+\]/g, "") // v3 bracket aliases don't resolve outside the packet
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+([.,;:])/g, "$1")
     .trim();
 }
 
-function projectHeaderFromBullet(bullet) {
-  // Bullet shape: "- **Vermillion Rise Warehouse:** narrative..."
-  const match = String(bullet || "").match(/^\s*[-*]\s+\*\*(.+?):?\*\*\s*([\s\S]*)$/);
-  if (!match) return null;
-  return { name: match[1].trim(), body: match[2].trim() };
-}
-
-// current_summary from the packet's prose section (owner-grade narrative).
-function summariesFromMarkdown(packet, projectRows) {
-  const section = packet.packet_json?.sections?.[PROJECT_INTELLIGENCE_SECTION];
+// current_summary from the v3 brief's per-project context (owner-grade narrative).
+function summariesFromBrief(packet, projectRows) {
+  const projects = Array.isArray(packet.packet_json?.brief?.projects)
+    ? packet.packet_json.brief.projects
+    : [];
   const map = new Map();
-  if (typeof section !== "string" || !section.trim()) return map;
-  for (const bullet of parseBullets(section)) {
-    const header = projectHeaderFromBullet(bullet);
-    if (!header) continue;
-    const projectId = projectIdForText(`${header.name}\n${header.body}`, projectRows);
+  for (const project of projects) {
+    const name = String(project?.name || "").trim();
+    const context = String(project?.context || "").trim();
+    if (!name || !context) continue;
+    const projectId = projectIdForText(`${name}\n${context}`, projectRows);
     if (!projectId || map.has(projectId)) continue; // one row per project per run
-    const currentSummary = stripPacketCitations(`${header.name}: ${header.body}`);
+    const currentSummary = stripPacketCitations(`${name}: ${context}`);
     if (!currentSummary) continue;
-    map.set(projectId, { name: header.name, currentSummary });
+    map.set(projectId, { name, currentSummary });
   }
   return map;
 }
@@ -725,10 +649,10 @@ function richFromRecords(packet, projectRows) {
   return map;
 }
 
-// Merge: current_summary from the prose section + rich fields from the
-// structured records, keyed by project. Either source alone is valid.
+// Merge: current_summary from the v3 brief's per-project context + rich fields
+// from the structured records, keyed by project. Either source alone is valid.
 function projectCurrentStateFromPacket(packet, projectRows) {
-  const summaries = summariesFromMarkdown(packet, projectRows);
+  const summaries = summariesFromBrief(packet, projectRows);
   const rich = richFromRecords(packet, projectRows);
   const projectIds = new Set([...summaries.keys(), ...rich.keys()]);
   const records = [];
@@ -845,7 +769,13 @@ async function main() {
   console.log(JSON.stringify(summary, null, 2));
 }
 
-main().catch((error) => {
-  console.error(error.stack || error.message);
-  process.exit(1);
-});
+// Pure extractors exported for unit testing (no DB). The CLI entry point below
+// only runs when this file is executed directly, not when imported.
+export { candidatesFromPacket, projectCurrentStateFromPacket };
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  main().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });
+}

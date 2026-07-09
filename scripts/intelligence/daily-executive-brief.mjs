@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import dotenv from "dotenv";
 import pg from "pg";
@@ -13,6 +14,11 @@ import {
   getAppDatabaseUrl,
   getRagDatabaseUrl,
 } from "../verify/app-db-connection.mjs";
+import {
+  nextMovesFromBriefV3,
+  renderBriefMarkdownV3,
+  validateBriefV3,
+} from "./lib/brief-v3.mjs";
 
 dotenv.config({ path: path.join(process.cwd(), ".env"), quiet: true });
 dotenv.config({ path: path.join(process.cwd(), "frontend/.env.local"), quiet: true });
@@ -595,216 +601,62 @@ async function summarizeLane(lane, items) {
   return chunks.join("\n\n");
 }
 
-async function draftExecutiveBrief(sources) {
-  const grouped = groupByLane(sources);
-  const laneNotes = {};
-  for (const lane of ["meetings", "emails", "teams", "documents"]) {
-    laneNotes[lane] = await summarizeLane(lane, grouped[lane]);
-  }
+const LANE_TO_TYPE = { meetings: "meeting", emails: "email", teams: "teams", documents: "document" };
 
-  const brief = await callModel(
-    [
-      {
-        role: "system",
-        content:
-          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. The source notes tag every fact with a short citation like `S12`; carry those tags through verbatim, inline, wrapped in backticks (e.g. `S12`), and NEVER alter, lengthen, shorten, merge, or invent a tag. Always refer to a project by its name — never by a numeric id, and never write 'Project <number>' (e.g. write 'Hillsdale', not 'Project 67'). Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify(
-          {
-            businessDate,
-            instruction:
-              "Write the Daily Executive Brief from these source notes. Include: Executive read, critical decisions, financial/watch items, schedule/operations watch, project-by-project notes, follow-ups, and source coverage.",
-            sourceCounts: Object.fromEntries(Object.entries(grouped).map(([key, value]) => [key, value.length])),
-            laneNotes,
-          },
-          null,
-          2,
-        ),
-      },
-    ],
-    3500,
-  );
-
-  return { brief: brief.replace(/^#\s+Daily Executive Brief[^\n]*\n+/i, "").trim(), laneNotes };
-}
-
-function nextMovesFromBrief(brief) {
-  const lines = brief
-    .split("\n")
-    .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
-    .filter(Boolean);
-  return lines
-    .filter((line) => /\b(follow|decide|confirm|review|approve|call|send|collect|resolve|assign|escalate)\b/i.test(line))
-    .slice(0, 8);
-}
-
-function bulletLinesFromBrief(brief, pattern, limit = 8) {
-  const lines = String(brief || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => /^[-*]\s+/.test(line));
-  return lines
-    .filter((line) => pattern.test(line))
-    .slice(0, limit);
-}
-
-function firstSourceIdFromBrief(brief) {
-  return String(brief || "").match(/\[([^\]]+)\]/)?.[1]?.split(",")?.[0]?.trim() ?? null;
-}
-
-function fallbackBullet(title, summary, brief) {
-  const sourceId = firstSourceIdFromBrief(brief);
-  return `- **${title}**: ${summary}${sourceId ? ` [${sourceId}]` : ""}`;
-}
-
-function sectionBlock(title, body) {
-  return [`## ${title}`, "", body.trim()].join("\n");
-}
-
-function buildMissingSection(title, brief, sources, skipped) {
-  const riskLines = bulletLinesFromBrief(
-    brief,
-    /\b(risk|blocked|blocker|delay|delayed|slip|slipped|exposure|unpaid|missing|hold|shutdown|not validated|not commit)\b/i,
-  );
-  const decisionLines = bulletLinesFromBrief(brief, /\b(decide|approve|push|escalate|confirm|review)\b/i);
-  const taskLines = bulletLinesFromBrief(brief, /\b(follow|confirm|send|collect|resolve|assign|finish|return|insert|price|schedule)\b/i);
-  const initiativeLines = bulletLinesFromBrief(brief, /\b(lock|control|workflow|source of truth|permanent|system|automation|prevent)\b/i);
-
-  switch (title) {
-    case "Risk Candidates":
-      return (
-        riskLines.join("\n") ||
-        fallbackBullet(
-          "Daily operational exposure review",
-          "Review the Executive Brief and Project Intelligence Updates for schedule, money, permit, and coordination exposure before promotion.",
-          brief,
-        )
-      );
-    case "Decision Candidates":
-      return (
-        decisionLines.join("\n") ||
-        fallbackBullet(
-          "Owner decision review",
-          "Review the Highest-Leverage Owner Decisions section and promote only decisions that have a clear owner action.",
-          brief,
-        )
-      );
-    case "Task Candidates":
-      return (
-        taskLines.join("\n") ||
-        nextMovesFromBrief(brief)
-          .map((line) => `- ${line}`)
-          .join("\n") ||
-        fallbackBullet(
-          "Daily follow-up review",
-          "Review source-backed follow-ups in the packet before creating assigned tasks.",
-          brief,
-        )
-      );
-    case "Initiative Candidates":
-      return (
-        initiativeLines.join("\n") ||
-        fallbackBullet(
-          "Daily Deep Read operating control",
-          "Use the packet to identify recurring process controls that should become durable project intelligence improvements.",
-          brief,
-        )
-      );
-    case "Source Coverage":
-      return [
-        "```json",
-        JSON.stringify(
-          {
-            businessDate,
-            window: windowBounds,
-            included: Object.fromEntries(
-              Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length]),
-            ),
-            skipped: skipped.length,
-          },
-          null,
-          2,
-        ),
-        "```",
-      ].join("\n");
-    case "Automation Instructions Learned":
-      return [
-        "- Keep Daily Deep Read synthesis packet-first: full transcript/email/Teams/document source notes create the packet; RAG chunks support search and citation only.",
-        "- Promote tasks, risks, decisions, initiatives, and project updates through review-gated candidates before updating project intelligence packets.",
-        "- Fail loudly when required sections are missing instead of writing incomplete packets.",
-      ].join("\n");
-    default:
-      return "No source-backed content identified.";
-  }
-}
-
-function ensureDailyDeepReadSections(brief, sources, skipped) {
-  const sections = markdownSections(brief);
-  const blocks = [String(brief || "").trim()];
-  for (const title of REQUIRED_DEEP_READ_SECTIONS) {
-    if (sections[title]) continue;
-    blocks.push(sectionBlock(title, buildMissingSection(title, brief, sources, skipped)));
-  }
-  return blocks.filter(Boolean).join("\n\n").trim();
-}
-
-function markdownSections(markdown) {
-  const sections = {};
-  let current = null;
-  const lines = String(markdown || "").split(/\r?\n/);
-  for (const line of lines) {
-    const heading = line.match(/^##\s+(.+?)\s*$/);
-    if (heading) {
-      current = heading[1].trim();
-      sections[current] = "";
-      continue;
-    }
-    if (current) {
-      sections[current] = `${sections[current]}${sections[current] ? "\n" : ""}${line}`;
+// Which source aliases the model actually cited — from sourceIds arrays and any
+// [S12] tags inline in prose — so we only emit link definitions for cited sources.
+function collectCitedAliases(structured) {
+  const cited = new Set();
+  const add = (ids) => {
+    for (const id of ids || []) if (id) cited.add(String(id).trim());
+  };
+  for (const call of structured.callsToday || []) add(call.sourceIds);
+  for (const end of structured.looseEnds || []) add(end.sourceIds);
+  for (const project of structured.projects || []) {
+    for (const item of project.actionItems || []) add(item.sourceIds);
+    for (const tag of String(project.context || "").match(/\[(S\d+)\]/g) || []) {
+      cited.add(tag.slice(1, -1));
     }
   }
-  return Object.fromEntries(Object.entries(sections).map(([key, value]) => [key, String(value).trim()]));
+  return cited;
 }
 
-const REQUIRED_DEEP_READ_SECTIONS = [
-  "Executive Brief",
-  "Highest-Leverage Owner Decisions",
-  "Project Intelligence Updates",
-  "Risk Candidates",
-  "Decision Candidates",
-  "Task Candidates",
-  "Initiative Candidates",
-  "Source Coverage",
-  "Automation Instructions Learned",
-];
-
-function validateDailyDeepReadSections(sections) {
-  const missing = REQUIRED_DEEP_READ_SECTIONS.filter((section) => !sections[section]);
-  if (missing.length > 0) {
-    throw new Error(`Daily Deep Read brief missing required sections: ${missing.join(", ")}`);
+function buildSourcesMap(sources, citedAliases) {
+  const map = {};
+  for (const source of sources) {
+    if (!citedAliases.has(source.alias)) continue;
+    map[source.alias] = {
+      title: source.title,
+      type: LANE_TO_TYPE[source.lane] ?? "document",
+      url: source.url || null,
+      project: source.projectName ?? null,
+    };
   }
+  return map;
 }
 
-// --- Candidate B: structured per-project operating records --------------------
-// The packet's prose "Project Intelligence Updates" section is owner-readable but
-// not machine-usable — the consumer used to regex bullets and could only fill
-// current_summary, leaving health/risks/financials on /intelligence stale. Here
-// the compiler ALSO emits a structured record per project (from the same full
-// transcripts), so every project that gets a fresh summary gets a fresh health
-// read too. Shape mirrors project_current_state's columns; the consumer maps it
-// straight to the table with no markdown parsing.
-
-const ALLOWED_HEALTH = new Set([
-  "on_track",
-  "watch",
-  "at_risk",
-  "critical",
-  "unknown",
-]);
-const MAX_RECORD_CHARS_PER_SOURCE = 4_000;
-const PROJECT_RECORD_BATCH = 5;
+const BRIEF_V3_SYSTEM_PROMPT = [
+  "You are the strategic advisor to Brandon Clymer, CEO of Alleato Group, a construction general contractor.",
+  "From the day's source notes, produce his Daily Executive Brief as STRUCTURED JSON. Write to him in the second person ('you').",
+  "",
+  "Return ONLY a JSON object of exactly this shape:",
+  '{"callsToday":[{"project":"<name>","question":"<the decision as a question/call>","optional":false,"sourceIds":["S12"]}],',
+  '"projects":[{"name":"<project name>","urgencyRank":<1 = most urgent>,"hasOwnerDecision":<true if Brandon has a decision/approval here>,"resolvedToday":<true if the only news is that something resolved today>,',
+  '"actionItems":[{"ownerIsBrandon":<bool>,"owner":"<person name, or \'You\' if Brandon>","text":"<the action, plain sentence>","due":"<human date like \'July 14\', or null>","dueIso":"<ISO date or null>","urgency":"<honest urgency phrase if no due date, else null>","optional":<bool>,"sourceIds":["S12"]}],',
+  '"context":"<advisor-voice prose>"}],',
+  '"looseEnds":[{"text":"<item not tied to any project>","sourceIds":["S12"]}],',
+  '"sourceCoverage":{"note":"<coverage caveats, or null>","thinLanes":["<lane>"]}}',
+  "",
+  "Rules:",
+  "- Order projects most urgent first. Projects with hasOwnerDecision=true are the priority and come first.",
+  "- callsToday lists ONLY Brandon's own decisions — one per decision, phrased as the question, with NO status or context. Every callsToday.project MUST be a project whose hasOwnerDecision is true.",
+  "- Lead each project with actionItems. Set ownerIsBrandon=true for Brandon's own decisions/approvals; otherwise owner is the responsible person's name.",
+  "- Use a real due date only when one exists in the sources; otherwise set due=null and give an honest urgency phrase. NEVER invent a date.",
+  "- context is plain, complete sentences. Spell out abbreviations ('Uniqlo' not 'UQ', 'certificate of insurance' not 'COI'). Write dates as words ('July 14'). Quote other people verbatim when decision-grade; render Brandon's own directives as his calls, not quotes at him. Do NOT write a how-to-read line.",
+  "- Citations: every fact carries its source alias. Put aliases (e.g. S12) in the relevant sourceIds arrays AND inline in context prose wrapped in square brackets like [S12]. NEVER alter, lengthen, shorten, merge, or invent an alias.",
+  "- Always refer to a project by its name — never a numeric id, never 'Project <number>'. If a source is 'Unassigned', omit it or fold it into an unassigned note.",
+  "- If a source lane is thin, name it in sourceCoverage.",
+].join("\n");
 
 function parseModelJson(text) {
   const cleaned = String(text || "")
@@ -827,6 +679,72 @@ function parseModelJson(text) {
   }
 }
 
+async function draftExecutiveBrief(sources) {
+  const grouped = groupByLane(sources);
+  const laneNotes = {};
+  for (const lane of ["meetings", "emails", "teams", "documents"]) {
+    laneNotes[lane] = await summarizeLane(lane, grouped[lane]);
+  }
+
+  const raw = await callModel(
+    [
+      { role: "system", content: BRIEF_V3_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            businessDate,
+            sourceCounts: Object.fromEntries(Object.entries(grouped).map(([key, value]) => [key, value.length])),
+            laneNotes,
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    9000,
+  );
+
+  const parsed = parseModelJson(raw);
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Brief model did not return parseable JSON for the structured brief.");
+  }
+
+  const structured = {
+    version: "v3",
+    businessDate,
+    callsToday: Array.isArray(parsed.callsToday) ? parsed.callsToday : [],
+    projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+    looseEnds: Array.isArray(parsed.looseEnds) ? parsed.looseEnds : [],
+    sourceCoverage: {
+      ...Object.fromEntries(
+        Object.entries(groupByLane(sources)).map(([key, value]) => [key, value.length]),
+      ),
+      thinLanes: Array.isArray(parsed.sourceCoverage?.thinLanes) ? parsed.sourceCoverage.thinLanes : [],
+      note: parsed.sourceCoverage?.note ? String(parsed.sourceCoverage.note) : null,
+    },
+    sources: buildSourcesMap(sources, collectCitedAliases({
+      callsToday: parsed.callsToday,
+      looseEnds: parsed.looseEnds,
+      projects: parsed.projects,
+    })),
+  };
+
+  validateBriefV3(structured);
+  return { structured, laneNotes };
+}
+
+
+// --- Candidate B: structured per-project operating records --------------------
+// The compiler ALSO emits a structured record per project (from the same full
+// transcripts), so every project that gets a fresh summary also gets a fresh
+// health read. Shape mirrors project_current_state's columns; the consumer maps
+// it straight to the table with no markdown parsing.
+
+const ALLOWED_HEALTH = new Set(["on_track", "watch", "at_risk", "critical", "unknown"]);
+const MAX_RECORD_CHARS_PER_SOURCE = 4_000;
+const PROJECT_RECORD_BATCH = 5;
+
 function groupSourcesByProject(sources) {
   const byProject = new Map();
   for (const source of sources) {
@@ -834,11 +752,7 @@ function groupSourcesByProject(sources) {
     if (!Number.isInteger(projectId) || projectId <= 0) continue; // 0 = unassigned
     if (!source.projectName) continue;
     if (!byProject.has(projectId)) {
-      byProject.set(projectId, {
-        projectId,
-        projectName: source.projectName,
-        sources: [],
-      });
+      byProject.set(projectId, { projectId, projectName: source.projectName, sources: [] });
     }
     byProject.get(projectId).sources.push({
       id: source.alias,
@@ -852,10 +766,7 @@ function groupSourcesByProject(sources) {
 
 function normalizeStringArray(value) {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => String(item ?? "").trim())
-    .filter((item) => item.length > 0)
-    .slice(0, 8);
+  return value.map((item) => String(item ?? "").trim()).filter((item) => item.length > 0).slice(0, 8);
 }
 
 function normalizeRecord(raw, projectId, projectName) {
@@ -872,9 +783,7 @@ function normalizeRecord(raw, projectId, projectName) {
     scheduleRead: String(raw?.scheduleRead ?? "").trim(),
     fieldRead: String(raw?.fieldRead ?? "").trim(),
     confidence:
-      typeof raw?.confidence === "number" &&
-      raw.confidence >= 0 &&
-      raw.confidence <= 1
+      typeof raw?.confidence === "number" && raw.confidence >= 0 && raw.confidence <= 1
         ? raw.confidence
         : null,
   };
@@ -899,10 +808,7 @@ async function extractProjectRecords(sources) {
             '{"records":[{"projectName":"...","healthStatus":"on_track|watch|at_risk|critical|unknown","whatChanged":"...","needsAttention":["..."],"openDecisions":["..."],"activeRisks":["..."],"financialRead":"...","scheduleRead":"...","fieldRead":"...","confidence":0.0}]} ' +
             "— one record per project in the input, using the project's EXACT projectName. Ground every field in the provided sources; NEVER invent, and NEVER paste raw email/transcript text — write concise owner-grade phrases. If a dimension has no evidence use an empty string or empty array. Use healthStatus 'unknown' when evidence is too thin to judge. Keep each list item to one short clause.",
         },
-        {
-          role: "user",
-          content: JSON.stringify({ businessDate, projects: batch }, null, 2),
-        },
+        { role: "user", content: JSON.stringify({ businessDate, projects: batch }, null, 2) },
       ],
       2600,
     );
@@ -917,7 +823,7 @@ async function extractProjectRecords(sources) {
   return records;
 }
 
-async function writePacket({ sources, brief, laneNotes, projectRecords = [] }) {
+async function writePacket({ sources, structured, briefMarkdown, laneNotes, projectRecords = [] }) {
   return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
     await client.query("begin");
     try {
@@ -967,14 +873,14 @@ async function writePacket({ sources, brief, laneNotes, projectRecords = [] }) {
         ),
         sourceIds: sources.map((source) => source.id),
       };
-      const sections = markdownSections(brief);
-      validateDailyDeepReadSections(sections);
       const packetJson = {
         kind: "daily_deep_read",
         businessDate,
         generatedAt: new Date().toISOString(),
-        briefMarkdown: brief,
-        sections,
+        // Structured v3 brief is the source of truth; consumers read this, not
+        // markdown section headings. briefMarkdown is one rendered view of it.
+        brief: structured,
+        briefMarkdown,
         laneNotes,
         sourceSet: {
           sources: sources.map((source) => ({
@@ -1041,11 +947,11 @@ async function writePacket({ sources, brief, laneNotes, projectRecords = [] }) {
           targetId,
           windowBounds.startIso,
           windowBounds.endIso,
-          brief.slice(0, 4000),
+          briefMarkdown.slice(0, 4000),
           `Daily executive brief for ${businessDate}`,
-          brief,
+          briefMarkdown,
           "Manual source-of-truth packet built from the raw daily source bundle.",
-          nextMovesFromBrief(brief),
+          nextMovesFromBriefV3(structured),
           JSON.stringify({
             confidence: "medium",
             basis: "Manual full-source bundle with source lane counts; model drafted from assembled source notes.",
@@ -1141,15 +1047,10 @@ async function main() {
     return;
   }
 
-  const { brief, laneNotes } = await draftExecutiveBrief(sources);
-  const packetBrief = ensureDailyDeepReadSections(brief, sources, skipped);
-  const briefMarkdown = [
-    `# Daily Executive Brief - ${businessDate}`,
-    "",
-    packetBrief,
-    "",
-  ].join("\n");
+  const { structured, laneNotes } = await draftExecutiveBrief(sources);
+  const briefMarkdown = renderBriefMarkdownV3(structured);
   await fs.writeFile(path.join(evidenceDir, "brief.md"), briefMarkdown);
+  await fs.writeFile(path.join(evidenceDir, "brief.json"), JSON.stringify(structured, null, 2));
 
   // Candidate B: structured per-project operating records (health/risks/etc).
   // Written to evidence ALWAYS (incl. --dry-run) so quality is inspectable
@@ -1163,7 +1064,7 @@ async function main() {
   let packet = null;
   let consumers = null;
   if (shouldWrite) {
-    packet = await writePacket({ sources, brief: packetBrief, laneNotes, projectRecords });
+    packet = await writePacket({ sources, structured, briefMarkdown, laneNotes, projectRecords });
     await fs.writeFile(path.join(evidenceDir, "packet-write.json"), JSON.stringify(packet, null, 2));
     if (!args["skip-consumers"]) {
       consumers = runConsumersForPacket(packet.packetId);
@@ -1189,7 +1090,13 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error.stack || error.message);
-  process.exit(1);
-});
+// Pure helpers exported for unit testing (no DB, no model). The CLI entry point
+// only runs when this file is executed directly, not when imported.
+export { parseModelJson, buildSourcesMap, collectCitedAliases, renderBriefMarkdownV3, validateBriefV3 };
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  main().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });
+}
